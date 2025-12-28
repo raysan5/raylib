@@ -43,7 +43,7 @@ int main(void)
     */
 
     // Set configuration flags for window creation
-    //SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI);
+    //SetConfigFlags(FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT | FLAG_WINDOW_HIGHDPI);// | FLAG_WINDOW_TRANSPARENT);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - window flags");
 
     Vector2 ballPosition = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
@@ -97,7 +97,8 @@ int main(void)
         if (IsWindowState(FLAG_WINDOW_MINIMIZED))
         {
             framesCounter++;
-            if (framesCounter >= 240) {
+            if (framesCounter >= 240)
+            {
                 RestoreWindow(); // Restore window after 3 seconds
                 framesCounter = 0;
             }

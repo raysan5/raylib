@@ -34,12 +34,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - triangle strip");
 
     Vector2 points[122] = { 0 };
-    Vector2 center = { (screenWidth/2.0f) - 125.f, screenHeight/2.0f };
+    Vector2 center = { (screenWidth/2.0f) - 125.0f, screenHeight/2.0f };
     float segments = 6.0f;
     float insideRadius = 100.0f;
     float outsideRadius = 150.0f;
     bool outline = true;
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -79,20 +79,20 @@ int main(void)
                 float angle1 = i*angleStep;
                 DrawTriangle(c, b, a, ColorFromHSV(angle1*RAD2DEG, 1.0f, 1.0f));
                 DrawTriangle(d, b, c, ColorFromHSV((angle1 + angleStep/2)*RAD2DEG, 1.0f, 1.0f));
-                
+
                 if (outline)
                 {
                     DrawTriangleLines(a, b, c, BLACK);
                     DrawTriangleLines(c, b, d, BLACK);
                 }
             }
- 
+
             DrawLine(580, 0, 580, GetScreenHeight(), (Color){ 218, 218, 218, 255 });
             DrawRectangle(580, 0, GetScreenWidth(), GetScreenHeight(), (Color){ 232, 232, 232, 255 });
 
             // Draw GUI controls
             //------------------------------------------------------------------------------
-            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Segments", TextFormat("%.0f", segments), &segments, 6.0f, 60.f);
+            GuiSliderBar((Rectangle){ 640, 40, 120, 20}, "Segments", TextFormat("%.0f", segments), &segments, 6.0f, 60.0f);
             GuiCheckBox((Rectangle){ 640, 70, 20, 20 }, "Outline", &outline);
             //------------------------------------------------------------------------------
 

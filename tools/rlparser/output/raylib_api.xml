@@ -7,7 +7,7 @@
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
         <Define name="RAYLIB_VERSION" type="STRING" value="5.6-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
-        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
+        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
         <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI/180.0f)" desc="" />
         <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f/PI)" desc="" />
@@ -155,10 +155,10 @@
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
-            <Field type="Vector2" name="offset" desc="Camera offset (displacement from target)" />
-            <Field type="Vector2" name="target" desc="Camera target (rotation and zoom origin)" />
-            <Field type="float" name="rotation" desc="Camera rotation in degrees" />
-            <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
+            <Field type="Vector2" name="offset" desc="Camera offset (screen space offset from window origin)" />
+            <Field type="Vector2" name="target" desc="Camera target (world space target point that is mapped to screen space offset)" />
+            <Field type="float" name="rotation" desc="Camera rotation in degrees (pivots around target)" />
+            <Field type="float" name="zoom" desc="Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale" />
         </Struct>
         <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
@@ -1111,7 +1111,7 @@
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
-            <Param type="const char *" name="dir" desc="" />
+            <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if a given path is a file or a directory">
             <Param type="const char *" name="path" desc="" />
@@ -2998,7 +2998,7 @@
         <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Checks if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
         </Function>
-        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (data and frame count should fit in sound)">
+        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
             <Param type="int" name="sampleCount" desc="" />
@@ -3043,7 +3043,7 @@
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (0.5 is center)">
+        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
@@ -3111,7 +3111,7 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (0.5 is center)">
+        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>

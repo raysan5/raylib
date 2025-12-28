@@ -40,7 +40,7 @@ return {
       name = "RLAPI",
       type = "UNKNOWN",
       value = "__declspec(dllexport)",
-      description = "We are building the library as a Win32 shared library (.dll)"
+      description = "Building the library as a Win32 shared library (.dll)"
     },
     {
       name = "PI",
@@ -769,22 +769,22 @@ return {
         {
           type = "Vector2",
           name = "offset",
-          description = "Camera offset (displacement from target)"
+          description = "Camera offset (screen space offset from window origin)"
         },
         {
           type = "Vector2",
           name = "target",
-          description = "Camera target (rotation and zoom origin)"
+          description = "Camera target (world space target point that is mapped to screen space offset)"
         },
         {
           type = "float",
           name = "rotation",
-          description = "Camera rotation in degrees"
+          description = "Camera rotation in degrees (pivots around target)"
         },
         {
           type = "float",
           name = "zoom",
-          description = "Camera zoom (scaling), should be 1.0f by default"
+          description = "Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale"
         }
       }
     },
@@ -4167,7 +4167,7 @@ return {
       description = "Change working directory, return true on success",
       returnType = "bool",
       params = {
-        {type = "const char *", name = "dir"}
+        {type = "const char *", name = "dirPath"}
       }
     },
     {
@@ -7995,7 +7995,7 @@ return {
     },
     {
       name = "UpdateSound",
-      description = "Update sound buffer with new data (data and frame count should fit in sound)",
+      description = "Update sound buffer with new data (default data format: 32 bit float, stereo)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},
@@ -8105,7 +8105,7 @@ return {
     },
     {
       name = "SetSoundPan",
-      description = "Set pan for a sound (0.5 is center)",
+      description = "Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Sound", name = "sound"},
@@ -8268,7 +8268,7 @@ return {
     },
     {
       name = "SetMusicPan",
-      description = "Set pan for a music (0.5 is center)",
+      description = "Set pan for a music (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},

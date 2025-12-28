@@ -7,7 +7,7 @@
 *       functionality available on rlgl.h library used by raylib, becoming a direct software
 *       rendering replacement for OpenGL 1.1 backend and allowing to run raylib on GPU-less
 *       devices when required
-* 
+*
 *   FEATURES:
 *       - Rendering to custom internal framebuffer with multiple color modes supported:
 *           - Color buffer: RGB - 8-bit (3:3:2) | RGB - 16-bit (5:6:5) | RGB - 24-bit (8:8:8)
@@ -40,9 +40,17 @@
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation
 *
+*       #define RLSW_USE_SIMD_INTRINSICS
+*           Detect and use SIMD intrinsics on the host compilation platform
+*           SIMD could improve rendering considerable vectorizing some raster operations
+*           but the target platforms running the compiled program with SIMD enabled
+*           must support the SIMD the program has been built for, making them only
+*           recommended under specific situations and only if the developers know
+*           what are they doing; this flag is not defined by default
+*
 *       rlsw capabilities could be customized just defining some internal
 *       values before library inclusion (default values listed):
-* 
+*
 *           #define SW_GL_FRAMEBUFFER_COPY_BGRA     true
 *           #define SW_GL_BINDING_COPY_TEXTURE      true
 *           #define SW_COLOR_BUFFER_BITS            24
@@ -52,7 +60,7 @@
 *           #define SW_MAX_TEXTURE_STACK_SIZE       2
 *           #define SW_MAX_TEXTURES                 128
 *
-* 
+*
 *   LICENSE: MIT
 *
 *   Copyright (c) 2025-2026 Le Juez Victor (@Bigfoot71), reviewed by Ramon Santamaria (@raysan5)
@@ -63,10 +71,10 @@
 *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 *   copies of the Software, and to permit persons to whom the Software is
 *   furnished to do so, subject to the following conditions:
-*   
+*
 *   The above copyright notice and this permission notice shall be included in all
 *   copies or substantial portions of the Software.
-*   
+*
 *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -94,11 +102,9 @@
 #ifndef SW_MALLOC
     #define SW_MALLOC(sz) malloc(sz)
 #endif
-
 #ifndef SW_REALLOC
     #define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
 #endif
-
 #ifndef SW_FREE
     #define SW_FREE(ptr) free(ptr)
 #endif
@@ -116,11 +122,11 @@
 #endif
 
 #ifndef SW_COLOR_BUFFER_BITS
-    #define SW_COLOR_BUFFER_BITS            32  //< 32 (rgba), 16 (rgb packed) or 8 (rgb packed) 
+    #define SW_COLOR_BUFFER_BITS            32  //< 32 (rgba), 16 (rgb packed) or 8 (rgb packed)
 #endif
 
 #ifndef SW_DEPTH_BUFFER_BITS
-    #define SW_DEPTH_BUFFER_BITS            16  //< 24, 16 or 8
+    #define SW_DEPTH_BUFFER_BITS            16  //< 32, 24 or 16
 #endif
 
 #ifndef SW_MAX_PROJECTION_STACK_SIZE
@@ -139,7 +145,7 @@
     #define SW_MAX_TEXTURES                 128
 #endif
 
-// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane.
+// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane
 // Considering the largest polygon involved is a quadrilateral (4 vertices),
 // and that clipping occurs against both the frustum (6 planes) and the scissors (4 planes),
 // the maximum number of vertices after clipping is:
@@ -150,12 +156,6 @@
 
 #ifndef SW_CLIP_EPSILON
     #define SW_CLIP_EPSILON                 1e-4f
-#endif
-
-#ifdef __cplusplus
-    #define CURLY_INIT(name) name
-#else
-    #define CURLY_INIT(name) (name)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -198,6 +198,7 @@ typedef double              GLclampd;
 //#define GL_ATTRIB_STACK_DEPTH             0x0BB0
 //#define GL_CLIENT_ATTRIB_STACK_DEPTH      0x0BB1
 #define GL_COLOR_CLEAR_VALUE                0x0C22
+#define GL_DEPTH_CLEAR_VALUE                0x0B73
 //#define GL_COLOR_WRITEMASK                0x0C23
 //#define GL_CURRENT_INDEX                  0x0B01
 #define GL_CURRENT_COLOR                    0x0B00
@@ -332,6 +333,7 @@ typedef double              GLclampd;
 #define glViewport(x, y, w, h)                      swViewport((x), (y), (w), (h))
 #define glScissor(x, y, w, h)                       swScissor((x), (y), (w), (h))
 #define glClearColor(r, g, b, a)                    swClearColor((r), (g), (b), (a))
+#define glClearDepth(d)                             swClearDepth((d))
 #define glClear(bitmask)                            swClear((bitmask))
 #define glBlendFunc(sfactor, dfactor)               swBlendFunc((sfactor), (dfactor))
 #define glPolygonMode(face, mode)                   swPolygonMode((mode))
@@ -384,7 +386,6 @@ typedef double              GLclampd;
 #define glBindTexture(tr, id)                       swBindTexture((id))
 
 // OpenGL functions NOT IMPLEMENTED by rlsw
-#define glClearDepth(X)                         ((void)(X))
 #define glDepthMask(X)                          ((void)(X))
 #define glColorMask(X,Y,Z,W)                    ((void)(X),(void)(Y),(void)(Z),(void)(W))
 #define glPixelStorei(X,Y)                      ((void)(X),(void)(Y))
@@ -415,6 +416,7 @@ typedef enum {
     SW_VERSION = GL_VERSION,
     SW_EXTENSIONS = GL_EXTENSIONS,
     SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
+    SW_DEPTH_CLEAR_VALUE = GL_DEPTH_CLEAR_VALUE,
     SW_CURRENT_COLOR = GL_CURRENT_COLOR,
     SW_CURRENT_TEXTURE_COORDS = GL_CURRENT_TEXTURE_COORDS,
     SW_POINT_SIZE = GL_POINT_SIZE,
@@ -529,7 +531,6 @@ SWAPI void swClose(void);
 SWAPI bool swResizeFramebuffer(int w, int h);
 SWAPI void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
-SWAPI void *swGetColorBuffer(int *w, int *h);
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -542,6 +543,7 @@ SWAPI void swViewport(int x, int y, int width, int height);
 SWAPI void swScissor(int x, int y, int width, int height);
 
 SWAPI void swClearColor(float r, float g, float b, float a);
+SWAPI void swClearDepth(float depth);
 SWAPI void swClear(uint32_t bitmask);
 
 SWAPI void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
@@ -608,142 +610,180 @@ SWAPI void swBindTexture(uint32_t id);
 #define RLSW_IMPLEMENTATION
 #if defined(RLSW_IMPLEMENTATION)
 
-#include <stdlib.h>
-#include <stddef.h>
-#include <math.h>           // Required for: floorf(), fabsf()
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <stddef.h>         // Required for: NULL, size_t, uint8_t, uint16_t, uint32_t...
+#include <math.h>           // Required for: sinf(), cosf(), floorf(), fabsf(), sqrtf(), roundf()
 
-#if defined(__FMA__) && defined(__AVX2__)
-#   define SW_HAS_FMA_AVX2
-#   include <immintrin.h>
+// Simple log system to avoid printf() calls if required
+// NOTE: Avoiding those calls, also avoids const strings memory usage
+#define SW_SUPPORT_LOG_INFO
+#if defined(SW_SUPPORT_LOG_INFO) //&& defined(_DEBUG)      // WARNING: LOG() output required for this tool
+    #include <stdio.h>
+    #define SW_LOG(...) printf(__VA_ARGS__)
+#else
+    #define SW_LOG(...)
 #endif
 
-#if defined(__FMA__) && defined(__AVX__)
-#    define SW_HAS_FMA_AVX
-#    include <immintrin.h>
+#if defined(_MSC_VER)
+    #define SW_ALIGN(x) __declspec(align(x))
+#elif defined(__GNUC__) || defined(__clang__)
+    #define SW_ALIGN(x) __attribute__((aligned(x)))
+#else
+    #define SW_ALIGN(x) // Do nothing if not available
 #endif
 
-#if defined(__AVX2__)
-#    define SW_HAS_AVX2
-#    include <immintrin.h>
+#if defined(_M_X64) || defined(__x86_64__)
+    #define SW_ARCH_X86_64
+#elif defined(_M_IX86) || defined(__i386__)
+    #define SW_ARCH_X86
+#elif defined(_M_ARM) || defined(__arm__)
+    #define SW_ARCH_ARM32
+#elif defined(_M_ARM64) || defined(__aarch64__)
+    #define SW_ARCH_ARM64
+#elif defined(__riscv)
+    #define SW_ARCH_RISCV
 #endif
 
-#if defined(__AVX__)
-#    define SW_HAS_AVX
-#    include <immintrin.h>
-#endif
+#if defined(RLSW_USE_SIMD_INTRINSICS)
+    // Check for SIMD vector instructions
+    // NOTE: Compiler is responsible to enable required flags for host device,
+    // supported features are detected at compiler init but varies depending on compiler
+    // TODO: This logic must be reviewed to avoid the inclusion of multiple headers
+    // and enable the higher level of SIMD available
+    #if defined(__FMA__) && defined(__AVX2__)
+        #define SW_HAS_FMA_AVX2
+        #include <immintrin.h>
+    #elif defined(__FMA__) && defined(__AVX__)
+        #define SW_HAS_FMA_AVX
+        #include <immintrin.h>
+    #elif defined(__AVX2__)
+        #define SW_HAS_AVX2
+        #include <immintrin.h>
+    #elif defined(__AVX__)
+        #define SW_HAS_AVX
+        #include <immintrin.h>
+    #endif
+    #if defined(__SSE4_2__)
+        #define SW_HAS_SSE42
+        #include <nmmintrin.h>
+    #elif defined(__SSE4_1__)
+        #define SW_HAS_SSE41
+        #include <smmintrin.h>
+    #elif defined(__SSSE3__)
+        #define SW_HAS_SSSE3
+        #include <tmmintrin.h>
+    #elif defined(__SSE3__)
+        #define SW_HAS_SSE3
+        #include <pmmintrin.h>
+    #elif defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
+        #define SW_HAS_SSE2
+        #include <emmintrin.h>
+    #elif defined(__SSE__)
+        #define SW_HAS_SSE
+        #include <xmmintrin.h>
+    #endif
+    #if defined(__ARM_NEON) || defined(__aarch64__)
+        #if defined(__ARM_FEATURE_FMA)
+            #define SW_HAS_NEON_FMA
+        #else
+            #define SW_HAS_NEON
+        #endif
+        #include <arm_neon.h>
+    #endif
+    #if defined(__riscv_vector)
+        // NOTE: Requires compilation flags: -march=rv64gcv -mabi=lp64d
+        #define SW_HAS_RVV
+        #include <riscv_vector.h>
+    #endif
+#endif  // RLSW_USE_SIMD_INTRINSICS
 
-#if defined(__SSE4_2__)
-#    define SW_HAS_SSE42
-#    include <nmmintrin.h>
-#endif
-
-#if defined(__SSE4_1__)
-#    define SW_HAS_SSE41
-#    include <smmintrin.h>
-#endif
-
-#if defined(__SSSE3__)
-#    define SW_HAS_SSSE3
-#    include <tmmintrin.h>
-#endif
-
-#if defined(__SSE3__)
-#    define SW_HAS_SSE3
-#    include <pmmintrin.h>
-#endif
-
-#if defined(__SSE2__)
-#    define SW_HAS_SSE2
-#    include <emmintrin.h>
-#endif
-
-#if defined(__SSE__)
-#    define SW_HAS_SSE
-#    include <xmmintrin.h>
-#endif
-
-#if defined(__ARM_NEON) || defined(__aarch64__)
-#    if defined(__ARM_FEATURE_FMA)
-#        define SW_HAS_NEON_FMA
-#    else
-#        define SW_HAS_NEON
-#    endif
-#    include <arm_neon.h>
+#ifdef __cplusplus
+    #define SW_CURLY_INIT(name) name
+#else
+    #define SW_CURLY_INIT(name) (name)
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #define SW_PI       3.14159265358979323846f
-#define SW_INV_255  0.00392156862745098f
+#define SW_INV_255  0.00392156862745098f            // 1.0f/255.0f
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
-#define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS/8)
-#define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS/8)
+#define SW_COLOR_PIXEL_SIZE     (SW_COLOR_BUFFER_BITS >> 3)
+#define SW_DEPTH_PIXEL_SIZE     (SW_DEPTH_BUFFER_BITS >> 3)
+#define SW_PIXEL_SIZE           (SW_COLOR_PIXEL_SIZE + SW_DEPTH_PIXEL_SIZE)
+
+#if (SW_PIXEL_SIZE <= 4)
+    #define SW_PIXEL_ALIGNMENT 4
+#else // if (SW_PIXEL_SIZE <= 8)
+    #define SW_PIXEL_ALIGNMENT 8
+#endif
 
 #if (SW_COLOR_BUFFER_BITS == 8)
-    #define COLOR_TYPE uint8_t
-    #define COLOR_IS_PACKED 1
-    #define PACK_COLOR(r,g,b) ((((uint8_t)((r)*7+0.5f))&0x07)<<5 | (((uint8_t)((g)*7+0.5f))&0x07)<<2 | ((uint8_t)((b)*3+0.5f))&0x03)
-    #define UNPACK_R(p) (((p)>>5)&0x07)
-    #define UNPACK_G(p) (((p)>>2)&0x07)
-    #define UNPACK_B(p) ((p)&0x03)
-    #define SCALE_R(v) ((v)*255+3)/7
-    #define SCALE_G(v) ((v)*255+3)/7
-    #define SCALE_B(v) ((v)*255+1)/3
-    #define TO_FLOAT_R(v) ((v)*(1.0f/7.0f))
-    #define TO_FLOAT_G(v) ((v)*(1.0f/7.0f))
-    #define TO_FLOAT_B(v) ((v)*(1.0f/3.0f))
+    #define SW_COLOR_TYPE       uint8_t
+    #define SW_COLOR_IS_PACKED  1
+    #define SW_COLOR_PACK_COMP  1
+    #define SW_PACK_COLOR(r,g,b) ((((uint8_t)((r)*7+0.5f))&0x07)<<5 | (((uint8_t)((g)*7+0.5f))&0x07)<<2 | ((uint8_t)((b)*3+0.5f))&0x03)
+    #define SW_UNPACK_R(p)      (((p)>>5)&0x07)
+    #define SW_UNPACK_G(p)      (((p)>>2)&0x07)
+    #define SW_UNPACK_B(p)      ((p)&0x03)
+    #define SW_SCALE_R(v)       ((v)*255+3)/7
+    #define SW_SCALE_G(v)       ((v)*255+3)/7
+    #define SW_SCALE_B(v)       ((v)*255+1)/3
+    #define SW_TO_FLOAT_R(v)    ((v)*(1.0f/7.0f))
+    #define SW_TO_FLOAT_G(v)    ((v)*(1.0f/7.0f))
+    #define SW_TO_FLOAT_B(v)    ((v)*(1.0f/3.0f))
 #elif (SW_COLOR_BUFFER_BITS == 16)
-    #define COLOR_TYPE uint16_t
-    #define COLOR_IS_PACKED 1
-    #define PACK_COLOR(r,g,b) ((((uint16_t)((r)*31+0.5f))&0x1F)<<11 | (((uint16_t)((g)*63+0.5f))&0x3F)<<5 | ((uint16_t)((b)*31+0.5f))&0x1F)
-    #define UNPACK_R(p) (((p)>>11)&0x1F)
-    #define UNPACK_G(p) (((p)>>5)&0x3F)
-    #define UNPACK_B(p) ((p)&0x1F)
-    #define SCALE_R(v) ((v)*255+15)/31
-    #define SCALE_G(v) ((v)*255+31)/63
-    #define SCALE_B(v) ((v)*255+15)/31
-    #define TO_FLOAT_R(v) ((v)*(1.0f/31.0f))
-    #define TO_FLOAT_G(v) ((v)*(1.0f/63.0f))
-    #define TO_FLOAT_B(v) ((v)*(1.0f/31.0f))
+    #define SW_COLOR_TYPE       uint16_t
+    #define SW_COLOR_IS_PACKED  1
+    #define SW_COLOR_PACK_COMP  1
+    #define SW_PACK_COLOR(r,g,b) ((((uint16_t)((r)*31+0.5f))&0x1F)<<11 | (((uint16_t)((g)*63+0.5f))&0x3F)<<5 | ((uint16_t)((b)*31+0.5f))&0x1F)
+    #define SW_UNPACK_R(p)      (((p)>>11)&0x1F)
+    #define SW_UNPACK_G(p)      (((p)>>5)&0x3F)
+    #define SW_UNPACK_B(p)      ((p)&0x1F)
+    #define SW_SCALE_R(v)       ((v)*255+15)/31
+    #define SW_SCALE_G(v)       ((v)*255+31)/63
+    #define SW_SCALE_B(v)       ((v)*255+15)/31
+    #define SW_TO_FLOAT_R(v)    ((v)*(1.0f/31.0f))
+    #define SW_TO_FLOAT_G(v)    ((v)*(1.0f/63.0f))
+    #define SW_TO_FLOAT_B(v)    ((v)*(1.0f/31.0f))
 #else // 32 bits
-    #define COLOR_TYPE uint8_t
-    #define COLOR_IS_PACKED 0
+    #define SW_COLOR_TYPE       uint8_t
+    #define SW_COLOR_IS_PACKED  0
+    #define SW_COLOR_PACK_COMP  4
 #endif
 
-#if (SW_DEPTH_BUFFER_BITS == 8)
-    #define DEPTH_TYPE uint8_t
-    #define DEPTH_IS_PACKED 1
-    #define DEPTH_MAX UINT8_MAX
-    #define DEPTH_SCALE (1.0f/UINT8_MAX)
-    #define PACK_DEPTH(d) ((DEPTH_TYPE)((d)*DEPTH_MAX))
-    #define UNPACK_DEPTH(p) (p)
-#elif (SW_DEPTH_BUFFER_BITS == 16)
-    #define DEPTH_TYPE uint16_t
-    #define DEPTH_IS_PACKED 1
-    #define DEPTH_MAX UINT16_MAX
-    #define DEPTH_SCALE (1.0f/UINT16_MAX)
-    #define PACK_DEPTH(d) ((DEPTH_TYPE)((d)*DEPTH_MAX))
-    #define UNPACK_DEPTH(p) (p)
-#else // 24 bits
-    #define DEPTH_TYPE uint8_t
-    #define DEPTH_IS_PACKED 0
-    #define DEPTH_MAX 0xFFFFFF
-    #define DEPTH_SCALE (1.0f/0xFFFFFF)
-    #define PACK_DEPTH_0(d) (((uint32_t)((d)*DEPTH_MAX)>>16)&0xFF)
-    #define PACK_DEPTH_1(d) (((uint32_t)((d)*DEPTH_MAX)>>8)&0xFF)
-    #define PACK_DEPTH_2(d) ((uint32_t)((d)*DEPTH_MAX)&0xFF)
-    #define UNPACK_DEPTH(p) (((p)[0]<<16)|((p)[1]<<8)|(p)[2])
+#if (SW_DEPTH_BUFFER_BITS == 16)
+    #define SW_DEPTH_TYPE       uint16_t
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        UINT16_MAX
+    #define SW_DEPTH_SCALE      (1.0f/UINT16_MAX)
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)((d)*SW_DEPTH_MAX))
+    #define SW_UNPACK_DEPTH(p)  (p)
+#elif (SW_DEPTH_BUFFER_BITS == 24)
+    #define SW_DEPTH_TYPE       uint8_t
+    #define SW_DEPTH_IS_PACKED  0
+    #define SW_DEPTH_PACK_COMP  3
+    #define SW_DEPTH_MAX        0xFFFFFFU
+    #define SW_DEPTH_SCALE      (1.0f/0xFFFFFFU)
+    #define SW_PACK_DEPTH_0(d)  ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>16)&0xFFU))
+    #define SW_PACK_DEPTH_1(d)  ((uint8_t)(((uint32_t)((d)*SW_DEPTH_MAX)>>8)&0xFFU))
+    #define SW_PACK_DEPTH_2(d)  ((uint8_t)((uint32_t)((d)*SW_DEPTH_MAX)&0xFFU))
+    #define SW_UNPACK_DEPTH(p)  ((((uint32_t)(p)[0]<<16)|((uint32_t)(p)[1]<<8)|(uint32_t)(p)[2]))
+#else // 32 bits
+    #define SW_DEPTH_TYPE       float
+    #define SW_DEPTH_IS_PACKED  1
+    #define SW_DEPTH_PACK_COMP  1
+    #define SW_DEPTH_MAX        1.0f
+    #define SW_DEPTH_SCALE      1.0f
+    #define SW_PACK_DEPTH(d)    ((SW_DEPTH_TYPE)(d))
+    #define SW_UNPACK_DEPTH(p)  (p)
 #endif
 
-#define GET_COLOR_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset)*SW_COLOR_PIXEL_SIZE))
-#define GET_DEPTH_PTR(ptr, offset) ((void*)((uint8_t*)(ptr) + (offset)*SW_DEPTH_PIXEL_SIZE))
-#define INC_COLOR_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_COLOR_PIXEL_SIZE))
-#define INC_DEPTH_PTR(ptr) ((ptr) = (void*)((uint8_t*)(ptr) + SW_DEPTH_PIXEL_SIZE))
-
-#define SW_STATE_CHECK(flags)           (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
+#define SW_STATE_CHECK(flags)   (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
 #define SW_STATE_CHECK_EX(state, flags) (((state) & (flags)) == (flags))
 
 #define SW_STATE_SCISSOR_TEST   (1 << 0)
@@ -808,9 +848,17 @@ typedef struct {
     float ty;                   // Texel height
 } sw_texture_t;
 
+// Pixel data type
+typedef SW_ALIGN(SW_PIXEL_ALIGNMENT) struct {
+    SW_COLOR_TYPE color[SW_COLOR_PACK_COMP];
+    SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP];
+#if (SW_PIXEL_SIZE % SW_PIXEL_ALIGNMENT != 0)
+    uint8_t padding[SW_PIXEL_ALIGNMENT - SW_PIXEL_SIZE % SW_PIXEL_ALIGNMENT];
+#endif
+} sw_pixel_t;
+
 typedef struct {
-    void *color;
-    void *depth;
+    sw_pixel_t *pixels;
     int width;
     int height;
     int allocSz;
@@ -818,8 +866,7 @@ typedef struct {
 
 typedef struct {
     sw_framebuffer_t framebuffer;   // Main framebuffer
-    float clearColor[4];            // Color used to clear the screen
-    float clearDepth;               // Depth value used to clear the screen
+    sw_pixel_t clearValue;          // Clear value of the framebuffer
 
     float vpCenter[2];              // Viewport center
     float vpHalf[2];                // Viewport half dimensions
@@ -849,7 +896,7 @@ typedef struct {
     int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
-    SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles) 
+    SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles)
     int reqVertices;                                            // Number of vertices required for the primitive being drawn
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
@@ -1075,38 +1122,54 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 #if defined(SW_HAS_NEON)
     float32x4_t values = vld1q_f32(src);
     float32x4_t scaled = vmulq_n_f32(values, 255.0f);
-    scaled = vminq_f32(vmaxq_f32(scaled, vdupq_n_f32(0.0f)), vdupq_n_f32(255.0f));
-    uint32x4_t clamped = vcvtq_u32_f32(scaled);
-
-    uint16x4_t narrow16 = vmovn_u32(clamped);
-    uint8x8_t narrow8 = vmovn_u16(vcombine_u16(narrow16, narrow16));
-
-    vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8), 0);
+    int32x4_t clamped_s32 = vcvtq_s32_f32(scaled);  // f32 -> s32 (truncated)
+    int16x4_t narrow16_s = vqmovn_s32(clamped_s32);
+    int16x8_t combined16_s = vcombine_s16(narrow16_s, narrow16_s);
+    uint8x8_t narrow8_u = vqmovun_s16(combined16_s);
+    vst1_lane_u32((uint32_t*)dst, vreinterpret_u32_u8(narrow8_u), 0);
 #elif defined(SW_HAS_SSE41)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
-    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
-    __m128i clamped = _mm_cvtps_epi32(scaled);
-
-    clamped = _mm_packus_epi32(clamped, clamped);
-    clamped = _mm_packus_epi16(clamped, clamped);
+    __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
+    clamped = _mm_packus_epi32(clamped, clamped);   // s32 -> u16 (saturated < 0 to 0)
+    clamped = _mm_packus_epi16(clamped, clamped);   // u16 -> u8 (saturated > 255 to 255)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
 #elif defined(SW_HAS_SSE2)
     __m128 values = _mm_loadu_ps(src);
     __m128 scaled = _mm_mul_ps(values, _mm_set1_ps(255.0f));
-    scaled = _mm_max_ps(_mm_min_ps(scaled, _mm_set1_ps(255.0f)), _mm_setzero_ps());
-    __m128i clamped = _mm_cvtps_epi32(scaled);
-
-    clamped = _mm_packs_epi32(clamped, clamped);
-    clamped = _mm_packus_epi16(clamped, clamped);
+    __m128i clamped = _mm_cvtps_epi32(scaled);      // f32 -> s32 (truncated)
+    clamped = _mm_packs_epi32(clamped, clamped);    // s32 -> s16 (saturated)
+    clamped = _mm_packus_epi16(clamped, clamped);   // s16 -> u8 (saturated < 0 to 0)
     *(uint32_t*)dst = _mm_cvtsi128_si32(clamped);
+#elif defined(SW_HAS_RVV)
+    // TODO: Sample code generated by AI, needs testing and review
+    // NOTE: RVV 1.0 specs define the use of __riscv_ prefix for instrinsic functions
+    size_t vl = __riscv_vsetvl_e32m1(4); // Load up to 4 floats into a vector register
+    vfloat32m1_t vsrc = __riscv_vle32_v_f32m1(src, vl); // Load float32 values
+
+    // Clamp to [0.0f, 1.0f]
+    vfloat32m1_t vzero = __riscv_vfmv_v_f_f32m1(0.0f, vl);
+    vfloat32m1_t vone  = __riscv_vfmv_v_f_f32m1(1.0f, vl);
+    vsrc = __riscv_vfmin_vv_f32m1(vsrc, vone, vl);
+    vsrc = __riscv_vfmax_vv_f32m1(vsrc, vzero, vl);
+
+    // Multiply by 255.0f and add 0.5f for rounding
+    vfloat32m1_t vscaled = __riscv_vfmul_vf_f32m1(vsrc, 255.0f, vl);
+    vscaled = __riscv_vfadd_vf_f32m1(vscaled, 0.5f, vl);
+
+    // Convert to unsigned integer (truncate toward zero)
+    vuint32m1_t vu32 = __riscv_vfcvt_xu_f_v_u32m1(vscaled, vl);
+
+    // Narrow from u32 -> u8
+    vuint8m1_t vu8 = __riscv_vnclipu_wx_u8m1(vu32, 0, vl); // Round toward zero
+    __riscv_vse8_v_u8m1(dst, vu8, vl); // Store result
 #else
     for (int i = 0; i < 4; i++)
     {
         float val = src[i]*255.0f;
         val = (val > 255.0f)? 255.0f : val;
         val = (val < 0.0f)? 0.0f : val;
-        dst[i] = (uint8_t)(val + 0.5f);
+        dst[i] = (uint8_t)val;
     }
 #endif
 }
@@ -1114,29 +1177,33 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
 {
 #if defined(SW_HAS_NEON)
-    uint32x4_t bytes = vdupq_n_u32(0);
-    bytes = vld1q_lane_u32((const uint32_t*)src, bytes, 0);
-
-    uint8x8_t bytes8 = vreinterpret_u8_u32(vget_low_u32(bytes));
+    uint8x8_t bytes8 = vld1_u8(src); //< Read 8 bytes, faster, but let's hope we're not at the end of the page (unlikely)...
     uint16x8_t bytes16 = vmovl_u8(bytes8);
     uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
-
     float32x4_t floats = vcvtq_f32_u32(ints);
     floats = vmulq_n_f32(floats, SW_INV_255);
     vst1q_f32(dst, floats);
 #elif defined(SW_HAS_SSE41)
-    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
+    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t *)src);
     __m128i ints = _mm_cvtepu8_epi32(bytes);
     __m128 floats = _mm_cvtepi32_ps(ints);
     floats = _mm_mul_ps(floats, _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, floats);
 #elif defined(SW_HAS_SSE2)
-    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t*)src);
+    __m128i bytes = _mm_cvtsi32_si128(*(const uint32_t *)src);
     bytes = _mm_unpacklo_epi8(bytes, _mm_setzero_si128());
     __m128i ints = _mm_unpacklo_epi16(bytes, _mm_setzero_si128());
     __m128 floats = _mm_cvtepi32_ps(ints);
     floats = _mm_mul_ps(floats, _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, floats);
+#elif defined(SW_HAS_RVV)
+    // TODO: Sample code generated by AI, needs testing and review
+    size_t vl = __riscv_vsetvl_e8m1(4); // Set vector length for 8-bit input elements
+    vuint8m1_t vsrc_u8 = __riscv_vle8_v_u8m1(src, vl); // Load 4 unsigned 8-bit integers
+    vuint32m1_t vsrc_u32 = __riscv_vwcvt_xu_u_v_u32m1(vsrc_u8, vl); // Widen to 32-bit unsigned integers
+    vfloat32m1_t vsrc_f32 = __riscv_vfcvt_f_xu_v_f32m1(vsrc_u32, vl); // Convert to float32
+    vfloat32m1_t vnorm = __riscv_vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
+    __riscv_vse32_v_f32m1(dst, vnorm, vl); // Store result
 #else
     dst[0] = (float)src[0]*SW_INV_255;
     dst[1] = (float)src[1]*SW_INV_255;
@@ -1204,15 +1271,8 @@ static inline bool sw_framebuffer_load(int w, int h)
 {
     int size = w*h;
 
-    RLSW.framebuffer.color = SW_MALLOC(SW_COLOR_PIXEL_SIZE*size);
-    if (RLSW.framebuffer.color == NULL) return false;
-
-    RLSW.framebuffer.depth = SW_MALLOC(SW_DEPTH_PIXEL_SIZE*size);
-    if (RLSW.framebuffer.depth == NULL)
-    {
-        SW_FREE(RLSW.framebuffer.color);
-        return false;
-    }
+    RLSW.framebuffer.pixels = SW_MALLOC(sizeof(sw_pixel_t)*size);
+    if (RLSW.framebuffer.pixels == NULL) return false;
 
     RLSW.framebuffer.width = w;
     RLSW.framebuffer.height = h;
@@ -1232,18 +1292,10 @@ static inline bool sw_framebuffer_resize(int w, int h)
         return true;
     }
 
-    void *newColor = SW_REALLOC(RLSW.framebuffer.color, SW_COLOR_PIXEL_SIZE*newSize);
-    if (newColor == NULL) return false;
+    void *newPixels = SW_REALLOC(RLSW.framebuffer.pixels, sizeof(sw_pixel_t)*newSize);
+    if (newPixels == NULL) return false;
 
-    void *newDepth = SW_REALLOC(RLSW.framebuffer.depth, SW_DEPTH_PIXEL_SIZE*newSize);
-    if (newDepth == NULL)
-    {
-        SW_FREE(newColor);
-        return false;
-    }
-
-    RLSW.framebuffer.color = newColor;
-    RLSW.framebuffer.depth = newDepth;
+    RLSW.framebuffer.pixels = newPixels;
 
     RLSW.framebuffer.width = w;
     RLSW.framebuffer.height = h;
@@ -1252,29 +1304,29 @@ static inline bool sw_framebuffer_resize(int w, int h)
     return true;
 }
 
-static inline void sw_framebuffer_read_color(float dst[4], const void *src)
+static inline void sw_framebuffer_read_color(float dst[4], const sw_pixel_t *src)
 {
-#if COLOR_IS_PACKED
-    COLOR_TYPE pixel = ((COLOR_TYPE*)src)[0];
-    dst[0] = TO_FLOAT_R(UNPACK_R(pixel));
-    dst[1] = TO_FLOAT_G(UNPACK_G(pixel));
-    dst[2] = TO_FLOAT_B(UNPACK_B(pixel));
+#if SW_COLOR_IS_PACKED
+    SW_COLOR_TYPE pixel = src->color[0];
+    dst[0] = SW_TO_FLOAT_R(SW_UNPACK_R(pixel));
+    dst[1] = SW_TO_FLOAT_G(SW_UNPACK_G(pixel));
+    dst[2] = SW_TO_FLOAT_B(SW_UNPACK_B(pixel));
     dst[3] = 1.0f;
 #else
-    sw_float_from_unorm8_simd(dst, src);
+    sw_float_from_unorm8_simd(dst, src->color);
 #endif
 }
 
-static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
+static inline void sw_framebuffer_read_color8(uint8_t dst[4], const sw_pixel_t *src)
 {
-#if COLOR_IS_PACKED
-    COLOR_TYPE pixel = ((COLOR_TYPE*)src)[0];
-    dst[0] = SCALE_R(UNPACK_R(pixel));
-    dst[1] = SCALE_G(UNPACK_G(pixel));
-    dst[2] = SCALE_B(UNPACK_B(pixel));
+#if SW_COLOR_IS_PACKED
+    SW_COLOR_TYPE pixel = src->color[0];
+    dst[0] = SW_SCALE_R(SW_UNPACK_R(pixel));
+    dst[1] = SW_SCALE_G(SW_UNPACK_G(pixel));
+    dst[2] = SW_SCALE_B(SW_UNPACK_B(pixel));
     dst[3] = 255;
 #else
-    const COLOR_TYPE *p = (const COLOR_TYPE*)src;
+    const SW_COLOR_TYPE *p = src->color;
     dst[0] = p[0];
     dst[1] = p[1];
     dst[2] = p[2];
@@ -1282,231 +1334,141 @@ static inline void sw_framebuffer_read_color8(uint8_t dst[4], const void *src)
 #endif
 }
 
-static inline void sw_framebuffer_write_color(void *dst, const float src[4])
+static inline float sw_framebuffer_read_depth(const sw_pixel_t *src)
 {
-#if COLOR_IS_PACKED
-    ((COLOR_TYPE*)dst)[0] = PACK_COLOR(src[0], src[1], src[2]);
+#if SW_DEPTH_IS_PACKED
+    return src->depth[0]*SW_DEPTH_SCALE;
 #else
-    sw_float_to_unorm8_simd(dst, src);
+    return SW_UNPACK_DEPTH(src->depth)*SW_DEPTH_SCALE;
 #endif
 }
 
-static inline void sw_framebuffer_fill_color(void *ptr, int size, const float color[4])
+static inline void sw_framebuffer_write_color(sw_pixel_t *dst, const float src[4])
 {
-#if COLOR_IS_PACKED
-    COLOR_TYPE packed = PACK_COLOR(color[0], color[1], color[2]);
-    COLOR_TYPE *p = (COLOR_TYPE*)ptr;
+#if SW_COLOR_IS_PACKED
+    dst->color[0] = SW_PACK_COLOR(src[0], src[1], src[2]);
 #else
-    COLOR_TYPE r = sw_clampi(color[0]*255, 0, 255);
-    COLOR_TYPE g = sw_clampi(color[1]*255, 0, 255);
-    COLOR_TYPE b = sw_clampi(color[2]*255, 0, 255);
-    COLOR_TYPE a = sw_clampi(color[3]*255, 0, 255);
-    COLOR_TYPE *p = (COLOR_TYPE*)ptr;
+    sw_float_to_unorm8_simd(dst->color, src);
 #endif
-    
+}
+
+static inline void sw_framebuffer_write_depth(sw_pixel_t *dst, float depth)
+{
+    depth = sw_saturate(depth); // REVIEW: An overflow can occur in certain circumstances with clipping, and needs to be reviewed...
+
+#if SW_DEPTH_IS_PACKED
+    dst->depth[0] = SW_PACK_DEPTH(depth);
+#else
+    dst->depth[0] = SW_PACK_DEPTH_0(depth);
+    dst->depth[1] = SW_PACK_DEPTH_1(depth);
+    dst->depth[2] = SW_PACK_DEPTH_2(depth);
+#endif
+}
+
+static inline void sw_framebuffer_fill_color(sw_pixel_t *ptr, int size, const SW_COLOR_TYPE color[SW_COLOR_PACK_COMP])
+{
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-#if COLOR_IS_PACKED
-            COLOR_TYPE *row = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int x = 0; x < w; x++) *row++ = packed;
-#else
-            COLOR_TYPE *row = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-            for (int x = 0; x < w; x++)
+            sw_pixel_t *row = ptr + y*RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int x = 0; x < w; x++, row++)
             {
-                *row++ = r;
-                *row++ = g;
-                *row++ = b;
-                *row++ = a;
+                for (int i = 0; i < SW_COLOR_PACK_COMP; i++) row->color[i] = color[i];
             }
-#endif
         }
     }
     else
     {
-#if COLOR_IS_PACKED
-        for (int i = 0; i < size; i++) *p++ = packed;
-#else
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++, ptr++)
         {
-            *p++ = r;
-            *p++ = g;
-            *p++ = b;
-            *p++ = a;
+            for (int j = 0; j < SW_COLOR_PACK_COMP; j++) ptr->color[j] = color[j];
         }
-#endif
     }
 }
 
-static inline float sw_framebuffer_read_depth(const void *src)
+static inline void sw_framebuffer_fill_depth(sw_pixel_t *ptr, int size, const SW_DEPTH_TYPE depth[SW_DEPTH_PACK_COMP])
 {
-#if DEPTH_IS_PACKED
-    return ((DEPTH_TYPE*)src)[0]*DEPTH_SCALE;
-#else
-    const DEPTH_TYPE *p = (const DEPTH_TYPE*)src;
-    uint32_t d = UNPACK_DEPTH(p);
-    return d*DEPTH_SCALE;
-#endif
-}
-
-static inline void sw_framebuffer_write_depth(void *dst, float depth)
-{
-#if DEPTH_IS_PACKED
-    ((DEPTH_TYPE*)dst)[0] = PACK_DEPTH(depth);
-#else
-    DEPTH_TYPE *p = (DEPTH_TYPE*)dst;
-    p[0] = PACK_DEPTH_0(depth);
-    p[1] = PACK_DEPTH_1(depth);
-    p[2] = PACK_DEPTH_2(depth);
-#endif
-}
-
-static inline void sw_framebuffer_fill_depth(void *ptr, int size, float value)
-{
-#if DEPTH_IS_PACKED
-    DEPTH_TYPE d = PACK_DEPTH(value);
-    DEPTH_TYPE *p = (DEPTH_TYPE*)ptr;
-#else
-    DEPTH_TYPE d0 = PACK_DEPTH_0(value);
-    DEPTH_TYPE d1 = PACK_DEPTH_1(value);
-    DEPTH_TYPE d2 = PACK_DEPTH_2(value);
-    DEPTH_TYPE *p = (DEPTH_TYPE*)ptr;
-#endif
-    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-#if DEPTH_IS_PACKED
-            DEPTH_TYPE *row = p + y*RLSW.framebuffer.width + RLSW.scMin[0];
-            for (int x = 0; x < w; x++) *row++ = d;
-#else
-            DEPTH_TYPE *row = p + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-            for (int x = 0; x < w; x++)
+            sw_pixel_t *row = ptr + y*RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int x = 0; x < w; x++, row++)
             {
-                *row++ = d0;
-                *row++ = d1;
-                *row++ = d2;
+                for (int i = 0; i < SW_DEPTH_PACK_COMP; i++) row->depth[i] = depth[i];
             }
-#endif
         }
     }
     else
     {
-#if DEPTH_IS_PACKED
-        for (int i = 0; i < size; i++) *p++ = d;
-#else
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++, ptr++)
         {
-            *p++ = d0;
-            *p++ = d1;
-            *p++ = d2;
+            for (int j = 0; j < SW_DEPTH_PACK_COMP; j++) ptr->depth[j] = depth[j];
         }
-#endif
     }
 }
 
-static inline void sw_framebuffer_fill(void *colorPtr, void *depthPtr, int size, float color[4], float depth)
+static inline void sw_framebuffer_fill(sw_pixel_t *ptr, int size, sw_pixel_t value)
 {
-#if COLOR_IS_PACKED
-    COLOR_TYPE packedColor = PACK_COLOR(color[0], color[1], color[2]);
-    COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
-#else
-    COLOR_TYPE r = sw_clampi(color[0]*255, 0, 255);
-    COLOR_TYPE g = sw_clampi(color[1]*255, 0, 255);
-    COLOR_TYPE b = sw_clampi(color[2]*255, 0, 255);
-    COLOR_TYPE a = sw_clampi(color[3]*255, 0, 255);
-    COLOR_TYPE *pColor = (COLOR_TYPE*)colorPtr;
-#endif
-
-#if DEPTH_IS_PACKED
-    DEPTH_TYPE d = PACK_DEPTH(depth);
-    DEPTH_TYPE *pDepth = (DEPTH_TYPE*)depthPtr;
-#else
-    DEPTH_TYPE d0 = PACK_DEPTH_0(depth);
-    DEPTH_TYPE d1 = PACK_DEPTH_1(depth);
-    DEPTH_TYPE d2 = PACK_DEPTH_2(depth);
-    DEPTH_TYPE *pDepth = (DEPTH_TYPE*)depthPtr;
-#endif
-    
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-#if COLOR_IS_PACKED
-            COLOR_TYPE *rowColor = pColor + y*RLSW.framebuffer.width + RLSW.scMin[0];
-#else
-            COLOR_TYPE *rowColor = pColor + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-#endif
-
-#if DEPTH_IS_PACKED
-            DEPTH_TYPE *rowDepth = pDepth + y*RLSW.framebuffer.width + RLSW.scMin[0];
-#else
-            DEPTH_TYPE *rowDepth = pDepth + 3*(y*RLSW.framebuffer.width + RLSW.scMin[0]);
-#endif
-
-            for (int x = 0; x < w; x++)
-            {
-#if COLOR_IS_PACKED
-                *rowColor++ = packedColor;
-#else
-                *rowColor++ = r;
-                *rowColor++ = g;
-                *rowColor++ = b;
-                *rowColor++ = a;
-#endif
-
-#if DEPTH_IS_PACKED
-                *rowDepth++ = d;
-#else
-                *rowDepth++ = d0;
-                *rowDepth++ = d1;
-                *rowDepth++ = d2;
-#endif
-            }
+            sw_pixel_t *row = ptr + y*RLSW.framebuffer.width + RLSW.scMin[0];
+            for (int x = 0; x < w; x++, row++) *row = value;
         }
     }
     else
     {
+        for (int i = 0; i < size; i++, ptr++) *ptr = value;
+    }
+}
+
+static inline void sw_framebuffer_copy_fast(void* dst)
+{
+    int size = RLSW.framebuffer.width*RLSW.framebuffer.height;
+    const sw_pixel_t *pixels = RLSW.framebuffer.pixels;
+
+#if SW_COLOR_BUFFER_BITS == 8
+    uint8_t *dst8 = (uint8_t*)dst;
+    for (int i = 0; i < size; i++) dst8[i] = pixels[i].color[0];
+#elif SW_COLOR_BUFFER_BITS == 16
+    uint16_t *dst16 = (uint16_t*)dst;
+    for (int i = 0; i < size; i++) dst16[i] = *(uint16_t*)pixels[i].color;
+#else // 32 bits
+    uint32_t *dst32 = (uint32_t*)dst;
+    #if SW_GL_FRAMEBUFFER_COPY_BGRA
         for (int i = 0; i < size; i++)
         {
-#if COLOR_IS_PACKED
-            *pColor++ = packedColor;
-#else
-            *pColor++ = r;
-            *pColor++ = g;
-            *pColor++ = b;
-            *pColor++ = a;
-#endif
-
-#if DEPTH_IS_PACKED
-            *pDepth++ = d;
-#else
-            *pDepth++ = d0;
-            *pDepth++ = d1;
-            *pDepth++ = d2;
-#endif
+            const uint8_t *c = pixels[i].color;
+            dst32[i] = (uint32_t)c[2] | ((uint32_t)c[1] << 8) | ((uint32_t)c[0] << 16) | ((uint32_t)c[3] << 24);
         }
-    }
+    #else // RGBA
+        for (int i = 0; i < size; i++) dst32[i] = *(uint32_t*)pixels[i].color;
+    #endif
+#endif
 }
 
 #define DEFINE_FRAMEBUFFER_COPY_BEGIN(name, DST_PTR_T)                          \
-static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst)   \
+static inline void sw_framebuffer_copy_to_##name(int x, int y, int w, int h, DST_PTR_T *dst) \
 {                                                                               \
-    const void *src = RLSW.framebuffer.color;                                   \
+    const int stride = RLSW.framebuffer.width;                                  \
+    const sw_pixel_t *src = RLSW.framebuffer.pixels + (y*stride + x);           \
                                                                                 \
-    for (int iy = y; iy < h; iy++) {                                            \
-        for (int ix = x; ix < w; ix++) {                                        \
+    for (int iy = 0; iy < h; iy++) {                                            \
+        const sw_pixel_t *line = src;                                           \
+        for (int ix = 0; ix < w; ix++) {                                        \
             uint8_t color[4];                                                   \
-            sw_framebuffer_read_color8(color, src);                             \
+            sw_framebuffer_read_color8(color, line);                            \
 
 #define DEFINE_FRAMEBUFFER_COPY_END()                                           \
-            INC_COLOR_PTR(src);                                                 \
+            ++line;                                                             \
         }                                                                       \
+        src += stride;                                                          \
     }                                                                           \
 }
 
@@ -1568,7 +1530,7 @@ DEFINE_FRAMEBUFFER_COPY_BEGIN(R5G5B5A1, uint16_t)
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
     uint8_t b5 = (color[2]*31 + 127)/255;
-    uint8_t a1 = color[3] >= 128 ? 1 : 0;
+    uint8_t a1 = (color[3] >= 128)? 1 : 0;
 
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
@@ -1620,22 +1582,24 @@ static inline void sw_framebuffer_blit_to_##name(                               
     int xSrc, int ySrc, int wSrc, int hSrc,                                     \
     DST_PTR_T *dst)                                                             \
 {                                                                               \
-    const uint8_t *srcBase = (uint8_t*)RLSW.framebuffer.color;                  \
-    int fbWidth = RLSW.framebuffer.width;                                       \
+    const sw_pixel_t *srcBase = RLSW.framebuffer.pixels;                        \
+    const int fbWidth = RLSW.framebuffer.width;                                 \
                                                                                 \
-    uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;                    \
-    uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;                    \
+    const uint32_t xScale = ((uint32_t)wSrc << 16)/(uint32_t)wDst;              \
+    const uint32_t yScale = ((uint32_t)hSrc << 16)/(uint32_t)hDst;              \
                                                                                 \
     for (int dy = 0; dy < hDst; dy++) {                                         \
         uint32_t yFix = ((uint32_t)ySrc << 16) + dy*yScale;                     \
         int sy = yFix >> 16;                                                    \
+        const sw_pixel_t *srcLine = srcBase + sy*fbWidth + xSrc;                \
                                                                                 \
+        const sw_pixel_t *srcPtr = srcLine;                                     \
         for (int dx = 0; dx < wDst; dx++) {                                     \
             uint32_t xFix = dx*xScale;                                          \
             int sx = xFix >> 16;                                                \
-            const void *srcPtr = GET_COLOR_PTR(srcBase, sy*fbWidth + sx);       \
+            const sw_pixel_t *pixel = srcPtr + sx;                              \
             uint8_t color[4];                                                   \
-            sw_framebuffer_read_color8(color, srcPtr);                          \
+            sw_framebuffer_read_color8(color, pixel);
 
 #define DEFINE_FRAMEBUFFER_BLIT_END()                                           \
         }                                                                       \
@@ -1697,7 +1661,7 @@ DEFINE_FRAMEBUFFER_BLIT_BEGIN(R5G5B5A1, uint16_t)
     uint8_t r5 = (color[0]*31 + 127)/255;
     uint8_t g5 = (color[1]*31 + 127)/255;
     uint8_t b5 = (color[2]*31 + 127)/255;
-    uint8_t a1 = color[3] >= 128 ? 1 : 0;
+    uint8_t a1 = (color[3] >= 128)? 1 : 0;
 
 #if SW_GL_FRAMEBUFFER_COPY_BGRA
     uint16_t pixel = (b5 << 11) | (g5 << 6) | (r5 << 1) | a1;
@@ -1955,7 +1919,7 @@ static inline void sw_texture_sample_nearest(float *color, const sw_texture_t *t
 static inline void sw_texture_sample_linear(float *color, const sw_texture_t *tex, float u, float v)
 {
     // TODO: With a bit more cleverness we could clearly reduce the
-    // number of operations here, but for now it works fine.
+    // number of operations here, but for now it works fine
 
     float xf = (u*tex->width) - 0.5f;
     float yf = (v*tex->height) - 0.5f;
@@ -2154,12 +2118,12 @@ static inline int sw_clip_##name(                                               
 // Frustum cliping functions
 //-------------------------------------------------------------------------------------------
 #define IS_INSIDE_PLANE_W(h) ((h)[3] >= SW_CLIP_EPSILON)
-#define IS_INSIDE_PLANE_X_POS(h) ((h)[0] <= (h)[3])
-#define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <= (h)[3])
-#define IS_INSIDE_PLANE_Y_POS(h) ((h)[1] <= (h)[3])
-#define IS_INSIDE_PLANE_Y_NEG(h) (-(h)[1] <= (h)[3])
-#define IS_INSIDE_PLANE_Z_POS(h) ((h)[2] <= (h)[3])
-#define IS_INSIDE_PLANE_Z_NEG(h) (-(h)[2] <= (h)[3])
+#define IS_INSIDE_PLANE_X_POS(h) ( (h)[0] <  (h)[3])        // Exclusive for +X
+#define IS_INSIDE_PLANE_X_NEG(h) (-(h)[0] <  (h)[3])        // Exclusive for -X
+#define IS_INSIDE_PLANE_Y_POS(h) ( (h)[1] <  (h)[3])        // Exclusive for +Y
+#define IS_INSIDE_PLANE_Y_NEG(h) (-(h)[1] <  (h)[3])        // Exclusive for -Y
+#define IS_INSIDE_PLANE_Z_POS(h) ( (h)[2] <= (h)[3])        // Inclusive for +Z
+#define IS_INSIDE_PLANE_Z_NEG(h) (-(h)[2] <= (h)[3])        // Inclusive for -Z
 
 #define COMPUTE_T_PLANE_W(hPrev, hCurr) ((SW_CLIP_EPSILON - (hPrev)[3])/((hCurr)[3] - (hPrev)[3]))
 #define COMPUTE_T_PLANE_X_POS(hPrev, hCurr) (((hPrev)[3] - (hPrev)[0])/(((hPrev)[3] - (hPrev)[0]) - ((hCurr)[3] - (hCurr)[0])))
@@ -2239,13 +2203,13 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 //-------------------------------------------------------------------------------------------
 static inline bool sw_triangle_face_culling(void)
 {
-    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations
     //       To handle triangles crossing the w=0 plane correctly,
     //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w).
+    //       before the perspective division (division by w)
     //       This test determines the orientation of the triangle in the (x,y,w) plane,
     //       which corresponds to the projected 2D winding order sign,
-    //       even with negative w values.
+    //       even with negative w values
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2253,11 +2217,11 @@ static inline bool sw_triangle_face_culling(void)
     const float *h2 = RLSW.vertexBuffer[2].homogeneous;
 
     // Compute a value proportional to the signed area in the projected 2D plane,
-    // calculated directly using homogeneous coordinates BEFORE division by w.
+    // calculated directly using homogeneous coordinates BEFORE division by w
     // This is the determinant of the matrix formed by the (x, y, w) components
     // of the vertices, which correctly captures the winding order in homogeneous
     // space and its relationship to the projected 2D winding order, even with
-    // negative w values.
+    // negative w values
     // The determinant formula used here is:
     // h0.x*(h1.y*h2.w - h2.y*h1.w) +
     // h1.x*(h2.y*h0.w - h0.y*h2.w) +
@@ -2269,20 +2233,18 @@ static inline bool sw_triangle_face_culling(void)
         h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
 
     // Discard the triangle if its winding order (determined by the sign
-    // of the homogeneous area/determinant) matches the culled direction.
+    // of the homogeneous area/determinant) matches the culled direction
     // A positive hSgnArea typically corresponds to a counter-clockwise
-    // winding in the projected space when all w > 0.
+    // winding in the projected space when all w > 0
     // This test is robust for points with w > 0 or w < 0, correctly
-    // capturing the change in orientation when crossing the w=0 plane.
+    // capturing the change in orientation when crossing the w=0 plane
 
-    // The culling logic remains the same based on the signed area/determinant.
+    // The culling logic remains the same based on the signed area/determinant
     // A value of 0 for hSgnArea means the points are collinear in (x, y, w)
-    // space, which corresponds to a degenerate triangle projection.
+    // space, which corresponds to a degenerate triangle projection
     // Such triangles are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
-    // and should be handled by the clipper if necessary.
-    return (RLSW.cullFace == SW_FRONT)
-        ? (hSgnArea < 0) // Cull if winding is "clockwise" in the projected sense
-        : (hSgnArea > 0); // Cull if winding is "counter-clockwise" in the projected sense
+    // and should be handled by the clipper if necessary
+    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0) : (hSgnArea > 0); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static inline void sw_triangle_clip_and_project(void)
@@ -2378,8 +2340,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
                                                                                     \
     /* Pre-calculate the starting pointers for the framebuffer row */               \
     int y = (int)start->screen[1];                                                  \
-    void *cptr = GET_COLOR_PTR(RLSW.framebuffer.color, y*RLSW.framebuffer.width + xStart);  \
-    void *dptr = GET_DEPTH_PTR(RLSW.framebuffer.depth, y*RLSW.framebuffer.width + xStart);  \
+    sw_pixel_t *ptr = RLSW.framebuffer.pixels + y*RLSW.framebuffer.width + xStart;  \
                                                                                     \
     /* Scanline rasterization */                                                    \
     for (int x = xStart; x < xEnd; x++)                                             \
@@ -2395,12 +2356,12 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
         if (ENABLE_DEPTH_TEST)                                                      \
         {                                                                           \
             /* TODO: Implement different depth funcs? */                            \
-            float depth =  sw_framebuffer_read_depth(dptr);                         \
+            float depth =  sw_framebuffer_read_depth(ptr);                          \
             if (z > depth) goto discard;                                            \
         }                                                                           \
                                                                                     \
         /* TODO: Implement depth mask */                                            \
-        sw_framebuffer_write_depth(dptr, z);                                        \
+        sw_framebuffer_write_depth(ptr, z);                                         \
                                                                                     \
         if (ENABLE_TEXTURE)                                                         \
         {                                                                           \
@@ -2417,13 +2378,13 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
         if (ENABLE_COLOR_BLEND)                                                     \
         {                                                                           \
             float dstColor[4];                                                      \
-            sw_framebuffer_read_color(dstColor, cptr);                              \
+            sw_framebuffer_read_color(dstColor, ptr);                               \
             sw_blend_colors(dstColor, srcColor);                                    \
-            sw_framebuffer_write_color(cptr, dstColor);                             \
+            sw_framebuffer_write_color(ptr, dstColor);                              \
         }                                                                           \
         else                                                                        \
         {                                                                           \
-            sw_framebuffer_write_color(cptr, srcColor);                             \
+            sw_framebuffer_write_color(ptr, srcColor);                              \
         }                                                                           \
                                                                                     \
         /* Increment the interpolation parameter, UVs, and pointers */              \
@@ -2439,9 +2400,7 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             u += dUdx;                                                              \
             v += dVdx;                                                              \
         }                                                                           \
-                                                                                    \
-        INC_COLOR_PTR(cptr);                                                        \
-        INC_DEPTH_PTR(dptr);                                                        \
+        ++ptr;                                                                      \
     }                                                                               \
 }
 
@@ -2598,14 +2557,14 @@ static inline void sw_triangle_render(void)
 //-------------------------------------------------------------------------------------------
 static inline bool sw_quad_face_culling(void)
 {
-    // NOTE: Face culling is done before clipping to avoid unnecessary computations.
+    // NOTE: Face culling is done before clipping to avoid unnecessary computations
     //       To handle quads crossing the w=0 plane correctly,
     //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w).
+    //       before the perspective division (division by w)
     //       For a convex quad with vertices P0, P1, P2, P3 in sequential order,
     //       the winding order of the quad is the same as the winding order
     //       of the triangle P0 P1 P2. We use the homogeneous triangle
-    //       winding test on this first triangle.
+    //       winding test on this first triangle
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2617,11 +2576,11 @@ static inline bool sw_quad_face_culling(void)
 
     // Compute a value proportional to the signed area of the triangle P0 P1 P2
     // in the projected 2D plane, calculated directly using homogeneous coordinates
-    // BEFORE division by w.
+    // BEFORE division by w
     // This is the determinant of the matrix formed by the (x, y, w) components
     // of the vertices P0, P1, and P2. Its sign correctly indicates the winding order
     // in homogeneous space and its relationship to the projected 2D winding order,
-    // even with negative w values.
+    // even with negative w values
     // The determinant formula used here is:
     // h0.x*(h1.y*h2.w - h2.y*h1.w) +
     // h1.x*(h2.y*h0.w - h0.y*h2.w) +
@@ -2633,21 +2592,19 @@ static inline bool sw_quad_face_culling(void)
         h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
 
     // Perform face culling based on the winding order determined by the sign
-    // of the homogeneous area/determinant of triangle P0 P1 P2.
+    // of the homogeneous area/determinant of triangle P0 P1 P2
     // This test is robust for points with w > 0 or w < 0 within the triangle,
-    // correctly capturing the change in orientation when crossing the w=0 plane.
+    // correctly capturing the change in orientation when crossing the w=0 plane
 
     // A positive hSgnArea typically corresponds to a counter-clockwise
-    // winding in the projected space when all w > 0.
+    // winding in the projected space when all w > 0
     // A value of 0 for hSgnArea means P0, P1, P2 are collinear in (x, y, w)
-    // space, which corresponds to a degenerate triangle projection.
+    // space, which corresponds to a degenerate triangle projection
     // Such quads might also be degenerate or non-planar. They are typically
     // not culled by this test (0 < 0 is false, 0 > 0 is false)
-    // and should be handled by the clipper if necessary.
+    // and should be handled by the clipper if necessary
 
-    return (RLSW.cullFace == SW_FRONT)
-        ? (hSgnArea < 0.0f) // Cull if winding is "clockwise" in the projected sense
-        : (hSgnArea > 0.0f); // Cull if winding is "counter-clockwise" in the projected sense
+    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0.0f) : (hSgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static inline void sw_quad_clip_and_project(void)
@@ -2690,25 +2647,38 @@ static inline void sw_quad_clip_and_project(void)
 
 static inline bool sw_quad_is_axis_aligned(void)
 {
-    int horizontal = 0;
-    int vertical = 0;
-
+    // Reject quads with perspective projection
+    // The fast path assumes affine (non-perspective) quads,
+    // so we require all vertices to have homogeneous w = 1.0
     for (int i = 0; i < 4; i++)
     {
         if (RLSW.vertexBuffer[i].homogeneous[3] != 1.0f) return false;
-
-        const float *v0 = RLSW.vertexBuffer[i].position;
-        const float *v1 = RLSW.vertexBuffer[(i + 1)%4].position;
-
-        float dx = v1[0] - v0[0];
-        float dy = v1[1] - v0[1];
-
-        if ((fabsf(dx) > 1e-6f) && (fabsf(dy) < 1e-6f)) horizontal++;
-        else if ((fabsf(dy) > 1e-6f) && (fabsf(dx) < 1e-6f)) vertical++;
-        else return false; // Diagonal edge -> not axis-aligned
     }
 
-    return ((horizontal == 2) && (vertical == 2));
+    // Epsilon tolerance in screen space (pixels)
+    const float epsilon = 0.5f;
+
+    // Fetch screen-space positions for the four quad vertices
+    const float *p0 = RLSW.vertexBuffer[0].screen;
+    const float *p1 = RLSW.vertexBuffer[1].screen;
+    const float *p2 = RLSW.vertexBuffer[2].screen;
+    const float *p3 = RLSW.vertexBuffer[3].screen;
+
+    // Compute edge vectors between consecutive vertices
+    // These define the four sides of the quad in screen space
+    float dx01 = p1[0] - p0[0], dy01 = p1[1] - p0[1];
+    float dx12 = p2[0] - p1[0], dy12 = p2[1] - p1[1];
+    float dx23 = p3[0] - p2[0], dy23 = p3[1] - p2[1];
+    float dx30 = p0[0] - p3[0], dy30 = p0[1] - p3[1];
+
+    // Each edge must be either horizontal or vertical within epsilon tolerance
+    // If any edge deviates significantly from either axis, the quad is not axis-aligned
+    if (!((fabsf(dy01) < epsilon) || (fabsf(dx01) < epsilon))) return false;
+    if (!((fabsf(dy12) < epsilon) || (fabsf(dx12) < epsilon))) return false;
+    if (!((fabsf(dy23) < epsilon) || (fabsf(dx23) < epsilon))) return false;
+    if (!((fabsf(dy30) < epsilon) || (fabsf(dx30) < epsilon))) return false;
+
+    return true;
 }
 
 static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
@@ -2716,9 +2686,9 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
     const sw_vertex_t *input = RLSW.vertexBuffer;
 
     // Calculate the centroid of the quad
-    float cx = (input[0].screen[0] + input[1].screen[0] + 
+    float cx = (input[0].screen[0] + input[1].screen[0] +
                 input[2].screen[0] + input[3].screen[0])*0.25f;
-    float cy = (input[0].screen[1] + input[1].screen[1] + 
+    float cy = (input[0].screen[1] + input[1].screen[1] +
                 input[2].screen[1] + input[3].screen[1])*0.25f;
 
     // Calculate the angle of each vertex relative to the center
@@ -2782,8 +2752,8 @@ static inline void FUNC_NAME(void)                                              
     float ySubstep = 1.0f - sw_fract(v0->screen[1]);                            \
                                                                                 \
     /* Calculation of vertex gradients in X and Y */                            \
-    float dUdx, dVdx;                                                           \
-    float dUdy, dVdy;                                                           \
+    float dUdx = 0.0f, dVdx = 0.0f;                                             \
+    float dUdy = 0.0f, dVdy = 0.0f;                                             \
     if (ENABLE_TEXTURE) {                                                       \
         dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                        \
         dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                        \
@@ -2809,8 +2779,7 @@ static inline void FUNC_NAME(void)                                              
     const sw_texture_t *tex;                                                    \
     if (ENABLE_TEXTURE) tex = &RLSW.loadedTextures[RLSW.currentTexture];        \
                                                                                 \
-    void *cDstBase = RLSW.framebuffer.color;                                    \
-    void *dDstBase = RLSW.framebuffer.depth;                                    \
+    sw_pixel_t *pixels = RLSW.framebuffer.pixels;                               \
     int wDst = RLSW.framebuffer.width;                                          \
                                                                                 \
     float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;       \
@@ -2826,8 +2795,7 @@ static inline void FUNC_NAME(void)                                              
                                                                                 \
     for (int y = yMin; y < yMax; y++)                                           \
     {                                                                           \
-        void *cptr = GET_COLOR_PTR(cDstBase, y*wDst + xMin);                    \
-        void *dptr = GET_DEPTH_PTR(dDstBase, y*wDst + xMin);                    \
+        sw_pixel_t *ptr = pixels + y*wDst + xMin;                               \
                                                                                 \
         float z = zScanline;                                                    \
         float u = uScanline;                                                    \
@@ -2855,12 +2823,12 @@ static inline void FUNC_NAME(void)                                              
             if (ENABLE_DEPTH_TEST)                                              \
             {                                                                   \
                 /* TODO: Implement different depth funcs? */                    \
-                float depth =  sw_framebuffer_read_depth(dptr);                 \
+                float depth =  sw_framebuffer_read_depth(ptr);                  \
                 if (z > depth) goto discard;                                    \
             }                                                                   \
                                                                                 \
             /* TODO: Implement depth mask */                                    \
-            sw_framebuffer_write_depth(dptr, z);                                \
+            sw_framebuffer_write_depth(ptr, z);                                 \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
@@ -2875,11 +2843,11 @@ static inline void FUNC_NAME(void)                                              
             if (ENABLE_COLOR_BLEND)                                             \
             {                                                                   \
                 float dstColor[4];                                              \
-                sw_framebuffer_read_color(dstColor, cptr);                      \
+                sw_framebuffer_read_color(dstColor, ptr);                       \
                 sw_blend_colors(dstColor, srcColor);                            \
-                sw_framebuffer_write_color(cptr, dstColor);                     \
+                sw_framebuffer_write_color(ptr, dstColor);                      \
             }                                                                   \
-            else sw_framebuffer_write_color(cptr, srcColor);                    \
+            else sw_framebuffer_write_color(ptr, srcColor);                     \
                                                                                 \
         discard:                                                                \
             z += dZdx;                                                          \
@@ -2887,15 +2855,12 @@ static inline void FUNC_NAME(void)                                              
             color[1] += dCdx[1];                                                \
             color[2] += dCdx[2];                                                \
             color[3] += dCdx[3];                                                \
-                                                                                \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
                 u += dUdx;                                                      \
                 v += dVdx;                                                      \
             }                                                                   \
-                                                                                \
-            INC_COLOR_PTR(cptr);                                                \
-            INC_DEPTH_PTR(dptr);                                                \
+            ++ptr;                                                              \
         }                                                                       \
                                                                                 \
         zScanline += dZdy;                                                      \
@@ -3119,8 +3084,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
     float a = v0->color[3] + aInc*substep;                              \
                                                                         \
     const int fbWidth = RLSW.framebuffer.width;                         \
-    void *cBuffer = RLSW.framebuffer.color;                             \
-    void *dBuffer = RLSW.framebuffer.depth;                             \
+    sw_pixel_t *pixels = RLSW.framebuffer.pixels;                       \
                                                                         \
     int numPixels = (int)(steps - substep) + 1;                         \
                                                                         \
@@ -3130,28 +3094,26 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
         int px = (int)(x - 0.5f);                                       \
         int py = (int)(y - 0.5f);                                       \
                                                                         \
-        int offset = py*fbWidth + px;                                   \
-        void *dptr = GET_DEPTH_PTR(dBuffer, offset);                    \
+        sw_pixel_t *ptr = pixels + py*fbWidth + px;                     \
                                                                         \
         if (ENABLE_DEPTH_TEST)                                          \
         {                                                               \
-            float depth = sw_framebuffer_read_depth(dptr);              \
+            float depth = sw_framebuffer_read_depth(ptr);               \
             if (z > depth) goto discard;                                \
         }                                                               \
                                                                         \
-        sw_framebuffer_write_depth(dptr, z);                            \
+        sw_framebuffer_write_depth(ptr, z);                             \
                                                                         \
-        void *cptr = GET_COLOR_PTR(cBuffer, offset);                    \
         float color[4] = {r, g, b, a};                                  \
                                                                         \
         if (ENABLE_COLOR_BLEND)                                         \
         {                                                               \
             float dstColor[4];                                          \
-            sw_framebuffer_read_color(dstColor, cptr);                  \
+            sw_framebuffer_read_color(dstColor, ptr);                   \
             sw_blend_colors(dstColor, color);                           \
-            sw_framebuffer_write_color(cptr, dstColor);                 \
+            sw_framebuffer_write_color(ptr, dstColor);                  \
         }                                                               \
-        else sw_framebuffer_write_color(cptr, color);                   \
+        else sw_framebuffer_write_color(ptr, color);                    \
                                                                         \
     discard:                                                            \
         x += xInc; y += yInc; z += zInc;                                \
@@ -3292,27 +3254,24 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
     }                                                                       \
                                                                             \
     int offset = y*RLSW.framebuffer.width + x;                              \
-                                                                            \
-    void *dptr = GET_DEPTH_PTR(RLSW.framebuffer.depth, offset);             \
+    sw_pixel_t *ptr = RLSW.framebuffer.pixels + offset;                     \
                                                                             \
     if (ENABLE_DEPTH_TEST)                                                  \
     {                                                                       \
-        float depth = sw_framebuffer_read_depth(dptr);                      \
+        float depth = sw_framebuffer_read_depth(ptr);                       \
         if (z > depth) return;                                              \
     }                                                                       \
                                                                             \
-    sw_framebuffer_write_depth(dptr, z);                                    \
-                                                                            \
-    void *cptr = GET_COLOR_PTR(RLSW.framebuffer.color, offset);             \
+    sw_framebuffer_write_depth(ptr, z);                                     \
                                                                             \
     if (ENABLE_COLOR_BLEND)                                                 \
     {                                                                       \
         float dstColor[4];                                                  \
-        sw_framebuffer_read_color(dstColor, cptr);                          \
+        sw_framebuffer_read_color(dstColor, ptr);                           \
         sw_blend_colors(dstColor, color);                                   \
-        sw_framebuffer_write_color(cptr, dstColor);                         \
+        sw_framebuffer_write_color(ptr, dstColor);                          \
     }                                                                       \
-    else sw_framebuffer_write_color(cptr, color);                           \
+    else sw_framebuffer_write_color(ptr, color);                            \
 }
 
 #define DEFINE_POINT_THICK_RASTER(FUNC_NAME, RASTER_FUNC)                   \
@@ -3598,11 +3557,9 @@ bool swInit(int w, int h)
     RLSW.freeTextureIds = (uint32_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(uint32_t));
     if (RLSW.loadedTextures == NULL) { swClose(); return false; }
 
-    RLSW.clearColor[0] = 0.0f;
-    RLSW.clearColor[1] = 0.0f;
-    RLSW.clearColor[2] = 0.0f;
-    RLSW.clearColor[3] = 1.0f;
-    RLSW.clearDepth = 1.0f;
+    const float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    sw_framebuffer_write_color(&RLSW.clearValue, clearColor);
+    sw_framebuffer_write_depth(&RLSW.clearValue, 1.0f);
 
     RLSW.currentMatrixMode = SW_MODELVIEW;
     RLSW.currentMatrix = &RLSW.stackModelview[0];
@@ -3655,6 +3612,23 @@ bool swInit(int w, int h)
 
     RLSW.loadedTextureCount = 1;
 
+    SW_LOG("INFO: RLSW: Software renderer initialized successfully\n");
+#if defined(SW_HAS_FMA_AVX) && defined(SW_HAS_FMA_AVX2)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: FMA AVX\n");
+#endif
+#if defined(SW_HAS_AVX) || defined(SW_HAS_AVX2)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: AVX\n");
+#endif
+#if defined(SW_HAS_SSE) || defined(SW_HAS_SSE2) || defined(SW_HAS_SSE3) || defined(SW_HAS_SSSE3) || defined(SW_HAS_SSE41) || defined(SW_HAS_SSE42)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: SSE\n");
+#endif
+#if defined(SW_HAS_NEON_FMA) || defined(SW_HAS_NEON)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: NEON\n");
+#endif
+#if defined(SW_HAS_RVV)
+    SW_LOG("INFO: RLSW: Using SIMD instructions: RVV\n");
+#endif
+
     return true;
 }
 
@@ -3669,12 +3643,11 @@ void swClose(void)
         }
     }
 
-    SW_FREE(RLSW.framebuffer.color);
-    SW_FREE(RLSW.framebuffer.depth);
+    SW_FREE(RLSW.framebuffer.pixels);
     SW_FREE(RLSW.loadedTextures);
     SW_FREE(RLSW.freeTextureIds);
 
-    RLSW = CURLY_INIT(sw_context_t) { 0 };
+    RLSW = SW_CURLY_INIT(sw_context_t) { 0 };
 }
 
 bool swResizeFramebuffer(int w, int h)
@@ -3686,23 +3659,33 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 {
     sw_pixelformat_t pFormat = (sw_pixelformat_t)sw_get_pixel_format(format, type);
 
-    if (w <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
-
-    if (h <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
+    if (w <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
+    if (h <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
     if (w > RLSW.framebuffer.width) w = RLSW.framebuffer.width;
     if (h > RLSW.framebuffer.height) h = RLSW.framebuffer.height;
 
     x = sw_clampi(x, 0, w);
     y = sw_clampi(y, 0, h);
+
+    if ((x >= w) || (y >= h)) return;
+
+    if ((x == 0) && (y == 0) && (w == RLSW.framebuffer.width) && (h == RLSW.framebuffer.height))
+    {
+        #if SW_COLOR_BUFFER_BITS == 32
+            if (pFormat == SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+            {
+                sw_framebuffer_copy_fast(pixels);
+                return;
+            }
+        #elif SW_COLOR_BUFFER_BITS == 16
+            if (pFormat == SW_PIXELFORMAT_UNCOMPRESSED_R5G6B5)
+            {
+                sw_framebuffer_copy_fast(pixels);
+                return;
+            }
+        #endif
+    }
 
     switch (pFormat)
     {
@@ -3712,7 +3695,7 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8: sw_framebuffer_copy_to_R8G8B8(x, y, w, h, (uint8_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R5G5B5A1: sw_framebuffer_copy_to_R5G5B5A1(x, y, w, h, (uint16_t *)pixels); break;
         case SW_PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: sw_framebuffer_copy_to_R4G4B4A4(x, y, w, h, (uint16_t *)pixels); break;
-        case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
+        //case SW_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: sw_framebuffer_copy_to_R8G8B8A8(x, y, w, h, (uint8_t *)pixels); break;
         // Below: not implemented
         case SW_PIXELFORMAT_UNCOMPRESSED_R32:
         case SW_PIXELFORMAT_UNCOMPRESSED_R32G32B32:
@@ -3720,9 +3703,7 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
         case SW_PIXELFORMAT_UNCOMPRESSED_R16:
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         case SW_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            break;
+        default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
 
@@ -3730,23 +3711,21 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
 {
     sw_pixelformat_t pFormat = (sw_pixelformat_t)sw_get_pixel_format(format, type);
 
-    if (wSrc <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
-
-    if (hSrc <= 0)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
+    if (wSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
+    if (hSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
     if (wSrc > RLSW.framebuffer.width) wSrc = RLSW.framebuffer.width;
     if (hSrc > RLSW.framebuffer.height) hSrc = RLSW.framebuffer.height;
 
     xSrc = sw_clampi(xSrc, 0, wSrc);
     ySrc = sw_clampi(ySrc, 0, hSrc);
+
+    // Check if the sizes are identical after clamping the source to avoid unexpected issues
+    // REVIEW: This repeats the operations if true, so we could make a copy function without these checks
+    if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
+    {
+        swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
+    }
 
     switch (pFormat)
     {
@@ -3768,14 +3747,6 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
             RLSW.errCode = SW_INVALID_ENUM;
             break;
     }
-}
-
-void *swGetColorBuffer(int *w, int *h)
-{
-    if (w) *w = RLSW.framebuffer.width;
-    if (h) *h = RLSW.framebuffer.height;
-
-    return RLSW.framebuffer.color;
 }
 
 void swEnable(SWstate state)
@@ -3821,10 +3792,11 @@ void swGetFloatv(SWget name, float *v)
     {
         case SW_COLOR_CLEAR_VALUE:
         {
-            v[0] = RLSW.clearColor[0];
-            v[1] = RLSW.clearColor[1];
-            v[2] = RLSW.clearColor[2];
-            v[3] = RLSW.clearColor[3];
+            sw_framebuffer_read_color(v, &RLSW.clearValue);
+        } break;
+        case SW_DEPTH_CLEAR_VALUE:
+        {
+            v[0] = sw_framebuffer_read_depth(&RLSW.clearValue);
         } break;
         case SW_CURRENT_COLOR:
         {
@@ -3932,10 +3904,13 @@ void swScissor(int x, int y, int width, int height)
 
 void swClearColor(float r, float g, float b, float a)
 {
-    RLSW.clearColor[0] = r;
-    RLSW.clearColor[1] = g;
-    RLSW.clearColor[2] = b;
-    RLSW.clearColor[3] = a;
+    float v[4] = { r, g, b, a };
+    sw_framebuffer_write_color(&RLSW.clearValue, v);
+}
+
+void swClearDepth(float depth)
+{
+    sw_framebuffer_write_depth(&RLSW.clearValue, depth);
 }
 
 void swClear(uint32_t bitmask)
@@ -3944,15 +3919,15 @@ void swClear(uint32_t bitmask)
 
     if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT))
     {
-        sw_framebuffer_fill(RLSW.framebuffer.color, RLSW.framebuffer.depth,size, RLSW.clearColor, RLSW.clearDepth);
+        sw_framebuffer_fill(RLSW.framebuffer.pixels, size, RLSW.clearValue);
     }
     else if (bitmask & (SW_COLOR_BUFFER_BIT))
     {
-        sw_framebuffer_fill_color(RLSW.framebuffer.color, size, RLSW.clearColor);
+        sw_framebuffer_fill_color(RLSW.framebuffer.pixels, size, RLSW.clearValue.color);
     }
     else if (bitmask & SW_DEPTH_BUFFER_BIT)
     {
-        sw_framebuffer_fill_depth(RLSW.framebuffer.depth, size, RLSW.clearDepth);
+        sw_framebuffer_fill_depth(RLSW.framebuffer.pixels, size, RLSW.clearValue.depth);
     }
 }
 
@@ -4353,7 +4328,7 @@ void swVertex2f(float x, float y)
 void swVertex2fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], 0.0f, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex3i(int x, int y, int z)
@@ -4371,7 +4346,7 @@ void swVertex3f(float x, float y, float z)
 void swVertex3fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], v[2], 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
 }
 
 void swVertex4i(int x, int y, int z, int w)
@@ -4513,19 +4488,19 @@ void swDrawArrays(SWdraw mode, int offset, int count)
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
         const float *defaultColor = RLSW.current.color;
-        
+
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
 
         int end = offset + count;
-        
+
         for (int i = offset; i < end; i++)
         {
             float u, v;
             if (texcoords)
             {
-                int idx = 2 * i;
+                int idx = 2*i;
                 u = texcoords[idx];
                 v = texcoords[idx + 1];
             }
@@ -4536,8 +4511,8 @@ void swDrawArrays(SWdraw mode, int offset, int count)
             }
 
             float texcoord[2];
-            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
-            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
+            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
 
             float color[4] = {
                 defaultColor[0],
@@ -4548,14 +4523,14 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
             if (colors)
             {
-                int idx = 4 * i;
+                int idx = 4*i;
                 color[0] *= (float)colors[idx]*SW_INV_255;
                 color[1] *= (float)colors[idx + 1]*SW_INV_255;
                 color[2] *= (float)colors[idx + 2]*SW_INV_255;
                 color[3] *= (float)colors[idx + 3]*SW_INV_255;
             }
 
-            int idx = 3 * i;
+            int idx = 3*i;
             float position[4] = {
                 positions[idx],
                 positions[idx + 1],
@@ -4608,20 +4583,20 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
         const float *defaultColor = RLSW.current.color;
-        
+
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
-        
+
         for (int i = 0; i < count; i++)
         {
-            int index = indicesUb ? indicesUb[i] : 
-                       (indicesUs ? indicesUs[i] : indicesUi[i]);
-            
+            int index = indicesUb? indicesUb[i] :
+                       (indicesUs? indicesUs[i] : indicesUi[i]);
+
             float u, v;
             if (texcoords)
             {
-                int idx = 2 * index;
+                int idx = 2*index;
                 u = texcoords[idx];
                 v = texcoords[idx + 1];
             }
@@ -4632,8 +4607,8 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
             }
 
             float texcoord[2];
-            texcoord[0] = texMatrix[0] * u + texMatrix[4] * v + texMatrix[12];
-            texcoord[1] = texMatrix[1] * u + texMatrix[5] * v + texMatrix[13];
+            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
+            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
 
             float color[4] = {
                 defaultColor[0],
@@ -4644,14 +4619,14 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
             if (colors)
             {
-                int idx = 4 * index;
+                int idx = 4*index;
                 color[0] *= (float)colors[idx]*SW_INV_255;
                 color[1] *= (float)colors[idx + 1]*SW_INV_255;
                 color[2] *= (float)colors[idx + 2]*SW_INV_255;
                 color[3] *= (float)colors[idx + 3]*SW_INV_255;
             }
 
-            int idx = 3 * index;
+            int idx = 3*index;
             float position[4] = {
                 positions[idx],
                 positions[idx + 1],

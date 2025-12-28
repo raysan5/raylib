@@ -6,7 +6,7 @@
 *
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
-*   Example contributed by GreenSnakeLinux (@GreenSnakeLinux), 
+*   Example contributed by GreenSnakeLinux (@GreenSnakeLinux),
 *   reviewed by Ramon Santamaria (@raysan5), oblerion (@oblerion) and danilwhale (@danilwhale)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
@@ -86,7 +86,7 @@ int main(void)
         pressedButton = BUTTON_NONE;
 
         // Make sure user is pressing left mouse button if they're from desktop
-        if ((GetTouchPointCount() > 0) || 
+        if ((GetTouchPointCount() > 0) ||
             ((GetTouchPointCount() == 0) && IsMouseButtonDown(MOUSE_BUTTON_LEFT)))
         {
             // Find nearest D-Pad button to the input position
@@ -113,7 +113,7 @@ int main(void)
             default: break;
         };
         //--------------------------------------------------------------------------
-        
+
         // Draw
         //--------------------------------------------------------------------------
         BeginDrawing();

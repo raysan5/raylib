@@ -5,7 +5,7 @@
 *   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
-*   
+*
 *   Example contributed by Jopestpe (@jopestpe)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
@@ -48,7 +48,7 @@ int main(void)
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     float rotation = 0.0f;
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -59,7 +59,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         rotation += 1.0f;
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -67,13 +67,13 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-            
-                // Draw model defining: position, size, rotation-axis, rotation (degrees), size, and tint-color 
-                DrawModelEx(model, (Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.5f, 1.0f, 0.0f }, 
+
+                // Draw model defining: position, size, rotation-axis, rotation (degrees), size, and tint-color
+                DrawModelEx(model, (Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ 0.5f, 1.0f, 0.0f },
                     rotation, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
-                    
+
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             DrawFPS(10, 10);

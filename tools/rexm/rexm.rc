@@ -6,8 +6,8 @@ PRODUCTVERSION  1,0,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
-	//BLOCK "080904E4" 	// English UK
-    BLOCK "040904E4"	// English US
+    //BLOCK "080904E4"     // English UK
+    BLOCK "040904E4"    // English US
     BEGIN
       VALUE "CompanyName", "Ramon Santamaria"
       VALUE "FileDescription", "rexm | raylib examples manager"
@@ -21,7 +21,7 @@ BEGIN
   END
   BLOCK "VarFileInfo"
   BEGIN
-	//VALUE "Translation", 0x809, 1252	// English UK
-    VALUE "Translation", 0x409, 1252	// English US
+    //VALUE "Translation", 0x809, 1252    // English UK
+    VALUE "Translation", 0x409, 1252    // English US
   END
 END

@@ -210,7 +210,7 @@ int main(void)
 
             // Draw random emojis in the background
             //------------------------------------------------------------------------------
-            for (int i = 0; i < SIZEOF(emoji); ++i)
+            for (int i = 0; i < SIZEOF(emoji); i++)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
                 Rectangle emojiRect = { position.x, position.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
@@ -316,7 +316,7 @@ static void RandomizeEmoji(void)
     hovered = selected = -1;
     int start = GetRandomValue(45, 360);
 
-    for (int i = 0; i < SIZEOF(emoji); ++i)
+    for (int i = 0; i < SIZEOF(emoji); i++)
     {
         // 0-179 emoji codepoints (from emoji char array) each 4bytes + null char
         emoji[i].index = GetRandomValue(0, 179)*5;

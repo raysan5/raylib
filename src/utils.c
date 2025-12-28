@@ -105,7 +105,7 @@ void TraceLog(int logType, const char *text, ...)
 {
 #if defined(SUPPORT_TRACELOG)
     // Message has level below current threshold, don't emit
-    if (logType < logTypeLevel) return;
+    if ((logType < logTypeLevel) || (text == NULL)) return;
 
     va_list args;
     va_start(args, text);
@@ -142,8 +142,8 @@ void TraceLog(int logType, const char *text, ...)
         default: break;
     }
 
-    unsigned int textSize = (unsigned int)strlen(text);
-    memcpy(buffer + strlen(buffer), text, (textSize < (MAX_TRACELOG_MSG_LENGTH - 12))? textSize : (MAX_TRACELOG_MSG_LENGTH - 12));
+    unsigned int textLength = (unsigned int)strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textLength < (MAX_TRACELOG_MSG_LENGTH - 12))? textLength : (MAX_TRACELOG_MSG_LENGTH - 12));
     strcat(buffer, "\n");
     vprintf(buffer, args);
     fflush(stdout);
@@ -313,7 +313,7 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
 
     // Get file name from path
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
     for (int i = 0; varFileName[i] != '\0'; i++)
     {
         // Convert variable name to uppercase
@@ -446,15 +446,15 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath)
 }
 
 // Replacement for fopen()
-// Ref: https://developer.android.com/ndk/reference/group/asset
+// REF: https://developer.android.com/ndk/reference/group/asset
 FILE *android_fopen(const char *fileName, const char *mode)
 {
     if (mode[0] == 'w')
     {
-        // fopen() is mapped to android_fopen() that only grants read access to
+        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
         // assets directory through AAssetManager but we want to also be able to
         // write data when required using the standard stdio FILE access functions
-        // Ref: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
+        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
         #undef fopen
         return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
         #define fopen(name, mode) android_fopen(name, mode)

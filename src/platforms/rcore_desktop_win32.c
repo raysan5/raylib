@@ -72,6 +72,8 @@
 #include <shellscalingapi.h>
 #include <versionhelpers.h>
 
+#include <malloc.h>          // Required for alloca()
+
 #if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     #include <GL/gl.h>
 #endif
@@ -195,8 +197,8 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 #define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#define WGL_CONTEXT_ES_PROFILE_BIT_EXT		0x00000004
-#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT		0x00000004
+#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -260,9 +262,9 @@ static bool DecoratedFromStyle(DWORD style)
 // Get window style from required flags
 static DWORD MakeWindowStyle(unsigned flags)
 {
-    // We don't need this since we don't have any child windows, but I guess
-    // it improves efficiency, plus, windows adds this flag automatically anyway
-    // so it keeps our flags in sync with the OS
+    // Flag is not needed because there are no child windows,
+    // but supposedly it improves efficiency, plus, windows adds this 
+    // flag automatically anyway so it keeps flags in sync with the OS
     DWORD style = WS_CLIPSIBLINGS;
 
     style |= (flags & FLAG_WINDOW_HIDDEN)? 0 : WS_VISIBLE;
@@ -271,7 +273,7 @@ static DWORD MakeWindowStyle(unsigned flags)
 
     // Minimized takes precedence over maximized
     int mized = MIZED_NONE;
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
     if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
 
     switch (mized)
@@ -937,7 +939,7 @@ void SetWindowIcon(Image image)
 // Set icon for window
 void SetWindowIcons(Image *images, int count)
 {
-    // TODO.
+    // TODO: Implement SetWindowIcons()
 }
 
 void SetWindowTitle(const char *title)
@@ -1228,7 +1230,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    LARGE_INTEGER now;
+    LARGE_INTEGER now = 0;
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
@@ -1237,14 +1239,18 @@ double GetTime(void)
 // NOTE: This function is only safe to use if you control the URL given
 // A user could craft a malicious string performing another action
 // Only call this function yourself not with user input or make sure to check the string yourself
-// Ref: https://github.com/raysan5/raylib/issues/686
+// REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        TRACELOG(LOG_WARNING, "OpenURL not implemented");
+        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
+        sprintf(cmd, "explorer \"%s\"", url);
+        int result = system(cmd);
+        if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
+        RL_FREE(cmd);
     }
 }
 
@@ -1871,13 +1877,23 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_DPICHANGED:
         {
+            // Get current dpi scale factor
+            float scalex = HIWORD(wParam)/96.0f;
+            float scaley = LOWORD(wParam)/96.0f;
+            
             RECT *suggestedRect = (RECT *)lparam;
 
             // Never set the window size to anything other than the suggested rect here
             // Doing so can cause a window to stutter between monitors when transitioning between them
-            int result = (int)SetWindowPos(hwnd, NULL, suggestedRect->left, suggestedRect->top,
-                suggestedRect->right - suggestedRect->left, suggestedRect->bottom - suggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            int result = (int)SetWindowPos(hwnd, NULL, 
+                suggestedRect->left, suggestedRect->top,
+                suggestedRect->right - suggestedRect->left, 
+                suggestedRect->bottom - suggestedRect->top, 
+                SWP_NOZORDER | SWP_NOACTIVATE);
+
             if (result == 0) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+            
+            // TODO: Update screen data, render size, screen scaling, viewport...
 
         } break;
         case WM_SETCURSOR:
@@ -1981,7 +1997,7 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     {
         CORE.Input.Keyboard.currentKeyState[key] = state;
 
-        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = 1;
+        if ((key == KEY_ESCAPE) && (state == 1)) CORE.Window.shouldClose = true;
     }
     else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
 
@@ -2033,8 +2049,7 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     // TODO: Update framebuffer on resize
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    //glViewport(0, 0, clientSize.cx, clientSize.cy);
-    //SetupFramebuffer(0, 0);
+    //SetupViewport(0, 0, clientSize.cx, clientSize.cy);
 
     SetupViewport(clientSize.cx, clientSize.cy);
     CORE.Window.resizedLastFrame = true;

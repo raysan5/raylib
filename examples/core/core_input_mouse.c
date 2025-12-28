@@ -40,14 +40,8 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_H))
         {
-            if (IsCursorHidden())
-            {
-                ShowCursor();
-            }
-            else
-            {
-                HideCursor();
-            }
+            if (IsCursorHidden()) ShowCursor();
+            else HideCursor();
         }
 
         ballPosition = GetMousePosition();

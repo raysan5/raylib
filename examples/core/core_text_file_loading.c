@@ -19,6 +19,8 @@
 
 #include "raymath.h"        // Required for: Lerp()
 
+#include <string.h>
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -59,10 +61,11 @@ int main(void)
         int lastSpace = 0;          // Keeping track of last valid space to insert '\n'
         int lastWrapStart = 0;      // Keeping track of the start of this wrapped line.
 
-        while (lines[i][j] != '\0')
+        while (j <= strlen(lines[i]))
         {
-            if (lines[i][j] == ' ')
+            if (lines[i][j] == ' ' || lines[i][j] == '\0')
             {
+                char before = lines[i][j];
                 // Making a C Style string by adding a '\0' at the required location so that we can use the MeasureText function
                 lines[i][j] = '\0';
 
@@ -75,7 +78,7 @@ int main(void)
                     lastWrapStart = lastSpace + 1;
                 }
 
-                lines[i][j] = ' ';  // Resetting the space back
+                if(before != '\0') lines[i][j] = ' ';  // Resetting the space back
                 lastSpace = j; // Since we encountered a new space we update our last encountered space location
             }
 
@@ -92,7 +95,7 @@ int main(void)
         textHeight += (int)size.y + 10;
     }
 
-    // A simple scrollbar on the side to show how far we have red into the file
+    // A simple scrollbar on the side to show how far we have read into the file
     Rectangle scrollBar = {
         .x = (float)screenWidth - 5,
         .y = 0,
@@ -132,7 +135,13 @@ int main(void)
                 for (int i = 0, t = textTop; i < lineCount; i++)
                 {
                     // Each time we go through and calculate the height of the text to move the cursor appropriately
-                    Vector2 size = MeasureTextEx(GetFontDefault(), lines[i], (float)fontSize, 2);
+                    Vector2 size;
+                    if(strcmp(lines[i], "")){
+                        // Fix for empty line in the text file
+                        size = MeasureTextEx( GetFontDefault(), lines[i], (float)fontSize, 2);
+                    }else{
+                        size = MeasureTextEx( GetFontDefault(), " ", (float)fontSize, 2);
+                    }
 
                     DrawText(lines[i], 10, t, fontSize, RED);
 

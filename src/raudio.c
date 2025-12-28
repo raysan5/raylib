@@ -593,7 +593,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // Init audio buffer values
     audioBuffer->volume = 1.0f;
     audioBuffer->pitch = 1.0f;
-    audioBuffer->pan = 0.5f;
+    audioBuffer->pan = 0.0f; // Center
 
     audioBuffer->callback = NULL;
     audioBuffer->processor = NULL;
@@ -720,7 +720,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 // Set pan for an audio buffer
 void SetAudioBufferPan(AudioBuffer *buffer, float pan)
 {
-    if (pan < 0.0f) pan = 0.0f;
+    if (pan < -1.0f) pan = -1.0f;
     else if (pan > 1.0f) pan = 1.0f;
 
     if (buffer != NULL)
@@ -985,10 +985,10 @@ Sound LoadSoundAlias(Sound source)
         audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
         audioBuffer->data = source.stream.buffer->data;
 
-        // initalize the buffer as if it was new
+        // Initalize the buffer as if it was new
         audioBuffer->volume = 1.0f;
         audioBuffer->pitch = 1.0f;
-        audioBuffer->pan = 0.5f;
+        audioBuffer->pan = 0.0f; // Center
 
         sound.frameCount = source.frameCount;
         sound.stream.sampleRate = AUDIO.System.device.sampleRate;
@@ -1040,8 +1040,8 @@ void UnloadSoundAlias(Sound alias)
 }
 
 // Update sound buffer with new data
-// NOTE 1: data format must match sound.stream.sampleSize
-// NOTE 2: frameCount must not exceed sound.frameCount
+// PARAMS: [data], format must match sound.stream.sampleSize, default 32 bit float - stereo
+// PARAMS: [frameCount] must not exceed sound.frameCount
 void UpdateSound(Sound sound, const void *data, int frameCount)
 {
     if (sound.stream.buffer != NULL)
@@ -1140,7 +1140,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 
     // Add wave information
@@ -2092,9 +2092,7 @@ float GetMusicTimePlayed(Music music)
             int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
             int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
             int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
-            if ((unsigned int)framesInBuffers > music.frameCount) {
-                if (!music.looping) framesInBuffers = music.frameCount;
-            }
+            if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
             int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
             int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
             if (framesPlayed < 0) framesPlayed += music.frameCount;
@@ -2125,7 +2123,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     if (deviceBitsPerSample > 4)  deviceBitsPerSample = 4;
     deviceBitsPerSample *= AUDIO.System.device.playback.channels;
 
-    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0) ? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
+    unsigned int subBufferSize = (AUDIO.Buffer.defaultSize == 0)? (AUDIO.System.device.sampleRate/30*deviceBitsPerSample) : AUDIO.Buffer.defaultSize;
 
     if (subBufferSize < periodSize) subBufferSize = periodSize;
 
@@ -2605,8 +2603,8 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
 
     if (channels == 2)  // We consider panning
     {
-        const float left = buffer->pan;
-        const float right = 1.0f - left;
+        const float right = (buffer->pan + 1.0f)/2.0f; // Normalize: [-1..1] -> [0..1]
+        const float left = 1.0f - right;
 
         // Fast sine approximation in [0..1] for pan law: y = 0.5f*x*(3 - x*x);
         const float levels[2] = { localVolume*0.5f*left*(3.0f - left*left), localVolume*0.5f*right*(3.0f - right*right) };
@@ -2741,11 +2739,13 @@ static const char *GetFileExtension(const char *fileName)
     return dot;
 }
 
-// String pointer reverse break: returns right-most occurrence of charset in s
-static const char *strprbrk(const char *s, const char *charset)
+// String pointer reverse break: returns right-most occurrence of charset in text
+static const char *strprbrk(const char *text, const char *charset)
 {
     const char *latestMatch = NULL;
-    for (; s = strpbrk(s, charset), s != NULL; latestMatch = s++) { }
+ 
+    for (; (text != NULL) && (text = strpbrk(text, charset)); latestMatch = text++) { }
+    
     return latestMatch;
 }
 
@@ -2768,11 +2768,11 @@ static const char *GetFileNameWithoutExt(const char *filePath)
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    if (filePath != NULL) strcpy(fileName, GetFileName(filePath));   // Get filename with extension
+    if (filePath != NULL) strncpy(fileName, GetFileName(filePath), MAX_FILENAMEWITHOUTEXT_LENGTH - 1); // Get filename with extension
 
-    int size = (int)strlen(fileName);   // Get size in bytes
+    int fileNameLength = (int)strlen(fileName); // Get size in bytes
 
-    for (int i = 0; (i < size) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
+    for (int i = 0; (i < fileNameLength) && (i < MAX_FILENAMEWITHOUTEXT_LENGTH); i++)
     {
         if (fileName[i] == '.')
         {
@@ -2866,7 +2866,8 @@ static bool SaveFileText(const char *fileName, char *text)
 
         if (file != NULL)
         {
-            int count = fprintf(file, "%s", text);
+            int count = 0;
+            if (text != NULL) count = fprintf(file, "%s", text);
 
             if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);

@@ -42,7 +42,7 @@ int main(void)
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - double pendulum");
 
-    // Simulation Paramters
+    // Simulation Parameters
     float l1 = 15.0f, m1 = 0.2f, theta1 = DEG2RAD*170, w1 = 0;
     float l2 = 15.0f, m2 = 0.1f, theta2 = DEG2RAD*0, w2 = 0;
     float lengthScaler = 0.1f;
@@ -76,7 +76,7 @@ int main(void)
         float step = dt/SIMULATION_STEPS, step2 = step*step;
 
         // Update Physics - larger steps = better approximation
-        for (int i = 0; i < SIMULATION_STEPS; ++i)
+        for (int i = 0; i < SIMULATION_STEPS; i++)
         {
             float delta = theta1 - theta2;
             float sinD = sinf(delta), cosD = cosf(delta), cos2D = cosf(2*delta);

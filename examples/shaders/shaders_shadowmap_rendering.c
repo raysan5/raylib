@@ -45,7 +45,7 @@ int main(void)
     // Shadows are a HUGE topic, and this example shows an extremely simple implementation of the shadowmapping algorithm,
     // which is the industry standard for shadows. This algorithm can be extended in a ridiculous number of ways to improve
     // realism and also adapt it for different scenes. This is pretty much the simplest possible implementation
-    
+
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shadowmap rendering");
 
@@ -59,7 +59,7 @@ int main(void)
     Shader shadowShader = LoadShader(TextFormat("resources/shaders/glsl%i/shadowmap.vs", GLSL_VERSION),
                                      TextFormat("resources/shaders/glsl%i/shadowmap.fs", GLSL_VERSION));
     shadowShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shadowShader, "viewPos");
-    
+
     Vector3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
     Color lightColor = WHITE;
     Vector4 lightColorNormalized = ColorNormalize(lightColor);
@@ -83,7 +83,7 @@ int main(void)
     ModelAnimation *robotAnimations = LoadModelAnimations("resources/models/robot.glb", &animCount);
 
     RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
-    
+
     // For the shadowmapping algorithm, we will be rendering everything from the light's point of view
     Camera3D lightCamera = { 0 };
     lightCamera.position = Vector3Scale(lightDir, -15.0f);
@@ -91,9 +91,9 @@ int main(void)
     lightCamera.projection = CAMERA_ORTHOGRAPHIC; // Use an orthographic projection for directional lights
     lightCamera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     lightCamera.fovy = 20.0f;
-    
+
     int frameCounter = 0;
-    
+
     // Store the light matrices
     Matrix lightView = { 0 };
     Matrix lightProj = { 0 };
@@ -136,7 +136,7 @@ int main(void)
         {
             if (lightDir.z > -0.6f) lightDir.z -= cameraSpeed*60.0f*deltaTime;
         }
-        
+
         lightDir = Vector3Normalize(lightDir);
         lightCamera.position = Vector3Scale(lightDir, -15.0f);
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
@@ -151,13 +151,13 @@ int main(void)
         // to determine whether a given point is "visible" to the light
         BeginTextureMode(shadowMap);
             ClearBackground(WHITE);
-            
+
             BeginMode3D(lightCamera);
                 lightView = rlGetMatrixModelview();
                 lightProj = rlGetMatrixProjection();
                 DrawScene(cube, robot);
             EndMode3D();
-            
+
         EndTextureMode();
         lightViewProj = MatrixMultiply(lightView, lightProj);
 
@@ -167,7 +167,7 @@ int main(void)
 
             SetShaderValueMatrix(shadowShader, lightVPLoc, lightViewProj);
             rlEnableShader(shadowShader.id);
-            
+
             rlActiveTextureSlot(textureActiveSlot);
             rlEnableTexture(shadowMap.depth.id);
             rlSetUniform(shadowMapLoc, &textureActiveSlot, SHADER_UNIFORM_INT, 1);
@@ -178,7 +178,7 @@ int main(void)
 
             DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
             DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 280, screenHeight - 20, 10, GRAY);
-            
+
         EndDrawing();
 
         if (IsKeyPressed(KEY_F)) TakeScreenshot("shaders_shadowmap.png");
@@ -200,7 +200,7 @@ int main(void)
 }
 
 // Load render texture for shadowmap projection
-// NOTE: Load framebuffer with only a texture depth attachment, 
+// NOTE: Load framebuffer with only a texture depth attachment,
 // no color attachment required for shadowmap
 static RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
 {

@@ -31,7 +31,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - math angle rotation");
     SetTargetFPS(60);
 
-    Vector2 center = { screenWidth / 2.0f, screenHeight / 2.0f };
+    Vector2 center = { screenWidth/2.0f, screenHeight/2.0f };
     const float lineLength = 150.0f;
 
     // Predefined angles for fixed lines
@@ -60,9 +60,9 @@ int main(void)
             // Draw fixed-angle lines with colorful gradient
             for (int i = 0; i < numAngles; i++)
             {
-                float rad = angles[i] * DEG2RAD;
-                Vector2 end = { center.x + cosf(rad) * lineLength,
-                                center.y + sinf(rad) * lineLength };
+                float rad = angles[i]*DEG2RAD;
+                Vector2 end = { center.x + cosf(rad)*lineLength,
+                                center.y + sinf(rad)*lineLength };
 
                 // Gradient color from green → cyan → blue → magenta
                 Color col;
@@ -78,15 +78,15 @@ int main(void)
                 DrawLineEx(center, end, 5.0f, col);
 
                 // Draw angle label slightly offset along the line
-                Vector2 textPos = { center.x + cosf(rad) * (lineLength + 20),
-                                    center.y + sinf(rad) * (lineLength + 20) };
+                Vector2 textPos = { center.x + cosf(rad)*(lineLength + 20),
+                                    center.y + sinf(rad)*(lineLength + 20) };
                 DrawText(TextFormat("%d°", angles[i]), (int)textPos.x, (int)textPos.y, 20, col);
             }
 
             // Draw animated rotating line with changing color
-            float animRad = totalAngle * DEG2RAD;
-            Vector2 animEnd = { center.x + cosf(animRad) * lineLength,
-                                center.y + sinf(animRad) * lineLength };
+            float animRad = totalAngle*DEG2RAD;
+            Vector2 animEnd = { center.x + cosf(animRad)*lineLength,
+                                center.y + sinf(animRad)*lineLength };
 
             // Cycle through HSV colors for animated line
             Color animCol = ColorFromHSV(fmodf(totalAngle, 360.0f), 0.8f, 0.9f);

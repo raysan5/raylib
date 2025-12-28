@@ -54,7 +54,8 @@ int main(void)
     Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
     Model skybox = LoadModelFromMesh(cube);
 
-    // Set this to true to use an HDR Texture, Note that raylib must be built with HDR Support for this to work SUPPORT_FILEFORMAT_HDR
+    // Set this to true to use an HDR Texture
+    // NOTE: raylib must be built with HDR Support for this to work: SUPPORT_FILEFORMAT_HDR
     bool useHDR = false;
 
     // Load skybox shader and set required locations
@@ -63,8 +64,8 @@ int main(void)
                                             TextFormat("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
 
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
     Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION),
@@ -91,9 +92,11 @@ int main(void)
     }
     else
     {
-        Image img = LoadImage("resources/skybox.png");
-        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
-        UnloadImage(img);
+        // TODO: WARNING: On PLATFORM_WEB it requires a big amount of memory to process input image 
+        // and generate the required cubemap image to be passed to rlLoadTextureCubemap()
+        Image image = LoadImage("resources/skybox.png");
+        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);
+        UnloadImage(image);
     }
 
     DisableCursor();                    // Limit cursor to relative movement inside the window
@@ -132,9 +135,9 @@ int main(void)
                     }
                     else
                     {
-                        Image img = LoadImage(droppedFiles.paths[0]);
-                        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);
-                        UnloadImage(img);
+                        Image image = LoadImage(droppedFiles.paths[0]);
+                        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);
+                        UnloadImage(image);
                     }
 
                     TextCopy(skyboxFileName, droppedFiles.paths[0]);
