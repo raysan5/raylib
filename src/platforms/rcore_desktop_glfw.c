@@ -268,7 +268,7 @@ void ToggleBorderlessWindowed(void)
                 int monitorPosY = 0;
                 glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
                 CORE.Window.position.x = monitorPosX;
-                CORE.Window.position.x = monitorPosY;
+                CORE.Window.position.y = monitorPosY;
 
                 CORE.Window.screen.width = mode->width;
                 CORE.Window.screen.height = mode->height;
