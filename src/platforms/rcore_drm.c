@@ -2352,7 +2352,8 @@ static void PollMouseEvents(void)
             if ((event.code) == (ABS_MT_POSITION_X))
             {
                 isMultitouch = true;
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) {
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
+                {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     
                     // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
@@ -2363,7 +2364,8 @@ static void PollMouseEvents(void)
 
             if ((event.code) == (ABS_MT_POSITION_Y))
             {
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) {
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
+                {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     
                     // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
@@ -2530,7 +2532,8 @@ static void PollMouseEvents(void)
         
         // Debug logging 
         static int lastTouchCount = 0;
-        if (CORE.Input.Touch.pointCount != lastTouchCount && (touchAction == 0 || touchAction == 1)) {
+        if (CORE.Input.Touch.pointCount != lastTouchCount && (touchAction == 0 || touchAction == 1)) 
+        {
             TRACELOG(LOG_DEBUG, "TOUCH: Count changed from %d to %d (action: %d)", lastTouchCount, CORE.Input.Touch.pointCount, touchAction);
             lastTouchCount = CORE.Input.Touch.pointCount;
         }
