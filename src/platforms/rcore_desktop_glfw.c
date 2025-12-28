@@ -267,12 +267,15 @@ void ToggleBorderlessWindowed(void)
                 int monitorPosX = 0;
                 int monitorPosY = 0;
                 glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
-                const int monitorWidth = mode->width;
-                const int monitorHeight = mode->height;
+                CORE.Window.position.x = monitorPosX;
+                CORE.Window.position.x = monitorPosY;
+
+                CORE.Window.screen.width = mode->width;
+                CORE.Window.screen.height = mode->height;
 
                 // Set screen position and size
-                glfwSetWindowMonitor(platform.handle, monitors[monitor], monitorPosX, monitorPosY, 
-                    monitorWidth, monitorHeight, mode->refreshRate);
+                glfwSetWindowMonitor(platform.handle, monitors[monitor], CORE.Window.position.x, CORE.Window.position.y, 
+                    CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -1817,7 +1820,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height)
 // WARNING: If FLAG_WINDOW_HIGHDPI is set, WindowContentScaleCallback() is called before this function
 static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
-    TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
+    //TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
 
     // WARNING: On window minimization, callback is called,
     // but we don't want to change internal screen values, it breaks things
@@ -1873,7 +1876,7 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
 // WARNING: If FLAG_WINDOW_HIGHDPI is not set, this function is not called
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley)
 {
-    TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
+    //TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
 
     float fbWidth = (float)CORE.Window.screen.width*scalex;
     float fbHeight = (float)CORE.Window.screen.height*scaley;
