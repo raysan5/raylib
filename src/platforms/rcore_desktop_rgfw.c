@@ -383,7 +383,7 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
-        if (!CORE.Window.fullscreen) ToggleFullscreen();
+        ToggleFullscreen();
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -457,7 +457,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
-        if (CORE.Window.fullscreen) ToggleFullscreen();
+        ToggleFullscreen();
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -508,7 +508,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        if (CORE.Window.fullscreen) ToggleBorderlessWindowed();
+        ToggleBorderlessWindowed();
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
@@ -1256,13 +1256,11 @@ int InitPlatform(void)
     // Check window creation flags
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        CORE.Window.fullscreen = true;
         FLAG_SET(flags, RGFW_windowFullscreen);
     }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        CORE.Window.fullscreen = true;
         FLAG_SET(flags, RGFW_windowedFullscreen);
     }
 
@@ -1313,10 +1311,6 @@ int InitPlatform(void)
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif
-    // TODO: Is this needed by raylib now?
-    // If so, rcore_desktop_sdl should be updated too
-    //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_VSYNC_HINT)) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 

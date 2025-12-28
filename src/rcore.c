@@ -492,7 +492,6 @@ extern int InitPlatform(void);          // Initialize platform (graphics, inputs
 extern void ClosePlatform(void);        // Close platform
 
 static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
-static void SetupFramebuffer(int width, int height);        // Setup main framebuffer (required by InitPlatform())
 static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
@@ -3825,84 +3824,6 @@ void SetupViewport(int width, int height)
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
-}
-
-// Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
-void SetupFramebuffer(int width, int height)
-{
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
-    if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-
-        // Downscaling to fit display with border-bars
-        float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
-        float heightRatio = (float)CORE.Window.display.height/(float)CORE.Window.screen.height;
-
-        if (widthRatio <= heightRatio)
-        {
-            CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
-        }
-        else
-        {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
-            CORE.Window.render.height = CORE.Window.display.height;
-            CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
-            CORE.Window.renderOffset.y = 0;
-        }
-
-        // Screen scaling required
-        float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
-        CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
-
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
-        CORE.Window.render.width = CORE.Window.display.width;
-        CORE.Window.render.height = CORE.Window.display.height;
-
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Window.render.width, CORE.Window.render.height);
-    }
-    else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
-    {
-        // Required screen size is smaller than display size
-        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-
-        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
-        {
-            CORE.Window.screen.width = CORE.Window.display.width;
-            CORE.Window.screen.height = CORE.Window.display.height;
-        }
-
-        // Upscaling to fit display with border-bars
-        float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
-        float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
-
-        if (displayRatio <= screenRatio)
-        {
-            CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
-        }
-        else
-        {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
-            CORE.Window.render.height = CORE.Window.screen.height;
-            CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
-            CORE.Window.renderOffset.y = 0;
-        }
-    }
-    else
-    {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.renderOffset.x = 0;
-        CORE.Window.renderOffset.y = 0;
-    }
 }
 
 // Scan all files and directories in a base path

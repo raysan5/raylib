@@ -2049,8 +2049,7 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     // TODO: Update framebuffer on resize
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    //glViewport(0, 0, clientSize.cx, clientSize.cy);
-    //SetupFramebuffer(0, 0);
+    //SetupViewport(0, 0, clientSize.cx, clientSize.cy);
 
     SetupViewport(clientSize.cx, clientSize.cy);
     CORE.Window.resizedLastFrame = true;
