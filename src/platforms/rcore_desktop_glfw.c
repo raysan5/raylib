@@ -275,12 +275,7 @@ void ToggleBorderlessWindowed(void)
                 FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
 
                 // Get monitor position and size
-                int monitorPosX = 0;
-                int monitorPosY = 0;
-                glfwGetMonitorPos(monitors[monitor], &monitorPosX, &monitorPosY);
-                CORE.Window.position.x = monitorPosX;
-                CORE.Window.position.y = monitorPosY;
-
+                glfwGetMonitorPos(monitors[monitor], &CORE.Window.position.x, &CORE.Window.position.y);
                 CORE.Window.screen.width = mode->width;
                 CORE.Window.screen.height = mode->height;
 
