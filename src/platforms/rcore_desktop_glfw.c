@@ -201,11 +201,12 @@ void ToggleFullscreen(void)
             // Set fullscreen flag to be processed on FramebufferSizeCallback() accordingly
             FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
+#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
             // NOTE: X11 requires undecorating the window before switching to
             // fullscreen to avoid issues with framebuffer scaling
             glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_FALSE);
             FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
-
+#endif
             // WARNING: This function launches FramebufferSizeCallback()
             glfwSetWindowMonitor(platform.handle, monitor, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         }
@@ -235,10 +236,12 @@ void ToggleFullscreen(void)
         glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, 
             CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
 
+#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
         // NOTE: X11 requires restoring the decorated window after switching from
         // fullscreen to avoid issues with framebuffer scaling
         glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
         FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
+#endif
     }
 
     // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
