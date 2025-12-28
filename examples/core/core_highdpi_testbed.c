@@ -33,6 +33,7 @@ int main(void)
     Vector2 scaleDpi = GetWindowScaleDPI();
     Vector2 mousePos = GetMousePosition();
     int currentMonitor = GetCurrentMonitor();
+    Vector2 windowPos = GetWindowPosition();
 
     int gridSpacing = 40;   // Grid spacing in pixels
 
@@ -47,6 +48,7 @@ int main(void)
         mousePos = GetMousePosition();
         currentMonitor = GetCurrentMonitor();
         scaleDpi = GetWindowScaleDPI();
+        windowPos = GetWindowPosition();
 
         if (IsKeyPressed(KEY_SPACE)) ToggleBorderlessWindowed();
         if (IsKeyPressed(KEY_F)) ToggleFullscreen();
@@ -73,9 +75,10 @@ int main(void)
             // Draw UI info
             DrawText(TextFormat("CURRENT MONITOR: %i/%i (%ix%i)", currentMonitor + 1, GetMonitorCount(), 
                 GetMonitorWidth(currentMonitor), GetMonitorHeight(currentMonitor)), 50, 50, 20, DARKGRAY);
-            DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 50, 90, 20, DARKGRAY);
-            DrawText(TextFormat("RENDER SIZE: %ix%i", GetRenderWidth(), GetRenderHeight()), 50, 130, 20, DARKGRAY);
-            DrawText(TextFormat("SCALE FACTOR: %.1fx%.1f", scaleDpi.x, scaleDpi.y), 50, 170, 20, GRAY);
+            DrawText(TextFormat("WINDOW POSITION: %ix%i", windowPos.x, windowPos.y), 50, 90, 20, DARKGRAY);
+            DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 50, 130, 20, DARKGRAY);
+            DrawText(TextFormat("RENDER SIZE: %ix%i", GetRenderWidth(), GetRenderHeight()), 50, 170, 20, DARKGRAY);
+            DrawText(TextFormat("SCALE FACTOR: %.1fx%.1f", scaleDpi.x, scaleDpi.y), 50, 210, 20, GRAY);
 
             // Draw reference rectangles, top-left and bottom-right corners
             DrawRectangle(0, 0, 30, 60, RED);
