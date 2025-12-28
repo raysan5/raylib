@@ -1149,7 +1149,6 @@ int InitPlatform(void)
 
     // Initialize graphic device: display/window and graphic context
     //----------------------------------------------------------------------------
-    CORE.Window.fullscreen = true;
     FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
