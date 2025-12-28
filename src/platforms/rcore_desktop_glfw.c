@@ -1021,12 +1021,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    int x = 0;
-    int y = 0;
-
-    glfwGetWindowPos(platform.handle, &x, &y);
-
-    return (Vector2){ (float)x, (float)y };
+    return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 }
 
 // Get window scale DPI factor for current monitor
