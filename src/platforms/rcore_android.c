@@ -885,7 +885,6 @@ void ClosePlatform(void)
 // NOTE: returns false in case graphic device could not be created
 static int InitGraphicsDevice(void)
 {
-    CORE.Window.fullscreen = true;
     FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
     EGLint samples = 0;

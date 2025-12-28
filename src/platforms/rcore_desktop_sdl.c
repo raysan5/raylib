@@ -472,13 +472,11 @@ void ToggleFullscreen(void)
         {
             SDL_SetWindowFullscreen(platform.window, 0);
             FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-            CORE.Window.fullscreen = false;
         }
         else
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
             FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-            CORE.Window.fullscreen = true;
         }
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
@@ -554,7 +552,7 @@ void SetWindowState(unsigned int flags)
     #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
-            CORE.Window.fullscreen = true;
+            FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         }
         else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
@@ -644,7 +642,6 @@ void ClearWindowState(unsigned int flags)
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
         SDL_SetWindowFullscreen(platform.window, 0);
-        CORE.Window.fullscreen = false;
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -1937,11 +1934,7 @@ int InitPlatform(void)
     FLAG_SET(flags, SDL_WINDOW_MOUSE_CAPTURE);  // Window has mouse captured
 
     // Check window creation flags
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-    {
-        CORE.Window.fullscreen = true;
-        FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
-    }
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
 
     //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, SDL_WINDOW_HIDDEN);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);

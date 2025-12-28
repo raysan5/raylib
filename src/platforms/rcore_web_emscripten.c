@@ -167,7 +167,6 @@ void ToggleFullscreen(void)
 
         EM_ASM(document.exitFullscreen(););
 
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }
@@ -183,7 +182,7 @@ void ToggleFullscreen(void)
                 Module.requestFullscreen(false, false);
             }, 100);
         );
-        CORE.Window.fullscreen = true;
+
         FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
     }
 
@@ -201,7 +200,7 @@ void ToggleFullscreen(void)
     */
     // EM_ASM(Module.requestFullscreen(false, false););
     /*
-        if (!CORE.Window.fullscreen)
+        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
         {
             // Option 1: Request fullscreen for the canvas element
             // This option does not seem to work at all:
@@ -237,7 +236,6 @@ void ToggleFullscreen(void)
             emscripten_get_canvas_element_size("#canvas", &width, &height);
             TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
 
-            CORE.Window.fullscreen = true;          // Toggle fullscreen flag
             FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         }
         else
@@ -249,7 +247,6 @@ void ToggleFullscreen(void)
             emscripten_get_canvas_element_size("#canvas", &width, &height);
             TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);
 
-            CORE.Window.fullscreen = false;          // Toggle fullscreen flag
             FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         }
     */
@@ -275,7 +272,6 @@ void ToggleBorderlessWindowed(void)
 
         EM_ASM(document.exitFullscreen(););
 
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }
@@ -494,7 +490,6 @@ void ClearWindowState(unsigned int flags)
             if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
         }
 
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
     }
 
@@ -1117,8 +1112,6 @@ int InitPlatform(void)
     attribs.antialias = EM_FALSE;
 
     // Check window creation flags
-    //if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) CORE.Window.fullscreen = true;
-
     // Disable FLAG_WINDOW_MINIMIZED, not supported
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
 
@@ -1354,7 +1347,6 @@ static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const Emscripte
     const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
     if (!wasFullscreen)
     {
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }

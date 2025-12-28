@@ -290,14 +290,13 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    if (!CORE.Window.fullscreen)
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         // Store previous window position (in case we exit fullscreen)
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
 
         platform.mon = RGFW_window_getMonitor(platform.window);
-        CORE.Window.fullscreen = true;
         FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
@@ -305,7 +304,6 @@ void ToggleFullscreen(void)
     }
     else
     {
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         if (platform.mon.mode.area.w)
@@ -331,7 +329,9 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (CORE.Window.fullscreen)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) ToggleFullscreen();
+    
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
@@ -348,8 +348,6 @@ void ToggleBorderlessWindowed(void)
         CORE.Window.position = CORE.Window.previousPosition;
         RGFW_window_resize(platform.window, RGFW_AREA(CORE.Window.previousScreen.width, CORE.Window.previousScreen.height));
     }
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;
 }
 
 // Set window state: maximized, if resizable

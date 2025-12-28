@@ -176,7 +176,7 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    if (!CORE.Window.fullscreen)
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         // Store previous window position (in case we exit fullscreen)
         CORE.Window.previousPosition = CORE.Window.position;
@@ -192,8 +192,6 @@ void ToggleFullscreen(void)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get monitor");
 
-            CORE.Window.fullscreen = false;
-            FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
             glfwSetWindowMonitor(platform.handle, NULL, 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
         }
@@ -666,7 +664,7 @@ void SetWindowMonitor(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        if (CORE.Window.fullscreen)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
         {
             TRACELOG(LOG_INFO, "GLFW: Selected fullscreen monitor: [%i] %s", monitor, glfwGetMonitorName(monitors[monitor]));
 
@@ -1422,8 +1420,6 @@ int InitPlatform(void)
     unsigned int requestedWindowFlags = CORE.Window.flags;
 
     // Check window creation flags
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) CORE.Window.fullscreen = true;
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Visible window
     else glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);     // Window initially hidden
 
@@ -1536,11 +1532,14 @@ int InitPlatform(void)
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
 
-    GLFWmonitor *monitor = NULL;
-    if (CORE.Window.fullscreen)
+    if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0)) FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
+
+    // Init window in fullscreen mode if requested
+    // NOTE: Keeping original screen size for toggle
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         // NOTE: Fullscreen applications default to the primary monitor
-        monitor = glfwGetPrimaryMonitor();
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
         if (!monitor)
         {
             TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
@@ -1614,9 +1613,6 @@ int InitPlatform(void)
             TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
             return -1;
         }
-
-        // NOTE: Full-screen change, not working properly...
-        //glfwSetWindowMonitor(platform.handle, glfwGetPrimaryMonitor(), 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
     }
     else
     {

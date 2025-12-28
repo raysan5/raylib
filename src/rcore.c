@@ -287,20 +287,19 @@ typedef struct CoreData {
         const char *title;                  // Window text title const pointer
         unsigned int flags;                 // Configuration flags (bit based), keeps window state
         bool ready;                         // Check if window has been initialized successfully
-        bool fullscreen;                    // Check if fullscreen mode is enabled
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
         bool eventWaiting;                  // Wait for events before ending frame
         bool usingFbo;                      // Using FBO (RenderTexture) for rendering instead of default framebuffer
 
-        Point position;                     // Window position (required on fullscreen toggle)
-        Point previousPosition;             // Window previous position (required on borderless windowed toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
-        Size screen;                        // Screen width and height (used render area)
-        Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
-        Size currentFbo;                    // Current render width and height (depends on active fbo)
-        Size render;                        // Framebuffer width and height (render area, including black bars if required)
-        Point renderOffset;                 // Offset from render area (must be divided by 2)
+        Size screen;                        // Screen current width and height
+        Point position;                     // Window current position
+        Size previousScreen;                // Screen previous width and height (required on fullscreen/borderless-windowed toggle)
+        Point previousPosition;             // Window previous position (required on fullscreeen/borderless-windowed toggle)
+        Size render;                        // Screen framebuffer width and height
+        Point renderOffset;                 // Screen framebuffer render offset (Not required anymore?)
+        Size currentFbo;                    // Current framebuffer render width and height (depends on active render texture)
         Size screenMin;                     // Screen minimum width and height (for resizable window)
         Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
@@ -762,31 +761,31 @@ bool IsWindowReady(void)
 // Check if window is currently fullscreen
 bool IsWindowFullscreen(void)
 {
-    return CORE.Window.fullscreen;
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 }
 
 // Check if window is currently hidden
 bool IsWindowHidden(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
 }
 
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
 }
 
 // Check if window has been maximized
 bool IsWindowMaximized(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
 }
 
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-    return (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED));
+    return !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
 }
 
 // Check if window has been resizedLastFrame
@@ -798,7 +797,7 @@ bool IsWindowResized(void)
 // Check if one specific window flag is enabled
 bool IsWindowState(unsigned int flag)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, flag));
+    return FLAG_IS_SET(CORE.Window.flags, flag);
 }
 
 // Get current screen width
@@ -1100,7 +1099,7 @@ void BeginScissorMode(int x, int y, int width, int height)
         rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)))
+    if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
         Vector2 scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
