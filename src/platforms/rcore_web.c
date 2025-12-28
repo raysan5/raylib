@@ -1290,18 +1290,6 @@ int InitPlatform(void)
 
         TRACELOG(LOG_WARNING, "SYSTEM: Closest fullscreen videomode: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
 
-        // NOTE: ISSUE: Closest videomode could not match monitor aspect-ratio, for example,
-        // for a desired screen size of 800x450 (16:9), closest supported videomode is 800x600 (4:3),
-        // framebuffer is rendered correctly but once displayed on a 16:9 monitor, it gets stretched
-        // by the sides to fit all monitor space...
-
-        // Try to setup the most appropriate fullscreen framebuffer for the requested screenWidth/screenHeight
-        // It considers device display resolution mode and setups a framebuffer with black bars if required (render size/offset)
-        // Modified global variables: CORE.Window.screen.width/CORE.Window.screen.height - CORE.Window.render.width/CORE.Window.render.height - CORE.Window.renderOffset.x/CORE.Window.renderOffset.y - CORE.Window.screenScale
-        // TODO: It is a quite cumbersome solution to display size vs requested size, it should be reviewed or removed...
-        // HighDPI monitors are properly considered in a following similar function: SetupViewport()
-        SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
         platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", glfwGetPrimaryMonitor(), NULL);
 
         // NOTE: Full-screen change, not working properly...
