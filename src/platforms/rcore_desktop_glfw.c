@@ -1565,13 +1565,18 @@ int InitPlatform(void)
             CORE.Window.previousScreen.height = 450;
             CORE.Window.previousPosition.x = CORE.Window.display.width/2 - 800/2;
             CORE.Window.previousPosition.y = CORE.Window.display.height/2 - 450/2;
+
+            // Set screen width/height to the display width/height
+            if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+            if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+        }
+        else
+        {
+            CORE.Window.previousScreen = CORE.Window.screen;
+            CORE.Window.screen = CORE.Window.display;
         }
 
-        // Set screen width/height to the display width/height
-        if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
-        if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
-
-        platform.handle = glfwCreateWindow(CORE.Window.display.width, CORE.Window.display.height, (CORE.Window.title != 0)? CORE.Window.title : " ", monitor, NULL);
+        platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", monitor, NULL);
         if (!platform.handle)
         {
             glfwTerminate();
@@ -1630,13 +1635,13 @@ int InitPlatform(void)
 
     glfwMakeContextCurrent(platform.handle);
     result = glfwGetError(NULL);
+    if ((result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR)) CORE.Window.ready = true; // Checking context activation
 
-    // Check context activation
-    if ((result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))
+    if (CORE.Window.ready)
     {
-        CORE.Window.ready = true;
+        // Setup additional windows configs and register required window size info
 
-        glfwSwapInterval(0);        // No V-Sync by default
+        glfwSwapInterval(0); // No V-Sync by default
 
         // Try to enable GPU V-Sync, so frames are limited to screen refresh rate (60Hz -> 60 FPS)
         // NOTE: V-Sync can be enabled by graphic driver configuration, it doesn't need
@@ -1677,25 +1682,13 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    }
-    else
-    {
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
-        return -1;
-    }
 
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
-
-    // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
-    else
-    {
+        // Try to center window on screen but avoiding window-bar outside of screen
         int monitorCount = 0;
         int monitorIndex = GetCurrentMonitor();
         GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
         GLFWmonitor *monitor = monitors[monitorIndex];
 
-        // Try to center window on screen but avoiding window-bar outside of screen
         int monitorX = 0;
         int monitorY = 0;
         int monitorWidth = 0;
@@ -1704,15 +1697,19 @@ int InitPlatform(void)
 
         // TODO: Here CORE.Window.render.width/height should be used instead of
         // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
-        int posX = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
-        int posY = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
-        if (posX < monitorX) posX = monitorX;
-        if (posY < monitorY) posY = monitorY;
-        SetWindowPosition(posX, posY);
+        CORE.Window.position.x = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
+        //if (CORE.Window.position.x < monitorX) CORE.Window.position.x = monitorX;
+        //if (CORE.Window.position.y < monitorY) CORE.Window.position.y = monitorY;
 
-        // Update CORE.Window.position here so it is correct from the start
-        CORE.Window.position.x = posX;
-        CORE.Window.position.y = posY;
+        SetWindowPosition(CORE.Window.position.x, CORE.Window.position.y);
+
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
+    }
+    else
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
+        return -1;
     }
 
     // Apply window flags requested previous to initialization
