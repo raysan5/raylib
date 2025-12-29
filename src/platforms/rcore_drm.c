@@ -2061,21 +2061,21 @@ static void ConfigureEvdevDevice(char *device)
     {
         bool prioritize = false;
 
-        // Priority logic: Touchscreens override Mice.
-        // 1. No device set yet? Take it.
+        // Priority logic: touchscreens override Mice
+        // 1. No device set yet? Take it
         if (platform.mouseFd == -1) prioritize = true;
-        // 2. Current is Mouse, New is Touch? Upgrade to Touch.
+        // 2. Current is mouse, new is touch? Upgrade to touch
         else if (isTouch && !platform.mouseIsTouch) prioritize = true;
-        // 3. Current is Touch, New is Touch? Use the new one (Last one found wins, standard behavior).
+        // 3. Current is touch, new is touch? Use the new one (last one found wins, standard behavior)
         else if (isTouch && platform.mouseIsTouch) prioritize = true;
-        // 4. Current is Mouse, New is Mouse? Use the new one.
+        // 4. Current is mouse, new is mouse? Use the new one
         else if (!isTouch && !platform.mouseIsTouch) prioritize = true;
-        // 5. Current is Touch, New is Mouse? IGNORE the mouse. Keep the touchscreen.
+        // 5. Current is touch, new is mouse? Ignore the mouse, keep the touchscreen
         else prioritize = false;
 
         if (prioritize)
         {
-            deviceKindStr = isTouch ? "touchscreen" : "mouse";
+            deviceKindStr = isTouch? "touchscreen" : "mouse";
             
             if (platform.mouseFd != -1) 
             {
@@ -2172,18 +2172,15 @@ static void PollKeyboardEvents(void)
         // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
-
         // Keyboard keys appear for codes 1 to 255, ignore everthing else
         if ((event.code >= 1) && (event.code <= 255))
         {
-
             // Lookup the scancode in the keymap to get a keycode
             keycode = linuxToRaylibMap[event.code];
 
             // Make sure we got a valid keycode
             if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
             {
-
                 // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
                 // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                 // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
@@ -2232,16 +2229,15 @@ static void PollGamepadEvents(void)
             {
                 if (event.code < KEYMAP_SIZE)
                 {
-                    short keycodeRaylib = linuxToRaylibMap[event.code];
+                    short keycode = linuxToRaylibMap[event.code]; // raylib keycode
 
-                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0)? "UP" : "DOWN", event.code, keycodeRaylib);
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0)? "UP" : "DOWN", event.code, keycode);
 
-                    if ((keycodeRaylib != 0) && (keycodeRaylib < MAX_GAMEPAD_BUTTONS))
+                    if ((keycode != 0) && (keycode < MAX_GAMEPAD_BUTTONS))
                     {
                         // 1 - button pressed, 0 - button released
-                        CORE.Input.Gamepad.currentButtonState[i][keycodeRaylib] = event.value;
-
-                        CORE.Input.Gamepad.lastButtonPressed = (event.value == 1)? keycodeRaylib : GAMEPAD_BUTTON_UNKNOWN;
+                        CORE.Input.Gamepad.currentButtonState[i][keycode] = event.value;
+                        CORE.Input.Gamepad.lastButtonPressed = (event.value == 1)? keycode : GAMEPAD_BUTTON_UNKNOWN;
                     }
                 }
             }
@@ -2323,7 +2319,7 @@ static void PollMouseEvents(void)
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
                 
                 // Update single touch position only if it's active and no MT events are being used
-                if ((platform.touchActive[0]) && (!isMultitouch)) 
+                if (platform.touchActive[0] && !isMultitouch) 
                 {
                     platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2335,7 +2331,7 @@ static void PollMouseEvents(void)
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
                 
                 // Update single touch position only if it's active and no MT events are being used
-                if ((platform.touchActive[0]) && (!isMultitouch)) 
+                if (platform.touchActive[0] && !isMultitouch) 
                 {
                     platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2343,16 +2339,16 @@ static void PollMouseEvents(void)
             }
 
             // Multitouch movement
-            if ((event.code) == (ABS_MT_SLOT)) 
+            if (event.code == ABS_MT_SLOT) 
             {
                 platform.touchSlot = event.value;  
                 isMultitouch = true;
             }
 
-            if ((event.code) == (ABS_MT_POSITION_X))
+            if (event.code == ABS_MT_POSITION_X)
             {
                 isMultitouch = true;
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     
@@ -2362,9 +2358,9 @@ static void PollMouseEvents(void)
                 }
             }
 
-            if ((event.code) == (ABS_MT_POSITION_Y))
+            if (event.code == ABS_MT_POSITION_Y)
             {
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     
@@ -2374,9 +2370,9 @@ static void PollMouseEvents(void)
                 }
             }
 
-            if ((event.code) == (ABS_MT_TRACKING_ID))
+            if (event.code == ABS_MT_TRACKING_ID)
             {
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS))
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     if (event.value >= 0)
                     {
@@ -2384,7 +2380,7 @@ static void PollMouseEvents(void)
                         platform.touchActive[platform.touchSlot] = true;
                         platform.touchId[platform.touchSlot] = event.value; // Use Tracking ID for unique IDs
                         
-                        touchAction = 1;    // TOUCH_ACTION_DOWN
+                        touchAction = 1; // TOUCH_ACTION_DOWN
                     }
                     else
                     {
@@ -2396,18 +2392,18 @@ static void PollMouseEvents(void)
                         
                         // Force UP action if we haven't already set a DOWN action
                         // (DOWN takes priority over UP if both happen in one frame, though rare)
-                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
+                        if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                     }
                 }
             }
 
             // Handle ABS_MT_PRESSURE (0x3a) if available, as some devices use it for lift-off
             #ifndef ABS_MT_PRESSURE
-            #define ABS_MT_PRESSURE 0x3a
+                #define ABS_MT_PRESSURE 0x3a
             #endif
-            if ((event.code) == (ABS_MT_PRESSURE))
+            if (event.code == ABS_MT_PRESSURE)
             {
-                if ((platform.touchSlot) < (MAX_TOUCH_POINTS))
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     if (event.value <= 0) // Pressure 0 means lift
                     {
@@ -2415,30 +2411,28 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].x = -1;
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
-                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
+                        if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                     }
                 }
             }
 
             // Touchscreen tap
-            if ((event.code) == (ABS_PRESSURE))
+            if (event.code == ABS_PRESSURE)
             {
                 int previousMouseLeftButtonState = platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT];
 
-                if ((!event.value) && (previousMouseLeftButtonState))
+                if (!event.value && previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-                    
-                    if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
+                    if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                 }
 
-                if ((event.value) && (!previousMouseLeftButtonState))
+                if (event.value && !previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
-                    touchAction = 1;    // TOUCH_ACTION_DOWN
+                    touchAction = 1; // TOUCH_ACTION_DOWN
                 }
             }
-
         }
 
         // Button parsing
@@ -2453,16 +2447,15 @@ static void PollMouseEvents(void)
                 {
                     bool activateSlot0 = false;
                     
-                    if (event.code == BTN_LEFT) 
-                    {
-                        activateSlot0 = true; // Mouse click always activates
-                    }
+                    if (event.code == BTN_LEFT) activateSlot0 = true; // Mouse click always activates
                     else if (event.code == BTN_TOUCH)
                     {
                         bool anyActive = false;
-                        for (int i = 0; i < MAX_TOUCH_POINTS; i++) {
+                        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                        {
                             if (platform.touchActive[i]) { anyActive = true; break; }
                         }
+
                         if (!anyActive) activateSlot0 = true;
                     }
 
@@ -2472,7 +2465,7 @@ static void PollMouseEvents(void)
                         platform.touchId[0] = 0;
                     }
 
-                    touchAction = 1;   // TOUCH_ACTION_DOWN
+                    touchAction = 1; // TOUCH_ACTION_DOWN
                 }
                 else
                 {
@@ -2483,10 +2476,8 @@ static void PollMouseEvents(void)
                         platform.touchPosition[0].x = -1;
                         platform.touchPosition[0].y = -1;
                     }
-                    else if (event.code == BTN_TOUCH)
-                    {
-                        platform.touchSlot = 0;            // Reset slot index to 0
-                    }
+                    else if (event.code == BTN_TOUCH) platform.touchSlot = 0;            // Reset slot index to 0
+
                     touchAction = 0;       // TOUCH_ACTION_UP
                 }
             }
@@ -2503,10 +2494,12 @@ static void PollMouseEvents(void)
         if (!CORE.Input.Mouse.cursorLocked)
         {
             if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
-            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) 
+                CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
             if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
-            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) 
+                CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
         }
 
         // Repack active touches into CORE.Input.Touch
@@ -2520,6 +2513,7 @@ static void PollMouseEvents(void)
                 k++;
             }
         }
+        
         CORE.Input.Touch.pointCount = k;
         
         // Clear remaining slots
@@ -2529,20 +2523,11 @@ static void PollMouseEvents(void)
             CORE.Input.Touch.position[i].y = -1;
             CORE.Input.Touch.pointId[i] = -1;
         }
-        
-        // Debug logging 
-        static int lastTouchCount = 0;
-        if (CORE.Input.Touch.pointCount != lastTouchCount && (touchAction == 0 || touchAction == 1)) 
-        {
-            TRACELOG(LOG_DEBUG, "TOUCH: Count changed from %d to %d (action: %d)", lastTouchCount, CORE.Input.Touch.pointCount, touchAction);
-            lastTouchCount = CORE.Input.Touch.pointCount;
-        }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
         if (touchAction > -1)
         {
             GestureEvent gestureEvent = { 0 };
-
             gestureEvent.touchAction = touchAction;
             gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
@@ -2553,7 +2538,6 @@ static void PollMouseEvents(void)
             }
 
             ProcessGestureEvent(gestureEvent);
-
             touchAction = -1;
         }
 #endif
