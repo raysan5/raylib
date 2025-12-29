@@ -2466,28 +2466,38 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 // Get collision vector for two rectangles collision
 Vector2 GetCollisionV(Rectangle rec1, Rectangle rec2)
 {
-    Rectangle inter = GetCollisionRec(rec1, rec2);
+    Vector2 result;
+    result.x = 0.0f;
+    result.y = 0.0f;
 
-    Vector2 result = { 0.0f, 0.0f };
-
-    if (inter.width <= 0.0f || inter.height <= 0.0f)
-        return result;
-
+    // Centers
     float ax = rec1.x + rec1.width  * 0.5f;
     float ay = rec1.y + rec1.height * 0.5f;
     float bx = rec2.x + rec2.width  * 0.5f;
     float by = rec2.y + rec2.height * 0.5f;
 
-    float overlapX = inter.width;
-    float overlapY = inter.height;
+    // Delta from a → b
+    float dx = bx - ax;
+    float dy = by - ay;
 
-    float signX = (ax < bx) ?  1.0f : -1.0f;
-    float signY = (ay < by) ?  1.0f : -1.0f;
+    // Combined half extents
+    float hx = (rec1.width  * 0.5f) + (rec2.width  * 0.5f);
+    float hy = (rec1.height * 0.5f) + (rec2.height * 0.5f);
 
-    if (overlapX < overlapY) {
-        result.x = signX * overlapX;
+    // Overlap along each axis
+    float px = hx - fabsf(dx);
+    if (px <= 0.0f) return result;   // no overlap → no collision
+
+    float py = hy - fabsf(dy);
+    if (py <= 0.0f) return result;   // no overlap → no collision
+
+    // Resolve along smallest penetration axis
+    if (px < py) {
+        result.x = (dx > 0.0f ? 1.0f : -1.0f) * px;
+        result.y = 0.0f;
     } else {
-        result.y = signY * overlapY;
+        result.x = 0.0f;
+        result.y = (dy > 0.0f ? 1.0f : -1.0f) * py;
     }
 
     return result;
