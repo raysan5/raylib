@@ -2463,6 +2463,36 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     return overlap;
 }
 
+// Get collision vector for two rectangles collision
+Vector2 GetCollisionV(Rectangle rec1, Rectangle rec2)
+{
+    Rectangle inter = GetCollisionRec(rec1, rec2);
+
+    Vector2 result = { 0.0f, 0.0f };
+
+    if (inter.width <= 0.0f || inter.height <= 0.0f)
+        return result;
+
+    float ax = rec1.x + rec1.width  * 0.5f;
+    float ay = rec1.y + rec1.height * 0.5f;
+    float bx = rec2.x + rec2.width  * 0.5f;
+    float by = rec2.y + rec2.height * 0.5f;
+
+    float overlapX = inter.width;
+    float overlapY = inter.height;
+
+    float signX = (ax < bx) ?  1.0f : -1.0f;
+    float signY = (ay < by) ?  1.0f : -1.0f;
+
+    if (overlapX < overlapY) {
+        result.x = signX * overlapX;
+    } else {
+        result.y = signY * overlapY;
+    }
+
+    return result;
+}
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
