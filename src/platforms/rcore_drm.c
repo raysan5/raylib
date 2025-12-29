@@ -135,8 +135,12 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
     bool cursorRelative;                // Relative cursor mode
     int mouseFd;                        // File descriptor for the evdev mouse/touch/gestures
+    bool mouseIsTouch;                  // Check if the current mouse device is actually a touchscreen
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
+    bool touchActive[MAX_TOUCH_POINTS]; // Track which touch points are currently active
+    Vector2 touchPosition[MAX_TOUCH_POINTS]; // Track touch positions for each slot
+    int touchId[MAX_TOUCH_POINTS];      // Track touch IDs for each slot
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
@@ -1115,9 +1119,6 @@ void PollInputEvents(void)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
-    // Reset touch positions to invalid state
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ -1, -1 };
-
     // Map touch position to mouse position for convenience
     // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
     // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
@@ -1565,7 +1566,11 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    if (!CORE.Window.ready) 
+    { 
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); 
+        return -1; 
+    }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Set some default window flags
@@ -1883,7 +1888,14 @@ static void InitEvdevInput(void)
     {
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
+        platform.touchActive[i] = false;
+        platform.touchPosition[i].x = -1;
+        platform.touchPosition[i].y = -1;
+        platform.touchId[i] = -1;
     }
+    
+    // Initialize touch slot
+    platform.touchSlot = 0;
 
     // Reset keyboard key state
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -2047,17 +2059,49 @@ static void ConfigureEvdevDevice(char *device)
     const char *deviceKindStr = "unknown";
     if (isMouse || isTouch)
     {
-        deviceKindStr = "mouse";
-        if (platform.mouseFd != -1) close(platform.mouseFd);
-        platform.mouseFd = fd;
+        bool prioritize = false;
 
-        if (absAxisCount > 0)
+        // Priority logic: Touchscreens override Mice.
+        // 1. No device set yet? Take it.
+        if (platform.mouseFd == -1) prioritize = true;
+        // 2. Current is Mouse, New is Touch? Upgrade to Touch.
+        else if (isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 3. Current is Touch, New is Touch? Use the new one (Last one found wins, standard behavior).
+        else if (isTouch && platform.mouseIsTouch) prioritize = true;
+        // 4. Current is Mouse, New is Mouse? Use the new one.
+        else if (!isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 5. Current is Touch, New is Mouse? IGNORE the mouse. Keep the touchscreen.
+        else prioritize = false;
+
+        if (prioritize)
         {
-            platform.absRange.x = absinfo[ABS_X].info.minimum;
-            platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+            deviceKindStr = isTouch ? "touchscreen" : "mouse";
+            
+            if (platform.mouseFd != -1) 
+            {
+                TRACELOG(LOG_INFO, "INPUT: Overwriting previous input device with new %s", deviceKindStr);
+                close(platform.mouseFd);
+            }
+            
+            platform.mouseFd = fd;
+            platform.mouseIsTouch = isTouch;
 
-            platform.absRange.y = absinfo[ABS_Y].info.minimum;
-            platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            if (absAxisCount > 0)
+            {
+                platform.absRange.x = absinfo[ABS_X].info.minimum;
+                platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+
+                platform.absRange.y = absinfo[ABS_Y].info.minimum;
+                platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            }
+            
+            TRACELOG(LOG_INFO, "INPUT: Initialized input device %s as %s", device, deviceKindStr);
+        }
+        else
+        {
+            TRACELOG(LOG_INFO, "INPUT: Ignoring device %s (keeping higher priority %s device)", device, platform.mouseIsTouch ? "touchscreen" : "mouse");
+            close(fd);
+            return;
         }
     }
     else if (isGamepad && !isMouse && !isKeyboard && (platform.gamepadCount < MAX_GAMEPADS))
@@ -2231,6 +2275,7 @@ static void PollMouseEvents(void)
 
     struct input_event event = { 0 };
     int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+    static bool isMultitouch = false; // Detect if device supports MT events
 
     // Try to read data from the mouse/touch/gesture and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -2276,54 +2321,118 @@ static void PollMouseEvents(void)
             if (event.code == ABS_X)
             {
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
-                CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
-
-                touchAction = 2;    // TOUCH_ACTION_MOVE
+                
+                // Update single touch position only if it's active and no MT events are being used
+                if ((platform.touchActive[0]) && (!isMultitouch)) 
+                {
+                    platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             if (event.code == ABS_Y)
             {
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-                CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
-
-                touchAction = 2;    // TOUCH_ACTION_MOVE
+                
+                // Update single touch position only if it's active and no MT events are being used
+                if ((platform.touchActive[0]) && (!isMultitouch)) 
+                {
+                    platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             // Multitouch movement
-            if (event.code == ABS_MT_SLOT) platform.touchSlot = event.value;   // Remember the slot number for the folowing events
-
-            if (event.code == ABS_MT_POSITION_X)
+            if ((event.code) == (ABS_MT_SLOT)) 
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                platform.touchSlot = event.value;  
+                isMultitouch = true;
             }
 
-            if (event.code == ABS_MT_POSITION_Y)
+            if ((event.code) == (ABS_MT_POSITION_X))
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-            }
-
-            if (event.code == ABS_MT_TRACKING_ID)
-            {
-                if ((event.value < 0) && (platform.touchSlot < MAX_TOUCH_POINTS))
+                isMultitouch = true;
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
                 {
-                    // Touch has ended for this point
-                    CORE.Input.Touch.position[platform.touchSlot].x = -1;
-                    CORE.Input.Touch.position[platform.touchSlot].y = -1;
+                    platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                    
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
+            }
+
+            if ((event.code) == (ABS_MT_POSITION_Y))
+            {
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS)) 
+                {
+                    platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                    
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
+            }
+
+            if ((event.code) == (ABS_MT_TRACKING_ID))
+            {
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS))
+                {
+                    if (event.value >= 0)
+                    {
+
+                        platform.touchActive[platform.touchSlot] = true;
+                        platform.touchId[platform.touchSlot] = event.value; // Use Tracking ID for unique IDs
+                        
+                        touchAction = 1;    // TOUCH_ACTION_DOWN
+                    }
+                    else
+                    {
+                        // Touch has ended for this point
+                        platform.touchActive[platform.touchSlot] = false;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
+                        
+                        // Force UP action if we haven't already set a DOWN action
+                        // (DOWN takes priority over UP if both happen in one frame, though rare)
+                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
+                    }
+                }
+            }
+
+            // Handle ABS_MT_PRESSURE (0x3a) if available, as some devices use it for lift-off
+            #ifndef ABS_MT_PRESSURE
+            #define ABS_MT_PRESSURE 0x3a
+            #endif
+            if ((event.code) == (ABS_MT_PRESSURE))
+            {
+                if ((platform.touchSlot) < (MAX_TOUCH_POINTS))
+                {
+                    if (event.value <= 0) // Pressure 0 means lift
+                    {
+                        platform.touchActive[platform.touchSlot] = false;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
+                        if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
+                    }
                 }
             }
 
             // Touchscreen tap
-            if (event.code == ABS_PRESSURE)
+            if ((event.code) == (ABS_PRESSURE))
             {
                 int previousMouseLeftButtonState = platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT];
 
-                if (!event.value && previousMouseLeftButtonState)
+                if ((!event.value) && (previousMouseLeftButtonState))
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-                    touchAction = 0;    // TOUCH_ACTION_UP
+                    
+                    if (touchAction != 1) touchAction = 0;    // TOUCH_ACTION_UP
                 }
 
-                if (event.value && !previousMouseLeftButtonState)
+                if ((event.value) && (!previousMouseLeftButtonState))
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
                     touchAction = 1;    // TOUCH_ACTION_DOWN
@@ -2340,8 +2449,46 @@ static void PollMouseEvents(void)
             {
                 platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
-                if (event.value > 0) touchAction = 1;   // TOUCH_ACTION_DOWN
-                else touchAction = 0;       // TOUCH_ACTION_UP
+                if (event.value > 0)
+                {
+                    bool activateSlot0 = false;
+                    
+                    if (event.code == BTN_LEFT) 
+                    {
+                        activateSlot0 = true; // Mouse click always activates
+                    }
+                    else if (event.code == BTN_TOUCH)
+                    {
+                        bool anyActive = false;
+                        for (int i = 0; i < MAX_TOUCH_POINTS; i++) {
+                            if (platform.touchActive[i]) { anyActive = true; break; }
+                        }
+                        if (!anyActive) activateSlot0 = true;
+                    }
+
+                    if (activateSlot0)
+                    {
+                        platform.touchActive[0] = true;
+                        platform.touchId[0] = 0;
+                    }
+
+                    touchAction = 1;   // TOUCH_ACTION_DOWN
+                }
+                else
+                {
+                    // Only clear touch 0 for actual mouse clicks (BTN_LEFT)
+                    if (event.code == BTN_LEFT)
+                    {
+                        platform.touchActive[0] = false;
+                        platform.touchPosition[0].x = -1;
+                        platform.touchPosition[0].y = -1;
+                    }
+                    else if (event.code == BTN_TOUCH)
+                    {
+                        platform.touchSlot = 0;            // Reset slot index to 0
+                    }
+                    touchAction = 0;       // TOUCH_ACTION_UP
+                }
             }
 
             if (event.code == BTN_RIGHT) platform.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
@@ -2362,11 +2509,33 @@ static void PollMouseEvents(void)
             if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
         }
 
-        // Update touch point count
-        CORE.Input.Touch.pointCount = 0;
+        // Repack active touches into CORE.Input.Touch
+        int k = 0;
         for (int i = 0; i < MAX_TOUCH_POINTS; i++)
         {
-            if (CORE.Input.Touch.position[i].x >= 0) CORE.Input.Touch.pointCount++;
+            if (platform.touchActive[i])
+            {
+                CORE.Input.Touch.position[k] = platform.touchPosition[i];
+                CORE.Input.Touch.pointId[k] = platform.touchId[i];
+                k++;
+            }
+        }
+        CORE.Input.Touch.pointCount = k;
+        
+        // Clear remaining slots
+        for (int i = k; i < MAX_TOUCH_POINTS; i++)
+        {
+            CORE.Input.Touch.position[i].x = -1;
+            CORE.Input.Touch.position[i].y = -1;
+            CORE.Input.Touch.pointId[i] = -1;
+        }
+        
+        // Debug logging 
+        static int lastTouchCount = 0;
+        if (CORE.Input.Touch.pointCount != lastTouchCount && (touchAction == 0 || touchAction == 1)) 
+        {
+            TRACELOG(LOG_DEBUG, "TOUCH: Count changed from %d to %d (action: %d)", lastTouchCount, CORE.Input.Touch.pointCount, touchAction);
+            lastTouchCount = CORE.Input.Touch.pointCount;
         }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
