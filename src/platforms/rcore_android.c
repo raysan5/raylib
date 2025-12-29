@@ -1336,30 +1336,17 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
     }
 
-    if ((flags == AMOTION_EVENT_ACTION_POINTER_UP) || (flags == AMOTION_EVENT_ACTION_UP) || (flags == AMOTION_EVENT_ACTION_HOVER_EXIT))
-    {
-        // One of the touchpoints is released, remove it from touch point arrays
-        if (flags == AMOTION_EVENT_ACTION_HOVER_EXIT)
-        {
-            // If the touchPoint is hover, remove it from hoverPoints
-            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-            {
-                if (touchRaw.hoverPoints[i] == touchRaw.pointId[pointerIndex])
-                {
-                    touchRaw.hoverPoints[i] = -1;
-                    break;
-                }
-            }
-        }
-        for (int i = pointerIndex; (i < touchRaw.pointCount - 1) && (i < MAX_TOUCH_POINTS - 1); i++)
-        {
-            touchRaw.pointId[i] = touchRaw.pointId[i+1];
-            touchRaw.position[i] = touchRaw.position[i+1];
-        }
-        touchRaw.pointCount--;
-    }
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    GestureEvent gestureEvent = { 0 };
 
-    int pointCount = 0;
+    gestureEvent.pointCount = 0;
+
+    // Register touch actions
+    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+
     for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
         // If the touchPoint is hover, Ignore it
@@ -1375,34 +1362,61 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         if (hover) continue;
 
-        CORE.Input.Touch.pointId[pointCount] = touchRaw.pointId[i];
-        CORE.Input.Touch.position[pointCount] = touchRaw.position[i];
-        pointCount++;
-    }
-    CORE.Input.Touch.pointCount = pointCount;
-
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-
-    // Register touch actions
-    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
-
-    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
-        gestureEvent.position[i] = CORE.Input.Touch.position[i];
-        gestureEvent.position[i].x /= (float)GetScreenWidth();
-        gestureEvent.position[i].y /= (float)GetScreenHeight();
+        gestureEvent.pointId[gestureEvent.pointCount] = touchRaw.pointId[i];
+        gestureEvent.position[gestureEvent.pointCount] = touchRaw.position[i];
+        gestureEvent.position[gestureEvent.pointCount].x /= (float)GetScreenWidth();
+        gestureEvent.position[gestureEvent.pointCount].y /= (float)GetScreenHeight();
+        gestureEvent.pointCount++;
     }
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
+
+    if (flags == AMOTION_EVENT_ACTION_HOVER_EXIT)
+    {
+        // Hover exited. So, remove it from hoverPoints
+        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+        {
+            if (touchRaw.hoverPoints[i] == touchRaw.pointId[pointerIndex])
+            {
+                touchRaw.hoverPoints[i] = -1;
+                break;
+            }
+        }
+    }
+
+    if ((flags == AMOTION_EVENT_ACTION_POINTER_UP) || (flags == AMOTION_EVENT_ACTION_UP))
+    {
+        // One of the touchpoints is released, remove it from touch point arrays
+        for (int i = pointerIndex; (i < touchRaw.pointCount - 1) && (i < MAX_TOUCH_POINTS - 1); i++)
+        {
+            touchRaw.pointId[i] = touchRaw.pointId[i+1];
+            touchRaw.position[i] = touchRaw.position[i+1];
+        }
+        touchRaw.pointCount--;
+    }
+
+    CORE.Input.Touch.pointCount = 0;
+    for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // If the touchPoint is hover, Ignore it
+        bool hover = false;
+        for (int j = 0; j < MAX_TOUCH_POINTS; j++)
+        {
+            // Check if the touchPoint is in hoverPointers
+            if (touchRaw.hoverPoints[j] == touchRaw.pointId[i])
+            {
+                hover = true;
+                break;
+            }
+        }
+        if (hover) continue;
+
+        CORE.Input.Touch.pointId[CORE.Input.Touch.pointCount] = touchRaw.pointId[i];
+        CORE.Input.Touch.position[CORE.Input.Touch.pointCount] = touchRaw.position[i];
+        CORE.Input.Touch.pointCount++;
+    }
 
     // When all touchpoints are tapped and released really quickly, this event is generated
     if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;
