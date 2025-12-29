@@ -2470,28 +2470,23 @@ Vector2 GetCollisionV(Rectangle rec1, Rectangle rec2)
     result.x = 0.0f;
     result.y = 0.0f;
 
-    // Centers
     float ax = rec1.x + rec1.width  * 0.5f;
     float ay = rec1.y + rec1.height * 0.5f;
     float bx = rec2.x + rec2.width  * 0.5f;
     float by = rec2.y + rec2.height * 0.5f;
 
-    // Delta from a → b
     float dx = bx - ax;
     float dy = by - ay;
 
-    // Combined half extents
     float hx = (rec1.width  * 0.5f) + (rec2.width  * 0.5f);
     float hy = (rec1.height * 0.5f) + (rec2.height * 0.5f);
 
-    // Overlap along each axis
     float px = hx - fabsf(dx);
-    if (px <= 0.0f) return result;   // no overlap → no collision
+    if (px <= 0.0f) return result;
 
     float py = hy - fabsf(dy);
-    if (py <= 0.0f) return result;   // no overlap → no collision
+    if (py <= 0.0f) return result;
 
-    // Resolve along smallest penetration axis
     if (px < py) {
         result.x = (dx > 0.0f ? 1.0f : -1.0f) * px;
         result.y = 0.0f;
