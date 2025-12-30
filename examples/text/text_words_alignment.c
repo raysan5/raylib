@@ -19,8 +19,6 @@
 
 #include "raymath.h"    // Required for: Lerp()
 
-#include <stdio.h>
-
 typedef enum TextAlignment {
     TEXT_ALIGN_LEFT   = 0,
     TEXT_ALIGN_TOP    = 0,
