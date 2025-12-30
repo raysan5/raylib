@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - hilbert curve example
+*   raylib [shapes] example - hilbert curve
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
