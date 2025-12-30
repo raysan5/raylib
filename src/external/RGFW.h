@@ -6522,8 +6522,8 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (win->src.aspectRatio.w != 0 && win->src.aspectRatio.h != 0) {
 				double aspectRatio = (double)win->src.aspectRatio.w / win->src.aspectRatio.h;
 
-				int width = windowRect.right - windowRect.left;
-				int height = windowRect.bottom - windowRect.top;
+				int width = (windowRect.right - windowRect.left) - win->src.wOffset;
+				int height = (windowRect.bottom - windowRect.top) - win->src.hOffset;
 				int newHeight = (int)(width / aspectRatio);
 				int newWidth = (int)(height * aspectRatio);
 
@@ -6968,6 +6968,7 @@ RGFW_window* RGFW_createWindowPtr(const char* name, RGFW_rect rect, RGFW_windowF
 	DestroyWindow(dummyWin);
 
 	win->src.hOffset = (u32)(windowRect.bottom - windowRect.top) - (u32)(clientRect.bottom - clientRect.top);
+	win->src.wOffset = (u32)(windowRect.right - windowRect.left) - (u32)(clientRect.right - clientRect.left);
 	win->src.window = CreateWindowW(Class.lpszClassName, (wchar_t*)wide_name, window_style, win->r.x, win->r.y, win->r.w, win->r.h + (i32)win->src.hOffset, 0, 0, inh, 0);
 	SetPropW(win->src.window, L"RGFW", win);
 	RGFW_window_resize(win, RGFW_AREA(win->r.w, win->r.h)); /* so WM_GETMINMAXINFO gets called again */
