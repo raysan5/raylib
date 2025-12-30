@@ -56,7 +56,7 @@ Example elements validated:
 | core_smooth_pixelperfect         |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_random_sequence             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_automation_events           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| core_high_dpi                    |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| core_highdpi_demo                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_render_texture              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_undo_redo                   |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_viewport_scaling            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -209,7 +209,7 @@ Example elements validated:
 | shaders_lightmap_rendering       |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shaders_rounded_rectangle        |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shaders_depth_rendering          |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| shaders_game_of_life             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ❌  |  ✔  |
+| shaders_game_of_life             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_module_playing             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_music_stream               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_raw_stream                 |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -219,9 +219,10 @@ Example elements validated:
 | audio_sound_multi                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_sound_positioning          |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_spectrum_visualizer        |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| rlgl_standalone                  |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| rlgl_compute_shader              |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| easings_testbed                  |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ❌ |  ✔  |  ❌ |  ✔  |  ✔  |
-| embedded_files_loading           |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| web_basic_window                 |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| rlgl_standalone                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| rlgl_compute_shader              |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| easings_testbed                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
+| embedded_files_loading           |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| web_basic_window                 |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_hilbert_curve             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
