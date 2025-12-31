@@ -207,8 +207,8 @@ static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *inf
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
 
-// Check if text string is a list of strings
-static bool TextInList(const char *text, const char **list, int listCount);
+// Check if text string is in a list of strings and get index, -1 if not found
+static int GetTextListIndex(const char *text, const char **list, int listCount);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -1003,6 +1003,9 @@ int main(int argc, char *argv[])
             VALID_INVALID_CATEGORY
             */
 
+            // Validate and update examples collection list
+            // NOTE: New .c examples found are added at the end of its category
+            //---------------------------------------------------------------------------------------------------
             // Scan available example .c files and add to collection missing ones
             // NOTE: Source of truth is what we have in the examples directories (on validation/update)
             LOG("INFO: Scanning available example (.c) files to be added to collection...\n");
@@ -1010,14 +1013,66 @@ int main(int argc, char *argv[])
 
             // Load examples collection list file (raylib/examples/examples_list.txt)
             char *exList = LoadFileText(exCollectionFilePath);
+            int exListLen = (int)strlen(exList);
+
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
 
-            int exListLen = (int)strlen(exList);
-            strcpy(exListUpdated, exList);
+            // Add new examples to the collection list if not found
+            // WARNING: Added to the end of category, order defines place on raylib webpage
+            for (unsigned int i = 0; i < clist.count; i++)
+            {
+                // NOTE: Skipping "examples_template" from checks
+                if (!TextIsEqual(GetFileNameWithoutExt(clist.paths[i]), "examples_template") &&
+                    (TextFindIndex(exList, GetFileNameWithoutExt(clist.paths[i])) == -1))
+                {
+                    // Get new example data
+                    rlExampleInfo *exInfo = LoadExampleInfo(clist.paths[i]);
 
-            // Copy examples list into an update list
-            // NOTE: Checking and removing duplicate entries
+                    // Get example category, -1 if not found in list
+                    int catIndex = GetTextListIndex(exInfo->category, exCategories, REXM_MAX_EXAMPLE_CATEGORIES);
+
+                    if (catIndex > -1)
+                    {
+                        int nextCatIndex = catIndex + 1;
+                        if (nextCatIndex > (REXM_MAX_EXAMPLE_CATEGORIES - 1)) nextCatIndex = -1; // EOF
+
+                        // Find position to add new example on list, just before the following category
+                        // Category order: core, shapes, textures, text, models, shaders, audio, [others]
+                        int exListNextCatIndex = -1;
+                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, exCategories[nextCatIndex]);
+                        else exListNextCatIndex = exListLen; // EOF
+
+                        strncpy(exListUpdated, exList, exListNextCatIndex);
+
+                        // Get example difficulty stars
+                        char starsText[16] = { 0 };
+                        for (int s = 0; s < 4; s++)
+                        {
+                            // NOTE: Every UTF-8 star are 3 bytes
+                            if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
+                            else strcpy(starsText + 3*s, "☆");
+                        }
+
+                        // Add new example to the list
+                        int exListNewExLen = sprintf(exListUpdated + exListNextCatIndex,
+                            TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
+                                exInfo->category, exInfo->name, starsText, exInfo->verCreated,
+                                exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed,
+                                exInfo->author, exInfo->authorGitHub));
+
+                        // Add the following examples to the end of collection list
+                        strncpy(exListUpdated + exListNextCatIndex + exListNewExLen, exList + exListNextCatIndex, exListLen - exListNextCatIndex);
+
+                        listUpdated = true;
+                    }
+
+                    UnloadExampleInfo(exInfo);
+                }
+            }
+
+            /*
+            // Check and remove duplicate example entries
             int lineCount = 0;
             char **exListLines = LoadTextLines(exList, &lineCount);
             int exListUpdatedOffset = 0;
@@ -1031,46 +1086,7 @@ int main(int argc, char *argv[])
             }
 
             UnloadTextLines(exListLines, lineCount);
-
-            for (unsigned int i = 0; i < clist.count; i++)
-            {
-                // NOTE: Skipping "examples_template" from checks
-                if (!TextIsEqual(GetFileNameWithoutExt(clist.paths[i]), "examples_template") &&
-                    (TextFindIndex(exList, GetFileNameWithoutExt(clist.paths[i])) == -1))
-                {
-                    // TODO: Examples to be added in the list should be added at the end of their categories,
-                    // not at the end of the file...
-
-                    // Add example to the examples collection list
-                    // WARNING: Added to the end of the list, order must be set by users and
-                    // defines placement on raylib webpage
-                    rlExampleInfo *exInfo = LoadExampleInfo(clist.paths[i]);
-
-                    // Validate example category
-                    // TODO: Should [others] category be considered?
-                    if (TextInList(exInfo->category, exCategories, REXM_MAX_EXAMPLE_CATEGORIES))// && !TextIsEqual(exInfo->category, "others"))
-                    {
-                        // Get example difficulty stars
-                        char starsText[16] = { 0 };
-                        for (int s = 0; s < 4; s++)
-                        {
-                            // NOTE: Every UTF-8 star are 3 bytes
-                            if (s < exInfo->stars) strcpy(starsText + 3*s, "★");
-                            else strcpy(starsText + 3*s, "☆");
-                        }
-
-                        exListLen += sprintf(exListUpdated + exListLen,
-                            TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
-                                exInfo->category, exInfo->name, starsText, exInfo->verCreated,
-                                exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed,
-                                exInfo->author, exInfo->authorGitHub));
-
-                        listUpdated = true;
-                    }
-
-                    UnloadExampleInfo(exInfo);
-                }
-            }
+            */
 
             if (listUpdated) SaveFileText(exCollectionFilePath, exListUpdated);
 
@@ -1078,6 +1094,7 @@ int main(int argc, char *argv[])
             RL_FREE(exListUpdated);
 
             UnloadDirectoryFiles(clist);
+            //---------------------------------------------------------------------------------------------------
 
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             LOG("INFO: Validating examples in collection...\n");
@@ -2918,13 +2935,13 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 }
 
 // Check if text string is a list of strings
-static bool TextInList(const char *text, const char **list, int listCount)
+static int GetTextListIndex(const char *text, const char **list, int listCount)
 {
-    bool result = false;
+    int result = -1;
 
     for (int i = 0; i < listCount; i++)
     {
-        if (TextIsEqual(text, list[i])) { result = true; break; }
+        if (TextIsEqual(text, list[i])) { result = i; break; }
     }
 
     return result;
