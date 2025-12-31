@@ -252,8 +252,13 @@ void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane)
 
     if (moveInWorldPlane)
     {
-        // Project vector onto world plane
-        forward.y = 0;
+        // Project vector onto world plane (the plane defined by the up vector)
+        if (fabsf(camera->up.z) > 0)
+            forward.z = 0;
+        else if (fabsf(camera->up.x) > 0)
+            forward.x = 0;
+        else
+            forward.y = 0;
         forward = Vector3Normalize(forward);
     }
 
@@ -285,8 +290,14 @@ void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane)
 
     if (moveInWorldPlane)
     {
-        // Project vector onto world plane
-        right.y = 0;
+        // Project vector onto world plane (the plane defined by the up vector)
+        if (fabsf(camera->up.z) > 0)
+            right.z = 0;
+        else if (fabsf(camera->up.x) > 0)
+            right.x = 0;
+        else
+            right.y = 0;
+
         right = Vector3Normalize(right);
     }
 
