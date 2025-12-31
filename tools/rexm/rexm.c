@@ -1592,11 +1592,16 @@ int main(int argc, char *argv[])
                 FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
 
                 // STEP 3: Run example on browser
-                // WARNING: Example download is asynchronous so reading fails on next step
-                // when looking for a file that could not have been downloaded yet
-                ChangeDirectory(TextFormat("%s", exBasePath));
-                if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
-                system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
+                if (FileExists(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)) &&
+                    FileExists(TextFormat("%s/%s/%s.wasm", exBasePath, exCategory, exName)) &&
+                    FileExists(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName)))
+                {
+                    // WARNING: Example download is asynchronous so reading fails on next step
+                    // when looking for a file that could not have been downloaded yet
+                    ChangeDirectory(TextFormat("%s", exBasePath));
+                    if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
+                    system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
+                }
 
                 // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
 
