@@ -89,6 +89,10 @@
     #define EGL_OPENGL_ES3_BIT  0x40
 #endif
 
+#ifndef EGL_PLATFORM_GBM_KHR
+    #define EGL_PLATFORM_GBM_KHR  0x31D7
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -1416,7 +1420,30 @@ int InitPlatform(void)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
-    platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
+    // Try eglGetPlatformDisplayEXT for better compatibility with some drivers (e.g. Mali Midgard)
+    // REF: https://github.com/raysan5/raylib/issues/5378
+    platform.device = EGL_NO_DISPLAY;
+    const char *eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+
+    if (eglClientExtensions != NULL)
+    {
+        if (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL)
+        {
+            PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+                (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+
+            if (eglGetPlatformDisplayEXT != NULL)
+            {
+                platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+            }
+        }
+    }
+
+    if (platform.device == EGL_NO_DISPLAY)
+    {
+        platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
+    }
+
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -1496,8 +1523,25 @@ int InitPlatform(void)
     }
 
     // Create an EGL window surface
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, (EGLNativeWindowType)platform.gbmSurface, NULL);
-    if (EGL_NO_SURFACE == platform.surface)
+    platform.surface = EGL_NO_SURFACE;
+
+    if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
+    {
+        PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC eglCreatePlatformWindowSurfaceEXT =
+            (PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC)eglGetProcAddress("eglCreatePlatformWindowSurfaceEXT");
+
+        if (eglCreatePlatformWindowSurfaceEXT != NULL)
+        {
+            platform.surface = eglCreatePlatformWindowSurfaceEXT(platform.device, platform.config, platform.gbmSurface, NULL);
+        }
+    }
+
+    if (platform.surface == EGL_NO_SURFACE)
+    {
+        platform.surface = eglCreateWindowSurface(platform.device, platform.config, (EGLNativeWindowType)platform.gbmSurface, NULL);
+    }
+
+    if (platform.surface == EGL_NO_SURFACE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
         return -1;
