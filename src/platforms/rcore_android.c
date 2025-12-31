@@ -919,7 +919,27 @@ static int InitGraphicsDevice(void)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
-    platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    // NOTE: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call
+    platform.device = EGL_NO_DISPLAY;
+#if defined(EGL_VERSION_1_5)
+    platform.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+#else
+    // Check if extension is available for eglGetPlatformDisplayEXT()
+    // NOTE: Better compatibility with some drivers (e.g. Mali Midgard)
+    const char *eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if (eglClientExtensions != NULL)
+    {
+        if (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL)
+        {
+            PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+            if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+        }
+    }
+
+    // In case extension not found or display could not be retrieved, try useing legacy version
+    if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
+
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
