@@ -1226,6 +1226,18 @@ int main(int argc, char *argv[])
 
                 // Actions to fix/review anything possible from validation results
                 //------------------------------------------------------------------------------------------------
+                // Update files: Makefile, Makefile.Web, README.md, examples.js
+                // Solves: VALID_NOT_IN_MAKEFILE, VALID_NOT_IN_MAKEFILE_WEB, VALID_NOT_IN_README, VALID_NOT_IN_JS
+                // WARNING: Makefile.Web needs to be updated before trying to rebuild web example!
+                UpdateRequiredFiles();
+                for (int i = 0; i < exCollectionCount; i++)
+                {
+                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE;
+                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE_WEB;
+                    exCollection[i].status &= ~VALID_NOT_IN_README;
+                    exCollection[i].status &= ~VALID_NOT_IN_JS;
+                }
+                
                 // Check examples "status" information
                 for (int i = 0; i < exCollectionCount; i++)
                 {
@@ -1324,17 +1336,6 @@ int main(int argc, char *argv[])
                             exInfo->status &= ~VALID_INCONSISTENT_INFO;
                         }
                     }
-                }
-
-                // Update files: Makefile, Makefile.Web, README.md, examples.js
-                // Solves: VALID_NOT_IN_MAKEFILE, VALID_NOT_IN_MAKEFILE_WEB, VALID_NOT_IN_README, VALID_NOT_IN_JS
-                UpdateRequiredFiles();
-                for (int i = 0; i < exCollectionCount; i++)
-                {
-                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE;
-                    exCollection[i].status &= ~VALID_NOT_IN_MAKEFILE_WEB;
-                    exCollection[i].status &= ~VALID_NOT_IN_README;
-                    exCollection[i].status &= ~VALID_NOT_IN_JS;
                 }
                 //------------------------------------------------------------------------------------------------
             }
