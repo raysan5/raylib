@@ -1746,16 +1746,23 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         {
             insertPoint = (char *)strstr(text, search);
             lastReplacePos = (int)(insertPoint - text);
-            temp = strncpy(temp, text, tempLen - 1) + lastReplacePos;
-            tempLen -= lastReplacePos;
-            temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
-            tempLen -= replaceLen;
+
+            // TODO: Review logic to avoid strcpy()
+            // OK - Those lines work
+            temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
+            temp = strcpy(temp, replacement) + replaceLen;
+            // WRONG - But not those ones
+            //temp = strncpy(temp, text, tempLen - 1) + lastReplacePos;
+            //tempLen -= lastReplacePos;
+            //temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
+            //tempLen -= replaceLen;
             
             text += lastReplacePos + searchLen; // Move to next "end of replace"
         }
 
         // Copy remaind text part after replacement to result (pointed by moving temp)
-        strncpy(temp, text, tempLen - 1);
+        strcpy(temp, text); // OK
+        //strncpy(temp, text, tempLen - 1); // WRONG
     }
 
     return result;
