@@ -1420,30 +1420,26 @@ int InitPlatform(void)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
-    // Try eglGetPlatformDisplayEXT for better compatibility with some drivers (e.g. Mali Midgard)
-    // REF: https://github.com/raysan5/raylib/issues/5378
+    // NOTE: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call
     platform.device = EGL_NO_DISPLAY;
+#if defined(EGL_VERSION_1_5)
+    platform.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+#else
+    // Check if extension is available for eglGetPlatformDisplayEXT()
+    // NOTE: Better compatibility with some drivers (e.g. Mali Midgard)
     const char *eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
-
     if (eglClientExtensions != NULL)
     {
         if (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL)
         {
-            PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
-                (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-
-            if (eglGetPlatformDisplayEXT != NULL)
-            {
-                platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
-            }
+            PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+            if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
         }
     }
 
-    if (platform.device == EGL_NO_DISPLAY)
-    {
-        platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
-    }
-
+    // In case extension not found or display could not be retrieved, try useing legacy version
+    if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
+#endif
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
