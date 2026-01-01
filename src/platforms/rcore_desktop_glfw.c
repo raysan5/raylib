@@ -188,7 +188,7 @@ void ToggleFullscreen(void)
         GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
         GLFWmonitor *monitor = (monitorIndex < monitorCount)? monitors[monitorIndex] : NULL;
 
-        if (monitor != NULL) 
+        if (monitor != NULL)
         {
             // Get current monitor video mode
             const GLFWvidmode *mode = glfwGetVideoMode(monitors[monitorIndex]);
@@ -233,7 +233,7 @@ void ToggleFullscreen(void)
 #endif
 
         // WARNING: This function launches FramebufferSizeCallback()
-        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, 
+        glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y,
             CORE.Window.screen.width, CORE.Window.screen.height, GLFW_DONT_CARE);
 
 #if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
@@ -283,7 +283,7 @@ void ToggleBorderlessWindowed(void)
                 CORE.Window.screen.height = mode->height;
 
                 // Set screen position and size
-                glfwSetWindowMonitor(platform.handle, monitors[monitor], CORE.Window.position.x, CORE.Window.position.y, 
+                glfwSetWindowMonitor(platform.handle, monitors[monitor], CORE.Window.position.x, CORE.Window.position.y,
                     CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
                 // Refocus window
@@ -312,7 +312,7 @@ void ToggleBorderlessWindowed(void)
             #endif
 
                 // Return to previous screen size and position
-                glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y, 
+                glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y,
                     CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
 
                 // Refocus window
@@ -908,7 +908,7 @@ Vector2 GetMonitorPosition(int monitor)
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        int x = 0; 
+        int x = 0;
         int y = 0;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
 
@@ -1026,7 +1026,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) 
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
         glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
@@ -1275,7 +1275,7 @@ void PollInputEvents(void)
                 state.axes[GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                 state.axes[GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
             }
-          
+
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -1345,7 +1345,7 @@ void PollInputEvents(void)
 
     CORE.Window.resizedLastFrame = false;
 
-    if ((CORE.Window.eventWaiting) || 
+    if ((CORE.Window.eventWaiting) ||
         (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN)))
     {
         glfwWaitEvents();     // Wait for in input events before continue (drawing is paused)
@@ -1455,7 +1455,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
         // Resize window content area based on the monitor content scale
-        // NOTE: This hint only has an effect on platforms where screen coordinates and 
+        // NOTE: This hint only has an effect on platforms where screen coordinates and
         // pixels always map 1:1 such as Windows and X11
         // On platforms like macOS the resolution of the framebuffer is changed independently of the window size
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
@@ -1463,7 +1463,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 #endif
     }
-    else 
+    else
     {
         glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 #if defined(__APPLE__)

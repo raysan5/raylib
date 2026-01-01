@@ -472,7 +472,7 @@ void PollInputEvents(void)
     }
 
     // TODO: Poll input events for current platform
-    
+
     // Check for key pressed to exit
     if (kbhit())
     {
@@ -513,7 +513,7 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-    
+
     CORE.Window.ready = true;
 
     // TODO: Load OpenGL extensions

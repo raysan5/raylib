@@ -320,7 +320,7 @@ typedef struct CoreData {
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
-            // NOTE: Since key press logic involves comparing previous vs currrent key state, 
+            // NOTE: Since key press logic involves comparing previous vs currrent key state,
             // key repeats needs to be handled specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame
 
@@ -817,7 +817,7 @@ int GetScreenHeight(void)
 int GetRenderWidth(void)
 {
     int width = 0;
-    
+
     if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
@@ -1735,7 +1735,7 @@ int GetRandomValue(int min, int max)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
-    
+
     // NOTE: This one-line approach produces a non-uniform distribution,
     // as stated by Donald Knuth in the book The Art of Programming, so
     // using below approach for more uniform results
@@ -2257,7 +2257,7 @@ const char *GetApplicationDirectory(void)
 
 #if defined(_WIN32)
     int len = 0;
-    
+
     #if defined(UNICODE)
     unsigned short widePath[MAX_PATH];
     len = GetModuleFileNameW(NULL, (wchar_t *)widePath, MAX_PATH);
@@ -2265,7 +2265,7 @@ const char *GetApplicationDirectory(void)
     #else
     len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
     #endif
-    
+
     if (len > 0)
     {
         for (int i = len; i >= 0; --i)
@@ -2282,7 +2282,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '\\';
     }
-    
+
 #elif defined(__linux__)
 
     unsigned int size = sizeof(appDir);
@@ -2304,7 +2304,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__APPLE__)
 
     uint32_t size = sizeof(appDir);
@@ -2326,7 +2326,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__FreeBSD__)
 
     size_t size = sizeof(appDir);
@@ -2697,7 +2697,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
         ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
         ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
     };
- 
+
     *outputSize = 0;
     if (text == NULL) return NULL;
 
@@ -4241,7 +4241,7 @@ const char *TextFormat(const char *text, ...)
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
-    
+
     if (text != NULL)
     {
         va_list args;

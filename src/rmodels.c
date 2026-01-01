@@ -132,7 +132,7 @@
 #ifndef MAX_MESH_VERTEX_BUFFERS
     #define MAX_MESH_VERTEX_BUFFERS  9      // Maximum vertex buffers (VBO) per mesh
 #endif
-#ifndef MAX_FILEPATH_LENGTH 
+#ifndef MAX_FILEPATH_LENGTH
     #define MAX_FILEPATH_LENGTH   4096      // Maximum length for filepaths (Linux PATH_MAX default value)
 #endif
 
@@ -4153,7 +4153,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         // Test against all triangles in mesh
         for (int i = 0; i < triangleCount; i++)
         {
-            Vector3 a = { 0 }; 
+            Vector3 a = { 0 };
             Vector3 b = { 0 };
             Vector3 c = { 0 };
             Vector3 *vertdata = (Vector3 *)mesh.vertices;

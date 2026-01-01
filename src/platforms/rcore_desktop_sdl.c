@@ -1425,8 +1425,8 @@ void PollInputEvents(void)
 
                 #if defined(USING_VERSION_SDL3)
                     // const char *data;   // The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events
-                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, 
-                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, 
+                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE,
+                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
                     // you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
                     strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
@@ -1487,7 +1487,7 @@ void PollInputEvents(void)
                         CORE.Window.resizedLastFrame = true;
 
                         #ifndef USING_VERSION_SDL3
-                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) 
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms)
                         // to remove the FLAG_WINDOW_MAXIMIZED accordingly
                         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))
                         {

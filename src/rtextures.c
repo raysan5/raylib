@@ -1125,7 +1125,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-    
+
     int imageSize = width*height;
     image.width = width;
     image.height = height;
@@ -1487,7 +1487,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
     if (text == NULL) return imText;
-    
+
     int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')

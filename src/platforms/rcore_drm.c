@@ -1606,10 +1606,10 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) 
-    { 
-        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); 
-        return -1; 
+    if (!CORE.Window.ready)
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device");
+        return -1;
     }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
@@ -1933,7 +1933,7 @@ static void InitEvdevInput(void)
         platform.touchPosition[i].y = -1;
         platform.touchId[i] = -1;
     }
-    
+
     // Initialize touch slot
     platform.touchSlot = 0;
 
@@ -2116,13 +2116,13 @@ static void ConfigureEvdevDevice(char *device)
         if (prioritize)
         {
             deviceKindStr = isTouch? "touchscreen" : "mouse";
-            
-            if (platform.mouseFd != -1) 
+
+            if (platform.mouseFd != -1)
             {
                 TRACELOG(LOG_INFO, "INPUT: Overwriting previous input device with new %s", deviceKindStr);
                 close(platform.mouseFd);
             }
-            
+
             platform.mouseFd = fd;
             platform.mouseIsTouch = isTouch;
 
@@ -2134,7 +2134,7 @@ static void ConfigureEvdevDevice(char *device)
                 platform.absRange.y = absinfo[ABS_Y].info.minimum;
                 platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
             }
-            
+
             TRACELOG(LOG_INFO, "INPUT: Initialized input device %s as %s", device, deviceKindStr);
         }
         else
@@ -2357,9 +2357,9 @@ static void PollMouseEvents(void)
             if (event.code == ABS_X)
             {
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
-                
+
                 // Update single touch position only if it's active and no MT events are being used
-                if (platform.touchActive[0] && !isMultitouch) 
+                if (platform.touchActive[0] && !isMultitouch)
                 {
                     platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2369,9 +2369,9 @@ static void PollMouseEvents(void)
             if (event.code == ABS_Y)
             {
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-                
+
                 // Update single touch position only if it's active and no MT events are being used
-                if (platform.touchActive[0] && !isMultitouch) 
+                if (platform.touchActive[0] && !isMultitouch)
                 {
                     platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
                     if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2379,9 +2379,9 @@ static void PollMouseEvents(void)
             }
 
             // Multitouch movement
-            if (event.code == ABS_MT_SLOT) 
+            if (event.code == ABS_MT_SLOT)
             {
-                platform.touchSlot = event.value;  
+                platform.touchSlot = event.value;
                 isMultitouch = true;
             }
 
@@ -2391,7 +2391,7 @@ static void PollMouseEvents(void)
                 if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
-                    
+
                     // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
                     // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2403,7 +2403,7 @@ static void PollMouseEvents(void)
                 if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
-                    
+
                     // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
                     // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
@@ -2419,7 +2419,7 @@ static void PollMouseEvents(void)
 
                         platform.touchActive[platform.touchSlot] = true;
                         platform.touchId[platform.touchSlot] = event.value; // Use Tracking ID for unique IDs
-                        
+
                         touchAction = 1; // TOUCH_ACTION_DOWN
                     }
                     else
@@ -2429,7 +2429,7 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].x = -1;
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
-                        
+
                         // Force UP action if we haven't already set a DOWN action
                         // (DOWN takes priority over UP if both happen in one frame, though rare)
                         if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
@@ -2486,7 +2486,7 @@ static void PollMouseEvents(void)
                 if (event.value > 0)
                 {
                     bool activateSlot0 = false;
-                    
+
                     if (event.code == BTN_LEFT) activateSlot0 = true; // Mouse click always activates
                     else if (event.code == BTN_TOUCH)
                     {
@@ -2534,11 +2534,11 @@ static void PollMouseEvents(void)
         if (!CORE.Input.Mouse.cursorLocked)
         {
             if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
-            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) 
+            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x)
                 CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
             if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
-            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) 
+            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y)
                 CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
         }
 
@@ -2553,9 +2553,9 @@ static void PollMouseEvents(void)
                 k++;
             }
         }
-        
+
         CORE.Input.Touch.pointCount = k;
-        
+
         // Clear remaining slots
         for (int i = k; i < MAX_TOUCH_POINTS; i++)
         {

@@ -76,10 +76,10 @@ typedef struct {
     bool ourFullscreen;                 // Internal var to filter our handling of fullscreen vs the user handling of fullscreen
     int unmaximizedWidth;               // Internal var to store the unmaximized window (canvas) width
     int unmaximizedHeight;              // Internal var to store the unmaximized window (canvas) height
-    
+
     char canvasId[64];                  // Keep current canvas id where wasm app is running
                                         // NOTE: Useful when trying to run multiple wasms in different canvases in same webpage
-    
+
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
 #endif
@@ -885,7 +885,7 @@ void SwapScreenBuffer(void)
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     // Update framebuffer
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
-    
+
     // Copy framebuffer data into canvas
     EM_ASM({
         const width = $0;
@@ -1128,7 +1128,7 @@ void PollInputEvents(void)
 int InitPlatform(void)
 {
     SetCanvasIdJs(platform.canvasId, 64); // Get the current canvas id
-    
+
     glfwSetErrorCallback(ErrorCallback);
 
     // Initialize GLFW internal global state
@@ -1200,8 +1200,8 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // Choose OpenGL minor version (just hint)
         // Profiles Hint, only OpenGL 3.3 and above
         // Possible values: GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_ANY_PROFILE, GLFW_OPENGL_COMPAT_PROFILE
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
-        
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Forward Compatibility Hint: Only 3.3 and above!
         // glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
@@ -1236,7 +1236,7 @@ int InitPlatform(void)
 
     // Init fullscreen toggle required var:
     platform.ourFullscreen = false;
-    
+
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
     emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
@@ -1244,7 +1244,7 @@ int InitPlatform(void)
         const canvas = document.getElementById("canvas");
         Module.canvas = canvas;
     });
-    
+
     // Load memory framebuffer with desired screen size
     // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
     // but it is not being used, on SwapScreenBuffer() the pure software renderer is used

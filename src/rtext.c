@@ -700,9 +700,9 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     switch (type)
                     {
                         case FONT_DEFAULT:
-                        case FONT_BITMAP: 
+                        case FONT_BITMAP:
                         {
-                            glyphs[k].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, cp, 
+                            glyphs[k].image.data = stbtt_GetCodepointBitmap(&fontInfo, scaleFactor, scaleFactor, cp,
                                 &cpWidth, &cpHeight, &glyphs[k].offsetX, &glyphs[k].offsetY);
                         } break;
                         case FONT_SDF:
@@ -1518,7 +1518,7 @@ const char *TextFormat(const char *text, ...)
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH); // Clear buffer before using
-    
+
     if (text != NULL)
     {
         va_list args;
@@ -1756,7 +1756,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
             //tempLen -= lastReplacePos;
             //temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
             //tempLen -= replaceLen;
-            
+
             text += lastReplacePos + searchLen; // Move to next "end of replace"
         }
 
@@ -2059,7 +2059,7 @@ char *TextToCamel(const char *text)
 char *LoadUTF8(const int *codepoints, int length)
 {
     char *text = NULL;
-    
+
     if ((codepoints != NULL) && (length > 0))
     {
         // We allocate enough memory to fit all possible codepoints
@@ -2096,7 +2096,7 @@ int *LoadCodepoints(const char *text, int *count)
 {
     int *codepoints = NULL;
     int codepointCount = 0;
-    
+
     if (text != NULL)
     {
         int textLength = TextLength(text);
@@ -2209,7 +2209,7 @@ int GetCodepoint(const char *text, int *codepointSize)
     0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 */
 
-    
+
     int codepoint = 0x3f;   // Codepoint (defaults to '?')
     *codepointSize = 1;
     if (text == NULL) return codepoint;
@@ -2504,7 +2504,7 @@ static Font LoadBMFont(const char *fileName)
     int charId = 0;
     int charX = 0;
     int charY = 0;
-    int charWidth = 0; 
+    int charWidth = 0;
     int charHeight = 0;
     int charOffsetX = 0;
     int charOffsetY = 0;

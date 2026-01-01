@@ -330,7 +330,7 @@ void ToggleFullscreen(void)
 void ToggleBorderlessWindowed(void)
 {
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) ToggleFullscreen();
-    
+
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         CORE.Window.previousPosition = CORE.Window.position;

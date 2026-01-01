@@ -2743,9 +2743,9 @@ static const char *GetFileExtension(const char *fileName)
 static const char *strprbrk(const char *text, const char *charset)
 {
     const char *latestMatch = NULL;
- 
+
     for (; (text != NULL) && (text = strpbrk(text, charset)); latestMatch = text++) { }
-    
+
     return latestMatch;
 }
 

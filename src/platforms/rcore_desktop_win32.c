@@ -263,7 +263,7 @@ static bool DecoratedFromStyle(DWORD style)
 static DWORD MakeWindowStyle(unsigned flags)
 {
     // Flag is not needed because there are no child windows,
-    // but supposedly it improves efficiency, plus, windows adds this 
+    // but supposedly it improves efficiency, plus, windows adds this
     // flag automatically anyway so it keeps flags in sync with the OS
     DWORD style = WS_CLIPSIBLINGS;
 
@@ -1880,19 +1880,19 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // Get current dpi scale factor
             float scalex = HIWORD(wParam)/96.0f;
             float scaley = LOWORD(wParam)/96.0f;
-            
+
             RECT *suggestedRect = (RECT *)lparam;
 
             // Never set the window size to anything other than the suggested rect here
             // Doing so can cause a window to stutter between monitors when transitioning between them
-            int result = (int)SetWindowPos(hwnd, NULL, 
+            int result = (int)SetWindowPos(hwnd, NULL,
                 suggestedRect->left, suggestedRect->top,
-                suggestedRect->right - suggestedRect->left, 
-                suggestedRect->bottom - suggestedRect->top, 
+                suggestedRect->right - suggestedRect->left,
+                suggestedRect->bottom - suggestedRect->top,
                 SWP_NOZORDER | SWP_NOACTIVATE);
 
             if (result == 0) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
-            
+
             // TODO: Update screen data, render size, screen scaling, viewport...
 
         } break;
