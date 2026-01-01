@@ -2783,20 +2783,40 @@ void ImageColorTint(Image *image, Color color)
     ImageFormat(image, format);
 }
 
-// Modify image color: invert
-void ImageColorInvert(Image *image)
-{
-    // Security check to avoid program crash
-    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+void ImageColorInvert(Image *image){
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0))
+        return;
 
     Color *pixels = LoadImageColors(*image);
+    int n = image->width*image->height;
 
-    for (int i = 0; i < image->width*image->height; i++)
-    {
+#if defined(__SSE2__)
+    #include <emmintrin.h>
+
+    unsigned char *p = (unsigned char *)pixels;
+    const __m128i mask = _mm_set1_epi32(0x00FFFFFF);
+
+    int i = 0;
+    int bytes = n*4;
+
+    for (; i + 16 <= bytes; i += 16) {
+        __m128i v = _mm_loadu_si128((__m128i *)(p + i));
+        v = _mm_xor_si128(v, mask);
+        _mm_storeu_si128((__m128i *)(p + i), v);
+    }
+
+    for (; i < bytes; i += 4) {
+        p[i + 0] = 255 - p[i + 0];
+        p[i + 1] = 255 - p[i + 1];
+        p[i + 2] = 255 - p[i + 2];
+    }
+#else
+    for (int i = 0; i < n; i++) {
         pixels[i].r = 255 - pixels[i].r;
         pixels[i].g = 255 - pixels[i].g;
         pixels[i].b = 255 - pixels[i].b;
     }
+#endif
 
     int format = image->format;
     RL_FREE(image->data);
@@ -2805,6 +2825,7 @@ void ImageColorInvert(Image *image)
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
     ImageFormat(image, format);
+
 }
 
 // Modify image color: grayscale
