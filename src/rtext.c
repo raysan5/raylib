@@ -742,20 +742,18 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
                         glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
-
-                        // [Security Fix] Prevent integer overflow/negative allocation
-                        // Issue #5436: Malicious font files may contain negative advanceX,
-                        // causing calloc overflow or crash
-                        if (glyphs[k].advanceX < 0) glyphs[k].advanceX = 0;
-
+                        
                         Image imSpace = {
-                            // Only allocate memory if width > 0, otherwise set to NULL
-                            .data = (glyphs[k].advanceX > 0) ? RL_CALLOC(glyphs[k].advanceX*fontSize, 2) : NULL,
+                            .data = NULL,
                             .width = glyphs[k].advanceX,
                             .height = fontSize,
                             .mipmaps = 1,
                             .format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE
                         };
+
+                        // Only allocate space image if required
+                        if (glyphs[k].advanceX > 0) imSpace.data = RL_CALLOC(glyphs[k].advanceX*fontSize, 1);
+                        else glyphs[k].advanceX = 0;
 
                         glyphs[k].image = imSpace;
                     }
@@ -859,8 +857,8 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     }
 #endif
 
-    int atlasDataSize = atlas.width * atlas.height; // Save total size for bounds checking
-    atlas.data = (unsigned char *)RL_CALLOC(1, atlasDataSize);   // Create a bitmap to store characters (8 bpp)
+    int atlasDataSize = atlas.width*atlas.height; // Save total size for bounds checking
+    atlas.data = (unsigned char *)RL_CALLOC(atlasDataSize, 1); // Create a bitmap to store characters (8 bpp)
     atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     atlas.mipmaps = 1;
 
@@ -908,13 +906,11 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     int destX = offsetX + x;
                     int destY = offsetY + y;
 
-                    // Security fix: check both lower and upper bounds
-                    // destX >= 0: prevent heap underflow (#5434)
-                    // destX < atlas.width: prevent heap overflow (#5433)
-                    if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
+                    // Security: check both lower and upper bounds
+                    if ((destX >= 0) && (destX < atlas.width) && (destY >= 0) && (destY < atlas.height))
                     {
-                        ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
-                            ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                        ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                            ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                     }
                 }
             }
@@ -985,10 +981,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
 #if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
-    // useful to use as the white texture to draw shapes with raylib.
-    // [Security Fix] Ensure the atlas is large enough to hold a 3x3 rectangle.
-    // This prevents heap underflow when width < 3 or height < 3 (Fixes #5434 variant)
-    if (atlas.width >= 3 && atlas.height >= 3)
+    // useful to use as the white texture to draw shapes with raylib
+    // Security: ensure the atlas is large enough to hold a 3x3 rectangle
+    if ((atlas.width >= 3) && (atlas.height >= 3))
     {
         for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
         {
