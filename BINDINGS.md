@@ -29,6 +29,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [bindbc-raylib3](https://github.com/o3o/bindbc-raylib3)                                  | **5.0**          | [D](https://dlang.org)                                               | BSL-1.0              |
 | [dray](https://github.com/redthing1/dray)                                                | **5.0**          | [D](https://dlang.org)                                               | Apache-2.0           |
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **5.5**          | [D](https://dlang.org)                                               | Zlib                 |
+| [DenoRaylib550](https://github.com/JJLDonley/DenoRaylib550)                              | **5.5**          | [Deno](https://deno.land)                                            | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 4.5              | [Factor](https://factorcode.org)                                     | BSD                  |
