@@ -177,26 +177,24 @@ typedef struct float16 {
 #if defined(RAYMATH_USE_SIMD_INTRINSICS)
     // SIMD is used on the most costly raymath function MatrixMultiply()
     // NOTE: Only SSE intrinsics support implemented
-    // TODO: Consider support for other SIMD instrinsics
+    // TODO: Consider support for other SIMD instrinsics:
+    //  - SSEx, AVX, AVX2, FMA, NEON, RVV
     /*
     #if defined(__SSE4_2__)
-        #define SW_HAS_SSE42
         #include <nmmintrin.h>
+        #define RAYMATH_SSE42_ENABLED
     #elif defined(__SSE4_1__)
-        #define SW_HAS_SSE41
         #include <smmintrin.h>
+        #define RAYMATH_SSE41_ENABLED
     #elif defined(__SSSE3__)
-        #define SW_HAS_SSSE3
         #include <tmmintrin.h>
+        #define RAYMATH_SSSE3_ENABLED
     #elif defined(__SSE3__)
-        #define SW_HAS_SSE3
         #include <pmmintrin.h>
+        #define RAYMATH_SSE3_ENABLED
     #elif defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
-        #define SW_HAS_SSE2
         #include <emmintrin.h>
-    #elif defined(__SSE__)
-        #define SW_HAS_SSE
-        #include <xmmintrin.h>
+        #define RAYMATH_SSE2_ENABLED
     #endif
     */
     #if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 1))
