@@ -211,9 +211,9 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
     ifeq ($(OS),Windows_NT)
         MAKE = mingw32-make
     else
-        EMMAKE != type emmake
+        EMMAKE := $(shell command -v emmake)
         ifneq (, $(EMMAKE))
-            MAKE = emmake make
+            MAKE = $(EMMAKE) make
         else
             MAKE = mingw32-make
         endif
