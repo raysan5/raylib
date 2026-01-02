@@ -109,13 +109,17 @@
     #include "config.h"             // Defines module configuration flags
 #endif
 
-#include "utils.h"                  // Required for: TRACELOG() macros
+// TRACELOG macros are defined in raylib.h
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit()
 #include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset()
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
+
+#if defined(PLATFORM_ANDROID)
+    #include <android/log.h>            // Required for: __android_log_vprint()
+#endif
 
 #if defined(PLATFORM_MEMORY) || defined(PLATFORM_WEB)
     #define SW_GL_FRAMEBUFFER_COPY_BGRA false
@@ -194,24 +198,16 @@
     #define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
 
-    #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
+    #include "external/dirent.h"    // Required for: DIR, RL_FS_OPENDIR(), RL_FS_CLOSEDIR() [Used in LoadDirectoryFiles()]
 #else
-    #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in LoadDirectoryFiles()]
+    #include <dirent.h>             // Required for: DIR, RL_FS_OPENDIR(), RL_FS_CLOSEDIR() [Used in LoadDirectoryFiles()]
 #endif
 
 #if defined(_WIN32)
     #include <io.h>                 // Required for: _access() [Used in FileExists()]
     #include <direct.h>             // Required for: _getch(), _chdir(), _mkdir()
-    #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
-    #define CHDIR _chdir
-    #define MKDIR(dir) _mkdir(dir)
-    #define ACCESS(fn) _access(fn, 0)
 #else
     #include <unistd.h>             // Required for: getch(), chdir(), mkdir(), access()
-    #define GETCWD getcwd
-    #define CHDIR chdir
-    #define MKDIR(dir) mkdir(dir, 0777)
-    #define ACCESS(fn) access(fn, F_OK)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -388,6 +384,13 @@ RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported s
 
 CoreData CORE = { 0 };                      // Global CORE state context
 
+static int logTypeLevel = LOG_INFO;                 // Minimum log type level
+static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
+static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
+
 #if defined(SUPPORT_SCREEN_CAPTURE)
 static int screenshotCounter = 0;           // Screenshots counter
 #endif
@@ -547,6 +550,9 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 #elif defined(PLATFORM_DRM)
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
+    // Android requires custom fopen to support asset manager
+    FILE *android_fopen(const char *fileName, const char *mode);
+    #define RL_FS_FOPEN(name, mode) android_fopen(name, mode)
     #include "platforms/rcore_android.c"
 #elif defined(PLATFORM_MEMORY)
     #include "platforms/rcore_memory.c"
@@ -1857,8 +1863,385 @@ void SetConfigFlags(unsigned int flags)
 }
 
 //----------------------------------------------------------------------------------
+// Module Functions Definition: Logging and Memory
+//----------------------------------------------------------------------------------
+
+// Set the current threshold (minimum) log level
+void SetTraceLogLevel(int logType)
+{
+    logTypeLevel = logType;
+}
+
+// Set custom trace log callback
+void SetTraceLogCallback(TraceLogCallback callback)
+{
+    traceLog = callback;
+}
+
+// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+void TraceLog(int logType, const char *text, ...)
+{
+#if defined(SUPPORT_TRACELOG)
+    // Message has level below current threshold, don't emit
+    if ((logType < logTypeLevel) || (text == NULL)) return;
+
+    va_list args;
+    va_start(args, text);
+
+    if (traceLog)
+    {
+        traceLog(logType, text, args);
+        va_end(args);
+        return;
+    }
+
+#if defined(PLATFORM_ANDROID)
+    switch (logType)
+    {
+        case LOG_TRACE: __android_log_vprint(ANDROID_LOG_VERBOSE, "raylib", text, args); break;
+        case LOG_DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", text, args); break;
+        case LOG_INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", text, args); break;
+        case LOG_WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", text, args); break;
+        case LOG_ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", text, args); break;
+        case LOG_FATAL: __android_log_vprint(ANDROID_LOG_FATAL, "raylib", text, args); break;
+        default: break;
+    }
+#else
+    char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
+
+    switch (logType)
+    {
+        case LOG_TRACE: strcpy(buffer, "TRACE: "); break;
+        case LOG_DEBUG: strcpy(buffer, "DEBUG: "); break;
+        case LOG_INFO: strcpy(buffer, "INFO: "); break;
+        case LOG_WARNING: strcpy(buffer, "WARNING: "); break;
+        case LOG_ERROR: strcpy(buffer, "ERROR: "); break;
+        case LOG_FATAL: strcpy(buffer, "FATAL: "); break;
+        default: break;
+    }
+
+    unsigned int textLength = (unsigned int)strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textLength < (MAX_TRACELOG_MSG_LENGTH - 12))? textLength : (MAX_TRACELOG_MSG_LENGTH - 12));
+    strcat(buffer, "\n");
+    vprintf(buffer, args);
+    fflush(stdout);
+#endif
+
+    va_end(args);
+
+    if (logType == LOG_FATAL) exit(EXIT_FAILURE);  // If fatal logging, exit program
+
+#endif  // SUPPORT_TRACELOG
+}
+
+// Internal memory allocator
+// NOTE: Initializes to zero by default
+void *MemAlloc(unsigned int size)
+{
+    void *ptr = RL_CALLOC(size, 1);
+    return ptr;
+}
+
+// Internal memory reallocator
+void *MemRealloc(void *ptr, unsigned int size)
+{
+    void *ret = RL_REALLOC(ptr, size);
+    return ret;
+}
+
+// Internal memory free
+void MemFree(void *ptr)
+{
+    RL_FREE(ptr);
+}
+
+// Set custom file data loader
+void SetLoadFileDataCallback(LoadFileDataCallback callback)
+{
+    loadFileData = callback;
+}
+
+// Set custom file data saver
+void SetSaveFileDataCallback(SaveFileDataCallback callback)
+{
+    saveFileData = callback;
+}
+
+// Set custom file text loader
+void SetLoadFileTextCallback(LoadFileTextCallback callback)
+{
+    loadFileText = callback;
+}
+
+// Set custom file text saver
+void SetSaveFileTextCallback(SaveFileTextCallback callback)
+{
+    saveFileText = callback;
+}
+
+//----------------------------------------------------------------------------------
 // Module Functions Definition: File system
 //----------------------------------------------------------------------------------
+
+// Load data from file into a buffer
+unsigned char *LoadFileData(const char *fileName, int *dataSize)
+{
+    unsigned char *data = NULL;
+    *dataSize = 0;
+
+    if (fileName != NULL)
+    {
+        if (loadFileData)
+        {
+            data = loadFileData(fileName, dataSize);
+            return data;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = RL_FS_FOPEN(fileName, "rb");
+
+        if (file != NULL)
+        {
+            // WARNING: On binary streams SEEK_END could not be found,
+            // using fseek() and ftell() could not work in some (rare) cases
+            RL_FS_FSEEK(file, 0, SEEK_END);
+            int size = RL_FS_FTELL(file);     // WARNING: ftell() returns 'long int', maximum size returned is INT_MAX (2147483647 bytes)
+            RL_FS_FSEEK(file, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                data = (unsigned char *)RL_CALLOC(size, sizeof(unsigned char));
+
+                if (data != NULL)
+                {
+                    // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                    size_t count = RL_FS_FREAD(data, sizeof(unsigned char), size, file);
+
+                    // WARNING: fread() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
+                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) we have a limitation
+                    if (count > 2147483647)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: [%s] File is bigger than 2147483647 bytes, avoid using LoadFileData()", fileName);
+
+                        RL_FREE(data);
+                        data = NULL;
+                    }
+                    else
+                    {
+                        *dataSize = (int)count;
+
+                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, dataSize, count);
+                        else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                    }
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+
+            RL_FS_FCLOSE(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return data;
+}
+
+// Unload file data allocated by LoadFileData()
+void UnloadFileData(unsigned char *data)
+{
+    RL_FREE(data);
+}
+
+// Save data to file from buffer
+bool SaveFileData(const char *fileName, void *data, int dataSize)
+{
+    bool success = false;
+
+    if (fileName != NULL)
+    {
+        if (saveFileData)
+        {
+            return saveFileData(fileName, data, dataSize);
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = RL_FS_FOPEN(fileName, "wb");
+
+        if (file != NULL)
+        {
+            // WARNING: fwrite() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
+            // and expects a size_t input value but as dataSize is limited to INT_MAX (2147483647 bytes), there shouldn't be a problem
+            int count = (int)RL_FS_FWRITE(data, sizeof(unsigned char), dataSize, file);
+
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
+            else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
+
+            int result = RL_FS_FCLOSE(file);
+            if (result == 0) success = true;
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return success;
+}
+
+// Export data to code (.h), returns true on success
+bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
+{
+    bool success = false;
+
+#ifndef TEXT_BYTES_PER_LINE
+    #define TEXT_BYTES_PER_LINE     20
+#endif
+
+    // NOTE: Text data buffer size is estimated considering raw data size in bytes
+    // and requiring 6 char bytes for every byte: "0x00, "
+    char *txtData = (char *)RL_CALLOC(dataSize*6 + 2000, sizeof(char));
+
+    int byteCount = 0;
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// DataAsCode exporter v1.0 - Raw data exported as an array of bytes                  //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2026 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    // Get file name from path
+    char varFileName[256] = { 0 };
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
+    for (int i = 0; varFileName[i] != '\0'; i++)
+    {
+        // Convert variable name to uppercase
+        if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+        // Replace non valid character for C identifier with '_'
+        else if (varFileName[i] == '.' || varFileName[i] == '-' || varFileName[i] == '?' || varFileName[i] == '!' || varFileName[i] == '+') { varFileName[i] = '_'; }
+    }
+
+    byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
+
+    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%s_DATA_SIZE] = { ", varFileName, varFileName);
+    for (int i = 0; i < (dataSize - 1); i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), data[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[dataSize - 1]);
+
+    // NOTE: Text data size exported is determined by '\0' (NULL) character
+    success = SaveFileText(fileName, txtData);
+
+    RL_FREE(txtData);
+
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
+
+    return success;
+}
+
+// Load text data from file, returns a '\0' terminated string
+// NOTE: text chars array should be freed manually
+char *LoadFileText(const char *fileName)
+{
+    char *text = NULL;
+
+    if (fileName != NULL)
+    {
+        if (loadFileText)
+        {
+            text = loadFileText(fileName);
+            return text;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = RL_FS_FOPEN(fileName, "rt");
+
+        if (file != NULL)
+        {
+            // WARNING: When reading a file as 'text' file,
+            // text mode causes carriage return-linefeed translation...
+            // ...but using fseek() should return correct byte-offset
+            RL_FS_FSEEK(file, 0, SEEK_END);
+            unsigned int size = (unsigned int)RL_FS_FTELL(file);
+            RL_FS_FSEEK(file, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                text = (char *)RL_CALLOC(size + 1, sizeof(char));
+
+                if (text != NULL)
+                {
+                    unsigned int count = (unsigned int)RL_FS_FREAD(text, sizeof(char), size, file);
+
+                    // WARNING: \r\n is converted to \n on reading, so,
+                    // read bytes count gets reduced by the number of lines
+                    if (count < size) text = (char *)RL_REALLOC(text, count + 1);
+
+                    // Zero-terminate the string
+                    text[count] = '\0';
+
+                    TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
+
+            RL_FS_FCLOSE(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return text;
+}
+
+// Unload file text data allocated by LoadFileText()
+void UnloadFileText(char *text)
+{
+    RL_FREE(text);
+}
+
+// Save text data to file (write), string must be '\0' terminated
+bool SaveFileText(const char *fileName, const char *text)
+{
+    bool success = false;
+
+    if (fileName != NULL)
+    {
+        if (saveFileText)
+        {
+            return saveFileText(fileName, text);
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = RL_FS_FOPEN(fileName, "wt");
+
+        if (file != NULL)
+        {
+            int count = RL_FS_FPRINTF(file, "%s", text);
+
+            if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
+
+            int result = RL_FS_FCLOSE(file);
+            if (result == 0) success = true;
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return success;
+}
 
 // Rename file (if exists)
 // NOTE: Only rename file name required, not full path
@@ -1868,7 +2251,7 @@ int FileRename(const char *fileName, const char *fileRename)
 
     if (FileExists(fileName))
     {
-        result = rename(fileName, fileRename);
+        result = RL_FS_RENAME(fileName, fileRename);
     }
     else result = -1;
 
@@ -1882,7 +2265,7 @@ int FileRemove(const char *fileName)
 
     if (FileExists(fileName))
     {
-        result = remove(fileName);
+        result = RL_FS_REMOVE(fileName);
     }
     else result = -1;
 
@@ -1974,7 +2357,7 @@ bool FileExists(const char *fileName)
 {
     bool result = false;
 
-    if (ACCESS(fileName) != -1) result = true;
+    if (RL_FS_ACCESS(fileName) != -1) result = true;
 
     // NOTE: Alternatively, stat() can be used instead of access()
     //#include <sys/stat.h>
@@ -2052,12 +2435,12 @@ bool IsFileExtension(const char *fileName, const char *ext)
 bool DirectoryExists(const char *dirPath)
 {
     bool result = false;
-    DIR *dir = opendir(dirPath);
+    DIR *dir = RL_FS_OPENDIR(dirPath);
 
     if (dir != NULL)
     {
         result = true;
-        closedir(dir);
+        RL_FS_CLOSEDIR(dir);
     }
 
     return result;
@@ -2245,7 +2628,7 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    char *path = RL_FS_GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
 
     return path;
 }
@@ -2364,12 +2747,12 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
     unsigned int fileCounter = 0;
 
     struct dirent *entity;
-    DIR *dir = opendir(dirPath);
+    DIR *dir = RL_FS_OPENDIR(dirPath);
 
     if (dir != NULL) // It's a directory
     {
         // SCAN 1: Count files
-        while ((entity = readdir(dir)) != NULL)
+        while ((entity = RL_FS_READDIR(dir)) != NULL)
         {
             // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
             if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
@@ -2380,7 +2763,7 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
         for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-        closedir(dir);
+        RL_FS_CLOSEDIR(dir);
 
         // SCAN 2: Read filepaths
         // NOTE: Directory paths are also registered
@@ -2443,14 +2826,14 @@ int MakeDirectory(const char *dirPath)
             if ((pathcpy[i] == '\\') || (pathcpy[i] == '/'))
             {
                 pathcpy[i] = '\0';
-                if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+                if (!DirectoryExists(pathcpy)) RL_FS_MKDIR(pathcpy);
                 pathcpy[i] = '/';
             }
         }
     }
 
     // Create final directory
-    if (!DirectoryExists(pathcpy)) MKDIR(pathcpy);
+    if (!DirectoryExists(pathcpy)) RL_FS_MKDIR(pathcpy);
     RL_FREE(pathcpy);
 
     // In case something failed and requested directory
@@ -2463,7 +2846,7 @@ int MakeDirectory(const char *dirPath)
 // Change working directory, returns true on success
 bool ChangeDirectory(const char *dirPath)
 {
-    bool result = CHDIR(dirPath);
+    bool result = RL_FS_CHDIR(dirPath);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dirPath);
     else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dirPath);
@@ -3833,11 +4216,11 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
     memset(path, 0, MAX_FILEPATH_LENGTH);
 
     struct dirent *dp = NULL;
-    DIR *dir = opendir(basePath);
+    DIR *dir = RL_FS_OPENDIR(basePath);
 
     if (dir != NULL)
     {
-        while ((dp = readdir(dir)) != NULL)
+        while ((dp = RL_FS_READDIR(dir)) != NULL)
         {
             if ((strcmp(dp->d_name, ".") != 0) &&
                 (strcmp(dp->d_name, "..") != 0))
@@ -3880,7 +4263,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
             }
         }
 
-        closedir(dir);
+        RL_FS_CLOSEDIR(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
 }
@@ -3893,11 +4276,11 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
     memset(path, 0, MAX_FILEPATH_LENGTH);
 
     struct dirent *dp = NULL;
-    DIR *dir = opendir(basePath);
+    DIR *dir = RL_FS_OPENDIR(basePath);
 
     if (dir != NULL)
     {
-        while (((dp = readdir(dir)) != NULL) && (files->count < files->capacity))
+        while (((dp = RL_FS_READDIR(dir)) != NULL) && (files->count < files->capacity))
         {
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
@@ -3953,7 +4336,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
             }
         }
 
-        closedir(dir);
+        RL_FS_CLOSEDIR(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
 }

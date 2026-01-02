@@ -86,6 +86,20 @@ typedef struct {
 extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific data
 
+// Android asset manager for accessing packaged resources
+static AAssetManager *assetManager = NULL;          // Android assets manager pointer
+static const char *internalDataPath = NULL;         // Android internal data path
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+void InitAssetManager(AAssetManager *manager, const char *dataPath);
+FILE *android_fopen(const char *fileName, const char *mode);
+static int android_read(void *cookie, char *data, int dataSize);
+static int android_write(void *cookie, const char *data, int dataSize);
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
+static int android_close(void *cookie);
+
 //----------------------------------------------------------------------------------
 // Local Variables Definition
 //----------------------------------------------------------------------------------
@@ -1531,6 +1545,70 @@ static void SetupFramebuffer(int width, int height)
         CORE.Window.renderOffset.x = 0;
         CORE.Window.renderOffset.y = 0;
     }
+}
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition: Android Asset Manager
+//----------------------------------------------------------------------------------
+
+// Initialize asset manager from android app
+void InitAssetManager(AAssetManager *manager, const char *dataPath)
+{
+    assetManager = manager;
+    internalDataPath = dataPath;
+}
+
+// Replacement for fopen()
+// REF: https://developer.android.com/ndk/reference/group/asset
+FILE *android_fopen(const char *fileName, const char *mode)
+{
+    if (mode[0] == 'w')
+    {
+        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
+        // assets directory through AAssetManager but we want to also be able to
+        // write data when required using the standard stdio FILE access functions
+        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
+        return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+    }
+    else
+    {
+        // NOTE: AAsset provides access to read-only asset
+        AAsset *asset = AAssetManager_open(assetManager, fileName, AASSET_MODE_UNKNOWN);
+
+        if (asset != NULL)
+        {
+            // Get pointer to file in the assets
+            return funopen(asset, android_read, android_write, android_seek, android_close);
+        }
+        else
+        {
+            // Just do a regular open if file is not found in the assets
+            return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+        }
+    }
+}
+
+static int android_read(void *cookie, char *data, int dataSize)
+{
+    return AAsset_read((AAsset *)cookie, data, dataSize);
+}
+
+static int android_write(void *cookie, const char *data, int dataSize)
+{
+    TRACELOG(LOG_WARNING, "ANDROID: Failed to provide write access to APK");
+
+    return EACCES;
+}
+
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence)
+{
+    return AAsset_seek((AAsset *)cookie, offset, whence);
+}
+
+static int android_close(void *cookie)
+{
+    AAsset_close((AAsset *)cookie);
+    return 0;
 }
 
 // EOF

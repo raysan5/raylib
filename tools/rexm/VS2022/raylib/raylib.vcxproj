@@ -312,7 +312,6 @@
     <ClCompile Include="$(RaylibSrcPath)\rshapes.c" />
     <ClCompile Include="$(RaylibSrcPath)\rtext.c" />
     <ClCompile Include="$(RaylibSrcPath)\rtextures.c" />
-    <ClCompile Include="$(RaylibSrcPath)\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(RaylibSrcPath)\config.h" />

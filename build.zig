@@ -196,8 +196,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         raylib.root_module.addIncludePath(b.path("src/external/glfw/include"));
     }
 
-    var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
+    var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 1);
+    c_source_files.appendSliceAssumeCapacity(&.{"src/rcore.c"});
 
     if (options.rshapes) {
         try c_source_files.append(b.allocator, "src/rshapes.c");

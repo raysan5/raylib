@@ -30,7 +30,7 @@
 
 //------------------------------------------------------------------------------------
 // Module selection - Some modules could be avoided
-// Mandatory modules: rcore, rlgl, utils
+// Mandatory modules: rcore, rlgl
 //------------------------------------------------------------------------------------
 #define SUPPORT_MODULE_RSHAPES          1
 #define SUPPORT_MODULE_RTEXTURES        1

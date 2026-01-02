@@ -141,6 +141,98 @@
     #define RL_FREE(ptr)        free(ptr)
 #endif
 
+// File system operations abstraction
+// NOTE: Require recompiling raylib sources
+#ifndef RL_FS_FOPEN
+    #define RL_FS_FOPEN(name, mode)                     fopen(name, mode)
+#endif
+#ifndef RL_FS_FCLOSE
+    #define RL_FS_FCLOSE(stream)                        fclose(stream)
+#endif
+#ifndef RL_FS_FREAD
+    #define RL_FS_FREAD(ptr, size, count, stream)       fread(ptr, size, count, stream)
+#endif
+#ifndef RL_FS_FWRITE
+    #define RL_FS_FWRITE(ptr, size, count, stream)      fwrite(ptr, size, count, stream)
+#endif
+#ifndef RL_FS_FSEEK
+    #define RL_FS_FSEEK(stream, offset, whence)         fseek(stream, offset, whence)
+#endif
+#ifndef RL_FS_FTELL
+    #define RL_FS_FTELL(stream)                         ftell(stream)
+#endif
+#ifndef RL_FS_FPRINTF
+    #define RL_FS_FPRINTF                               fprintf
+#endif
+#ifndef RL_FS_REMOVE
+    #define RL_FS_REMOVE(name)                          remove(name)
+#endif
+#ifndef RL_FS_RENAME
+    #define RL_FS_RENAME(old, new)                      rename(old, new)
+#endif
+
+// Platform-specific directory and file system operations
+#if defined(_WIN32)
+    #ifndef RL_FS_STAT
+        #define RL_FS_STAT(path, buf)                   _stat(path, buf)
+    #endif
+    #ifndef RL_FS_ACCESS
+        #define RL_FS_ACCESS(fn)                        _access(fn, 0)
+    #endif
+    #ifndef RL_FS_CHDIR
+        #define RL_FS_CHDIR(dir)                        _chdir(dir)
+    #endif
+    #ifndef RL_FS_GETCWD
+        #define RL_FS_GETCWD(buf, size)                 _getcwd(buf, size)
+    #endif
+    #ifndef RL_FS_MKDIR
+        #define RL_FS_MKDIR(dir)                        _mkdir(dir)
+    #endif
+#else
+    #ifndef RL_FS_STAT
+        #define RL_FS_STAT(path, buf)                   stat(path, buf)
+    #endif
+    #ifndef RL_FS_ACCESS
+        #define RL_FS_ACCESS(fn)                        access(fn, F_OK)
+    #endif
+    #ifndef RL_FS_CHDIR
+        #define RL_FS_CHDIR(dir)                        chdir(dir)
+    #endif
+    #ifndef RL_FS_GETCWD
+        #define RL_FS_GETCWD(buf, size)                 getcwd(buf, size)
+    #endif
+    #ifndef RL_FS_MKDIR
+        #define RL_FS_MKDIR(dir)                        mkdir(dir, 0777)
+    #endif
+#endif
+
+// Directory operations (both Windows and POSIX)
+#ifndef RL_FS_OPENDIR
+    #define RL_FS_OPENDIR(name)                         opendir(name)
+#endif
+#ifndef RL_FS_READDIR
+    #define RL_FS_READDIR(dir)                          readdir(dir)
+#endif
+#ifndef RL_FS_CLOSEDIR
+    #define RL_FS_CLOSEDIR(dir)                         closedir(dir)
+#endif
+
+//------------------------------------------------------------------------------------
+// Logging macros
+//------------------------------------------------------------------------------------
+#if defined(SUPPORT_TRACELOG)
+    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
+
+    #if defined(SUPPORT_TRACELOG_DEBUG)
+        #define TRACELOGD(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
+    #else
+        #define TRACELOGD(...) (void)0
+    #endif
+#else
+    #define TRACELOG(level, ...) (void)0
+    #define TRACELOGD(...) (void)0
+#endif
+
 // NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized with { }
 // This is called aggregate initialization (C++11 feature)
