@@ -353,7 +353,7 @@ typedef struct CoreData {
             int pointCount;                                 // Number of touch points active
             int pointId[MAX_TOUCH_POINTS];                  // Point identifiers
             Vector2 position[MAX_TOUCH_POINTS];             // Touch position on screen
-            Vector2 previousPosition[MAX_TOUCH_POINTS]; // Previous touch position on screen
+            Vector2 previousPosition[MAX_TOUCH_POINTS];     // Previous touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state
 
