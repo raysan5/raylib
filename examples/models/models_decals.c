@@ -45,7 +45,10 @@ static void FreeMeshBuilder(MeshBuilder *mb);
 static Mesh BuildMesh(MeshBuilder *mb);
 static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, float decalOffset);
 static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
-#define FreeDecalMeshData() GenMeshDecal((Model){ .meshCount = -1.0f }, (Matrix){ 0 }, 0.0f, 0.0f)
+inline void FreeDecalMeshData()
+{
+    GenMeshDecal((Model) { .meshCount = -1 }, (Matrix) { 0 }, 0.0f, 0.0f);
+}
 static bool GuiButton(Rectangle rec, const char *label);
 
 //------------------------------------------------------------------------------------
@@ -198,12 +201,12 @@ int main(void)
             EndMode3D();
 
             float yPos = 10;
-            float x0 = GetScreenWidth() - 300;
+            float x0 = GetScreenWidth() - 300.0f;
             float x1 = x0 + 100;
             float x2 = x1 + 100;
 
-            DrawText("Vertices", x1, yPos, 10, LIME);
-            DrawText("Triangles", x2, yPos, 10, LIME);
+            DrawText("Vertices", (int)x1, (int)yPos, 10, LIME);
+            DrawText("Triangles", (int)x2, (int)yPos, 10, LIME);
             yPos += 15;
 
             int vertexCount = 0;
@@ -215,24 +218,24 @@ int main(void)
                 triangleCount += model.meshes[i].triangleCount;
             }
 
-            DrawText("Main model", x0, yPos, 10, LIME);
-            DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
-            DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
+            DrawText("Main model", (int)x0, (int)yPos, 10, LIME);
+            DrawText(TextFormat("%d", vertexCount), (int)x1, (int)yPos, 10, LIME);
+            DrawText(TextFormat("%d", triangleCount), (int)x2, (int)yPos, 10, LIME);
             yPos += 15;
 
             for (int i = 0; i < decalCount; i++)
             {
                 if (i == 20)
                 {
-                    DrawText("...", x0, yPos, 10, LIME);
+                    DrawText("...", (int)x0, (int)yPos, 10, LIME);
                     yPos += 15;
                 }
 
                 if (i < 20)
                 {
-                    DrawText(TextFormat("Decal #%d", i+1), x0, yPos, 10, LIME);
-                    DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), x1, yPos, 10, LIME);
-                    DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), x2, yPos, 10, LIME);
+                    DrawText(TextFormat("Decal #%d", i+1), (int)x0, (int)yPos, 10, LIME);
+                    DrawText(TextFormat("%d", decalModels[i].meshes[0].vertexCount), (int)x1, (int)yPos, 10, LIME);
+                    DrawText(TextFormat("%d", decalModels[i].meshes[0].triangleCount), (int)x2, (int)yPos, 10, LIME);
                     yPos += 15;
                 }
 
@@ -240,18 +243,18 @@ int main(void)
                 triangleCount += decalModels[i].meshes[0].triangleCount;
             }
 
-            DrawText("TOTAL", x0, yPos, 10, LIME);
-            DrawText(TextFormat("%d", vertexCount), x1, yPos, 10, LIME);
-            DrawText(TextFormat("%d", triangleCount), x2, yPos, 10, LIME);
+            DrawText("TOTAL", (int)x0, (int)yPos, 10, LIME);
+            DrawText(TextFormat("%d", vertexCount), (int)x1, (int)yPos, 10, LIME);
+            DrawText(TextFormat("%d", triangleCount), (int)x2, (int)yPos, 10, LIME);
             yPos += 15;
 
             DrawText("Hold RMB to move camera", 10, 430, 10, GRAY);
             DrawText("(c) Character model and texture from kenney.nl", screenWidth - 260, screenHeight - 20, 10, GRAY);
 
             // UI elements
-            if (GuiButton((Rectangle){ 10, screenHeight - 100, 100, 60 }, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
+            if (GuiButton((Rectangle){ 10, screenHeight - 1000.f, 100, 60 }, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
 
-            if (GuiButton((Rectangle){ 10 + 110, screenHeight - 100, 100, 60 }, "Clear Decals"))
+            if (GuiButton((Rectangle){ 10 + 110, screenHeight - 100.0f, 100, 60 }, "Clear Decals"))
             {
                 // Clear decals, unload all decal models
                 for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
@@ -596,8 +599,8 @@ static bool GuiButton(Rectangle rec, const char *label)
     DrawRectangleRec(rec, bgColor);
     DrawRectangleLinesEx(rec, 2.0f, DARKGRAY);
 
-    float fontSize = 10.0f;
-    float textWidth = MeasureText(label, fontSize);
+    int fontSize = 10;
+    int textWidth = MeasureText(label, fontSize);
 
     DrawText(label, (int)(rec.x + rec.width*0.5f - textWidth*0.5f), (int)(rec.y + rec.height*0.5f - fontSize*0.5f), fontSize, DARKGRAY);
 

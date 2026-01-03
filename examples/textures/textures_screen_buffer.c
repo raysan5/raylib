@@ -66,7 +66,7 @@ int main(void)
         // Grow flameRoot
         for (int x = 2; x < flameWidth; x++)
         {
-            unsigned short flame = flameRootBuffer[x];
+            unsigned char flame = flameRootBuffer[x];
             if (flame == 255) continue;
             flame += GetRandomValue(0, 2);
             if (flame > 255) flame = 255;
