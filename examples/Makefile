@@ -529,6 +529,7 @@ CORE = \
     core/core_clipboard_text \
     core/core_compute_hash \
     core/core_custom_frame_control \
+    core/core_custom_filesystem \
     core/core_custom_logging \
     core/core_delta_time \
     core/core_directory_files \
