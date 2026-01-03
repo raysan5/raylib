@@ -227,8 +227,8 @@ void ToggleFullscreen(void)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
             Vector2 scaleDpi = GetWindowScaleDPI();
-            CORE.Window.screen.width *= scaleDpi.x;
-            CORE.Window.screen.height *= scaleDpi.y;
+            CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width * scaleDpi.x);
+            CORE.Window.screen.height = (unsigned int)(CORE.Window.screen.height * scaleDpi.y);
         }
 #endif
 
@@ -306,8 +306,8 @@ void ToggleBorderlessWindowed(void)
                 if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                 {
                     Vector2 scaleDpi = GetWindowScaleDPI();
-                    CORE.Window.screen.width *= scaleDpi.x;
-                    CORE.Window.screen.height *= scaleDpi.y;
+                    CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width * scaleDpi.x);
+                    CORE.Window.screen.height = (unsigned int)(CORE.Window.screen.height * scaleDpi.y);
                 }
             #endif
 
