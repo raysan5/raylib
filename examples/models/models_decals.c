@@ -45,10 +45,7 @@ static void FreeMeshBuilder(MeshBuilder *mb);
 static Mesh BuildMesh(MeshBuilder *mb);
 static Mesh GenMeshDecal(Model inputModel, Matrix projection, float decalSize, float decalOffset);
 static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
-inline void FreeDecalMeshData()
-{
-    GenMeshDecal((Model) { .meshCount = -1 }, (Matrix) { 0 }, 0.0f, 0.0f);
-}
+static void FreeDecalMeshData(void) { GenMeshDecal((Model){ .meshCount = -1 }, (Matrix){ 0 }, 0.0f, 0.0f); }
 static bool GuiButton(Rectangle rec, const char *label);
 
 //------------------------------------------------------------------------------------
