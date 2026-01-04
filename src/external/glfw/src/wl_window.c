@@ -50,6 +50,8 @@
 #include "relative-pointer-unstable-v1-client-protocol.h"
 #include "pointer-constraints-unstable-v1-client-protocol.h"
 #include "xdg-activation-v1-client-protocol.h"
+#include "wlr-layer-shell-unstable-v1-client-protocol.h"
+#include "wlr-layer-shell-unstable-v1-client-protocol-code.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
 #include "fractional-scale-v1-client-protocol.h"
 
@@ -688,6 +690,45 @@ static const struct xdg_surface_listener xdgSurfaceListener =
     xdgSurfaceHandleConfigure
 };
 
+static void layerSurfaceHandleConfigure(void* userData,
+                                        struct zwlr_layer_surface_v1* surface,
+                                        uint32_t serial,
+                                        uint32_t width,
+                                        uint32_t height)
+{
+    _GLFWwindow* window = userData;
+
+    zwlr_layer_surface_v1_ack_configure(surface, serial);
+
+    if (width > 0 && height > 0)
+    {
+        window->wl.width = width;
+        window->wl.height = height;
+        window->wl.fbWidth = width;
+        window->wl.fbHeight = height;
+
+        resizeFramebuffer(window);
+        _glfwInputFramebufferSize(window, window->wl.fbWidth, window->wl.fbHeight);
+        _glfwInputWindowSize(window, window->wl.width, window->wl.height);
+    }
+
+    window->wl.visible = GLFW_TRUE;
+    _glfwInputWindowFocus(window, GLFW_TRUE);
+}
+
+static void layerSurfaceHandleClosed(void* userData,
+                                     struct zwlr_layer_surface_v1* surface)
+{
+    _GLFWwindow* window = userData;
+    _glfwInputWindowCloseRequest(window);
+}
+
+static const struct zwlr_layer_surface_v1_listener layerSurfaceListener =
+{
+    layerSurfaceHandleConfigure,
+    layerSurfaceHandleClosed
+};
+
 void libdecorFrameHandleConfigure(struct libdecor_frame* frame,
                                   struct libdecor_configuration* config,
                                   void* userData)
@@ -913,6 +954,43 @@ static void updateXdgSizeLimits(_GLFWwindow* window)
     xdg_toplevel_set_max_size(window->wl.xdg.toplevel, maxwidth, maxheight);
 }
 
+static GLFWbool createLayerShellSurface(_GLFWwindow* window)
+{
+    window->wl.layerShell.surface = zwlr_layer_shell_v1_get_layer_surface(
+            _glfw.wl.layerShell,
+            window->wl.surface,
+            NULL,
+            window->wl.layerShell.layer,  // Use the stored layer value
+            window->wl.appId ? window->wl.appId : "glfw-layer");
+
+    if (!window->wl.layerShell.surface)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: Failed to create layer surface");
+        return GLFW_FALSE;
+    }
+
+    // Fullscreen on all edges
+    zwlr_layer_surface_v1_set_size(window->wl.layerShell.surface, 0, 0);
+    zwlr_layer_surface_v1_set_anchor(window->wl.layerShell.surface,
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT);
+    zwlr_layer_surface_v1_set_exclusive_zone(window->wl.layerShell.surface, -1);
+    zwlr_layer_surface_v1_set_keyboard_interactivity(
+        window->wl.layerShell.surface,
+        ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE);
+
+    zwlr_layer_surface_v1_add_listener(window->wl.layerShell.surface,
+                                       &layerSurfaceListener, window);
+
+    wl_surface_commit(window->wl.surface);
+    wl_display_roundtrip(_glfw.wl.display);
+
+    return GLFW_TRUE;
+}
+
 static GLFWbool createXdgShellObjects(_GLFWwindow* window)
 {
     window->wl.xdg.surface = xdg_wm_base_get_xdg_surface(_glfw.wl.wmBase,
@@ -987,6 +1065,9 @@ static GLFWbool createXdgShellObjects(_GLFWwindow* window)
 
 static GLFWbool createShellObjects(_GLFWwindow* window)
 {
+    if (window->wl.layerShell.layer >= 0 && _glfw.wl.layerShell)
+        return createLayerShellSurface(window);
+  
     if (_glfw.wl.libdecor.context)
     {
         if (createLibdecorFrame(window))
@@ -996,12 +1077,19 @@ static GLFWbool createShellObjects(_GLFWwindow* window)
     return createXdgShellObjects(window);
 }
 
+
 static void destroyShellObjects(_GLFWwindow* window)
 {
     destroyFallbackDecorations(window);
 
     if (window->wl.libdecor.frame)
         libdecor_frame_unref(window->wl.libdecor.frame);
+
+    if (window->wl.layerShell.surface)
+        {
+            zwlr_layer_surface_v1_destroy(window->wl.layerShell.surface);
+            window->wl.layerShell.surface = NULL;
+        }
 
     if (window->wl.xdg.decoration)
         zxdg_toplevel_decoration_v1_destroy(window->wl.xdg.decoration);
@@ -1040,6 +1128,7 @@ static GLFWbool createNativeSurface(_GLFWwindow* window,
     window->wl.fbWidth = wndconfig->width;
     window->wl.fbHeight = wndconfig->height;
     window->wl.appId = _glfw_strdup(wndconfig->wl.appId);
+    window->wl.layerShell.layer = wndconfig->wl.layerShellLayer;
 
     window->wl.bufferScale = 1;
     window->wl.scalingNumerator = 120;
@@ -3306,4 +3395,3 @@ GLFWAPI struct wl_surface* glfwGetWaylandWindow(GLFWwindow* handle)
 }
 
 #endif // _GLFW_WAYLAND
-

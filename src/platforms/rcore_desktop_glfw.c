@@ -1471,6 +1471,16 @@ int InitPlatform(void)
 #endif
     }
 
+    // Wayland layer shell
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WAYLAND_LAYER_OVERLAY))
+        glfwWindowHint(GLFW_WAYLAND_LAYER_SHELL, 3);  // ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY
+    else if (FLAG_IS_SET(CORE.Window.flags, FLAG_WAYLAND_LAYER_TOP))
+        glfwWindowHint(GLFW_WAYLAND_LAYER_SHELL, 2);  // ZWLR_LAYER_SHELL_V1_LAYER_TOP
+    else if (FLAG_IS_SET(CORE.Window.flags, FLAG_WAYLAND_LAYER_BOTTOM))
+        glfwWindowHint(GLFW_WAYLAND_LAYER_SHELL, 1);  // ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM
+    else if (FLAG_IS_SET(CORE.Window.flags, FLAG_WAYLAND_LAYER_BACKGROUND))
+        glfwWindowHint(GLFW_WAYLAND_LAYER_SHELL, 0);  // ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND
+
     // Mouse passthrough
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MOUSE_PASSTHROUGH)) glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
     else glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, GLFW_FALSE);
