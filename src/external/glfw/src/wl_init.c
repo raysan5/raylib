@@ -50,6 +50,7 @@
 #include "fractional-scale-v1-client-protocol.h"
 #include "xdg-activation-v1-client-protocol.h"
 #include "idle-inhibit-unstable-v1-client-protocol.h"
+#include "wlr-layer-shell-unstable-v1-client-protocol.h"
 
 // NOTE: Versions of wayland-scanner prior to 1.17.91 named every global array of
 //       wl_interface pointers 'types', making it impossible to combine several unmodified
@@ -154,6 +155,10 @@ static void registryHandleGlobal(void* userData,
         _glfw.wl.wmBase =
             wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
         xdg_wm_base_add_listener(_glfw.wl.wmBase, &wmBaseListener, NULL);
+    }
+    else if (strcmp(interface, "zwlr_layer_shell_v1") == 0)
+    {
+        _glfw.wl.layerShell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 1);
     }
     else if (strcmp(interface, "zxdg_decoration_manager_v1") == 0)
     {
@@ -952,6 +957,8 @@ void _glfwTerminateWayland(void)
         wl_compositor_destroy(_glfw.wl.compositor);
     if (_glfw.wl.shm)
         wl_shm_destroy(_glfw.wl.shm);
+    if (_glfw.wl.layerShell)
+        zwlr_layer_shell_v1_destroy(_glfw.wl.layerShell);
     if (_glfw.wl.viewporter)
         wp_viewporter_destroy(_glfw.wl.viewporter);
     if (_glfw.wl.decorationManager)

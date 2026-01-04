@@ -1135,6 +1135,7 @@ extern "C" {
  *  Allows specification of the Wayland app_id.
  */
 #define GLFW_WAYLAND_APP_ID         0x00026001
+#define GLFW_WAYLAND_LAYER_SHELL    0x00026002
 /*! @} */
 
 #define GLFW_NO_API                          0

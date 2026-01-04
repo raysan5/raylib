@@ -381,6 +381,11 @@ typedef struct _GLFWwindowWayland
     } xdg;
 
     struct {
+        struct zwlr_layer_surface_v1* surface;
+        int layer;
+    } layerShell;
+    
+    struct {
         struct libdecor_frame*  frame;
     } libdecor;
 
@@ -436,6 +441,7 @@ typedef struct _GLFWlibraryWayland
     struct zwp_pointer_constraints_v1*      pointerConstraints;
     struct zwp_idle_inhibit_manager_v1*     idleInhibitManager;
     struct xdg_activation_v1*               activationManager;
+    struct zwlr_layer_shell_v1* layerShell;
     struct wp_fractional_scale_manager_v1*  fractionalScaleManager;
 
     _GLFWofferWayland*          offers;

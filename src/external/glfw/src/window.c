@@ -276,6 +276,7 @@ void glfwDefaultWindowHints(void)
     _glfw.hints.window.xpos         = GLFW_ANY_POSITION;
     _glfw.hints.window.ypos         = GLFW_ANY_POSITION;
     _glfw.hints.window.scaleFramebuffer = GLFW_TRUE;
+    _glfw.hints.window.wl.layerShellLayer = -1;
 
     // The default is 24 bits of color, 24 bits of depth and 8 bits of stencil,
     // double buffered
@@ -430,6 +431,9 @@ GLFWAPI void glfwWindowHint(int hint, int value)
             return;
         case GLFW_REFRESH_RATE:
             _glfw.hints.refreshRate = value;
+            return;
+        case GLFW_WAYLAND_LAYER_SHELL:
+            _glfw.hints.window.wl.layerShellLayer = value;
             return;
     }
 

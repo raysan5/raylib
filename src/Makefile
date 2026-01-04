@@ -469,6 +469,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/fractional-scale-v1.xml, fractional-scale-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-activation-v1.xml, xdg-activation-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/idle-inhibit-unstable-v1.xml, idle-inhibit-unstable-v1-client-protocol)
+
+            wlr_protocols_dir := $(shell pkg-config --variable=pkgdatadir wlr-protocols)
+            $(call wl_generate, $(wlr_protocols_dir)/unstable/wlr-layer-shell-unstable-v1.xml, wlr-layer-shell-unstable-v1-client-protocol)
         endif
     endif
 endif
