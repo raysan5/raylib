@@ -554,11 +554,10 @@ typedef enum {
     FLAG_BORDERLESS_WINDOWED_MODE = 0x00008000, // Set to run program in borderless windowed mode
     FLAG_MSAA_4X_HINT       = 0x00000020,   // Set to try enabling MSAA 4X
     FLAG_INTERLACED_HINT    = 0x00010000,    // Set to try enabling interlaced video format (for V3D)
-
-    FLAG_WAYLAND_LAYER_BACKGROUND = 0x00020000,  // Layer 0
-    FLAG_WAYLAND_LAYER_BOTTOM     = 0x00040000,  // Layer 1
-    FLAG_WAYLAND_LAYER_TOP        = 0x00080000,  // Layer 2
-    FLAG_WAYLAND_LAYER_OVERLAY    = 0x00100000,  // Layer 3
+    FLAG_WAYLAND_LAYER_BACKGROUND = 0x00020000,  // Layer level 0: background (for wallpapers)
+    FLAG_WAYLAND_LAYER_BOTTOM     = 0x00040000,  // Layer level 1: bottom (for normal applications)
+    FLAG_WAYLAND_LAYER_TOP        = 0x00080000,  // Layer level 2: top (for panels or popups)
+    FLAG_WAYLAND_LAYER_OVERLAY    = 0x00100000,  // Layer level 3: overlay (for lock screens or on screen keybords)
 } ConfigFlags;
 
 // Trace log level
