@@ -1035,7 +1035,7 @@ void UnloadFont(Font font)
         UnloadTexture(font.texture);
         RL_FREE(font.recs);
 
-        TRACELOGD("FONT: Unloaded font data from RAM and VRAM");
+        TRACELOG(LOG_DEBUG, "FONT: Unloaded font data from RAM and VRAM");
     }
 }
 
