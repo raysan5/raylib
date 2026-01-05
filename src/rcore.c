@@ -362,6 +362,7 @@ typedef struct CoreData {
             int lastButtonPressed;          // Register last gamepad button pressed
             int axisCount[MAX_GAMEPADS];    // Register number of available gamepad axes
             bool ready[MAX_GAMEPADS];       // Flag to know if gamepad is ready
+            bool prevReady[MAX_GAMEPADS];   // Flag to know previous ready state
             char name[MAX_GAMEPADS][MAX_GAMEPAD_NAME_LENGTH];               // Gamepad name holder
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
@@ -3348,7 +3349,11 @@ void PlayAutomationEvent(AutomationEvent event)
                 CORE.Input.Touch.position[event.params[0]].x = (float)event.params[1];
                 CORE.Input.Touch.position[event.params[0]].y = (float)event.params[2];
             } break;
-            case INPUT_GAMEPAD_CONNECT: CORE.Input.Gamepad.ready[event.params[0]] = true; break;                // param[0]: gamepad
+            case INPUT_GAMEPAD_CONNECT:     // param[0]: gamepad
+            {
+                 CORE.Input.Gamepad.ready[event.params[0]] = true;
+                 CORE.Input.Gamepad.prevReady[event.params[0]] = false;
+            } break;                
             case INPUT_GAMEPAD_DISCONNECT: CORE.Input.Gamepad.ready[event.params[0]] = false; break;            // param[0]: gamepad
             case INPUT_GAMEPAD_BUTTON_UP: CORE.Input.Gamepad.currentButtonState[event.params[0]][event.params[1]] = false; break;    // param[0]: gamepad, param[1]: button
             case INPUT_GAMEPAD_BUTTON_DOWN: CORE.Input.Gamepad.currentButtonState[event.params[0]][event.params[1]] = true; break;   // param[0]: gamepad, param[1]: button
@@ -4127,24 +4132,41 @@ static void RecordAutomationEvent(void)
     // Gamepad input currentEventList->events recording
     //-------------------------------------------------------------------------------------
     for (int gamepad = 0; gamepad < MAX_GAMEPADS; gamepad++)
-    {
+    { 
         // Event type: INPUT_GAMEPAD_CONNECT
-        /*
-        if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to ready
+             
+        if ((CORE.Input.Gamepad.ready[gamepad] != CORE.Input.Gamepad.prevReady[gamepad]) &&
+            (CORE.Input.Gamepad.ready[gamepad])) // Check if changed to ready
         {
-            // TODO: Save gamepad connect event
+            currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
+            currentEventList->events[currentEventList->count].type = INPUT_GAMEPAD_CONNECT;
+            currentEventList->events[currentEventList->count].params[0] = gamepad;
+            currentEventList->events[currentEventList->count].params[1] = 0;
+            currentEventList->events[currentEventList->count].params[2] = 0;
+
+            TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GAMEPAD_CONNECT | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
+            currentEventList->count++;
         }
-        */
+        
 
         // Event type: INPUT_GAMEPAD_DISCONNECT
-        /*
-        if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
-            (!CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to not-ready
+        
+        if ((CORE.Input.Gamepad.ready[gamepad] != CORE.Input.Gamepad.prevReady[gamepad]) &&
+            (!CORE.Input.Gamepad.ready[gamepad])) // Check if changed to not-ready
         {
-            // TODO: Save gamepad disconnect event
+            currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
+            currentEventList->events[currentEventList->count].type = INPUT_GAMEPAD_DISCONNECT;
+            currentEventList->events[currentEventList->count].params[0] = gamepad;
+            currentEventList->events[currentEventList->count].params[1] = 0;
+            currentEventList->events[currentEventList->count].params[2] = 0;
+
+            TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_GAMEPAD_DISCONNECT | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
+            currentEventList->count++;
         }
-        */
+            
+        CORE.Input.Gamepad.prevReady[gamepad] = CORE.Input.Gamepad.ready[gamepad];
+
+        if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         for (int button = 0; button < MAX_GAMEPAD_BUTTONS; button++)
         {
