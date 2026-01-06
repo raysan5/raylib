@@ -53,6 +53,10 @@
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
 
+#ifndef EGL_PLATFORM_GBM_KHR
+    #define EGL_PLATFORM_GBM_KHR  0x31D7
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -64,6 +68,9 @@ typedef struct {
     bool contextRebindRequired;         // Used to know context rebind required
 
     // Display data
+    struct gbm_device *gbmDevice;       // GBM device
+    struct gbm_surface *gbmSurface;     // GBM surface
+    struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
     EGLDisplay device;                  // Native display device (physical screen connection)
     EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
     EGLContext context;                 // Graphic context, mode in which drawing can be done
