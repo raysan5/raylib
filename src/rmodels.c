@@ -7045,8 +7045,8 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
         else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i animations, %i bones, %i skins", fileName,
             m3d->numaction, m3d->numbone, m3d->numskin);
 
-        // No animation or bone+skin?
-        if (!m3d->numaction || !m3d->numbone || !m3d->numskin)
+        // No animation or bones, exit out. skins are not required because some people use one animation for N models
+        if (!m3d->numaction || !m3d->numbone)
         {
             m3d_free(m3d);
             UnloadFileData(fileData);
