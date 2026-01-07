@@ -80,12 +80,13 @@ int main(void)
         if (playerCellY < 0) playerCellY = 0;
         else if (playerCellY >= cubicmap.height) playerCellY = cubicmap.height - 1;
 
-        // Check map collisions using image data and player position
-        // TODO: Improvement: Just check player surrounding cells for collision
-        for (int y = 0; y < cubicmap.height; y++)
+        // Check map collisions using image data and player position against surrounding cells only
+        for (int y = playerCellY - 1; y <= playerCellY + 1; y++)
         {
-            for (int x = 0; x < cubicmap.width; x++)
+            if (y < 0 || y >= cubicmap.height) continue;
+            for (int x = playerCellX - 1; x <= playerCellX + 1; x++)
             {
+                if (x < 0 || x >= cubicmap.width) continue;
                 if ((mapPixels[y*cubicmap.width + x].r == 255) &&       // Collision: white pixel, only check R channel
                     (CheckCollisionCircleRec(playerPos, playerRadius,
                     (Rectangle){ mapPosition.x - 0.5f + x*1.0f, mapPosition.z - 0.5f + y*1.0f, 1.0f, 1.0f })))
