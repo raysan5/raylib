@@ -2894,8 +2894,8 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         // Get example name: replace underscore by spaces
         strncpy(exName, GetFileNameWithoutExt(exHtmlPathCopy), 64 - 1);
-        strncpy(exTitle, exName, 64 - 1);
-        for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
+        strcpy(exTitle, exName);
+        for (int i = 0; (i < 64) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
 
         // Get example category from exName: copy until first underscore
         for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
