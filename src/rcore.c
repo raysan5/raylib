@@ -3230,25 +3230,24 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
     // Export events as binary file
-    
-    // Binary buffer size = header (file id + count) + events data
-    int binarySize = 4 + sizeof(int) + sizeof(AutomationEvent)*list.count;
-    unsigned char *binBuffer = (unsigned char* )RL_MALLOC(binarySize);
-    if(!binBuffer) return false;
-
-    int offset = 0;
-    memcpy(binBuffer + offset, "rAE ", 4); offset += 4;
-    memcpy(binBuffer + offset, &list.count, sizeof(int)); offset += sizeof(int);
-    
-    if(list.count > 0)
+    // NOTE: Code not used, only for reference if required in the future
+    /*
+    if (list.count > 0)
     {
-        memcpy(binBuffer + offset, list.events,sizeof(AutomationEvent)*list.count);
+        int binarySize = 4 + sizeof(int) + sizeof(AutomationEvent)*list.count;
+        unsigned char *binBuffer = (unsigned char *)RL_CALLOC(binarySize, 1);
+        int offset = 0;
+        memcpy(binBuffer + offset, "rAE ", 4); 
+        offset += 4;
+        memcpy(binBuffer + offset, &list.count, sizeof(int)); 
+        offset += sizeof(int);
+        memcpy(binBuffer + offset, list.events, sizeof(AutomationEvent)*list.count);
         offset += sizeof(AutomationEvent)*list.count;
+        
+        success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
+        RL_FREE(binBuffer);
     }
-
-    success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
-
-    RL_FREE(binBuffer);
+    */
 
     // Export events as text
     // NOTE: Save to memory buffer and SaveFileText()
