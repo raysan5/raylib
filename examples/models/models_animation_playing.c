@@ -52,6 +52,10 @@ int main(void)
     // Load animation data
     int animsCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/iqm/guyanim.iqm", &animsCount);
+    if (anims==0) {
+        TraceLog(LOG_ERROR, "Failed to load animations.  You must run this example from the `examples/models` folder");
+        return -1;
+    }
     int animFrameCounter = 0;
 
     DisableCursor();                    // Catch cursor
