@@ -56,6 +56,7 @@ core;core_screen_recording;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santama
 core;core_clipboard_text;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ananth S";@Ananth1839
 core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@NimComPoo-04
 core;core_compute_hash;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
+core;core_keyboard_testbed;★★☆☆;5.6;5.6;2026;2026;"Ramon Santamaria";@raysan5
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
