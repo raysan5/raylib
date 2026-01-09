@@ -570,8 +570,7 @@ typedef enum {
 } TraceLogLevel;
 
 // Keyboard keys (US keyboard layout)
-// NOTE: Use GetKeyPressed() to allow redefining
-// required keys for alternative layouts
+// NOTE: Use GetKeyPressed() to allow redefining required keys for alternative layouts
 typedef enum {
     KEY_NULL            = 0,        // Key: NULL, used for no key pressed
     // Alphanumeric keys
