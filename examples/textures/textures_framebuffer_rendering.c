@@ -11,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2026-2026 Jack Boakes (@jackboakes)
+*   Copyright (c) 2026 Jack Boakes (@jackboakes)
 *
 ********************************************************************************************/
 
