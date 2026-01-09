@@ -608,6 +608,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
     textures/textures_fog_of_war \
+    textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
     textures/textures_image_channel \
     textures/textures_image_drawing \
