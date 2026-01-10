@@ -473,7 +473,9 @@ FILE *android_fopen(const char *fileName, const char *mode)
         {
             #undef fopen
             // Just do a regular open if file is not found in the assets
-            return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+            if(fopen(TextFormat("%s/%s", internalDataPath, fileName), mode) == NULL) {
+                return fopen(fileName, mode);
+            }
             #define fopen(name, mode) android_fopen(name, mode)
         }
     }
