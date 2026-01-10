@@ -78,7 +78,7 @@
     #if !defined(EXTERNAL_CONFIG_FLAGS)
         #include "config.h"     // Defines module configuration flags
     #endif
-    #include "utils.h"          // Required for: fopen() Android mapping
+    //#include "utils.h"          // Required for: fopen() Android mapping
 #endif
 
 #if defined(SUPPORT_MODULE_RAUDIO) || defined(RAUDIO_STANDALONE)

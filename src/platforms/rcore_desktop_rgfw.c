@@ -13,10 +13,7 @@
 *       - TODO
 *
 *   POSSIBLE IMPROVEMENTS:
-*       - TODO
-*
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
+*       - TBD
 *
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_RGFW

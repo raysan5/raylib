@@ -582,7 +582,6 @@
     <ClCompile Include="..\..\..\src\rshapes.c" />
     <ClCompile Include="..\..\..\src\rtext.c" />
     <ClCompile Include="..\..\..\src\rtextures.c" />
-    <ClCompile Include="..\..\..\src\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\external\cgltf.h" />

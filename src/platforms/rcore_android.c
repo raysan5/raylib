@@ -13,9 +13,6 @@
 *       - Improvement 01
 *       - Improvement 02
 *
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
-*
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_CUSTOM_FLAG
 *           Custom flag for rcore on target platform -not used-
@@ -48,7 +45,11 @@
 
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
+#include <android/log.h>                // Required for: Android log system: __android_log_vprint()
+#include <android/asset_manager.h>      // Required for: AAssetManager
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
+
+#include <errno.h>                      // Required for: error types
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL() and GetCurrentMonitor()]
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
@@ -268,6 +269,17 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 static GamepadButton AndroidTranslateGamepadButton(int button);                     // Map Android gamepad button to raylib gamepad button
 
 static void SetupFramebuffer(int width, int height); // Setup main framebuffer (required by InitPlatform())
+
+static int android_read(void *cookie, char *buf, int size);
+static int android_write(void *cookie, const char *buf, int size);
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
+static int android_close(void *cookie);
+
+FILE *android_fopen(const char *fileName, const char *mode); // Replacement for fopen() -> Read-only!
+FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
+              fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
+
+#define fopen(name, mode) android_fopen(name, mode)
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -819,8 +831,6 @@ int InitPlatform(void)
 
     // Initialize storage system
     //----------------------------------------------------------------------------
-    InitAssetManager(platform.app->activity->assetManager, platform.app->activity->internalDataPath);   // Initialize assets manager
-
     CORE.Storage.basePath = platform.app->activity->internalDataPath;   // Define base path for storage
     //----------------------------------------------------------------------------
 
@@ -1512,6 +1522,68 @@ static void SetupFramebuffer(int width, int height)
         CORE.Window.renderOffset.x = 0;
         CORE.Window.renderOffset.y = 0;
     }
+}
+
+// Replacement for fopen()
+// REF: https://developer.android.com/ndk/reference/group/asset
+FILE *android_fopen(const char *fileName, const char *mode)
+{
+    FILE *file = NULL;
+    
+    if (mode[0] == 'w')
+    {
+        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
+        // assets directory through AAssetManager but we want to also be able to
+        // write data when required using the standard stdio FILE access functions
+        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
+        #undef fopen
+        file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+        #define fopen(name, mode) android_fopen(name, mode)
+    }
+    else
+    {
+        // NOTE: AAsset provides access to read-only asset
+        AAsset *asset = AAssetManager_open(platform.app->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
+
+        if (asset != NULL)
+        {
+            // Get pointer to file in the assets
+            file = funopen(asset, android_read, android_write, android_seek, android_close);
+        }
+        else
+        {
+            #undef fopen
+            // Just do a regular open if file is not found in the assets
+            file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+            if (file == NULL) file = fopen(fileName, mode);
+            #define fopen(name, mode) android_fopen(name, mode)
+        }
+    }
+    
+    return file;
+}
+
+static int android_read(void *cookie, char *data, int dataSize)
+{
+    return AAsset_read((AAsset *)cookie, data, dataSize);
+}
+
+static int android_write(void *cookie, const char *data, int dataSize)
+{
+    TRACELOG(LOG_WARNING, "ANDROID: Failed to provide write access to APK");
+
+    return EACCES;
+}
+
+static fpos_t android_seek(void *cookie, fpos_t offset, int whence)
+{
+    return AAsset_seek((AAsset *)cookie, offset, whence);
+}
+
+static int android_close(void *cookie)
+{
+    AAsset_close((AAsset *)cookie);
+    return 0;
 }
 
 // EOF

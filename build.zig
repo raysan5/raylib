@@ -197,7 +197,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
+    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c" });
 
     if (options.rshapes) {
         try c_source_files.append(b.allocator, "src/rshapes.c");

@@ -30,7 +30,7 @@
 
 //------------------------------------------------------------------------------------
 // Module selection - Some modules could be avoided
-// Mandatory modules: rcore, rlgl, utils
+// Mandatory modules: rcore, rlgl
 //------------------------------------------------------------------------------------
 #define SUPPORT_MODULE_RSHAPES          1
 #define SUPPORT_MODULE_RTEXTURES        1
@@ -41,6 +41,16 @@
 //------------------------------------------------------------------------------------
 // Module: rcore - Configuration Flags
 //------------------------------------------------------------------------------------
+// Standard file io library (stdio.h) included
+#define SUPPORT_STANDARD_FILEIO         1
+// Show TRACELOG() output messages
+#define SUPPORT_TRACELOG                1
+#if defined(SUPPORT_TRACELOG)
+    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
+#else
+    #define TRACELOG(level, ...) (void)0
+#endif
+
 // Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM           1
 // Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
@@ -72,7 +82,7 @@
 
 // Support for clipboard image loading
 // NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
-#define SUPPORT_CLIPBOARD_IMAGE    1
+#define SUPPORT_CLIPBOARD_IMAGE         1
 
 // NOTE: Clipboard image loading requires support for some image file formats
 // TODO: Those defines should probably be removed from here, letting the user manage them
@@ -96,6 +106,7 @@
 
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
+#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 #define MAX_FILEPATH_CAPACITY        8192       // Maximum file paths capacity
 #define MAX_FILEPATH_LENGTH          4096       // Maximum length for filepaths (Linux PATH_MAX default value)
 
@@ -280,17 +291,5 @@
 #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device sample rate (device default)
 
 #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels
-
-//------------------------------------------------------------------------------------
-// Module: utils - Configuration Flags
-//------------------------------------------------------------------------------------
-// Standard file io library (stdio.h) included
-#define SUPPORT_STANDARD_FILEIO         1
-// Show TRACELOG() output messages
-#define SUPPORT_TRACELOG                1
-
-// utils: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 
 #endif // CONFIG_H

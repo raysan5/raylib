@@ -658,8 +658,7 @@ endif
 OBJS = rcore.o \
        rshapes.o \
        rtextures.o \
-       rtext.o \
-       utils.o
+       rtext.o
 
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(USE_EXTERNAL_GLFW),FALSE)
@@ -758,7 +757,7 @@ endif
 rcore.o : platforms/*.c
 
 # Compile core module
-rcore.o : rcore.c raylib.h rlgl.h utils.h raymath.h rcamera.h rgestures.h
+rcore.o : rcore.c raylib.h rlgl.h raymath.h rcamera.h rgestures.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile rglfw module
@@ -770,15 +769,11 @@ rshapes.o : rshapes.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile textures module
-rtextures.o : rtextures.c raylib.h rlgl.h utils.h
+rtextures.o : rtextures.c raylib.h rlgl.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile text module
-rtext.o : rtext.c raylib.h utils.h
-	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
-
-# Compile utils module
-utils.o : utils.c utils.h
+rtext.o : rtext.c raylib.h
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
 # Compile models module
