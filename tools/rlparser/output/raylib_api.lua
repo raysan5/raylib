@@ -3865,6 +3865,14 @@ return {
       }
     },
     {
+      name = "SetTraceLogLevel",
+      description = "Set the current threshold (minimum) log level",
+      returnType = "void",
+      params = {
+        {type = "int", name = "logLevel"}
+      }
+    },
+    {
       name = "TraceLog",
       description = "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)",
       returnType = "void",
@@ -3875,11 +3883,11 @@ return {
       }
     },
     {
-      name = "SetTraceLogLevel",
-      description = "Set the current threshold (minimum) log level",
+      name = "SetTraceLogCallback",
+      description = "Set custom trace log",
       returnType = "void",
       params = {
-        {type = "int", name = "logLevel"}
+        {type = "TraceLogCallback", name = "callback"}
       }
     },
     {
@@ -3905,46 +3913,6 @@ return {
       returnType = "void",
       params = {
         {type = "void *", name = "ptr"}
-      }
-    },
-    {
-      name = "SetTraceLogCallback",
-      description = "Set custom trace log",
-      returnType = "void",
-      params = {
-        {type = "TraceLogCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetLoadFileDataCallback",
-      description = "Set custom file binary data loader",
-      returnType = "void",
-      params = {
-        {type = "LoadFileDataCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetSaveFileDataCallback",
-      description = "Set custom file binary data saver",
-      returnType = "void",
-      params = {
-        {type = "SaveFileDataCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetLoadFileTextCallback",
-      description = "Set custom file text data loader",
-      returnType = "void",
-      params = {
-        {type = "LoadFileTextCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetSaveFileTextCallback",
-      description = "Set custom file text data saver",
-      returnType = "void",
-      params = {
-        {type = "SaveFileTextCallback", name = "callback"}
       }
     },
     {
@@ -4007,6 +3975,38 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "const char *", name = "text"}
+      }
+    },
+    {
+      name = "SetLoadFileDataCallback",
+      description = "Set custom file binary data loader",
+      returnType = "void",
+      params = {
+        {type = "LoadFileDataCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetSaveFileDataCallback",
+      description = "Set custom file binary data saver",
+      returnType = "void",
+      params = {
+        {type = "SaveFileDataCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetLoadFileTextCallback",
+      description = "Set custom file text data loader",
+      returnType = "void",
+      params = {
+        {type = "LoadFileTextCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetSaveFileTextCallback",
+      description = "Set custom file text data saver",
+      returnType = "void",
+      params = {
+        {type = "SaveFileTextCallback", name = "callback"}
       }
     },
     {

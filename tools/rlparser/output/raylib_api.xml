@@ -988,13 +988,16 @@
         <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">
             <Param type="const char *" name="url" desc="" />
         </Function>
+        <Function name="SetTraceLogLevel" retType="void" paramCount="1" desc="Set the current threshold (minimum) log level">
+            <Param type="int" name="logLevel" desc="" />
+        </Function>
         <Function name="TraceLog" retType="void" paramCount="3" desc="Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="..." name="args" desc="" />
         </Function>
-        <Function name="SetTraceLogLevel" retType="void" paramCount="1" desc="Set the current threshold (minimum) log level">
-            <Param type="int" name="logLevel" desc="" />
+        <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
+            <Param type="TraceLogCallback" name="callback" desc="" />
         </Function>
         <Function name="MemAlloc" retType="void *" paramCount="1" desc="Internal memory allocator">
             <Param type="unsigned int" name="size" desc="" />
@@ -1005,21 +1008,6 @@
         </Function>
         <Function name="MemFree" retType="void" paramCount="1" desc="Internal memory free">
             <Param type="void *" name="ptr" desc="" />
-        </Function>
-        <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
-            <Param type="TraceLogCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetLoadFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data loader">
-            <Param type="LoadFileDataCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetSaveFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data saver">
-            <Param type="SaveFileDataCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetLoadFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data loader">
-            <Param type="LoadFileTextCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetSaveFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data saver">
-            <Param type="SaveFileTextCallback" name="callback" desc="" />
         </Function>
         <Function name="LoadFileData" retType="unsigned char *" paramCount="2" desc="Load file data as byte array (read)">
             <Param type="const char *" name="fileName" desc="" />
@@ -1047,6 +1035,18 @@
         <Function name="SaveFileText" retType="bool" paramCount="2" desc="Save text data to file (write), string must be '\0' terminated, returns true on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="SetLoadFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data loader">
+            <Param type="LoadFileDataCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetSaveFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data saver">
+            <Param type="SaveFileDataCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetLoadFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data loader">
+            <Param type="LoadFileTextCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetSaveFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data saver">
+            <Param type="SaveFileTextCallback" name="callback" desc="" />
         </Function>
         <Function name="FileRename" retType="int" paramCount="2" desc="Rename file (if exists)">
             <Param type="const char *" name="fileName" desc="" />
