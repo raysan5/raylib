@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2CCCD9E4-9058-4291-BD89-39C979F0CA1E}</ProjectGuid>
+    <ProjectGuid>{F8DC77C0-556C-4672-B5B3-D2FA4ADC505C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>textures_framebuffer_rendering</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
