@@ -449,6 +449,8 @@ void InitAssetManager(AAssetManager *manager, const char *dataPath)
 // REF: https://developer.android.com/ndk/reference/group/asset
 FILE *android_fopen(const char *fileName, const char *mode)
 {
+    FILE *file = NULL;
+    
     if (mode[0] == 'w')
     {
         // NOTE: fopen() is mapped to android_fopen() that only grants read access to
@@ -456,7 +458,7 @@ FILE *android_fopen(const char *fileName, const char *mode)
         // write data when required using the standard stdio FILE access functions
         // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
         #undef fopen
-        return fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+        file = fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
         #define fopen(name, mode) android_fopen(name, mode)
     }
     else
@@ -467,18 +469,19 @@ FILE *android_fopen(const char *fileName, const char *mode)
         if (asset != NULL)
         {
             // Get pointer to file in the assets
-            return funopen(asset, android_read, android_write, android_seek, android_close);
+            file = funopen(asset, android_read, android_write, android_seek, android_close);
         }
         else
         {
             #undef fopen
             // Just do a regular open if file is not found in the assets
-            if(fopen(TextFormat("%s/%s", internalDataPath, fileName), mode) == NULL) {
-                return fopen(fileName, mode);
-            }
+            file = fopen(TextFormat("%s/%s", internalDataPath, fileName), mode);
+            if (file == NULL) file = fopen(fileName, mode);
             #define fopen(name, mode) android_fopen(name, mode)
         }
     }
+    
+    return file;
 }
 #endif  // PLATFORM_ANDROID
 
