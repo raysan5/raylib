@@ -544,6 +544,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_keyboard_testbed \
     core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
@@ -608,6 +609,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
     textures/textures_fog_of_war \
+    textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
     textures/textures_image_channel \
     textures/textures_image_drawing \

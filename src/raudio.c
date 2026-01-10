@@ -1249,7 +1249,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     frameCount = (ma_uint32)ma_convert_frames(data, frameCount, formatOut, channels, sampleRate, wave->data, frameCountIn, formatIn, wave->channels, wave->sampleRate);
     if (frameCount == 0)
     {
-        RL_FREE(wave->data);
+        RL_FREE(data);
         TRACELOG(LOG_WARNING, "WAVE: Failed format conversion");
         return;
     }

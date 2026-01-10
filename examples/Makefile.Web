@@ -530,6 +530,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_keyboard_testbed \
     core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
@@ -594,6 +595,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
     textures/textures_fog_of_war \
+    textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
     textures/textures_image_channel \
     textures/textures_image_drawing \
@@ -819,6 +821,9 @@ core/core_input_multitouch: core/core_input_multitouch.c
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_keyboard_testbed: core/core_keyboard_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_monitor_detector: core/core_monitor_detector.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1007,6 +1012,9 @@ textures/textures_cellular_automata: textures/textures_cellular_automata.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+textures/textures_framebuffer_rendering: textures/textures_framebuffer_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_gif_player: textures/textures_gif_player.c
