@@ -601,7 +601,6 @@
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
-    <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\src\raylib.dll.rc" />
