@@ -522,12 +522,13 @@ fn addExamples(
     raylib: *std.Build.Step.Compile,
 ) !*std.Build.Step {
     const all = b.step(module, "All " ++ module ++ " examples");
+    const io = all.owner.graph.io;
     const module_subpath = b.pathJoin(&.{ "examples", module });
-    var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
-    defer dir.close();
+    var dir = try std.Io.Dir.cwd().openDir(io, b.pathFromRoot(module_subpath), .{ .iterate = true });
+    defer dir.close(io);
 
     var iter = dir.iterate();
-    while (try iter.next()) |entry| {
+    while (try iter.next(io)) |entry| {
         if (entry.kind != .file) continue;
         const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
         const name = entry.name[0..extension_idx];
