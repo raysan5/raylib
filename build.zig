@@ -348,7 +348,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
-            try c_source_files.append(b.allocator, "rglfw.c");
+            try c_source_files.append(b.allocator, "src/rglfw.c");
             raylib.root_module.linkSystemLibrary("GL", .{});
             raylib.root_module.linkSystemLibrary("rt", .{});
             raylib.root_module.linkSystemLibrary("dl", .{});
