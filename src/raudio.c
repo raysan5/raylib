@@ -474,7 +474,8 @@ void InitAudioContext(void)
     AUDIO.System.isCtxReady = true;
 }
 
-void QueryAudioDevices(void(*callback)(int, char*, bool)) {
+void QueryAudioDevices(void(*callback)(int, char*, bool)) 
+{
     ma_device_info* pPlaybackInfos;
     ma_uint32 playbackCount;
     ma_device_info* pCaptureInfos;
@@ -598,7 +599,8 @@ void CloseAudioDevice(void)
     else TRACELOG(LOG_WARNING, "AUDIO: Device could not be closed, not currently initialized");
 }
 
-void CloseAudioContext(void) {
+void CloseAudioContext(void)
+{
     if (AUDIO.System.isCtxReady)
     {
         ma_context_uninit(&AUDIO.System.context);
