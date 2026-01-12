@@ -1491,6 +1491,9 @@ void rlEnd(void)
 // NOTE: Vertex position data is the basic information required for drawing
 void rlVertex3f(float x, float y, float z)
 {
+    _mm_prefetch(RLGL.currentBatch->vertexBuffer + RLGL.currentBatch->currentBuffer, 1);
+    _mm_prefetch(RLGL.currentBatch->draws + RLGL.currentBatch->drawCounter - 1, 0);
+
     float tx = x;
     float ty = y;
     float tz = z;
