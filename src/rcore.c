@@ -104,10 +104,7 @@
 
 #include "raylib.h"                 // Declares module functions
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"             // Defines module configuration flags
-#endif
+#include "config.h"                 // Defines module configuration flags
 
 #include <stdlib.h>                 // Required for: srand(), rand(), atexit(), exit()
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
