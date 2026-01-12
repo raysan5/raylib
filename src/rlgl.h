@@ -822,6 +822,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
 #if defined(RLGL_IMPLEMENTATION)
 
+#if defined(_WIN32)
+#include <intrin.h>
+#endif
+
 // Expose OpenGL functions from glad in raylib
 #if defined(BUILD_LIBTYPE_SHARED)
     #define GLAD_API_CALL_EXPORT
@@ -1491,8 +1495,10 @@ void rlEnd(void)
 // NOTE: Vertex position data is the basic information required for drawing
 void rlVertex3f(float x, float y, float z)
 {
+#if defined(_WIN32)
     _mm_prefetch(RLGL.currentBatch->vertexBuffer + RLGL.currentBatch->currentBuffer, 1);
     _mm_prefetch(RLGL.currentBatch->draws + RLGL.currentBatch->drawCounter - 1, 0);
+#endif
 
     float tx = x;
     float ty = y;
