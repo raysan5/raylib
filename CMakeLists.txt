@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(raylib)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Avoid excessive expansion of variables in conditionals. In particular, if
 # "PLATFORM" is "DRM" then:
 #

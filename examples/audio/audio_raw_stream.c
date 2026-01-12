@@ -62,7 +62,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - raw audio streaming");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);              // Initialize audio device
 
     SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE);
 

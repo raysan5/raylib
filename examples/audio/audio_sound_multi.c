@@ -29,7 +29,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - playing sound multiple times");
 
-    InitAudioDevice();      // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);       // Initialize audio device
 
     // load the sound list
     soundArray[0] = LoadSound("resources/sound.wav");         // Load WAV audio file into the first slot as the 'source' sound

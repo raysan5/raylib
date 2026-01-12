@@ -39,7 +39,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - stream effects");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);               // Initialize audio device
 
     Music music = LoadMusicStream("resources/country.mp3");
 

@@ -37,7 +37,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - module playing (streaming)");
 
-    InitAudioDevice();                  // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);                   // Initialize audio device
 
     Color colors[14] = { ORANGE, RED, GOLD, LIME, BLUE, VIOLET, BROWN, LIGHTGRAY, PINK,
                          YELLOW, GREEN, SKYBLUE, PURPLE, BEIGE };

@@ -28,7 +28,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - sprite explosion");
 
-    InitAudioDevice();
+    InitAudioContext();
+    InitAudioDevice(0); 
 
     // Load explosion sound
     Sound fxBoom = LoadSound("resources/boom.wav");

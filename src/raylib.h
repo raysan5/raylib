@@ -1624,7 +1624,9 @@ RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 
 typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
 
 // Audio device management functions
-RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
+RLAPI void InitAudioContext(void); 
+RLAPI void QueryAudioDevices(void(*callback)(int, char*, bool)); 
+RLAPI void InitAudioDevice(char* deviceName);                                     // Initialize audio device
 RLAPI void CloseAudioDevice(void);                                    // Close the audio device and context
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)

@@ -30,7 +30,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [others] example - embedded files loading");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);               // Initialize audio device
 
     // Loaded in CPU memory (RAM) from header file (audio_data.h)
     // Same as: Wave wave = LoadWave("sound.wav");

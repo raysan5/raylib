@@ -381,6 +381,7 @@ typedef struct AudioData {
         ma_context context;         // miniaudio context data
         ma_device device;           // miniaudio device
         ma_mutex lock;              // miniaudio mutex lock
+        bool isCtxReady;
         bool isReady;               // Check if audio device is ready
         size_t pcmBufferSize;       // Pre-allocated buffer size
         void *pcmBuffer;            // Pre-allocated buffer to read audio data from file/memory
@@ -455,8 +456,9 @@ void UntrackAudioBuffer(AudioBuffer *buffer);
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Audio Device initialization and Closing
 //----------------------------------------------------------------------------------
+
 // Initialize audio device
-void InitAudioDevice(void)
+void InitAudioContext(void)
 {
     // Init audio context
     ma_context_config ctxConfig = ma_context_config_init();
@@ -469,10 +471,67 @@ void InitAudioDevice(void)
         return;
     }
 
+    AUDIO.System.isCtxReady = true;
+}
+
+void QueryAudioDevices(void(*callback)(int, char*, bool)) {
+    ma_device_info* pPlaybackInfos;
+    ma_uint32 playbackCount;
+    ma_device_info* pCaptureInfos;
+    ma_uint32 captureCount;
+
+    if (ma_context_get_devices(&AUDIO.System.context, &pPlaybackInfos, &playbackCount, &pCaptureInfos, &captureCount) != MA_SUCCESS) 
+    {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to query playback devices");
+        return;
+    }
+
+    for (ma_uint32 i = 0; i < playbackCount; i += 1) {
+        callback(i, pPlaybackInfos[i].name, pPlaybackInfos[i].isDefault);
+    }
+}
+
+// Initialize audio device
+void InitAudioDevice(char* deviceName)
+{
+    if (!AUDIO.System.isCtxReady) {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device because context is not ready yet");
+        return;
+    }
+
+    ma_device_info* pPlaybackInfos;
+    ma_uint32 playbackCount;
+    ma_device_info* pCaptureInfos;
+    ma_uint32 captureCount;
+    ma_device_id* pDeviceId = NULL;
+
+    if (deviceName == NULL) 
+    {
+        TRACELOG(LOG_WARNING, "AUDIO: No playback device provided, falling back to default");
+    }
+    else 
+    {
+        if (ma_context_get_devices(&AUDIO.System.context, &pPlaybackInfos, &playbackCount, &pCaptureInfos, &captureCount) != MA_SUCCESS) 
+        {
+            TRACELOG(LOG_WARNING, "AUDIO: Failed to query playback devices, falling back to default");
+        }
+        else 
+        {
+            for (ma_uint32 i = 0; i < playbackCount; i += 1) 
+            {
+                if (strcmp(deviceName, pPlaybackInfos[i].name) == 0) 
+                {
+                    pDeviceId = &pPlaybackInfos[i].id;
+                    break;
+                }
+            }
+        }
+    }
+
     // Init audio device
     // NOTE: Using the default device. Format is floating point because it simplifies mixing
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device
+    config.playback.pDeviceID = pDeviceId;  // NULL for the default playback AUDIO.System.device
     config.playback.format = AUDIO_DEVICE_FORMAT;
     config.playback.channels = AUDIO_DEVICE_CHANNELS;
     config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device
@@ -482,7 +541,7 @@ void InitAudioDevice(void)
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
 
-    result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
+    ma_result result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize playback device");
@@ -528,7 +587,6 @@ void CloseAudioDevice(void)
     {
         ma_mutex_uninit(&AUDIO.System.lock);
         ma_device_uninit(&AUDIO.System.device);
-        ma_context_uninit(&AUDIO.System.context);
 
         AUDIO.System.isReady = false;
         RL_FREE(AUDIO.System.pcmBuffer);
@@ -538,6 +596,17 @@ void CloseAudioDevice(void)
         TRACELOG(LOG_INFO, "AUDIO: Device closed successfully");
     }
     else TRACELOG(LOG_WARNING, "AUDIO: Device could not be closed, not currently initialized");
+}
+
+void CloseAudioContext(void) {
+    if (AUDIO.System.isCtxReady)
+    {
+        ma_context_uninit(&AUDIO.System.context);
+        AUDIO.System.isCtxReady = false;
+
+        TRACELOG(LOG_INFO, "AUDIO: Context closed successfully");
+    }
+    else TRACELOG(LOG_WARNING, "AUDIO: Context could not be closed, not currently initialized");
 }
 
 // Check if device has been initialized successfully

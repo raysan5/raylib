@@ -25,7 +25,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound loading and playing");
 
-    InitAudioDevice();      // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);       // Initialize audio device
 
     Sound fxWav = LoadSound("resources/sound.wav");         // Load WAV audio file
     Sound fxOgg = LoadSound("resources/target.ogg");        // Load OGG audio file

@@ -27,7 +27,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - sprite button");
 
-    InitAudioDevice();      // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);      // Initialize audio device
 
     Sound fxButton = LoadSound("resources/buttonfx.wav");   // Load button sound
     Texture2D button = LoadTexture("resources/button.png"); // Load button texture

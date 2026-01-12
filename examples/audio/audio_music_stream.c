@@ -12,6 +12,11 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <stdio.h>
+
+void AudioDevicesQuery(int index, char* deviceName, bool isDefault) {
+    printf("index: %d / deviceName: %s / isDefault: %d\n", index, deviceName, isDefault);
+}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -25,7 +30,11 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - music playing (streaming)");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioContext();
+
+    QueryAudioDevices(AudioDevicesQuery);
+
+    InitAudioDevice(0);              // Initialize audio device
 
     Music music = LoadMusicStream("resources/country.mp3");
 
@@ -90,6 +99,7 @@ int main(void)
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
 
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
+    CloseAudioDevice();
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

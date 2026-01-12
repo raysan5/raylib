@@ -55,7 +55,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - processing mixed output");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioContext();
+    InitAudioDevice(0);               // Initialize audio device
 
     AttachAudioMixedProcessor(ProcessAudio);
 
