@@ -70,7 +70,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -104,16 +104,12 @@
 
 #include "raylib.h"                 // Declares module functions
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"             // Defines module configuration flags
-#endif
+#include "config.h"                 // Defines module configuration flags
 
-#include "utils.h"                  // Required for: TRACELOG() macros
-
-#include <stdlib.h>                 // Required for: srand(), rand(), atexit()
-#include <stdio.h>                  // Required for: sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset()
+#include <stdlib.h>                 // Required for: srand(), rand(), atexit(), exit()
+#include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
+#include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset(), strcat()
+#include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
@@ -205,16 +201,22 @@
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
     #define MKDIR(dir) _mkdir(dir)
+    #define ACCESS(fn) _access(fn, 0)
 #else
     #include <unistd.h>             // Required for: getch(), chdir(), mkdir(), access()
     #define GETCWD getcwd
     #define CHDIR chdir
     #define MKDIR(dir) mkdir(dir, 0777)
+    #define ACCESS(fn) access(fn, F_OK)
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
+#ifndef MAX_TRACELOG_MSG_LENGTH
+    #define MAX_TRACELOG_MSG_LENGTH      256        // Max length of one trace-log message
+#endif
+
 #ifndef MAX_FILEPATH_CAPACITY
     #define MAX_FILEPATH_CAPACITY       8192        // Maximum capacity for filepath
 #endif
@@ -273,7 +275,7 @@
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
-#define FLAG_IS_SET(n, f) (((n) & (f)) > 0)
+#define FLAG_IS_SET(n, f) (((n) & (f)) == (f))
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -287,20 +289,19 @@ typedef struct CoreData {
         const char *title;                  // Window text title const pointer
         unsigned int flags;                 // Configuration flags (bit based), keeps window state
         bool ready;                         // Check if window has been initialized successfully
-        bool fullscreen;                    // Check if fullscreen mode is enabled
         bool shouldClose;                   // Check if window set for closing
         bool resizedLastFrame;              // Check if window has been resized last frame
         bool eventWaiting;                  // Wait for events before ending frame
         bool usingFbo;                      // Using FBO (RenderTexture) for rendering instead of default framebuffer
 
-        Point position;                     // Window position (required on fullscreen toggle)
-        Point previousPosition;             // Window previous position (required on borderless windowed toggle)
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
-        Size screen;                        // Screen width and height (used render area)
-        Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
-        Size currentFbo;                    // Current render width and height (depends on active fbo)
-        Size render;                        // Framebuffer width and height (render area, including black bars if required)
-        Point renderOffset;                 // Offset from render area (must be divided by 2)
+        Size screen;                        // Screen current width and height
+        Point position;                     // Window current position
+        Size previousScreen;                // Screen previous width and height (required on fullscreen/borderless-windowed toggle)
+        Point previousPosition;             // Window previous position (required on fullscreeen/borderless-windowed toggle)
+        Size render;                        // Screen framebuffer width and height
+        Point renderOffset;                 // Screen framebuffer render offset (Not required anymore?)
+        Size currentFbo;                    // Current framebuffer render width and height (depends on active render texture)
         Size screenMin;                     // Screen minimum width and height (for resizable window)
         Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
@@ -316,17 +317,17 @@ typedef struct CoreData {
     struct {
         struct {
             int exitKey;                    // Default exit key
-            char currentKeyState[MAX_KEYBOARD_KEYS];        // Registers current frame key state
-            char previousKeyState[MAX_KEYBOARD_KEYS];       // Registers previous frame key state
+            char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
+            char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
-            // NOTE: Since key press logic involves comparing previous vs currrent key state, 
+            // NOTE: Since key press logic involves comparing previous vs currrent key state,
             // key repeats needs to be handled specially
-            char keyRepeatInFrame[MAX_KEYBOARD_KEYS];       // Registers key repeats for current frame
+            char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame
 
-            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE];     // Input keys queue
+            int keyPressedQueue[MAX_KEY_PRESSED_QUEUE]; // Input keys queue
             int keyPressedQueueCount;       // Input keys queue count
 
-            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE];   // Input characters queue (unicode)
+            int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
 
         } Keyboard;
@@ -342,18 +343,19 @@ typedef struct CoreData {
             bool cursorLocked;              // Track if cursor is locked (disabled)
             bool cursorOnScreen;            // Tracks if cursor is inside client area
 
-            char currentButtonState[MAX_MOUSE_BUTTONS];     // Registers current mouse button state
-            char previousButtonState[MAX_MOUSE_BUTTONS];    // Registers previous mouse button state
+            char currentButtonState[MAX_MOUSE_BUTTONS]; // Registers current mouse button state
+            char previousButtonState[MAX_MOUSE_BUTTONS]; // Registers previous mouse button state
             Vector2 currentWheelMove;       // Registers current mouse wheel variation
             Vector2 previousWheelMove;      // Registers previous mouse wheel variation
 
         } Mouse;
         struct {
-            int pointCount;                             // Number of touch points active
-            int pointId[MAX_TOUCH_POINTS];              // Point identifiers
-            Vector2 position[MAX_TOUCH_POINTS];         // Touch position on screen
-            char currentTouchState[MAX_TOUCH_POINTS];   // Registers current touch state
-            char previousTouchState[MAX_TOUCH_POINTS];  // Registers previous touch state
+            int pointCount;                                 // Number of touch points active
+            int pointId[MAX_TOUCH_POINTS];                  // Point identifiers
+            Vector2 position[MAX_TOUCH_POINTS];             // Touch position on screen
+            Vector2 previousPosition[MAX_TOUCH_POINTS];     // Previous touch position on screen
+            char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state
+            char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state
 
         } Touch;
         struct {
@@ -385,10 +387,18 @@ typedef struct CoreData {
 //----------------------------------------------------------------------------------
 RLAPI const char *raylib_version = RAYLIB_VERSION;  // raylib version exported symbol, required for some bindings
 
-CoreData CORE = { 0 };                      // Global CORE state context
+CoreData CORE = { 0 };                              // Global CORE state context
+
+static int logTypeLevel = LOG_INFO;                 // Minimum log type level
+
+static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
+static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-static int screenshotCounter = 0;           // Screenshots counter
+static int screenshotCounter = 0;                   // Screenshots counter
 #endif
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
@@ -493,7 +503,6 @@ extern int InitPlatform(void);          // Initialize platform (graphics, inputs
 extern void ClosePlatform(void);        // Close platform
 
 static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
-static void SetupFramebuffer(int width, int height);        // Setup main framebuffer (required by InitPlatform())
 static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
@@ -762,31 +771,31 @@ bool IsWindowReady(void)
 // Check if window is currently fullscreen
 bool IsWindowFullscreen(void)
 {
-    return CORE.Window.fullscreen;
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 }
 
 // Check if window is currently hidden
 bool IsWindowHidden(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN);
 }
 
 // Check if window has been minimized
 bool IsWindowMinimized(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);
 }
 
 // Check if window has been maximized
 bool IsWindowMaximized(void)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED));
+    return FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
 }
 
 // Check if window has the focus
 bool IsWindowFocused(void)
 {
-    return (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED));
+    return !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
 }
 
 // Check if window has been resizedLastFrame
@@ -798,7 +807,7 @@ bool IsWindowResized(void)
 // Check if one specific window flag is enabled
 bool IsWindowState(unsigned int flag)
 {
-    return (FLAG_IS_SET(CORE.Window.flags, flag));
+    return FLAG_IS_SET(CORE.Window.flags, flag);
 }
 
 // Get current screen width
@@ -817,7 +826,7 @@ int GetScreenHeight(void)
 int GetRenderWidth(void)
 {
     int width = 0;
-    
+
     if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
@@ -1100,7 +1109,7 @@ void BeginScissorMode(int x, int y, int width, int height)
         rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)))
+    if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
         Vector2 scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
@@ -1735,7 +1744,7 @@ int GetRandomValue(int min, int max)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
-    
+
     // NOTE: This one-line approach produces a non-uniform distribution,
     // as stated by Donald Knuth in the book The Art of Programming, so
     // using below approach for more uniform results
@@ -1856,9 +1865,389 @@ void SetConfigFlags(unsigned int flags)
     FLAG_SET(CORE.Window.flags, flags);
 }
 
+// void OpenURL(const char *url);   // Defined per platform
+
 //----------------------------------------------------------------------------------
-// Module Functions Definition: File system
+// Module Functions Definition: Logging system
 //----------------------------------------------------------------------------------
+// Set the current threshold (minimum) log level
+void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
+
+// Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
+void TraceLog(int logType, const char *text, ...)
+{
+#if defined(SUPPORT_TRACELOG)
+    // Message has level below current threshold, don't emit
+    if ((logType < logTypeLevel) || (text == NULL)) return;
+
+    va_list args;
+    va_start(args, text);
+
+    if (traceLog)
+    {
+        traceLog(logType, text, args);
+        va_end(args);
+        return;
+    }
+
+#if defined(PLATFORM_ANDROID)
+    switch (logType)
+    {
+        case LOG_TRACE: __android_log_vprint(ANDROID_LOG_VERBOSE, "raylib", text, args); break;
+        case LOG_DEBUG: __android_log_vprint(ANDROID_LOG_DEBUG, "raylib", text, args); break;
+        case LOG_INFO: __android_log_vprint(ANDROID_LOG_INFO, "raylib", text, args); break;
+        case LOG_WARNING: __android_log_vprint(ANDROID_LOG_WARN, "raylib", text, args); break;
+        case LOG_ERROR: __android_log_vprint(ANDROID_LOG_ERROR, "raylib", text, args); break;
+        case LOG_FATAL: __android_log_vprint(ANDROID_LOG_FATAL, "raylib", text, args); break;
+        default: break;
+    }
+#else
+    char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
+
+    switch (logType)
+    {
+        case LOG_TRACE: strncpy(buffer, "TRACE: ", 8); break;
+        case LOG_DEBUG: strncpy(buffer, "DEBUG: ", 8); break;
+        case LOG_INFO: strncpy(buffer, "INFO: ", 7); break;
+        case LOG_WARNING: strncpy(buffer, "WARNING: ", 10); break;
+        case LOG_ERROR: strncpy(buffer, "ERROR: ", 8); break;
+        case LOG_FATAL: strncpy(buffer, "FATAL: ", 8); break;
+        default: break;
+    }
+
+    unsigned int textLength = (unsigned int)strlen(text);
+    memcpy(buffer + strlen(buffer), text, (textLength < (MAX_TRACELOG_MSG_LENGTH - 12))? textLength : (MAX_TRACELOG_MSG_LENGTH - 12));
+    strcat(buffer, "\n");
+    vprintf(buffer, args);
+    fflush(stdout);
+#endif
+
+    va_end(args);
+
+    if (logType == LOG_FATAL) exit(EXIT_FAILURE);  // If fatal logging, exit program
+
+#endif  // SUPPORT_TRACELOG
+}
+
+// Set custom trace log
+void SetTraceLogCallback(TraceLogCallback callback)
+{ 
+    traceLog = callback;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Memory management
+//----------------------------------------------------------------------------------
+// Internal memory allocator
+// NOTE: Initializes to zero by default
+void *MemAlloc(unsigned int size)
+{
+    void *ptr = RL_CALLOC(size, 1);
+    return ptr;
+}
+
+// Internal memory reallocator
+void *MemRealloc(void *ptr, unsigned int size)
+{
+    void *ret = RL_REALLOC(ptr, size);
+    return ret;
+}
+
+// Internal memory free
+void MemFree(void *ptr)
+{
+    RL_FREE(ptr);
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: File System management
+//----------------------------------------------------------------------------------
+// Load data from file into a buffer
+unsigned char *LoadFileData(const char *fileName, int *dataSize)
+{
+    unsigned char *data = NULL;
+    *dataSize = 0;
+
+    if (fileName != NULL)
+    {
+        if (loadFileData)
+        {
+            data = loadFileData(fileName, dataSize);
+            return data;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = fopen(fileName, "rb");
+
+        if (file != NULL)
+        {
+            // WARNING: On binary streams SEEK_END could not be found,
+            // using fseek() and ftell() could not work in some (rare) cases
+            fseek(file, 0, SEEK_END);
+            int size = ftell(file);     // WARNING: ftell() returns 'long int', maximum size returned is INT_MAX (2147483647 bytes)
+            fseek(file, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                data = (unsigned char *)RL_CALLOC(size, sizeof(unsigned char));
+
+                if (data != NULL)
+                {
+                    // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                    size_t count = fread(data, sizeof(unsigned char), size, file);
+
+                    // WARNING: fread() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
+                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) we have a limitation
+                    if (count > 2147483647)
+                    {
+                        TRACELOG(LOG_WARNING, "FILEIO: [%s] File is bigger than 2147483647 bytes, avoid using LoadFileData()", fileName);
+
+                        RL_FREE(data);
+                        data = NULL;
+                    }
+                    else
+                    {
+                        *dataSize = (int)count;
+
+                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, dataSize, count);
+                        else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
+                    }
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read file", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return data;
+}
+
+// Unload file data allocated by LoadFileData()
+void UnloadFileData(unsigned char *data)
+{
+    RL_FREE(data);
+}
+
+// Save data to file from buffer
+bool SaveFileData(const char *fileName, void *data, int dataSize)
+{
+    bool success = false;
+
+    if (fileName != NULL)
+    {
+        if (saveFileData)
+        {
+            return saveFileData(fileName, data, dataSize);
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = fopen(fileName, "wb");
+
+        if (file != NULL)
+        {
+            // WARNING: fwrite() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
+            // and expects a size_t input value but as dataSize is limited to INT_MAX (2147483647 bytes), there shouldn't be a problem
+            int count = (int)fwrite(data, sizeof(unsigned char), dataSize, file);
+
+            if (count == 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write file", fileName);
+            else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
+
+            int result = fclose(file);
+            if (result == 0) success = true;
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return success;
+}
+
+// Export data to code (.h), returns true on success
+bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
+{
+    bool success = false;
+
+#ifndef TEXT_BYTES_PER_LINE
+    #define TEXT_BYTES_PER_LINE     20
+#endif
+
+    // NOTE: Text data buffer size is estimated considering raw data size in bytes
+    // and requiring 6 char bytes for every byte: "0x00, "
+    char *txtData = (char *)RL_CALLOC(dataSize*6 + 2000, sizeof(char));
+
+    int byteCount = 0;
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// DataAsCode exporter v1.0 - Raw data exported as an array of bytes                  //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2022-2026 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+
+    // Get file name from path
+    char varFileName[256] = { 0 };
+    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
+    for (int i = 0; varFileName[i] != '\0'; i++)
+    {
+        // Convert variable name to uppercase
+        if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
+        // Replace non valid character for C identifier with '_'
+        else if (varFileName[i] == '.' || varFileName[i] == '-' || varFileName[i] == '?' || varFileName[i] == '!' || varFileName[i] == '+') { varFileName[i] = '_'; }
+    }
+
+    byteCount += sprintf(txtData + byteCount, "#define %s_DATA_SIZE     %i\n\n", varFileName, dataSize);
+
+    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%s_DATA_SIZE] = { ", varFileName, varFileName);
+    for (int i = 0; i < (dataSize - 1); i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), data[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[dataSize - 1]);
+
+    // NOTE: Text data size exported is determined by '\0' (NULL) character
+    success = SaveFileText(fileName, txtData);
+
+    RL_FREE(txtData);
+
+    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
+
+    return success;
+}
+
+// Load text data from file, returns a '\0' terminated string
+// NOTE: text chars array should be freed manually
+char *LoadFileText(const char *fileName)
+{
+    char *text = NULL;
+
+    if (fileName != NULL)
+    {
+        if (loadFileText)
+        {
+            text = loadFileText(fileName);
+            return text;
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = fopen(fileName, "rt");
+
+        if (file != NULL)
+        {
+            // WARNING: When reading a file as 'text' file,
+            // text mode causes carriage return-linefeed translation...
+            // ...but using fseek() should return correct byte-offset
+            fseek(file, 0, SEEK_END);
+            unsigned int size = (unsigned int)ftell(file);
+            fseek(file, 0, SEEK_SET);
+
+            if (size > 0)
+            {
+                text = (char *)RL_CALLOC(size + 1, sizeof(char));
+
+                if (text != NULL)
+                {
+                    unsigned int count = (unsigned int)fread(text, sizeof(char), size, file);
+
+                    // WARNING: \r\n is converted to \n on reading, so,
+                    // read bytes count gets reduced by the number of lines
+                    if (count < size) text = (char *)RL_REALLOC(text, count + 1);
+
+                    // Zero-terminate the string
+                    text[count] = '\0';
+
+                    TRACELOG(LOG_INFO, "FILEIO: [%s] Text file loaded successfully", fileName);
+                }
+                else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to allocated memory for file reading", fileName);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to read text file", fileName);
+
+            fclose(file);
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return text;
+}
+
+// Unload file text data allocated by LoadFileText()
+void UnloadFileText(char *text)
+{
+    RL_FREE(text);
+}
+
+// Save text data to file (write), string must be '\0' terminated
+bool SaveFileText(const char *fileName, const char *text)
+{
+    bool success = false;
+
+    if (fileName != NULL)
+    {
+        if (saveFileText)
+        {
+            return saveFileText(fileName, text);
+        }
+#if defined(SUPPORT_STANDARD_FILEIO)
+        FILE *file = fopen(fileName, "wt");
+
+        if (file != NULL)
+        {
+            int count = fprintf(file, "%s", text);
+
+            if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
+            else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
+
+            int result = fclose(file);
+            if (result == 0) success = true;
+        }
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
+#else
+    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
+#endif
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
+
+    return success;
+}
+
+// File access custom callbacks
+// WARNING: Callbacks setup is intended for advanced users
+
+// Set custom file binary data loader
+void SetLoadFileDataCallback(LoadFileDataCallback callback)
+{
+    loadFileData = callback;
+}
+
+// Set custom file binary data saver
+void SetSaveFileDataCallback(SaveFileDataCallback callback)
+{
+    saveFileData = callback;
+}
+
+// Set custom file text data loader
+void SetLoadFileTextCallback(LoadFileTextCallback callback)
+{
+    loadFileText = callback;
+}
+
+// Set custom file text data saver
+void SetSaveFileTextCallback(SaveFileTextCallback callback)
+{
+    saveFileText = callback;
+}
 
 // Rename file (if exists)
 // NOTE: Only rename file name required, not full path
@@ -1974,11 +2363,7 @@ bool FileExists(const char *fileName)
 {
     bool result = false;
 
-#if defined(_WIN32)
-    if (_access(fileName, 0) != -1) result = true;
-#else
-    if (access(fileName, F_OK) != -1) result = true;
-#endif
+    if (ACCESS(fileName) != -1) result = true;
 
     // NOTE: Alternatively, stat() can be used instead of access()
     //#include <sys/stat.h>
@@ -2261,7 +2646,7 @@ const char *GetApplicationDirectory(void)
 
 #if defined(_WIN32)
     int len = 0;
-    
+
     #if defined(UNICODE)
     unsigned short widePath[MAX_PATH];
     len = GetModuleFileNameW(NULL, (wchar_t *)widePath, MAX_PATH);
@@ -2269,7 +2654,7 @@ const char *GetApplicationDirectory(void)
     #else
     len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
     #endif
-    
+
     if (len > 0)
     {
         for (int i = len; i >= 0; --i)
@@ -2286,7 +2671,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '\\';
     }
-    
+
 #elif defined(__linux__)
 
     unsigned int size = sizeof(appDir);
@@ -2308,7 +2693,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__APPLE__)
 
     uint32_t size = sizeof(appDir);
@@ -2330,7 +2715,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__FreeBSD__)
 
     size_t size = sizeof(appDir);
@@ -2701,7 +3086,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
         ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
         ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
     };
- 
+
     *outputSize = 0;
     if (text == NULL) return NULL;
 
@@ -3233,14 +3618,23 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
     // Export events as binary file
-    // TODO: Save to memory buffer and SaveFileData()
+    // NOTE: Code not used, only for reference if required in the future
     /*
-    unsigned char fileId[4] = "rAE ";
-    FILE *raeFile = fopen(fileName, "wb");
-    fwrite(fileId, sizeof(unsigned char), 4, raeFile);
-    fwrite(&eventCount, sizeof(int), 1, raeFile);
-    fwrite(events, sizeof(AutomationEvent), eventCount, raeFile);
-    fclose(raeFile);
+    if (list.count > 0)
+    {
+        int binarySize = 4 + sizeof(int) + sizeof(AutomationEvent)*list.count;
+        unsigned char *binBuffer = (unsigned char *)RL_CALLOC(binarySize, 1);
+        int offset = 0;
+        memcpy(binBuffer + offset, "rAE ", 4); 
+        offset += 4;
+        memcpy(binBuffer + offset, &list.count, sizeof(int)); 
+        offset += sizeof(int);
+        memcpy(binBuffer + offset, list.events, sizeof(AutomationEvent)*list.count);
+        offset += sizeof(AutomationEvent)*list.count;
+        
+        success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
+        RL_FREE(binBuffer);
+    }
     */
 
     // Export events as text
@@ -3257,7 +3651,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "# more info and bugs-report:  github.com/raysan5/raylib\n");
     byteCount += sprintf(txtData + byteCount, "# feedback and support:       ray[at]raylib.com\n");
     byteCount += sprintf(txtData + byteCount, "#\n");
-    byteCount += sprintf(txtData + byteCount, "# Copyright (c) 2023-2025 Ramon Santamaria (@raysan5)\n");
+    byteCount += sprintf(txtData + byteCount, "# Copyright (c) 2023-2026 Ramon Santamaria (@raysan5)\n");
     byteCount += sprintf(txtData + byteCount, "#\n\n");
 
     // Add events data
@@ -3828,84 +4222,6 @@ void SetupViewport(int width, int height)
     rlLoadIdentity();                   // Reset current matrix (modelview)
 }
 
-// Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
-void SetupFramebuffer(int width, int height)
-{
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
-    if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-
-        // Downscaling to fit display with border-bars
-        float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
-        float heightRatio = (float)CORE.Window.display.height/(float)CORE.Window.screen.height;
-
-        if (widthRatio <= heightRatio)
-        {
-            CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
-        }
-        else
-        {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
-            CORE.Window.render.height = CORE.Window.display.height;
-            CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
-            CORE.Window.renderOffset.y = 0;
-        }
-
-        // Screen scaling required
-        float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
-        CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
-
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
-        CORE.Window.render.width = CORE.Window.display.width;
-        CORE.Window.render.height = CORE.Window.display.height;
-
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Window.render.width, CORE.Window.render.height);
-    }
-    else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
-    {
-        // Required screen size is smaller than display size
-        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
-
-        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
-        {
-            CORE.Window.screen.width = CORE.Window.display.width;
-            CORE.Window.screen.height = CORE.Window.display.height;
-        }
-
-        // Upscaling to fit display with border-bars
-        float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
-        float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
-
-        if (displayRatio <= screenRatio)
-        {
-            CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
-        }
-        else
-        {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
-            CORE.Window.render.height = CORE.Window.screen.height;
-            CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
-            CORE.Window.renderOffset.y = 0;
-        }
-    }
-    else
-    {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.renderOffset.x = 0;
-        CORE.Window.renderOffset.y = 0;
-    }
-}
-
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
@@ -4186,22 +4502,20 @@ static void RecordAutomationEvent(void)
 
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
-        // Event type: INPUT_TOUCH_POSITION
-        // TODO: It requires the id!
-        /*
-        if (((int)CORE.Input.Touch.currentPosition[id].x != (int)CORE.Input.Touch.previousPosition[id].x) ||
-            ((int)CORE.Input.Touch.currentPosition[id].y != (int)CORE.Input.Touch.previousPosition[id].y))
+        // Event type: INPUT_TOUCH_POSITION         
+        if (((int)CORE.Input.Touch.position[id].x != (int)CORE.Input.Touch.previousPosition[id].x) ||
+            ((int)CORE.Input.Touch.position[id].y != (int)CORE.Input.Touch.previousPosition[id].y))
         {
             currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
             currentEventList->events[currentEventList->count].type = INPUT_TOUCH_POSITION;
             currentEventList->events[currentEventList->count].params[0] = id;
-            currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Touch.currentPosition[id].x;
-            currentEventList->events[currentEventList->count].params[2] = (int)CORE.Input.Touch.currentPosition[id].y;
+            currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Touch.position[id].x;
+            currentEventList->events[currentEventList->count].params[2] = (int)CORE.Input.Touch.position[id].y;
 
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_TOUCH_POSITION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;
         }
-        */
+        
 
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
     }
@@ -4323,7 +4637,7 @@ const char *TextFormat(const char *text, ...)
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
-    
+
     if (text != NULL)
     {
         va_list args;

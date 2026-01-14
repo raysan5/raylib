@@ -20,7 +20,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2022-2025 Christoph Wagner (@Crydsch) & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2026 Christoph Wagner (@Crydsch) and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -50,14 +50,14 @@
 // Function specifiers in case library is build/used as a shared library (Windows)
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
 #if defined(_WIN32)
-#if defined(BUILD_LIBTYPE_SHARED)
-#if defined(__TINYC__)
-#define __declspec(x) __attribute__((x))
-#endif
-#define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
-#elif defined(USE_LIBTYPE_SHARED)
-#define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
-#endif
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #if defined(__TINYC__)
+            #define __declspec(x) __attribute__((x))
+        #endif
+        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #elif defined(USE_LIBTYPE_SHARED)
+        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
 #endif
 
 #ifndef RLAPI
@@ -191,19 +191,21 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
                             // IsKeyDown()
                             // IsKeyPressed()
                             // GetFrameTime()
+                            
+#include <math.h>           // Required for: fabsf()
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define CAMERA_MOVE_SPEED                               5.4f       // Units per second
-#define CAMERA_ROTATION_SPEED                           0.03f
-#define CAMERA_PAN_SPEED                                0.2f
+#define CAMERA_MOVE_SPEED                           5.4f       // Units per second
+#define CAMERA_ROTATION_SPEED                       0.03f
+#define CAMERA_PAN_SPEED                            0.2f
 
 // Camera mouse movement sensitivity
-#define CAMERA_MOUSE_MOVE_SENSITIVITY                   0.003f
+#define CAMERA_MOUSE_MOVE_SENSITIVITY               0.003f
 
 // Camera orbital speed in CAMERA_ORBITAL mode
-#define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
+#define CAMERA_ORBITAL_SPEED                        0.5f       // Radians per second
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -252,8 +254,11 @@ void CameraMoveForward(Camera *camera, float distance, bool moveInWorldPlane)
 
     if (moveInWorldPlane)
     {
-        // Project vector onto world plane
-        forward.y = 0;
+        // Project vector onto world plane (the plane defined by the up vector)
+        if (fabsf(camera->up.z) > 0.7071f) forward.z = 0;
+        else if (fabsf(camera->up.x) > 0.7071f) forward.x = 0;
+        else forward.y = 0;
+
         forward = Vector3Normalize(forward);
     }
 
@@ -285,8 +290,11 @@ void CameraMoveRight(Camera *camera, float distance, bool moveInWorldPlane)
 
     if (moveInWorldPlane)
     {
-        // Project vector onto world plane
-        right.y = 0;
+        // Project vector onto world plane (the plane defined by the up vector)
+        if (fabsf(camera->up.z) > 0.7071f) right.z = 0;
+        else if (fabsf(camera->up.x) > 0.7071f) right.x = 0;
+        else right.y = 0;
+
         right = Vector3Normalize(right);
     }
 
@@ -345,7 +353,7 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
 //  - lockView prevents camera overrotation (aka "somersaults")
 //  - rotateAroundTarget defines if rotation is around target or around its position
 //  - rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
-// NOTE: angle must be provided in radians
+// NOTE: [angle] must be provided in radians
 void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {
     // Up direction
@@ -382,7 +390,7 @@ void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTa
         // Move position relative to target
         camera->position = Vector3Subtract(camera->target, targetPosition);
     }
-    else // rotate around camera.position
+    else // Rotate around camera.position
     {
         // Move target relative to position
         camera->target = Vector3Add(camera->position, targetPosition);

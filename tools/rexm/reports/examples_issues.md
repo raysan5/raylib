@@ -21,10 +21,9 @@ Example elements validated:
 | **EXAMPLE NAME**                 | [C] | [CAT]| [INFO]|[PNG]|[WPNG]| [RES]| [MK] |[MKWEB]| [VCX]| [SOL]|[RDME]|[JS] | [WOUT]|[WMETA]|
 |:---------------------------------|:---:|:----:|:-----:|:---:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|:---:|:-----:|:-----:|
 | core_highdpi_testbed             |  ✔ |  ✔  |  ✔  |  ✔ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| shaders_game_of_life             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ❌  |  ✔  |
-| rlgl_standalone                  |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| rlgl_compute_shader              |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| easings_testbed                  |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ❌ |  ✔  |  ❌ |  ✔  |  ✔  |
-| embedded_files_loading           |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ❌  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ❌ |  ✔  |  ✔  |
-| web_basic_window                 |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ❌  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| rlgl_standalone                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| rlgl_compute_shader              |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| easings_testbed                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
+| embedded_files_loading           |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| web_basic_window                 |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |

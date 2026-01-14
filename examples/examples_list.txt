@@ -1,11 +1,13 @@
 #
-# raylib examples list used to generate/update collection
-# examples must be provided as: <example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;<year_created>;<year_reviewed>;"<example_author_name>";<author_github_user>
+# raylib examples list with available .c example files
+#
+# WARNING: List is not ordered by example name but by the display order on web,
+# so it can not be automatically generated scanning available .c code files, only updated
+# new examples are added at the end of each category; it's up to the user to reorder them as desired
+#
+# examples data is listed as: <example_category>;<example_name>;<example_stars>;<raylib_created_version>;<raylib_last_update_version>;<year_created>;<year_reviewed>;"<example_author_name>";<author_github_user>
 #
 # This list is used as the main reference by [rexm] tool for examples collection validation and management
-# New examples must be added to this list and any possible rename must be made on this list first
-#
-# WARNING: List is not ordered by example name but by the display order on web
 #
 core;core_basic_window;★☆☆☆;1.0;1.0;2013;2025;"Ramon Santamaria";@raysan5
 core;core_delta_time;★☆☆☆;5.5;5.6-dev;2025;2025;"Robin";@RobinsAviary
@@ -54,6 +56,7 @@ core;core_screen_recording;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santama
 core;core_clipboard_text;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ananth S";@Ananth1839
 core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@NimComPoo-04
 core;core_compute_hash;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
+core;core_keyboard_testbed;★★☆☆;5.6;5.6;2026;2026;"Ramon Santamaria";@raysan5
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
@@ -92,6 +95,7 @@ shapes;shapes_rlgl_color_wheel;★★★☆;5.6-dev;5.6-dev;2025;2025;"Robin";@R
 shapes;shapes_rlgl_triangle;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@RobinsAviary
 shapes;shapes_ball_physics;★★☆☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 shapes;shapes_penrose_tile;★★★★;5.5;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
+shapes;shapes_hilbert_curve;★★★☆;5.6;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -121,6 +125,7 @@ textures;textures_screen_buffer;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";
 textures;textures_textured_curve;★★★☆;4.5;4.5;2022;2025;"Jeffery Myers";@JeffM2501
 textures;textures_sprite_stacking;★★☆☆;5.6-dev;6.0;2025;2025;"Robin";@RobinsAviary
 textures;textures_cellular_automata;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+textures;textures_framebuffer_rendering;★★☆☆;5.6;5.6;2026;2026;"Jack Boakes";@jackboakes
 text;text_sprite_fonts;★☆☆☆;1.7;3.7;2017;2025;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 text;text_font_filters;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5

@@ -1563,100 +1563,100 @@ Function 106: OpenURL() (1 input parameters)
   Return type: void
   Description: Open URL with default system browser (if available)
   Param[1]: url (type: const char *)
-Function 107: TraceLog() (3 input parameters)
+Function 107: SetTraceLogLevel() (1 input parameters)
+  Name: SetTraceLogLevel
+  Return type: void
+  Description: Set the current threshold (minimum) log level
+  Param[1]: logLevel (type: int)
+Function 108: TraceLog() (3 input parameters)
   Name: TraceLog
   Return type: void
   Description: Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
   Param[1]: logLevel (type: int)
   Param[2]: text (type: const char *)
   Param[3]: args (type: ...)
-Function 108: SetTraceLogLevel() (1 input parameters)
-  Name: SetTraceLogLevel
+Function 109: SetTraceLogCallback() (1 input parameters)
+  Name: SetTraceLogCallback
   Return type: void
-  Description: Set the current threshold (minimum) log level
-  Param[1]: logLevel (type: int)
-Function 109: MemAlloc() (1 input parameters)
+  Description: Set custom trace log
+  Param[1]: callback (type: TraceLogCallback)
+Function 110: MemAlloc() (1 input parameters)
   Name: MemAlloc
   Return type: void *
   Description: Internal memory allocator
   Param[1]: size (type: unsigned int)
-Function 110: MemRealloc() (2 input parameters)
+Function 111: MemRealloc() (2 input parameters)
   Name: MemRealloc
   Return type: void *
   Description: Internal memory reallocator
   Param[1]: ptr (type: void *)
   Param[2]: size (type: unsigned int)
-Function 111: MemFree() (1 input parameters)
+Function 112: MemFree() (1 input parameters)
   Name: MemFree
   Return type: void
   Description: Internal memory free
   Param[1]: ptr (type: void *)
-Function 112: SetTraceLogCallback() (1 input parameters)
-  Name: SetTraceLogCallback
-  Return type: void
-  Description: Set custom trace log
-  Param[1]: callback (type: TraceLogCallback)
-Function 113: SetLoadFileDataCallback() (1 input parameters)
-  Name: SetLoadFileDataCallback
-  Return type: void
-  Description: Set custom file binary data loader
-  Param[1]: callback (type: LoadFileDataCallback)
-Function 114: SetSaveFileDataCallback() (1 input parameters)
-  Name: SetSaveFileDataCallback
-  Return type: void
-  Description: Set custom file binary data saver
-  Param[1]: callback (type: SaveFileDataCallback)
-Function 115: SetLoadFileTextCallback() (1 input parameters)
-  Name: SetLoadFileTextCallback
-  Return type: void
-  Description: Set custom file text data loader
-  Param[1]: callback (type: LoadFileTextCallback)
-Function 116: SetSaveFileTextCallback() (1 input parameters)
-  Name: SetSaveFileTextCallback
-  Return type: void
-  Description: Set custom file text data saver
-  Param[1]: callback (type: SaveFileTextCallback)
-Function 117: LoadFileData() (2 input parameters)
+Function 113: LoadFileData() (2 input parameters)
   Name: LoadFileData
   Return type: unsigned char *
   Description: Load file data as byte array (read)
   Param[1]: fileName (type: const char *)
   Param[2]: dataSize (type: int *)
-Function 118: UnloadFileData() (1 input parameters)
+Function 114: UnloadFileData() (1 input parameters)
   Name: UnloadFileData
   Return type: void
   Description: Unload file data allocated by LoadFileData()
   Param[1]: data (type: unsigned char *)
-Function 119: SaveFileData() (3 input parameters)
+Function 115: SaveFileData() (3 input parameters)
   Name: SaveFileData
   Return type: bool
   Description: Save data to file from byte array (write), returns true on success
   Param[1]: fileName (type: const char *)
   Param[2]: data (type: void *)
   Param[3]: dataSize (type: int)
-Function 120: ExportDataAsCode() (3 input parameters)
+Function 116: ExportDataAsCode() (3 input parameters)
   Name: ExportDataAsCode
   Return type: bool
   Description: Export data to code (.h), returns true on success
   Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
   Param[3]: fileName (type: const char *)
-Function 121: LoadFileText() (1 input parameters)
+Function 117: LoadFileText() (1 input parameters)
   Name: LoadFileText
   Return type: char *
   Description: Load text data from file (read), returns a '\0' terminated string
   Param[1]: fileName (type: const char *)
-Function 122: UnloadFileText() (1 input parameters)
+Function 118: UnloadFileText() (1 input parameters)
   Name: UnloadFileText
   Return type: void
   Description: Unload file text data allocated by LoadFileText()
   Param[1]: text (type: char *)
-Function 123: SaveFileText() (2 input parameters)
+Function 119: SaveFileText() (2 input parameters)
   Name: SaveFileText
   Return type: bool
   Description: Save text data to file (write), string must be '\0' terminated, returns true on success
   Param[1]: fileName (type: const char *)
   Param[2]: text (type: const char *)
+Function 120: SetLoadFileDataCallback() (1 input parameters)
+  Name: SetLoadFileDataCallback
+  Return type: void
+  Description: Set custom file binary data loader
+  Param[1]: callback (type: LoadFileDataCallback)
+Function 121: SetSaveFileDataCallback() (1 input parameters)
+  Name: SetSaveFileDataCallback
+  Return type: void
+  Description: Set custom file binary data saver
+  Param[1]: callback (type: SaveFileDataCallback)
+Function 122: SetLoadFileTextCallback() (1 input parameters)
+  Name: SetLoadFileTextCallback
+  Return type: void
+  Description: Set custom file text data loader
+  Param[1]: callback (type: LoadFileTextCallback)
+Function 123: SetSaveFileTextCallback() (1 input parameters)
+  Name: SetSaveFileTextCallback
+  Return type: void
+  Description: Set custom file text data saver
+  Param[1]: callback (type: SaveFileTextCallback)
 Function 124: FileRename() (2 input parameters)
   Name: FileRename
   Return type: int

@@ -102,4 +102,4 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
 
 `rexm` is an **open source** project, licensed under an unmodified [zlib/libpng license](LICENSE)
 
-*Copyright (c) 2025 Ramon Santamaria ([@raysan5](https://github.com/raysan5))*
+*Copyright (c) 2025-2026 Ramon Santamaria ([@raysan5](https://github.com/raysan5))*

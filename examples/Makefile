@@ -30,7 +30,7 @@
 #     > PLATFORM_ANDROID:
 #         - Android (ARM, ARM64)
 #
-#   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -205,15 +205,17 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
-    MAKE = mingw32-make
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        MAKE = mingw32-make
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    ifeq ($(OS),Windows_NT)
+    ifeq ($(PLATFORM_OS),WINDOWS)
         MAKE = mingw32-make
     else
-        EMMAKE != type emmake
+        EMMAKE := $(shell command -v emmake)
         ifneq (, $(EMMAKE))
-            MAKE = emmake make
+            MAKE = $(EMMAKE) make
         else
             MAKE = mingw32-make
         endif
@@ -542,6 +544,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_keyboard_testbed \
     core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
@@ -575,6 +578,7 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_lines_drawing \
@@ -605,6 +609,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
     textures/textures_fog_of_war \
+    textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
     textures/textures_image_channel \
     textures/textures_image_drawing \

@@ -27,12 +27,13 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - highdpi testbed");
 
     Vector2 scaleDpi = GetWindowScaleDPI();
     Vector2 mousePos = GetMousePosition();
     int currentMonitor = GetCurrentMonitor();
+    Vector2 windowPos = GetWindowPosition();
 
     int gridSpacing = 40;   // Grid spacing in pixels
 
@@ -47,8 +48,10 @@ int main(void)
         mousePos = GetMousePosition();
         currentMonitor = GetCurrentMonitor();
         scaleDpi = GetWindowScaleDPI();
+        windowPos = GetWindowPosition();
 
         if (IsKeyPressed(KEY_SPACE)) ToggleBorderlessWindowed();
+        if (IsKeyPressed(KEY_F)) ToggleFullscreen();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -58,12 +61,12 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw grid
-            for (int h = 0; h < 20; h++)
+            for (int h = 0; h < GetScreenHeight()/gridSpacing + 1; h++)
             {
                 DrawText(TextFormat("%02i", h*gridSpacing), 4, h*gridSpacing - 4, 10, GRAY);
                 DrawLine(24, h*gridSpacing, GetScreenWidth(), h*gridSpacing, LIGHTGRAY);
             }
-            for (int v = 0; v < 40; v++)
+            for (int v = 0; v < GetScreenWidth()/gridSpacing + 1; v++)
             {
                 DrawText(TextFormat("%02i", v*gridSpacing), v*gridSpacing - 10, 4, 10, GRAY);
                 DrawLine(v*gridSpacing, 20, v*gridSpacing, GetScreenHeight(), LIGHTGRAY);
@@ -72,9 +75,14 @@ int main(void)
             // Draw UI info
             DrawText(TextFormat("CURRENT MONITOR: %i/%i (%ix%i)", currentMonitor + 1, GetMonitorCount(), 
                 GetMonitorWidth(currentMonitor), GetMonitorHeight(currentMonitor)), 50, 50, 20, DARKGRAY);
-            DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 50, 90, 20, DARKGRAY);
-            DrawText(TextFormat("RENDER SIZE: %ix%i", GetRenderWidth(), GetRenderHeight()), 50, 130, 20, DARKGRAY);
-            DrawText(TextFormat("SCALE FACTOR: %.1fx%.1f", scaleDpi.x, scaleDpi.y), 50, 170, 20, GRAY);
+            DrawText(TextFormat("WINDOW POSITION: %ix%i", (int)windowPos.x, (int)windowPos.y), 50, 90, 20, DARKGRAY);
+            DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 50, 130, 20, DARKGRAY);
+            DrawText(TextFormat("RENDER SIZE: %ix%i", GetRenderWidth(), GetRenderHeight()), 50, 170, 20, DARKGRAY);
+            DrawText(TextFormat("SCALE FACTOR: %.1fx%.1f", scaleDpi.x, scaleDpi.y), 50, 210, 20, GRAY);
+
+            // Draw reference rectangles, top-left and bottom-right corners
+            DrawRectangle(0, 0, 30, 60, RED);
+            DrawRectangle(GetScreenWidth() - 30, GetScreenHeight() - 60, 30, 60, BLUE);
 
             // Draw mouse position
             DrawCircleV(GetMousePosition(), 20, MAROON);

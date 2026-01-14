@@ -21,7 +21,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -42,14 +42,10 @@
 
 #include "raylib.h"         // Declares module functions
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"     // Defines module configuration flags
-#endif
+#include "config.h"         // Defines module configuration flags
 
 #if defined(SUPPORT_MODULE_RMODELS)
 
-#include "utils.h"          // Required for: TRACELOG(), LoadFileData(), LoadFileText(), SaveFileText()
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 #include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
@@ -132,7 +128,7 @@
 #ifndef MAX_MESH_VERTEX_BUFFERS
     #define MAX_MESH_VERTEX_BUFFERS  9      // Maximum vertex buffers (VBO) per mesh
 #endif
-#ifndef MAX_FILEPATH_LENGTH 
+#ifndef MAX_FILEPATH_LENGTH
     #define MAX_FILEPATH_LENGTH   4096      // Maximum length for filepaths (Linux PATH_MAX default value)
 #endif
 
@@ -1762,11 +1758,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
     // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCE_TX
-    for (unsigned int i = 0; i < 4; i++)
+    if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] != -1)
     {
-        rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i);
-        rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
-        rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 1);
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
+            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 1);
+        }
     }
 
     rlDisableVertexBuffer();
@@ -1987,7 +1986,7 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         byteCount += sprintf(txtData + byteCount, "# // more info and bugs-report:  github.com/raysan5/raylib                        //\n");
         byteCount += sprintf(txtData + byteCount, "# // feedback and support:       ray[at]raylib.com                                //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
-        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                          //\n");
+        byteCount += sprintf(txtData + byteCount, "# // Copyright (c) 2018-2026 Ramon Santamaria (@raysan5)                          //\n");
         byteCount += sprintf(txtData + byteCount, "# //                                                                              //\n");
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n\n");
         byteCount += sprintf(txtData + byteCount, "# Vertex Count:     %i\n", mesh.vertexCount);
@@ -4153,7 +4152,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         // Test against all triangles in mesh
         for (int i = 0; i < triangleCount; i++)
         {
-            Vector3 a = { 0 }; 
+            Vector3 a = { 0 };
             Vector3 b = { 0 };
             Vector3 c = { 0 };
             Vector3 *vertdata = (Vector3 *)mesh.vertices;
@@ -6353,7 +6352,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     return true;
 }
 
-#define GLTF_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
+#define GLTF_FRAMERATE 60.0f    // glTF animation framerate (frames per second)
 
 static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount)
 {
@@ -6473,13 +6472,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                 if (animData.name != NULL) strncpy(animations[i].name, animData.name, sizeof(animations[i].name) - 1);
 
-                animations[i].frameCount = (int)(animDuration*1000.0f/GLTF_ANIMDELAY) + 1;
+                animations[i].frameCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
                 animations[i].framePoses = (Transform **)RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
 
                 for (int j = 0; j < animations[i].frameCount; j++)
                 {
                     animations[i].framePoses[j] = (Transform *)RL_MALLOC(animations[i].boneCount*sizeof(Transform));
-                    float time = ((float) j*GLTF_ANIMDELAY)/1000.0f;
+                    float time = (float)j / GLTF_FRAMERATE;
 
                     for (int k = 0; k < animations[i].boneCount; k++)
                     {
@@ -7042,8 +7041,8 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
         else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i animations, %i bones, %i skins", fileName,
             m3d->numaction, m3d->numbone, m3d->numskin);
 
-        // No animation or bone+skin?
-        if (!m3d->numaction || !m3d->numbone || !m3d->numskin)
+        // No animation or bones, exit out. skins are not required because some people use one animation for N models
+        if (!m3d->numaction || !m3d->numbone)
         {
             m3d_free(m3d);
             UnloadFileData(fileData);

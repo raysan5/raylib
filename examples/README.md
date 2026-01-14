@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 205]
+## EXAMPLES COLLECTION [TOTAL: 208]
 
-### category: core [47]
+### category: core [48]
 
 Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.
 
@@ -69,11 +69,12 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_directory_files](core/core_directory_files.c) | <img src="core/core_directory_files.png" alt="core_directory_files" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Hugo ARNAL](https://github.com/hugoarnal) |
 | [core_highdpi_testbed](core/core_highdpi_testbed.c) | <img src="core/core_highdpi_testbed.png" alt="core_highdpi_testbed" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_screen_recording](core/core_screen_recording.c) | <img src="core/core_screen_recording.png" alt="core_screen_recording" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ananth S](https://github.com/Ananth1839) |
+| [core_clipboard_text](core/core_clipboard_text.c) | <img src="core/core_clipboard_text.png" alt="core_clipboard_text" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ananth S](https://github.com/Ananth1839) |
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 | [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [38]
+### category: shapes [39]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -117,8 +118,9 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_rlgl_triangle](shapes/shapes_rlgl_triangle.c) | <img src="shapes/shapes_rlgl_triangle.png" alt="shapes_rlgl_triangle" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Robin](https://github.com/RobinsAviary) |
 | [shapes_ball_physics](shapes/shapes_ball_physics.c) | <img src="shapes/shapes_ball_physics.png" alt="shapes_ball_physics" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
 | [shapes_penrose_tile](shapes/shapes_penrose_tile.c) | <img src="shapes/shapes_penrose_tile.png" alt="shapes_penrose_tile" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
+| [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 
-### category: textures [29]
+### category: textures [30]
 
 Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
@@ -153,6 +155,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_textured_curve](textures/textures_textured_curve.c) | <img src="textures/textures_textured_curve.png" alt="textures_textured_curve" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [textures_sprite_stacking](textures/textures_sprite_stacking.c) | <img src="textures/textures_sprite_stacking.png" alt="textures_sprite_stacking" width="80"> | ⭐⭐☆☆ | 5.6-dev | 6.0 | [Robin](https://github.com/RobinsAviary) |
 | [textures_cellular_automata](textures/textures_cellular_automata.c) | <img src="textures/textures_cellular_automata.png" alt="textures_cellular_automata" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [textures_framebuffer_rendering](textures/textures_framebuffer_rendering.c) | <img src="textures/textures_framebuffer_rendering.png" alt="textures_framebuffer_rendering" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jack Boakes](https://github.com/jackboakes) |
 
 ### category: text [16]
 

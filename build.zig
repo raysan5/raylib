@@ -197,7 +197,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c", "src/utils.c" });
+    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c" });
 
     if (options.rshapes) {
         try c_source_files.append(b.allocator, "src/rshapes.c");
@@ -348,7 +348,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
         },
         .freebsd, .openbsd, .netbsd, .dragonfly => {
-            try c_source_files.append(b.allocator, "rglfw.c");
+            try c_source_files.append(b.allocator, "src/rglfw.c");
             raylib.root_module.linkSystemLibrary("GL", .{});
             raylib.root_module.linkSystemLibrary("rt", .{});
             raylib.root_module.linkSystemLibrary("dl", .{});

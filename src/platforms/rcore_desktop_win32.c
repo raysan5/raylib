@@ -13,9 +13,6 @@
 *       - Improvement 01
 *       - Improvement 02
 *
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
-*
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_CUSTOM_FLAG
 *           Custom flag for rcore on target platform -not used-
@@ -26,7 +23,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -263,7 +260,7 @@ static bool DecoratedFromStyle(DWORD style)
 static DWORD MakeWindowStyle(unsigned flags)
 {
     // Flag is not needed because there are no child windows,
-    // but supposedly it improves efficiency, plus, windows adds this 
+    // but supposedly it improves efficiency, plus, windows adds this
     // flag automatically anyway so it keeps flags in sync with the OS
     DWORD style = WS_CLIPSIBLINGS;
 
@@ -1877,13 +1874,23 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_DPICHANGED:
         {
+            // Get current dpi scale factor
+            float scalex = HIWORD(wParam)/96.0f;
+            float scaley = LOWORD(wParam)/96.0f;
+
             RECT *suggestedRect = (RECT *)lparam;
 
             // Never set the window size to anything other than the suggested rect here
             // Doing so can cause a window to stutter between monitors when transitioning between them
-            int result = (int)SetWindowPos(hwnd, NULL, suggestedRect->left, suggestedRect->top,
-                suggestedRect->right - suggestedRect->left, suggestedRect->bottom - suggestedRect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            int result = (int)SetWindowPos(hwnd, NULL,
+                suggestedRect->left, suggestedRect->top,
+                suggestedRect->right - suggestedRect->left,
+                suggestedRect->bottom - suggestedRect->top,
+                SWP_NOZORDER | SWP_NOACTIVATE);
+
             if (result == 0) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+
+            // TODO: Update screen data, render size, screen scaling, viewport...
 
         } break;
         case WM_SETCURSOR:
@@ -2039,8 +2046,7 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     // TODO: Update framebuffer on resize
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    //glViewport(0, 0, clientSize.cx, clientSize.cy);
-    //SetupFramebuffer(0, 0);
+    //SetupViewport(0, 0, clientSize.cx, clientSize.cy);
 
     SetupViewport(clientSize.cx, clientSize.cy);
     CORE.Window.resizedLastFrame = true;

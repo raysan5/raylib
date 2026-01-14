@@ -42,7 +42,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -63,14 +63,10 @@
 
 #include "raylib.h"             // Declares module functions
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
-#endif
+#include "config.h"             // Defines module configuration flags
 
 #if defined(SUPPORT_MODULE_RTEXTURES)
 
-#include "utils.h"              // Required for: TRACELOG()
 #include "rlgl.h"               // OpenGL abstraction layer to multiple versions
 
 #include <stdlib.h>             // Required for: malloc(), calloc(), free()
@@ -765,7 +761,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2026 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -1125,7 +1121,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-    
+
     int imageSize = width*height;
     image.width = width;
     image.height = height;
@@ -1487,7 +1483,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
     if (text == NULL) return imText;
-    
+
     int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
@@ -2395,7 +2391,7 @@ void ImageMipmaps(Image *image)
         if (mipWidth < 1) mipWidth = 1;
         if (mipHeight < 1) mipHeight = 1;
 
-        TRACELOGD("IMAGE: Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
+        TRACELOG(LOG_DEBUG, "IMAGE: Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
 
         mipCount++;
         mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
@@ -2432,7 +2428,7 @@ void ImageMipmaps(Image *image)
 
             if (i < image->mipmaps) continue;
 
-            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+            TRACELOG(LOG_DEBUG, "IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
             ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
             memcpy(nextmip, imCopy.data, mipSize);
         }
