@@ -1208,16 +1208,14 @@ void DrawFPS(int posX, int posY)
 void DrawText(const char *text, int posX, int posY, int fontSize, Color color)
 {
     // Check if default font has been loaded
-    if (GetFontDefault().texture.id != 0)
-    {
-        Vector2 position = { (float)posX, (float)posY };
-
-        int defaultFontSize = 10;   // Default Font chars height in pixel
-        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-        int spacing = fontSize/defaultFontSize;
-
-        DrawTextEx(GetFontDefault(), text, position, (float)fontSize, (float)spacing, color);
-    }
+    const int txid = GetFontDefault().texture.id;
+    if (txid == 0)
+        return;
+    const Vector2 position = { (float)posX, (float)posY };
+    const int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    const float spacing = fontSize/defaultFontSize;
+    DrawTextEx(GetFontDefault(), text, position, (float)fontSize, spacing, color);
 }
 
 // Draw text using Font
@@ -1537,7 +1535,6 @@ const char *TextFormat(const char *text, ...)
     static int index = 0;
 
     char *currentBuffer = buffers[index];
-    memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH); // Clear buffer before using
 
     if (text != NULL)
     {
@@ -1657,13 +1654,12 @@ bool TextIsEqual(const char *text1, const char *text2)
 const char *TextSubtext(const char *text, int position, int length)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
         int textLength = TextLength(text);
 
-        if (position >= textLength) return buffer; // First char is already '\0' by memset
+        if (position >= textLength) return buffer; // First char is already '\0'
 
         int maxLength = textLength - position;
         if (length > maxLength) length = maxLength;
@@ -1683,7 +1679,6 @@ const char *TextSubtext(const char *text, int position, int length)
 const char *TextRemoveSpaces(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -1703,7 +1698,6 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
     #define MAX_TEXT_BETWEEN_SIZE   1024
 
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     int beginIndex = TextFindIndex(text, begin);
 
@@ -1848,11 +1842,10 @@ char *TextInsert(const char *text, const char *insert, int position)
 }
 
 // Join text strings with delimiter
-// REQUIRES: memset(), memcpy()
+// REQUIRES: memcpy()
 char *TextJoin(char **textList, int count, const char *delimiter)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
     char *textPtr = buffer;
 
     int totalLength = 0;
@@ -1882,7 +1875,7 @@ char *TextJoin(char **textList, int count, const char *delimiter)
 }
 
 // Split string into multiple strings
-// REQUIRES: memset()
+// REQUIRES: 
 char **TextSplit(const char *text, char delimiter, int *count)
 {
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
@@ -1893,7 +1886,6 @@ char **TextSplit(const char *text, char delimiter, int *count)
 
     static char *buffers[MAX_TEXTSPLIT_COUNT] = { NULL }; // Pointers to buffer[] text data
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 }; // Text data with '\0' separators
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     buffers[0] = buffer;
     int counter = 0;
@@ -1955,7 +1947,6 @@ int TextFindIndex(const char *text, const char *search)
 char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -1974,7 +1965,6 @@ char *TextToUpper(const char *text)
 char *TextToLower(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -1993,7 +1983,6 @@ char *TextToLower(const char *text)
 char *TextToPascal(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -2022,7 +2011,6 @@ char *TextToPascal(const char *text)
 char *TextToSnake(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -2050,7 +2038,6 @@ char *TextToSnake(const char *text)
 char *TextToCamel(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if (text != NULL)
     {
@@ -2174,7 +2161,6 @@ int GetCodepointCount(const char *text)
 const char *CodepointToUTF8(int codepoint, int *utf8Size)
 {
     static char utf8[6] = { 0 };
-    memset(utf8, 0, 6); // Clear static array
     int size = 0;       // Byte size of codepoint
 
     if (codepoint <= 0x7f)
