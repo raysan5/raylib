@@ -2787,15 +2787,66 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 // NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+
     FilePathList files = { 0 };
 
-    files.capacity = MAX_FILEPATH_CAPACITY;
-    files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
-    for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+    struct dirent *entity;
+    DIR *dir = opendir(basePath);
 
-    // WARNING: basePath is always prepended to scanned paths
-    if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
-    else ScanDirectoryFiles(basePath, &files, filter);
+    if (dir != NULL) // It's a directory
+    {
+        // Count files if we aren't loading recursively
+        if (!scanSubdirs)
+        {
+            unsigned int fileCounter = 0;
+
+            while ((entity = readdir(dir)) != NULL)
+            {
+                // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+                if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0))
+                {
+                    // Only count files included in filter
+                    if (filter != NULL)
+                    {
+                        // Construct new path from our base path
+                        #if defined(_WIN32)
+                            int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, entity->d_name);
+                        #else
+                            int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, entity->d_name);
+                        #endif
+                        if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
+                        {
+                            TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
+                        }
+                        else if (IsPathFile(path))
+                        {
+                            if (IsFileExtension(path, filter)) fileCounter++;
+                        }
+                        else
+                        {
+                            if (strstr(filter, DIRECTORY_FILTER_TAG) != NULL) fileCounter++;
+                        }
+                    }
+                    else fileCounter++;
+                }
+            }
+
+            files.capacity = fileCounter;
+        }
+        else files.capacity = MAX_FILEPATH_CAPACITY;
+        
+        files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
+        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        
+        closedir(dir);
+
+        // WARNING: basePath is always prepended to scanned paths
+        if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
+        else ScanDirectoryFiles(basePath, &files, filter);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
     return files;
 }
