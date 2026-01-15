@@ -2740,6 +2740,7 @@ const char *GetApplicationDirectory(void)
     }
 
 #elif defined(__wasm__)
+
     appDir[0] = '/';
 #endif
 
