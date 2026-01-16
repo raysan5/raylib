@@ -2768,7 +2768,11 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
         ScanDirectoryFiles(dirPath, &files, NULL, fileCounter);
 
         // Security check: read files.count should match fileCounter
-        if (files.count != fileCounter) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
+        if (files.count != fileCounter)
+        {
+            TRACELOG(LOG_WARNING, "FILEIO: Read files count (%u) does not match capacity allocated (%u)", files.count, fileCounter);
+            files.count = fileCounter; // Avoid memory leak when unloading this FilePathList
+        }
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
@@ -2794,6 +2798,13 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
         // WARNING: basePath is always prepended to scanned paths
         if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter, fileCounter);
         else ScanDirectoryFiles(basePath, &files, filter, fileCounter);
+
+        // Security check: read files.count should match fileCounter
+        if (files.count != fileCounter)
+        {
+            TRACELOG(LOG_WARNING, "FILEIO: Read files count (%u) does not match capacity allocated (%u)", files.count, fileCounter);
+            files.count = fileCounter; // Avoid memory leak when unloading this FilePathList
+        }
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
@@ -4366,13 +4377,6 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
-
-    // Security check: read files.count should match fileCounter
-    if (files->count != fileCount)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
-        files->count = fileCount; // Avoid memory leak when unloading this FilePathList
-    }
 }
 
 // Scan all files and directories recursively from a base path
@@ -4436,13 +4440,6 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
-
-    // Security check: read files.count should match fileCounter
-    if (files->count != fileCount)
-    {
-        TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
-        files->count = fileCount; // Avoid memory leak when unloading this FilePathList
-    }
 }
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
