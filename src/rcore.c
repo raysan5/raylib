@@ -505,8 +505,11 @@ extern void ClosePlatform(void);        // Close platform
 static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
 static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
-static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter);   // Scan all files and directories in a base path
-static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter);  // Scan all files and directories recursively from a base path
+static unsigned int GetDirectoryFileCount(const char *dirPath);                                         // Get the file count in a directory
+static unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs);// Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
+
+static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int maxFileCount);            // Scan all files and directories in a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter, unsigned int maxFileCount); // Scan all files and directories recursively from a base path
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
@@ -2750,33 +2753,22 @@ const char *GetApplicationDirectory(void)
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     FilePathList files = { 0 };
-    unsigned int fileCounter = 0;
 
-    struct dirent *entity;
-    DIR *dir = opendir(dirPath);
-
-    if (dir != NULL) // It's a directory
+    if (DirectoryExists(dirPath)) // It's a directory
     {
         // SCAN 1: Count files
-        while ((entity = readdir(dir)) != NULL)
-        {
-            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
-            if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0)) fileCounter++;
-        }
+        unsigned int fileCounter = GetDirectoryFileCount(dirPath);
 
         // Memory allocation for dirFileCount
-        files.capacity = fileCounter;
-        files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
-        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-
-        closedir(dir);
+        files.paths = (char **)RL_CALLOC(fileCounter, sizeof(char *));
+        for (unsigned int i = 0; i < fileCounter; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
         // SCAN 2: Read filepaths
         // NOTE: Directory paths are also registered
-        ScanDirectoryFiles(dirPath, &files, NULL);
+        ScanDirectoryFiles(dirPath, &files, NULL, fileCounter);
 
         // Security check: read files.count should match fileCounter
-        if (files.count != files.capacity) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
+        if (files.count != fileCounter) TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
@@ -2784,67 +2776,24 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
-// NOTE: On recursive loading we do not pre-scan for file count, we use MAX_FILEPATH_CAPACITY
+// WARNING: Directory is scanned twice, first time to get files count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
-    static char path[MAX_FILEPATH_LENGTH] = { 0 };
-    memset(path, 0, MAX_FILEPATH_LENGTH);
-
     FilePathList files = { 0 };
 
-    struct dirent *entity;
-    DIR *dir = opendir(basePath);
-
-    if (dir != NULL) // It's a directory
+    if (DirectoryExists(basePath)) // It's a directory
     {
-        // Count files if we aren't loading recursively
-        if (!scanSubdirs)
-        {
-            unsigned int fileCounter = 0;
-
-            while ((entity = readdir(dir)) != NULL)
-            {
-                // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
-                if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0))
-                {
-                    // Only count files included in filter
-                    if (filter != NULL)
-                    {
-                        // Construct new path from our base path
-                        #if defined(_WIN32)
-                            int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, entity->d_name);
-                        #else
-                            int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, entity->d_name);
-                        #endif
-                        if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
-                        {
-                            TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
-                        }
-                        else if (IsPathFile(path))
-                        {
-                            if (IsFileExtension(path, filter)) fileCounter++;
-                        }
-                        else
-                        {
-                            if (strstr(filter, DIRECTORY_FILTER_TAG) != NULL) fileCounter++;
-                        }
-                    }
-                    else fileCounter++;
-                }
-            }
-
-            files.capacity = fileCounter;
-        }
-        else files.capacity = MAX_FILEPATH_CAPACITY;
+        // SCAN 1: Count files
+        unsigned int fileCounter = GetDirectoryFileCountEx(basePath, filter, scanSubdirs);
         
-        files.paths = (char **)RL_CALLOC(files.capacity, sizeof(char *));
-        for (unsigned int i = 0; i < files.capacity; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-        
-        closedir(dir);
+        // Memory allocation for dirFileCount
+        files.paths = (char **)RL_CALLOC(fileCounter, sizeof(char *));
+        for (unsigned int i = 0; i < fileCounter; i++) files.paths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
+        // SCAN 2: Read filepaths
         // WARNING: basePath is always prepended to scanned paths
-        if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter);
-        else ScanDirectoryFiles(basePath, &files, filter);
+        if (scanSubdirs) ScanDirectoryFilesRecursively(basePath, &files, filter, fileCounter);
+        else ScanDirectoryFiles(basePath, &files, filter, fileCounter);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
 
@@ -2857,7 +2806,7 @@ void UnloadDirectoryFiles(FilePathList files)
 {
     if (files.paths != NULL)
     {
-        for (unsigned int i = 0; i < files.capacity; i++) RL_FREE(files.paths[i]);
+        for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
 
         RL_FREE(files.paths);
     }
@@ -4273,10 +4222,95 @@ void SetupViewport(int width, int height)
     rlLoadIdentity();                   // Reset current matrix (modelview)
 }
 
+// Get the file count in a directory
+static unsigned int GetDirectoryFileCount(const char *dirPath)
+{
+    unsigned int fileCounter = 0;
+
+    static char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+
+    struct dirent *entity;
+    DIR *dir = opendir(dirPath);
+
+    if (dir != NULL) // It's a directory
+    {
+        while ((entity = readdir(dir)) != NULL)
+        {
+            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0))
+            {
+                // Construct new path from our base path
+                #if defined(_WIN32)
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", dirPath, entity->d_name);
+                #else
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", dirPath, entity->d_name);
+                #endif
+                // Don't add to count if path too long
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
+                {
+                    TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, dirPath);
+                }
+                else fileCounter++;
+            }
+        }
+
+        closedir(dir);
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
+    return fileCounter;
+}
+
+// Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
+static unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs)
+{
+    unsigned int fileCounter = 0;
+
+    // WARNING: Path can not be static or it will be reused between recursive function calls!
+    char path[MAX_FILEPATH_LENGTH] = { 0 };
+    memset(path, 0, MAX_FILEPATH_LENGTH);
+
+    struct dirent *entity;
+    DIR *dir = opendir(basePath);
+
+    if (dir != NULL) // It's a directory
+    {
+        while ((entity = readdir(dir)) != NULL)
+        {
+            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0))
+            {
+                // Construct new path from our base path
+                #if defined(_WIN32)
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, entity->d_name);
+                #else
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, entity->d_name);
+                #endif
+                // Don't add to count if path too long
+                if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
+                {
+                    TRACELOG(LOG_WARNING, "FILEIO: Path longer than %d characters (%s...)", MAX_FILEPATH_LENGTH, basePath);
+                }
+                else if (IsPathFile(path))
+                {
+                    if (filter == NULL || IsFileExtension(path, filter)) fileCounter++;
+                }
+                else
+                {
+                    if (filter == NULL || strstr(filter, DIRECTORY_FILTER_TAG) != NULL) fileCounter++;
+                    if (scanSubdirs) fileCounter += GetDirectoryFileCountEx(path, filter, scanSubdirs);
+                }
+            }
+        }
+    }
+    else TRACELOG(LOG_WARNING, "FILEIO: Failed to open requested directory");  // Maybe it's a file...
+    return fileCounter;
+}
+
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
-static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter)
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter, unsigned int maxFileCount)
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
@@ -4286,17 +4320,17 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
     if (dir != NULL)
     {
-        while ((dp = readdir(dir)) != NULL)
+        while ((dp = readdir(dir)) != NULL && files->count < maxFileCount)
         {
             if ((strcmp(dp->d_name, ".") != 0) &&
                 (strcmp(dp->d_name, "..") != 0))
             {
                 // Construct new path from our base path
-            #if defined(_WIN32)
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
-            #else
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
-            #endif
+                #if defined(_WIN32)
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
+                #else
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
+                #endif
 
                 if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
                 {
@@ -4335,7 +4369,9 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 }
 
 // Scan all files and directories recursively from a base path
-static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter)
+// WARNING: files.paths[] must be previously allocated and
+// contain enough space to store all required paths
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter, unsigned int maxFileCount)
 {
     // WARNING: Path can not be static or it will be reused between recursive function calls!
     char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -4346,7 +4382,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 
     if (dir != NULL)
     {
-        while (((dp = readdir(dir)) != NULL) && (files->count < files->capacity))
+        while (((dp = readdir(dir)) != NULL) && files->count < maxFileCount)
         {
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
@@ -4376,12 +4412,6 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
                         files->count++;
                     }
-
-                    if (files->count >= files->capacity)
-                    {
-                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
-                        break;
-                    }
                 }
                 else
                 {
@@ -4391,13 +4421,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         files->count++;
                     }
 
-                    if (files->count >= files->capacity)
-                    {
-                        TRACELOG(LOG_WARNING, "FILEIO: Maximum filepath scan capacity reached (%i files)", files->capacity);
-                        break;
-                    }
-
-                    ScanDirectoryFilesRecursively(path, files, filter);
+                    ScanDirectoryFilesRecursively(path, files, filter, maxFileCount);
                 }
             }
         }
