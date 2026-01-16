@@ -1151,6 +1151,8 @@ RLAPI void UnloadDirectoryFiles(FilePathList files);                // Unload fi
 RLAPI bool IsFileDropped(void);                                     // Check if a file has been dropped into window
 RLAPI FilePathList LoadDroppedFiles(void);                          // Load dropped filepaths
 RLAPI void UnloadDroppedFiles(FilePathList files);                  // Unload dropped filepaths
+RLAPI unsigned int GetDirectoryFileCount(const char *dirPath);      // Get the file count in a directory
+RLAPI unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs);// Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
 
 // Compression/Encoding functionality
 RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize);        // Compress data (DEFLATE algorithm), memory must be MemFree()
