@@ -1326,11 +1326,6 @@ return {
       fields = {
         {
           type = "unsigned int",
-          name = "capacity",
-          description = "Filepaths max entries"
-        },
-        {
-          type = "unsigned int",
           name = "count",
           description = "Filepaths entries count"
         },

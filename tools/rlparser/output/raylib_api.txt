@@ -540,12 +540,11 @@ Struct 31: VrStereoConfig (8 fields)
   Field[6]: float[2] rightScreenCenter // VR right screen center
   Field[7]: float[2] scale // VR distortion scale
   Field[8]: float[2] scaleIn // VR distortion scale in
-Struct 32: FilePathList (3 fields)
+Struct 32: FilePathList (2 fields)
   Name: FilePathList
   Description: File path list
-  Field[1]: unsigned int capacity // Filepaths max entries
-  Field[2]: unsigned int count // Filepaths entries count
-  Field[3]: char ** paths // Filepaths entries
+  Field[1]: unsigned int count // Filepaths entries count
+  Field[2]: char ** paths // Filepaths entries
 Struct 33: AutomationEvent (3 fields)
   Name: AutomationEvent
   Description: Automation event

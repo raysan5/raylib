@@ -280,8 +280,7 @@
             <Field type="float[2]" name="scale" desc="VR distortion scale" />
             <Field type="float[2]" name="scaleIn" desc="VR distortion scale in" />
         </Struct>
-        <Struct name="FilePathList" fieldCount="3" desc="File path list">
-            <Field type="unsigned int" name="capacity" desc="Filepaths max entries" />
+        <Struct name="FilePathList" fieldCount="2" desc="File path list">
             <Field type="unsigned int" name="count" desc="Filepaths entries count" />
             <Field type="char **" name="paths" desc="Filepaths entries" />
         </Struct>
