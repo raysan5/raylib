@@ -508,8 +508,8 @@ static void SetupViewport(int width, int height);           // Set viewport for 
 static unsigned int GetDirectoryFileCount(const char *dirPath);                                         // Get the file count in a directory
 static unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs);// Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
 
-static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int maxFileCount);            // Scan all files and directories in a base path
-static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter, unsigned int maxFileCount); // Scan all files and directories recursively from a base path
+static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int fileCount);            // Scan all files and directories in a base path
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *list, const char *filter, unsigned int fileCount); // Scan all files and directories recursively from a base path
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
@@ -4310,7 +4310,7 @@ static unsigned int GetDirectoryFileCountEx(const char *basePath, const char *fi
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
-static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter, unsigned int maxFileCount)
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter, unsigned int fileCount)
 {
     static char path[MAX_FILEPATH_LENGTH] = { 0 };
     memset(path, 0, MAX_FILEPATH_LENGTH);
@@ -4320,7 +4320,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
     if (dir != NULL)
     {
-        while ((dp = readdir(dir)) != NULL && files->count < maxFileCount)
+        while (((dp = readdir(dir)) != NULL) && (files->count < fileCount))
         {
             if ((strcmp(dp->d_name, ".") != 0) &&
                 (strcmp(dp->d_name, "..") != 0))
@@ -4366,12 +4366,19 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+
+    // Security check: read files.count should match fileCounter
+    if (files->count != fileCount)
+    {
+        TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
+        files->count = fileCount; // Avoid memory leak when unloading this FilePathList
+    }
 }
 
 // Scan all files and directories recursively from a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
-static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter, unsigned int maxFileCount)
+static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *files, const char *filter, unsigned int fileCount)
 {
     // WARNING: Path can not be static or it will be reused between recursive function calls!
     char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -4382,7 +4389,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
 
     if (dir != NULL)
     {
-        while (((dp = readdir(dir)) != NULL) && files->count < maxFileCount)
+        while (((dp = readdir(dir)) != NULL) && (files->count < fileCount))
         {
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
@@ -4421,7 +4428,7 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
                         files->count++;
                     }
 
-                    ScanDirectoryFilesRecursively(path, files, filter, maxFileCount);
+                    ScanDirectoryFilesRecursively(path, files, filter, fileCount);
                 }
             }
         }
@@ -4429,6 +4436,13 @@ static void ScanDirectoryFilesRecursively(const char *basePath, FilePathList *fi
         closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);
+
+    // Security check: read files.count should match fileCounter
+    if (files->count != fileCount)
+    {
+        TRACELOG(LOG_WARNING, "FILEIO: Read files count do not match capacity allocated");
+        files->count = fileCount; // Avoid memory leak when unloading this FilePathList
+    }
 }
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
