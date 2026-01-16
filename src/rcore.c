@@ -4308,7 +4308,7 @@ static unsigned int GetDirectoryFileCountEx(const char *basePath, const char *fi
                 }
                 else
                 {
-                    if (filter == NULL || strstr(filter, DIRECTORY_FILTER_TAG) != NULL) fileCounter++;
+                    if ((filter != NULL) && (strstr(filter, DIRECTORY_FILTER_TAG) != NULL)) fileCounter++;
                     if (scanSubdirs) fileCounter += GetDirectoryFileCountEx(path, filter, scanSubdirs);
                 }
             }
