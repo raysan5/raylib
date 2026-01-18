@@ -30,7 +30,7 @@
 #     > PLATFORM_ANDROID:
 #         - Android (ARM, ARM64)
 #
-#   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -208,12 +208,12 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     MAKE = mingw32-make
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    ifeq ($(OS),Windows_NT)
+    ifeq ($(PLATFORM_OS),WINDOWS)
         MAKE = mingw32-make
     else
-        EMMAKE != type emmake
+        EMMAKE := $(shell command -v emmake)
         ifneq (, $(EMMAKE))
-            MAKE = emmake make
+            MAKE = $(EMMAKE) make
         else
             MAKE = mingw32-make
         endif
@@ -519,7 +519,7 @@ CORE = \
     core/core_delta_time \
     core/core_directory_files \
     core/core_drop_files \
-    core/core_high_dpi \
+    core/core_highdpi_demo \
     core/core_highdpi_testbed \
     core/core_input_actions \
     core/core_input_gamepad \
@@ -530,6 +530,7 @@ CORE = \
     core/core_input_mouse_wheel \
     core/core_input_multitouch \
     core/core_input_virtual_controls \
+    core/core_keyboard_testbed \
     core/core_monitor_detector \
     core/core_random_sequence \
     core/core_random_values \
@@ -563,6 +564,7 @@ SHAPES = \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
+    shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
     shapes/shapes_lines_bezier \
     shapes/shapes_lines_drawing \
@@ -593,6 +595,7 @@ TEXTURES = \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
     textures/textures_fog_of_war \
+    textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
     textures/textures_image_channel \
     textures/textures_image_drawing \
@@ -783,7 +786,7 @@ core/core_directory_files: core/core_directory_files.c
 core/core_drop_files: core/core_drop_files.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-core/core_high_dpi: core/core_high_dpi.c
+core/core_highdpi_demo: core/core_highdpi_demo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_highdpi_testbed: core/core_highdpi_testbed.c
@@ -816,6 +819,9 @@ core/core_input_multitouch: core/core_input_multitouch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_input_virtual_controls: core/core_input_virtual_controls.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_keyboard_testbed: core/core_keyboard_testbed.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_monitor_detector: core/core_monitor_detector.c
@@ -914,6 +920,9 @@ shapes/shapes_easings_rectangles: shapes/shapes_easings_rectangles.c
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_hilbert_curve: shapes/shapes_hilbert_curve.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_kaleidoscope: shapes/shapes_kaleidoscope.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1003,6 +1012,9 @@ textures/textures_cellular_automata: textures/textures_cellular_automata.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+textures/textures_framebuffer_rendering: textures/textures_framebuffer_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_gif_player: textures/textures_gif_player.c
@@ -1367,15 +1379,15 @@ shaders/shaders_fog_rendering: shaders/shaders_fog_rendering.c
 shaders/shaders_game_of_life: shaders/shaders_game_of_life.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/game_of_life.fs@resources/shaders/glsl100/game_of_life.fs \
-    --preload-file shaders/resources/game_of_life/acorn.png@resources/game_of_life/acorn.png \
-    --preload-file shaders/resources/game_of_life/breeder.png@resources/game_of_life/breeder.png \
+    --preload-file shaders/resources/game_of_life/r_pentomino.png@resources/game_of_life/r_pentomino.png \
     --preload-file shaders/resources/game_of_life/glider.png@resources/game_of_life/glider.png \
-    --preload-file shaders/resources/game_of_life/glider_gun.png@resources/game_of_life/glider_gun.png \
+    --preload-file shaders/resources/game_of_life/acorn.png@resources/game_of_life/acorn.png \
+    --preload-file shaders/resources/game_of_life/spaceships.png@resources/game_of_life/spaceships.png \
+    --preload-file shaders/resources/game_of_life/still_lifes.png@resources/game_of_life/still_lifes.png \
     --preload-file shaders/resources/game_of_life/oscillators.png@resources/game_of_life/oscillators.png \
     --preload-file shaders/resources/game_of_life/puffer_train.png@resources/game_of_life/puffer_train.png \
-    --preload-file shaders/resources/game_of_life/r_pentomino.png@resources/game_of_life/r_pentomino.png \
-    --preload-file shaders/resources/game_of_life/spaceships.png@resources/game_of_life/spaceships.png \
-    --preload-file shaders/resources/game_of_life/still_lifes.png@resources/game_of_life/still_lifes.png
+    --preload-file shaders/resources/game_of_life/glider_gun.png@resources/game_of_life/glider_gun.png \
+    --preload-file shaders/resources/game_of_life/breeder.png@resources/game_of_life/breeder.png
 
 shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

@@ -52,7 +52,7 @@
     raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
     BSD-like license that allows static linking with closed source software:
 
-    Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)
+    Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)
 
 **********************************************************************************************/
 
@@ -1084,7 +1084,7 @@ static void ShowCommandLineInfo(void)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/raylib/tools/rlparser          //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)                          //\n");
+    printf("// Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)                          //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 

@@ -19,20 +19,25 @@
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
-*           Generates the implementation of the library into the included file.
+*           Generates the implementation of the library into the included file
 *           If not defined, the library is in header only mode and can be included in other headers
-*           or source files without problems. But only ONE file should hold the implementation.
+*           or source files without problems. But only ONE file should hold the implementation
 *
 *       #define RAYMATH_STATIC_INLINE
-*           Define static inline functions code, so #include header suffices for use.
-*           This may use up lots of memory.
+*           Define static inline functions code, so #include header suffices for use
+*           This may use up lots of memory
 *
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *
+*       #define RAYMATH_USE_SIMD_INTRINSICS
+*           Try to enable SIMD intrinsics for MatrixMultiply()
+*           Note that users enabling it must be aware of the target platform where application will
+*           run to support the selected SIMD intrinsic, for now, only SSE is supported
+*
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -78,7 +83,6 @@
         #define RMAPI inline        // Functions may be inlined or external definition used
     #endif
 #endif
-
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -169,6 +173,35 @@ typedef struct float16 {
 } float16;
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
+
+#if defined(RAYMATH_USE_SIMD_INTRINSICS)
+    // SIMD is used on the most costly raymath function MatrixMultiply()
+    // NOTE: Only SSE intrinsics support implemented
+    // TODO: Consider support for other SIMD instrinsics:
+    //  - SSEx, AVX, AVX2, FMA, NEON, RVV
+    /*
+    #if defined(__SSE4_2__)
+        #include <nmmintrin.h>
+        #define RAYMATH_SSE42_ENABLED
+    #elif defined(__SSE4_1__)
+        #include <smmintrin.h>
+        #define RAYMATH_SSE41_ENABLED
+    #elif defined(__SSSE3__)
+        #include <tmmintrin.h>
+        #define RAYMATH_SSSE3_ENABLED
+    #elif defined(__SSE3__)
+        #include <pmmintrin.h>
+        #define RAYMATH_SSE3_ENABLED
+    #elif defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
+        #include <emmintrin.h>
+        #define RAYMATH_SSE2_ENABLED
+    #endif
+    */
+    #if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 1))
+        #include <xmmintrin.h>
+        #define RAYMATH_SSE_ENABLED
+    #endif
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -1647,7 +1680,64 @@ RMAPI Matrix MatrixSubtract(Matrix left, Matrix right)
 RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
+    
+#if defined(RAYMATH_SSE_ENABLED)
+    // Load left side and right side
+    __m128 c0 = _mm_set_ps(right.m12, right.m8,  right.m4,  right.m0);
+    __m128 c1 = _mm_set_ps(right.m13, right.m9,  right.m5,  right.m1);
+    __m128 c2 = _mm_set_ps(right.m14, right.m10, right.m6,  right.m2);
+    __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
+    
+    // Transpose so c0..c3 become *rows* of the right matrix in semantic order
+    _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
 
+    float tmp[4] = { 0 };
+    __m128 row;
+    
+    // Row 0 of result: [m0, m1, m2, m3]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m0),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m1),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m2),  c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m3),  c3));
+    _mm_storeu_ps(tmp, row);
+    result.m0 = tmp[0];
+    result.m1 = tmp[1];
+    result.m2 = tmp[2];
+    result.m3 = tmp[3];
+
+    // Row 1 of result: [m4, m5, m6, m7]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m4),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m5),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m6),  c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m7),  c3));
+    _mm_storeu_ps(tmp, row);
+    result.m4 = tmp[0];
+    result.m5 = tmp[1];
+    result.m6 = tmp[2];
+    result.m7 = tmp[3];
+
+    // Row 2 of result: [m8, m9, m10, m11]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m8),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m9),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m10), c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m11), c3));
+    _mm_storeu_ps(tmp, row);
+    result.m8  = tmp[0];
+    result.m9  = tmp[1];
+    result.m10 = tmp[2];
+    result.m11 = tmp[3];
+
+    // Row 3 of result: [m12, m13, m14, m15]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m12), c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m13), c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m14), c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m15), c3));
+    _mm_storeu_ps(tmp, row);
+    result.m12 = tmp[0];
+    result.m13 = tmp[1];
+    result.m14 = tmp[2];
+    result.m15 = tmp[3];
+#else
     result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
     result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
     result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
@@ -1664,6 +1754,7 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
     result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
+#endif
 
     return result;
 }

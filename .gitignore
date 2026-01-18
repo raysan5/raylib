@@ -58,6 +58,10 @@ packages/
 *.h.pch
 ./*.obj
 
+# Ignore SDL libs for testing
+src/external/SDL2
+src/external/SDL3
+
 # Emscripten
 emsdk
 

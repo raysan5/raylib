@@ -62,7 +62,7 @@
 *   raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -570,8 +570,7 @@ typedef enum {
 } TraceLogLevel;
 
 // Keyboard keys (US keyboard layout)
-// NOTE: Use GetKeyPressed() to allow redefining
-// required keys for alternative layouts
+// NOTE: Use GetKeyPressed() to allow redefining required keys for alternative layouts
 typedef enum {
     KEY_NULL            = 0,        // Key: NULL, used for no key pressed
     // Alphanumeric keys
@@ -1075,47 +1074,41 @@ RLAPI Matrix GetCameraMatrix(Camera camera);                            // Get c
 RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                        // Get camera 2d transform matrix
 
 // Timing-related functions
-RLAPI void SetTargetFPS(int fps);                                 // Set target FPS (maximum)
-RLAPI float GetFrameTime(void);                                   // Get time in seconds for last frame drawn (delta time)
-RLAPI double GetTime(void);                                       // Get elapsed time in seconds since InitWindow()
-RLAPI int GetFPS(void);                                           // Get current FPS
+RLAPI void SetTargetFPS(int fps);                       // Set target FPS (maximum)
+RLAPI float GetFrameTime(void);                         // Get time in seconds for last frame drawn (delta time)
+RLAPI double GetTime(void);                             // Get elapsed time in seconds since InitWindow()
+RLAPI int GetFPS(void);                                 // Get current FPS
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advanced users that want full control over the frame processing
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
-RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
-RLAPI void PollInputEvents(void);                                 // Register all input events
-RLAPI void WaitTime(double seconds);                              // Wait for some time (halt program execution)
+RLAPI void SwapScreenBuffer(void);                      // Swap back buffer with front buffer (screen drawing)
+RLAPI void PollInputEvents(void);                       // Register all input events
+RLAPI void WaitTime(double seconds);                    // Wait for some time (halt program execution)
 
 // Random values generation functions
-RLAPI void SetRandomSeed(unsigned int seed);                      // Set the seed for the random number generator
-RLAPI int GetRandomValue(int min, int max);                       // Get a random value between min and max (both included)
+RLAPI void SetRandomSeed(unsigned int seed);            // Set the seed for the random number generator
+RLAPI int GetRandomValue(int min, int max);             // Get a random value between min and max (both included)
 RLAPI int *LoadRandomSequence(unsigned int count, int min, int max); // Load random values sequence, no values repeated
-RLAPI void UnloadRandomSequence(int *sequence);                   // Unload random values sequence
+RLAPI void UnloadRandomSequence(int *sequence);         // Unload random values sequence
 
 // Misc. functions
-RLAPI void TakeScreenshot(const char *fileName);                  // Takes a screenshot of current screen (filename extension defines format)
-RLAPI void SetConfigFlags(unsigned int flags);                    // Setup init configuration flags (view FLAGS)
-RLAPI void OpenURL(const char *url);                              // Open URL with default system browser (if available)
+RLAPI void TakeScreenshot(const char *fileName);                // Takes a screenshot of current screen (filename extension defines format)
+RLAPI void SetConfigFlags(unsigned int flags);                  // Setup init configuration flags (view FLAGS)
+RLAPI void OpenURL(const char *url);                            // Open URL with default system browser (if available)
 
-// NOTE: Following functions implemented in module [utils]
-//------------------------------------------------------------------
-RLAPI void TraceLog(int logLevel, const char *text, ...);         // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
-RLAPI void SetTraceLogLevel(int logLevel);                        // Set the current threshold (minimum) log level
-RLAPI void *MemAlloc(unsigned int size);                          // Internal memory allocator
-RLAPI void *MemRealloc(void *ptr, unsigned int size);             // Internal memory reallocator
-RLAPI void MemFree(void *ptr);                                    // Internal memory free
+// Logging system
+RLAPI void SetTraceLogLevel(int logLevel);                      // Set the current threshold (minimum) log level
+RLAPI void TraceLog(int logLevel, const char *text, ...);       // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
+RLAPI void SetTraceLogCallback(TraceLogCallback callback);      // Set custom trace log
 
-// Set custom callbacks
-// WARNING: Callbacks setup is intended for advanced users
-RLAPI void SetTraceLogCallback(TraceLogCallback callback);          // Set custom trace log
-RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
-RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
-RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
-RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
+// Memory management, using internal allocators 
+RLAPI void *MemAlloc(unsigned int size);                        // Internal memory allocator
+RLAPI void *MemRealloc(void *ptr, unsigned int size);           // Internal memory reallocator
+RLAPI void MemFree(void *ptr);                                  // Internal memory free
 
-// Files management functions
+// File system management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, int *dataSize); // Load file data as byte array (read)
 RLAPI void UnloadFileData(unsigned char *data);                     // Unload file data allocated by LoadFileData()
 RLAPI bool SaveFileData(const char *fileName, void *data, int dataSize); // Save data to file from byte array (write), returns true on success
@@ -1123,9 +1116,14 @@ RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char 
 RLAPI char *LoadFileText(const char *fileName);                     // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                              // Unload file text data allocated by LoadFileText()
 RLAPI bool SaveFileText(const char *fileName, const char *text);    // Save text data to file (write), string must be '\0' terminated, returns true on success
-//------------------------------------------------------------------
 
-// File system functions
+// File access custom callbacks
+// WARNING: Callbacks setup is intended for advanced users
+RLAPI void SetLoadFileDataCallback(LoadFileDataCallback callback);  // Set custom file binary data loader
+RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custom file binary data saver
+RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
+RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
+
 RLAPI int FileRename(const char *fileName, const char *fileRename); // Rename file (if exists)
 RLAPI int FileRemove(const char *fileName);                         // Remove file (if exists)
 RLAPI int FileCopy(const char *srcPath, const char *dstPath);       // Copy file from one path to another, dstPath created if it doesn't exist

@@ -21,6 +21,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [claw-raylib](https://github.com/bohonghuang/claw-raylib)                                | **auto**         | [Common Lisp](https://common-lisp.net)                               | Apache-2.0           |
 | [raylib](https://github.com/fosskers/raylib)                                             | 5.5              | [Common Lisp](https://common-lisp.net)                               | MPL-2.0              |
 | [chez-raylib](https://github.com/Yunoinsky/chez-raylib)                                  | **auto**         | [Chez Scheme](https://cisco.github.io/ChezScheme)                    | GPLv3                |
+| [chicken-raylib](https://github.com/meowstr/chicken-raylib)                              | 5.5              | [CHICKEN Scheme](https://wiki.call-cc.org)                           | MIT                  |
 | [CLIPSraylib](https://github.com/mrryanjohnston/CLIPSraylib)                             | **auto**         | [CLIPS](https://www.clipsrules.net/)                                 | MIT                  |
 | [raylib-cr](https://github.com/sol-vin/raylib-cr)                                        | 4.6-dev (5e1a81) | [Crystal](https://crystal-lang.org)                                  | Apache-2.0           |
 | [ray-cyber](https://github.com/fubark/ray-cyber)                                         | **5.0**          | [Cyber](https://cyberscript.dev)                                     | MIT                  |
@@ -28,6 +29,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [bindbc-raylib3](https://github.com/o3o/bindbc-raylib3)                                  | **5.0**          | [D](https://dlang.org)                                               | BSL-1.0              |
 | [dray](https://github.com/redthing1/dray)                                                | **5.0**          | [D](https://dlang.org)                                               | Apache-2.0           |
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **5.5**          | [D](https://dlang.org)                                               | Zlib                 |
+| [DenoRaylib550](https://github.com/JJLDonley/DenoRaylib550)                              | **5.5**          | [Deno](https://deno.land)                                            | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 4.5              | [Factor](https://factorcode.org)                                     | BSD                  |
@@ -76,6 +78,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-rs](https://github.com/raylib-rs/raylib-rs)                                      | **5.5**          | [Rust](https://www.rust-lang.org)                                    | Zlib                 |
 | [raylib-ruby](https://github.com/wilsonsilva/raylib-ruby)                                | 4.5              | [Ruby](https://www.ruby-lang.org)                                    | Zlib                 |
 | [Relib](https://github.com/RedCubeDev-ByteSpace/Relib)                                   | 3.5              | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT)                 | **???**              |
+| [ringraylib5](https://github.com/ring-lang/ring/tree/master/extensions/ringraylib5)      | **5.0**          | [Ring](https://ring-lang.github.io/)                                 | **???**              |
 | [racket-raylib](https://github.com/eutro/racket-raylib)                                  | **5.5**          | [Racket](https://racket-lang.org)                                    | MIT/Apache-2.0       |
 | [raylib-swift](https://github.com/STREGAsGate/Raylib)                                    | 4.0              | [Swift](https://swift.org)                                           | MIT                  |
 | [raylib-scopes](https://github.com/salotz/raylib-scopes)                                 | auto             | [Scopes](http://scopes.rocks)                                        | MIT                  |

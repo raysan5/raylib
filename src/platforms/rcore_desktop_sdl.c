@@ -15,9 +15,6 @@
 *       - Improvement 01
 *       - Improvement 02
 *
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
-*
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_CUSTOM_FLAG
 *           Custom flag for rcore on target platform -not used-
@@ -29,7 +26,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -57,7 +54,7 @@
 // SDL base library (window/rendered, input, timing... functionality)
 #ifdef USING_SDL3_PROJECT
     #include "SDL3/SDL.h"
-#elif USING_SDL2_PROJECT
+#elif defined(USING_SDL2_PROJECT)
     #include "SDL2/SDL.h"
 #else
     #include "SDL.h"
@@ -71,7 +68,7 @@
       // SDL OpenGL functionality (if required, instead of internal renderer)
       #ifdef USING_SDL3_PROJECT
           #include "SDL3/SDL_opengl.h"
-      #elif USING_SDL2_PROJECT
+      #elif defined(USING_SDL2_PROJECT)
           #include "SDL2/SDL_opengl.h"
       #else
           #include "SDL_opengl.h"
@@ -472,13 +469,11 @@ void ToggleFullscreen(void)
         {
             SDL_SetWindowFullscreen(platform.window, 0);
             FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-            CORE.Window.fullscreen = false;
         }
         else
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
             FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-            CORE.Window.fullscreen = true;
         }
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
@@ -554,7 +549,7 @@ void SetWindowState(unsigned int flags)
     #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
-            CORE.Window.fullscreen = true;
+            FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         }
         else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
     }
@@ -644,7 +639,6 @@ void ClearWindowState(unsigned int flags)
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
         SDL_SetWindowFullscreen(platform.window, 0);
-        CORE.Window.fullscreen = false;
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -679,6 +673,7 @@ void ClearWindowState(unsigned int flags)
     {
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_TRANSPARENT is not supported on PLATFORM_DESKTOP_SDL");
     }
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
     {
         // NOTE: There also doesn't seem to be a feature to disable high DPI once enabled
         TRACELOG(LOG_WARNING, "ClearWindowState() - FLAG_WINDOW_HIGHDPI is not supported on PLATFORM_DESKTOP_SDL");
@@ -1041,7 +1036,7 @@ int GetMonitorPhysicalWidth(int monitor)
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (ddpi > 0.0f) width = (mode.w/ddpi)*25.4f;
+        if (ddpi > 0.0f) width = (int)((mode.w/ddpi)*25.4f);
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
@@ -1065,7 +1060,7 @@ int GetMonitorPhysicalHeight(int monitor)
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         // Calculate size on inches, then convert to millimeter
-        if (ddpi > 0.0f) height = (mode.h/ddpi)*25.4f;
+        if (ddpi > 0.0f) height = (int)((mode.h/ddpi)*25.4f);
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
 
@@ -1127,14 +1122,15 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
-#ifndef USING_VERSION_SDL3
-    // NOTE: SDL_GetWindowDisplayScale was only added on SDL3
+#if defined(USING_VERSION_SDL3)
+    // NOTE: SDL_GetWindowDisplayScale added on SDL3
     // REF: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
-    // TODO: Implement the window scale factor calculation manually
-    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
-#else
     scale.x = SDL_GetWindowDisplayScale(platform.window);
     scale.y = scale.x;
+#else
+    // NOTE: SDL_GetWindowDisplayScale not available on SDL2
+    // TODO: Implement the window scale factor calculation manually
+    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #endif
 
     return scale;
@@ -1195,7 +1191,7 @@ Image GetClipboardImage(void)
 
         if (fileData)
         {
-            image = LoadImageFromMemory(imageExtensions[i], fileData, dataSize);
+            image = LoadImageFromMemory(imageExtensions[i], fileData, (int)dataSize);
             if (IsImageValid(image))
             {
                 TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
@@ -1426,12 +1422,12 @@ void PollInputEvents(void)
 
                 #if defined(USING_VERSION_SDL3)
                     // const char *data;   // The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events
-                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE, 
-                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events, 
+                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE,
+                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
                     // you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
                     SDL_free(event.drop.file);
                 #endif
 
@@ -1442,9 +1438,9 @@ void PollInputEvents(void)
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
                 #if defined(USING_VERSION_SDL3)
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
-                    strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file);
+                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
                     SDL_free(event.drop.file);
                 #endif
 
@@ -1454,7 +1450,7 @@ void PollInputEvents(void)
 
             } break;
 
-            // Window events are also polled (Minimized, maximized, close...)
+            // Window events are also polled (minimized, maximized, close...)
 
             #ifndef USING_VERSION_SDL3
             // SDL3 states:
@@ -1473,7 +1469,7 @@ void PollInputEvents(void)
                         const int height = event.window.data2;
                         SetupViewport(width, height);
                         // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-                        if (IsWindowState(FLAG_WINDOW_HIGHDPI))
+                        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                         {
                             CORE.Window.screen.width = (int)(width/GetWindowScaleDPI().x);
                             CORE.Window.screen.height = (int)(height/GetWindowScaleDPI().y);
@@ -1488,7 +1484,8 @@ void PollInputEvents(void)
                         CORE.Window.resizedLastFrame = true;
 
                         #ifndef USING_VERSION_SDL3
-                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms) to remove the FLAG_WINDOW_MAXIMIZED accordingly
+                        // Manually detect if the window was maximized (due to SDL2 restore being unreliable on some platforms)
+                        // to remove the FLAG_WINDOW_MAXIMIZED accordingly
                         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED))
                         {
                             int borderTop = 0;
@@ -1504,14 +1501,8 @@ void PollInputEvents(void)
                         #endif
                     } break;
 
-                    case SDL_WINDOWEVENT_ENTER:
-                    {
-                        CORE.Input.Mouse.cursorOnScreen = true;
-                    } break;
-                    case SDL_WINDOWEVENT_LEAVE:
-                    {
-                        CORE.Input.Mouse.cursorOnScreen = false;
-                    } break;
+                    case SDL_WINDOWEVENT_ENTER: CORE.Input.Mouse.cursorOnScreen = true; break;
+                    case SDL_WINDOWEVENT_LEAVE: CORE.Input.Mouse.cursorOnScreen = false; break;
 
                     case SDL_WINDOWEVENT_MINIMIZED:
                     {
@@ -1750,7 +1741,11 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
+            #if defined(USING_VERSION_SDL3)
                 switch (event.gbutton.button)
+            #else
+                switch (event.jbutton.button)
+            #endif
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1778,7 +1773,11 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
+                    #if defined(USING_VERSION_SDL3)
                         if (platform.gamepadId[i] == event.gbutton.which)
+                    #else
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                    #endif
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 1;
                             CORE.Input.Gamepad.lastButtonPressed = button;
@@ -1791,7 +1790,11 @@ void PollInputEvents(void)
             {
                 int button = -1;
 
+            #if defined(USING_VERSION_SDL3)
                 switch (event.gbutton.button)
+            #else
+                switch (event.jbutton.button)
+            #endif
                 {
                     case SDL_CONTROLLER_BUTTON_Y: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
                     case SDL_CONTROLLER_BUTTON_B: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
@@ -1819,7 +1822,11 @@ void PollInputEvents(void)
                 {
                     for (int i = 0; i < MAX_GAMEPADS; i++)
                     {
+                    #if defined(USING_VERSION_SDL3)
                         if (platform.gamepadId[i] == event.gbutton.which)
+                    #else
+                        if (platform.gamepadId[i] == event.jbutton.which)
+                    #endif
                         {
                             CORE.Input.Gamepad.currentButtonState[i][button] = 0;
                             if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
@@ -1924,11 +1931,7 @@ int InitPlatform(void)
     FLAG_SET(flags, SDL_WINDOW_MOUSE_CAPTURE);  // Window has mouse captured
 
     // Check window creation flags
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-    {
-        CORE.Window.fullscreen = true;
-        FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
-    }
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) FLAG_SET(flags, SDL_WINDOW_FULLSCREEN);
 
     //if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, SDL_WINDOW_HIDDEN);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, SDL_WINDOW_BORDERLESS);
@@ -2054,28 +2057,23 @@ int InitPlatform(void)
         platform.gamepadId[i] = -1; // Set all gamepad initial instance ids as invalid to not conflict with instance id zero
     }
 
-    int numJoysticks = 0;
-    SDL_JoystickID *joysticks = SDL_GetJoysticks(&numJoysticks); // array of joystick IDs, they do not start from 0
+    int numJoysticks = SDL_NumJoysticks();
 
-    if (joysticks)
+    for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++)
     {
-        for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++)
-        {
-            platform.gamepad[i] = SDL_GameControllerOpen(joysticks[i]);
-            platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+        platform.gamepad[i] = SDL_GameControllerOpen(i);
+        platform.gamepadId[i] = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(platform.gamepad[i]));
 
-            if (platform.gamepad[i])
-            {
-                CORE.Input.Gamepad.ready[i] = true;
-                CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
-                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
-                CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
-                strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
-                CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
-            }
-            else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
+        if (platform.gamepad[i])
+        {
+            CORE.Input.Gamepad.ready[i] = true;
+            CORE.Input.Gamepad.axisCount[i] = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(platform.gamepad[i]));
+            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+            CORE.Input.Gamepad.axisState[i][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+            strncpy(CORE.Input.Gamepad.name[i], SDL_GameControllerNameForIndex(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+            CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
         }
-        SDL_free(joysticks);
+        else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
 
     // Disable mouse events being interpreted as touch events
@@ -2196,7 +2194,7 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
     for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
     {
         SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
-        CORE.Input.Touch.pointId[i] = finger->id;
+        CORE.Input.Touch.pointId[i] = (int)finger->id;
         CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
         CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;

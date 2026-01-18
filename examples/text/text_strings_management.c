@@ -133,7 +133,7 @@ int main(void)
         {
             for (int i = 0; i < particleCount; i++)
             {
-                if (!textParticles[i].grabbed) textParticles[i].vel = (Vector2){ GetRandomValue(-2000, 2000), GetRandomValue(-2000, 2000) };
+                if (!textParticles[i].grabbed) textParticles[i].vel = (Vector2){ (float)GetRandomValue(-2000, 2000), (float)GetRandomValue(-2000, 2000) };
             }
         }
 
@@ -233,9 +233,9 @@ int main(void)
             for (int i = 0; i < particleCount; i++)
             {
                 TextParticle *tp = &textParticles[i];
-                DrawRectangle(tp->rect.x-tp->borderWidth, tp->rect.y-tp->borderWidth, tp->rect.width+tp->borderWidth*2, tp->rect.height+tp->borderWidth*2, BLACK);
+                DrawRectangleRec((Rectangle) { tp->rect.x - tp->borderWidth, tp->rect.y - tp->borderWidth, tp->rect.width + tp->borderWidth * 2, tp->rect.height + tp->borderWidth * 2 }, BLACK);
                 DrawRectangleRec(tp->rect, tp->color);
-                DrawText(tp->text, tp->rect.x+tp->padding, tp->rect.y+tp->padding, FONT_SIZE, BLACK);
+                DrawText(tp->text, (int)(tp->rect.x+tp->padding), (int)(tp->rect.y+tp->padding), FONT_SIZE, BLACK);
             }
 
             DrawText("grab a text particle by pressing with the mouse and throw it by releasing", 10, 10, 10, DARKGRAY);
@@ -265,8 +265,8 @@ void PrepareFirstTextParticle(const char* text, TextParticle *tps, int *particle
 {
     tps[0] = CreateTextParticle(
         text, 
-        GetScreenWidth()/2, 
-        GetScreenHeight()/2, 
+        GetScreenWidth()/2.0f, 
+        GetScreenHeight()/2.0f, 
         RAYWHITE
     );
     *particleCount = 1;
@@ -277,12 +277,12 @@ TextParticle CreateTextParticle(const char *text, float x, float y, Color color)
     TextParticle tp = {
         .text = "",
         .rect = { x, y, 30, 30 },
-        .vel = { GetRandomValue(-200, 200), GetRandomValue(-200, 200) },
+        .vel = { (float)GetRandomValue(-200, 200), (float)GetRandomValue(-200, 200) },
         .ppos = { 0 },
         .padding = 5.0f,
         .borderWidth = 5.0f,
-        .friction = 0.99,
-        .elasticity = 0.9,
+        .friction = 0.99f,
+        .elasticity = 0.9f,
         .color = color,
         .grabbed = false
     };
@@ -316,7 +316,7 @@ void SliceTextParticle(TextParticle *tp, int particlePos, int sliceLength, TextP
 void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *tps, int *particleCount)
 {
     int tokenCount = 0;
-    const char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
+    char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
     
     if (tokenCount > 1)
     {

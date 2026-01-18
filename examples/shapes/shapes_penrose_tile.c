@@ -185,12 +185,12 @@ static void BuildProductionStep(PenroseLSystem *ls)
     char *newProduction = (char *)RL_MALLOC(sizeof(char)*STR_MAX_SIZE);
     newProduction[0] = '\0';
 
-    int productionLength = strnlen(ls->production, STR_MAX_SIZE);
+    int productionLength = (int)strnlen(ls->production, STR_MAX_SIZE);
 
     for (int i = 0; i < productionLength; i++)
     {
         char step = ls->production[i];
-        int remainingSpace = STR_MAX_SIZE - strnlen(newProduction, STR_MAX_SIZE) - 1;
+        int remainingSpace = STR_MAX_SIZE - (int)strnlen(newProduction, STR_MAX_SIZE) - 1;
         switch (step)
         {
             case 'W': strncat(newProduction, ls->ruleW, remainingSpace); break;
@@ -201,7 +201,7 @@ static void BuildProductionStep(PenroseLSystem *ls)
             {
                 if (step != 'F')
                 {
-                    int t = strnlen(newProduction, STR_MAX_SIZE);
+                    int t = (int)strnlen(newProduction, STR_MAX_SIZE);
                     newProduction[t] = step;
                     newProduction[t + 1] = '\0';
                 }
@@ -218,7 +218,7 @@ static void BuildProductionStep(PenroseLSystem *ls)
 // Draw penrose tile lines
 static void DrawPenroseLSystem(PenroseLSystem *ls)
 {
-    Vector2 screenCenter = { GetScreenWidth()/2, GetScreenHeight()/2 };
+    Vector2 screenCenter = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
 
     TurtleState turtle = {
         .origin = { 0 },
@@ -245,7 +245,7 @@ static void DrawPenroseLSystem(PenroseLSystem *ls)
                 Vector2 startPosScreen = { startPosWorld.x + screenCenter.x, startPosWorld.y + screenCenter.y };
                 Vector2 endPosScreen = { turtle.origin.x + screenCenter.x, turtle.origin.y + screenCenter.y };
                 
-                DrawLineEx(startPosScreen, endPosScreen, 2, Fade(BLACK, 0.2));
+                DrawLineEx(startPosScreen, endPosScreen, 2, Fade(BLACK, 0.2f));
             }
             
             repeats = 1;

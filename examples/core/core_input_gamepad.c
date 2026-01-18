@@ -67,7 +67,7 @@ int main(void)
         if (IsKeyPressed(KEY_RIGHT)) gamepad++;
         Vector2 mousePosition = GetMousePosition();
 
-        vibrateButton = (Rectangle){ 10, 70 + 20*GetGamepadAxisCount(gamepad) + 20, 75, 24 };
+        vibrateButton = (Rectangle){ 10, 70.0f + 20*GetGamepadAxisCount(gamepad) + 20, 75, 24 };
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePosition, vibrateButton)) SetGamepadVibration(gamepad, 1.0, 1.0, 1.0);
         //----------------------------------------------------------------------------------
 
@@ -262,7 +262,7 @@ int main(void)
 
                 // Draw vibrate button
                 DrawRectangleRec(vibrateButton, SKYBLUE);
-                DrawText("VIBRATE", vibrateButton.x + 14, vibrateButton.y + 1, 10, DARKGRAY);
+                DrawText("VIBRATE", (int)(vibrateButton.x + 14), (int)(vibrateButton.y + 1), 10, DARKGRAY);
 
                 if (GetGamepadButtonPressed() != GAMEPAD_BUTTON_UNKNOWN) DrawText(TextFormat("DETECTED BUTTON: %i", GetGamepadButtonPressed()), 10, 430, 10, RED);
                 else DrawText("DETECTED BUTTON: NONE", 10, 430, 10, GRAY);

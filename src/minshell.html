@@ -54,6 +54,12 @@
             // 'Ask where to save each file before downloading' - which you can set true/false.
             // If you enable this setting it would always ask you and bring the SaveAsDialog
             saveAs(blob, localFSname);
+          
+            // Alternative implementation to avoid FileSaver.js
+            //const link = document.createElement("a");
+            //link.href = URL.createObjectURL(blob);
+            //link.download = localFSname;
+            //link.click();
         }
     </script>
     </head>

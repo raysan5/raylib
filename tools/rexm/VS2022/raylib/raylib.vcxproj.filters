@@ -8,7 +8,6 @@
     <ClCompile Include="$(RaylibSrcPath)\rshapes.c" />
     <ClCompile Include="$(RaylibSrcPath)\rtext.c" />
     <ClCompile Include="$(RaylibSrcPath)\rtextures.c" />
-    <ClCompile Include="$(RaylibSrcPath)\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(RaylibSrcPath)\config.h" />
@@ -16,7 +15,6 @@
     <ClInclude Include="$(RaylibSrcPath)\raylib.h" />
     <ClInclude Include="$(RaylibSrcPath)\raymath.h" />
     <ClInclude Include="$(RaylibSrcPath)\rlgl.h" />
-    <ClInclude Include="$(RaylibSrcPath)\utils.h" />
     <ClInclude Include="$(RaylibSrcPath)\rcamera.h" />
     <ClInclude Include="$(RaylibSrcPath)\external\cgltf.h">
       <Filter>external</Filter>

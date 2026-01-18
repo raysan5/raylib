@@ -178,14 +178,14 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                     // Convert hex color text into actual Color
                     unsigned int colHexValue = strtoul(colHexText, NULL, 16);
                     if (text[i - 1] == 'c')
-					{
+                    {
 						colFront = GetColor(colHexValue);
-						colFront.a *= (float)color.a/255.0f;
+						colFront.a = (unsigned char)(colFront.a * (float)color.a/255.0f);
 					}
                     else if (text[i - 1] == 'b')
 					{
 						colBack = GetColor(colHexValue);
-						colBack.a *= (float)color.a/255.0f;
+						colBack.a *= (unsigned char)(colFront.a * (float)color.a / 255.0f);
 					}
 
                     i += (colHexCount + 1); // Skip color value retrieved and ']'

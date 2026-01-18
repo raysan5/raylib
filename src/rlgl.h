@@ -37,10 +37,6 @@
 *           If not defined, the library is in header only mode and can be included in other headers
 *           or source files without problems. But only ONE file should hold the implementation
 *
-*       #define RLGL_RENDER_TEXTURES_HINT
-*           Enable framebuffer objects (fbo) support (enabled by default)
-*           Some GPUs could not support them despite the OpenGL version
-*
 *       #define RLGL_SHOW_GL_DETAILS_INFO
 *           Show OpenGL extensions and capabilities detailed logs on init
 *
@@ -89,7 +85,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -132,7 +128,6 @@
 // Support TRACELOG macros
 #ifndef TRACELOG
     #define TRACELOG(level, ...) (void)0
-    #define TRACELOGD(...) (void)0
 #endif
 
 // Allow custom memory allocators
@@ -196,10 +191,6 @@
 #if defined(GRAPHICS_API_OPENGL_ES3)
     #define GRAPHICS_API_OPENGL_ES2
 #endif
-
-// Support framebuffer objects by default
-// NOTE: Some driver implementation do not support it, despite they should
-#define RLGL_RENDER_TEXTURES_HINT
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -1864,7 +1855,7 @@ void rlDisableShader(void)
 // Enable rendering to texture (fbo)
 void rlEnableFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 #endif
 }
@@ -1873,7 +1864,7 @@ void rlEnableFramebuffer(unsigned int id)
 unsigned int rlGetActiveFramebuffer(void)
 {
     GLint fboId = 0;
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3))
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboId);
 #endif
     return fboId;
@@ -1882,7 +1873,7 @@ unsigned int rlGetActiveFramebuffer(void)
 // Disable rendering to texture
 void rlDisableFramebuffer(void)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 }
@@ -1890,7 +1881,7 @@ void rlDisableFramebuffer(void)
 // Blit active framebuffer to main framebuffer
 void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, int bufferMask)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3))
     glBlitFramebuffer(srcX, srcY, srcWidth, srcHeight, dstX, dstY, dstWidth, dstHeight, bufferMask, GL_NEAREST);
 #endif
 }
@@ -1898,7 +1889,7 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 // Bind framebuffer object (fbo)
 void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(target, framebuffer);
 #endif
 }
@@ -1907,7 +1898,7 @@ void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 // NOTE: One color buffer is always active by default
 void rlActiveDrawBuffers(int count)
 {
-#if ((defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)) && defined(RLGL_RENDER_TEXTURES_HINT))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3))
     // NOTE: Maximum number of draw buffers supported is implementation dependant,
     // it can be queried with glGet*() but it must be at least 8
     //GLint maxDrawBuffers = 0;
@@ -3324,7 +3315,7 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         unsigned int glInternalFormat, glFormat, glType;
         rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
 
-        TRACELOGD("TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
+        TRACELOG(RL_LOG_DEBUG, "TEXTURE: Load mipmap level %i (%i x %i), size: %i, offset: %i", i, mipWidth, mipHeight, mipSize, mipOffset);
 
         if (glInternalFormat != 0)
         {
@@ -3353,8 +3344,8 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 
         mipWidth /= 2;
         mipHeight /= 2;
-        mipOffset += mipSize;       // Increment offset position to next mipmap
-        if (data != NULL) dataPtr += mipSize;         // Increment data pointer to next mipmap
+        mipOffset += mipSize; // Increment offset position to next mipmap
+        if (data != NULL) dataPtr += mipSize; // Increment data pointer to next mipmap
 
         // Security check for NPOT textures
         if (mipWidth < 1) mipWidth = 1;
@@ -3391,9 +3382,15 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
         // Activate trilinear filtering if mipmaps are available
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        
-        // Define thee maximum number of mipmap levels to be used, 0 is default texture size
+
+        // Define the maximum number of mipmap levels to be used, 0 is base texture size
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapCount - 1);
+
+        // Check if the loaded texture with mipmaps is complete,
+        // uncomplete textures will draw in black if mipmap filtering is required
+        //GLint complete = 0;
+        //glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_IMMUTABLE_FORMAT, &complete);
     }
 #endif
 
@@ -3821,7 +3818,7 @@ unsigned int rlLoadFramebuffer(void)
     unsigned int fboId = 0;
     if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return fboId; }
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glGenFramebuffers(1, &fboId);       // Create the framebuffer object
     glBindFramebuffer(GL_FRAMEBUFFER, 0);   // Unbind any framebuffer
 #endif
@@ -3833,7 +3830,7 @@ unsigned int rlLoadFramebuffer(void)
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlFramebufferAttach(unsigned int fboId, unsigned int texId, int attachType, int texType, int mipLevel)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
     switch (attachType)
@@ -3873,7 +3870,7 @@ bool rlFramebufferComplete(unsigned int id)
 {
     bool result = false;
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -3904,7 +3901,7 @@ bool rlFramebufferComplete(unsigned int id)
 // NOTE: All attached textures/cubemaps/renderbuffers are also deleted
 void rlUnloadFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)) && defined(RLGL_RENDER_TEXTURES_HINT)
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
     // Query depth attachment to automatically delete texture/renderbuffer
     int depthType = 0, depthId = 0;
     glBindFramebuffer(GL_FRAMEBUFFER, id);   // Bind framebuffer to query depth texture type
@@ -4240,7 +4237,7 @@ unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
                 glGetActiveUniform(id, i, sizeof(name) - 1, &namelen, &num, &type, name);
 
                 name[namelen] = 0;
-                TRACELOGD("SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
+                TRACELOG(RL_LOG_DEBUG, "SHADER: [ID %i] Active uniform (%s) set at location: %i", id, name, glGetUniformLocation(id, name));
             }
         }
         */
@@ -5218,24 +5215,36 @@ static int rlGetPixelDataSize(int width, int height, int format)
         case RL_PIXELFORMAT_COMPRESSED_ETC1_RGB:
         case RL_PIXELFORMAT_COMPRESSED_ETC2_RGB:
         case RL_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-        case RL_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case RL_PIXELFORMAT_COMPRESSED_PVRT_RGBA: // 8 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*8;
+        } break;
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-        case RL_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case RL_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: // 16 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*16;
+        } break;
+        case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 4 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            dataSize = blockWidth*blockHeight*4;
+        } break;
         default: break;
     }
 
-    double bytesPerPixel = (double)bpp/8.0;
-    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
-
-    // Most compressed formats works on 4x4 blocks,
-    // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width < 4) && (height < 4))
+    // Compute dataSize for uncompressed texture data (no blocks)
+    if ((format >= RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
+        (format <= RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        double bytesPerPixel = (double)bpp/8.0;
+        dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
     }
 
     return dataSize;

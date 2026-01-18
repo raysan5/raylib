@@ -113,7 +113,7 @@ int main(void)
             DrawText("LEFT-RIGHT for PAN CONTROL", 320, 74, 10, DARKBLUE);
             DrawRectangle(300, 100, 200, 12, LIGHTGRAY);
             DrawRectangleLines(300, 100, 200, 12, GRAY);
-            DrawRectangle(300 + (pan + 1.0)/2.0f*200 - 5, 92, 10, 28, DARKGRAY);
+            DrawRectangle((int)(300 + (pan + 1.0f)/2.0f*200 - 5), 92, 10, 28, DARKGRAY);
 
             DrawRectangle(200, 200, 400, 12, LIGHTGRAY);
             DrawRectangle(200, 200, (int)(timePlayed*400.0f), 12, MAROON);
@@ -125,7 +125,7 @@ int main(void)
             DrawText("UP-DOWN for VOLUME CONTROL", 320, 334, 10, DARKGREEN);
             DrawRectangle(300, 360, 200, 12, LIGHTGRAY);
             DrawRectangleLines(300, 360, 200, 12, GRAY);
-            DrawRectangle(300 + volume*200 - 5, 352, 10, 28, DARKGRAY);
+            DrawRectangle((int)(300 + volume*200 - 5), 352, 10, 28, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
