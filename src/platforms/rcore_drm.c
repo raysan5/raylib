@@ -1161,7 +1161,8 @@ int InitPlatform(void)
     platform.fd = open("/dev/dri/by-path/platform-gpu-card", O_RDWR); // VideoCore VI (Raspberry Pi 4)
     if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: platform-gpu-card opened successfully");
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    drmModeRes *res = NULL;
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open platform-gpu-card, trying card1");
@@ -1169,7 +1170,7 @@ int InitPlatform(void)
         if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card1 opened successfully");
     }
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card1, trying card0");
@@ -1177,7 +1178,7 @@ int InitPlatform(void)
         if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card0 opened successfully");
     }
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card0, trying card2");
@@ -1192,7 +1193,6 @@ int InitPlatform(void)
         return -1;
     }
 
-    drmModeRes *res = drmModeGetResources(platform.fd);
     if (!res)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");

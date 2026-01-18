@@ -1044,15 +1044,26 @@ bool ExportFontAsCode(Font font, const char *fileName)
     #define TEXT_BYTES_PER_LINE     20
 #endif
 
-    #define MAX_FONT_DATA_SIZE      1024*1024       // 1 MB
-
     // Get file name from path
     char fileNamePascal[256] = { 0 };
     strncpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)), 256 - 1);
+    
+    // Get font atlas image and size, required to estimate code file size
+    // NOTE: This mechanism is highly coupled to raylib
+    Image image = LoadImageFromTexture(font.texture);
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
+    int imageDataSize = GetPixelDataSize(image.width, image.height, image.format);
 
-    // NOTE: Text data buffer size is estimated considering image data size in bytes
-    // and requiring 6 char bytes for every byte: "0x00, "
-    char *txtData = (char *)RL_CALLOC(MAX_FONT_DATA_SIZE, sizeof(char));
+    // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
+    //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
+    
+    // Estimate text code size
+    //  - Image data is stored as "0x%02x", so it requires at least 4 char per byte, let's use 6
+    //  - font.recs[] data is stored as "{ %1.0f, %1.0f, %1.0f , %1.0f }", let's reserve 64 per rec
+    //  - font.glyphs[] data is stored as "{ %i, %i, %i, %i, { 0 }},\n", let's reserve 64 per glyph
+    //  - Comments and additional code, let's reserve 32KB
+    int txtDataSize = imageDataSize*6 + font.glyphCount*64 + font.glyphCount*64 + 32768; 
+    char *txtData = (char *)RL_CALLOC(txtDataSize, sizeof(char));
 
     int byteCount = 0;
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
@@ -1073,15 +1084,6 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// Font LICENSE: ....                                                                 //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
-
-    // Support font export and initialization
-    // NOTE: This mechanism is highly coupled to raylib
-    Image image = LoadImageFromTexture(font.texture);
-    if (image.format != PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) TRACELOG(LOG_WARNING, "Font export as code: Font image format is not GRAY+ALPHA!");
-    int imageDataSize = GetPixelDataSize(image.width, image.height, image.format);
-
-    // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
-    //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
 #define SUPPORT_COMPRESSED_FONT_ATLAS
 #if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
@@ -1120,8 +1122,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "};\n\n");
 
     // Save font glyphs data
-    // NOTE: Glyphs image data not saved (grayscale pixels),
-    // it could be generated from image and recs
+    // NOTE: Glyphs image data not saved (grayscale pixels), it could be generated from image and recs
     byteCount += sprintf(txtData + byteCount, "// Font glyphs info data\n");
     byteCount += sprintf(txtData + byteCount, "// NOTE: No glyphs.image data provided\n");
     byteCount += sprintf(txtData + byteCount, "static GlyphInfo fontGlyphs_%s[%i] = {\n", fileNamePascal, font.glyphCount);
@@ -1152,8 +1153,8 @@ bool ExportFontAsCode(Font font, const char *fileName)
 #if defined(SUPPORT_COMPRESSED_FONT_ATLAS)
     byteCount += sprintf(txtData + byteCount, "    UnloadImage(imFont);  // Uncompressed data can be unloaded from memory\n\n");
 #endif
-    // We have two possible mechanisms to assign font.recs and font.glyphs data,
-    // that data is already available as global arrays, we two options to assign that data:
+    // There are two possible mechanisms to assign font.recs and font.glyphs data,
+    // that data is already available as global arrays, two options to assign that data:
     //  - 1. Data copy. This option consumes more memory and Font MUST be unloaded by user, requiring additional code
     //  - 2. Data assignment. This option consumes less memory and Font MUST NOT be unloaded by user because data is on protected DATA segment
 //#define SUPPORT_FONT_DATA_COPY
