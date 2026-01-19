@@ -165,7 +165,7 @@ int main(void)
 
                 // If the mouse is on this preset, highlight it
                 if (mouseInCell == i + 8)
-                    DrawRectangleLinesEx((Rectangle) { 2 + (presetsSizeX + 2.0f)*(i/2),
+                    DrawRectangleLinesEx((Rectangle) { 2 + (presetsSizeX + 2.0f)*((float)i/2),
                                                        (presetsSizeY + 2.0f)*(i%2),
                                                        presetsSizeX + 4.0f, presetsSizeY + 4.0f }, 3, RED);
             }

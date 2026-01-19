@@ -39,8 +39,8 @@ int main(void)
     Texture2D explosion = LoadTexture("resources/explosion.png");
 
     // Init variables for animation
-    float frameWidth = (float)(explosion.width/NUM_FRAMES_PER_LINE);   // Sprite one frame rectangle width
-    float frameHeight = (float)(explosion.height/NUM_LINES);           // Sprite one frame rectangle height
+    float frameWidth = (float)explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
+    float frameHeight = (float)explosion.height/NUM_LINES;           // Sprite one frame rectangle height
     int currentFrame = 0;
     int currentLine = 0;
 
