@@ -953,8 +953,8 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
         if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
         duration *= 1000.0f; // Convert duration to ms
 
-        // Note: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
-        //       and Firefox only supports the hapticActuators API
+        // NOTE: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
+        // and Firefox only supports the hapticActuators API
         EM_ASM({
             try
             {
@@ -1798,8 +1798,8 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 // Emscripten: Called on fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
-    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    // NOTE 1: Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    // NOTE 2: Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
     if (platform.ourFullscreen) platform.ourFullscreen = false;
     else
     {

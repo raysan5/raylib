@@ -1189,7 +1189,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) ||
             FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD))
         {
-            // For now we'll assume a single gamepad which we "detect" on its input event
+            // Assuming a single gamepad, "detected" on its input event
             CORE.Input.Gamepad.ready[0] = true;
 
             CORE.Input.Gamepad.axisState[0][GAMEPAD_AXIS_LEFT_X] = AMotionEvent_getAxisValue(
@@ -1256,7 +1256,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
              FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD)) &&
             !FLAG_IS_SET(source, AINPUT_SOURCE_KEYBOARD))
         {
-            // For now we'll assume a single gamepad which we "detect" on its input event
+            // Assuming a single gamepad, "detected" on its input event
             CORE.Input.Gamepad.ready[0] = true;
 
             GamepadButton button = AndroidTranslateGamepadButton(keycode);

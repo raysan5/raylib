@@ -602,7 +602,7 @@ void SetWindowIcon(Image image)
             icon[0].height = image.height;
             icon[0].pixels = (unsigned char *)image.data;
 
-            // NOTE 1: We only support one image icon
+            // NOTE 1: Only one image icon supported
             // NOTE 2: The specified image data is copied before this function returns
             glfwSetWindowIcon(platform.handle, 1, icon);
         }
@@ -833,7 +833,7 @@ int GetCurrentMonitor(void)
         }
         else
         {
-            // In case the window is between two monitors, we use below logic
+            // In case the window is between two monitors, below logic is used
             // to try to detect the "current monitor" for that window, note that
             // this is probably an overengineered solution for a very side case
             // trying to match SDL behaviour
@@ -1186,7 +1186,7 @@ void SetMouseCursor(int cursor)
     if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(platform.handle, NULL);
     else
     {
-        // NOTE: We are relating internal GLFW enum values to our MouseCursor enum values
+        // NOTE: Mapping internal GLFW enum values to MouseCursor enum values
         glfwSetCursor(platform.handle, glfwCreateStandardCursor(0x00036000 + cursor));
     }
 }
@@ -1247,7 +1247,7 @@ void PollInputEvents(void)
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
-    // NOTE: We do it here in case of disconnection
+    // NOTE: Doing it here in case of disconnection
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
         if (glfwJoystickPresent(i)) CORE.Input.Gamepad.ready[i] = true;
@@ -1263,7 +1263,7 @@ void PollInputEvents(void)
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
 
             // Get current gamepad state
-            // NOTE: There is no callback available, so we get it manually
+            // NOTE: There is no callback available, getting it manually
             GLFWgamepadstate state = { 0 };
             int result = glfwGetGamepadState(i, &state); // This remaps all gamepads so they have their buttons mapped like an xbox controller
             if (result == GLFW_FALSE) // No joystick is connected, no gamepad mapping or an error occurred
@@ -1359,8 +1359,8 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-// Function wrappers around RL_*alloc macros, used by glfwInitAllocator() inside of InitPlatform()
-// We need to provide these because GLFWallocator expects function pointers with specific signatures
+// Function wrappers around RL_*ALLOC macros, used by glfwInitAllocator() inside of InitPlatform()
+// GLFWallocator expects function pointers with specific signatures to be provided
 // REF: https://www.glfw.org/docs/latest/intro_guide.html#init_allocator
 static void *AllocateWrapper(size_t size, void *user)
 {
@@ -1742,7 +1742,7 @@ int InitPlatform(void)
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
         // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
-        // we can get a not-NULL terminated string, so, we only copy up to (MAX_GAMEPAD_NAME_LENGTH - 1)
+        // only copying up to (MAX_GAMEPAD_NAME_LENGTH - 1)
         if (glfwJoystickPresent(i))
         {
           CORE.Input.Gamepad.ready[i] = true;
@@ -1819,8 +1819,8 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //TRACELOG(LOG_INFO, "GLFW3: Window framebuffer size callback called [%i,%i]", width, height);
 
-    // WARNING: On window minimization, callback is called,
-    // but we don't want to change internal screen values, it breaks things
+    // WARNING: On window minimization, callback is called with 0 values,
+    // but internal screen values should not be changed, it breaks things
     if ((width == 0) || (height == 0)) return;
 
     // Reset viewport and projection matrix for new size
@@ -1926,7 +1926,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 {
     if (count > 0)
     {
-        // In case previous dropped filepaths have not been freed, we free them
+        // In case previous dropped filepaths have not been freed, free them
         if (CORE.Window.dropFileCount > 0)
         {
             for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
@@ -1937,7 +1937,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
             CORE.Window.dropFilepaths = NULL;
         }
 
-        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        // WARNING: Paths are freed by GLFW when the callback returns, keeping an internal copy
         CORE.Window.dropFileCount = count;
         CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
@@ -1954,7 +1954,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
 
-    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // WARNING: GLFW could return GLFW_REPEAT, it needs to be considered as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
     else if (action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
@@ -2079,7 +2079,7 @@ static void JoystickCallback(int jid, int event)
     if (event == GLFW_CONNECTED)
     {
         // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
-        // we can get a not-NULL terminated string, so, we clean destination and only copy up to -1
+        // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
         memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
         strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
     }
