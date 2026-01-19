@@ -511,7 +511,7 @@ extern void ClosePlatform(void);        // Close platform
 static void InitTimer(void);                                // Initialize timer, hi-resolution if available (required by InitPlatform())
 static void SetupViewport(int width, int height);           // Set viewport for a provided width and height
 
-static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int fileCount, bool scanSubdirs); // Scan all files and directories in a base path
+static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int expectedFileCount, bool scanSubdirs); // Scan all files and directories in a base path
 
 #if defined(SUPPORT_AUTOMATION_EVENTS)
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
@@ -4270,7 +4270,7 @@ void SetupViewport(int width, int height)
 // Scan all files and directories in a base path
 // WARNING: files.paths[] must be previously allocated and
 // contain enough space to store all required paths
-static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter, unsigned int fileCount, bool scanSubdirs)
+static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const char *filter, unsigned int expectedFileCount, bool scanSubdirs)
 {
     // WARNING: Path can not be static or it will be reused between recursive function calls!
     char path[MAX_FILEPATH_LENGTH] = { 0 };
@@ -4281,7 +4281,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
 
     if (dir != NULL)
     {
-        while (((dp = readdir(dir)) != NULL) && (files->count < fileCount))
+        while (((dp = readdir(dir)) != NULL) && (files->count < expectedFileCount))
         {
             if ((strcmp(dp->d_name, ".") != 0) && (strcmp(dp->d_name, "..") != 0))
             {
@@ -4313,7 +4313,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                         files->count++;
                     }
 
-                    if (scanSubdirs) ScanDirectoryFiles(path, files, filter, fileCount, scanSubdirs);
+                    if (scanSubdirs) ScanDirectoryFiles(path, files, filter, expectedFileCount, scanSubdirs);
                 }
             }
         }
