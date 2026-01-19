@@ -113,11 +113,11 @@
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
 // NOTE: visibility(default) attribute makes symbols "visible" when compiled with -fvisibility=hidden
 #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
-    #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #define RLAPI __declspec(dllexport)     // Building the library as a Win32 shared library (.dll)
 #elif defined(BUILD_LIBTYPE_SHARED)
-    #define RLAPI __attribute__((visibility("default"))) // We are building the library as a Unix shared library (.so/.dylib)
+    #define RLAPI __attribute__((visibility("default"))) // Building the library as a Unix shared library (.so/.dylib)
 #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
-    #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #define RLAPI __declspec(dllimport)     // Using the library as a Win32 shared library (.dll)
 #endif
 
 // Function specifiers definition
@@ -3731,7 +3731,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // Two possible Options:
     // 1 - Bind texture to color fbo attachment and glReadPixels()
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
-    // We are using Option 1, just need to care for texture format on retrieval
+    // Using Option 1, just need to care for texture format on retrieval
     // NOTE: This behaviour could be conditioned by graphic driver...
     unsigned int fboId = rlLoadFramebuffer();
 

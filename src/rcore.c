@@ -525,7 +525,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-// We're using '#pragma message' because '#warning' is not adopted by MSVC
+// Using '#pragma message' because '#warning' is not adopted by MSVC
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #if !defined(SUPPORT_MODULE_RTEXTURES)
         #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
@@ -1499,7 +1499,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //      When setting higher scale, it's more intuitive for the world to become bigger (= camera become smaller),
     //      not for the camera getting bigger, hence the invert. Same deal with rotation
     //   3. Move it by (-offset);
-    //      Offset defines target transform relative to screen, but since we're effectively "moving" screen (camera)
+    //      Offset defines target transform relative to screen, but since effectively "moving" screen (camera)
     //      we need to do it into opposite direction (inverse transform)
 
     // Having camera transform in world-space, inverse of it gives the modelview transform
