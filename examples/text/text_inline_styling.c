@@ -180,12 +180,12 @@ static void DrawTextStyled(Font font, const char *text, Vector2 position, float 
                     if (text[i - 1] == 'c')
                     {
 						colFront = GetColor(colHexValue);
-						colFront.a = (unsigned char)(colFront.a * (float)color.a/255.0f);
+						//colFront.a *= (unsigned char)(colFront.a*(float)color.a/255.0f); // TODO: Review
 					}
                     else if (text[i - 1] == 'b')
 					{
 						colBack = GetColor(colHexValue);
-						colBack.a *= (unsigned char)(colFront.a * (float)color.a / 255.0f);
+						//colBack.a *= (unsigned char)(colFront.a*(float)color.a/255.0f);
 					}
 
                     i += (colHexCount + 1); // Skip color value retrieved and ']'
