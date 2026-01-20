@@ -1270,12 +1270,12 @@ void rlLoadIdentity(void)
 // Multiply the current matrix by a translation matrix
 void rlTranslatef(float x, float y, float z)
 {
-    Matrix matTranslation = {
-        1.0f, 0.0f, 0.0f, x,
-        0.0f, 1.0f, 0.0f, y,
-        0.0f, 0.0f, 1.0f, z,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    Matrix matTranslation = rlMatrixIdentity();
+
+    // Set translation component of matrix
+    matTranslation.m12 = x;
+    matTranslation.m13 = y;
+    matTranslation.m14 = z;
 
     // NOTE: We transpose matrix with multiplication order
     *RLGL.State.currentMatrix = rlMatrixMultiply(matTranslation, *RLGL.State.currentMatrix);
@@ -1329,12 +1329,12 @@ void rlRotatef(float angle, float x, float y, float z)
 // Multiply the current matrix by a scaling matrix
 void rlScalef(float x, float y, float z)
 {
-    Matrix matScale = {
-        x, 0.0f, 0.0f, 0.0f,
-        0.0f, y, 0.0f, 0.0f,
-        0.0f, 0.0f, z, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    Matrix matScale = rlMatrixIdentity();
+
+    // Set scale component of matrix
+    matScale.m0 = x;
+    matScale.m5 = y;
+    matScale.m10 = z;
 
     // NOTE: We transpose matrix with multiplication order
     *RLGL.State.currentMatrix = rlMatrixMultiply(matScale, *RLGL.State.currentMatrix);
@@ -1344,6 +1344,7 @@ void rlScalef(float x, float y, float z)
 void rlMultMatrixf(const float *matf)
 {
     // Matrix creation from array
+    // Conversion from column-major to row-major memory order
     Matrix mat = { matf[0], matf[4], matf[8], matf[12],
                    matf[1], matf[5], matf[9], matf[13],
                    matf[2], matf[6], matf[10], matf[14],
@@ -4463,13 +4464,7 @@ void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType
 void rlSetUniformMatrix(int locIndex, Matrix mat)
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    float matfloat[16] = {
-        mat.m0, mat.m1, mat.m2, mat.m3,
-        mat.m4, mat.m5, mat.m6, mat.m7,
-        mat.m8, mat.m9, mat.m10, mat.m11,
-        mat.m12, mat.m13, mat.m14, mat.m15
-    };
-    glUniformMatrix4fv(locIndex, 1, false, matfloat);
+    glUniformMatrix4fv(locIndex, 1, false, rlMatrixToFloat(mat));
 #endif
 }
 
@@ -5255,17 +5250,17 @@ static int rlGetPixelDataSize(int width, int height, int format)
 // Get identity matrix
 static Matrix rlMatrixIdentity(void)
 {
-    Matrix result = {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    Matrix matIdentity = { 0 };
+    matIdentity.m0 = 1.0f;
+    matIdentity.m5 = 1.0f;
+    matIdentity.m10 = 1.0f;
+    matIdentity.m15 = 1.0f;
 
-    return result;
+    return matIdentity;
 }
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 // Get float array of matrix data
+// Explicit conversion to column-major memory layout
 static rl_float16 rlMatrixToFloatV(Matrix mat)
 {
     rl_float16 result = { 0 };
