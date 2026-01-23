@@ -1326,11 +1326,6 @@ return {
       fields = {
         {
           type = "unsigned int",
-          name = "capacity",
-          description = "Filepaths max entries"
-        },
-        {
-          type = "unsigned int",
           name = "count",
           description = "Filepaths entries count"
         },
@@ -4228,6 +4223,24 @@ return {
       returnType = "void",
       params = {
         {type = "FilePathList", name = "files"}
+      }
+    },
+    {
+      name = "GetDirectoryFileCount",
+      description = "Get the file count in a directory",
+      returnType = "unsigned int",
+      params = {
+        {type = "const char *", name = "dirPath"}
+      }
+    },
+    {
+      name = "GetDirectoryFileCountEx",
+      description = "Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result",
+      returnType = "unsigned int",
+      params = {
+        {type = "const char *", name = "basePath"},
+        {type = "const char *", name = "filter"},
+        {type = "bool", name = "scanSubdirs"}
       }
     },
     {
