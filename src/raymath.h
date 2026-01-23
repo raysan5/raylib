@@ -2369,7 +2369,7 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     result.x = cross.x;
     result.y = cross.y;
     result.z = cross.z;
-    result.w = 1.0f + cos2Theta;
+    result.w = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta) + cos2Theta; // sqrtf(Vector3DotProduct(cross, cross) + cos2Theta * cos2Theta) + cos2Theta
 
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
