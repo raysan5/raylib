@@ -316,15 +316,16 @@ void ToggleBorderlessWindowed(void)
         // 2. The style unset handles the possibility of a width="value%" like on the default shell.html file
         EM_ASM
         (
+            const canvasId = UTF8ToString($0);
             setTimeout(function()
             {
                 Module.requestFullscreen(false, true);
                 setTimeout(function()
                 {
-                    document.getElementById("canvas").style.width="unset";
+                    document.querySelector(canvasId).style.width="unset";
                 }, 100);
             }, 100);
-        );
+        , platform.canvasId);
         FLAG_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }
 }
@@ -1238,9 +1239,9 @@ int InitPlatform(void)
     // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
     emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
     EM_ASM({
-        const canvas = document.getElementById("canvas");
+        const canvas = document.querySelector(UTF8ToString($0));
         Module.canvas = canvas;
-    });
+    }, platform.canvasId);
 
     // Load memory framebuffer with desired screen size
     // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
