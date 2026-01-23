@@ -285,7 +285,7 @@ void ToggleBorderlessWindowed(void)
                 Module.requestFullscreen(false, true);
                 setTimeout(function()
                 {
-                    canvas.style.width="unset";
+                    document.getElementById("canvas").style.width="unset";
                 }, 100);
             }, 100);
         );
