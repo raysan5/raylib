@@ -4013,6 +4013,7 @@ bool IsGamepadButtonUp(int gamepad, int button)
 }
 
 // Get the last gamepad button pressed
+// NOTE: Returns last gamepad button down, down->up change not considered
 int GetGamepadButtonPressed(void)
 {
     return CORE.Input.Gamepad.lastButtonPressed;

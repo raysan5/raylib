@@ -1211,7 +1211,7 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
     //CORE.Input.Gamepad.axisCount = 0;
 
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
