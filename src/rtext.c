@@ -1774,8 +1774,8 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
             
             if(replaceLen > 0)
             {
-              memcpy(temp,replacement,replaceLen);
-              temp += replaceLen; 
+                memcpy(temp,replacement,replaceLen);
+                temp += replaceLen; 
             }
 
             text += lastReplacePos + searchLen; // Move to next "end of replace"
