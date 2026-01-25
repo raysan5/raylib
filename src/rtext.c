@@ -1734,7 +1734,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
 
     if ((text != NULL) && (search != NULL))
     {   
-        if(replacement == NULL) replacement = "";
+        if (replacement == NULL) replacement = "";
 
         char *insertPoint = NULL;   // Next insert point
         char *temp = NULL;          // Temp pointer
@@ -1769,12 +1769,12 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
             insertPoint = (char *)strstr(text, search);
             lastReplacePos = (int)(insertPoint - text);
             
-            memcpy(temp,text,lastReplacePos);
+            memcpy(temp, text, lastReplacePos);
             temp += lastReplacePos;
             
-            if(replaceLen > 0)
+            if (replaceLen > 0)
             {
-                memcpy(temp,replacement,replaceLen);
+                memcpy(temp, replacement, replaceLen);
                 temp += replaceLen; 
             }
 
