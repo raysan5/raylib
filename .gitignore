@@ -132,6 +132,3 @@ tools/rexm/rexm
 # CI
 emsdk-cache/
 raylib.com/
-*.obj
-*.exp
-*.lib
