@@ -59,21 +59,26 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera platformer");
 
+    // Initialize player state with default values
     Player player = { 0 };
-    player.position = (Vector2){ 400, 280 };
+    player.position = (Vector2){ 400, 280 }; // Starting position in world space
     player.speed = 0;
     player.canJump = false;
+
+    // Static level geometry
     EnvItem envItems[] = {
-        {{ 0, 0, 1000, 400 }, 0, LIGHTGRAY },
-        {{ 0, 400, 1000, 200 }, 1, GRAY },
-        {{ 300, 200, 400, 10 }, 1, GRAY },
-        {{ 250, 300, 100, 10 }, 1, GRAY },
-        {{ 650, 300, 100, 10 }, 1, GRAY }
+        {{ 0, 0, 1000, 400 }, 0, LIGHTGRAY },  //Background wall
+        {{ 0, 400, 1000, 200 }, 1, GRAY },     // Ground
+        {{ 300, 200, 400, 10 }, 1, GRAY },     // Floating platform
+        {{ 250, 300, 100, 10 }, 1, GRAY },     // Left Platform
+        {{ 650, 300, 100, 10 }, 1, GRAY }      // Right Platform
     };
 
+    // Number of environment items in the level
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
 
-    Camera2D camera = { 0 };
+    // Camer is centered on the player with no rotation and a default zoom
+    Camera2D camera = { 0 }; // declaring the camera
     camera.target = player.position;
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
