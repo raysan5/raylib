@@ -138,7 +138,7 @@ jobs:
         7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
         dir
       shell: cmd
-        
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
