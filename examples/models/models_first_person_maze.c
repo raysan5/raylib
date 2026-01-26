@@ -84,19 +84,19 @@ int main(void)
         for (int y = playerCellY - 1; y <= playerCellY + 1; y++)
         {
             // Avoid map accessing out of bounds
-            if ((y < 0) || (y >= cubicmap.height)) continue;
-            
-            for (int x = playerCellX - 1; x <= playerCellX + 1; x++)
+            if ((y >= 0) && (y < cubicmap.height))
             {
-                // Avoid map accessing out of bounds
-                if ((x < 0) || (x >= cubicmap.width)) continue;
-                
-                if ((mapPixels[y*cubicmap.width + x].r == 255) &&       // Collision: white pixel, only check R channel
-                    (CheckCollisionCircleRec(playerPos, playerRadius,
-                    (Rectangle){ mapPosition.x - 0.5f + x*1.0f, mapPosition.z - 0.5f + y*1.0f, 1.0f, 1.0f })))
+                for (int x = playerCellX - 1; x <= playerCellX + 1; x++)
                 {
-                    // Collision detected, reset camera position
-                    camera.position = oldCamPos;
+                    // NOTE: Collision: Only checking R channel for white pixel
+                    if (((x >= 0) && (x < cubicmap.width)) &&
+                        (mapPixels[y*cubicmap.width + x].r == 255) &&
+                        (CheckCollisionCircleRec(playerPos, playerRadius,
+                        (Rectangle){ mapPosition.x - 0.5f + x*1.0f, mapPosition.z - 0.5f + y*1.0f, 1.0f, 1.0f })))
+                    {
+                        // Collision detected, reset camera position
+                        camera.position = oldCamPos;
+                    }
                 }
             }
         }

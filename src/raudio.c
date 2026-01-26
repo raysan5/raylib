@@ -2418,7 +2418,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
         audioBuffer->frameCursorPos = (audioBuffer->frameCursorPos + framesToRead)%audioBuffer->sizeInFrames;
         framesRead += framesToRead;
 
-        // If we've read to the end of the buffer, mark it as processed
+        // If the end of the buffer is read, mark it as processed
         if (framesToRead == framesRemainingInOutputBuffer)
         {
             audioBuffer->isSubBufferProcessed[currentSubBufferIndex] = true;
@@ -2426,7 +2426,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 
             currentSubBufferIndex = (currentSubBufferIndex + 1)%2;
 
-            // We need to break from this loop if we're not looping
+            // Break from this loop if looping not enabled
             if (!audioBuffer->looping)
             {
                 StopAudioBufferInLockedState(audioBuffer);
@@ -2453,10 +2453,12 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 // Reads audio data from an AudioBuffer object in device format, returned data will be in a format appropriate for mixing
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount)
 {
-    // What's going on here is that we're continuously converting data from the AudioBuffer's internal format to the mixing format, which
-    // should be defined by the output format of the data converter. We do this until frameCount frames have been output. The important
-    // detail to remember here is that we never, ever attempt to read more input data than is required for the specified number of output
-    // frames. This can be achieved with ma_data_converter_get_required_input_frame_count()
+    // NOTE: Continuously converting data from the AudioBuffer's internal format to the mixing format, 
+    // which should be defined by the output format of the data converter. 
+    // This is done until frameCount frames have been output. 
+    // The important detail to remember is that more data than required should neeveer be read, 
+    // for the specified number of output frames. 
+    // This can be achieved with ma_data_converter_get_required_input_frame_count()
     ma_uint8 inputBuffer[4096] = { 0 };
     ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
 
@@ -2573,8 +2575,8 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                     }
                 }
 
-                // If for some reason we weren't able to read every frame we'll need to break from the loop
-                // Not doing this could theoretically put us into an infinite loop
+                // If for some reason is not possible to read every frame, the loop needs to be broken
+                // Not doing this could theoretically eend up into an infinite loop
                 if (framesToRead > 0) break;
             }
         }

@@ -30,6 +30,7 @@
 
 #if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
     #if defined(GRAPHICS_API_OPENGL_ES2)
+        #define GLAD_GLES2_IMPLEMENTATION
         #include "glad_gles2.h"       // Required for: OpenGL functionality
         #define glGenVertexArrays glGenVertexArraysOES
         #define glBindVertexArray glBindVertexArrayOES

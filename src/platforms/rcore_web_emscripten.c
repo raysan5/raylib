@@ -137,7 +137,7 @@ bool WindowShouldClose(void)
     // and encapsulating one frame execution on a UpdateDrawFrame() function,
     // allowing the browser to manage execution asynchronously
 
-    // Optionally we can manage the time we give-control-back-to-browser if required,
+    // NOTE: Optionally, time can be managed, giving control back-to-browser as required,
     // but it seems below line could generate stuttering on some browsers
     emscripten_sleep(12);
 
@@ -280,15 +280,16 @@ void ToggleBorderlessWindowed(void)
         // 2. The style unset handles the possibility of a width="value%" like on the default shell.html file
         EM_ASM
         (
+            const canvasId = UTF8ToString($0);
             setTimeout(function()
             {
                 Module.requestFullscreen(false, true);
                 setTimeout(function()
                 {
-                    canvas.style.width="unset";
+                    document.querySelector(canvasId).style.width="unset";
                 }, 100);
             }, 100);
-        );
+        , platform.canvasId);
         FLAG_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }
 }
@@ -1358,7 +1359,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 {
     if (count > 0)
     {
-        // In case previous dropped filepaths have not been freed, we free them
+        // In case previous dropped filepaths have not been freed, free them
         if (CORE.Window.dropFileCount > 0)
         {
             for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
@@ -1369,7 +1370,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
             CORE.Window.dropFilepaths = NULL;
         }
 
-        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        // WARNING: Paths are freed by GLFW when the callback returns, an internal copy should be kept
         CORE.Window.dropFileCount = count;
         CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
@@ -1610,7 +1611,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     double canvasWidth = 0.0;
     double canvasHeight = 0.0;
     // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
-    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
+    // looking for actual CSS size: canvas.style.width and canvas.style.height
     // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
     emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
 
@@ -1630,7 +1631,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
-    // Update mouse position if we detect a single touch
+    // Update mouse position if a single touch is detected
     if (CORE.Input.Touch.pointCount == 1)
     {
         CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;

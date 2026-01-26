@@ -59,9 +59,9 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// Error rate to calculate how many segments we need to draw a smooth circle,
-// taken from https://stackoverflow.com/a/2244088
 #ifndef SMOOTH_CIRCLE_ERROR_RATE
+    // Define error rate to calculate how many segments are needed to draw a smooth circle
+    // REF: https://stackoverflow.com/a/2244088
     #define SMOOTH_CIRCLE_ERROR_RATE    0.5f      // Circle error rate
 #endif
 #ifndef SPLINE_SEGMENT_DIVISIONS
@@ -318,7 +318,7 @@ void DrawCircle(int centerX, int centerY, float radius, Color color)
 }
 
 // Draw a color-filled circle (Vector version)
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
+// NOTE: On OpenGL 3.3 and ES2 using QUADS to avoid drawing order issues
 void DrawCircleV(Vector2 center, float radius, Color color)
 {
     DrawCircleSector(center, radius, 0, 360, 36, color);
@@ -379,7 +379,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
             angle += (stepLength*2.0f);
         }
 
-        // NOTE: In case number of segments is odd, we add one last piece to the cake
+        // NOTE: In case number of segments is odd, adding one last piece to the cake
         if ((((unsigned int)segments)%2) == 1)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
@@ -722,7 +722,7 @@ void DrawRectangle(int posX, int posY, int width, int height, Color color)
 }
 
 // Draw a color-filled rectangle (Vector version)
-// NOTE: On OpenGL 3.3 and ES2 we use QUADS to avoid drawing order issues
+// NOTE: On OpenGL 3.3 and ES2 using QUADS to avoid drawing order issues
 void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 {
     DrawRectanglePro((Rectangle){ position.x, position.y, size.x, size.y }, (Vector2){ 0.0f, 0.0f }, 0.0f, color);
@@ -968,7 +968,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 
     /*
     Quick sketch to make sense of all of this,
-    there are 9 parts to draw, also mark the 12 points we'll use
+    there are 9 parts to draw, also mark the 12 points used
 
           P0____________________P1
           /|                    |\
@@ -1024,7 +1024,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
                 angle += (stepLength*2);
             }
 
-            // NOTE: In case number of segments is odd, we add one last piece to the cake
+            // NOTE: In case number of segments is odd, adding one last piece to the cake
             if (segments%2)
             {
                 rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1168,7 +1168,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 // Draw rectangle with rounded edges
 void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
 {
-    // NOTE: For line thicknes <=1.0f we use RL_LINES, otherwise wee use RL_QUADS/RL_TRIANGLES
+    // NOTE: For line thicknes <=1.0f using RL_LINES, otherwise using RL_QUADS/RL_TRIANGLES
     DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
 }
 
@@ -1204,7 +1204,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 
     /*
     Quick sketch to make sense of all of this,
-    marks the 16 + 4(corner centers P16-19) points we'll use
+    marks the 16 + 4(corner centers P16-19) points used
 
            P0 ================== P1
           // P8                P9 \\
@@ -1946,7 +1946,7 @@ void DrawSplineBezierCubic(const Vector2 *points, int pointCount, float thick, C
 // Draw spline segment: Linear, 2 points
 void DrawSplineSegmentLinear(Vector2 p1, Vector2 p2, float thick, Color color)
 {
-    // NOTE: For the linear spline we don't use subdivisions, just a single quad
+    // NOTE: For the linear spline no subdivisions are used, just a single quad
 
     Vector2 delta = { p2.x - p1.x, p2.y - p1.y };
     float length = sqrtf(delta.x*delta.x + delta.y*delta.y);

@@ -1754,7 +1754,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData()
     // It isn't clear which would be reliably faster in all cases and on all platforms,
     // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
-    // no faster, since we're transferring all the transform matrices anyway
+    // no faster, since all the transform matrices are transferred anyway
     instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
     // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCE_TX
@@ -4084,7 +4084,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
 {
     RayCollision collision = { 0 };
 
-    // Note: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
+    // NOTE: If ray.position is inside the box, the distance is negative (as if the ray was reversed)
     // Reversing ray.direction will give use the correct result
     bool insideBox = (ray.position.x > box.min.x) && (ray.position.x < box.max.x) &&
                      (ray.position.y > box.min.y) && (ray.position.y < box.max.y) &&

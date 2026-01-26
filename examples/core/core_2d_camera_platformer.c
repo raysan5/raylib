@@ -226,10 +226,10 @@ void UpdateCameraCenterInsideMap(Camera2D *camera, Player *player, EnvItem *envI
     Vector2 max = GetWorldToScreen2D((Vector2){ maxX, maxY }, *camera);
     Vector2 min = GetWorldToScreen2D((Vector2){ minX, minY }, *camera);
 
-    if (max.x < width) camera->offset.x = width - (max.x - width/2);
-    if (max.y < height) camera->offset.y = height - (max.y - height/2);
-    if (min.x > 0) camera->offset.x = width/2 - min.x;
-    if (min.y > 0) camera->offset.y = height/2 - min.y;
+    if (max.x < width) camera->offset.x = width - (max.x - (float)width/2);
+    if (max.y < height) camera->offset.y = height - (max.y - (float)height/2);
+    if (min.x > 0) camera->offset.x = (float)width/2 - min.x;
+    if (min.y > 0) camera->offset.y = (float)height/2 - min.y;
 }
 
 void UpdateCameraCenterSmoothFollow(Camera2D *camera, Player *player, EnvItem *envItems, int envItemsLength, float delta, int width, int height)
