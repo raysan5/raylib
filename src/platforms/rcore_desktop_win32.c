@@ -1227,7 +1227,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    LARGE_INTEGER now = 0;
+    LARGE_INTEGER now = { 0 };
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
@@ -1875,8 +1875,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DPICHANGED:
         {
             // Get current dpi scale factor
-            float scalex = HIWORD(wParam)/96.0f;
-            float scaley = LOWORD(wParam)/96.0f;
+            float scalex = HIWORD(wparam)/96.0f;
+            float scaley = LOWORD(wparam)/96.0f;
 
             RECT *suggestedRect = (RECT *)lparam;
 
