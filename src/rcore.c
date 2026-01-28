@@ -4047,12 +4047,15 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //void SetMousePosition(int x, int y)
 //void SetMouseCursor(int cursor)
+#define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
-
+    
+    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    
     if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) pressed = true;
 
     // Map touches to mouse buttons checking
@@ -4065,7 +4068,9 @@ bool IsMouseButtonPressed(int button)
 bool IsMouseButtonDown(int button)
 {
     bool down = false;
-
+    
+    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    
     if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
 
     // NOTE: Touches are considered like mouse buttons
@@ -4078,7 +4083,9 @@ bool IsMouseButtonDown(int button)
 bool IsMouseButtonReleased(int button)
 {
     bool released = false;
-
+    
+    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    
     if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
 
     // Map touches to mouse buttons checking
@@ -4091,7 +4098,9 @@ bool IsMouseButtonReleased(int button)
 bool IsMouseButtonUp(int button)
 {
     bool up = false;
-
+    
+    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    
     if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
 
     // NOTE: Touches are considered like mouse buttons
