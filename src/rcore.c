@@ -3972,8 +3972,10 @@ bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.previousButtonState[gamepad][button] == 0) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) pressed = true;
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS))
+    {
+        if ((CORE.Input.Gamepad.previousButtonState[gamepad][button] == 0) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) pressed = true;
+    }
 
     return pressed;
 }
@@ -3983,8 +3985,10 @@ bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool down = false;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1)) down = true;
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS))
+    {
+        if (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 1) down = true;
+    }
 
     return down;
 }
@@ -3994,8 +3998,10 @@ bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.previousButtonState[gamepad][button] == 1) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) released = true;
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS))
+    {
+        if ((CORE.Input.Gamepad.previousButtonState[gamepad][button] == 1) && (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) released = true;
+    }
 
     return released;
 }
@@ -4005,8 +4011,10 @@ bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool up = false;
 
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS) &&
-        (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0)) up = true;
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (button < MAX_GAMEPAD_BUTTONS))
+    {
+        if (CORE.Input.Gamepad.currentButtonState[gamepad][button] == 0) up = true;
+    }
 
     return up;
 }
