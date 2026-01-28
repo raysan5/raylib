@@ -323,7 +323,7 @@ Uint8 SDL_EventState(Uint32 type, int state)
     return stateBefore;
 }
 
-void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode* mode)
+void SDL_GetCurrentDisplayMode_Adapter(SDL_DisplayID displayID, SDL_DisplayMode *mode)
 {
     const SDL_DisplayMode *currentMode = SDL_GetCurrentDisplayMode(displayID);
 
