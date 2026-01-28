@@ -1727,14 +1727,15 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
 
 // Replace text string
 // REQUIRES: strstr(), strncpy()
-// TODO: If (replacement == "") remove "search" text
 // WARNING: Allocated memory must be manually freed
 char *TextReplace(const char *text, const char *search, const char *replacement)
 {
     char *result = NULL;
 
     if ((text != NULL) && (search != NULL))
-    {
+    {   
+        if (replacement == NULL) replacement = "";
+
         char *insertPoint = NULL;   // Next insert point
         char *temp = NULL;          // Temp pointer
         int textLen = 0;            // Text string length
@@ -1767,16 +1768,15 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         {
             insertPoint = (char *)strstr(text, search);
             lastReplacePos = (int)(insertPoint - text);
-
-            // TODO: Review logic to avoid strcpy()
-            // OK - Those lines work
-            temp = strncpy(temp, text, lastReplacePos) + lastReplacePos;
-            temp = strcpy(temp, replacement) + replaceLen;
-            // WRONG - But not those ones
-            //temp = strncpy(temp, text, tempLen - 1) + lastReplacePos;
-            //tempLen -= lastReplacePos;
-            //temp = strncpy(temp, replacement, tempLen - 1) + replaceLen;
-            //tempLen -= replaceLen;
+            
+            memcpy(temp, text, lastReplacePos);
+            temp += lastReplacePos;
+            
+            if (replaceLen > 0)
+            {
+                memcpy(temp, replacement, replaceLen);
+                temp += replaceLen; 
+            }
 
             text += lastReplacePos + searchLen; // Move to next "end of replace"
         }
