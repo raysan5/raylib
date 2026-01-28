@@ -6517,7 +6517,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         };
                     }
 
-                    Transform* root = &animations[i].framePoses[j][0];
+                    Transform *root = &animations[i].framePoses[j][0];
                     root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
                     root->scale = Vector3Multiply(root->scale, worldTransform.scale);
                     root->translation = Vector3Multiply(root->translation, worldTransform.scale);
