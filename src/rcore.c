@@ -4047,7 +4047,6 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //void SetMousePosition(int x, int y)
 //void SetMouseCursor(int cursor)
-#define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
