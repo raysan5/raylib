@@ -2228,10 +2228,14 @@ bool IsMaterialValid(Material material)
 {
     bool result = false;
 
-    if ((material.maps != NULL) &&      // Validate material contain some map
-        (material.shader.id > 0)) result = true; // Validate material shader is valid
+    bool hasValidShader = ((material.maps != NULL) &&   // Validate material contain some maps
+        (material.shader.id > 0));  // Validate material shader is valid
 
-    // TODO: Check if available maps contain loaded textures
+    bool hasValidTexture = ((material.maps != NULL) && // Validate material contain some maps
+        (material.maps->texture.id > 0));   // Validate material texture is valid
+
+    if (hasValidShader && hasValidTexture)
+        result = true;
 
     return result;
 }
