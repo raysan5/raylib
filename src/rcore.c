@@ -4053,13 +4053,16 @@ bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
     
-    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    if ((button >= 0) && (button <= MOUSE_BUTTON_BACK))
+    {
     
-    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) pressed = true;
+        if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) pressed = true;
 
-    // Map touches to mouse buttons checking
-    if ((CORE.Input.Touch.currentTouchState[button] == 1) && (CORE.Input.Touch.previousTouchState[button] == 0)) pressed = true;
-
+        // Map touches to mouse buttons checking
+        if ((CORE.Input.Touch.currentTouchState[button] == 1) && (CORE.Input.Touch.previousTouchState[button] == 0)) pressed = true;
+        
+    }
+    
     return pressed;
 }
 
@@ -4068,13 +4071,16 @@ bool IsMouseButtonDown(int button)
 {
     bool down = false;
     
-    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    if ((button >= 0) && (button <= MOUSE_BUTTON_BACK))
+    {
+        
+        if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
+
+        // NOTE: Touches are considered like mouse buttons
+        if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
+        
+    }
     
-    if (CORE.Input.Mouse.currentButtonState[button] == 1) down = true;
-
-    // NOTE: Touches are considered like mouse buttons
-    if (CORE.Input.Touch.currentTouchState[button] == 1) down = true;
-
     return down;
 }
 
@@ -4083,13 +4089,16 @@ bool IsMouseButtonReleased(int button)
 {
     bool released = false;
     
-    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    if ((button >= 0) && (button <= MOUSE_BUTTON_BACK))
+    {
+        
+        if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
+
+        // Map touches to mouse buttons checking
+        if ((CORE.Input.Touch.currentTouchState[button] == 0) && (CORE.Input.Touch.previousTouchState[button] == 1)) released = true;
+            
+    }
     
-    if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) released = true;
-
-    // Map touches to mouse buttons checking
-    if ((CORE.Input.Touch.currentTouchState[button] == 0) && (CORE.Input.Touch.previousTouchState[button] == 1)) released = true;
-
     return released;
 }
 
@@ -4098,13 +4107,16 @@ bool IsMouseButtonUp(int button)
 {
     bool up = false;
     
-    if ((button < 0) || (button > MOUSE_BUTTON_BACK)) return false;
+    if ((button >= 0) && (button <= MOUSE_BUTTON_BACK))
+    {
+        
+        if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
+
+        // NOTE: Touches are considered like mouse buttons
+        if (CORE.Input.Touch.currentTouchState[button] == 0) up = true;
+            
+    }
     
-    if (CORE.Input.Mouse.currentButtonState[button] == 0) up = true;
-
-    // NOTE: Touches are considered like mouse buttons
-    if (CORE.Input.Touch.currentTouchState[button] == 0) up = true;
-
     return up;
 }
 
