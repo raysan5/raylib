@@ -58,7 +58,7 @@ int main(void)
     
     int ballCount = 1;
     Ball *grabbedBall = NULL;   // A pointer to the current ball that is grabbed
-    Vector2 pressOffset = {0};  // Mouse press offset relative to the ball that grabbedd
+    Vector2 pressOffset = { 0 };  // Mouse press offset relative to the ball that grabbedd
 
     float gravity = 100;        // World gravity
 

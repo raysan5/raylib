@@ -886,8 +886,8 @@ void ClosePlatform(void)
     // NOTE: Reset global state in case the activity is being relaunched
     if (platform.app->destroyRequested != 0)
     {
-        CORE = (CoreData){0};
-        platform = (PlatformData){0};
+        CORE = (CoreData){ 0 };
+        platform = (PlatformData){ 0 };
     }
 }
 
