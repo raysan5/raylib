@@ -2149,10 +2149,10 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
     // Flags that just apply immediately without needing any operations
     CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
 
-    int vsync = (CORE.Window.flags & FLAG_VSYNC_HINT)? 1 : 0;
+    int vsync = (desiredFlags & FLAG_VSYNC_HINT)? 1 : 0;
     if (wglSwapIntervalEXT)
     {
-        (*wglSwapIntervalEXT)(vsync);
+        wglSwapIntervalEXT(vsync);
         if (vsync) CORE.Window.flags |= FLAG_VSYNC_HINT;
         else CORE.Window.flags &= ~FLAG_VSYNC_HINT;
     }
