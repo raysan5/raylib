@@ -49,8 +49,8 @@ int main(void)
     bool showPercentages = false;
     bool showDonut = false;
     int hoveredSlice = -1;
-    Rectangle scrollPanelBounds = {0};
-    Vector2 scrollContentOffset = {0};
+    Rectangle scrollPanelBounds = { 0 };
+    Vector2 scrollContentOffset = { 0 };
     Rectangle view = { 0 };
 
     // UI layout parameters

@@ -183,7 +183,7 @@ int main(void)
                 if (showModel) DrawModel(model, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
 
                 // Draw the decal models
-                for (int i = 0; i < decalCount; i++) DrawModel(decalModels[i], (Vector3){0}, 1.0f, WHITE);
+                for (int i = 0; i < decalCount; i++) DrawModel(decalModels[i], (Vector3){ 0 }, 1.0f, WHITE);
 
                 // If we hit the mesh, draw the box for the decal
                 if (collision.hit)
@@ -191,7 +191,7 @@ int main(void)
                     Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
                     Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){0,1,0});
                     placementCube.transform = MatrixInvert(splat);
-                    DrawModel(placementCube, (Vector3){0}, 1.0f, Fade(WHITE, 0.5f));
+                    DrawModel(placementCube, (Vector3){ 0 }, 1.0f, Fade(WHITE, 0.5f));
                 }
 
                 DrawGrid(10, 10.0f);
