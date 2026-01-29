@@ -1177,7 +1177,7 @@ static inline void sw_float_to_unorm8_simd(uint8_t dst[4], const float src[4])
 static inline void sw_float_from_unorm8_simd(float dst[4], const uint8_t src[4])
 {
 #if defined(SW_HAS_NEON)
-    uint8x8_t bytes8 = vld1_u8(src); //< Read 8 bytes, faster, but let's hope we're not at the end of the page (unlikely)...
+    uint8x8_t bytes8 = vld1_u8(src); // Reading 8 bytes, faster, but let's hope not hitting the end of the page (unlikely)...
     uint16x8_t bytes16 = vmovl_u8(bytes8);
     uint32x4_t ints = vmovl_u16(vget_low_u16(bytes16));
     float32x4_t floats = vcvtq_f32_u32(ints);
@@ -1224,8 +1224,8 @@ static inline uint32_t sw_half_to_float_ui(uint16_t h)
     // denormal: flush to zero
     r = (em < (1 << 10))? 0 : r;
 
-    // infinity/NaN; note that we preserve NaN payload as a byproduct of unifying inf/nan cases
-    // 112 is an exponent bias fixup; since we already applied it once, applying it twice converts 31 to 255
+    // NOTE: infinity/NaN; NaN payload is preserved as a byproduct of unifying inf/nan cases
+    // 112 is an exponent bias fixup; since it is already applied once, applying it twice converts 31 to 255
     r += (em >= (31 << 10))? (112 << 23) : 0;
 
     return s | r;
@@ -1252,7 +1252,7 @@ static inline uint16_t sw_half_from_float_ui(uint32_t ui)
     // Overflow: infinity; 143 encodes exponent 16
     h = (em >= (143 << 23))? 0x7c00 : h;
 
-    // NaN; note that we convert all types of NaN to qNaN
+    // NOTE: NaN; all types of NaN aree converted to qNaN
     h = (em > (255 << 23))? 0x7e00 : h;
 
     return (uint16_t)(s | h);
@@ -1918,8 +1918,8 @@ static inline void sw_texture_sample_nearest(float *color, const sw_texture_t *t
 
 static inline void sw_texture_sample_linear(float *color, const sw_texture_t *tex, float u, float v)
 {
-    // TODO: With a bit more cleverness we could clearly reduce the
-    // number of operations here, but for now it works fine
+    // TODO: With a bit more cleverness thee number of operations can
+    // be clearly reduced, but for now it works fine
 
     float xf = (u*tex->width) - 0.5f;
     float yf = (v*tex->height) - 0.5f;
@@ -1933,7 +1933,7 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
     int x1 = x0 + 1;
     int y1 = y0 + 1;
 
-    // NOTE: If the textures are POT we could avoid the division for SW_REPEAT
+    // NOTE: If the textures are POT, avoid the division for SW_REPEAT
 
     if (tex->sWrap == SW_CLAMP)
     {
@@ -1974,7 +1974,7 @@ static inline void sw_texture_sample_linear(float *color, const sw_texture_t *te
 static inline void sw_texture_sample(float *color, const sw_texture_t *tex, float u, float v, float dUdx, float dUdy, float dVdx, float dVdy)
 {
     // Previous method: There is no need to compute the square root
-    // because using the squared value, the comparison remains `L2 > 1.0f*1.0f`
+    // because using the squared value, the comparison remains (L2 > 1.0f*1.0f)
     //float du = sqrtf(dUdx*dUdx + dUdy*dUdy);
     //float dv = sqrtf(dVdx*dVdx + dVdy*dVdy);
     //float L = (du > dv)? du : dv;
@@ -2204,12 +2204,12 @@ static inline bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VE
 static inline bool sw_triangle_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations
-    //       To handle triangles crossing the w=0 plane correctly,
-    //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w)
-    //       This test determines the orientation of the triangle in the (x,y,w) plane,
-    //       which corresponds to the projected 2D winding order sign,
-    //       even with negative w values
+    // To handle triangles crossing the w=0 plane correctly,
+    // the winding order test is performeed in homogeneous coordinates directly,
+    // before the perspective division (division by w)
+    // This test determines the orientation of the triangle in the (x,y,w) plane,
+    // which corresponds to the projected 2D winding order sign,
+    // even with negative w values
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2558,13 +2558,13 @@ static inline void sw_triangle_render(void)
 static inline bool sw_quad_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations
-    //       To handle quads crossing the w=0 plane correctly,
-    //       we perform the winding order test in homogeneous coordinates directly,
-    //       before the perspective division (division by w)
-    //       For a convex quad with vertices P0, P1, P2, P3 in sequential order,
-    //       the winding order of the quad is the same as the winding order
-    //       of the triangle P0 P1 P2. We use the homogeneous triangle
-    //       winding test on this first triangle
+    // To handle quads crossing the w=0 plane correctly,
+    // the winding order test is performed in homogeneous coordinates directly,
+    // before the perspective division (division by w)
+    // For a convex quad with vertices P0, P1, P2, P3 in sequential order,
+    // the winding order of the quad is the same as the winding order
+    // of the triangle P0 P1 P2. The homogeneous triangle is used on
+    // winding test on this first triangle
 
     // Preload homogeneous coordinates into local variables
     const float *h0 = RLSW.vertexBuffer[0].homogeneous;
@@ -2649,7 +2649,7 @@ static inline bool sw_quad_is_axis_aligned(void)
 {
     // Reject quads with perspective projection
     // The fast path assumes affine (non-perspective) quads,
-    // so we require all vertices to have homogeneous w = 1.0
+    // so it's required for all vertices to have homogeneous w = 1.0
     for (int i = 0; i < 4; i++)
     {
         if (RLSW.vertexBuffer[i].homogeneous[3] != 1.0f) return false;
@@ -2721,7 +2721,7 @@ static inline void sw_quad_sort_cw(const sw_vertex_t* *output)
 
 // TODO: REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth,
 // still appear perfectly aligned from a certain point of view?
-// Because in that case, we would still need to perform perspective division for textures and colors...
+// Because in that case, it's still needed to perform perspective division for textures and colors...
 #define DEFINE_QUAD_RASTER_AXIS_ALIGNED(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
 static inline void FUNC_NAME(void)                                              \
 {                                                                               \
@@ -3090,7 +3090,7 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                                                                         \
     for (int i = 0; i < numPixels; i++)                                 \
     {                                                                   \
-        /* REVIEW: May require reviewing projection details */          \
+        /* TODO: REVIEW: May require reviewing projection details */    \
         int px = (int)(x - 0.5f);                                       \
         int py = (int)(y - 0.5f);                                       \
                                                                         \
@@ -3721,7 +3721,7 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
     ySrc = sw_clampi(ySrc, 0, hSrc);
 
     // Check if the sizes are identical after clamping the source to avoid unexpected issues
-    // REVIEW: This repeats the operations if true, so we could make a copy function without these checks
+    // TODO: REVIEW: This repeats the operations if true, so a copy function can be made without these checks
     if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
     {
         swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);

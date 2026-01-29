@@ -216,7 +216,7 @@ static void KeepAspectCenteredInteger(int screenWidth, int screenHeight, int gam
 
 static void KeepHeightCenteredInteger(int screenWidth, int screenHeight, int gameWidth, int gameHeight, Rectangle *sourceRect, Rectangle *destRect)
 {
-    const float resizeRatio = (float)(screenHeight/gameHeight);
+    const float resizeRatio = (float)screenHeight/gameHeight;
     sourceRect->x = 0.0f;
     sourceRect->y = 0.0f;
     sourceRect->width = (float)(int)(screenWidth/resizeRatio);
@@ -230,7 +230,7 @@ static void KeepHeightCenteredInteger(int screenWidth, int screenHeight, int gam
 
 static void KeepWidthCenteredInteger(int screenWidth, int screenHeight, int gameWidth, int gameHeight, Rectangle *sourceRect, Rectangle *destRect)
 {
-    const float resizeRatio = (float)(screenWidth/gameWidth);
+    const float resizeRatio = (float)screenWidth/gameWidth;
     sourceRect->x = 0.0f;
     sourceRect->y = 0.0f;
     sourceRect->width = (float)gameWidth;

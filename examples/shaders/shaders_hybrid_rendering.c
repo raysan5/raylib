@@ -65,7 +65,7 @@ int main(void)
     Shader shdrRaster = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
 
     // Declare Struct used to store camera locs
-    RayLocs marchLocs = {0};
+    RayLocs marchLocs = { 0 };
 
     // Fill the struct with shader locs
     marchLocs.camPos = GetShaderLocation(shdrRaymarch, "camPos");

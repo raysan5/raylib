@@ -3625,7 +3625,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
 }
 
 // Draw circle within an image
-void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color color)
+void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
 {
     int x = 0;
     int y = radius;
@@ -3649,7 +3649,7 @@ void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color col
 }
 
 // Draw circle within an image (Vector version)
-void ImageDrawCircleV(Image* dst, Vector2 center, int radius, Color color)
+void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
 {
     ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
 }

@@ -113,7 +113,7 @@ int main(void)
 
     // Set the text (using markdown!)
     char text[64] = "Hello ~~World~~ in 3D!";
-    Vector3 tbox = {0};
+    Vector3 tbox = { 0 };
     int layers = 1;
     int quads = 0;
     float layerDistance = 0.01f;
@@ -133,7 +133,7 @@ int main(void)
     Shader alphaDiscard = LoadShader(NULL, TextFormat("resources/shaders/glsl%i/alpha_discard.fs", GLSL_VERSION));
 
     // Array filled with multiple random colors (when multicolor mode is set)
-    Color multi[TEXT_MAX_LAYERS] = {0};
+    Color multi[TEXT_MAX_LAYERS] = { 0 };
 
     DisableCursor();                    // Limit cursor to relative movement inside the window
 

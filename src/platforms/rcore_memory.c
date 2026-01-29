@@ -499,7 +499,7 @@ int InitPlatform(void)
     }
     //----------------------------------------------------------------------------
 
-    // If everything work as expected, we can continue
+    // If everything worked as expected, continue
     CORE.Window.render.width = CORE.Window.screen.width;
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;

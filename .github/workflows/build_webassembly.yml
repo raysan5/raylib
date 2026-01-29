@@ -71,8 +71,10 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.RELEASE_NAME }}.zip
-        path: ./build/${{ env.RELEASE_NAME }}.zip
+        name: ${{ env.RELEASE_NAME }}
+        path: |
+          ./build/${{ env.RELEASE_NAME }}
+          !./build/${{ env.RELEASE_NAME }}.zip
         
     - name: Upload Artifact to Release
       uses: softprops/action-gh-release@v1

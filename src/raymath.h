@@ -66,11 +66,11 @@
 // Function specifiers definition
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll)
+        #define RMAPI __declspec(dllexport) extern inline    // Building raylib as a Win32 shared library (.dll)
     #elif defined(BUILD_LIBTYPE_SHARED)
-        #define RMAPI __attribute__((visibility("default"))) // We are building raylib as a Unix shared library (.so/.dylib)
+        #define RMAPI __attribute__((visibility("default"))) // Building raylib as a Unix shared library (.so/.dylib)
     #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+        #define RMAPI __declspec(dllimport)                  // Using raylib as a Win32 shared library (.dll)
     #else
         #define RMAPI extern inline // Provide external definition
     #endif
@@ -595,7 +595,7 @@ RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 // v: normalized direction of the incoming ray
 // n: normalized normal vector of the interface of two optical media
 // r: ratio of the refractive index of the medium from where the ray comes
-//    to the refractive index of the medium on the other side of the surface
+// to the refractive index of the medium on the other side of the surface
 RMAPI Vector2 Vector2Refract(Vector2 v, Vector2 n, float r)
 {
     Vector2 result = { 0 };
@@ -1083,7 +1083,7 @@ RMAPI Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Projects a Vector3 from screen space into object space
-// NOTE: We are avoiding calling other raymath functions despite available
+// NOTE: Self-contained function, no other raymath functions are called
 RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
@@ -1245,7 +1245,7 @@ RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 // v: normalized direction of the incoming ray
 // n: normalized normal vector of the interface of two optical media
 // r: ratio of the refractive index of the medium from where the ray comes
-//    to the refractive index of the medium on the other side of the surface
+// to the refractive index of the medium on the other side of the surface
 RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 {
     Vector3 result = { 0 };
@@ -2363,13 +2363,13 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 {
     Quaternion result = { 0 };
 
-    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z);    // Vector3DotProduct(from, to)
+    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z); // Vector3DotProduct(from, to)
     Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
 
     result.x = cross.x;
     result.y = cross.y;
     result.z = cross.z;
-    result.w = 1.0f + cos2Theta;
+    result.w = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta) + cos2Theta;
 
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
@@ -2663,14 +2663,14 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     forward = Vector3RotateByQuaternion(forward, rotation);
     
     // Set result matrix output
-	Matrix result = {
-		right.x, up.x, forward.x, translation.x,
-		right.y, up.y, forward.y, translation.y,
-		right.z, up.z, forward.z, translation.z,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
+    Matrix result = {
+        right.x, up.x, forward.x, translation.x,
+        right.y, up.y, forward.y, translation.y,
+        right.z, up.z, forward.z, translation.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 
-	return result;
+    return result;
 }
 
 // Decompose a transformation matrix into its rotational, translational and scaling components and remove shear

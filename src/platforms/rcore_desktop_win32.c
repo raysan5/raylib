@@ -433,7 +433,7 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     return true;
 }
 
-// Verify if we are running in Windows 10 version 1703 (Creators Update)
+// Check if running in Windows 10 version 1703 (Creators Update)
 static BOOL IsWindows10Version1703OrGreaterWin32(void)
 {
     HMODULE ntdll = LoadLibraryW(L"ntdll.dll");
@@ -1138,7 +1138,7 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-    // NOTE: We use SetCursor() instead of ShowCursor() because
+    // NOTE: Using SetCursor() instead of ShowCursor() because
     // it makes it easy to only hide the cursor while it's inside the client area
     SetCursor(NULL);
     CORE.Input.Mouse.cursorHidden = true;
@@ -1227,7 +1227,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    LARGE_INTEGER now = 0;
+    LARGE_INTEGER now = { 0 };
     QueryPerformanceCounter(&now);
     return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 }
@@ -1345,7 +1345,7 @@ void PollInputEvents(void)
 //----------------------------------------------------------------------------------
 
 // Initialize modern OpenGL context
-// NOTE: We need to create a dummy context first to query required extensions
+// NOTE: Creating a dummy context first to query required extensions
 HGLRC InitOpenGL(HWND hwnd, HDC hdc)
 {
     // First, create a dummy context to get WGL extensions
@@ -1460,7 +1460,7 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
             0 // Terminator
         };
 
-        // NOTE: We are not sharing context resources so, second parameters is NULL
+        // NOTE: Not sharing context resources so, second parameters is NULL
         realContext = wglCreateContextAttribsARB(hdc, NULL, contextAttribs);
 
         // Check for error context creation errors
@@ -1476,8 +1476,8 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
     // Activate real context
     if (realContext) wglMakeCurrent(hdc, realContext);
 
-    // Once we got a real modern OpenGL context,
-    // we can load required extensions (function pointers)
+    // Once a real modern OpenGL context is created,
+    // required extensions can be loaded (function pointers)
     rlLoadExtensions(WglGetProcAddress);
 
     return realContext;
@@ -1521,7 +1521,7 @@ int InitPlatform(void)
         .lpfnWndProc = WndProc,                         // Custom procedure assigned
         .cbWndExtra = sizeof(LONG_PTR),                 // extra space for the Tuple object ptr
         .hInstance = hInstance,
-        .hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW), // TODO: Audit if we want to set this since we're implementing WM_SETCURSOR
+        .hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW), // TODO: Check if this is really required, since WM_SETCURSOR event is processed
         .lpszClassName = CLASS_NAME                     // Class name: L"raylibWindow"
     };
 
@@ -1854,8 +1854,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             SIZE *inoutSize = (SIZE *)lparam;
             UINT newDpi = (UINT)wparam; // TODO: WARNING: Converting from WPARAM = UINT_PTR
 
-            // for any of these other cases, we might want to post a window
-            // resize event after the dpi changes?
+            // For the following flag changes, a window resize event should be posted, 
+            // TODO: Should it be done after dpi changes?
             if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
             if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
             if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
@@ -1875,8 +1875,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DPICHANGED:
         {
             // Get current dpi scale factor
-            float scalex = HIWORD(wParam)/96.0f;
-            float scaley = LOWORD(wParam)/96.0f;
+            float scalex = HIWORD(wparam)/96.0f;
+            float scaley = LOWORD(wparam)/96.0f;
 
             RECT *suggestedRect = (RECT *)lparam;
 
@@ -2025,8 +2025,8 @@ static void HandleRawInput(LPARAM lparam)
 
     if (input.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) TRACELOG(LOG_ERROR, "TODO: handle virtual desktop mouse inputs!");
 
-    // Trick to keep the mouse position at 0,0 and instead move
-    // the previous position so we can still get a proper mouse delta
+    // Trick to keep the mouse position at (0,0) and instead move
+    // the previous position so a proper mouse delta can still be retrieved
     //CORE.Input.Mouse.previousPosition.x -= input.data.mouse.lLastX;
     //CORE.Input.Mouse.previousPosition.y -= input.data.mouse.lLastY;
     //if (CORE.Input.Mouse.currentPosition.x != 0) abort();
@@ -2138,12 +2138,12 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 // This design takes care of many odd corner cases. For example, if you want to restore
 // a window that was previously maximized AND minimized and you want to remove both these
 // flags, you actually need to call ShowWindow with SW_RESTORE twice. Another example is
-// if you have a maximized window, if the undecorated flag is modified then we'd need to
-// update the window style, but updating the style would mean the window size would change
-// causing the window to lose its Maximized state which would mean we'd need to update the
-// window size and then update the window style a second time to restore that maximized
+// if you have a maximized window, if the undecorated flag is modified then the window style
+// needs to be updated, but updating the style would mean the window size would change
+// causing the window to lose its Maximized state which would mean the window size
+// needs to be updated, followed by the update of window style, a second time, to restore that maximized
 // state. This implementation is able to handle any/all of these special situations with a
-// retry loop that continues until we either reach the desired state or the state stops changing
+// retry loop that continues until either the desired state is reached or the state stops changing
 static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
 {
     // Flags that just apply immediately without needing any operations

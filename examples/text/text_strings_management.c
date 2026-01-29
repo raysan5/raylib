@@ -65,7 +65,7 @@ int main(void)
     TextParticle textParticles[MAX_TEXT_PARTICLES] = { 0 };
     int particleCount = 0;
     TextParticle *grabbedTextParticle = NULL;
-    Vector2 pressOffset = {0};
+    Vector2 pressOffset = { 0 };
 
     PrepareFirstTextParticle("raylib => fun videogames programming!", textParticles, &particleCount);
 

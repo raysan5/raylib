@@ -1556,7 +1556,7 @@ int main(int argc, char *argv[])
                     "#include <string.h>\n"
                     "#include <stdlib.h>\n"
                     "#include <emscripten/emscripten.h>\n\n"
-                    "static char logText[4096] = {0};\n"
+                    "static char logText[4096] = { 0 };\n"
                     "static int logTextOffset = 0;\n\n"
                     "void CustomTraceLog(int msgType, const char *text, va_list args)\n{\n"
                     "    if (logTextOffset < 3800)\n    {\n"
