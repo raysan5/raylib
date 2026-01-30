@@ -2090,10 +2090,10 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
     // Minimized takes precedence over maximized
     Mized currentMized = MIZED_NONE;
     Mized desiredMized = MIZED_NONE;
-    if (CORE.Window.flags & WS_MINIMIZE) currentMized = MIZED_MIN;
-    else if (CORE.Window.flags & WS_MAXIMIZE) currentMized = MIZED_MAX;
-    if (desiredFlags & WS_MINIMIZE) currentMized = MIZED_MIN;
-    else if (desiredFlags & WS_MAXIMIZE) currentMized = MIZED_MAX;
+    if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) currentMized = MIZED_MIN;
+    else if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) currentMized = MIZED_MAX;
+    if (desiredFlags & FLAG_WINDOW_MINIMIZED) desiredMized = MIZED_MIN;
+    else if (desiredFlags & FLAG_WINDOW_MAXIMIZED) desiredMized = MIZED_MAX;
 
     if (currentMized != desiredMized)
     {
