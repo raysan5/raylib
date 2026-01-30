@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < lineCount; i++)
     {
         int j = 0;
-        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
+        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the beginning
         // Read define line
         if (IsTextEqual(lines[i]+j, "#define ", 8))
         {
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
         char *linePtr = lines[defineLines[i]];
         int j = 0;
 
-        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the begining
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the beginning
         j += 8;                                                  // Skip "#define "
         while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after "#define "
 
