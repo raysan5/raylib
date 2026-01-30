@@ -270,8 +270,8 @@ static DWORD MakeWindowStyle(unsigned flags)
 
     // Minimized takes precedence over maximized
     int mized = MIZED_NONE;
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
-    if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
+    if (flags & FLAG_WINDOW_MINIMIZED) mized = MIZED_MIN;
+    else if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
 
     switch (mized)
     {
