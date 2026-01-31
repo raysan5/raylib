@@ -1777,7 +1777,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                     {
                         // looks like windows will automatically "unminimize" a window
                         // if a style changes modifies it's size
-                        TRACELOG(LOG_INFO, "WIN32: WINDOW: Style change modifed window size, removing maximized flag");
+                        TRACELOG(LOG_INFO, "WIN32: WINDOW: Style change modified window size, removing maximized flag");
                         deferredFlags->clear |= FLAG_WINDOW_MAXIMIZED;
                     }
                 }
