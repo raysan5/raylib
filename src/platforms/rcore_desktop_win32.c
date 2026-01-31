@@ -1590,8 +1590,6 @@ int InitPlatform(void)
 
     if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
     {
-        //ShowWindow(platform.hwnd, SW_SHOWDEFAULT); //SW_SHOWNORMAL
-
         // Initialize software framebuffer
         BITMAPINFO bmi = { 0 };
         ZeroMemory(&bmi, sizeof(bmi));
@@ -1619,6 +1617,9 @@ int InitPlatform(void)
     }
 
     CORE.Window.ready = true;
+
+    // Activate window to set focus and show taskbar icon
+    ShowWindow(platform.hwnd, SW_SHOWDEFAULT);
 
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
