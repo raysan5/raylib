@@ -1916,6 +1916,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
                 EndPaint(hwnd, &ps);
             }
+            else DefWindowProc(hwnd, msg, wparam, lparam);
         }
         case WM_INPUT:
         {
