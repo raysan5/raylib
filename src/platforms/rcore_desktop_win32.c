@@ -2111,10 +2111,41 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
 // Sanitize flags
 static unsigned SanitizeFlags(int mode, unsigned flags)
 {
-    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE))
+    if (flags & FLAG_WINDOW_MAXIMIZED)
     {
-        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Borderless windows mode overriding maximized window flag");
-        flags &= ~FLAG_WINDOW_MAXIMIZED;
+        if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+        {
+            TRACELOG(LOG_WARNING, "WIN32: WINDOW: Borderless windows mode overriding maximized window flag");
+            flags &= ~FLAG_WINDOW_MAXIMIZED;
+        }
+
+        if (~flags & FLAG_WINDOW_RESIZABLE)
+        {
+            if (!(CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot maximize a non-resizable window");
+                flags &= ~FLAG_WINDOW_MAXIMIZED;
+            }
+            else if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set window as non-resizable when maximized");
+                flags |= FLAG_WINDOW_RESIZABLE;
+            }
+        }
+        else if (!(CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+        {
+            if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
+            {
+                // Window needs to be unminimized before it can be maximized since minimizing takes precedence
+                flags &= ~FLAG_WINDOW_MINIMIZED;
+            }
+            else if ((flags & FLAG_WINDOW_MINIMIZED) && !(CORE.Window.flags & FLAG_WINDOW_MINIMIZED))
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot minimize and maximize a window in the same frame");
+                flags &= ~FLAG_WINDOW_MINIMIZED;
+                flags &= ~FLAG_WINDOW_MAXIMIZED;
+            }
+        }
     }
 
     if (mode == 1)
