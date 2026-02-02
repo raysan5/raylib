@@ -2762,6 +2762,8 @@ FilePathList LoadDirectoryFiles(const char *dirPath)
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
+// Use 'DIR*' to include directories on directory scan
+// Use '*.*' to include all file types and directories on directory scan
 // WARNING: Directory is scanned twice, first time to get files count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
