@@ -1290,7 +1290,7 @@ int InitPlatform(void)
 
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
 
-    platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
+    platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
 
     if (platform.window != NULL)
