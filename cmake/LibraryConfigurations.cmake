@@ -149,6 +149,24 @@ elseif ("${PLATFORM}" MATCHES "SDL")
 	endif()	
 elseif ("${PLATFORM}" MATCHES "RGFW")
     set(PLATFORM_CPP "PLATFORM_DESKTOP_RGFW")
+
+    if (APPLE)
+        find_library(COCOA Cocoa)
+        find_library(OPENGL OpenGL)
+
+        set(LIBS_PRIVATE ${COCOA} ${OPENGL})
+    elseif (WIN32)
+        find_package(OpenGL REQUIRED)
+
+        set(LIBS_PRIVATE ${OPENGL_LIBRARIES} gdi32)
+    elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
+        message(FATAL_ERROR "RGFW platform does not support QNX. Use PLATFORM=Desktop or PLATFORM=SDL instead.")
+    elseif (UNIX)
+        find_package(X11 REQUIRED)
+        find_package(OpenGL REQUIRED)
+
+        set(LIBS_PRIVATE ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+    endif ()
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
