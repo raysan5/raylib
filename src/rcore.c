@@ -3004,6 +3004,7 @@ unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, b
                 }
             }
         }
+        closedir(dir);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);  // Maybe it's a file...
     return fileCounter;
