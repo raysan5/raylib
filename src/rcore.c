@@ -2662,7 +2662,7 @@ const char *GetApplicationDirectory(void)
 
     if (len > 0)
     {
-        for (int i = len; i >= 0; --i)
+        for (int i = len; i >= 0; i--)
         {
             if (appDir[i] == '\\')
             {
@@ -2684,7 +2684,7 @@ const char *GetApplicationDirectory(void)
 
     if (len > 0)
     {
-        for (int i = len; i >= 0; --i)
+        for (int i = len; i >= 0; i--)
         {
             if (appDir[i] == '/')
             {
@@ -2706,7 +2706,7 @@ const char *GetApplicationDirectory(void)
     if (_NSGetExecutablePath(appDir, &size) == 0)
     {
         int appDirLength = (int)strlen(appDir);
-        for (int i = appDirLength; i >= 0; --i)
+        for (int i = appDirLength; i >= 0; i--)
         {
             if (appDir[i] == '/')
             {
@@ -2729,7 +2729,7 @@ const char *GetApplicationDirectory(void)
     if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
     {
         int appDirLength = (int)strlen(appDir);
-        for (int i = appDirLength; i >= 0; --i)
+        for (int i = appDirLength; i >= 0; i--)
         {
             if (appDir[i] == '/')
             {
