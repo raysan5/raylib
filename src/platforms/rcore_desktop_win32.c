@@ -141,7 +141,7 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 #define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
 #define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
 
-#define STYLE_FLAGS_RESIZABLE   WS_THICKFRAME
+#define STYLE_FLAGS_RESIZABLE   (WS_THICKFRAME | WS_MAXIMIZEBOX)
 
 #define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
 #define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
@@ -270,8 +270,8 @@ static DWORD MakeWindowStyle(unsigned flags)
 
     // Minimized takes precedence over maximized
     int mized = MIZED_NONE;
-    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
-    if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
+    if (flags & FLAG_WINDOW_MINIMIZED) mized = MIZED_MIN;
+    else if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
 
     switch (mized)
     {
@@ -1590,8 +1590,6 @@ int InitPlatform(void)
 
     if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
     {
-        //ShowWindow(platform.hwnd, SW_SHOWDEFAULT); //SW_SHOWNORMAL
-
         // Initialize software framebuffer
         BITMAPINFO bmi = { 0 };
         ZeroMemory(&bmi, sizeof(bmi));
@@ -1619,6 +1617,9 @@ int InitPlatform(void)
     }
 
     CORE.Window.ready = true;
+
+    // Activate window to set focus and show taskbar icon
+    ShowWindow(platform.hwnd, SW_SHOWDEFAULT);
 
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
@@ -1916,6 +1917,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
                 EndPaint(hwnd, &ps);
             }
+            else DefWindowProc(hwnd, msg, wparam, lparam);
         }
         case WM_INPUT:
         {
@@ -2090,10 +2092,10 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
     // Minimized takes precedence over maximized
     Mized currentMized = MIZED_NONE;
     Mized desiredMized = MIZED_NONE;
-    if (CORE.Window.flags & WS_MINIMIZE) currentMized = MIZED_MIN;
-    else if (CORE.Window.flags & WS_MAXIMIZE) currentMized = MIZED_MAX;
-    if (desiredFlags & WS_MINIMIZE) currentMized = MIZED_MIN;
-    else if (desiredFlags & WS_MAXIMIZE) currentMized = MIZED_MAX;
+    if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) currentMized = MIZED_MIN;
+    else if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) currentMized = MIZED_MAX;
+    if (desiredFlags & FLAG_WINDOW_MINIMIZED) desiredMized = MIZED_MIN;
+    else if (desiredFlags & FLAG_WINDOW_MAXIMIZED) desiredMized = MIZED_MAX;
 
     if (currentMized != desiredMized)
     {
@@ -2109,10 +2111,41 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
 // Sanitize flags
 static unsigned SanitizeFlags(int mode, unsigned flags)
 {
-    if ((flags & FLAG_WINDOW_MAXIMIZED) && (flags & FLAG_BORDERLESS_WINDOWED_MODE))
+    if (flags & FLAG_WINDOW_MAXIMIZED)
     {
-        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Borderless windows mode overriding maximized window flag");
-        flags &= ~FLAG_WINDOW_MAXIMIZED;
+        if (flags & FLAG_BORDERLESS_WINDOWED_MODE)
+        {
+            TRACELOG(LOG_WARNING, "WIN32: WINDOW: Borderless windows mode overriding maximized window flag");
+            flags &= ~FLAG_WINDOW_MAXIMIZED;
+        }
+
+        if (~flags & FLAG_WINDOW_RESIZABLE)
+        {
+            if (!(CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot maximize a non-resizable window");
+                flags &= ~FLAG_WINDOW_MAXIMIZED;
+            }
+            else if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set window as non-resizable when maximized");
+                flags |= FLAG_WINDOW_RESIZABLE;
+            }
+        }
+        else if (!(CORE.Window.flags & FLAG_WINDOW_MAXIMIZED))
+        {
+            if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED)
+            {
+                // Window needs to be unminimized before it can be maximized since minimizing takes precedence
+                flags &= ~FLAG_WINDOW_MINIMIZED;
+            }
+            else if ((flags & FLAG_WINDOW_MINIMIZED) && !(CORE.Window.flags & FLAG_WINDOW_MINIMIZED))
+            {
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot minimize and maximize a window in the same frame");
+                flags &= ~FLAG_WINDOW_MINIMIZED;
+                flags &= ~FLAG_WINDOW_MAXIMIZED;
+            }
+        }
     }
 
     if (mode == 1)
