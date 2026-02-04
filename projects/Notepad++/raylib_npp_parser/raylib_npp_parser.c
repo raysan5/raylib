@@ -97,7 +97,8 @@ int main(int argc, char *argv[])
                 // Scan params string for number of func params, type and name
                 char *paramPtr[16];         // Allocate 16 pointers for possible parameters
                 int paramsCount = 0;
-                paramPtr[paramsCount] = strtok(params, ",");
+                char *saveptr;              // Save pointer for strtok_r
+                paramPtr[paramsCount] = strtok_r(params, ",", &saveptr);
 
                 if ((funcName[0] == '*') && (funcName[1] == '*')) fprintf(rxmlFile, "        <KeyWord name=\"%s\" func=\"yes\">\n", funcName + 2);
                 else if (funcName[0] == '*') fprintf(rxmlFile, "        <KeyWord name=\"%s\" func=\"yes\">\n", funcName + 1);
@@ -128,7 +129,7 @@ int main(int argc, char *argv[])
                     else fprintf(rxmlFile, "\n                <Param name=\"%s %s\" />", paramType[paramsCount], paramName[paramsCount]);
 
                     paramsCount++;
-                    paramPtr[paramsCount] = strtok(NULL, ",");
+                    paramPtr[paramsCount] = strtok_r(NULL, ",", &saveptr);
                 }
                 
                 fprintf(rxmlFile, "%s</Overload>\n", paramsVoid ? "" : "\n            ");
