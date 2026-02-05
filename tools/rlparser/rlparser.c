@@ -721,7 +721,8 @@ int main(int argc, char *argv[])
                             char v = structs[i].fieldType[originalIndex][k];
                             if ((v == '*') || (v == ' ') || (v == ','))
                             {
-                                if (nameEnd != -1) {
+                                if (nameEnd != -1)
+                                {
                                     // Don't copy to last additional field
                                     if (fieldsRemaining != additionalFields)
                                     {
@@ -1011,7 +1012,8 @@ int main(int argc, char *argv[])
                     ((linePtr[c - 4] == 'v') &&
                      (linePtr[c - 3] == 'o') &&
                      (linePtr[c - 2] == 'i') &&
-                     (linePtr[c - 1] == 'd'))) {
+                     (linePtr[c - 1] == 'd')))
+                {
                   break;
                 }
 
