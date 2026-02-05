@@ -894,7 +894,8 @@ void SwapScreenBuffer(void)
         const canvas = Module.canvas;
         const ctx = canvas.getContext('2d');
 
-        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height)) {
+        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height))
+        {
             Module.__img = ctx.createImageData(width, height);
         }
 

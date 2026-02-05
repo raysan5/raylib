@@ -1,7 +1,8 @@
 #include <math.h>
 #include "raylib.h"
 
-int main() {
+int main()
+{
     int screenWidth = 800;
     int screenHeight = 450;
 
@@ -17,7 +18,8 @@ int main() {
 
     SetTargetFPS(60);
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose())
+    {
         cam.position.x = sin(GetTime())*10.0f;
         cam.position.z = cos(GetTime())*10.0f;
 

@@ -63,7 +63,7 @@ float sdSixWayCutHollowSphere(vec3 p, float r, float h, float t)
 }
 
 // SRC: https://iquilezles.org/articles/boxfunctions
-vec2 iBox(in vec3 ro, in vec3 rd, in vec3 rad) 
+vec2 iBox(in vec3 ro, in vec3 rd, in vec3 rad)
 {
     vec3 m = 1.0/rd;
     vec3 n = m*ro;

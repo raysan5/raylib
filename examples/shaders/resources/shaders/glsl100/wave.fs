@@ -19,7 +19,8 @@ uniform float ampY;
 uniform float speedX;
 uniform float speedY;
 
-void main() {
+void main()
+{
     float pixelWidth = 1.0/size.x;
     float pixelHeight = 1.0/size.y;
     float aspect = pixelHeight/pixelWidth;
