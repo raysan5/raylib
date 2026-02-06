@@ -2363,32 +2363,36 @@ bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
 }
 
 // Check the collision between two lines defined by two points each, returns collision point by reference
+// REF: https://en.wikipedia.org/wiki/Line–line_intersection#Given_two_points_on_each_line_segment
 bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, Vector2 endPos2, Vector2 *collisionPoint)
 {
-    // According to https://en.wikipedia.org/wiki/Line–line_intersection#Given_two_points_on_each_line_segment
+    bool collision = false;
+
     float rx = endPos1.x - startPos1.x;
     float ry = endPos1.y - startPos1.y;
     float sx = endPos2.x - startPos2.x;
     float sy = endPos2.y - startPos2.y;
 
-    float div = rx * sy - ry * sx;
+    float div = rx*sy - ry*sx;
 
-    if (fabsf(div) < FLT_EPSILON) {
-        return false;
+    if (fabsf(div) >= FLT_EPSILON)
+    {
+        float s12x = startPos2.x - startPos1.x;
+        float s12y = startPos2.y - startPos1.y;
+
+        float t = (s12x*sy - s12y*sx)/div;
+        float u = (s12x*ry - s12y*rx)/div;
+
+        if ((0.0f <= t) && (t <= 1.0f) && (0.0f <= u) && (u <= 1.0f))
+        {
+            collisionPoint->x = startPos1.x + t*rx;
+            collisionPoint->y = startPos1.y + t*ry;
+            
+            collision = true;
+        }
     }
-
-    float s12x = startPos2.x - startPos1.x;
-    float s12y = startPos2.y - startPos1.y;
-
-    float t = (s12x * sy - s12y * sx) / div;
-    float u = (s12x * ry - s12y * rx) / div;
-
-    if (0.0f <= t && t <= 1.0f && 0.0f <= u && u <= 1.0f) {
-        collisionPoint->x = startPos1.x + t * rx;
-        collisionPoint->y = startPos1.y + t * ry;
-        return true;
-    }
-    return false;
+    
+    return collision;
 }
 
 // Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
