@@ -972,6 +972,12 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
+    if ((width > CORE.Window.screenMax.width) || (height > CORE.Window.screenMax.height))
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set minimum screen size higher than the maximum");
+        return;
+    }
+
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 
@@ -981,6 +987,12 @@ void SetWindowMinSize(int width, int height)
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
+    if ((width < CORE.Window.screenMin.width) || (height < CORE.Window.screenMin.height))
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set maximum screen size lower than the minimum");
+        return;
+    }
+
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
     
