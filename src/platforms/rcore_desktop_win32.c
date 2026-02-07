@@ -2054,12 +2054,10 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     GetClientRect(hwnd, &rect);
     SIZE clientSize = { rect.right, rect.bottom };
 
-    // TODO: Update framebuffer on resize
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    //SetupViewport(0, 0, clientSize.cx, clientSize.cy);
-
     SetupViewport(clientSize.cx, clientSize.cy);
+
     CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindow(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
