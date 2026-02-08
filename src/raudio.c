@@ -31,7 +31,6 @@
 *   DEPENDENCIES:
 *       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
-*       dr_wav.h     - WAV audio files loading (http://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
 *       jar_mod.h    - MOD audio file loading
 *
@@ -166,14 +165,7 @@ typedef struct tagBITMAPINFOHEADER {
     #define MA_NO_WAV
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_WAV)
-    #define DRWAV_MALLOC RL_MALLOC
-    #define DRWAV_REALLOC RL_REALLOC
-    #define DRWAV_FREE RL_FREE
-
-    #define DR_WAV_IMPLEMENTATION
-    #include "external/dr_wav.h" // WAV saving functions
-#else
+#if !defined(SUPPORT_FILEFORMAT_WAV)
     #define MA_NO_WAV
 #endif
 
@@ -1029,24 +1021,16 @@ bool ExportWave(Wave wave, const char *fileName)
 #if defined(SUPPORT_FILEFORMAT_WAV)
     else if (IsFileExtension(fileName, ".wav"))
     {
-        drwav wav = { 0 };
-        drwav_data_format format = { 0 };
-        format.container = drwav_container_riff;
-        if (wave.sampleSize == 32) format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
-        else format.format = DR_WAVE_FORMAT_PCM;
-        format.channels = wave.channels;
-        format.sampleRate = wave.sampleRate;
-        format.bitsPerSample = wave.sampleSize;
-
-        void *fileData = NULL;
-        size_t fileDataSize = 0;
-        success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-        if (success) success = (int)drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
-        drwav_result result = drwav_uninit(&wav);
-
-        if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
-
-        drwav_free(fileData, NULL);
+        ma_format format = (wave.sampleSize == 32)? ma_format_f32 : ma_format_s16;
+        ma_encoder_config cfg = ma_encoder_config_init(ma_encoding_format_wav, format, wave.channels, wave.sampleRate);
+        ma_encoder encoder;
+        ma_result res = ma_encoder_init_file(fileName, &cfg, &encoder);
+        if (res == MA_SUCCESS) {
+            ma_uint64 framesWritten = 0;
+            ma_encoder_write_pcm_frames(&encoder, wave.data, wave.frameCount, &framesWritten);
+            ma_encoder_uninit(&encoder);
+            success = (framesWritten == wave.frameCount);
+        }
     }
 #endif
 #if defined(SUPPORT_FILEFORMAT_QOA)
