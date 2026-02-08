@@ -165,10 +165,6 @@ typedef struct tagBITMAPINFOHEADER {
     #define MA_NO_WAV
 #endif
 
-#if !defined(SUPPORT_FILEFORMAT_WAV)
-    #define MA_NO_WAV
-#endif
-
 #if !defined(SUPPORT_FILEFORMAT_FLAC)
     #define MA_NO_FLAC
 #endif
