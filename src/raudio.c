@@ -781,28 +781,42 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 
     if (decodable)
     {
-        wave.channels = 2;
-        wave.sampleRate = 48000;
-        wave.sampleSize = 16;
-        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, wave.channels, wave.sampleRate);
-        ma_decoder ma_decoder;
-        ma_result ma_res = ma_decoder_init_memory(fileData, dataSize, &cfg, &ma_decoder);
+        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, 0, 0);
+        ma_decoder decoder;
+        ma_result ma_res = ma_decoder_init_memory(fileData, dataSize, &cfg, &decoder);
         if (ma_res != MA_SUCCESS) {
             TRACELOG(LOG_WARNING, "Failed to setup audio decoder!\n");
             return wave;
         }
         ma_uint64 frame_count = 0;
-        ma_decoder_get_length_in_pcm_frames(&ma_decoder, &frame_count);
+        ma_decoder_get_length_in_pcm_frames(&decoder, &frame_count);
 
         wave.frameCount = frame_count;
         wave.data = (short *)RL_MALLOC((size_t)wave.frameCount * wave.channels * sizeof(short));
 
         if (wave.data) {
-            ma_decoder_read_pcm_frames(&ma_decoder, wave.data, wave.frameCount, NULL);
+            ma_decoder_read_pcm_frames(&decoder, wave.data, wave.frameCount, NULL);
+
+            ma_uint32 format, channels, sampleRate;
+            ma_channel channelMap;
+            ma_decoder_get_data_format(&decoder, &format, &channels, &sampleRate, &channelMap, 0);
+            wave.channels = channels;
+            wave.sampleRate = sampleRate;
+            switch (format) {
+            case ma_format_s16:
+                wave.sampleSize = 16;
+                break;
+            case ma_format_f32:
+                wave.sampleSize = 32;
+                break;
+            default:
+                wave.sampleSize = 0;
+                break;
+            }
         } else {
             TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
         }
-        ma_decoder_uninit(&ma_decoder);
+        ma_decoder_uninit(&decoder);
     }
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
@@ -1302,11 +1316,9 @@ Music LoadMusicStream(const char *fileName)
 #endif
 
     if (decodable) {
-        ma_decoder *ctxDecoder = (ma_decoder *)RL_CALLOC(1, sizeof(ma_decoder));
+        ma_decoder *ctxDecoder = (ma_decoder *)RL_CALLOC(1, sizeof(*ctxDecoder));
 
-        const ma_uint32 sampleRate = 48000;
-        const ma_uint32 channels = 2;
-        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, channels, sampleRate);
+        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, 0, 0);
         ma_result ma_res = ma_decoder_init_file(fileName, &cfg, ctxDecoder);
         if (ma_res != MA_SUCCESS) {
             TRACELOG(LOG_WARNING, "Failed to setup audio decoder!\n");
@@ -1315,7 +1327,23 @@ Music LoadMusicStream(const char *fileName)
         }
         music.ctxType = MUSIC_AUDIO_DECODER;
         music.ctxData = ctxDecoder;
-        music.stream = LoadAudioStream(sampleRate, 16, channels);
+
+        ma_uint32 format, channels, sampleRate, sampleSize;
+        ma_channel channelMap;
+        ma_decoder_get_data_format(ctxDecoder, &format, &channels, &sampleRate, &channelMap, 0);
+        switch (format) {
+            case ma_format_s16:
+                sampleSize = 16;
+                break;
+            case ma_format_f32:
+                sampleSize = 32;
+                break;
+            default:
+                sampleSize = 0;
+                break;
+        }
+
+        music.stream = LoadAudioStream(sampleRate, sampleSize, channels);
         ma_uint64 frameCount = 0;
         ma_decoder_get_length_in_pcm_frames(ctxDecoder, &frameCount);
         music.frameCount = frameCount;
@@ -1463,11 +1491,9 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 
 
     if (decodable) {
-        ma_decoder *ctxDecoder = (ma_decoder *)RL_CALLOC(1, sizeof(ma_decoder));
+        ma_decoder *ctxDecoder = (ma_decoder *)RL_CALLOC(1, sizeof(*ctxDecoder));
 
-        const ma_uint32 sampleRate = 48000;
-        const ma_uint32 channels = 2;
-        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, channels, sampleRate);
+        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, 0, 0);
         ma_result ma_res = ma_decoder_init_memory(data, dataSize, &cfg, ctxDecoder);
         if (ma_res != MA_SUCCESS) {
             TRACELOG(LOG_WARNING, "Failed to setup audio decoder!\n");
@@ -1476,13 +1502,28 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         }
         music.ctxType = MUSIC_AUDIO_DECODER;
         music.ctxData = ctxDecoder;
-        music.stream = LoadAudioStream(sampleRate, 16, channels);
+
+        ma_uint32 format, channels, sampleRate, sampleSize;
+        ma_channel channelMap;
+        ma_decoder_get_data_format(ctxDecoder, &format, &channels, &sampleRate, &channelMap, 0);
+        switch (format) {
+            case ma_format_s16:
+                sampleSize = 16;
+                break;
+            case ma_format_f32:
+                sampleSize = 32;
+                break;
+            default:
+                sampleSize = 0;
+                break;
+        }
+
+        music.stream = LoadAudioStream(sampleRate, sampleSize, channels);
         ma_uint64 frameCount = 0;
         ma_decoder_get_length_in_pcm_frames(ctxDecoder, &frameCount);
         music.frameCount = frameCount;
         music.looping = true;
         musicLoaded = true;
-
     }
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
