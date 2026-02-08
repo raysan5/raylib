@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [audio] example - sound loading
+*   raylib [audio] example - sound export
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
