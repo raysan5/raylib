@@ -1328,20 +1328,10 @@ Music LoadMusicStream(const char *fileName)
         music.ctxType = MUSIC_AUDIO_DECODER;
         music.ctxData = ctxDecoder;
 
-        ma_uint32 format, channels, sampleRate, sampleSize;
+        ma_uint32 format, channels, sampleRate;
         ma_channel channelMap;
         ma_decoder_get_data_format(ctxDecoder, &format, &channels, &sampleRate, &channelMap, 0);
-        switch (format) {
-            case ma_format_s16:
-                sampleSize = 16;
-                break;
-            case ma_format_f32:
-                sampleSize = 32;
-                break;
-            default:
-                sampleSize = 0;
-                break;
-        }
+        const ma_uint32 sampleSize = ma_get_bytes_per_sample(format) * 8;
 
         music.stream = LoadAudioStream(sampleRate, sampleSize, channels);
         ma_uint64 frameCount = 0;
@@ -1503,20 +1493,10 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         music.ctxType = MUSIC_AUDIO_DECODER;
         music.ctxData = ctxDecoder;
 
-        ma_uint32 format, channels, sampleRate, sampleSize;
+        ma_uint32 format, channels, sampleRate;
         ma_channel channelMap;
         ma_decoder_get_data_format(ctxDecoder, &format, &channels, &sampleRate, &channelMap, 0);
-        switch (format) {
-            case ma_format_s16:
-                sampleSize = 16;
-                break;
-            case ma_format_f32:
-                sampleSize = 32;
-                break;
-            default:
-                sampleSize = 0;
-                break;
-        }
+        const ma_uint32 sampleSize = ma_get_bytes_per_sample(format) * 8;
 
         music.stream = LoadAudioStream(sampleRate, sampleSize, channels);
         ma_uint64 frameCount = 0;
