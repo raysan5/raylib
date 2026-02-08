@@ -168,6 +168,39 @@ typedef struct tagBITMAPINFOHEADER {
 #define MA_NO_ENGINE
 #define MA_NO_GENERATION
 
+
+#if defined(SUPPORT_FILEFORMAT_WAV)
+#define DRWAV_MALLOC RL_MALLOC
+#define DRWAV_REALLOC RL_REALLOC
+#define DRWAV_FREE RL_FREE
+
+#undef MA_NO_WAV
+#define DR_WAV_IMPLEMENTATION
+#include "external/dr_wav.h"        // WAV loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+#define DRMP3_MALLOC RL_MALLOC
+#define DRMP3_REALLOC RL_REALLOC
+#define DRMP3_FREE RL_FREE
+
+#undef MA_NO_MP3
+#define DR_MP3_IMPLEMENTATION
+#include "external/dr_mp3.h"        // MP3 loading functions
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+#define DRFLAC_MALLOC RL_MALLOC
+#define DRFLAC_REALLOC RL_REALLOC
+#define DRFLAC_FREE RL_FREE
+
+#undef MA_NO_FLAC
+#define DR_FLAC_IMPLEMENTATION
+#define DR_FLAC_NO_WIN32_IO
+#include "external/dr_flac.h"       // FLAC loading functions
+#endif
+
+
 // Threading model: Default: [0] COINIT_MULTITHREADED: COM calls objects on any thread (free threading)
 #define MA_COINIT_VALUE  2              // [2] COINIT_APARTMENTTHREADED: Each object has its own thread (apartment model)
 
@@ -200,27 +233,9 @@ typedef struct tagBITMAPINFOHEADER {
     #endif
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_WAV)
-    #define DRWAV_MALLOC RL_MALLOC
-    #define DRWAV_REALLOC RL_REALLOC
-    #define DRWAV_FREE RL_FREE
-
-    #define DR_WAV_IMPLEMENTATION
-    #include "external/dr_wav.h"        // WAV loading functions
-#endif
-
 #if defined(SUPPORT_FILEFORMAT_OGG)
     // TODO: Remap stb_vorbis malloc()/free() calls to RL_MALLOC/RL_FREE
     #include "external/stb_vorbis.c"    // OGG loading functions
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_MP3)
-    #define DRMP3_MALLOC RL_MALLOC
-    #define DRMP3_REALLOC RL_REALLOC
-    #define DRMP3_FREE RL_FREE
-
-    #define DR_MP3_IMPLEMENTATION
-    #include "external/dr_mp3.h"        // MP3 loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_QOA)
@@ -241,16 +256,6 @@ typedef struct tagBITMAPINFOHEADER {
     #if defined(_MSC_VER)
         #pragma warning(pop)        // Disable MSVC warning suppression
     #endif
-#endif
-
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    #define DRFLAC_MALLOC RL_MALLOC
-    #define DRFLAC_REALLOC RL_REALLOC
-    #define DRFLAC_FREE RL_FREE
-
-    #define DR_FLAC_IMPLEMENTATION
-    #define DR_FLAC_NO_WIN32_IO
-    #include "external/dr_flac.h"       // FLAC loading functions
 #endif
 
 #if defined(SUPPORT_FILEFORMAT_XM)
@@ -788,29 +793,46 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 {
     Wave wave = { 0 };
 
-    if (false) { }
+    // Whether the input file can be decoded with miniaudio
+    bool decodable = false;
+
 #if defined(SUPPORT_FILEFORMAT_WAV)
-    else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
-    {
-        drwav wav = { 0 };
-        bool success = drwav_init_memory(&wav, fileData, dataSize, NULL);
-
-        if (success)
-        {
-            wave.frameCount = (unsigned int)wav.totalPCMFrameCount;
-            wave.sampleRate = wav.sampleRate;
-            wave.sampleSize = 16;
-            wave.channels = wav.channels;
-            wave.data = (short *)RL_MALLOC((size_t)wave.frameCount*wave.channels*sizeof(short));
-
-            // NOTE: We are forcing conversion to 16bit sample size on reading
-            drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
-        }
-        else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
-
-        drwav_uninit(&wav);
-    }
+    decodable |= (strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0);
 #endif
+
+#if defined(SUPPORT_FILEFORMAT_MP3)
+    decodable |= (strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0);
+#endif
+
+#if defined(SUPPORT_FILEFORMAT_FLAC)
+    decodable |= (strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0);
+#endif
+
+    if (decodable)
+    {
+        wave.channels = 2;
+        wave.sampleRate = 48000;
+        wave.sampleSize = 16;
+        ma_decoder_config cfg = ma_decoder_config_init(ma_format_s16, wave.channels, wave.sampleRate);
+        ma_decoder ma_decoder;
+        ma_result ma_res = ma_decoder_init_memory(fileData, dataSize, &cfg, &ma_decoder);
+        if (ma_res != MA_SUCCESS) {
+            TRACELOG(LOG_WARNING, "Failed to setup audio decoder!\n");
+            return wave;
+        }
+        ma_uint64 frame_count = 0;
+        ma_decoder_get_length_in_pcm_frames(&ma_decoder, &frame_count);
+
+        wave.frameCount = frame_count;
+        wave.data = (short *)RL_MALLOC((size_t)wave.frameCount * wave.channels * sizeof(short));
+
+        if (wave.data) {
+            ma_decoder_read_pcm_frames(&ma_decoder, wave.data, wave.frameCount, NULL);
+        } else {
+            TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
+        }
+        ma_decoder_uninit(&ma_decoder);
+    }
 #if defined(SUPPORT_FILEFORMAT_OGG)
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
@@ -833,26 +855,6 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load OGG data");
     }
 #endif
-#if defined(SUPPORT_FILEFORMAT_MP3)
-    else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
-    {
-        drmp3_config config = { 0 };
-        unsigned long long int totalFrameCount = 0;
-
-        // NOTE: We are forcing conversion to 32bit float sample size on reading
-        wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
-        wave.sampleSize = 32;
-
-        if (wave.data != NULL)
-        {
-            wave.channels = config.channels;
-            wave.sampleRate = config.sampleRate;
-            wave.frameCount = (int)totalFrameCount;
-        }
-        else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
-
-    }
-#endif
 #if defined(SUPPORT_FILEFORMAT_QOA)
     else if ((strcmp(fileType, ".qoa") == 0) || (strcmp(fileType, ".QOA") == 0))
     {
@@ -870,19 +872,6 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load QOA data");
 
-    }
-#endif
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-    else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
-    {
-        unsigned long long int totalFrameCount = 0;
-
-        // NOTE: We are forcing conversion to 16bit sample size on reading
-        wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
-        wave.sampleSize = 16;
-
-        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount;
-        else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
     }
 #endif
     else TRACELOG(LOG_WARNING, "WAVE: Data format not supported");
