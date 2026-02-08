@@ -78,7 +78,6 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-rs](https://github.com/raylib-rs/raylib-rs)                                      | **5.5**          | [Rust](https://www.rust-lang.org)                                    | Zlib                 |
 | [raylib-ruby](https://github.com/wilsonsilva/raylib-ruby)                                | 4.5              | [Ruby](https://www.ruby-lang.org)                                    | Zlib                 |
 | [Relib](https://github.com/RedCubeDev-ByteSpace/Relib)                                   | 3.5              | [ReCT](https://github.com/RedCubeDev-ByteSpace/ReCT)                 | **???**              |
-| [ringraylib5](https://github.com/ring-lang/ring/tree/master/extensions/ringraylib5)      | **5.0**          | [Ring](https://ring-lang.github.io/)                                 | **???**              |
 | [racket-raylib](https://github.com/eutro/racket-raylib)                                  | **5.5**          | [Racket](https://racket-lang.org)                                    | MIT/Apache-2.0       |
 | [raylib-swift](https://github.com/STREGAsGate/Raylib)                                    | 4.0              | [Swift](https://swift.org)                                           | MIT                  |
 | [raylib-scopes](https://github.com/salotz/raylib-scopes)                                 | auto             | [Scopes](http://scopes.rocks)                                        | MIT                  |
@@ -95,6 +94,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-sunder](https://github.com/ashn-dot-dev/raylib-sunder)                           | **auto**         | [Sunder](https://github.com/ashn-dot-dev/sunder)                     | 0BSD                 |
 | [raylib-bqn](https://github.com/Brian-ED/raylib-bqn)                                     | **5.0**          | [BQN](https://mlochbaum.github.io/BQN)                               | MIT                  |
 | [rayjs](https://github.com/mode777/rayjs)                                                | 4.6-dev          | [QuickJS](https://bellard.org/quickjs)                               | MIT                  |
+| [rayjule](https://github.com/SabeDoesThings/rayjule)                                     | **5.5**          | [Jule](https://jule.dev/)                                            | MIT                  |
 | [raylib-raku](https://github.com/vushu/raylib-raku)                                      | **auto**         | [Raku](https://www.raku.org)                                         | Artistic License 2.0 |
 | [Raylib.lean](https://github.com/KislyjKisel/Raylib.lean)                                | **5.5-dev**      | [Lean4](https://lean-lang.org)                                       | BSD-3-Clause         |
 | [raylib-cobol](https://codeberg.org/glowiak/raylib-cobol)                                | **auto**         | [COBOL](https://gnucobol.sourceforge.io)                             | Public domain        |
