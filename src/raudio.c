@@ -32,8 +32,6 @@
 *       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
 *       stb_vorbis.h - Ogg audio files loading (http://www.nothings.org/stb_vorbis/)
 *       dr_wav.h     - WAV audio files loading (http://github.com/mackron/dr_libs)
-*       dr_mp3.h     - MP3 audio file loading (https://github.com/mackron/dr_libs)
-*       dr_flac.h    - FLAC audio file loading (https://github.com/mackron/dr_libs)
 *       jar_xm.h     - XM module file loading
 *       jar_mod.h    - MOD audio file loading
 *
@@ -158,46 +156,33 @@ typedef struct tagBITMAPINFOHEADER {
 
 #define MA_MALLOC RL_MALLOC
 #define MA_FREE RL_FREE
-
 #define MA_NO_JACK
-#define MA_NO_WAV
-#define MA_NO_FLAC
-#define MA_NO_MP3
 #define MA_NO_RESOURCE_MANAGER
 #define MA_NO_NODE_GRAPH
 #define MA_NO_ENGINE
 #define MA_NO_GENERATION
 
+#if !defined(SUPPORT_FILEFORMAT_WAV)
+    #define MA_NO_WAV
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_WAV)
-#define DRWAV_MALLOC RL_MALLOC
-#define DRWAV_REALLOC RL_REALLOC
-#define DRWAV_FREE RL_FREE
+    #define DRWAV_MALLOC RL_MALLOC
+    #define DRWAV_REALLOC RL_REALLOC
+    #define DRWAV_FREE RL_FREE
 
-#undef MA_NO_WAV
-#define DR_WAV_IMPLEMENTATION
-#include "external/dr_wav.h"        // WAV loading functions
+    #define DR_WAV_IMPLEMENTATION
+    #include "external/dr_wav.h" // WAV saving functions
+#else
+    #define MA_NO_WAV
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_MP3)
-#define DRMP3_MALLOC RL_MALLOC
-#define DRMP3_REALLOC RL_REALLOC
-#define DRMP3_FREE RL_FREE
-
-#undef MA_NO_MP3
-#define DR_MP3_IMPLEMENTATION
-#include "external/dr_mp3.h"        // MP3 loading functions
+#if !defined(SUPPORT_FILEFORMAT_FLAC)
+    #define MA_NO_FLAC
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_FLAC)
-#define DRFLAC_MALLOC RL_MALLOC
-#define DRFLAC_REALLOC RL_REALLOC
-#define DRFLAC_FREE RL_FREE
-
-#undef MA_NO_FLAC
-#define DR_FLAC_IMPLEMENTATION
-#define DR_FLAC_NO_WIN32_IO
-#include "external/dr_flac.h"       // FLAC loading functions
+#if !defined(SUPPORT_FILEFORMAT_MP3)
+    #define MA_NO_MP3
 #endif
 
 
