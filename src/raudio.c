@@ -338,7 +338,11 @@ typedef enum {
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
 
-    AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
+    // NOTE: Only one of these may be set at a time.
+    AudioCallback   callback;       // Audio buffer callback for buffer filling on audio threads 
+    AudioCallbackEx callback_ex;    // Same as callback, but with context pointer
+    void *callback_ex_ctx;          // Context pointer passed to SetAudioStreamCallbackEx 
+
     rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
@@ -364,7 +368,12 @@ struct rAudioBuffer {
 // Audio processor struct
 // NOTE: Useful to apply effects to an AudioBuffer
 struct rAudioProcessor {
+    
+    // NOTE: Just like rAudioBuffer, only one of these process properties may be set at a time.
     AudioCallback process;          // Processor callback function
+    AudioCallbackEx process_ex;     // Processor callback function (with context pointer)
+    void *process_ex_ctx;           // Context pointer to
+
     rAudioProcessor *next;          // Next audio processor on the list
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
@@ -592,6 +601,8 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     audioBuffer->pan = 0.0f; // Center
 
     audioBuffer->callback = NULL;
+    audioBuffer->callback_ex = NULL;
+    audioBuffer->callback_ex_ctx = NULL;
     audioBuffer->processor = NULL;
 
     audioBuffer->playing = false;
@@ -2229,6 +2240,19 @@ void SetAudioStreamBufferSizeDefault(int size)
     AUDIO.Buffer.defaultSize = size;
 }
 
+// Audio thread callback to request new data (with context)
+void SetAudioStreamCallbackEx(AudioStream stream, AudioCallbackEx callback, void *context)
+{
+    if (stream.buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        stream.buffer->callback    = NULL;
+        stream.buffer->callback_ex = callback;
+        stream.buffer->callback_ex_ctx = context;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
+}
+
 // Audio thread callback to request new data
 void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
 {
@@ -2236,7 +2260,57 @@ void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
     {
         ma_mutex_lock(&AUDIO.System.lock);
         stream.buffer->callback = callback;
+        stream.buffer->callback_ex = NULL;
         ma_mutex_unlock(&AUDIO.System.lock);
+    }
+}
+
+// Appends a given processor to the end of a linked list
+// (list is double pointer such that we can manipulate the pointer itself)
+void AppendAudioProcessorToLinkedList(rAudioProcessor **list, rAudioProcessor *processor)
+{
+    // if head is NULL to begin with, set it to processor.
+    if (*list) {
+        rAudioProcessor *node = (*list);
+        while (node->next) {
+            node = node->next;
+        }
+
+        // node is the tail of the list now
+        processor->prev = node;
+        node->next = processor;
+    } else {
+        *list = processor;
+    }
+}
+
+// Technically doesn't need a pointer to pointer, but uses one
+// for parity with AppendAudioProcessorToLinkedList 
+void RemoveAudioProcessorFromLinkedList(rAudioProcessor **list, AudioCallback callback)
+{
+    rAudioProcessor *node = *list;
+    while (node) {
+        if (node->process == callback) {
+            if (node->prev) node->prev->next = node->next;
+            if (node->next) node->next->prev = node->prev;
+            RL_FREE(node);
+            break;
+        }
+        node = node->next;
+    }
+}
+
+void RemoveAudioProcessorExFromLinkedList(rAudioProcessor **list, AudioCallbackEx callback, void *context)
+{
+    rAudioProcessor *node = *list;
+    while (node) {
+        if (node->process_ex == callback && node->process_ex_ctx == context) {
+            if (node->prev) node->prev->next = node->next;
+            if (node->next) node->next->prev = node->prev;
+            RL_FREE(node);
+            break;
+        }
+        node = node->next;
     }
 }
 
@@ -2250,18 +2324,20 @@ void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
 
-    rAudioProcessor *last = stream.buffer->processor;
+    AppendAudioProcessorToLinkedList(&stream.buffer->processor, processor);
 
-    while (last && last->next)
-    {
-        last = last->next;
-    }
-    if (last)
-    {
-        processor->prev = last;
-        last->next = processor;
-    }
-    else stream.buffer->processor = processor;
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+void AttachAudioStreamProcessorEx(AudioStream stream, AudioCallbackEx process, void *context)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
+    processor->process_ex = process;
+    processor->process_ex_ctx = context;
+
+    AppendAudioProcessorToLinkedList(&stream.buffer->processor, processor);
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
@@ -2271,24 +2347,17 @@ void DetachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 {
     ma_mutex_lock(&AUDIO.System.lock);
 
-    rAudioProcessor *processor = stream.buffer->processor;
+    RemoveAudioProcessorFromLinkedList(&stream.buffer->processor, process);
 
-    while (processor)
-    {
-        rAudioProcessor *next = processor->next;
-        rAudioProcessor *prev = processor->prev;
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
 
-        if (processor->process == process)
-        {
-            if (stream.buffer->processor == processor) stream.buffer->processor = next;
-            if (prev) prev->next = next;
-            if (next) next->prev = prev;
+// Remove processor from audio stream
+void DetachAudioStreamProcessorEx(AudioStream stream, AudioCallbackEx process, void *context)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
 
-            RL_FREE(processor);
-        }
-
-        processor = next;
-    }
+    RemoveAudioProcessorExFromLinkedList(&stream.buffer->processor, process, context);
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
@@ -2303,45 +2372,41 @@ void AttachAudioMixedProcessor(AudioCallback process)
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
 
-    rAudioProcessor *last = AUDIO.mixedProcessor;
-
-    while (last && last->next)
-    {
-        last = last->next;
-    }
-    if (last)
-    {
-        processor->prev = last;
-        last->next = processor;
-    }
-    else AUDIO.mixedProcessor = processor;
+    AppendAudioProcessorToLinkedList(&AUDIO.mixedProcessor, processor);
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
+
+void AttachAudioMixedProcessorEx(AudioCallbackEx process, void *context)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
+
+    rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
+    processor->process_ex = process;
+    processor->process_ex_ctx = context;
+
+    AppendAudioProcessorToLinkedList(&AUDIO.mixedProcessor, processor);
+
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
+
 
 // Remove processor from audio pipeline
 void DetachAudioMixedProcessor(AudioCallback process)
 {
     ma_mutex_lock(&AUDIO.System.lock);
 
-    rAudioProcessor *processor = AUDIO.mixedProcessor;
+    RemoveAudioProcessorFromLinkedList(&AUDIO.mixedProcessor, process);
 
-    while (processor)
-    {
-        rAudioProcessor *next = processor->next;
-        rAudioProcessor *prev = processor->prev;
+    ma_mutex_unlock(&AUDIO.System.lock);
+}
 
-        if (processor->process == process)
-        {
-            if (AUDIO.mixedProcessor == processor) AUDIO.mixedProcessor = next;
-            if (prev) prev->next = next;
-            if (next) next->prev = prev;
+// Remove processor with context from audio pipeline
+void DetachAudioMixedProcessorEx(AudioCallbackEx process, void *context)
+{
+    ma_mutex_lock(&AUDIO.System.lock);
 
-            RL_FREE(processor);
-        }
-
-        processor = next;
-    }
+    RemoveAudioProcessorExFromLinkedList(&AUDIO.mixedProcessor, process, context);
 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
@@ -2359,11 +2424,14 @@ static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
 static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount)
 {
     // Using audio buffer callback
-    if (audioBuffer->callback)
-    {
-        audioBuffer->callback(framesOut, frameCount);
+    if (audioBuffer->callback || audioBuffer->callback_ex) {
+        if (audioBuffer->callback) {
+            audioBuffer->callback(framesOut, frameCount);
+        } else if (audioBuffer->callback_ex) {
+            audioBuffer->callback_ex(framesOut, frameCount, audioBuffer->callback_ex_ctx);
+        }
+    
         audioBuffer->framesProcessed += frameCount;
-
         return frameCount;
     }
 
@@ -2539,9 +2607,12 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 
                         // Apply processors chain if defined
                         rAudioProcessor *processor = audioBuffer->processor;
-                        while (processor)
-                        {
-                            processor->process(framesIn, framesJustRead);
+                        while (processor) {
+                            if (processor->process) {
+                                processor->process(framesIn, framesJustRead);
+                            } else if (processor->process_ex) {
+                                processor->process_ex(framesIn, framesJustRead, processor->process_ex_ctx);
+                            }
                             processor = processor->next;
                         }
 
@@ -2583,9 +2654,13 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     }
 
     rAudioProcessor *processor = AUDIO.mixedProcessor;
-    while (processor)
-    {
-        processor->process(pFramesOut, frameCount);
+    while (processor) {
+        if (processor->process) {
+            processor->process(pFramesOut, frameCount);
+        } else if (processor->process_ex) {
+            processor->process_ex(pFramesOut, frameCount, processor->process_ex_ctx);
+        }
+
         processor = processor->next;
     }
 

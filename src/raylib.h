@@ -462,8 +462,6 @@ typedef struct rAudioProcessor rAudioProcessor;
 // AudioStream, custom audio stream
 typedef struct AudioStream {
     rAudioBuffer *buffer;       // Pointer to internal data used by the audio system
-    rAudioProcessor *processor; // Pointer to internal data processor, useful for audio effects
-
     unsigned int sampleRate;    // Frequency (samples per second)
     unsigned int sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
     unsigned int channels;      // Number of channels (1-mono, 2-stereo, ...)
@@ -1640,6 +1638,7 @@ RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
 typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
+typedef void (*AudioCallbackEx)(void *bufferData, unsigned int frames, void *context);
 
 // Audio device management functions
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
@@ -1712,12 +1711,17 @@ RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pit
 RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (0.5 is centered)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback); // Audio thread callback to request new data
+RLAPI void SetAudioStreamCallbackEx(AudioStream stream, AudioCallbackEx callback, void *context); // Audio thread callback to request new data (with context pointer)
 
 RLAPI void AttachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)
 RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processor); // Detach audio stream processor from stream
+RLAPI void AttachAudioStreamProcessorEx(AudioStream stream, AudioCallbackEx processor, void *context); // Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo) (with context pointer)
+RLAPI void DetachAudioStreamProcessorEx(AudioStream stream, AudioCallbackEx processor, void *context); // Detach audio stream processor from stream (with context pointer)
 
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
+RLAPI void AttachAudioMixedProcessorEx(AudioCallbackEx processor, void *context); // Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo) (with context pointer)
+RLAPI void DetachAudioMixedProcessorEx(AudioCallbackEx processor, void *context); // Detach audio stream processor from the entire audio pipeline (with context pointer)
 
 #if defined(__cplusplus)
 }
