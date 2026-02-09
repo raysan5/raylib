@@ -241,9 +241,8 @@
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
             <Field type="void *" name="data" desc="Buffer data pointer" />
         </Struct>
-        <Struct name="AudioStream" fieldCount="5" desc="AudioStream, custom audio stream">
+        <Struct name="AudioStream" fieldCount="4" desc="AudioStream, custom audio stream">
             <Field type="rAudioBuffer *" name="buffer" desc="Pointer to internal data used by the audio system" />
-            <Field type="rAudioProcessor *" name="processor" desc="Pointer to internal data processor, useful for audio effects" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
@@ -651,7 +650,7 @@
             <Value name="NPATCH_THREE_PATCH_HORIZONTAL" integer="2" desc="Npatch layout: 3x1 tiles" />
         </Enum>
     </Enums>
-    <Callbacks count="6">
+    <Callbacks count="7">
         <Callback name="TraceLogCallback" retType="void" paramCount="3" desc="Logging: Redirect trace log messages">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
@@ -677,8 +676,13 @@
             <Param type="void *" name="bufferData" desc="" />
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
+        <Callback name="AudioCallbackEx" retType="void" paramCount="3" desc="">
+            <Param type="void *" name="bufferData" desc="" />
+            <Param type="unsigned int" name="frames" desc="" />
+            <Param type="void *" name="context" desc="" />
+        </Callback>
     </Callbacks>
-    <Functions count="599">
+    <Functions count="604">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -3181,6 +3185,11 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="callback" desc="" />
         </Function>
+        <Function name="SetAudioStreamCallbackEx" retType="void" paramCount="3" desc="Audio thread callback to request new data (with context pointer)">
+            <Param type="AudioStream" name="stream" desc="" />
+            <Param type="AudioCallbackEx" name="callback" desc="" />
+            <Param type="void *" name="context" desc="" />
+        </Function>
         <Function name="AttachAudioStreamProcessor" retType="void" paramCount="2" desc="Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
@@ -3189,11 +3198,29 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
+        <Function name="AttachAudioStreamProcessorEx" retType="void" paramCount="3" desc="Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo) (with context pointer)">
+            <Param type="AudioStream" name="stream" desc="" />
+            <Param type="AudioCallbackEx" name="processor" desc="" />
+            <Param type="void *" name="context" desc="" />
+        </Function>
+        <Function name="DetachAudioStreamProcessorEx" retType="void" paramCount="3" desc="Detach audio stream processor from stream (with context pointer)">
+            <Param type="AudioStream" name="stream" desc="" />
+            <Param type="AudioCallbackEx" name="processor" desc="" />
+            <Param type="void *" name="context" desc="" />
+        </Function>
         <Function name="AttachAudioMixedProcessor" retType="void" paramCount="1" desc="Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)">
             <Param type="AudioCallback" name="processor" desc="" />
         </Function>
         <Function name="DetachAudioMixedProcessor" retType="void" paramCount="1" desc="Detach audio stream processor from the entire audio pipeline">
             <Param type="AudioCallback" name="processor" desc="" />
+        </Function>
+        <Function name="AttachAudioMixedProcessorEx" retType="void" paramCount="2" desc="Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo) (with context pointer)">
+            <Param type="AudioCallbackEx" name="processor" desc="" />
+            <Param type="void *" name="context" desc="" />
+        </Function>
+        <Function name="DetachAudioMixedProcessorEx" retType="void" paramCount="2" desc="Detach audio stream processor from the entire audio pipeline (with context pointer)">
+            <Param type="AudioCallbackEx" name="processor" desc="" />
+            <Param type="void *" name="context" desc="" />
         </Function>
     </Functions>
 </raylibAPI>

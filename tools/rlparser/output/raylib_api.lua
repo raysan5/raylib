@@ -1155,11 +1155,6 @@ return {
           description = "Pointer to internal data used by the audio system"
         },
         {
-          type = "rAudioProcessor *",
-          name = "processor",
-          description = "Pointer to internal data processor, useful for audio effects"
-        },
-        {
           type = "unsigned int",
           name = "sampleRate",
           description = "Frequency (samples per second)"
@@ -3113,6 +3108,16 @@ return {
       params = {
         {type = "void *", name = "bufferData"},
         {type = "unsigned int", name = "frames"}
+      }
+    },
+    {
+      name = "AudioCallbackEx",
+      description = "",
+      returnType = "void",
+      params = {
+        {type = "void *", name = "bufferData"},
+        {type = "unsigned int", name = "frames"},
+        {type = "void *", name = "context"}
       }
     }
   },
@@ -8433,6 +8438,16 @@ return {
       }
     },
     {
+      name = "SetAudioStreamCallbackEx",
+      description = "Audio thread callback to request new data (with context pointer)",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallbackEx", name = "callback"},
+        {type = "void *", name = "context"}
+      }
+    },
+    {
       name = "AttachAudioStreamProcessor",
       description = "Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
@@ -8451,6 +8466,26 @@ return {
       }
     },
     {
+      name = "AttachAudioStreamProcessorEx",
+      description = "Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo) (with context pointer)",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallbackEx", name = "processor"},
+        {type = "void *", name = "context"}
+      }
+    },
+    {
+      name = "DetachAudioStreamProcessorEx",
+      description = "Detach audio stream processor from stream (with context pointer)",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallbackEx", name = "processor"},
+        {type = "void *", name = "context"}
+      }
+    },
+    {
       name = "AttachAudioMixedProcessor",
       description = "Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
@@ -8464,6 +8499,24 @@ return {
       returnType = "void",
       params = {
         {type = "AudioCallback", name = "processor"}
+      }
+    },
+    {
+      name = "AttachAudioMixedProcessorEx",
+      description = "Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo) (with context pointer)",
+      returnType = "void",
+      params = {
+        {type = "AudioCallbackEx", name = "processor"},
+        {type = "void *", name = "context"}
+      }
+    },
+    {
+      name = "DetachAudioMixedProcessorEx",
+      description = "Detach audio stream processor from the entire audio pipeline (with context pointer)",
+      returnType = "void",
+      params = {
+        {type = "AudioCallbackEx", name = "processor"},
+        {type = "void *", name = "context"}
       }
     }
   }

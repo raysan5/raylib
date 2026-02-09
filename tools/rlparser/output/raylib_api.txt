@@ -496,14 +496,13 @@ Struct 26: Wave (5 fields)
   Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
   Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
   Field[5]: void * data // Buffer data pointer
-Struct 27: AudioStream (5 fields)
+Struct 27: AudioStream (4 fields)
   Name: AudioStream
   Description: AudioStream, custom audio stream
   Field[1]: rAudioBuffer * buffer // Pointer to internal data used by the audio system
-  Field[2]: rAudioProcessor * processor // Pointer to internal data processor, useful for audio effects
-  Field[3]: unsigned int sampleRate // Frequency (samples per second)
-  Field[4]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-  Field[5]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
+  Field[2]: unsigned int sampleRate // Frequency (samples per second)
+  Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+  Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
 Struct 28: Sound (2 fields)
   Name: Sound
   Description: Sound
@@ -952,7 +951,7 @@ Enum 21: NPatchLayout (3 values)
   Value[NPATCH_THREE_PATCH_VERTICAL]: 1
   Value[NPATCH_THREE_PATCH_HORIZONTAL]: 2
 
-Callbacks found: 6
+Callbacks found: 7
 
 Callback 001: TraceLogCallback() (3 input parameters)
   Name: TraceLogCallback
@@ -991,8 +990,15 @@ Callback 006: AudioCallback() (2 input parameters)
   Description: 
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
+Callback 007: AudioCallbackEx() (3 input parameters)
+  Name: AudioCallbackEx
+  Return type: void
+  Description: 
+  Param[1]: bufferData (type: void *)
+  Param[2]: frames (type: unsigned int)
+  Param[3]: context (type: void *)
 
-Functions found: 599
+Functions found: 604
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
@@ -4767,25 +4773,58 @@ Function 595: SetAudioStreamCallback() (2 input parameters)
   Description: Audio thread callback to request new data
   Param[1]: stream (type: AudioStream)
   Param[2]: callback (type: AudioCallback)
-Function 596: AttachAudioStreamProcessor() (2 input parameters)
+Function 596: SetAudioStreamCallbackEx() (3 input parameters)
+  Name: SetAudioStreamCallbackEx
+  Return type: void
+  Description: Audio thread callback to request new data (with context pointer)
+  Param[1]: stream (type: AudioStream)
+  Param[2]: callback (type: AudioCallbackEx)
+  Param[3]: context (type: void *)
+Function 597: AttachAudioStreamProcessor() (2 input parameters)
   Name: AttachAudioStreamProcessor
   Return type: void
   Description: Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 597: DetachAudioStreamProcessor() (2 input parameters)
+Function 598: DetachAudioStreamProcessor() (2 input parameters)
   Name: DetachAudioStreamProcessor
   Return type: void
   Description: Detach audio stream processor from stream
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 598: AttachAudioMixedProcessor() (1 input parameters)
+Function 599: AttachAudioStreamProcessorEx() (3 input parameters)
+  Name: AttachAudioStreamProcessorEx
+  Return type: void
+  Description: Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo) (with context pointer)
+  Param[1]: stream (type: AudioStream)
+  Param[2]: processor (type: AudioCallbackEx)
+  Param[3]: context (type: void *)
+Function 600: DetachAudioStreamProcessorEx() (3 input parameters)
+  Name: DetachAudioStreamProcessorEx
+  Return type: void
+  Description: Detach audio stream processor from stream (with context pointer)
+  Param[1]: stream (type: AudioStream)
+  Param[2]: processor (type: AudioCallbackEx)
+  Param[3]: context (type: void *)
+Function 601: AttachAudioMixedProcessor() (1 input parameters)
   Name: AttachAudioMixedProcessor
   Return type: void
   Description: Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)
   Param[1]: processor (type: AudioCallback)
-Function 599: DetachAudioMixedProcessor() (1 input parameters)
+Function 602: DetachAudioMixedProcessor() (1 input parameters)
   Name: DetachAudioMixedProcessor
   Return type: void
   Description: Detach audio stream processor from the entire audio pipeline
   Param[1]: processor (type: AudioCallback)
+Function 603: AttachAudioMixedProcessorEx() (2 input parameters)
+  Name: AttachAudioMixedProcessorEx
+  Return type: void
+  Description: Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo) (with context pointer)
+  Param[1]: processor (type: AudioCallbackEx)
+  Param[2]: context (type: void *)
+Function 604: DetachAudioMixedProcessorEx() (2 input parameters)
+  Name: DetachAudioMixedProcessorEx
+  Return type: void
+  Description: Detach audio stream processor from the entire audio pipeline (with context pointer)
+  Param[1]: processor (type: AudioCallbackEx)
+  Param[2]: context (type: void *)
