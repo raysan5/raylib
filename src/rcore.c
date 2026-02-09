@@ -17,10 +17,13 @@
 *           - Linux (X11/Wayland desktop mode)
 *           - macOS/OSX (x64, arm64)
 *           - Others (not tested)
-*       > PLATFORM_WEB_RGFW:
+*       > PLATFORM_DESKTOP_WIN32 (native Win32):
+*           - Windows (Win32, Win64)
 *       > PLATFORM_WEB (GLFW + Emscripten):
 *           - HTML5 (WebAssembly)
 *       > PLATFORM_WEB_EMSCRIPTEN (Emscripten):
+*           - HTML5 (WebAssembly)
+*       > PLATFORM_WEB_RGFW (Emscripten):
 *           - HTML5 (WebAssembly)
 *       > PLATFORM_DRM (native DRM):
 *           - Raspberry Pi 0-5 (DRM/KMS)

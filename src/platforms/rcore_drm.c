@@ -1469,7 +1469,7 @@ int InitPlatform(void)
     if (!eglChooseConfig(platform.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
-        free(configs);
+        RL_FREE(configs);
         return -1;
     }
 

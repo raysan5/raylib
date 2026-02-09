@@ -148,6 +148,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadRenderTexture(observerTarget);
     UnloadRenderTexture(subjectTarget);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
