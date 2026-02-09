@@ -4,135 +4,6 @@ const builtin = @import("builtin");
 /// Minimum supported version of Zig
 const min_ver = "0.16.0-dev.2349+204fa8959";
 
-fn processExample(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    raylib: *std.Build.Step.Compile,
-    module_subpath: []const u8,
-    name: []const u8,
-    all_step: *std.Build.Step,
-) !void {
-    const filename = try std.fmt.allocPrint(b.allocator, "{s}.c", .{name});
-    const path = b.pathJoin(&.{ module_subpath, filename });
-
-    // zig's mingw headers do not include pthread.h
-    if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) return;
-
-    const exe_mod = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-    });
-    exe_mod.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
-    exe_mod.linkLibrary(raylib);
-
-    const run_step = b.step(name, name);
-
-    if (target.result.os.tag == .emscripten) {
-        const wasm = b.addLibrary(.{
-            .name = name,
-            .linkage = .static,
-            .root_module = exe_mod,
-        });
-
-        if (std.mem.eql(u8, name, "rlgl_standalone")) {
-            exe_mod.addIncludePath(b.path("src"));
-            exe_mod.addIncludePath(b.path("src/external/glfw/include"));
-        }
-        if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
-            exe_mod.addIncludePath(b.path("src/external"));
-        }
-
-        const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
-        const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
-
-        const install_dir: std.Build.InstallDir = .{ .custom = "htmlout" };
-        const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
-            .optimize = optimize,
-            .flags = emcc_flags,
-            .settings = emcc_settings,
-            .shell_file_path = b.path("src/shell.html"),
-            .embed_paths = &.{
-                .{
-                    .src_path = b.pathJoin(&.{ module_subpath, "resources" }),
-                    .virtual_path = "resources",
-                },
-            },
-            .install_dir = install_dir,
-        });
-
-        const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
-        const emrun_step = emsdk.emrunStep(
-            b,
-            b.getInstallPath(install_dir, html_filename),
-            &.{"--no_browser"},
-        );
-        emrun_step.dependOn(emcc_step);
-
-        run_step.dependOn(emrun_step);
-        all_step.dependOn(emcc_step);
-    } else {
-        // special examples that test using these external dependencies directly
-        // alongside raylib
-        if (std.mem.eql(u8, name, "rlgl_standalone")) {
-            exe_mod.addIncludePath(b.path("src"));
-            exe_mod.addIncludePath(b.path("src/external/glfw/include"));
-            if (!hasCSource(raylib.root_module, "rglfw.c")) {
-                exe_mod.addCSourceFile(.{ .file = b.path("src/rglfw.c"), .flags = &.{} });
-            }
-        }
-        if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
-            exe_mod.addIncludePath(b.path("src/external"));
-        }
-
-        switch (target.result.os.tag) {
-            .windows => {
-                exe_mod.linkSystemLibrary("winmm", .{});
-                exe_mod.linkSystemLibrary("gdi32", .{});
-                exe_mod.linkSystemLibrary("opengl32", .{});
-
-                exe_mod.addCMacro("PLATFORM_DESKTOP", "");
-            },
-            .linux => {
-                exe_mod.linkSystemLibrary("GL", .{});
-                exe_mod.linkSystemLibrary("rt", .{});
-                exe_mod.linkSystemLibrary("dl", .{});
-                exe_mod.linkSystemLibrary("m", .{});
-                exe_mod.linkSystemLibrary("X11", .{});
-
-                exe_mod.addCMacro("PLATFORM_DESKTOP", "");
-            },
-            .macos => {
-                exe_mod.linkFramework("Foundation", .{});
-                exe_mod.linkFramework("Cocoa", .{});
-                exe_mod.linkFramework("OpenGL", .{});
-                exe_mod.linkFramework("CoreAudio", .{});
-                exe_mod.linkFramework("CoreVideo", .{});
-                exe_mod.linkFramework("IOKit", .{});
-
-                exe_mod.addCMacro("PLATFORM_DESKTOP", "");
-            },
-            else => {
-                @panic("Unsupported OS");
-            },
-        }
-
-        const exe = b.addExecutable(.{
-            .name = name,
-            .root_module = exe_mod,
-        });
-
-        const install_cmd = b.addInstallArtifact(exe, .{});
-
-        const run_cmd = b.addRunArtifact(exe);
-        run_cmd.cwd = b.path(module_subpath);
-        run_cmd.step.dependOn(&install_cmd.step);
-
-        run_step.dependOn(&run_cmd.step);
-        all_step.dependOn(&install_cmd.step);
-    }
-}
-
 const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
 const emccOutputFile = "index.html";
 
@@ -661,7 +532,124 @@ fn addExamples(
         if (entry.kind != .file) continue;
         const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
         const name = entry.name[0..extension_idx];
-        try processExample(b, target, optimize, raylib, module_subpath, name, all);
+        const filename = try std.fmt.allocPrint(b.allocator, "{s}.c", .{name});
+        const path = b.pathJoin(&.{ module_subpath, filename });
+
+        // zig's mingw headers do not include pthread.h
+        if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
+
+        const exe_mod = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+        });
+        exe_mod.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
+        exe_mod.linkLibrary(raylib);
+
+        const run_step = b.step(name, name);
+
+        if (target.result.os.tag == .emscripten) {
+            const wasm = b.addLibrary(.{
+                .name = name,
+                .linkage = .static,
+                .root_module = exe_mod,
+            });
+
+            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+                exe_mod.addIncludePath(b.path("src"));
+                exe_mod.addIncludePath(b.path("src/external/glfw/include"));
+            }
+            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+                exe_mod.addIncludePath(b.path("src/external"));
+            }
+
+            const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
+            const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
+
+            const install_dir: std.Build.InstallDir = .{ .custom = "htmlout" };
+            const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
+                .optimize = optimize,
+                .flags = emcc_flags,
+                .settings = emcc_settings,
+                .shell_file_path = b.path("src/shell.html"),
+                .embed_paths = &.{
+                    .{
+                        .src_path = b.pathJoin(&.{ module_subpath, "resources" }),
+                        .virtual_path = "resources",
+                    },
+                },
+                .install_dir = install_dir,
+            });
+
+            const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
+            const emrun_step = emsdk.emrunStep(
+                b,
+                b.getInstallPath(install_dir, html_filename),
+                &.{"--no_browser"},
+            );
+            emrun_step.dependOn(emcc_step);
+
+            run_step.dependOn(emrun_step);
+            all.dependOn(emcc_step);
+        } else {
+            // special examples that test using these external dependencies directly
+            // alongside raylib
+            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+                exe_mod.addIncludePath(b.path("src"));
+                exe_mod.addIncludePath(b.path("src/external/glfw/include"));
+                if (!hasCSource(raylib.root_module, "rglfw.c")) {
+                    exe_mod.addCSourceFile(.{ .file = b.path("src/rglfw.c"), .flags = &.{} });
+                }
+            }
+            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+                exe_mod.addIncludePath(b.path("src/external"));
+            }
+
+            switch (target.result.os.tag) {
+                .windows => {
+                    exe_mod.linkSystemLibrary("winmm", .{});
+                    exe_mod.linkSystemLibrary("gdi32", .{});
+                    exe_mod.linkSystemLibrary("opengl32", .{});
+
+                    exe_mod.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                .linux => {
+                    exe_mod.linkSystemLibrary("GL", .{});
+                    exe_mod.linkSystemLibrary("rt", .{});
+                    exe_mod.linkSystemLibrary("dl", .{});
+                    exe_mod.linkSystemLibrary("m", .{});
+                    exe_mod.linkSystemLibrary("X11", .{});
+
+                    exe_mod.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                .macos => {
+                    exe_mod.linkFramework("Foundation", .{});
+                    exe_mod.linkFramework("Cocoa", .{});
+                    exe_mod.linkFramework("OpenGL", .{});
+                    exe_mod.linkFramework("CoreAudio", .{});
+                    exe_mod.linkFramework("CoreVideo", .{});
+                    exe_mod.linkFramework("IOKit", .{});
+
+                    exe_mod.addCMacro("PLATFORM_DESKTOP", "");
+                },
+                else => {
+                    @panic("Unsupported OS");
+                },
+            }
+
+            const exe = b.addExecutable(.{
+                .name = name,
+                .root_module = exe_mod,
+            });
+
+            const install_cmd = b.addInstallArtifact(exe, .{});
+
+            const run_cmd = b.addRunArtifact(exe);
+            run_cmd.cwd = b.path(module_subpath);
+            run_cmd.step.dependOn(&install_cmd.step);
+
+            run_step.dependOn(&run_cmd.step);
+            all.dependOn(&install_cmd.step);
+        }
     }
 
     return all;
