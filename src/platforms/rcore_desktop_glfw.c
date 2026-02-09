@@ -1049,14 +1049,14 @@ Image GetClipboardImage(void)
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
 #if defined(_WIN32)
     unsigned long long int dataSize = 0;
-    void *fileData = NULL;
+    void *bmpData = NULL;
     int width = 0;
     int height = 0;
 
-    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    bmpData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
-    if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
+    if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif
