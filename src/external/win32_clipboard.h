@@ -16,38 +16,38 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
 // NOTE: These search for architecture is taken from "Windows.h", and it's necessary if we really don't wanna import windows.h
 // and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined.
 #if !defined(_X86_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IX86)
-#define _X86_
-#if !defined(_CHPE_X86_ARM64_) && defined(_M_HYBRID)
-#define _CHPE_X86_ARM64_
-#endif
+    #define _X86_
+    #if !defined(_CHPE_X86_ARM64_) && defined(_M_HYBRID)
+        #define _CHPE_X86_ARM64_
+    #endif
 #endif
 
 #if !defined(_AMD64_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && (defined(_M_AMD64) || defined(_M_ARM64EC))
-#define _AMD64_
+    #define _AMD64_
 #endif
 
 #if !defined(_ARM_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_ARM)
-#define _ARM_
+    #define _ARM_
 #endif
 
 #if !defined(_ARM64_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64EC_) && defined(_M_ARM64)
-#define _ARM64_
+    #define _ARM64_
 #endif
 
 #if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_ARM64EC)
-#define _ARM64EC_
+    #define _ARM64EC_
 #endif
 
 #if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_M68K)
-#define _68K_
+    #define _68K_
 #endif
 
 #if !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_MPPC)
-#define _MPPC_
+    #define _MPPC_
 #endif
 
 #if !defined(_IA64_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_X86_) && !defined(_M_IX86) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IA64)
-#define _IA64_
+    #define _IA64_
 #endif
 
 
@@ -59,35 +59,35 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
 // #include <minwinbase.h>
 
 #ifndef WINAPI
-#if defined(_ARM_)
-#define WINAPI
-#else
-#define WINAPI __stdcall
-#endif
+    #if defined(_ARM_)
+        #define WINAPI
+    #else
+        #define WINAPI __stdcall
+    #endif
 #endif
 
 #ifndef WINAPI
-#if defined(_ARM_)
-#define WINAPI
-#else
-#define WINAPI __stdcall
-#endif
+    #if defined(_ARM_)
+        #define WINAPI
+    #else
+        #define WINAPI __stdcall
+    #endif
 #endif
 
 #ifndef WINBASEAPI
-#ifndef _KERNEL32_
-#define WINBASEAPI DECLSPEC_IMPORT
-#else
-#define WINBASEAPI
-#endif
+    #ifndef _KERNEL32_
+        #define WINBASEAPI DECLSPEC_IMPORT
+    #else
+        #define WINBASEAPI
+    #endif
 #endif
 
 #ifndef WINUSERAPI
-#ifndef _USER32_
-#define WINUSERAPI __declspec (dllimport)
-#else
-#define WINUSERAPI
-#endif
+    #ifndef _USER32_
+        #define WINUSERAPI __declspec (dllimport)
+    #else
+        #define WINUSERAPI
+    #endif
 #endif
 
 typedef int WINBOOL;
@@ -115,7 +115,7 @@ WINUSERAPI HWND    WINAPI GetOpenClipboardWindow(VOID);
 #endif
 
 #ifndef HGLOBAL
-#define HGLOBAL void*
+    #define HGLOBAL void*
 #endif
 
 #if !defined(_WINBASE_) || !defined(WINBASE_ALREADY_INCLUDED)
@@ -123,7 +123,6 @@ WINBASEAPI SIZE_T  WINAPI GlobalSize (HGLOBAL hMem);
 WINBASEAPI LPVOID  WINAPI GlobalLock (HGLOBAL hMem);
 WINBASEAPI WINBOOL WINAPI GlobalUnlock (HGLOBAL hMem);
 #endif
-
 
 #if !defined(_WINGDI_) || !defined(WINGDI_ALREADY_INCLUDED)
 #ifndef BITMAPINFOHEADER_ALREADY_DEFINED
@@ -183,7 +182,6 @@ typedef struct tagRGBQUAD {
 // Bitmap not compressed and that the color table consists of four DWORD color masks, 
 // that specify the red, green, blue, and alpha components of each pixel
 #define BI_ALPHABITFIELDS 0x0006
-
 #endif
 
 // REF: https://learn.microsoft.com/en-us/windows/win32/dataxchg/standard-clipboard-formats
@@ -204,11 +202,14 @@ typedef struct tagRGBQUAD {
 // #define OCR_HAND        32649 // Link       select
 // #define OCR_APPSTARTING 32650 //
 
-static BOOL OpenClipboardRetrying(HWND handle); // Open clipboard with a number of retries
-static int GetPixelDataOffset(BITMAPINFOHEADER bih);
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+static BOOL OpenClipboardRetrying(HWND handle); // Open clipboard with a number of retries
+static int GetPixelDataOffset(BITMAPINFOHEADER bih); // Get pixel data offset from DIB image
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition
 //----------------------------------------------------------------------------------
 unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long long int *dataSize)
 {
@@ -274,6 +275,9 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
     return bmpData;
 }
 
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition
+//----------------------------------------------------------------------------------
 // Open clipboard with several tries
 // NOTE: If parameter is NULL, the open clipboard is associated with the current task
 static BOOL OpenClipboardRetrying(HWND hWnd)
