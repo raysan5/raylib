@@ -13,6 +13,7 @@
 *           - Linux (X11/Wayland desktop mode)
 *           - Others (not tested)
 *       > PLATFORM_DESKTOP_RGFW (RGFW backend):
+*       > PLATFORM_DESKTOP_WIN32 (native Win32):
 *           - Windows (Win32, Win64)
 *           - Linux (X11/Wayland desktop mode)
 *           - macOS/OSX (x64, arm64)
