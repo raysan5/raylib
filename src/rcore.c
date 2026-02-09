@@ -277,7 +277,7 @@
     #define FILE_FILTER_TAG_DIR_ONLY   "DIR*"       // Filter to include directories on directory scan
 #endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
 
-// Flags operation macros
+// Flags bitwise operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
 #define FLAG_CLEAR(n, f) ((n) &= ~(f))
 #define FLAG_TOGGLE(n, f) ((n) ^= (f))
