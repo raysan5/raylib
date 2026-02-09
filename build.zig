@@ -2,20 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// Minimum supported version of Zig
-const min_ver = "0.15.1";
-
-const is_zig_0_16 = builtin.zig_version.minor >= 16;
-
-fn getAndroidNdk(b: *std.Build) []const u8 {
-    if (comptime is_zig_0_16) {
-        return b.graph.environ_map.get("ANDROID_NDK_HOME") orelse "";
-    } else {
-        if (@hasDecl(std.process, "getEnvVarOwned")) {
-            return std.process.getEnvVarOwned(b.allocator, "ANDROID_NDK_HOME") catch "";
-        }
-        return "";
-    }
-}
+const min_ver = "0.16.0-dev.2349+204fa8959";
 
 fn processExample(
     b: *std.Build,
@@ -590,7 +577,7 @@ pub const Options = struct {
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
-            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse getAndroidNdk(b),
+            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse b.graph.environ_map.get("ANDROID_NDK_HOME") orelse "",
             .android_api_version = b.option([]const u8, "android_api_version", "specify target android API level") orelse defaults.android_api_version,
         };
     }
@@ -666,28 +653,15 @@ fn addExamples(
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
 
-    if (comptime is_zig_0_16) {
-        var dir = try std.Io.Dir.cwd().openDir(b.graph.io, b.pathFromRoot(module_subpath), .{ .iterate = true });
-        defer dir.close(b.graph.io);
+    var dir = try std.Io.Dir.cwd().openDir(b.graph.io, b.pathFromRoot(module_subpath), .{ .iterate = true });
+    defer dir.close(b.graph.io);
 
-        var iter = dir.iterate();
-        while (try iter.next(b.graph.io)) |entry| {
-            if (entry.kind != .file) continue;
-            const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
-            const name = entry.name[0..extension_idx];
-            try processExample(b, target, optimize, raylib, module_subpath, name, all);
-        }
-    } else {
-        var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
-        defer dir.close();
-
-        var iter = dir.iterate();
-        while (try iter.next()) |entry| {
-            if (entry.kind != .file) continue;
-            const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
-            const name = entry.name[0..extension_idx];
-            try processExample(b, target, optimize, raylib, module_subpath, name, all);
-        }
+    var iter = dir.iterate();
+    while (try iter.next(b.graph.io)) |entry| {
+        if (entry.kind != .file) continue;
+        const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
+        const name = entry.name[0..extension_idx];
+        try processExample(b, target, optimize, raylib, module_subpath, name, all);
     }
 
     return all;
