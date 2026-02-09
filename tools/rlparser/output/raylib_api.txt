@@ -496,13 +496,14 @@ Struct 26: Wave (5 fields)
   Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
   Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
   Field[5]: void * data // Buffer data pointer
-Struct 27: AudioStream (4 fields)
+Struct 27: AudioStream (5 fields)
   Name: AudioStream
   Description: AudioStream, custom audio stream
   Field[1]: rAudioBuffer * buffer // Pointer to internal data used by the audio system
-  Field[2]: unsigned int sampleRate // Frequency (samples per second)
-  Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
-  Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
+  Field[2]: rAudioProcessor * processor // Pointer to internal data processor, useful for audio effects
+  Field[3]: unsigned int sampleRate // Frequency (samples per second)
+  Field[4]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+  Field[5]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
 Struct 28: Sound (2 fields)
   Name: Sound
   Description: Sound

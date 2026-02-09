@@ -241,8 +241,9 @@
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />
             <Field type="void *" name="data" desc="Buffer data pointer" />
         </Struct>
-        <Struct name="AudioStream" fieldCount="4" desc="AudioStream, custom audio stream">
+        <Struct name="AudioStream" fieldCount="5" desc="AudioStream, custom audio stream">
             <Field type="rAudioBuffer *" name="buffer" desc="Pointer to internal data used by the audio system" />
+            <Field type="rAudioProcessor *" name="processor" desc="Pointer to internal data processor, useful for audio effects" />
             <Field type="unsigned int" name="sampleRate" desc="Frequency (samples per second)" />
             <Field type="unsigned int" name="sampleSize" desc="Bit depth (bits per sample): 8, 16, 32 (24 not supported)" />
             <Field type="unsigned int" name="channels" desc="Number of channels (1-mono, 2-stereo, ...)" />

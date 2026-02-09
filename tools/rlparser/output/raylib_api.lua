@@ -1155,6 +1155,11 @@ return {
           description = "Pointer to internal data used by the audio system"
         },
         {
+          type = "rAudioProcessor *",
+          name = "processor",
+          description = "Pointer to internal data processor, useful for audio effects"
+        },
+        {
           type = "unsigned int",
           name = "sampleRate",
           description = "Frequency (samples per second)"
