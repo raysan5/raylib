@@ -156,8 +156,6 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 // Flags that have no operations to perform during an update
 #define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
 
-#define WM_APP_UPDATE_WINDOW_SIZE (WM_APP + 1)
-
 #define WGL_DRAW_TO_WINDOW_ARB              0x2001
 #define WGL_ACCELERATION_ARB                0x2003
 #define WGL_SUPPORT_OPENGL_ARB              0x2010
@@ -426,9 +424,7 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     else swpFlags |= SWP_NOMOVE;
 
     // WARNING: This code must be called after swInit() has been called, after InitPlatform() in [rcore]
-    //RECT rc = {0, 0, desired.cx, desired.cy};
-    //AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, FALSE, 0);
-    //SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOZORDER);
+    SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, windowSize.cx, windowSize.cy, SWP_NOMOVE | SWP_NOZORDER);
 
     return true;
 }
@@ -976,25 +972,40 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMinSize not implemented");
+    if ((width > CORE.Window.screenMax.width) || (height > CORE.Window.screenMax.height))
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set minimum screen size higher than the maximum");
+        return;
+    }
 
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
+
+    SetWindowSize(platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMaxSize not implemented");
+    if ((width < CORE.Window.screenMin.width) || (height < CORE.Window.screenMin.height))
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Cannot set maximum screen size lower than the minimum");
+        return;
+    }
 
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
+    
+    SetWindowSize(platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize not implemented");
+    int screenWidth = fmaxf(CORE.Window.screenMin.width, fminf(CORE.Window.screenMax.width, width));
+    int screenHeight = fmaxf(CORE.Window.screenMin.height, fminf(CORE.Window.screenMax.height, height));
+
+    UpdateWindowSize(1, platform.hwnd, screenWidth, screenHeight, platform.desiredFlags);
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -1494,7 +1505,8 @@ int InitPlatform(void)
 
     // NOTE: From this point CORE.Window.flags should always reflect the actual state of the window
     CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
-
+    CORE.Window.screenMax.width = 9999;
+    CORE.Window.screenMax.height = 9999;
 /*
     // TODO: Review SetProcessDpiAwarenessContext()
     // NOTE: SetProcessDpiAwarenessContext() requires Windows 10, version 1703 and shcore.lib linkage
@@ -1747,13 +1759,26 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_SIZING:
         {
-            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
-            {
-                // TODO: Enforce min/max size
-            }
-            else TRACELOG(LOG_WARNING, "WIN32: WINDOW: Trying to resize a non-resizable window");
+            if (!(CORE.Window.flags & FLAG_WINDOW_RESIZABLE))
+                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Trying to resize a non-resizable window");
 
             result = TRUE;
+        } break;
+        case WM_GETMINMAXINFO:
+        {
+            DWORD style = MakeWindowStyle(platform.desiredFlags);
+            SIZE maxClientSize = { CORE.Window.screenMax.width, CORE.Window.screenMax.height };
+            SIZE maxWindowSize = CalcWindowSize(96, maxClientSize, style);
+            SIZE minClientSize = { CORE.Window.screenMin.width, CORE.Window.screenMin.height };
+            SIZE minWindowSize = CalcWindowSize(96, minClientSize, style);
+            
+            LPMINMAXINFO lpmmi = (LPMINMAXINFO) lparam;
+            lpmmi->ptMaxSize.x = maxWindowSize.cx;
+            lpmmi->ptMaxSize.y = maxWindowSize.cy;
+            lpmmi->ptMaxTrackSize.x = maxWindowSize.cx;
+            lpmmi->ptMaxTrackSize.y = maxWindowSize.cy;
+            lpmmi->ptMinTrackSize.x = minWindowSize.cx;
+            lpmmi->ptMinTrackSize.y = minWindowSize.cy;
         } break;
         case WM_STYLECHANGING:
         {
@@ -1960,10 +1985,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
         case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
-        case WM_APP_UPDATE_WINDOW_SIZE:
-        {
-            //UpdateWindowSize(UPDATE_WINDOW_NORMAL, hwnd, platform.appScreenWidth, platform.appScreenHeight, CORE.Window.flags);
-        } break;
 
         default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
     }
@@ -2045,12 +2066,10 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     GetClientRect(hwnd, &rect);
     SIZE clientSize = { rect.right, rect.bottom };
 
-    // TODO: Update framebuffer on resize
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    //SetupViewport(0, 0, clientSize.cx, clientSize.cy);
-
     SetupViewport(clientSize.cx, clientSize.cy);
+
     CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindow(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
