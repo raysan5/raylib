@@ -180,6 +180,10 @@ typedef struct tagRGBQUAD {
 #define BI_CMYKRLE8  0x000C
 #define BI_CMYKRLE4  0x000D
 
+// Bitmap not compressed and that the color table consists of four DWORD color masks, 
+// that specify the red, green, blue, and alpha components of each pixel
+#define BI_ALPHABITFIELDS 0x0006
+
 #endif
 
 // REF: https://learn.microsoft.com/en-us/windows/win32/dataxchg/standard-clipboard-formats
@@ -208,91 +212,70 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih);
 //----------------------------------------------------------------------------------
 unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long long int *dataSize)
 {
-    HWND win = NULL; // Get from somewhere but is doesnt seem to matter
-    const char *msgString = "";
-    int severity = LOG_INFO;
-    BYTE *bmpData = NULL;
+    unsigned char *bmpData = NULL;
     
-    if (!OpenClipboardRetrying(win))
+    if (OpenClipboardRetrying(NULL))
     {
-        severity = LOG_ERROR;
-        msgString = "Couldn't open clipboard";
-        goto end;
+        HGLOBAL clipHandle = (HGLOBAL)GetClipboardData(CF_DIB);
+        if (clipHandle != NULL)
+        {
+            BITMAPINFOHEADER *bmpInfoHeader = (BITMAPINFOHEADER *)GlobalLock(clipHandle);
+            if (bmpInfoHeader)
+            {
+                *width = bmpInfoHeader->biWidth;
+                *height = bmpInfoHeader->biHeight;
+                SIZE_T clipDataSize = GlobalSize(clipHandle);
+                if (clipDataSize >= sizeof(BITMAPINFOHEADER))
+                {
+                    int pixelOffset = GetPixelDataOffset(*bmpInfoHeader);
+                    
+                    // Create the bytes for a correct BMP file and copy the data to a pointer
+                    //------------------------------------------------------------------------
+                    BITMAPFILEHEADER bmpFileHeader = { 0 };
+                    SIZE_T bmpFileSize = sizeof(bmpFileHeader) + clipDataSize;
+                    *dataSize = bmpFileSize;
+
+                    bmpFileHeader.bfType = 0x4D42; // BMP fil type constant
+                    bmpFileHeader.bfSize = (DWORD)bmpFileSize; // Up to 4GB works fine
+                    bmpFileHeader.bfOffBits = sizeof(bmpFileHeader) + pixelOffset;
+
+                    bmpData = (unsigned char *)RL_MALLOC(sizeof(bmpFileHeader) + clipDataSize);
+                    memcpy(bmpData, &bmpFileHeader, sizeof(bmpFileHeader)); // Add BMP file header data
+                    memcpy(bmpData + sizeof(bmpFileHeader), bmpInfoHeader, clipDataSize); // Add BMP info header data
+                    
+                    GlobalUnlock(clipHandle);
+                    CloseClipboard();
+                    
+                    TRACELOG(LOG_INFO, "Clipboad image acquired successfully");
+                    //------------------------------------------------------------------------
+                }
+                else
+                {
+                    TRACELOG(LOG_WARNING, "Clipboard data is malformed");
+                    GlobalUnlock(clipHandle);
+                    CloseClipboard();
+                }
+            }
+            else 
+            {
+                TRACELOG(LOG_WARNING, "Clipboard data failed to be locked");
+                GlobalUnlock(clipHandle);
+                CloseClipboard();
+            }
+        }
+        else 
+        {
+            TRACELOG(LOG_WARNING, "Clipboard data is not an image");
+            CloseClipboard();
+        }
     }
+    else TRACELOG(LOG_WARNING, "Clipboard can not be opened");
 
-    HGLOBAL clipHandle = (HGLOBAL)GetClipboardData(CF_DIB);
-    if (!clipHandle)
-    {
-        severity = LOG_ERROR;
-        msgString = "Clipboard data is not an Image";
-        goto close;
-    }
-
-    BITMAPINFOHEADER *bmpInfoHeader = (BITMAPINFOHEADER *)GlobalLock(clipHandle);
-    if (!bmpInfoHeader)
-    {
-        // Mapping from HGLOBAL to our local *address space* failed
-        severity = LOG_ERROR;
-        msgString = "Clipboard data failed to be locked";
-        goto unlock;
-    }
-
-    *width = bmpInfoHeader->biWidth;
-    *height = bmpInfoHeader->biHeight;
-
-    SIZE_T clipDataSize = GlobalSize(clipHandle);
-    if (clipDataSize < sizeof(BITMAPINFOHEADER))
-    {
-        // Format CF_DIB needs space for BITMAPINFOHEADER struct.
-        msgString = "Clipboard has Malformed data";
-        severity = LOG_ERROR;
-        goto unlock;
-    }
-
-    // Denotes where the pixel data starts from the bmpInfoHeader pointer
-    int pixelOffset = GetPixelDataOffset(*bmpInfoHeader);
-
-    //--------------------------------------------------------------------------------//
-    //
-    // The rest of the section is about create the bytes for a correct BMP file
-    // Then we copy the data and to a pointer
-    //
-    //--------------------------------------------------------------------------------//
-
-    BITMAPFILEHEADER bmpFileHeader = { 0 };
-    SIZE_T bmpFileSize = sizeof(bmpFileHeader) + clipDataSize;
-    *dataSize = bmpFileSize;
-
-    bmpFileHeader.bfType = 0x4D42; // REF: https://stackoverflow.com/questions/601430/multibyte-character-constants-and-bitmap-file-header-type-constants#601536
-
-    bmpFileHeader.bfSize = (DWORD)bmpFileSize; // Up to 4GB works fine
-    bmpFileHeader.bfOffBits = sizeof(bmpFileHeader) + pixelOffset;
-
-    // WARNING: Each process has a default heap provided by the system
-    // Memory objects allocated by GlobalAlloc and LocalAlloc are in private,
-    // committed pages with read/write access that cannot be accessed by other processes
-    //
-    // This may be wrong since we might be allocating in a DLL and freeing from another module, the main application
-    // that may cause heap corruption. We could create a FreeImage function
-    bmpData = (BYTE *)RL_MALLOC(sizeof(bmpFileHeader) + clipDataSize);
-    // First we add the header for a bmp file
-    memcpy(bmpData, &bmpFileHeader, sizeof(bmpFileHeader));  // Add BMP file header data
-    // Then we add the header for the bmp itself + the pixel data
-    memcpy(bmpData + sizeof(bmpFileHeader), bmpInfoHeader, clipDataSize); // Add BMP info header data
-    
-    msgString = "Clipboad image acquired successfully";
-
-unlock:
-    GlobalUnlock(clipHandle);
-close:
-    CloseClipboard();
-end:
-
-    TRACELOG(severity, msgString);
-    
     return bmpData;
 }
 
+// Open clipboard with several tries
+// NOTE: If parameter is NULL, the open clipboard is associated with the current task
 static BOOL OpenClipboardRetrying(HWND hWnd)
 {
     static const int maxTries = 20;
@@ -320,22 +303,18 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
 
     // NOTE: biSize specifies the number of bytes required by the structure
     // We expect to always be 40 because it should be packed
-    if ((40 == bih.biSize) && (40 == sizeof(BITMAPINFOHEADER)))
+    if ((bih.biSize == 40) && (sizeof(BITMAPINFOHEADER) == 40))
     {
-        // NOTE: biBitCount specifies the number of bits per pixel.
+        // NOTE: biBitCount specifies the number of bits per pixel
         // Might exist some bit masks *after* the header and *before* the pixel offset
         // we're looking, but only if we have more than
         // 8 bits per pixel, so we need to ajust for that
         if (bih.biBitCount > 8)
         {
-            // if bih.biCompression is RBG we should NOT offset more
+            // If (bih.biCompression == BI_RGB) we should NOT offset more
 
             if (bih.biCompression == BI_BITFIELDS) offset += 3*rgbaSize;
-            else if (bih.biCompression == 6) // BI_ALPHABITFIELDS
-            {
-                // Not widely supported, but valid
-                offset += 4*rgbaSize;
-            }
+            else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4*rgbaSize; // Not widely supported, but valid
         }
     }
 
@@ -353,4 +332,3 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
     return bih.biSize + offset;
 }
 #endif // WIN32_CLIPBOARD_IMPLEMENTATION
-// EOF
