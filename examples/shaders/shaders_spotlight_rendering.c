@@ -239,7 +239,7 @@ int main(void)
 static void ResetStar(Star *star)
 {
     star->position = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
-    
+
     star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
     star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
 
@@ -247,7 +247,7 @@ static void ResetStar(Star *star)
     {
         star->speed.x = (float)GetRandomValue(-1000, 1000)/100.0f;
         star->speed.y = (float)GetRandomValue(-1000, 1000)/100.0f;
-    } 
+    }
 
     star->position = Vector2Add(star->position, Vector2Multiply(star->speed, (Vector2){ 8.0f, 8.0f }));
 }

@@ -45,7 +45,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - bunnymark");
 
     // Load bunny texture
-    Texture2D texBunny = LoadTexture("resources/wabbit_alpha.png");
+    Texture2D texBunny = LoadTexture("resources/raybunny.png");
 
     Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
 
@@ -83,10 +83,10 @@ int main(void)
             bunnies[i].position.x += bunnies[i].speed.x;
             bunnies[i].position.y += bunnies[i].speed.y;
 
-            if (((bunnies[i].position.x + texBunny.width/2) > GetScreenWidth()) ||
-                ((bunnies[i].position.x + texBunny.width/2) < 0)) bunnies[i].speed.x *= -1;
-            if (((bunnies[i].position.y + texBunny.height/2) > GetScreenHeight()) ||
-                ((bunnies[i].position.y + texBunny.height/2 - 40) < 0)) bunnies[i].speed.y *= -1;
+            if (((bunnies[i].position.x + (float)texBunny.width/2) > GetScreenWidth()) ||
+                ((bunnies[i].position.x + (float)texBunny.width/2) < 0)) bunnies[i].speed.x *= -1;
+            if (((bunnies[i].position.y + (float)texBunny.height/2) > GetScreenHeight()) ||
+                ((bunnies[i].position.y + (float)texBunny.height/2 - 40) < 0)) bunnies[i].speed.y *= -1;
         }
         //----------------------------------------------------------------------------------
 

@@ -221,7 +221,7 @@ int main(void)
 }
 
 
-// NoEase function, used when "no easing" is selected for any axis 
+// NoEase function, used when "no easing" is selected for any axis
 // It just ignores all parameters besides b
 static float NoEase(float t, float b, float c, float d)
 {

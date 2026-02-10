@@ -184,7 +184,7 @@ static void DrawRectangleRoundedGradientH(Rectangle rec, float roundnessLeft, fl
             }
 
             // End one even segments
-            if ( segments % 2)
+            if ( segments%2)
             {
                 rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
                 rlVertex2f(center.x, center.y);

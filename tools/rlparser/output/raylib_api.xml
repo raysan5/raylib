@@ -7,7 +7,7 @@
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
         <Define name="RAYLIB_VERSION" type="STRING" value="5.6-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
-        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="We are building the library as a Win32 shared library (.dll)" />
+        <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
         <Define name="DEG2RAD" type="FLOAT_MATH" value="(PI/180.0f)" desc="" />
         <Define name="RAD2DEG" type="FLOAT_MATH" value="(180.0f/PI)" desc="" />
@@ -155,10 +155,10 @@
             <Field type="int" name="projection" desc="Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC" />
         </Struct>
         <Struct name="Camera2D" fieldCount="4" desc="Camera2D, defines position/orientation in 2d space">
-            <Field type="Vector2" name="offset" desc="Camera offset (displacement from target)" />
-            <Field type="Vector2" name="target" desc="Camera target (rotation and zoom origin)" />
-            <Field type="float" name="rotation" desc="Camera rotation in degrees" />
-            <Field type="float" name="zoom" desc="Camera zoom (scaling), should be 1.0f by default" />
+            <Field type="Vector2" name="offset" desc="Camera offset (screen space offset from window origin)" />
+            <Field type="Vector2" name="target" desc="Camera target (world space target point that is mapped to screen space offset)" />
+            <Field type="float" name="rotation" desc="Camera rotation in degrees (pivots around target)" />
+            <Field type="float" name="zoom" desc="Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale" />
         </Struct>
         <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
@@ -214,11 +214,11 @@
             <Field type="Transform *" name="bindPose" desc="Bones base transformation (pose)" />
         </Struct>
         <Struct name="ModelAnimation" fieldCount="5" desc="ModelAnimation">
+            <Field type="char[32]" name="name" desc="Animation name" />
             <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="int" name="frameCount" desc="Number of animation frames" />
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="Transform **" name="framePoses" desc="Poses array by frame" />
-            <Field type="char[32]" name="name" desc="Animation name" />
         </Struct>
         <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
             <Field type="Vector3" name="position" desc="Ray position (origin)" />
@@ -280,8 +280,7 @@
             <Field type="float[2]" name="scale" desc="VR distortion scale" />
             <Field type="float[2]" name="scaleIn" desc="VR distortion scale in" />
         </Struct>
-        <Struct name="FilePathList" fieldCount="3" desc="File path list">
-            <Field type="unsigned int" name="capacity" desc="Filepaths max entries" />
+        <Struct name="FilePathList" fieldCount="2" desc="File path list">
             <Field type="unsigned int" name="count" desc="Filepaths entries count" />
             <Field type="char **" name="paths" desc="Filepaths entries" />
         </Struct>
@@ -988,13 +987,16 @@
         <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">
             <Param type="const char *" name="url" desc="" />
         </Function>
+        <Function name="SetTraceLogLevel" retType="void" paramCount="1" desc="Set the current threshold (minimum) log level">
+            <Param type="int" name="logLevel" desc="" />
+        </Function>
         <Function name="TraceLog" retType="void" paramCount="3" desc="Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)">
             <Param type="int" name="logLevel" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="..." name="args" desc="" />
         </Function>
-        <Function name="SetTraceLogLevel" retType="void" paramCount="1" desc="Set the current threshold (minimum) log level">
-            <Param type="int" name="logLevel" desc="" />
+        <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
+            <Param type="TraceLogCallback" name="callback" desc="" />
         </Function>
         <Function name="MemAlloc" retType="void *" paramCount="1" desc="Internal memory allocator">
             <Param type="unsigned int" name="size" desc="" />
@@ -1005,21 +1007,6 @@
         </Function>
         <Function name="MemFree" retType="void" paramCount="1" desc="Internal memory free">
             <Param type="void *" name="ptr" desc="" />
-        </Function>
-        <Function name="SetTraceLogCallback" retType="void" paramCount="1" desc="Set custom trace log">
-            <Param type="TraceLogCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetLoadFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data loader">
-            <Param type="LoadFileDataCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetSaveFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data saver">
-            <Param type="SaveFileDataCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetLoadFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data loader">
-            <Param type="LoadFileTextCallback" name="callback" desc="" />
-        </Function>
-        <Function name="SetSaveFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data saver">
-            <Param type="SaveFileTextCallback" name="callback" desc="" />
         </Function>
         <Function name="LoadFileData" retType="unsigned char *" paramCount="2" desc="Load file data as byte array (read)">
             <Param type="const char *" name="fileName" desc="" />
@@ -1047,6 +1034,18 @@
         <Function name="SaveFileText" retType="bool" paramCount="2" desc="Save text data to file (write), string must be '\0' terminated, returns true on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="text" desc="" />
+        </Function>
+        <Function name="SetLoadFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data loader">
+            <Param type="LoadFileDataCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetSaveFileDataCallback" retType="void" paramCount="1" desc="Set custom file binary data saver">
+            <Param type="SaveFileDataCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetLoadFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data loader">
+            <Param type="LoadFileTextCallback" name="callback" desc="" />
+        </Function>
+        <Function name="SetSaveFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data saver">
+            <Param type="SaveFileTextCallback" name="callback" desc="" />
         </Function>
         <Function name="FileRename" retType="int" paramCount="2" desc="Rename file (if exists)">
             <Param type="const char *" name="fileName" desc="" />
@@ -1111,7 +1110,7 @@
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
-            <Param type="const char *" name="dir" desc="" />
+            <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if a given path is a file or a directory">
             <Param type="const char *" name="path" desc="" />
@@ -1136,6 +1135,14 @@
         </Function>
         <Function name="UnloadDroppedFiles" retType="void" paramCount="1" desc="Unload dropped filepaths">
             <Param type="FilePathList" name="files" desc="" />
+        </Function>
+        <Function name="GetDirectoryFileCount" retType="unsigned int" paramCount="1" desc="Get the file count in a directory">
+            <Param type="const char *" name="dirPath" desc="" />
+        </Function>
+        <Function name="GetDirectoryFileCountEx" retType="unsigned int" paramCount="3" desc="Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result">
+            <Param type="const char *" name="basePath" desc="" />
+            <Param type="const char *" name="filter" desc="" />
+            <Param type="bool" name="scanSubdirs" desc="" />
         </Function>
         <Function name="CompressData" retType="unsigned char *" paramCount="3" desc="Compress data (DEFLATE algorithm), memory must be MemFree()">
             <Param type="const unsigned char *" name="data" desc="" />
@@ -3009,7 +3016,7 @@
         <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Checks if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
         </Function>
-        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (data and frame count should fit in sound)">
+        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
             <Param type="int" name="sampleCount" desc="" />
@@ -3054,7 +3061,7 @@
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (0.5 is center)">
+        <Function name="SetSoundPan" retType="void" paramCount="2" desc="Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
@@ -3122,7 +3129,7 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (0.5 is center)">
+        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>

@@ -49,7 +49,7 @@ static void DrawTexturedCurve(void);
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ static void DrawTexturedCurve(void)
         Vector2 normal = Vector2Normalize((Vector2){ -delta.y, delta.x });
 
         // The v texture coordinate of the segment (add up the length of all the segments so far)
-        float v = previousV + Vector2Length(delta);
+        float v = previousV + Vector2Length(delta) / (float)(texRoad.height * 2);
 
         // Make sure the start point has a normal
         if (!tangentSet)

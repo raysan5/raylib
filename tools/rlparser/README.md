@@ -19,7 +19,7 @@ Check `rlparser.c` for details about those structs.
 //                                                                              //
 // more info and bugs-report: github.com/raysan5/raylib/tools/rlparser          //
 //                                                                              //
-// Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)                          //
+// Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)                          //
 //                                                                              //
 //////////////////////////////////////////////////////////////////////////////////
 

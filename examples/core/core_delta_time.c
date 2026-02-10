@@ -59,7 +59,7 @@ int main(void)
         // GetFrameTime() returns the time it took to draw the last frame, in seconds (usually called delta time)
         // Uses the delta time to make the circle look like it's moving at a "consistent" speed regardless of FPS
 
-        // Multiply by 6.0 (an arbitrary value) in order to make the speed 
+        // Multiply by 6.0 (an arbitrary value) in order to make the speed
         // visually closer to the other circle (at 60 fps), for comparison
         deltaCircle.x += GetFrameTime()*6.0f*speed;
         // This circle can move faster or slower visually depending on the FPS
@@ -68,7 +68,7 @@ int main(void)
         // If either circle is off the screen, reset it back to the start
         if (deltaCircle.x > screenWidth) deltaCircle.x = 0;
         if (frameCircle.x > screenWidth) frameCircle.x = 0;
-        
+
         // Reset both circles positions
         if (IsKeyPressed(KEY_R))
         {

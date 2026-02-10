@@ -36,7 +36,7 @@ void main()
     vec3 ambient = albedo*vec3(0.1);
     vec3 viewDirection = normalize(viewPosition - fragPosition);
 
-    for (int i = 0; i < NR_LIGHTS; ++i)
+    for (int i = 0; i < NR_LIGHTS; i++)
     {
         if (lights[i].enabled == 0) continue;
         vec3 lightDirection = lights[i].position - fragPosition;

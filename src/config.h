@@ -6,7 +6,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2018-2025 Ahmad Fatoum & Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2026 Ahmad Fatoum and Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -30,17 +30,24 @@
 
 //------------------------------------------------------------------------------------
 // Module selection - Some modules could be avoided
-// Mandatory modules: rcore, rlgl, utils
+// Mandatory modules: rcore, rlgl
 //------------------------------------------------------------------------------------
-#define SUPPORT_MODULE_RSHAPES          1
-#define SUPPORT_MODULE_RTEXTURES        1
-#define SUPPORT_MODULE_RTEXT            1       // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
-#define SUPPORT_MODULE_RMODELS          1
-#define SUPPORT_MODULE_RAUDIO           1
+#if !defined(EXTERNAL_CONFIG_FLAGS)
+    #define SUPPORT_MODULE_RSHAPES          1
+    #define SUPPORT_MODULE_RTEXTURES        1
+    #define SUPPORT_MODULE_RTEXT            1       // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
+    #define SUPPORT_MODULE_RMODELS          1
+    #define SUPPORT_MODULE_RAUDIO           1
+#endif
 
 //------------------------------------------------------------------------------------
 // Module: rcore - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
+// Standard file io library (stdio.h) included
+#define SUPPORT_STANDARD_FILEIO         1
+// Show TRACELOG() output messages
+#define SUPPORT_TRACELOG                1
 // Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
 #define SUPPORT_CAMERA_SYSTEM           1
 // Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
@@ -49,19 +56,18 @@
 #define SUPPORT_RPRAND_GENERATOR        1
 // Mouse gestures are directly mapped like touches and processed by gestures system
 #define SUPPORT_MOUSE_GESTURES          1
-// Reconfigure standard input to receive key inputs, works with SSH connection.
+// Reconfigure standard input to receive key inputs, works with SSH connection
 #define SUPPORT_SSH_KEYBOARD_RPI        1
-// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions.
-// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often.
+// Setting a higher resolution can improve the accuracy of time-out intervals in wait functions
+// However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
 #define SUPPORT_WINMM_HIGHRES_TIMER     1
 // Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
 //#define SUPPORT_BUSY_WAIT_LOOP          1
 // Use a partial-busy wait loop, in this case frame sleeps for most of the time, but then runs a busy loop at the end for accuracy
 #define SUPPORT_PARTIALBUSY_WAIT_LOOP    1
 // Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
+// WARNING: It also requires SUPPORT_IMAGE_EXPORT and SUPPORT_FILEFORMAT_PNG flags
 #define SUPPORT_SCREEN_CAPTURE          1
-// Allow automatic gif recording of current screen pressing CTRL+F12, defined in KeyCallback()
-#define SUPPORT_GIF_RECORDING           1
 // Support CompressData() and DecompressData() functions
 #define SUPPORT_COMPRESSION_API         1
 // Support automatic generated events, loading and recording of those events when required
@@ -70,13 +76,13 @@
 // By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // Enabling this flag allows manual control of the frame processes, use at your own risk
 //#define SUPPORT_CUSTOM_FRAME_CONTROL    1
-
 // Support for clipboard image loading
 // NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
-#define SUPPORT_CLIPBOARD_IMAGE    1
+#define SUPPORT_CLIPBOARD_IMAGE         1
+#endif
 
 // NOTE: Clipboard image loading requires support for some image file formats
-// TODO: Those defines should probably be removed from here, I prefer to let the user manage them
+// TODO: Those defines should probably be removed from here, letting the user manage them
 #if defined(SUPPORT_CLIPBOARD_IMAGE)
     #ifndef SUPPORT_MODULE_RTEXTURES
         #define SUPPORT_MODULE_RTEXTURES 1
@@ -95,8 +101,15 @@
     #endif
 #endif
 
+#if defined(SUPPORT_TRACELOG)
+    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
+#else
+    #define TRACELOG(level, ...) (void)0
+#endif
+
 // rcore: Configuration values
 //------------------------------------------------------------------------------------
+#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 #define MAX_FILEPATH_CAPACITY        8192       // Maximum file paths capacity
 #define MAX_FILEPATH_LENGTH          4096       // Maximum length for filepaths (Linux PATH_MAX default value)
 
@@ -106,7 +119,7 @@
 #define MAX_GAMEPAD_AXES                8       // Maximum number of axes supported (per gamepad)
 #define MAX_GAMEPAD_BUTTONS            32       // Maximum number of buttons supported (per gamepad)
 #define MAX_GAMEPAD_VIBRATION_TIME      2.0f    // Maximum vibration time in seconds
-#define MAX_TOUCH_POINTS                8       // Maximum number of touch points supported
+#define MAX_TOUCH_POINTS               10       // Maximum number of touch points supported
 #define MAX_KEY_PRESSED_QUEUE          16       // Maximum number of keys in the key input queue
 #define MAX_CHAR_PRESSED_QUEUE         16       // Maximum number of characters in the char input queue
 
@@ -117,7 +130,7 @@
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
-
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Enable OpenGL Debug Context (only available on OpenGL 4.3)
 //#define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       1
 
@@ -125,6 +138,7 @@
 //#define RLGL_SHOW_GL_DETAILS_INFO              1
 
 #define RL_SUPPORT_MESH_GPU_SKINNING           1      // GPU skinning, comment if your GPU does not support more than 8 VBOs
+#endif
 
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
 #define RL_DEFAULT_BATCH_BUFFERS               1      // Default number of batch buffers (multi-buffering)
@@ -174,9 +188,11 @@
 //------------------------------------------------------------------------------------
 // Module: rshapes - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Use QUADS instead of TRIANGLES for drawing when possible
 // Some lines-based shapes could still use lines
 #define SUPPORT_QUADS_DRAW_MODE         1
+#endif
 
 // rshapes: Configuration values
 //------------------------------------------------------------------------------------
@@ -185,6 +201,7 @@
 //------------------------------------------------------------------------------------
 // Module: rtextures - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Selected desired fileformats to be supported for image data loading
 #define SUPPORT_FILEFORMAT_PNG      1
 //#define SUPPORT_FILEFORMAT_BMP      1
@@ -208,10 +225,12 @@
 // Support multiple image editing functions to scale, adjust colors, flip, draw on images, crop...
 // If not defined, still some functions are supported: ImageFormat(), ImageCrop(), ImageToPOT()
 #define SUPPORT_IMAGE_MANIPULATION      1
+#endif
 
 //------------------------------------------------------------------------------------
 // Module: rtext - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Default font is loaded on window initialization to be available for the user to render simple text
 // NOTE: If enabled, uses external module functions to load default raylib font
 #define SUPPORT_DEFAULT_FONT            1
@@ -226,11 +245,12 @@
 
 // On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
 // at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-// drawing text and shapes with a single draw call [SetShapesTexture()].
+// drawing text and shapes with a single draw call [SetShapesTexture()]
 #define SUPPORT_FONT_ATLAS_WHITE_REC    1
 
 // Support conservative font atlas size estimation
 //#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE    1
+#endif
 
 // rtext: Configuration values
 //------------------------------------------------------------------------------------
@@ -241,6 +261,7 @@
 //------------------------------------------------------------------------------------
 // Module: rmodels - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Selected desired model fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_OBJ          1
 #define SUPPORT_FILEFORMAT_MTL          1
@@ -251,6 +272,7 @@
 // Support procedural mesh generation functions, uses external par_shapes.h library
 // NOTE: Some generated meshes DO NOT include generated texture coordinates
 #define SUPPORT_MESH_GENERATION         1
+#endif
 
 // rmodels: Configuration values
 //------------------------------------------------------------------------------------
@@ -265,6 +287,7 @@
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags
 //------------------------------------------------------------------------------------
+#if !defined(EXTERNAL_CONFIG_FLAGS)
 // Desired audio fileformats to be supported for loading
 #define SUPPORT_FILEFORMAT_WAV          1
 #define SUPPORT_FILEFORMAT_OGG          1
@@ -273,6 +296,7 @@
 //#define SUPPORT_FILEFORMAT_FLAC         1
 #define SUPPORT_FILEFORMAT_XM           1
 #define SUPPORT_FILEFORMAT_MOD          1
+#endif
 
 // raudio: Configuration values
 //------------------------------------------------------------------------------------
@@ -281,19 +305,5 @@
 #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device sample rate (device default)
 
 #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels
-
-//------------------------------------------------------------------------------------
-// Module: utils - Configuration Flags
-//------------------------------------------------------------------------------------
-// Standard file io library (stdio.h) included
-#define SUPPORT_STANDARD_FILEIO         1
-// Show TRACELOG() output messages
-// NOTE: By default LOG_DEBUG traces not shown
-#define SUPPORT_TRACELOG                1
-//#define SUPPORT_TRACELOG_DEBUG          1
-
-// utils: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
 
 #endif // CONFIG_H

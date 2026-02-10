@@ -23,7 +23,8 @@ uniform vec3 viewPosition;
 const float QUADRATIC = 0.032;
 const float LINEAR = 0.09;
 
-void main() {
+void main()
+{
     vec3 fragPosition = texture(gPosition, texCoord).rgb;
     vec3 normal = texture(gNormal, texCoord).rgb;
     vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
@@ -32,7 +33,7 @@ void main() {
     vec3 ambient = albedo*vec3(0.1f);
     vec3 viewDirection = normalize(viewPosition - fragPosition);
 
-    for (int i = 0; i < NR_LIGHTS; ++i)
+    for (int i = 0; i < NR_LIGHTS; i++)
     {
         if (lights[i].enabled == 0) continue;
         vec3 lightDirection = lights[i].position - fragPosition;

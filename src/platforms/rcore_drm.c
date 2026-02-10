@@ -13,9 +13,6 @@
 *       - Improvement 01
 *       - Improvement 02
 *
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
-*
 *   CONFIGURATION:
 *       #define SUPPORT_SSH_KEYBOARD_RPI (Raspberry Pi only)
 *           Reconfigure standard input to receive key inputs, works with SSH connection
@@ -29,7 +26,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -89,6 +86,10 @@
     #define EGL_OPENGL_ES3_BIT  0x40
 #endif
 
+#ifndef EGL_PLATFORM_GBM_KHR
+    #define EGL_PLATFORM_GBM_KHR  0x31D7
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -135,8 +136,12 @@ typedef struct {
     char currentButtonStateEvdev[MAX_MOUSE_BUTTONS]; // Holds the new mouse state for the next polling event to grab
     bool cursorRelative;                // Relative cursor mode
     int mouseFd;                        // File descriptor for the evdev mouse/touch/gestures
+    bool mouseIsTouch;                  // Check if the current mouse device is actually a touchscreen
     Rectangle absRange;                 // Range of values for absolute pointing devices (touchscreens)
     int touchSlot;                      // Hold the touch slot number of the currently being sent multitouch block
+    bool touchActive[MAX_TOUCH_POINTS]; // Track which touch points are currently active
+    Vector2 touchPosition[MAX_TOUCH_POINTS]; // Track touch positions for each slot
+    int touchId[MAX_TOUCH_POINTS];      // Track touch IDs for each slot
 
     // Gamepad data
     int gamepadStreamFd[MAX_GAMEPADS];  // Gamepad device file descriptor
@@ -220,7 +225,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     248, 0,   0,   0,   0,   0,   0,   0,
 
     // Gamepads are mapped according to:
-    // https://www.kernel.org/doc/html/next/input/gamepad.html
+    // REF: https://www.kernel.org/doc/html/next/input/gamepad.html
     // Those mappings are standardized, but that doesn't mean people follow
     // the standards, so this is more of an approximation
     [BTN_DPAD_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
@@ -264,6 +269,8 @@ static void PollMouseEvents(void);              // Process evdev mouse events
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);    // Search the nearest matching DRM connector mode in connector's list
+
+static void SetupFramebuffer(int width, int height); // Setup main framebuffer (required by InitPlatform())
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -637,7 +644,7 @@ static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
 }
 
 // Renders a blank frame to allocate initial buffers
-// TODO: WARNING: Platform layers do not include OpenGL code!
+// TODO: WARNING: Platform backend should not include OpenGL code
 void RenderBlankFrame()
 {
     glClearColor(0, 0, 0, 1);
@@ -824,15 +831,6 @@ void SwapScreenBuffer(void)
         return;
     }
 
-    // Get the software rendered color buffer
-    int bufferWidth = 0, bufferHeight = 0;
-    void *colorBuffer = swGetColorBuffer(&bufferWidth, &bufferHeight);
-    if (!colorBuffer)
-    {
-        TRACELOG(LOG_ERROR, "DISPLAY: Failed to get software color buffer");
-        return;
-    }
-
     // Retrieving the dimensions of the display mode used
     drmModeModeInfo *mode = &platform.connector->modes[platform.modeIndex];
     uint32_t width = mode->hdisplay;
@@ -900,16 +898,8 @@ void SwapScreenBuffer(void)
     }
 
     // Copy the software rendered buffer to the dumb buffer with scaling if needed
-    if (bufferWidth == width && bufferHeight == height)
-    {
-        // Direct copy if sizes match
-        swCopyFramebuffer(0, 0, bufferWidth, bufferHeight, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
-    }
-    else
-    {
-        // Scale the software buffer to match the display mode
-        swBlitFramebuffer(0, 0, width, height, 0, 0, bufferWidth, bufferHeight, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
-    }
+    // NOTE: RLSW will make a simple copy if the dimensions match
+    swBlitFramebuffer(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
 
     // Unmap the buffer
     munmap(dumbBuffer, creq.size);
@@ -925,7 +915,7 @@ void SwapScreenBuffer(void)
         {
             TRACELOG(LOG_ERROR, "DISPLAY: Failed to get DRM resources");
             drmModeRmFB(platform.fd, fb);
-            struct drm_mode_destroy_dumb dreq = {0};
+            struct drm_mode_destroy_dumb dreq = { 0 };
             dreq.handle = creq.handle;
             drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
             return;
@@ -965,7 +955,7 @@ void SwapScreenBuffer(void)
         {
             TRACELOG(LOG_ERROR, "DISPLAY: No compatible CRTC found");
             drmModeRmFB(platform.fd, fb);
-            struct drm_mode_destroy_dumb dreq = {0};
+            struct drm_mode_destroy_dumb dreq = { 0 };
             dreq.handle = creq.handle;
             drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
             return;
@@ -981,7 +971,7 @@ void SwapScreenBuffer(void)
         TRACELOG(LOG_ERROR, "DISPLAY: Mode: %dx%d@%d", mode->hdisplay, mode->vdisplay, mode->vrefresh);
 
         drmModeRmFB(platform.fd, fb);
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = creq.handle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
         return;
@@ -999,7 +989,7 @@ void SwapScreenBuffer(void)
     // Clean up previous dumb buffer
     if (platform.prevDumbHandle)
     {
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = platform.prevDumbHandle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
     }
@@ -1030,7 +1020,7 @@ double GetTime(void)
 // NOTE: This function is only safe to use if you control the URL given
 // A user could craft a malicious string performing another action
 // Only call this function yourself not with user input or make sure to check the string yourself
-// Ref: https://github.com/raysan5/raylib/issues/686
+// REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
     TRACELOG(LOG_WARNING, "OpenURL() not implemented on target platform");
@@ -1130,9 +1120,6 @@ void PollInputEvents(void)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
-    // Reset touch positions to invalid state
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ -1, -1 };
-
     // Map touch position to mouse position for convenience
     // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
     // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
@@ -1164,8 +1151,7 @@ int InitPlatform(void)
 
     // Initialize graphic device: display/window and graphic context
     //----------------------------------------------------------------------------
-    CORE.Window.fullscreen = true;
-    CORE.Window.flags |= FLAG_FULLSCREEN_MODE;
+    FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
 #if defined(DEFAULT_GRAPHIC_DEVICE_DRM)
     platform.fd = open(DEFAULT_GRAPHIC_DEVICE_DRM, O_RDWR);
@@ -1175,7 +1161,8 @@ int InitPlatform(void)
     platform.fd = open("/dev/dri/by-path/platform-gpu-card", O_RDWR); // VideoCore VI (Raspberry Pi 4)
     if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: platform-gpu-card opened successfully");
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    drmModeRes *res = NULL;
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open platform-gpu-card, trying card1");
@@ -1183,7 +1170,7 @@ int InitPlatform(void)
         if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card1 opened successfully");
     }
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card1, trying card0");
@@ -1191,7 +1178,7 @@ int InitPlatform(void)
         if (platform.fd != -1) TRACELOG(LOG_INFO, "DISPLAY: card0 opened successfully");
     }
 
-    if ((platform.fd == -1) || (drmModeGetResources(platform.fd) == NULL))
+    if ((platform.fd == -1) || ((res = drmModeGetResources(platform.fd)) == NULL))
     {
         if (platform.fd != -1) close(platform.fd);
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to open graphic card0, trying card2");
@@ -1206,7 +1193,6 @@ int InitPlatform(void)
         return -1;
     }
 
-    drmModeRes *res = drmModeGetResources(platform.fd);
     if (!res)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed get DRM resources");
@@ -1230,9 +1216,9 @@ int InitPlatform(void)
 
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i modes detected: %i", i, con->count_modes);
         TRACELOG(LOG_TRACE, "DISPLAY: Connector %i status: %s", i,
-                 (con->connection == DRM_MODE_CONNECTED) ? "CONNECTED" :
-                 (con->connection == DRM_MODE_DISCONNECTED) ? "DISCONNECTED" :
-                 (con->connection == DRM_MODE_UNKNOWNCONNECTION) ? "UNKNOWN" : "OTHER");
+                 (con->connection == DRM_MODE_CONNECTED)? "CONNECTED" :
+                 (con->connection == DRM_MODE_DISCONNECTED)? "DISCONNECTED" :
+                 (con->connection == DRM_MODE_UNKNOWNCONNECTION)? "UNKNOWN" : "OTHER");
 
         // In certain cases the status of the conneciton is reported as UKNOWN, but it is still connected
         // This might be a hardware or software limitation like on Raspberry Pi Zero with composite output
@@ -1314,8 +1300,8 @@ int InitPlatform(void)
         CORE.Window.screen.height = CORE.Window.display.height;
     }
 
-    const bool allowInterlaced = CORE.Window.flags & FLAG_INTERLACED_HINT;
-    const int fps = (CORE.Time.target > 0) ? (1.0/CORE.Time.target) : 60;
+    const bool allowInterlaced = FLAG_IS_SET(CORE.Window.flags, FLAG_INTERLACED_HINT);
+    const int fps = (CORE.Time.target > 0)? (1.0/CORE.Time.target) : 60;
 
     // Try to find an exact matching mode
     platform.modeIndex = FindExactConnectorMode(platform.connector, CORE.Window.screen.width, CORE.Window.screen.height, fps, allowInterlaced);
@@ -1345,7 +1331,7 @@ int InitPlatform(void)
 
     TRACELOG(LOG_INFO, "DISPLAY: Selected DRM connector mode %s (%ux%u%c@%u)", platform.connector->modes[platform.modeIndex].name,
         platform.connector->modes[platform.modeIndex].hdisplay, platform.connector->modes[platform.modeIndex].vdisplay,
-        (platform.connector->modes[platform.modeIndex].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
+        FLAG_IS_SET(platform.connector->modes[platform.modeIndex].flags, DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
         platform.connector->modes[platform.modeIndex].vrefresh);
 
     drmModeFreeEncoder(enc);
@@ -1362,7 +1348,7 @@ int InitPlatform(void)
                  platform.connector->modes[0].name,
                  platform.connector->modes[0].hdisplay,
                  platform.connector->modes[0].vdisplay,
-                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE) ? 'i' : 'p',
+                 (platform.connector->modes[0].flags & DRM_MODE_FLAG_INTERLACE)? 'i' : 'p',
                  platform.connector->modes[0].vrefresh);
     }
     else
@@ -1401,7 +1387,7 @@ int InitPlatform(void)
 
     EGLint samples = 0;
     EGLint sampleBuffer = 0;
-    if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         samples = 4;
         sampleBuffer = 1;
@@ -1429,9 +1415,27 @@ int InitPlatform(void)
     };
 
     EGLint numConfigs = 0;
+    const char *eglClientExtensions = NULL;
 
     // Get an EGL device connection
-    platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
+    // NOTE: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call
+    platform.device = EGL_NO_DISPLAY;
+#if defined(EGL_VERSION_1_5)
+    platform.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+#else
+    // Check if extension is available for eglGetPlatformDisplayEXT()
+    // NOTE: Better compatibility with some drivers (e.g. Mali Midgard)
+    eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
+    {
+        PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+        
+        if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+    }
+
+    // In case extension not found or display could not be retrieved, try useing legacy version
+    if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
+#endif
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -1465,7 +1469,7 @@ int InitPlatform(void)
     if (!eglChooseConfig(platform.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
-        free(configs);
+        RL_FREE(configs);
         return -1;
     }
 
@@ -1473,7 +1477,7 @@ int InitPlatform(void)
 
     // find the EGL config that matches the previously setup GBM format
     int found = 0;
-    for (EGLint i = 0; i < matchingNumConfigs; ++i)
+    for (EGLint i = 0; i < matchingNumConfigs; i++)
     {
         EGLint id = 0;
         if (!eglGetConfigAttrib(platform.device, configs[i], EGL_NATIVE_VISUAL_ID, &id))
@@ -1511,8 +1515,21 @@ int InitPlatform(void)
     }
 
     // Create an EGL window surface
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, (EGLNativeWindowType)platform.gbmSurface, NULL);
-    if (EGL_NO_SURFACE == platform.surface)
+    platform.surface = EGL_NO_SURFACE;
+
+    if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
+    {
+        PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC eglCreatePlatformWindowSurfaceEXT = (PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC)eglGetProcAddress("eglCreatePlatformWindowSurfaceEXT");
+
+        if (eglCreatePlatformWindowSurfaceEXT != NULL) platform.surface = eglCreatePlatformWindowSurfaceEXT(platform.device, platform.config, platform.gbmSurface, NULL);
+    }
+
+    if (platform.surface == EGL_NO_SURFACE)
+    {
+        platform.surface = eglCreateWindowSurface(platform.device, platform.config, (EGLNativeWindowType)platform.gbmSurface, NULL);
+    }
+
+    if (platform.surface == EGL_NO_SURFACE)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL window surface: 0x%04x", eglGetError());
         return -1;
@@ -1578,17 +1595,21 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 #endif
 
-    if ((CORE.Window.flags & FLAG_WINDOW_MINIMIZED) > 0) MinimizeWindow();
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
     // If graphic device is no properly initialized, we end program
-    if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
+    if (!CORE.Window.ready)
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device");
+        return -1;
+    }
     else SetWindowPosition(GetMonitorWidth(GetCurrentMonitor())/2 - CORE.Window.screen.width/2, GetMonitorHeight(GetCurrentMonitor())/2 - CORE.Window.screen.height/2);
 
     // Set some default window flags
-    CORE.Window.flags &= ~FLAG_WINDOW_HIDDEN;       // false
-    CORE.Window.flags &= ~FLAG_WINDOW_MINIMIZED;    // false
-    CORE.Window.flags |= FLAG_WINDOW_MAXIMIZED;     // true
-    CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;    // false
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_HIDDEN);       // false
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);    // false
+    FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);      // true
+    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);    // false
 
     //----------------------------------------------------------------------------
     // Initialize timing system
@@ -1737,8 +1758,8 @@ static void InitKeyboard(void)
 
     // New terminal settings for keyboard: turn off buffering (non-canonical mode), echo and key processing
     // NOTE: ISIG controls if ^C and ^Z generate break signals or not
-    keyboardNewSettings.c_lflag &= ~(ICANON | ECHO | ISIG);
-    //keyboardNewSettings.c_iflag &= ~(ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
+    FLAG_CLEAR(keyboardNewSettings.c_lflag, ICANON | ECHO | ISIG);
+    //FLAG_CLEAR(keyboardNewSettings.c_iflag, ISTRIP | INLCR | ICRNL | IGNCR | IXON | IXOFF);
     keyboardNewSettings.c_cc[VMIN] = 1;
     keyboardNewSettings.c_cc[VTIME] = 0;
 
@@ -1757,10 +1778,10 @@ static void InitKeyboard(void)
     else
     {
         // Reconfigure keyboard mode to get:
-        //    - scancodes (K_RAW)
-        //    - keycodes (K_MEDIUMRAW)
-        //    - ASCII chars (K_XLATE)
-        //    - UNICODE chars (K_UNICODE)
+        // - scancodes (K_RAW)
+        // - keycodes (K_MEDIUMRAW)
+        // - ASCII chars (K_XLATE)
+        // - UNICODE chars (K_UNICODE)
         ioctl(STDIN_FILENO, KDSKBMODE, K_XLATE);  // ASCII chars
     }
 
@@ -1882,7 +1903,7 @@ static void ProcessKeyboard(void)
 }
 #endif  // SUPPORT_SSH_KEYBOARD_RPI
 
-// Initialise user input from evdev(/dev/input/event<N>)
+// Initialize user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
 static void InitEvdevInput(void)
 {
@@ -1890,16 +1911,23 @@ static void InitEvdevInput(void)
     DIR *directory = NULL;
     struct dirent *entity = NULL;
 
-    // Initialise keyboard file descriptor
+    // Initialize keyboard file descriptor
     platform.keyboardFd = -1;
     platform.mouseFd = -1;
 
     // Reset variables
-    for (int i = 0; i < MAX_TOUCH_POINTS; ++i)
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
     {
         CORE.Input.Touch.position[i].x = -1;
         CORE.Input.Touch.position[i].y = -1;
+        platform.touchActive[i] = false;
+        platform.touchPosition[i].x = -1;
+        platform.touchPosition[i].y = -1;
+        platform.touchId[i] = -1;
     }
+
+    // Initialize touch slot
+    platform.touchSlot = 0;
 
     // Reset keyboard key state
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -2063,17 +2091,49 @@ static void ConfigureEvdevDevice(char *device)
     const char *deviceKindStr = "unknown";
     if (isMouse || isTouch)
     {
-        deviceKindStr = "mouse";
-        if (platform.mouseFd != -1) close(platform.mouseFd);
-        platform.mouseFd = fd;
+        bool prioritize = false;
 
-        if (absAxisCount > 0)
+        // Priority logic: touchscreens override Mice
+        // 1. No device set yet? Take it
+        if (platform.mouseFd == -1) prioritize = true;
+        // 2. Current is mouse, new is touch? Upgrade to touch
+        else if (isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 3. Current is touch, new is touch? Use the new one (last one found wins, standard behavior)
+        else if (isTouch && platform.mouseIsTouch) prioritize = true;
+        // 4. Current is mouse, new is mouse? Use the new one
+        else if (!isTouch && !platform.mouseIsTouch) prioritize = true;
+        // 5. Current is touch, new is mouse? Ignore the mouse, keep the touchscreen
+        else prioritize = false;
+
+        if (prioritize)
         {
-            platform.absRange.x = absinfo[ABS_X].info.minimum;
-            platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+            deviceKindStr = isTouch? "touchscreen" : "mouse";
 
-            platform.absRange.y = absinfo[ABS_Y].info.minimum;
-            platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            if (platform.mouseFd != -1)
+            {
+                TRACELOG(LOG_INFO, "INPUT: Overwriting previous input device with new %s", deviceKindStr);
+                close(platform.mouseFd);
+            }
+
+            platform.mouseFd = fd;
+            platform.mouseIsTouch = isTouch;
+
+            if (absAxisCount > 0)
+            {
+                platform.absRange.x = absinfo[ABS_X].info.minimum;
+                platform.absRange.width = absinfo[ABS_X].info.maximum - absinfo[ABS_X].info.minimum;
+
+                platform.absRange.y = absinfo[ABS_Y].info.minimum;
+                platform.absRange.height = absinfo[ABS_Y].info.maximum - absinfo[ABS_Y].info.minimum;
+            }
+
+            TRACELOG(LOG_INFO, "INPUT: Initialized input device %s as %s", device, deviceKindStr);
+        }
+        else
+        {
+            TRACELOG(LOG_INFO, "INPUT: Ignoring device %s (keeping higher priority %s device)", device, platform.mouseIsTouch ? "touchscreen" : "mouse");
+            close(fd);
+            return;
         }
     }
     else if (isGamepad && !isMouse && !isKeyboard && (platform.gamepadCount < MAX_GAMEPADS))
@@ -2144,18 +2204,15 @@ static void PollKeyboardEvents(void)
         // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
-
         // Keyboard keys appear for codes 1 to 255, ignore everthing else
         if ((event.code >= 1) && (event.code <= 255))
         {
-
             // Lookup the scancode in the keymap to get a keycode
             keycode = linuxToRaylibMap[event.code];
 
             // Make sure we got a valid keycode
             if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
             {
-
                 // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
                 // Event interface: 'value' is the value the event carries. Either a relative change for EV_REL,
                 // absolute new value for EV_ABS (joysticks ...), or 0 for EV_KEY for release, 1 for keypress and 2 for autorepeat
@@ -2204,16 +2261,15 @@ static void PollGamepadEvents(void)
             {
                 if (event.code < KEYMAP_SIZE)
                 {
-                    short keycodeRaylib = linuxToRaylibMap[event.code];
+                    short keycode = linuxToRaylibMap[event.code]; // raylib keycode
 
-                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0)? "UP" : "DOWN", event.code, keycodeRaylib);
+                    TRACELOG(LOG_DEBUG, "INPUT: Gamepad %2i: KEY_%s Keycode(linux): %4i Keycode(raylib): %4i", i, (event.value == 0)? "UP" : "DOWN", event.code, keycode);
 
-                    if ((keycodeRaylib != 0) && (keycodeRaylib < MAX_GAMEPAD_BUTTONS))
+                    if ((keycode != 0) && (keycode < MAX_GAMEPAD_BUTTONS))
                     {
                         // 1 - button pressed, 0 - button released
-                        CORE.Input.Gamepad.currentButtonState[i][keycodeRaylib] = event.value;
-
-                        CORE.Input.Gamepad.lastButtonPressed = (event.value == 1)? keycodeRaylib : GAMEPAD_BUTTON_UNKNOWN;
+                        CORE.Input.Gamepad.currentButtonState[i][keycode] = event.value;
+                        CORE.Input.Gamepad.lastButtonPressed = (event.value == 1)? keycode : GAMEPAD_BUTTON_UNKNOWN;
                     }
                 }
             }
@@ -2247,6 +2303,7 @@ static void PollMouseEvents(void)
 
     struct input_event event = { 0 };
     int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+    static bool isMultitouch = false; // Detect if device supports MT events
 
     // Try to read data from the mouse/touch/gesture and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -2292,39 +2349,102 @@ static void PollMouseEvents(void)
             if (event.code == ABS_X)
             {
                 CORE.Input.Mouse.currentPosition.x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
-                CORE.Input.Touch.position[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;        // Scale according to absRange
 
-                touchAction = 2;    // TOUCH_ACTION_MOVE
+                // Update single touch position only if it's active and no MT events are being used
+                if (platform.touchActive[0] && !isMultitouch)
+                {
+                    platform.touchPosition[0].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             if (event.code == ABS_Y)
             {
                 CORE.Input.Mouse.currentPosition.y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
-                CORE.Input.Touch.position[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;      // Scale according to absRange
 
-                touchAction = 2;    // TOUCH_ACTION_MOVE
+                // Update single touch position only if it's active and no MT events are being used
+                if (platform.touchActive[0] && !isMultitouch)
+                {
+                    platform.touchPosition[0].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+                    if (touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             // Multitouch movement
-            if (event.code == ABS_MT_SLOT) platform.touchSlot = event.value;   // Remember the slot number for the folowing events
+            if (event.code == ABS_MT_SLOT)
+            {
+                platform.touchSlot = event.value;
+                isMultitouch = true;
+            }
 
             if (event.code == ABS_MT_POSITION_X)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;    // Scale according to absRange
+                isMultitouch = true;
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
+                {
+                    platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
+
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             if (event.code == ABS_MT_POSITION_Y)
             {
-                if (platform.touchSlot < MAX_TOUCH_POINTS) CORE.Input.Touch.position[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;  // Scale according to absRange
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
+                {
+                    platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
+
+                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
+                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
+                }
             }
 
             if (event.code == ABS_MT_TRACKING_ID)
             {
-                if ((event.value < 0) && (platform.touchSlot < MAX_TOUCH_POINTS))
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
                 {
-                    // Touch has ended for this point
-                    CORE.Input.Touch.position[platform.touchSlot].x = -1;
-                    CORE.Input.Touch.position[platform.touchSlot].y = -1;
+                    if (event.value >= 0)
+                    {
+
+                        platform.touchActive[platform.touchSlot] = true;
+                        platform.touchId[platform.touchSlot] = event.value; // Use Tracking ID for unique IDs
+
+                        touchAction = 1; // TOUCH_ACTION_DOWN
+                    }
+                    else
+                    {
+                        // Touch has ended for this point
+                        platform.touchActive[platform.touchSlot] = false;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
+
+                        // Force UP action if we haven't already set a DOWN action
+                        // (DOWN takes priority over UP if both happen in one frame, though rare)
+                        if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
+                    }
+                }
+            }
+
+            // Handle ABS_MT_PRESSURE (0x3a) if available, as some devices use it for lift-off
+            #ifndef ABS_MT_PRESSURE
+                #define ABS_MT_PRESSURE 0x3a
+            #endif
+            if (event.code == ABS_MT_PRESSURE)
+            {
+                if (platform.touchSlot < MAX_TOUCH_POINTS)
+                {
+                    if (event.value <= 0) // Pressure 0 means lift
+                    {
+                        platform.touchActive[platform.touchSlot] = false;
+                        platform.touchPosition[platform.touchSlot].x = -1;
+                        platform.touchPosition[platform.touchSlot].y = -1;
+                        platform.touchId[platform.touchSlot] = -1;
+                        if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
+                    }
                 }
             }
 
@@ -2336,16 +2456,15 @@ static void PollMouseEvents(void)
                 if (!event.value && previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 0;
-                    touchAction = 0;    // TOUCH_ACTION_UP
+                    if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                 }
 
                 if (event.value && !previousMouseLeftButtonState)
                 {
                     platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = 1;
-                    touchAction = 1;    // TOUCH_ACTION_DOWN
+                    touchAction = 1; // TOUCH_ACTION_DOWN
                 }
             }
-
         }
 
         // Button parsing
@@ -2356,8 +2475,43 @@ static void PollMouseEvents(void)
             {
                 platform.currentButtonStateEvdev[MOUSE_BUTTON_LEFT] = event.value;
 
-                if (event.value > 0) touchAction = 1;   // TOUCH_ACTION_DOWN
-                else touchAction = 0;       // TOUCH_ACTION_UP
+                if (event.value > 0)
+                {
+                    bool activateSlot0 = false;
+
+                    if (event.code == BTN_LEFT) activateSlot0 = true; // Mouse click always activates
+                    else if (event.code == BTN_TOUCH)
+                    {
+                        bool anyActive = false;
+                        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+                        {
+                            if (platform.touchActive[i]) { anyActive = true; break; }
+                        }
+
+                        if (!anyActive) activateSlot0 = true;
+                    }
+
+                    if (activateSlot0)
+                    {
+                        platform.touchActive[0] = true;
+                        platform.touchId[0] = 0;
+                    }
+
+                    touchAction = 1; // TOUCH_ACTION_DOWN
+                }
+                else
+                {
+                    // Only clear touch 0 for actual mouse clicks (BTN_LEFT)
+                    if (event.code == BTN_LEFT)
+                    {
+                        platform.touchActive[0] = false;
+                        platform.touchPosition[0].x = -1;
+                        platform.touchPosition[0].y = -1;
+                    }
+                    else if (event.code == BTN_TOUCH) platform.touchSlot = 0;            // Reset slot index to 0
+
+                    touchAction = 0;       // TOUCH_ACTION_UP
+                }
             }
 
             if (event.code == BTN_RIGHT) platform.currentButtonStateEvdev[MOUSE_BUTTON_RIGHT] = event.value;
@@ -2372,24 +2526,40 @@ static void PollMouseEvents(void)
         if (!CORE.Input.Mouse.cursorLocked)
         {
             if (CORE.Input.Mouse.currentPosition.x < 0) CORE.Input.Mouse.currentPosition.x = 0;
-            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x) CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
+            if (CORE.Input.Mouse.currentPosition.x > CORE.Window.screen.width/CORE.Input.Mouse.scale.x)
+                CORE.Input.Mouse.currentPosition.x = CORE.Window.screen.width/CORE.Input.Mouse.scale.x;
 
             if (CORE.Input.Mouse.currentPosition.y < 0) CORE.Input.Mouse.currentPosition.y = 0;
-            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y) CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
+            if (CORE.Input.Mouse.currentPosition.y > CORE.Window.screen.height/CORE.Input.Mouse.scale.y)
+                CORE.Input.Mouse.currentPosition.y = CORE.Window.screen.height/CORE.Input.Mouse.scale.y;
         }
 
-        // Update touch point count
-        CORE.Input.Touch.pointCount = 0;
+        // Repack active touches into CORE.Input.Touch
+        int k = 0;
         for (int i = 0; i < MAX_TOUCH_POINTS; i++)
         {
-            if (CORE.Input.Touch.position[i].x >= 0) CORE.Input.Touch.pointCount++;
+            if (platform.touchActive[i])
+            {
+                CORE.Input.Touch.position[k] = platform.touchPosition[i];
+                CORE.Input.Touch.pointId[k] = platform.touchId[i];
+                k++;
+            }
+        }
+
+        CORE.Input.Touch.pointCount = k;
+
+        // Clear remaining slots
+        for (int i = k; i < MAX_TOUCH_POINTS; i++)
+        {
+            CORE.Input.Touch.position[i].x = -1;
+            CORE.Input.Touch.position[i].y = -1;
+            CORE.Input.Touch.pointId[i] = -1;
         }
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
         if (touchAction > -1)
         {
             GestureEvent gestureEvent = { 0 };
-
             gestureEvent.touchAction = touchAction;
             gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
@@ -2400,7 +2570,6 @@ static void PollMouseEvents(void)
             }
 
             ProcessGestureEvent(gestureEvent);
-
             touchAction = -1;
         }
 #endif
@@ -2419,7 +2588,7 @@ static int FindMatchingConnectorMode(const drmModeConnector *connector, const dr
     for (size_t i = 0; i < connector->count_modes; i++)
     {
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, connector->modes[i].hdisplay, connector->modes[i].vdisplay,
-            connector->modes[i].vrefresh, (connector->modes[i].flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+            connector->modes[i].vrefresh, (FLAG_IS_SET(connector->modes[i].flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
         if (0 == BINCMP(&platform.crtc->mode, &platform.connector->modes[i])) return i;
     }
@@ -2440,9 +2609,9 @@ static int FindExactConnectorMode(const drmModeConnector *connector, uint width,
     {
         const drmModeModeInfo *const mode = &platform.connector->modes[i];
 
-        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+        TRACELOG(LOG_TRACE, "DISPLAY: DRM Mode %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh, (FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced) continue;
+        if ((FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0) && !allowInterlaced) continue;
 
         if ((mode->hdisplay == width) && (mode->vdisplay == height) && (mode->vrefresh == fps)) return i;
     }
@@ -2466,7 +2635,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
         const drmModeModeInfo *const mode = &platform.connector->modes[i];
 
         TRACELOG(LOG_TRACE, "DISPLAY: DRM mode: %d %ux%u@%u %s", i, mode->hdisplay, mode->vdisplay, mode->vrefresh,
-            (mode->flags & DRM_MODE_FLAG_INTERLACE)? "interlaced" : "progressive");
+            (FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0)? "interlaced" : "progressive");
 
         if ((mode->hdisplay < width) || (mode->vdisplay < height))
         {
@@ -2474,13 +2643,13 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
             continue;
         }
 
-        if ((mode->flags & DRM_MODE_FLAG_INTERLACE) && !allowInterlaced)
+        if ((FLAG_IS_SET(mode->flags, DRM_MODE_FLAG_INTERLACE) > 0) && !allowInterlaced)
         {
             TRACELOG(LOG_TRACE, "DISPLAY: DRM shouldn't choose an interlaced mode");
             continue;
         }
 
-        const int unusedPixels = (mode->hdisplay - width) * (mode->vdisplay - height);
+        const int unusedPixels = (mode->hdisplay - width)*(mode->vdisplay - height);
         const int fpsDiff = mode->vrefresh - fps;
 
         if ((unusedPixels < minUnusedPixels) ||
@@ -2494,6 +2663,84 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
     }
 
     return nearestIndex;
+}
+
+// Compute framebuffer size relative to screen size and display size
+// NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
+static void SetupFramebuffer(int width, int height)
+{
+    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
+    if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
+    {
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+
+        // Downscaling to fit display with border-bars
+        float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
+        float heightRatio = (float)CORE.Window.display.height/(float)CORE.Window.screen.height;
+
+        if (widthRatio <= heightRatio)
+        {
+            CORE.Window.render.width = CORE.Window.display.width;
+            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
+            CORE.Window.renderOffset.x = 0;
+            CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
+        }
+        else
+        {
+            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
+            CORE.Window.render.height = CORE.Window.display.height;
+            CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
+            CORE.Window.renderOffset.y = 0;
+        }
+
+        // Screen scaling required
+        float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
+        CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
+
+        // NOTE: We render to full display resolution!
+        // We just need to calculate above parameters for downscale matrix and offsets
+        CORE.Window.render.width = CORE.Window.display.width;
+        CORE.Window.render.height = CORE.Window.display.height;
+
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Window.render.width, CORE.Window.render.height);
+    }
+    else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
+    {
+        // Required screen size is smaller than display size
+        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+
+        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        {
+            CORE.Window.screen.width = CORE.Window.display.width;
+            CORE.Window.screen.height = CORE.Window.display.height;
+        }
+
+        // Upscaling to fit display with border-bars
+        float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
+        float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+
+        if (displayRatio <= screenRatio)
+        {
+            CORE.Window.render.width = CORE.Window.screen.width;
+            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
+            CORE.Window.renderOffset.x = 0;
+            CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
+        }
+        else
+        {
+            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
+            CORE.Window.render.height = CORE.Window.screen.height;
+            CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
+            CORE.Window.renderOffset.y = 0;
+        }
+    }
+    else
+    {
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+        CORE.Window.renderOffset.x = 0;
+        CORE.Window.renderOffset.y = 0;
+    }
 }
 
 // EOF

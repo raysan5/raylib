@@ -93,8 +93,8 @@ int main(void)
         for (unsigned int i = 0; i < map.tilesX*map.tilesY; i++) if (map.tileFog[i] == 1) map.tileFog[i] = 2;
 
         // Get current tile position from player pixel position
-        playerTileX = (int)((playerPosition.x + MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
-        playerTileY = (int)((playerPosition.y + MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
+        playerTileX = (int)((playerPosition.x + (float)MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
+        playerTileY = (int)((playerPosition.y + (float)MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
 
         // Check visibility and update fog
         // NOTE: We check tilemap limits to avoid processing tiles out-of-array-bounds (it could crash program)

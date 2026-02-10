@@ -62,7 +62,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -308,7 +308,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         unsigned char alpha = 0;
 
                         // NOTE: Data comes as A1R5G5B5, it must be reordered to R5G5B5A1
-                        for (int i = 0; i < image_pixel_size; i++)
+                        for (int i = 0; i < data_size/sizeof(unsigned short); i++)
                         {
                             alpha = ((unsigned short *)image_data)[i] >> 15;
                             ((unsigned short *)image_data)[i] = ((unsigned short *)image_data)[i] << 1;
@@ -328,7 +328,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         unsigned char alpha = 0;
 
                         // NOTE: Data comes as A4R4G4B4, it must be reordered R4G4B4A4
-                        for (int i = 0; i < image_pixel_size; i++)
+                        for (int i = 0; i < data_size/sizeof(unsigned short); i++)
                         {
                             alpha = ((unsigned short *)image_data)[i] >> 12;
                             ((unsigned short *)image_data)[i] = ((unsigned short *)image_data)[i] << 4;
@@ -339,7 +339,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     }
                 }
             }
-            else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24))   // DDS_RGB, no compressed
+            else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24)) // DDS_RGB, no compressed
             {
                 int data_size = image_pixel_size*3*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
@@ -362,7 +362,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
                 // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
                 // So, we must realign B8G8R8A8 to R8G8B8A8
-                for (int i = 0; i < image_pixel_size*4; i += 4)
+                for (int i = 0; i < data_size; i += 4)
                 {
                     blue = ((unsigned char *)image_data)[i];
                     ((unsigned char *)image_data)[i] = ((unsigned char *)image_data)[i + 2];

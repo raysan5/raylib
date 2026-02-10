@@ -2,6 +2,9 @@
 
 #extension GL_EXT_frag_depth : enable           //Extension required for writing depth
 #extension GL_OES_standard_derivatives : enable //Extension used for fwidth()
+
+#define ZERO 0
+
 precision mediump float;                // Precision required for OpenGL ES2 (WebGL)
 
 // Input vertex attributes (from vertex shader)
@@ -16,8 +19,6 @@ uniform vec4 colDiffuse;
 uniform vec3 camPos;
 uniform vec3 camDir;
 uniform vec2 screenCenter;
-
-#define ZERO 0
 
 // SRC: https://learnopengl.com/Advanced-OpenGL/Depth-testing
 float CalcDepth(in vec3 rd, in float Idist)
@@ -62,7 +63,7 @@ float sdSixWayCutHollowSphere(vec3 p, float r, float h, float t)
 }
 
 // SRC: https://iquilezles.org/articles/boxfunctions
-vec2 iBox(in vec3 ro, in vec3 rd, in vec3 rad) 
+vec2 iBox(in vec3 ro, in vec3 rd, in vec3 rad)
 {
     vec3 m = 1.0/rd;
     vec3 n = m*ro;
@@ -128,7 +129,7 @@ float calcSoftshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
 
     float res = 1.0;
     float t = mint;
-    for (int i=ZERO; i<24; i++)
+    for (int i = ZERO; i < 24; i++)
     {
         float h = map(ro + rd*t).x;
         float s = clamp(8.0*h/t,0.0,1.0);
@@ -156,7 +157,7 @@ float calcAO(in vec3 pos, in vec3 nor)
 {
     float occ = 0.0;
     float sca = 1.0;
-    for (int i=ZERO; i<5; i++)
+    for (int i = ZERO; i < 5; i++)
     {
         float h = 0.01 + 0.12*float(i)/4.0;
         float d = map(pos + h*nor).x;
@@ -257,7 +258,8 @@ vec4 render(in vec3 ro, in vec3 rd)
     return vec4(vec3(clamp(col,0.0,1.0)),t);
 }
 
-vec3 CalcRayDir(vec2 nCoord){
+vec3 CalcRayDir(vec2 nCoord)
+{
     vec3 horizontal = normalize(cross(camDir,vec3(.0 , 1.0, .0)));
     vec3 vertical   = normalize(cross(horizontal,camDir));
     return normalize(camDir + horizontal*nCoord.x + vertical*nCoord.y);
@@ -287,6 +289,7 @@ void main()
         color = res.xyz;
         depth = CalcDepth(rd,res.w);
     }
+    
     gl_FragColor = vec4(color , 1.0);
     gl_FragDepthEXT = depth;
 }

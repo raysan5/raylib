@@ -210,7 +210,7 @@ int main(void)
 
             // Draw random emojis in the background
             //------------------------------------------------------------------------------
-            for (int i = 0; i < SIZEOF(emoji); ++i)
+            for (int i = 0; i < SIZEOF(emoji); i++)
             {
                 const char *txt = &emojiCodepoints[emoji[i].index];
                 Rectangle emojiRect = { position.x, position.y, (float)fontEmoji.baseSize, (float)fontEmoji.baseSize };
@@ -277,7 +277,7 @@ int main(void)
                 DrawTriangle(a, b, c, emoji[selected].color);
 
                 // Draw the main text message
-                Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
+                Rectangle textRect = { msgRect.x + (float)horizontalPadding/2, msgRect.y + (float)verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
                 DrawTextBoxed(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
 
                 // Draw the info text below the main message
@@ -316,7 +316,7 @@ static void RandomizeEmoji(void)
     hovered = selected = -1;
     int start = GetRandomValue(45, 360);
 
-    for (int i = 0; i < SIZEOF(emoji); ++i)
+    for (int i = 0; i < SIZEOF(emoji); i++)
     {
         // 0-179 emoji codepoints (from emoji char array) each 4bytes + null char
         emoji[i].index = GetRandomValue(0, 179)*5;
@@ -421,7 +421,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap)
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
             }
@@ -429,7 +429,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap && ((textOffsetX + glyphWidth) > rec.width))
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
 
@@ -453,7 +453,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 
             if (wordWrap && (i == endLine))
             {
-                textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                 textOffsetX = 0;
                 startLine = endLine;
                 endLine = -1;

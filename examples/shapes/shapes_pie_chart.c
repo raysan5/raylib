@@ -49,8 +49,8 @@ int main(void)
     bool showPercentages = false;
     bool showDonut = false;
     int hoveredSlice = -1;
-    Rectangle scrollPanelBounds = {0};
-    Vector2 scrollContentOffset = {0};
+    Rectangle scrollPanelBounds = { 0 };
+    Vector2 scrollContentOffset = { 0 };
     Rectangle view = { 0 };
 
     // UI layout parameters
@@ -67,7 +67,7 @@ int main(void)
     const Rectangle panelRect = {
         panelPos.x, panelPos.y,
         (float)panelWidth,
-        (float)screenHeight - 2.0f*panelMargin 
+        (float)screenHeight - 2.0f*panelMargin
     };
 
     // Pie chart geometry
@@ -108,13 +108,13 @@ int main(void)
                 for (int i = 0; i < sliceCount; i++)
                 {
                     float sweep = (totalValue > 0)? (values[i]/totalValue)*360.0f : 0.0f;
-                    
+
                     if ((angle >= currentAngle) && (angle < (currentAngle + sweep)))
                     {
                         hoveredSlice = i;
                         break;
                     }
-                    
+
                     currentAngle += sweep;
                 }
             }
@@ -182,11 +182,11 @@ int main(void)
             GuiLine((Rectangle){ panelPos.x + 10, (float)panelPos.y + 12 + 170, panelRect.width - 20, 1 }, NULL);
 
             // Scrollable area for slice editors
-            scrollPanelBounds = (Rectangle){ 
-                panelPos.x + panelMargin, 
-                (float)panelPos.y + 12 + 190, 
-                panelRect.width - panelMargin*2, 
-                panelRect.y + panelRect.height - panelPos.y + 12 + 190 - panelMargin 
+            scrollPanelBounds = (Rectangle){
+                panelPos.x + panelMargin,
+                (float)panelPos.y + 12 + 190,
+                panelRect.width - panelMargin*2,
+                panelRect.y + panelRect.height - panelPos.y + 12 + 190 - panelMargin
             };
             int contentHeight = sliceCount*35;
 

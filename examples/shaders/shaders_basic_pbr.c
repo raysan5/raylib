@@ -77,7 +77,7 @@ static void UpdateLight(Shader shader, Light light);
 //----------------------------------------------------------------------------------
 // Program main entry point
 //----------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ int main()
                 SetShaderValue(shader, emissiveColorLoc, &carEmissiveColor, SHADER_UNIFORM_VEC4);
                 float emissiveIntensity = 0.01f;
                 SetShaderValue(shader, emissiveIntensityLoc, &emissiveIntensity, SHADER_UNIFORM_FLOAT);
-		
+
                 // Set old car metallic and roughness values
                 SetShaderValue(shader, metallicValueLoc, &car.materials[0].maps[MATERIAL_MAP_METALNESS].value, SHADER_UNIFORM_FLOAT);
                 SetShaderValue(shader, roughnessValueLoc, &car.materials[0].maps[MATERIAL_MAP_ROUGHNESS].value, SHADER_UNIFORM_FLOAT);
@@ -252,11 +252,11 @@ int main()
                 // Draw spheres to show the lights positions
                 for (int i = 0; i < MAX_LIGHTS; i++)
                 {
-                    Color lightColor = (Color){ 
+                    Color lightColor = (Color){
                         (unsigned char)(lights[i].color[0]*255),
-                        (unsigned char)(lights[i].color[1] * 255),
-                        (unsigned char)(lights[i].color[2] * 255),
-                        (unsigned char)(lights[i].color[3] * 255) };
+                        (unsigned char)(lights[i].color[1]*255),
+                        (unsigned char)(lights[i].color[2]*255),
+                        (unsigned char)(lights[i].color[3]*255) };
 
                     if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lightColor);
                     else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lightColor, 0.3f));

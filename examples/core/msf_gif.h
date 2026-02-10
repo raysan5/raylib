@@ -413,7 +413,7 @@ static MsfGifBuffer * msf_compress_frame(void * allocContext, int width, int hei
 
     //generate palette
     typedef struct { uint8_t r, g, b; } Color3;
-    Color3 table[256] = { {0} };
+    Color3 table[256] = { { 0 } };
     int tableIdx = 1; //we start counting at 1 because 0 is the transparent color
     //transparent is always last in the table
     tlb[tlbSize-1] = 0;
@@ -550,7 +550,7 @@ static void msf_free_gif_state(MsfGifState * handle) {
 
 int msf_gif_begin(MsfGifState * handle, int width, int height) { MsfTimeFunc
     //NOTE: we cannot stomp the entire struct to zero because we must preserve `customAllocatorContext`.
-    MsfCookedFrame empty = {0}; //god I hate MSVC...
+    MsfCookedFrame empty = { 0 }; //god I hate MSVC...
     handle->previousFrame = empty;
     handle->currentFrame = empty;
     handle->width = width;
@@ -614,7 +614,7 @@ int msf_gif_frame(MsfGifState * handle, uint8_t * pixelData, int centiSecondsPer
 }
 
 MsfGifResult msf_gif_end(MsfGifState * handle) { MsfTimeFunc
-    if (!handle->listHead) { MsfGifResult empty = {0}; return empty; }
+    if (!handle->listHead) { MsfGifResult empty = { 0 }; return empty; }
 
     //first pass: determine total size
     size_t total = 1; //1 byte for trailing marker

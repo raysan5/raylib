@@ -42,15 +42,15 @@ int main(void)
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - double pendulum");
 
-    // Simulation Paramters
+    // Simulation Parameters
     float l1 = 15.0f, m1 = 0.2f, theta1 = DEG2RAD*170, w1 = 0;
     float l2 = 15.0f, m2 = 0.1f, theta2 = DEG2RAD*0, w2 = 0;
     float lengthScaler = 0.1f;
     float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-    previousPosition.x += (screenWidth/2);
-    previousPosition.y += (screenHeight/2 - 100);
+    previousPosition.x += ((float)screenWidth/2);
+    previousPosition.y += ((float)screenHeight/2 - 100);
 
     // Scale length
     float L1 = l1*lengthScaler;
@@ -76,7 +76,7 @@ int main(void)
         float step = dt/SIMULATION_STEPS, step2 = step*step;
 
         // Update Physics - larger steps = better approximation
-        for (int i = 0; i < SIMULATION_STEPS; ++i)
+        for (int i = 0; i < SIMULATION_STEPS; i++)
         {
             float delta = theta1 - theta2;
             float sinD = sinf(delta), cosD = cosf(delta), cos2D = cosf(2*delta);
@@ -105,8 +105,8 @@ int main(void)
 
         // Calculate position
         Vector2 currentPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-        currentPosition.x += screenWidth/2;
-        currentPosition.y += screenHeight/2 - 100;
+        currentPosition.x += (float)screenWidth/2;
+        currentPosition.y += (float)screenHeight/2 - 100;
 
         // Draw to render texture
         BeginTextureMode(target);

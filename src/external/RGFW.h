@@ -669,7 +669,8 @@ typedef struct RGFW_event {
 typedef struct RGFW_window_src {
 	HWND window; /*!< source window */
 	HDC hdc; /*!< source HDC */
-	u32 hOffset; /*!< height offset for window */
+	i32 wOffset; /*!< width offset for window */
+	i32 hOffset; /*!< height offset for window */
 	HICON hIconSmall, hIconBig; /*!< source window icons */
 	#if (defined(RGFW_OPENGL)) && !defined(RGFW_OSMESA) && !defined(RGFW_EGL)
 		HGLRC ctx; /*!< source graphics context */
@@ -6522,8 +6523,8 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (win->src.aspectRatio.w != 0 && win->src.aspectRatio.h != 0) {
 				double aspectRatio = (double)win->src.aspectRatio.w / win->src.aspectRatio.h;
 
-				int width = windowRect.right - windowRect.left;
-				int height = windowRect.bottom - windowRect.top;
+				int width = (windowRect.right - windowRect.left) - win->src.wOffset;
+				int height = (windowRect.bottom - windowRect.top) - win->src.hOffset;
 				int newHeight = (int)(width / aspectRatio);
 				int newWidth = (int)(height * aspectRatio);
 
@@ -6537,11 +6538,11 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					else windowRect.bottom = windowRect.top + newHeight;
 				}
 
-				RGFW_window_resize(win, RGFW_AREA((windowRect.right - windowRect.left),
+				RGFW_window_resize(win, RGFW_AREA((u32)(windowRect.right - windowRect.left) - (u32)win->src.wOffset,
 												(u32)(windowRect.bottom - windowRect.top) - (u32)win->src.hOffset));
 			}
 
-			win->r.w = windowRect.right -  windowRect.left;
+			win->r.w = (windowRect.right -  windowRect.left) - (i32)win->src.wOffset;
 			win->r.h = (windowRect.bottom - windowRect.top) - (i32)win->src.hOffset;
 			RGFW_eventQueuePushEx(e.type = RGFW_windowResized; e._win = win);
 			RGFW_windowResizedCallback(win, win->r);
@@ -6561,12 +6562,12 @@ LRESULT CALLBACK WndProcW(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		#endif
 		case WM_GETMINMAXINFO: {
 			MINMAXINFO* mmi = (MINMAXINFO*) lParam;
-			mmi->ptMinTrackSize.x = (LONG)win->src.minSize.w;
+			mmi->ptMinTrackSize.x = (LONG)(win->src.minSize.w + win->src.wOffset);
 			mmi->ptMinTrackSize.y = (LONG)(win->src.minSize.h + win->src.hOffset);
 			if (win->src.maxSize.w == 0 && win->src.maxSize.h == 0)
 				return DefWindowProcW(hWnd, message, wParam, lParam);
 
-			mmi->ptMaxTrackSize.x = (LONG)win->src.maxSize.w;
+			mmi->ptMaxTrackSize.x = (LONG)(win->src.maxSize.w + win->src.wOffset);
 			mmi->ptMaxTrackSize.y = (LONG)(win->src.maxSize.h + win->src.hOffset);
 			return DefWindowProcW(hWnd, message, wParam, lParam);
 		}
@@ -6968,7 +6969,8 @@ RGFW_window* RGFW_createWindowPtr(const char* name, RGFW_rect rect, RGFW_windowF
 	DestroyWindow(dummyWin);
 
 	win->src.hOffset = (u32)(windowRect.bottom - windowRect.top) - (u32)(clientRect.bottom - clientRect.top);
-	win->src.window = CreateWindowW(Class.lpszClassName, (wchar_t*)wide_name, window_style, win->r.x, win->r.y, win->r.w, win->r.h + (i32)win->src.hOffset, 0, 0, inh, 0);
+	win->src.wOffset = (u32)(windowRect.right - windowRect.left) - (u32)(clientRect.right - clientRect.left);
+	win->src.window = CreateWindowW(Class.lpszClassName, (wchar_t*)wide_name, window_style, win->r.x, win->r.y, win->r.w + (i32)win->src.wOffset, win->r.h + (i32)win->src.hOffset, 0, 0, inh, 0);
 	SetPropW(win->src.window, L"RGFW", win);
 	RGFW_window_resize(win, RGFW_AREA(win->r.w, win->r.h)); /* so WM_GETMINMAXINFO gets called again */
 
@@ -7064,7 +7066,7 @@ void RGFW_window_setFullscreen(RGFW_window* win, RGFW_bool fullscreen) {
 
 	if (fullscreen == RGFW_FALSE) {
 		RGFW_window_setBorder(win, 1);
-		SetWindowPos(win->src.window, HWND_NOTOPMOST, win->_oldRect.x, win->_oldRect.y, win->_oldRect.w, win->_oldRect.h + (i32)win->src.hOffset,
+		SetWindowPos(win->src.window, HWND_NOTOPMOST, win->_oldRect.x, win->_oldRect.y, win->_oldRect.w + (i32)win->src.wOffset, win->_oldRect.h + (i32)win->src.hOffset,
 			 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
 		win->_flags &= ~(u32)RGFW_windowFullscreen;
@@ -7898,7 +7900,7 @@ void RGFW_window_resize(RGFW_window* win, RGFW_area a) {
 
 	win->r.w = (i32)a.w;
 	win->r.h = (i32)a.h;
-	SetWindowPos(win->src.window, HWND_TOP, 0, 0, win->r.w, win->r.h + (i32)win->src.hOffset, SWP_NOMOVE);
+	SetWindowPos(win->src.window, HWND_TOP, 0, 0, win->r.w + (i32)win->src.wOffset, win->r.h + (i32)win->src.hOffset, SWP_NOMOVE);
 }
 
 

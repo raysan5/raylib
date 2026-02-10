@@ -113,7 +113,7 @@ int main(void)
 
     // Set the text (using markdown!)
     char text[64] = "Hello ~~World~~ in 3D!";
-    Vector3 tbox = {0};
+    Vector3 tbox = { 0 };
     int layers = 1;
     int quads = 0;
     float layerDistance = 0.01f;
@@ -133,7 +133,7 @@ int main(void)
     Shader alphaDiscard = LoadShader(NULL, TextFormat("resources/shaders/glsl%i/alpha_discard.fs", GLSL_VERSION));
 
     // Array filled with multiple random colors (when multicolor mode is set)
-    Color multi[TEXT_MAX_LAYERS] = {0};
+    Color multi[TEXT_MAX_LAYERS] = { 0 };
 
     DisableCursor();                    // Limit cursor to relative movement inside the window
 
@@ -231,7 +231,7 @@ int main(void)
             if (multicolor)
             {
                 // Fill color array with random colors
-                for (int i = 0; i < TEXT_MAX_LAYERS; ++i)
+                for (int i = 0; i < TEXT_MAX_LAYERS; i++)
                 {
                     multi[i] = GenerateRandomColor(0.5f, 0.8f);
                     multi[i].a = GetRandomValue(0, 255);
@@ -296,7 +296,7 @@ int main(void)
                         rlRotatef(90.0f, 1.0f, 0.0f, 0.0f);
                         rlRotatef(90.0f, 0.0f, 0.0f, -1.0f);
 
-                        for (int i = 0; i < layers; ++i)
+                        for (int i = 0; i < layers; i++)
                         {
                             Color clr = light;
                             if (multicolor) clr = multi[i];

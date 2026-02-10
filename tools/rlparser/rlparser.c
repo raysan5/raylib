@@ -52,7 +52,7 @@
     raylib-parser is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
     BSD-like license that allows static linking with closed source software:
 
-    Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)
+    Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)
 
 **********************************************************************************************/
 
@@ -198,7 +198,7 @@ static void ExportParsedData(const char *fileName, int format); // Export parsed
 //----------------------------------------------------------------------------------
 // Program main entry point
 //----------------------------------------------------------------------------------
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc > 1) ProcessCommandLine(argc, argv);
 
@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < lineCount; i++)
     {
         int j = 0;
-        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the begining
+        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the beginning
         // Read define line
         if (IsTextEqual(lines[i]+j, "#define ", 8))
         {
@@ -385,7 +385,7 @@ int main(int argc, char* argv[])
         char *linePtr = lines[defineLines[i]];
         int j = 0;
 
-        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the begining
+        while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs in the beginning
         j += 8;                                                  // Skip "#define "
         while ((linePtr[j] == ' ') || (linePtr[j] == '\t')) j++; // Skip spaces and tabs after "#define "
 
@@ -721,7 +721,8 @@ int main(int argc, char* argv[])
                             char v = structs[i].fieldType[originalIndex][k];
                             if ((v == '*') || (v == ' ') || (v == ','))
                             {
-                                if (nameEnd != -1) {
+                                if (nameEnd != -1)
+                                {
                                     // Don't copy to last additional field
                                     if (fieldsRemaining != additionalFields)
                                     {
@@ -1011,7 +1012,8 @@ int main(int argc, char* argv[])
                     ((linePtr[c - 4] == 'v') &&
                      (linePtr[c - 3] == 'o') &&
                      (linePtr[c - 2] == 'i') &&
-                     (linePtr[c - 1] == 'd'))) {
+                     (linePtr[c - 1] == 'd')))
+                {
                   break;
                 }
 
@@ -1084,7 +1086,7 @@ static void ShowCommandLineInfo(void)
     printf("//                                                                              //\n");
     printf("// more info and bugs-report: github.com/raysan5/raylib/tools/rlparser          //\n");
     printf("//                                                                              //\n");
-    printf("// Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)                          //\n");
+    printf("// Copyright (c) 2021-2026 Ramon Santamaria (@raysan5)                          //\n");
     printf("//                                                                              //\n");
     printf("//////////////////////////////////////////////////////////////////////////////////\n\n");
 

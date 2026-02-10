@@ -65,7 +65,7 @@ int main(void)
     Shader shdrRaster = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
 
     // Declare Struct used to store camera locs
-    RayLocs marchLocs = {0};
+    RayLocs marchLocs = { 0 };
 
     // Fill the struct with shader locs
     marchLocs.camPos = GetShaderLocation(shdrRaymarch, "camPos");
@@ -118,7 +118,7 @@ int main(void)
             // Raymarch Scene
             rlEnableDepthTest(); // Manually enable Depth Test to handle multiple rendering methods
             BeginShaderMode(shdrRaymarch);
-                DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
+                DrawRectangleRec((Rectangle){ 0,0, (float)screenWidth, (float)screenHeight },WHITE);
             EndShaderMode();
 
             // Rasterize Scene
@@ -138,6 +138,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------

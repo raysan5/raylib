@@ -22,7 +22,7 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -85,9 +85,9 @@ int main()
 
                             // Calculate the cube position
                             Vector3 cubePos = {
-                                (float)(x - numBlocks/2)*(scale*3.0f) + scatter,
-                                (float)(y - numBlocks/2)*(scale*2.0f) + scatter,
-                                (float)(z - numBlocks/2)*(scale*3.0f) + scatter
+                                (float)(x - (float)numBlocks/2)*(scale*3.0f) + scatter,
+                                (float)(y - (float)numBlocks/2)*(scale*2.0f) + scatter,
+                                (float)(z - (float)numBlocks/2)*(scale*3.0f) + scatter
                             };
 
                             // Pick a color with a hue depending on cube position for the rainbow color effect
