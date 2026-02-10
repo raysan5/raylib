@@ -466,11 +466,11 @@ Struct 21: Model (9 fields)
 Struct 22: ModelAnimation (5 fields)
   Name: ModelAnimation
   Description: ModelAnimation
-  Field[1]: int boneCount // Number of bones
-  Field[2]: int frameCount // Number of animation frames
-  Field[3]: BoneInfo * bones // Bones information (skeleton)
-  Field[4]: Transform ** framePoses // Poses array by frame
-  Field[5]: char[32] name // Animation name
+  Field[1]: char[32] name // Animation name
+  Field[2]: int boneCount // Number of bones
+  Field[3]: int frameCount // Number of animation frames
+  Field[4]: BoneInfo * bones // Bones information (skeleton)
+  Field[5]: Transform ** framePoses // Poses array by frame
 Struct 23: Ray (2 fields)
   Name: Ray
   Description: Ray, ray for raycasting

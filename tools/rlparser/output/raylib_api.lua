@@ -1030,6 +1030,11 @@ return {
       description = "ModelAnimation",
       fields = {
         {
+          type = "char[32]",
+          name = "name",
+          description = "Animation name"
+        },
+        {
           type = "int",
           name = "boneCount",
           description = "Number of bones"
@@ -1048,11 +1053,6 @@ return {
           type = "Transform **",
           name = "framePoses",
           description = "Poses array by frame"
-        },
-        {
-          type = "char[32]",
-          name = "name",
-          description = "Animation name"
         }
       }
     },
