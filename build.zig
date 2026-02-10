@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// Minimum supported version of Zig
-const min_ver = "0.15.1";
+const min_ver = "0.16.0-dev.2349+204fa8959";
 
 const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
 const emccOutputFile = "index.html";
@@ -197,7 +197,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     }
 
     var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{ "src/rcore.c" });
+    c_source_files.appendSliceAssumeCapacity(&.{"src/rcore.c"});
 
     if (options.rshapes) {
         try c_source_files.append(b.allocator, "src/rshapes.c");
@@ -448,7 +448,7 @@ pub const Options = struct {
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
-            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse std.process.getEnvVarOwned(b.allocator, "ANDROID_NDK_HOME") catch "",
+            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse b.graph.environ_map.get("ANDROID_NDK_HOME") orelse "",
             .android_api_version = b.option([]const u8, "android_api_version", "specify target android API level") orelse defaults.android_api_version,
         };
     }
@@ -523,15 +523,17 @@ fn addExamples(
 ) !*std.Build.Step {
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
-    var dir = try std.fs.cwd().openDir(b.pathFromRoot(module_subpath), .{ .iterate = true });
-    defer dir.close();
+
+    var dir = try std.Io.Dir.cwd().openDir(b.graph.io, b.pathFromRoot(module_subpath), .{ .iterate = true });
+    defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
-    while (try iter.next()) |entry| {
+    while (try iter.next(b.graph.io)) |entry| {
         if (entry.kind != .file) continue;
         const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
         const name = entry.name[0..extension_idx];
-        const path = b.pathJoin(&.{ module_subpath, entry.name });
+        const filename = try std.fmt.allocPrint(b.allocator, "{s}.c", .{name});
+        const path = b.pathJoin(&.{ module_subpath, filename });
 
         // zig's mingw headers do not include pthread.h
         if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
@@ -553,12 +555,11 @@ fn addExamples(
             });
 
             if (std.mem.eql(u8, name, "rlgl_standalone")) {
-                //TODO: Make rlgl_standalone example work
-                continue;
+                exe_mod.addIncludePath(b.path("src"));
+                exe_mod.addIncludePath(b.path("src/external/glfw/include"));
             }
             if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
-                //TODO: Make raylib_opengl_interop example work
-                continue;
+                exe_mod.addIncludePath(b.path("src/external"));
             }
 
             const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
@@ -650,6 +651,7 @@ fn addExamples(
             all.dependOn(&install_cmd.step);
         }
     }
+
     return all;
 }
 
