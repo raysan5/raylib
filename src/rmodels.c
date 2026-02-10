@@ -2358,11 +2358,12 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
         Mesh mesh = model.meshes[m];
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
+        const int vValues = mesh.vertexCount*3;
+        
         int boneId = 0;
         int boneCounter = 0;
-        float boneWeight = 0.0;
+        float boneWeight = 0.0f;
         bool updated = false; // Flag to check when anim vertex information is updated
-        const int vValues = mesh.vertexCount*3;
 
         // Skip if missing bone data, causes segfault without on some models
         if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
@@ -2388,7 +2389,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
                 // Early stop when no transformation will be applied
                 if (boneWeight == 0.0f) continue;
                 animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex,model.meshes[m].boneMatrices[boneId]);
+                animVertex = Vector3Transform(animVertex, model.meshes[m].boneMatrices[boneId]);
                 mesh.animVertices[vCounter] += animVertex.x*boneWeight;
                 mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
                 mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
