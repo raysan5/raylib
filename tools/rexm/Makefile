@@ -42,6 +42,14 @@ RAYLIB_LIB_PATH       ?= $(RAYLIB_SRC_PATH)
 # Library type used for raylib: STATIC (.a) or SHARED (.so/.dll)
 RAYLIB_LIBTYPE        ?= STATIC
 
+# Select raylib linkage mode explicitly to avoid pulling a local shared
+# library when static linking is requested.
+ifeq ($(RAYLIB_LIBTYPE),STATIC)
+    RAYLIB_LINK_LIB = $(RAYLIB_LIB_PATH)/libraylib.a
+else
+    RAYLIB_LINK_LIB = -lraylib
+endif
+
 # Define compiler path on Windows
 COMPILER_PATH         ?= C:\raylib\w64devkit\bin
 
@@ -264,14 +272,14 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
         # Libraries for Windows desktop compilation
         # NOTE: WinMM library required to set high-res timer resolution
-        LDLIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
+        LDLIBS = $(RAYLIB_LINK_LIB) -lopengl32 -lgdi32 -lwinmm
         # Required for physac examples
         #LDLIBS += -static -lpthread
     endif
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
+        LDLIBS = $(RAYLIB_LINK_LIB) -lGL -lm -lpthread -ldl -lrt
 
         # On Wayland windowing system, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
@@ -290,12 +298,12 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+        LDLIBS = $(RAYLIB_LINK_LIB) -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
         # NOTE: Required packages: mesa-libs
-        LDLIBS = -lraylib -lGL -lpthread -lm
+        LDLIBS = $(RAYLIB_LINK_LIB) -lGL -lpthread -lm
 
         # On XWindow requires also below libraries
         LDLIBS += -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
