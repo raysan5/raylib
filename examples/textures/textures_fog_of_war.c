@@ -68,6 +68,7 @@ int main(void)
     // at a smaller size (one pixel per tile) and scale it on drawing with bilinear filtering
     RenderTexture2D fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
     SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(fogOfWar.texture, TEXTURE_WRAP_CLAMP);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
