@@ -114,7 +114,6 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-// #include <string.h>     // Required for: strcmp()
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -983,8 +982,6 @@ void PollInputEvents(void)
             case RGFW_mouseEnter: CORE.Input.Mouse.cursorOnScreen = true; break;
             case RGFW_mouseLeave: CORE.Input.Mouse.cursorOnScreen = false; break;
             case RGFW_quit:
-                event.type = 0; // TODO: remove?
-                // CORE.Window.shouldClose = true;
                 RGFW_window_setShouldClose(platform.window, true);
                 return;
             case RGFW_dataDrop:      // Dropped file
