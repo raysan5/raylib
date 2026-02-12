@@ -908,9 +908,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform

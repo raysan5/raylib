@@ -1244,9 +1244,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 // REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1864,9 +1864,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_SIZE:
         {
-            // WARNING: Don't trust the docs, they say you won't get this message if you don't call DefWindowProc
-            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
-            // message without getting WM_WINDOWPOSCHANGED
+            // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
+            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created, 
+            // this message can be obtained without getting WM_WINDOWPOSCHANGED
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
         } break;
         //case WM_MOVE
@@ -2187,10 +2187,10 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 // window. This function will continue to perform these update operations so long as
 // the state continues to change
 //
-// This design takes care of many odd corner cases. For example, if you want to restore
-// a window that was previously maximized AND minimized and you want to remove both these
-// flags, you actually need to call ShowWindow with SW_RESTORE twice. Another example is
-// if you have a maximized window, if the undecorated flag is modified then the window style
+// This design takes care of many odd corner cases. For example, in case of restoring
+// a window that was previously maximized AND minimized and those two flags need to be removed, 
+// ShowWindow with SW_RESTORE twice need to bee actually calleed. Another example is
+// wheen having a maximized window, if the undecorated flag is modified then the window style
 // needs to be updated, but updating the style would mean the window size would change
 // causing the window to lose its Maximized state which would mean the window size
 // needs to be updated, followed by the update of window style, a second time, to restore that maximized

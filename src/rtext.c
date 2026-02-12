@@ -682,7 +682,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 //  Render a unicode codepoint to a bitmap
                 //      stbtt_GetCodepointBitmap()           -- allocates and returns a bitmap
                 //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
-                //      stbtt_MakeCodepointBitmap()          -- renders into bitmap you provide
+                //      stbtt_MakeCodepointBitmap()          -- renders into a provided bitmap
 
                 // Check if a glyph is available in the font
                 // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
