@@ -133,6 +133,118 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific
 
+#if defined(__linux__) // prevent collision of raylibs KEY_X and x11
+    #undef KEY_NULL // // // // // //= 0;
+// Alphanumeric keys
+#undef KEY_APOSTROPHE // // //= 39;
+#undef KEY_COMMA // // // // // = 44;
+#undef KEY_MINUS // // // // // = 45;
+#undef KEY_PERIOD // // // // //= 46;
+#undef KEY_SLASH // // // // // = 47;
+#undef KEY_ZERO // // // // // //= 48;
+#undef KEY_ONE // // // // // // = 49;
+#undef KEY_TWO // // // // // // = 50;
+#undef KEY_THREE // // // // // = 51;
+#undef KEY_FOUR // // // // // //= 52;
+#undef KEY_FIVE // // // // // //= 53;
+#undef KEY_SIX // // // // // // = 54;
+#undef KEY_SEVEN // // // // // = 55;
+#undef KEY_EIGHT // // // // // = 56;
+#undef KEY_NINE // // // // // //= 57;
+#undef KEY_SEMICOLON // // // = 59;
+#undef KEY_EQUAL // // // // // = 61;
+#undef KEY_A // // // // // // // = 65;
+#undef KEY_B // // // // // // // = 66;
+#undef KEY_C // // // // // // // = 67;
+#undef KEY_D // // // // // // // = 68;
+#undef KEY_E // // // // // // // = 69;
+#undef KEY_F // // // // // // // = 70;
+#undef KEY_G // // // // // // // = 71;
+#undef KEY_H // // // // // // // = 72;
+#undef KEY_I // // // // // // // = 73;
+#undef KEY_J // // // // // // // = 74;
+#undef KEY_K // // // // // // // = 75;
+#undef KEY_L // // // // // // // = 76;
+#undef KEY_M // // // // // // // = 77;
+#undef KEY_N // // // // // // // = 78;
+#undef KEY_O // // // // // // // = 79;
+#undef KEY_P // // // // // // // = 80;
+#undef KEY_Q // // // // // // // = 81;
+#undef KEY_R // // // // // // // = 82;
+#undef KEY_S // // // // // // // = 83;
+#undef KEY_T // // // // // // // = 84;
+#undef KEY_U // // // // // // // = 85;
+#undef KEY_V // // // // // // // = 86;
+#undef KEY_W // // // // // // // = 87;
+#undef KEY_X // // // // // // // = 88;
+#undef KEY_Y // // // // // // // = 89;
+#undef KEY_Z // // // // // // // = 90;
+#undef KEY_LEFT_BRACKET // //= 91;
+#undef KEY_BACKSLASH // // // = 92;
+#undef KEY_RIGHT_BRACKET // = 93;
+#undef KEY_GRAVE // // // // // = 96;
+// Function keys
+#undef KEY_SPACE // // // // // = 32;
+#undef KEY_ESCAPE // // // // //= 256;
+#undef KEY_ENTER // // // // // = 257;
+#undef KEY_TAB // // // // // // = 258;
+#undef KEY_BACKSPACE // // // = 259;
+#undef KEY_INSERT // // // // //= 260;
+#undef KEY_DELETE // // // // //= 261;
+#undef KEY_RIGHT // // // // // = 262;
+#undef KEY_LEFT // // // // // //= 263;
+#undef KEY_DOWN // // // // // //= 264;
+#undef KEY_UP // // // // // // //= 265;
+#undef KEY_PAGE_UP // // // // = 266;
+#undef KEY_PAGE_DOWN // // // = 267;
+#undef KEY_HOME // // // // // //= 268;
+#undef KEY_END // // // // // // = 269;
+#undef KEY_CAPS_LOCK // // // = 280;
+#undef KEY_SCROLL_LOCK // // = 281;
+#undef KEY_NUM_LOCK // // // //= 282;
+#undef KEY_PRINT_SCREEN // //= 283;
+#undef KEY_PAUSE // // // // // = 284;
+#undef KEY_F1 // // // // // // //= 290;
+#undef KEY_F2 // // // // // // //= 291;
+#undef KEY_F3 // // // // // // //= 292;
+#undef KEY_F4 // // // // // // //= 293;
+#undef KEY_F5 // // // // // // //= 294;
+#undef KEY_F6 // // // // // // //= 295;
+#undef KEY_F7 // // // // // // //= 296;
+#undef KEY_F8 // // // // // // //= 297;
+#undef KEY_F9 // // // // // // //= 298;
+#undef KEY_F10 // // // // // // = 299;
+#undef KEY_F11 // // // // // // = 300;
+#undef KEY_F12 // // // // // // = 301;
+#undef KEY_LEFT_SHIFT // // //= 340;
+#undef KEY_LEFT_CONTROL // //= 341;
+#undef KEY_LEFT_ALT // // // //= 342;
+#undef KEY_LEFT_SUPER // // //= 343;
+#undef KEY_RIGHT_SHIFT // // = 344;
+#undef KEY_RIGHT_CONTROL // = 345;
+#undef KEY_RIGHT_ALT // // // = 346;
+#undef KEY_RIGHT_SUPER // // = 347;
+#undef KEY_KB_MENU // // // // = 348;
+// Keypad keys
+#undef KEY_KP_0 // // // // // //= 320;
+#undef KEY_KP_1 // // // // // //= 321;
+#undef KEY_KP_2 // // // // // //= 322;
+#undef KEY_KP_3 // // // // // //= 323;
+#undef KEY_KP_4 // // // // // //= 324;
+#undef KEY_KP_5 // // // // // //= 325;
+#undef KEY_KP_6 // // // // // //= 326;
+#undef KEY_KP_7 // // // // // //= 327;
+#undef KEY_KP_8 // // // // // //= 328;
+#undef KEY_KP_9 // // // // // //= 329;
+#undef KEY_KP_DECIMAL // // //= 330;
+#undef KEY_KP_DIVIDE // // // = 331;
+#undef KEY_KP_MULTIPLY // // = 332;
+#undef KEY_KP_SUBTRACT // // = 333;
+#undef KEY_KP_ADD // // // // //= 334;
+#undef KEY_KP_ENTER // // // //= 335;
+#undef KEY_KP_EQUAL // // // //= 336;
+#endif
+
 static const unsigned short keyMappingRGFW[] = {
     [RGFW_keyNULL] = KEY_NULL,
     [RGFW_apostrophe] = KEY_APOSTROPHE,
@@ -975,12 +1087,8 @@ void PollInputEvents(void)
 
     if ((CORE.Window.eventWaiting) || (IsWindowState(FLAG_WINDOW_MINIMIZED) && !IsWindowState(FLAG_WINDOW_ALWAYS_RUN)))
     {
-        RGFW_waitForEvent(1); // Wait for input events: keyboard/mouse/window events (callbacks) -> Update keys state
         CORE.Time.previous = GetTime();
     }
-
-     
-     mg_gamepads_poll(&platform.minigamepad);
 
     RGFW_event rgfw_event;
     while (RGFW_window_checkEvent(platform.window, &rgfw_event))
@@ -1176,6 +1284,69 @@ void PollInputEvents(void)
 #endif
     }
     //-----------------------------------------------------------------------------
+
+    mg_gamepads_poll(&platform.minigamepad);
+    mg_event gamepad_event;
+    while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event)) {
+        int gamepadIndex = gamepad_event.gamepad->index;
+        switch (gamepad_event.type) {
+            case MG_EVENT_BUTTON_PRESS:
+                printf("PRESS\\n");
+                CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 1;
+                CORE.Input.Gamepad.lastButtonPressed = gamepad_event.button;
+                break;
+            case MG_EVENT_BUTTON_RELEASE:
+                printf("RELEASE\\n");
+                CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 0;
+                if (CORE.Input.Gamepad.lastButtonPressed == gamepad_event.button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                break;
+            case MG_EVENT_AXIS_MOVE:
+                printf("AXIS MOVE (%d) %d\\n", gamepadIndex, gamepad_event.axis);
+                int axis = -1;
+                float value = 0;
+
+                switch(gamepad_event.axis)
+                {
+                    case 0:
+                    {
+                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_X] = platform.minigamepad.gamepads[gamepadIndex].axes[0].value/100.0f;
+                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_Y] = platform.minigamepad.gamepads[gamepadIndex].axes[0].value/100.0f;
+                    } break;
+                    case 1:
+                    {
+                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_X] = platform.minigamepad.gamepads[gamepadIndex].axes[1].value/100.0f;
+                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_Y] = platform.minigamepad.gamepads[gamepadIndex].axes[1].value/100.0f;
+                    } break;
+                    case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
+                    case 3:
+                    {
+                        if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
+
+                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                        int pressed = (value > 0.1f);
+                        CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = pressed;
+
+                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = gamepad_event.button;
+                        else if (CORE.Input.Gamepad.lastButtonPressed == gamepad_event.button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                    }
+                    default: break;
+                }
+                break;
+            case MG_EVENT_GAMEPAD_CONNECT:
+                printf("CONNECT\\n");
+                CORE.Input.Gamepad.ready[gamepadIndex] = true;
+                CORE.Input.Gamepad.axisCount[gamepadIndex] = MG_AXIS_COUNT;
+                CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
+                CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+                strcpy(CORE.Input.Gamepad.name[gamepadIndex], platform.minigamepad.gamepads[gamepadIndex].name);
+                break;
+            case MG_EVENT_GAMEPAD_DISCONNECT:
+                printf("DISCONNECT\\n");
+                CORE.Input.Gamepad.ready[gamepadIndex] = false;
+                break;
+            default: break;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -1236,7 +1407,6 @@ int InitPlatform(void)
 
     if (platform.window != NULL)
     {
-        TRACELOG(LOG_INFO, "PLATFORM: Failed to initialize window");
         // NOTE: RGFW's exit key is distinct from raylib's exit key and
         // must be set to NULL to not interfere
         RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
@@ -1337,6 +1507,8 @@ void ClosePlatform(void)
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
     if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return KEY_NULL;
+
+    printf("returning %d from %d (%d)\n", (KeyboardKey)keyMappingRGFW[keycode], keycode, KEY_S);
 
     return (KeyboardKey)keyMappingRGFW[keycode];
 }
