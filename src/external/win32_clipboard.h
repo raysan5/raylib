@@ -13,7 +13,7 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
 #include <stdlib.h>
 #include <assert.h>
 
-// NOTE: These search for architecture is taken from "Windows.h", and it's necessary if we really don't wanna import windows.h
+// NOTE: These search for architecture is taken from "windows.h", and it's necessary to avoid including windows.h
 // and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined.
 #if !defined(_X86_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IX86)
     #define _X86_
@@ -306,16 +306,15 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
     const unsigned int rgbaSize = sizeof(RGBQUAD);
 
     // NOTE: biSize specifies the number of bytes required by the structure
-    // We expect to always be 40 because it should be packed
+    // It's expected to be always 40 because it should be packed
     if ((bih.biSize == 40) && (sizeof(BITMAPINFOHEADER) == 40))
     {
         // NOTE: biBitCount specifies the number of bits per pixel
         // Might exist some bit masks *after* the header and *before* the pixel offset
-        // we're looking, but only if we have more than
-        // 8 bits per pixel, so we need to ajust for that
+        // we're looking, but only if more than 8 bits per pixel, so it needs to be ajusted for that
         if (bih.biBitCount > 8)
         {
-            // If (bih.biCompression == BI_RGB) we should NOT offset more
+            // If (bih.biCompression == BI_RGB) no need to be offset more
 
             if (bih.biCompression == BI_BITFIELDS) offset += 3*rgbaSize;
             else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4*rgbaSize; // Not widely supported, but valid
