@@ -1287,7 +1287,25 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    return SDL_GameControllerAddMapping(mappings);
+    const int mappingsLength = strlen(mappings);
+    char *buffer = (char *)RL_CALLOC(mappingsLength + 1, sizeof(char));
+    memcpy(buffer, mappings, mappingsLength);
+    char *p = strtok(buffer, "\n");
+    bool succeed = true;
+
+    while (p != NULL)
+    {
+        if (SDL_GameControllerAddMapping(p) == -1)
+        {
+            succeed = false;
+        }
+        p = strtok(NULL, "\n");
+    }
+
+    RL_FREE(buffer);
+
+    // To make return value is consistent with the GLFW version.
+    return (succeed)? 1 : 0;
 }
 
 // Set gamepad vibration
