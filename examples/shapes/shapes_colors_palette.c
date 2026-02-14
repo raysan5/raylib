@@ -45,7 +45,7 @@ int main(void)
     for (int i = 0; i < MAX_COLORS_COUNT; i++)
     {
         colorsRecs[i].x = 20.0f + 100.0f *(i%7) + 10.0f *(i%7);
-        colorsRecs[i].y = 80.0f + 100.0f *((float)i/7) + 10.0f *((float)i/7);
+        colorsRecs[i].y = 80.0f + 100.0f *((int)i/7) + 10.0f *((float)i/7);
         colorsRecs[i].width = 100.0f;
         colorsRecs[i].height = 100.0f;
     }
