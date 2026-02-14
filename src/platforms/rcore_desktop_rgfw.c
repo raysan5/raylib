@@ -738,6 +738,7 @@ void SetWindowFocused(void)
 void *GetWindowHandle(void)
 {
     if (platform.window == NULL) return NULL;
+
 #ifdef RGFW_WASM
     return (void *)platform.window->src.ctx;
 #else
@@ -1177,22 +1178,23 @@ void PollInputEvents(void)
 
                     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
                 }
-
-                // TODO: RGFW_keyChar? new window event?
-                //
-                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
-                // Check if there is space available in the queue
-                // if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-                // {
-                //     // Add character (codepoint) to the queue
-                //     CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RGFW_rgfwToKeyChar(rgfw_event.key.value);
-                //     CORE.Input.Keyboard.charPressedQueueCount++;
-                // }
             } break;
             case RGFW_keyReleased:
             {
                 KeyboardKey key = ConvertScancodeToKey(rgfw_event.key.value);
                 if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
+            } break;
+
+            case RGFW_keyChar:
+            {
+                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
+                // Check if there is space available in the queue
+                if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+                {
+                    // Add character (codepoint) to the queue
+                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = rgfw_event.keyChar.value;
+                    CORE.Input.Keyboard.charPressedQueueCount++;
+                }
             } break;
 
             // Check mouse events
