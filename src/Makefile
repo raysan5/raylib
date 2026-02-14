@@ -841,6 +841,7 @@ ifeq ($(ROOT),root)
         # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
+		cp --update rcamera.h $(RAYLIB_H_INSTALL_PATH)/rcamera.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files installed/updated!"
     else
