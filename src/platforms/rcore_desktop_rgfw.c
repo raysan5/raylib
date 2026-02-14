@@ -356,25 +356,42 @@ static const unsigned short keyMappingRGFW[] = {
     [RGFW_kpEqual] = KEY_KP_EQUAL,
 };
 
-// static int RGFW_gpConvTable[18] = {
-//     [RGFW_gamepadY] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
-//     [RGFW_gamepadB] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-//     [RGFW_gamepadA] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
-//     [RGFW_gamepadX] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-//     [RGFW_gamepadL1] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
-//     [RGFW_gamepadR1] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
-//     [RGFW_gamepadL2] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
-//     [RGFW_gamepadR2] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
-//     [RGFW_gamepadSelect] = GAMEPAD_BUTTON_MIDDLE_LEFT,
-//     [RGFW_gamepadHome] = GAMEPAD_BUTTON_MIDDLE,
-//     [RGFW_gamepadStart] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
-//     [RGFW_gamepadUp] = GAMEPAD_BUTTON_LEFT_FACE_UP,
-//     [RGFW_gamepadRight] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-//     [RGFW_gamepadDown] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-//     [RGFW_gamepadLeft] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-//     [RGFW_gamepadL3] = GAMEPAD_BUTTON_LEFT_THUMB,
-//     [RGFW_gamepadR3] = GAMEPAD_BUTTON_RIGHT_THUMB,
-// };
+static int mg_buttonConvertTable[] = {
+    [MG_BUTTON_NORTH] = GAMEPAD_BUTTON_RIGHT_FACE_UP,
+    [MG_BUTTON_EAST] = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+    [MG_BUTTON_SOUTH] = GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+    [MG_BUTTON_WEST] = GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+    [MG_BUTTON_LEFT_SHOULDER] = GAMEPAD_BUTTON_LEFT_TRIGGER_1,
+    [MG_BUTTON_RIGHT_SHOULDER] = GAMEPAD_BUTTON_RIGHT_TRIGGER_1,
+    [MG_BUTTON_LEFT_TRIGGER] = GAMEPAD_BUTTON_LEFT_TRIGGER_2,
+    [MG_BUTTON_RIGHT_TRIGGER] = GAMEPAD_BUTTON_RIGHT_TRIGGER_2,
+    [MG_BUTTON_BACK] = GAMEPAD_BUTTON_MIDDLE_LEFT,
+    [MG_BUTTON_GUIDE] = GAMEPAD_BUTTON_MIDDLE,
+    [MG_BUTTON_START] = GAMEPAD_BUTTON_MIDDLE_RIGHT,
+    [MG_BUTTON_DPAD_UP] = GAMEPAD_BUTTON_LEFT_FACE_UP,
+    [MG_BUTTON_DPAD_RIGHT] = GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+    [MG_BUTTON_DPAD_DOWN] = GAMEPAD_BUTTON_LEFT_FACE_DOWN,
+    [MG_BUTTON_DPAD_LEFT] = GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+    [MG_BUTTON_LEFT_STICK] = GAMEPAD_BUTTON_LEFT_THUMB,
+    [MG_BUTTON_RIGHT_STICK] = GAMEPAD_BUTTON_RIGHT_THUMB,
+};
+
+static int mg_axisConvertTable[] = {
+    [MG_AXIS_LEFT_X] = GAMEPAD_AXIS_LEFT_X,
+    [MG_AXIS_LEFT_Y] = GAMEPAD_AXIS_LEFT_Y,
+    [MG_AXIS_RIGHT_X] = GAMEPAD_AXIS_RIGHT_X,
+    [MG_AXIS_RIGHT_Y] = GAMEPAD_AXIS_RIGHT_Y,
+    [MG_AXIS_LEFT_TRIGGER] = GAMEPAD_AXIS_LEFT_TRIGGER,
+    [MG_AXIS_RIGHT_TRIGGER] = GAMEPAD_AXIS_RIGHT_TRIGGER,
+
+    /* unsupported in raylib */
+    [MG_AXIS_HAT_DPAD_LEFT_RIGHT] = -1,
+    [MG_AXIS_HAT_DPAD_LEFT] = -1,
+    [MG_AXIS_HAT_DPAD_RIGHT] = -1,
+    [MG_AXIS_HAT_DPAD_UP_DOWN] = -1,
+    [MG_AXIS_HAT_DPAD_UP] = -1,
+    [MG_AXIS_HAT_DPAD_DOWN] = -1,
+};
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -1278,55 +1295,67 @@ void PollInputEvents(void)
     }
     //-----------------------------------------------------------------------------
 
-    mg_gamepads_poll(&platform.minigamepad);
+    // mg_gamepads_poll(&platform.minigamepad);
     mg_event gamepad_event;
     while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event)) {
         int gamepadIndex = gamepad_event.gamepad->index;
         switch (gamepad_event.type) {
             case MG_EVENT_BUTTON_PRESS:
-                CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 1;
-                CORE.Input.Gamepad.lastButtonPressed = gamepad_event.button;
-                break;
-            case MG_EVENT_BUTTON_RELEASE:
-                CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 0;
-                if (CORE.Input.Gamepad.lastButtonPressed == gamepad_event.button) CORE.Input.Gamepad.lastButtonPressed = 0;
-                break;
-            case MG_EVENT_AXIS_MOVE:
-                int axis = -1;
-                float value = 0;
-
-                switch(gamepad_event.axis)
                 {
-                    case 0:
+                    int button = mg_buttonConvertTable[gamepad_event.button];
+                    if (button >= 0)
                     {
-                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_X] = platform.minigamepad.gamepads[gamepadIndex].axes[0].value/100.0f;
-                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_Y] = platform.minigamepad.gamepads[gamepadIndex].axes[0].value/100.0f;
-                    } break;
-                    case 1:
-                    {
-                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_X] = platform.minigamepad.gamepads[gamepadIndex].axes[1].value/100.0f;
-                        CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_Y] = platform.minigamepad.gamepads[gamepadIndex].axes[1].value/100.0f;
-                    } break;
-                    case 2: axis = GAMEPAD_AXIS_LEFT_TRIGGER;
-                    case 3:
-                    {
-                        if (axis == -1) axis = GAMEPAD_AXIS_RIGHT_TRIGGER;
-
-                        int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-                        int pressed = (value > 0.1f);
-                        CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = pressed;
-
-                        if (pressed) CORE.Input.Gamepad.lastButtonPressed = gamepad_event.button;
-                        else if (CORE.Input.Gamepad.lastButtonPressed == gamepad_event.button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                        CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = 1;
+                        CORE.Input.Gamepad.lastButtonPressed = button;
                     }
-                    default: break;
+                } break;
+            case MG_EVENT_BUTTON_RELEASE:
+                {
+                    int button = mg_buttonConvertTable[gamepad_event.button];
+                    if (button >= 0)
+                    {
+                        CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = 0;
+                        if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                    }
+                } break;
+            case MG_EVENT_AXIS_MOVE:
+                int axis = mg_axisConvertTable[gamepad_event.axis];
+
+                switch (axis) {
+                    case GAMEPAD_AXIS_LEFT_X:
+                    case GAMEPAD_AXIS_LEFT_Y:
+                    case GAMEPAD_AXIS_RIGHT_X:
+                    case GAMEPAD_AXIS_RIGHT_Y:
+                            CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
+                        break;
+                    case GAMEPAD_AXIS_LEFT_TRIGGER:
+                    case GAMEPAD_AXIS_RIGHT_TRIGGER:
+                            CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
+
+                            /* trigger button press when axis is all the way */
+                            int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                            int pressed = (platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value >= 1.0f);
+
+                            CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = pressed;
+                            if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+                            else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                        break;
                 }
                 break;
             case MG_EVENT_GAMEPAD_CONNECT:
                 CORE.Input.Gamepad.ready[gamepadIndex] = true;
-                CORE.Input.Gamepad.axisCount[gamepadIndex] = MG_AXIS_COUNT;
                 CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
                 CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
+
+                int axisCount = 0;
+                for (int i = 0; i < MG_AXIS_COUNT; i += 1) {
+                    if (platform.minigamepad.gamepads[gamepadIndex].axes[i].supported) {
+                        axisCount += 1;
+                    } else {
+                        break;
+                    }
+                }
+                CORE.Input.Gamepad.axisCount[gamepadIndex] = axisCount;
                 strcpy(CORE.Input.Gamepad.name[gamepadIndex], platform.minigamepad.gamepads[gamepadIndex].name);
                 break;
             case MG_EVENT_GAMEPAD_DISCONNECT:
