@@ -51,11 +51,31 @@ int main(void)
         { padPosition.x, padPosition.y + buttonRadius*1.5f }  // Down
     };
 
-    const char *buttonLabels[BUTTON_MAX] = {
-        "Y",    // Up
-        "X",    // Left
-        "B",    // Right
-        "A"     // Down
+    Vector2 arrowTris[4][3] = {
+        // Up
+        {
+            { buttonPositions[0].x,     buttonPositions[0].y - 12 },
+            { buttonPositions[0].x - 9, buttonPositions[0].y + 9  },
+            { buttonPositions[0].x + 9, buttonPositions[0].y + 9  }
+        },
+        // Left
+        {
+            { buttonPositions[1].x + 9,  buttonPositions[1].y - 9 },
+            { buttonPositions[1].x - 12, buttonPositions[1].y     },
+            { buttonPositions[1].x + 9,  buttonPositions[1].y + 9 }
+        },
+        // Right
+        {
+            { buttonPositions[2].x + 12, buttonPositions[2].y     },
+            { buttonPositions[2].x - 9,  buttonPositions[2].y - 9 },
+            { buttonPositions[2].x - 9,  buttonPositions[2].y + 9 }
+        },
+        // Down
+        {
+            { buttonPositions[3].x - 9, buttonPositions[3].y - 9  },
+            { buttonPositions[3].x,     buttonPositions[3].y + 12 },
+            { buttonPositions[3].x + 9, buttonPositions[3].y - 9  }
+        }
     };
 
     Color buttonLabelColors[BUTTON_MAX] = {
@@ -128,9 +148,12 @@ int main(void)
             {
                 DrawCircleV(buttonPositions[i], buttonRadius, (i == pressedButton)? DARKGRAY : BLACK);
 
-                DrawText(buttonLabels[i],
-                    (int)buttonPositions[i].x - 7, (int)buttonPositions[i].y - 8,
-                    20, buttonLabelColors[i]);
+                DrawTriangle(
+                    arrowTris[i][0],
+                    arrowTris[i][1],
+                    arrowTris[i][2],
+                    buttonLabelColors[i]
+                );
             }
 
             DrawText("move the player with D-Pad buttons", 10, 10, 20, DARKGRAY);

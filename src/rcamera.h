@@ -199,7 +199,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 //----------------------------------------------------------------------------------
 #define CAMERA_MOVE_SPEED                           5.4f       // Units per second
 #define CAMERA_ROTATION_SPEED                       0.03f
-#define CAMERA_PAN_SPEED                            0.2f
+#define CAMERA_PAN_SPEED                            2.0f
 
 // Camera mouse movement sensitivity
 #define CAMERA_MOUSE_MOVE_SENSITIVITY               0.003f
