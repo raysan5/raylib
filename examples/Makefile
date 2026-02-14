@@ -740,7 +740,7 @@ OTHERS = \
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
 # Default target entry
-all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO)
+all: $(CORE) $(SHAPES) $(TEXT) $(TEXTURES) $(MODELS) $(SHADERS) $(AUDIO) $(OTHERS)
 
 core: $(CORE)
 shapes: $(SHAPES)
@@ -749,6 +749,7 @@ text: $(TEXT)
 models: $(MODELS)
 shaders: $(SHADERS)
 audio: $(AUDIO)
+others: $(OTHERS)
 
 # Generic compilation pattern
 # NOTE: Examples must be ready for Android compilation!
