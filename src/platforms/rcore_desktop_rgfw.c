@@ -122,7 +122,7 @@ extern "C" {
 typedef struct {
     double startTime;
     RGFW_window *window;                // Native display device (physical screen connection)
-    RGFW_monitor mon;
+    RGFW_monitor *mon;
     mg_gamepads minigamepad;
 } PlatformData;
 
@@ -133,7 +133,7 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific
 
-#if defined(__linux__) // prevent collision of raylibs KEY_X and x11
+#if defined(__linux__) // prevent collision of raylibs KEY_<X> and linux/input.h KEY_<X>
     #undef KEY_NULL // // // // // //= 0;
 // Alphanumeric keys
 #undef KEY_APOSTROPHE // // //= 39;
@@ -421,12 +421,12 @@ void ToggleFullscreen(void)
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
-        if (platform.mon.mode.w)
+        if (platform.mon->mode.w)
         {
-            RGFW_monitor monitor = RGFW_window_getMonitor(platform.window);
-            RGFW_monitor_requestMode(monitor, platform.mon.mode, RGFW_monitorScale);
+            RGFW_monitor *monitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor_requestMode(monitor, &platform.mon->mode, RGFW_monitorScale);
 
-            platform.mon.mode.w = 0;
+            platform.mon->mode.w = 0;
         }
 
         // we update the window position right away
@@ -453,8 +453,8 @@ void ToggleBorderlessWindowed(void)
 
         RGFW_window_setBorder(platform.window, 0);
 
-        RGFW_monitor mon = RGFW_window_getMonitor(platform.window);
-        RGFW_window_resize(platform.window, mon.mode.w, mon.mode.h);
+        RGFW_monitor *mon = RGFW_window_getMonitor(platform.window);
+        RGFW_window_resize(platform.window, mon->mode.w, mon->mode.h);
     }
     else
     {
@@ -748,19 +748,8 @@ void *GetWindowHandle(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    #define MAX_MONITORS_SUPPORTED 6
-
-    int count = MAX_MONITORS_SUPPORTED;
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
-
-    for (int i = 0; i < 6; i++)
-    {
-        if (!mons[i].x && !mons[i].y && !mons[i].mode.w && mons[i].mode.h)
-        {
-            count = i;
-            break;
-        }
-    }
+    size_t count = 0;
+    RGFW_getMonitors(&count);
 
     return count;
 }
@@ -768,15 +757,15 @@ int GetMonitorCount(void)
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
-    RGFW_monitor mon = { 0 };
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
+    RGFW_monitor *mon = NULL;
 
     if (platform.window) mon = RGFW_window_getMonitor(platform.window);
     else mon = RGFW_getPrimaryMonitor();
 
     for (int i = 0; i < 6; i++)
     {
-        if ((mons[i].x ==  mon.x) && (mons[i].y ==  mon.y)) return i;
+        if ((mons[i]->x ==  mon->x) && (mons[i]->y ==  mon->y)) return i;
     }
 
     return 0;
@@ -785,57 +774,57 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return (Vector2){ (float)mons[monitor].x, (float)mons[monitor].y };
+    return (Vector2){ (float)mons[monitor]->x, (float)mons[monitor]->y };
 }
 
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return mons[monitor].mode.w;
+    return mons[monitor]->mode.w;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return mons[monitor].mode.h;
+    return mons[monitor]->mode.h;
 }
 
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return mons[monitor].physW;
+    return mons[monitor]->physW;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return (int)mons[monitor].physH;
+    return (int)mons[monitor]->physH;
 }
 
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return (int)mons[monitor].mode.refreshRate;
+    return (int)mons[monitor]->mode.refreshRate;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    RGFW_monitor *mons = RGFW_getMonitors(NULL);
+    RGFW_monitor **mons = RGFW_getMonitors(NULL);
 
-    return mons[monitor].name;
+    return mons[monitor]->name;
 }
 
 // Get window position XY on monitor
@@ -848,18 +837,19 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    RGFW_monitor monitor = { 0 };
+    RGFW_monitor *monitor = NULL;
 
     if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
     else monitor = RGFW_getPrimaryMonitor();
 
-    return (Vector2){ monitor.scaleX, monitor.scaleX };
+    return (Vector2){ monitor->scaleX, monitor->scaleX };
 }
 
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    RGFW_writeClipboard(text, strlen(text));
+    // add 1 for null terminator
+    RGFW_writeClipboard(text, strlen(text)+1);
 }
 
 // Get clipboard text content
@@ -919,7 +909,7 @@ void HideCursor(void)
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    RGFW_releaseCursor(platform.window);
+    RGFW_window_captureMouse(platform.window, false);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -931,7 +921,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    RGFW_captureCursor(platform.window);
+    RGFW_window_captureMouse(platform.window, true);
     HideCursor();
 
     CORE.Input.Mouse.cursorLocked = true;
@@ -1075,7 +1065,7 @@ void PollInputEvents(void)
     CORE.Window.resizedLastFrame = false;
 
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    if (FLAG_IS_SET(platform.window->internal.flags, RGFW_windowHideMouse))
+    if (RGFW_window_isCaptured(platform.window))
     {
         CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
         CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -1188,14 +1178,16 @@ void PollInputEvents(void)
                     if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
                 }
 
+                // TODO: RGFW_keyChar? new window event?
+                //
                 // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
                 // Check if there is space available in the queue
-                if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-                {
-                    // Add character (codepoint) to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RGFW_rgfwToKeyChar(rgfw_event.key.value);
-                    CORE.Input.Keyboard.charPressedQueueCount++;
-                }
+                // if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+                // {
+                //     // Add character (codepoint) to the queue
+                //     CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = RGFW_rgfwToKeyChar(rgfw_event.key.value);
+                //     CORE.Input.Keyboard.charPressedQueueCount++;
+                // }
             } break;
             case RGFW_keyReleased:
             {
@@ -1206,8 +1198,8 @@ void PollInputEvents(void)
             // Check mouse events
             case RGFW_mouseScroll:
             {
-                CORE.Input.Mouse.currentWheelMove.x = rgfw_event.scroll.x;
-                CORE.Input.Mouse.currentWheelMove.y = rgfw_event.scroll.y;
+                CORE.Input.Mouse.currentWheelMove.x += rgfw_event.scroll.x;
+                CORE.Input.Mouse.currentWheelMove.y += rgfw_event.scroll.y;
             } break;
             case RGFW_mouseButtonPressed:
             {
@@ -1235,14 +1227,13 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
-                if (FLAG_IS_SET(platform.window->internal.flags, RGFW_windowHideMouse))
+                if (RGFW_window_isCaptured(platform.window))
                 {
-                    CORE.Input.Mouse.currentPosition.x += (float)rgfw_event.mouse.x;
-                    CORE.Input.Mouse.currentPosition.y += (float)rgfw_event.mouse.y;
+                    CORE.Input.Mouse.currentPosition.x += (float)rgfw_event.mouse.vecX;
+                    CORE.Input.Mouse.currentPosition.y += (float)rgfw_event.mouse.vecY;
                 }
                 else
                 {
-                    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
                     CORE.Input.Mouse.currentPosition.x = (float)rgfw_event.mouse.x;
                     CORE.Input.Mouse.currentPosition.y = (float)rgfw_event.mouse.y;
                 }
@@ -1291,17 +1282,14 @@ void PollInputEvents(void)
         int gamepadIndex = gamepad_event.gamepad->index;
         switch (gamepad_event.type) {
             case MG_EVENT_BUTTON_PRESS:
-                printf("PRESS\\n");
                 CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 1;
                 CORE.Input.Gamepad.lastButtonPressed = gamepad_event.button;
                 break;
             case MG_EVENT_BUTTON_RELEASE:
-                printf("RELEASE\\n");
                 CORE.Input.Gamepad.currentButtonState[gamepadIndex][gamepad_event.button] = 0;
                 if (CORE.Input.Gamepad.lastButtonPressed == gamepad_event.button) CORE.Input.Gamepad.lastButtonPressed = 0;
                 break;
             case MG_EVENT_AXIS_MOVE:
-                printf("AXIS MOVE (%d) %d\\n", gamepadIndex, gamepad_event.axis);
                 int axis = -1;
                 float value = 0;
 
@@ -1333,7 +1321,6 @@ void PollInputEvents(void)
                 }
                 break;
             case MG_EVENT_GAMEPAD_CONNECT:
-                printf("CONNECT\\n");
                 CORE.Input.Gamepad.ready[gamepadIndex] = true;
                 CORE.Input.Gamepad.axisCount[gamepadIndex] = MG_AXIS_COUNT;
                 CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
@@ -1341,7 +1328,6 @@ void PollInputEvents(void)
                 strcpy(CORE.Input.Gamepad.name[gamepadIndex], platform.minigamepad.gamepads[gamepadIndex].name);
                 break;
             case MG_EVENT_GAMEPAD_DISCONNECT:
-                printf("DISCONNECT\\n");
                 CORE.Input.Gamepad.ready[gamepadIndex] = false;
                 break;
             default: break;
@@ -1403,18 +1389,7 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    platform.mon.mode.w = 0;
-
-    if (platform.window != NULL)
-    {
-        // NOTE: RGFW's exit key is distinct from raylib's exit key and
-        // must be set to NULL to not interfere
-        RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
-
-        RGFW_window_makeCurrentWindow_OpenGL(platform.window);
-
-        platform.startTime = get_time_seconds();
-    }
+    platform.startTime = get_time_seconds();
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
@@ -1443,6 +1418,12 @@ int InitPlatform(void)
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
         return -1;
     }
+
+    // NOTE: RGFW's exit key is distinct from raylib's exit key and
+    // must be set to NULL to not interfere
+    RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
+    RGFW_window_makeCurrentWindow_OpenGL(platform.window);
+
     //----------------------------------------------------------------------------
 
     // If everything work as expected, we can continue
@@ -1507,8 +1488,6 @@ void ClosePlatform(void)
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
     if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return KEY_NULL;
-
-    printf("returning %d from %d (%d)\n", (KeyboardKey)keyMappingRGFW[keycode], keycode, KEY_S);
 
     return (KeyboardKey)keyMappingRGFW[keycode];
 }
