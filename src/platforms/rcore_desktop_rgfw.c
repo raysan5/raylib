@@ -993,8 +993,8 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    TRACELOG(LOG_WARNING, "SetGamepadMappings() unsupported on target platform");
-    return 0;
+    printf("SetGamepadMappings\n");
+    return mg_update_gamepad_mappings(&platform.minigamepad, mappings);
 }
 
 // Set gamepad vibration

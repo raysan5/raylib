@@ -3408,14 +3408,12 @@ void RGFW_clipboard_switch(char* newstr) {
 
 const char* RGFW_readClipboard(size_t* len) {
 	RGFW_ssize_t size = RGFW_readClipboardPtr(NULL, 0);
-	printf("clipboard size (1): %ld\n", size);
     RGFW_CHECK_CLIPBOARD();
     char* str = (char*)RGFW_ALLOC((size_t)size);
     RGFW_ASSERT(str != NULL);
     str[0] = '\0';
 
     size = RGFW_readClipboardPtr(str, (size_t)size);
-    printf("clipboard size (2): %ld\n", size);
 
     RGFW_CHECK_CLIPBOARD();
 
@@ -7630,7 +7628,6 @@ void RGFW_FUNC(RGFW_window_flash) (RGFW_window* win, RGFW_flashRequest request) 
 }
 
 RGFW_ssize_t RGFW_FUNC(RGFW_readClipboardPtr)(char* str, size_t strCapacity) {
-	printf("RGFW_readClipboardPtr macro 1\n");
 	RGFW_init();
 	RGFW_LOAD_ATOM(XSEL_DATA); RGFW_LOAD_ATOM(UTF8_STRING); RGFW_LOAD_ATOM(CLIPBOARD);
 	if (XGetSelectionOwner(_RGFW->display, CLIPBOARD) == _RGFW->helperWindow) {
@@ -10136,7 +10133,6 @@ void RGFW_FUNC(RGFW_window_flash) (RGFW_window* win, RGFW_flashRequest request) 
 }
 
 RGFW_ssize_t RGFW_FUNC(RGFW_readClipboardPtr) (char* str, size_t strCapacity) {
-printf("RGFW_readClipboardPtr macro 2\n");
 	RGFW_UNUSED(strCapacity);
 
 	if (str != NULL)
@@ -12104,7 +12100,6 @@ RGFW_bool RGFW_window_setIconEx(RGFW_window* win, u8* data, i32 w, i32 h, RGFW_f
 }
 
 RGFW_ssize_t RGFW_readClipboardPtr(char* str, size_t strCapacity) {
-	printf("RGFW_readClipboardPtr %d\n", 1);
 	/* Open the clipboard */
 	if (OpenClipboard(NULL) == 0)
 		return -1;
@@ -12118,7 +12113,6 @@ RGFW_ssize_t RGFW_readClipboardPtr(char* str, size_t strCapacity) {
 
 	wchar_t* wstr = (wchar_t*) GlobalLock(hData);
 
-	printf("RGFW_readClipboardPtr %d\n", 2);
 	RGFW_ssize_t textLen = 0;
 
 	{
@@ -12135,7 +12129,6 @@ RGFW_ssize_t RGFW_readClipboardPtr(char* str, size_t strCapacity) {
 			str[textLen - 1] = '\0';
 		}
 	}
-	printf("RGFW_readClipboardPtr %d\n", 3);
 
 	/* Release the clipboard data */
 	GlobalUnlock(hData);
@@ -14398,7 +14391,6 @@ RGFW_monitor* RGFW_window_getMonitor(RGFW_window* win) {
 }
 
 RGFW_ssize_t RGFW_readClipboardPtr(char* str, size_t strCapacity) {
-	printf("RGFW_readClipboardPtr FART %d\n", 1);
 	size_t clip_len;
 	char* clip = (char*)NSPasteboard_stringForType(NSPasteboard_generalPasteboard(), NSPasteboardTypeString, &clip_len);
 	if (clip == NULL) return -1;
@@ -15225,7 +15217,6 @@ void RGFW_writeClipboard(const char* text, u32 textLen) {
 
 
 RGFW_ssize_t RGFW_readClipboardPtr(char* str, size_t strCapacity) {
-	printf("RGFW_readClipboardPtr UNUSED \n");
 	RGFW_UNUSED(str); RGFW_UNUSED(strCapacity);
 	/*
 		placeholder code for later
