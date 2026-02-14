@@ -134,118 +134,118 @@ extern CoreData CORE;                   // Global CORE state context
 static PlatformData platform = { 0 };   // Platform specific
 
 #if defined(__linux__) // prevent collision of raylibs KEY_<X> and linux/input.h KEY_<X>
-    #undef KEY_NULL // // // // // //= 0;
-// Alphanumeric keys
-#undef KEY_APOSTROPHE // // //= 39;
-#undef KEY_COMMA // // // // // = 44;
-#undef KEY_MINUS // // // // // = 45;
-#undef KEY_PERIOD // // // // //= 46;
-#undef KEY_SLASH // // // // // = 47;
-#undef KEY_ZERO // // // // // //= 48;
-#undef KEY_ONE // // // // // // = 49;
-#undef KEY_TWO // // // // // // = 50;
-#undef KEY_THREE // // // // // = 51;
-#undef KEY_FOUR // // // // // //= 52;
-#undef KEY_FIVE // // // // // //= 53;
-#undef KEY_SIX // // // // // // = 54;
-#undef KEY_SEVEN // // // // // = 55;
-#undef KEY_EIGHT // // // // // = 56;
-#undef KEY_NINE // // // // // //= 57;
-#undef KEY_SEMICOLON // // // = 59;
-#undef KEY_EQUAL // // // // // = 61;
-#undef KEY_A // // // // // // // = 65;
-#undef KEY_B // // // // // // // = 66;
-#undef KEY_C // // // // // // // = 67;
-#undef KEY_D // // // // // // // = 68;
-#undef KEY_E // // // // // // // = 69;
-#undef KEY_F // // // // // // // = 70;
-#undef KEY_G // // // // // // // = 71;
-#undef KEY_H // // // // // // // = 72;
-#undef KEY_I // // // // // // // = 73;
-#undef KEY_J // // // // // // // = 74;
-#undef KEY_K // // // // // // // = 75;
-#undef KEY_L // // // // // // // = 76;
-#undef KEY_M // // // // // // // = 77;
-#undef KEY_N // // // // // // // = 78;
-#undef KEY_O // // // // // // // = 79;
-#undef KEY_P // // // // // // // = 80;
-#undef KEY_Q // // // // // // // = 81;
-#undef KEY_R // // // // // // // = 82;
-#undef KEY_S // // // // // // // = 83;
-#undef KEY_T // // // // // // // = 84;
-#undef KEY_U // // // // // // // = 85;
-#undef KEY_V // // // // // // // = 86;
-#undef KEY_W // // // // // // // = 87;
-#undef KEY_X // // // // // // // = 88;
-#undef KEY_Y // // // // // // // = 89;
-#undef KEY_Z // // // // // // // = 90;
-#undef KEY_LEFT_BRACKET // //= 91;
-#undef KEY_BACKSLASH // // // = 92;
-#undef KEY_RIGHT_BRACKET // = 93;
-#undef KEY_GRAVE // // // // // = 96;
-// Function keys
-#undef KEY_SPACE // // // // // = 32;
-#undef KEY_ESCAPE // // // // //= 256;
-#undef KEY_ENTER // // // // // = 257;
-#undef KEY_TAB // // // // // // = 258;
-#undef KEY_BACKSPACE // // // = 259;
-#undef KEY_INSERT // // // // //= 260;
-#undef KEY_DELETE // // // // //= 261;
-#undef KEY_RIGHT // // // // // = 262;
-#undef KEY_LEFT // // // // // //= 263;
-#undef KEY_DOWN // // // // // //= 264;
-#undef KEY_UP // // // // // // //= 265;
-#undef KEY_PAGE_UP // // // // = 266;
-#undef KEY_PAGE_DOWN // // // = 267;
-#undef KEY_HOME // // // // // //= 268;
-#undef KEY_END // // // // // // = 269;
-#undef KEY_CAPS_LOCK // // // = 280;
-#undef KEY_SCROLL_LOCK // // = 281;
-#undef KEY_NUM_LOCK // // // //= 282;
-#undef KEY_PRINT_SCREEN // //= 283;
-#undef KEY_PAUSE // // // // // = 284;
-#undef KEY_F1 // // // // // // //= 290;
-#undef KEY_F2 // // // // // // //= 291;
-#undef KEY_F3 // // // // // // //= 292;
-#undef KEY_F4 // // // // // // //= 293;
-#undef KEY_F5 // // // // // // //= 294;
-#undef KEY_F6 // // // // // // //= 295;
-#undef KEY_F7 // // // // // // //= 296;
-#undef KEY_F8 // // // // // // //= 297;
-#undef KEY_F9 // // // // // // //= 298;
-#undef KEY_F10 // // // // // // = 299;
-#undef KEY_F11 // // // // // // = 300;
-#undef KEY_F12 // // // // // // = 301;
-#undef KEY_LEFT_SHIFT // // //= 340;
-#undef KEY_LEFT_CONTROL // //= 341;
-#undef KEY_LEFT_ALT // // // //= 342;
-#undef KEY_LEFT_SUPER // // //= 343;
-#undef KEY_RIGHT_SHIFT // // = 344;
-#undef KEY_RIGHT_CONTROL // = 345;
-#undef KEY_RIGHT_ALT // // // = 346;
-#undef KEY_RIGHT_SUPER // // = 347;
-#undef KEY_KB_MENU // // // // = 348;
-// Keypad keys
-#undef KEY_KP_0 // // // // // //= 320;
-#undef KEY_KP_1 // // // // // //= 321;
-#undef KEY_KP_2 // // // // // //= 322;
-#undef KEY_KP_3 // // // // // //= 323;
-#undef KEY_KP_4 // // // // // //= 324;
-#undef KEY_KP_5 // // // // // //= 325;
-#undef KEY_KP_6 // // // // // //= 326;
-#undef KEY_KP_7 // // // // // //= 327;
-#undef KEY_KP_8 // // // // // //= 328;
-#undef KEY_KP_9 // // // // // //= 329;
-#undef KEY_KP_DECIMAL // // //= 330;
-#undef KEY_KP_DIVIDE // // // = 331;
-#undef KEY_KP_MULTIPLY // // = 332;
-#undef KEY_KP_SUBTRACT // // = 333;
-#undef KEY_KP_ADD // // // // //= 334;
-#undef KEY_KP_ENTER // // // //= 335;
-#undef KEY_KP_EQUAL // // // //= 336;
+    #undef KEY_NULL
+    // Alphanumeric keys
+    #undef KEY_APOSTROPHE
+    #undef KEY_COMMA
+    #undef KEY_MINUS
+    #undef KEY_PERIOD
+    #undef KEY_SLASH
+    #undef KEY_ZERO
+    #undef KEY_ONE
+    #undef KEY_TWO
+    #undef KEY_THREE
+    #undef KEY_FOUR
+    #undef KEY_FIVE
+    #undef KEY_SIX
+    #undef KEY_SEVEN
+    #undef KEY_EIGHT
+    #undef KEY_NINE
+    #undef KEY_SEMICOLON
+    #undef KEY_EQUAL
+    #undef KEY_A
+    #undef KEY_B
+    #undef KEY_C
+    #undef KEY_D
+    #undef KEY_E
+    #undef KEY_F
+    #undef KEY_G
+    #undef KEY_H
+    #undef KEY_I
+    #undef KEY_J
+    #undef KEY_K
+    #undef KEY_L
+    #undef KEY_M
+    #undef KEY_N
+    #undef KEY_O
+    #undef KEY_P
+    #undef KEY_Q
+    #undef KEY_R
+    #undef KEY_S
+    #undef KEY_T
+    #undef KEY_U
+    #undef KEY_V
+    #undef KEY_W
+    #undef KEY_X
+    #undef KEY_Y
+    #undef KEY_Z
+    #undef KEY_LEFT_BRACKET
+    #undef KEY_BACKSLASH
+    #undef KEY_RIGHT_BRACKET
+    #undef KEY_GRAVE
+    // Function keys
+    #undef KEY_SPACE
+    #undef KEY_ESCAPE
+    #undef KEY_ENTER
+    #undef KEY_TAB
+    #undef KEY_BACKSPACE
+    #undef KEY_INSERT
+    #undef KEY_DELETE
+    #undef KEY_RIGHT
+    #undef KEY_LEFT
+    #undef KEY_DOWN
+    #undef KEY_UP
+    #undef KEY_PAGE_UP
+    #undef KEY_PAGE_DOWN
+    #undef KEY_HOME
+    #undef KEY_END
+    #undef KEY_CAPS_LOCK
+    #undef KEY_SCROLL_LOCK
+    #undef KEY_NUM_LOCK
+    #undef KEY_PRINT_SCREEN
+    #undef KEY_PAUSE
+    #undef KEY_F1
+    #undef KEY_F2
+    #undef KEY_F3
+    #undef KEY_F4
+    #undef KEY_F5
+    #undef KEY_F6
+    #undef KEY_F7
+    #undef KEY_F8
+    #undef KEY_F9
+    #undef KEY_F10
+    #undef KEY_F11
+    #undef KEY_F12
+    #undef KEY_LEFT_SHIFT
+    #undef KEY_LEFT_CONTROL
+    #undef KEY_LEFT_ALT
+    #undef KEY_LEFT_SUPER
+    #undef KEY_RIGHT_SHIFT
+    #undef KEY_RIGHT_CONTROL
+    #undef KEY_RIGHT_ALT
+    #undef KEY_RIGHT_SUPER
+    #undef KEY_KB_MENU
+    // Keypad keys
+    #undef KEY_KP_0
+    #undef KEY_KP_1
+    #undef KEY_KP_2
+    #undef KEY_KP_3
+    #undef KEY_KP_4
+    #undef KEY_KP_5
+    #undef KEY_KP_6
+    #undef KEY_KP_7
+    #undef KEY_KP_8
+    #undef KEY_KP_9
+    #undef KEY_KP_DECIMAL
+    #undef KEY_KP_DIVIDE
+    #undef KEY_KP_MULTIPLY
+    #undef KEY_KP_SUBTRACT
+    #undef KEY_KP_ADD
+    #undef KEY_KP_ENTER
+    #undef KEY_KP_EQUAL
 #endif
 
-static const unsigned short keyMappingRGFW[] = {
+static const unsigned short RGFW_keyConvertTable[] = {
     [RGFW_keyNULL] = KEY_NULL,
     [RGFW_apostrophe] = KEY_APOSTROPHE,
     [RGFW_comma] = KEY_COMMA,
@@ -993,7 +993,6 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    printf("SetGamepadMappings\n");
     return mg_update_gamepad_mappings(&platform.minigamepad, mappings);
 }
 
@@ -1518,9 +1517,9 @@ void ClosePlatform(void)
 // Keycode mapping
 static KeyboardKey ConvertScancodeToKey(u32 keycode)
 {
-    if (keycode > sizeof(keyMappingRGFW)/sizeof(unsigned short)) return KEY_NULL;
+    if (keycode > sizeof(RGFW_keyConvertTable)/sizeof(unsigned short)) return KEY_NULL;
 
-    return (KeyboardKey)keyMappingRGFW[keycode];
+    return (KeyboardKey)RGFW_keyConvertTable[keycode];
 }
 
 // Helper functions for Time
