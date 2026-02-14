@@ -757,7 +757,7 @@ void *GetWindowHandle(void)
     if (platform.window == NULL) return NULL;
 
 #ifdef RGFW_WASM
-    return (void *)platform.window->src.ctx;
+    return (void *)&platform.window->src.ctx;
 #else
     return (void *)platform.window->src.window;
 #endif
