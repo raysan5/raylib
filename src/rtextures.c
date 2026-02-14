@@ -3295,9 +3295,9 @@ Color GetImageColor(Image image, int x, int y)
             case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
             {
                 color.r = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 1]*255.0f);
+                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 2]*255.0f);
+                color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 3]*255.0f);
 
             } break;
             case PIXELFORMAT_UNCOMPRESSED_R16:
@@ -3319,9 +3319,9 @@ Color GetImageColor(Image image, int x, int y)
             case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
             {
                 color.r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 1])*255.0f);
+                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 2])*255.0f);
+                color.a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 3])*255.0f);
 
             } break;
             default: TRACELOG(LOG_WARNING, "Compressed image format does not support color reading"); break;
