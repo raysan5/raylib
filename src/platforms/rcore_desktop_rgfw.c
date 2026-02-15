@@ -1294,7 +1294,6 @@ void PollInputEvents(void)
     }
     //-----------------------------------------------------------------------------
 
-    // mg_gamepads_poll(&platform.minigamepad);
     mg_event gamepad_event;
     while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event)) {
         int gamepadIndex = gamepad_event.gamepad->index;
