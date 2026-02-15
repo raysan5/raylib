@@ -78,7 +78,7 @@ int main(void)
             DrawText(TextFormat("WINDOW POSITION: %ix%i", (int)windowPos.x, (int)windowPos.y), 50, 90, 20, DARKGRAY);
             DrawText(TextFormat("SCREEN SIZE: %ix%i", GetScreenWidth(), GetScreenHeight()), 50, 130, 20, DARKGRAY);
             DrawText(TextFormat("RENDER SIZE: %ix%i", GetRenderWidth(), GetRenderHeight()), 50, 170, 20, DARKGRAY);
-            DrawText(TextFormat("SCALE FACTOR: %.1fx%.1f", scaleDpi.x, scaleDpi.y), 50, 210, 20, GRAY);
+            DrawText(TextFormat("SCALE FACTOR: %.2fx%.2f", scaleDpi.x, scaleDpi.y), 50, 210, 20, GRAY);
 
             // Draw reference rectangles, top-left and bottom-right corners
             DrawRectangle(0, 0, 30, 60, RED);

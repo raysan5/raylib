@@ -1649,31 +1649,34 @@ int InitPlatform(void)
             TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
         }
 
-        int fbWidth = CORE.Window.screen.width;
-        int fbHeight = CORE.Window.screen.height;
-
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
+            // Set screen size to logical pixel size, considering content scaling
+            Vector2 scaleDpi = GetWindowScaleDPI();
+            CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
+            CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
+
             // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
             // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-
             // Get current framebuffer size, on high-dpi it could be bigger than screen size
-            glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+            //glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
-            CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
 #if !defined(__APPLE__)
             // Mouse input scaling for the new screen size
-            SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
 #endif
+            glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+        }
+        else
+        {
+            CORE.Window.render = CORE.Window.screen;
+            CORE.Window.currentFbo = CORE.Window.render;
         }
 
-        CORE.Window.render.width = fbWidth;
-        CORE.Window.render.height = fbHeight;
-        CORE.Window.currentFbo.width = fbWidth;
-        CORE.Window.currentFbo.height = fbHeight;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s", 
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
