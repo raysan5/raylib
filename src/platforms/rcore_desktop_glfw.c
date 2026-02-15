@@ -221,7 +221,9 @@ void ToggleFullscreen(void)
 
 #if !defined(__APPLE__)
         // Make sure to restore render size considering HighDPI scaling
-        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        // NOTE: On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling, skip manual resize
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) &&
+            (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
         {
             Vector2 scaleDpi = GetWindowScaleDPI();
             CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width*scaleDpi.x);
@@ -300,7 +302,9 @@ void ToggleBorderlessWindowed(void)
 
             #if !defined(__APPLE__)
                 // Make sure to restore size considering HighDPI scaling
-                if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+                // NOTE: On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling, skip manual resize
+                if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) &&
+                    (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
                 {
                     Vector2 scaleDpi = GetWindowScaleDPI();
                     CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width*scaleDpi.x);
@@ -1871,6 +1875,23 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
         CORE.Window.screen.height = height;
         CORE.Window.screenScale = MatrixScale(1.0f, 1.0f, 1.0f);
         SetMouseScale(1.0f, 1.0f);
+
+        // On Wayland with GLFW_SCALE_FRAMEBUFFER, the framebuffer is still scaled
+        // in fullscreen. Use logical window size as screen and apply screenScale.
+        if ((glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) &&
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        {
+            int winWidth, winHeight;
+            glfwGetWindowSize(platform.handle, &winWidth, &winHeight);
+            if ((winWidth != width) || (winHeight != height))
+            {
+                CORE.Window.screen.width = winWidth;
+                CORE.Window.screen.height = winHeight;
+                float scaleX = (float)width/winWidth;
+                float scaleY = (float)height/winHeight;
+                CORE.Window.screenScale = MatrixScale(scaleX, scaleY, 1.0f);
+            }
+        }
     }
     else // Window mode (including borderless window)
     {
