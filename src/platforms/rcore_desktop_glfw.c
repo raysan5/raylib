@@ -1655,25 +1655,29 @@ int InitPlatform(void)
             Vector2 scaleDpi = GetWindowScaleDPI();
             CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
             CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
-
-            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
-            // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-            // Get current framebuffer size, on high-dpi it could be bigger than screen size
-            //glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+            //TRACELOG(LOG_INFO, "DPI SCALING: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+
+            // NOTE: On APPLE platforms system manage window and input scaling
+            // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+
+            // Screen scaling matrix is required in case desired screen area is different from display area
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+
 #if !defined(__APPLE__)
             // Mouse input scaling for the new screen size
             SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
-#endif
+
+            // Force window size (and framebuffer) refresh
             glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+#endif
         }
-        else
-        {
-            CORE.Window.render = CORE.Window.screen;
-            CORE.Window.currentFbo = CORE.Window.render;
-        }
+        else CORE.Window.render = CORE.Window.screen;
+
+        // Current active framebuffer size is main framebuffer size
+        CORE.Window.currentFbo = CORE.Window.render;
 
         TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s", 
             FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
@@ -1681,6 +1685,7 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        //TRACELOG(LOG_INFO, "    > Content Scaling: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
 
         // Try to center window on screen but avoiding window-bar outside of screen
         int monitorCount = 0;
@@ -1694,13 +1699,17 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        // TODO: Here CORE.Window.render.width/height should be used instead of
-        // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
-        CORE.Window.position.x = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
-        //if (CORE.Window.position.x < monitorX) CORE.Window.position.x = monitorX;
-        //if (CORE.Window.position.y < monitorY) CORE.Window.position.y = monitorY;
+        // NOTE: It seems on macOS monitor size is not correct
+        //TRACELOG(LOG_WARNING, "Monitor info: [%i, %i, %i, %i]", monitorX, monitorY, monitorWidth, monitorHeight);
 
+        // Center window into current monitor
+    #if defined(__APPLE__)
+        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+    #else
+        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.render.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.render.height)/2;
+    #endif
         SetWindowPosition(CORE.Window.position.x, CORE.Window.position.y);
 
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
@@ -1831,8 +1840,9 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
     SetupViewport(width, height);
 
     // Set render size
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
+    CORE.Window.render.width = width;
+    CORE.Window.render.height = height;
+    CORE.Window.currentFbo = CORE.Window.render;
     CORE.Window.resizedLastFrame = true;
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
@@ -1878,8 +1888,9 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 {
     //TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
 
-    float fbWidth = (float)CORE.Window.screen.width*scalex;
-    float fbHeight = (float)CORE.Window.screen.height*scaley;
+    CORE.Window.render.width = (int)((float)CORE.Window.screen.width*scalex);
+    CORE.Window.render.height = (int)((float)CORE.Window.screen.height*scaley);
+    CORE.Window.currentFbo = CORE.Window.render;
 
     // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
     // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
@@ -1889,10 +1900,6 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
     // Mouse input scaling for the new screen size
     SetMouseScale(1.0f/scalex, 1.0f/scaley);
 #endif
-
-    CORE.Window.render.width = (int)fbWidth;
-    CORE.Window.render.height = (int)fbHeight;
-    CORE.Window.currentFbo = CORE.Window.render;
 }
 
 // GLFW3: Window position callback, runs when window position changes
