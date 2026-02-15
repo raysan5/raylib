@@ -327,6 +327,7 @@ typedef struct CoreData {
     struct {
         struct {
             int exitKey;                    // Default exit key
+            int screenshotKey;              // Default screenshot key
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
@@ -692,6 +693,8 @@ void InitWindow(int width, int height, const char *title)
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input)); // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
+    CORE.Input.Keyboard.screenshotKey = KEY_F12;
+
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
@@ -940,7 +943,7 @@ void EndDrawing(void)
 #endif
 
 #if defined(SUPPORT_SCREEN_CAPTURE)
-    if (IsKeyPressed(KEY_F12))
+    if (IsKeyPressed(CORE.Input.Keyboard.screenshotKey))
     {
         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
@@ -3949,6 +3952,13 @@ int GetCharPressed(void)
 void SetExitKey(int key)
 {
     CORE.Input.Keyboard.exitKey = key;
+}
+
+// Set a custom key to take a screenshot
+// NOTE: default screenshotKey is set to F12
+void SetScreenshotKey(int key)
+{
+    CORE.Input.Keyboard.screenshotKey = key;
 }
 
 //----------------------------------------------------------------------------------

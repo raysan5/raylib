@@ -1187,6 +1187,7 @@ RLAPI int GetKeyPressed(void);                                // Get key pressed
 RLAPI int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
 RLAPI const char *GetKeyName(int key);                        // Get name of a QWERTY key on the current keyboard layout (eg returns string 'q' for KEY_A on an AZERTY keyboard)
 RLAPI void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+RLAPI void SetScreenshotKey(int key);                         // Set a custom key for taking a screenshot (default is F12)
 
 // Input-related functions: gamepads
 RLAPI bool IsGamepadAvailable(int gamepad);                   // Check if a gamepad is available
