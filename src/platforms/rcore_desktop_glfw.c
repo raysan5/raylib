@@ -1465,6 +1465,10 @@ int InitPlatform(void)
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
+        // GLFW 3.4+ defaults GLFW_SCALE_FRAMEBUFFER to TRUE, causing framebuffer/window
+        // size mismatch on Wayland with display scaling. Disable without FLAG_WINDOW_HIGHDPI.
+        if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+            glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
     }
 
     // Mouse passthrough
@@ -1667,11 +1671,23 @@ int InitPlatform(void)
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
 
 #if !defined(__APPLE__)
-            // Mouse input scaling for the new screen size
-            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+            {
+                // On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling; read actual framebuffer
+                // size instead of resizing the window (which would double-scale).
+                int fbWidth, fbHeight;
+                glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+                CORE.Window.render.width = fbWidth;
+                CORE.Window.render.height = fbHeight;
+            }
+            else
+            {
+                // Mouse input scaling for the new screen size
+                SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
 
-            // Force window size (and framebuffer) refresh
-            glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+                // Force window size (and framebuffer) refresh
+                glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+            }
 #endif
         }
         else CORE.Window.render = CORE.Window.screen;
@@ -1867,8 +1883,9 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
             CORE.Window.screen.height = (int)((float)height/scaleDpi.y);
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
 #if !defined(__APPLE__)
-            // Mouse input scaling for the new screen size
-            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            // On Wayland, mouse coords are already in logical space
+            if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)
+                SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
 #endif
         }
         else
@@ -1897,8 +1914,9 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
     CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 
 #if !defined(__APPLE__)
-    // Mouse input scaling for the new screen size
-    SetMouseScale(1.0f/scalex, 1.0f/scaley);
+    // On Wayland, mouse coords are already in logical space
+    if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)
+        SetMouseScale(1.0f/scalex, 1.0f/scaley);
 #endif
 }
 
