@@ -393,14 +393,14 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
 
-        # On X11 requires also below libraries
-        LDLIBS += -lX11
-        # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
-        #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
-
-        # On Wayland windowing system, additional libraries requires
+        # On Wayland, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
+        else
+            # On X11, additional libraries required
+            LDLIBS += -lX11
+            # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
+            #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
         endif
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -439,15 +439,16 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib $(SDL_LIBRARIES) -lGL -lm -lpthread -ldl -lrt
 
-        # On X11 requires also below libraries
+        # On X11, addition libraries required
         LDLIBS += -lX11
         # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
         #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
 
-        # On Wayland windowing system, additional libraries requires
+        # On Wayland, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
         endif
+
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
