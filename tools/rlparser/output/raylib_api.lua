@@ -4444,6 +4444,14 @@ return {
       }
     },
     {
+      name = "SetScreenshotKey",
+      description = "Set a custom key for taking a screenshot (default is F12)",
+      returnType = "void",
+      params = {
+        {type = "int", name = "key"}
+      }
+    },
+    {
       name = "IsGamepadAvailable",
       description = "Check if a gamepad is available",
       returnType = "bool",

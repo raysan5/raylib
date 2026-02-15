@@ -678,7 +678,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="599">
+    <Functions count="600">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1225,6 +1225,9 @@
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="SetExitKey" retType="void" paramCount="1" desc="Set a custom key to exit program (default is ESC)">
+            <Param type="int" name="key" desc="" />
+        </Function>
+        <Function name="SetScreenshotKey" retType="void" paramCount="1" desc="Set a custom key for taking a screenshot (default is F12)">
             <Param type="int" name="key" desc="" />
         </Function>
         <Function name="IsGamepadAvailable" retType="bool" paramCount="1" desc="Check if a gamepad is available">
