@@ -1653,25 +1653,34 @@ int InitPlatform(void)
         {
             // Set screen size to logical pixel size, considering content scaling
             Vector2 scaleDpi = GetWindowScaleDPI();
-            CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
-            CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
-            //TRACELOG(LOG_INFO, "DPI SCALING: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
-
             // Screen scaling matrix is required in case desired screen area is different from display area
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
 
             // NOTE: On APPLE platforms system manage window and input scaling
             // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
 
-            // Screen scaling matrix is required in case desired screen area is different from display area
-            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+            // glfw handles the scaling on wayland. See below
+            if (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)
+            {
+                CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
+                CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
+            }
 
 #if !defined(__APPLE__)
-            // Mouse input scaling for the new screen size
-            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            // Mouse scaling is only needed for windows. Not linux-x11 or linux-wayland
+            if (glfwGetPlatform() == GLFW_PLATFORM_WIN32) {
+                // Mouse input scaling for the new screen size
+                SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            }
 
             // Force window size (and framebuffer) refresh
             glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+            if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+            {
+                // glfw handles the scaling on wayland, we just need to set the render width
+                // after the window size is performed.
+                glfwGetFramebufferSize(platform.handle, &CORE.Window.render.width, &CORE.Window.render.height);
+            }
 #endif
         }
         else CORE.Window.render = CORE.Window.screen;
