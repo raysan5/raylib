@@ -163,6 +163,7 @@ models;models_heightmap_rendering;★☆☆☆;1.8;3.5;2015;2025;"Ramon Santamar
 models;models_skybox_rendering;★★☆☆;1.8;4.0;2017;2025;"Ramon Santamaria";@raysan5
 models;models_textured_cube;★★☆☆;4.5;4.5;2022;2025;"Ramon Santamaria";@raysan5
 models;models_animation_gpu_skinning;★★★☆;4.5;4.5;2024;2025;"Daniel Holden";@orangeduck
+models;models_animation_bone_blending;★★★★;5.5;5.5;2025;2025;"[Your Name]";@[your_github]
 models;models_bone_socket;★★★★;4.5;4.5;2024;2025;"iP";@ipzaur
 models;models_tesseract_view;★★☆☆;5.6-dev;5.6-dev;2024;2025;"Timothy van der Valk";@arceryz
 models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
