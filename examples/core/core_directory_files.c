@@ -37,9 +37,16 @@ int main(void)
     char directory[MAX_FILEPATH_SIZE] = { 0 };
     strcpy(directory, GetWorkingDirectory());
 
+    // Load file-paths on current working directory
+    // NOTE: LoadDirectoryFiles() loads files and directories by default,
+    // use LoadDirectoryFilesEx() for custom filters and recursive directories loading
     FilePathList files = LoadDirectoryFiles(directory);
 
     int btnBackPressed = false;
+
+    int listScrollIndex = 0;
+    int listItemActive = -1;
+    int listItemFocused = -1;
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -62,10 +69,18 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
 
-            DrawText(directory, 100, 40, 20, DARKGRAY);
+            btnBackPressed = GuiButton((Rectangle){ 40.0f, 10.0f, 48, 28 }, "<");
 
-            btnBackPressed = GuiButton((Rectangle){ 40.0f, 38.0f, 48, 24 }, "<");
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*2);
+            GuiLabel((Rectangle){ 40 + 48 + 10, 10, 700, 28 }, directory);
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
 
+            GuiSetStyle(LISTVIEW, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+            GuiSetStyle(LISTVIEW, TEXT_PADDING, 40);
+            GuiListViewEx((Rectangle){ 0, 50, GetScreenWidth(), GetScreenHeight() - 40 },
+                files.paths, files.count, &listScrollIndex, &listItemActive, &listItemFocused);
+
+            /*
             for (int i = 0; i < (int)files.count; i++)
             {
                 Color color = Fade(LIGHTGRAY, 0.3f);
@@ -84,6 +99,7 @@ int main(void)
                 DrawRectangle(0, 85 + 40*i, screenWidth, 40, color);
                 DrawText(GetFileName(files.paths[i]), 120, 100 + 40*i, 10, GRAY);
             }
+            */
 
         EndDrawing();
         //----------------------------------------------------------------------------------
