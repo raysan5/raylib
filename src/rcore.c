@@ -682,8 +682,6 @@ void InitWindow(int width, int height, const char *title)
     // Initialize window data
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
     CORE.Window.eventWaiting = false;
     CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
@@ -709,10 +707,10 @@ void InitWindow(int width, int height, const char *title)
 
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: Current fbo size stored as globals in rlgl for convenience
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    rlglInit(CORE.Window.render.width, CORE.Window.render.height);
 
     // Setup default viewport
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
 #if defined(SUPPORT_MODULE_RTEXT)
     #if defined(SUPPORT_DEFAULT_FONT)
