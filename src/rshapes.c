@@ -2336,6 +2336,31 @@ bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, floa
     return collision;
 }
 
+// Check collision between two triangles
+bool CheckCollisionTriangles(Vector2 t1p1, Vector2 t1p2, Vector2 t1p3, Vector2 t2p1, Vector2 t2p2, Vector2 t2p3)
+{
+    bool collision = CheckCollisionPointTriangle(t2p1, t1p1, t1p2, t1p3) || CheckCollisionPointTriangle(t1p1, t2p1, t2p2, t2p3);
+
+    if (!collision)
+    {
+        int pointSize = 3;
+        const Vector2 t1_points[3] = {t1p1, t1p2, t1p3};
+        const Vector2 t2_points[3] = {t2p1, t2p2, t2p3};
+        Vector2 collisionPoint;
+        for (int i = 0; i < pointSize; i++)
+        {
+            for (int j = 0; j < pointSize; j++)
+            {
+                if (CheckCollisionLines(t1_points[i], t1_points[(i + 1) % pointSize], t2_points[j], t2_points[(j + 1) % pointSize], &collisionPoint))
+                {
+                    return collision = true;
+                }
+            }
+        }
+    }
+    return collision;
+}
+
 // Check collision between circle and rectangle
 // NOTE: Reviewed version to take into account corner limit case
 bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec)
