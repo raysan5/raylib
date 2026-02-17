@@ -5373,6 +5373,7 @@ static Model LoadGLTF(const char *fileName)
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
+        bool dracoCompression = false;
 
         // NOTE: We will load every primitive in the glTF as a separate raylib Mesh
         // Determine total number of meshes needed from the node hierarchy
@@ -5384,9 +5385,22 @@ static Model LoadGLTF(const char *fileName)
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
-                if (mesh->primitives[p].type == cgltf_primitive_type_triangles) primitivesCount++;
+                if (mesh->primitives[p].has_draco_mesh_compression)
+                {
+                    dracoCompression = true;
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load mesh data, Draco compression not supported", fileName);
+                    break;
+                }
+                else if (mesh->primitives[p].type == cgltf_primitive_type_triangles) primitivesCount++;
             }
         }
+
+        if (dracoCompression)
+        {
+            return model;
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
+        }
+
         TRACELOG(LOG_DEBUG, "    > Primitives (triangles only) count based on hierarchy : %i", primitivesCount);
 
         // Load our model data: meshes and materials
