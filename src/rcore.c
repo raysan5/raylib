@@ -2773,6 +2773,8 @@ FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool
 
     if (DirectoryExists(basePath)) // It's a directory
     {
+        if ((filter != NULL) && (filter[0] == '\0')) filter = NULL;
+
         // SCAN 1: Count files
         unsigned int fileCounter = GetDirectoryFileCountEx(basePath, filter, scanSubdirs);
 

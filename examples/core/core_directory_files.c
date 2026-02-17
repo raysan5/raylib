@@ -40,7 +40,8 @@ int main(void)
     // Load file-paths on current working directory
     // NOTE: LoadDirectoryFiles() loads files and directories by default,
     // use LoadDirectoryFilesEx() for custom filters and recursive directories loading
-    FilePathList files = LoadDirectoryFiles(directory);
+    //FilePathList files = LoadDirectoryFiles(directory);
+    FilePathList files = LoadDirectoryFilesEx(directory, ".png;.c", false);
 
     int btnBackPressed = false;
 
@@ -77,7 +78,7 @@ int main(void)
 
             GuiSetStyle(LISTVIEW, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             GuiSetStyle(LISTVIEW, TEXT_PADDING, 40);
-            GuiListViewEx((Rectangle){ 0, 50, GetScreenWidth(), GetScreenHeight() - 40 },
+            GuiListViewEx((Rectangle){ 0, 50, GetScreenWidth(), GetScreenHeight() - 50 },
                 files.paths, files.count, &listScrollIndex, &listItemActive, &listItemFocused);
 
             /*
