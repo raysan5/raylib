@@ -723,7 +723,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
-        ma_uint32 outputSampleRate = (ma_uint32)((float)buffer->converter.sampleRateOut/pitch);
+        ma_uint32 outputSampleRate = (ma_uint32)((float)AUDIO.System.device.sampleRate/pitch);
         ma_data_converter_set_rate(&buffer->converter, buffer->converter.sampleRateIn, outputSampleRate);
 
         buffer->pitch = pitch;
