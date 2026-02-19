@@ -62,7 +62,7 @@ Example elements validated:
 | core_viewport_scaling            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_input_actions               |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_directory_files             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| core_highdpi_testbed             |  ✔ |  ✔  |  ✔  |  ✔ |  ❌  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| core_highdpi_testbed             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_screen_recording            |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_clipboard_text              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | core_text_file_loading           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -107,6 +107,7 @@ Example elements validated:
 | shapes_ball_physics              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_penrose_tile              |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | shapes_hilbert_curve             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
+| shapes_easings_testbed           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_logo_raylib             |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_srcrec_dstrec           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | textures_image_drawing           |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
@@ -222,9 +223,3 @@ Example elements validated:
 | audio_sound_multi                |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_sound_positioning          |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
 | audio_spectrum_visualizer        |  ✔ |  ✔  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| rlgl_standalone                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| rlgl_compute_shader              |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| easings_testbed                  |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| raylib_opengl_interop            |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ❌ |  ✔  |  ✔ |  ✔  |  ✔  |
-| embedded_files_loading           |  ✔ |  ❌  |  ✔  |  ✔ |  ✔  |  ❌  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |
-| web_basic_window                 |  ✔ |  ❌  |  ❌  |  ✔ |  ✔  |  ✔  |  ✔ |   ✔  |  ✔  |  ✔ |  ✔  |  ✔ |  ✔  |  ✔  |

@@ -578,6 +578,7 @@ SHAPES = \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
+    shapes/shapes_easings_testbed \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \

@@ -68,6 +68,15 @@ typedef struct EasingFuncs {
     float (*func)(float, float, float, float);
 } EasingFuncs;
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+// Function used when "no easing" is selected for any axis
+static float NoEase(float t, float b, float c, float d);  
+
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
 // Easing functions reference data
 static const EasingFuncs easings[] = {
     [EASE_LINEAR_NONE] = { .name = "EaseLinearNone", .func = EaseLinearNone },
@@ -101,11 +110,7 @@ static const EasingFuncs easings[] = {
     [EASING_NONE] = { .name = "None", .func = NoEase },
 };
 
-//------------------------------------------------------------------------------------
-// Module Functions Declaration
-//------------------------------------------------------------------------------------
-// Function used when "no easing" is selected for any axis
-static float NoEase(float t, float b, float c, float d);  
+
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -191,8 +196,8 @@ int main(void)
         // Movement computation
         if (!paused && ((boundedT && t < d) || !boundedT))
         {
-            ballPosition.x = Easings[easingX].func(t, 100.0f, 700.0f - 170.0f, d);
-            ballPosition.y = Easings[easingY].func(t, 100.0f, 400.0f - 170.0f, d);
+            ballPosition.x = easings[easingX].func(t, 100.0f, 700.0f - 170.0f, d);
+            ballPosition.y = easings[easingY].func(t, 100.0f, 400.0f - 170.0f, d);
             t += 1.0f;
         }
         //----------------------------------------------------------------------------------
@@ -204,8 +209,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw information text
-            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 20, FONT_SIZE, FONT_SIZE, LIGHTGRAY);
-            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 20, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing x: %s", easings[easingX].name), 20, FONT_SIZE, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing y: %s", easings[easingY].name), 20, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
             DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d), 20, FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
 
             // Draw instructions text

@@ -96,6 +96,7 @@ shapes;shapes_rlgl_triangle;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@Robi
 shapes;shapes_ball_physics;★★☆☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 shapes;shapes_penrose_tile;★★★★;5.5;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 shapes;shapes_hilbert_curve;★★★☆;5.6;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
+shapes;shapes_easings_testbed;★★★☆;2.5;2.5;2019;2025;"Juan Miguel López";@flashback-fx
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -211,3 +212,9 @@ audio;audio_stream_effects;★★★★;4.2;5.0;2022;2025;"Ramon Santamaria";@ra
 audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM2501
 audio;audio_sound_positioning;★★☆☆;5.5;5.5;2025;2025;"Le Juez Victor";@Bigfoot71
 audio;audio_spectrum_visualizer;★★★☆;6.0;5.6-dev;2025;2025;"IANN";@meisei4
+ei4
+ei4
+meisei4
+ei4
+ei4
+ei4
