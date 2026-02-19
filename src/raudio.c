@@ -295,8 +295,8 @@ typedef struct tagBITMAPINFOHEADER {
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
 #endif
 
-#ifndef AUDIO_BUFFER_CONVERSION_CACHE_SIZE
-    #define AUDIO_BUFFER_CONVERSION_CACHE_SIZE  256 // In PCM frames. Smaller values use less memory but have more overhead..
+#ifndef AUDIO_BUFFER_RESIDUAL_CAPACITY
+    #define AUDIO_BUFFER_RESIDUAL_CAPACITY     8    // In PCM frames. For resampling and pitch shifting.
 #endif
 
 //----------------------------------------------------------------------------------
@@ -341,9 +341,8 @@ typedef enum {
 // Audio buffer struct
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
-    unsigned char* converterCache;  // Cached input samples for use by the converter when resampling is required
-    unsigned int converterCacheCap; // The capacity of the converter cache in frames
-    unsigned int converterCacheLen; // The number of valid frames sitting in the converter cache
+    unsigned char* converterResidual;       // Cached residual input frames for use by the converter
+    unsigned int converterResidualCount;    // The number of valid frames sitting in converterResidual
 
     AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
     rAudioProcessor *processor;     // Audio processor
@@ -599,9 +598,8 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // ensure there are no discontinuities. Since raylib supports pitch
     // shifting, which is done through resampling, a cache will always be
     // required. This will be kept relatively small to avoid too much wastage.
-    audioBuffer->converterCacheLen = 0;
-    audioBuffer->converterCacheCap = AUDIO_BUFFER_CONVERSION_CACHE_SIZE;
-    audioBuffer->converterCache = (unsigned char*)RL_CALLOC(audioBuffer->converterCacheCap*ma_get_bytes_per_frame(format, channels), 1);
+    audioBuffer->converterResidualCount = 0;
+    audioBuffer->converterResidual = (unsigned char*)RL_CALLOC(AUDIO_BUFFER_RESIDUAL_CAPACITY*ma_get_bytes_per_frame(format, channels), 1);
 
     // Init audio buffer values
     audioBuffer->volume = 1.0f;
@@ -638,7 +636,7 @@ void UnloadAudioBuffer(AudioBuffer *buffer)
     {
         UntrackAudioBuffer(buffer);
         ma_data_converter_uninit(&buffer->converter, NULL);
-        RL_FREE(buffer->converterCache);
+        RL_FREE(buffer->converterResidual);
         RL_FREE(buffer->data);
         RL_FREE(buffer);
     }
@@ -2474,47 +2472,77 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
     // NOTE: Continuously converting data from the AudioBuffer's internal format to the mixing format, 
     // which should be defined by the output format of the data converter. 
     // This is done until frameCount frames have been output. 
-    // A cache is required to ensure continuity when resampling.
-
+    ma_uint32 bpf = ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
+    ma_uint8 inputBuffer[4096] = { 0 };
+    ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/bpf;
+    
     ma_uint32 totalOutputFramesProcessed = 0;
     while (totalOutputFramesProcessed < frameCount)
     {
+        float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
         ma_uint64 inputFramesToProcessThisIteration = 0;
-
-        // Output frames come from the converter. The converter reads from the cache. The process
-        // goes like this:
-        //
-        //   AudioBuffer -> Cache -> Converter -> framesOut
-        //
-        // Data is moved from the AudioBuffer into the cache, and then the cache is fed into the
-        // converter which outputs to the output buffer.
-
-        // Refill the cache if necessary.
-        if (audioBuffer->converterCacheLen == 0)
+        
+        // Process any residual input frames from the previous read first.
+        if (audioBuffer->converterResidualCount > 0)
         {
-            audioBuffer->converterCacheLen = ReadAudioBufferFramesInInternalFormat(audioBuffer, audioBuffer->converterCache, audioBuffer->converterCacheCap);
-        }
-
-        // Now run the data through the data converter.
-        if (audioBuffer->converterCacheLen > 0)
-        {
-            ma_uint32 bpf = ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
-            float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
-
-            ma_uint64 inputFramesProcessedThisIteration = audioBuffer->converterCacheLen;
+            ma_uint64 inputFramesProcessedThisIteration = audioBuffer->converterResidualCount;
             ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
-            ma_data_converter_process_pcm_frames(&audioBuffer->converter, audioBuffer->converterCache, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
+            ma_data_converter_process_pcm_frames(&audioBuffer->converter, audioBuffer->converterResidual, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
 
             // Make sure the data in the cache is consumed. This can be optimized to use a cursor instead of a memmove().
-            memmove(audioBuffer->converterCache, audioBuffer->converterCache + inputFramesProcessedThisIteration*bpf, (size_t)(audioBuffer->converterCacheCap - inputFramesProcessedThisIteration) * bpf);
-            audioBuffer->converterCacheLen -= (ma_uint32)inputFramesProcessedThisIteration; // Safe cast
+            memmove(audioBuffer->converterResidual, audioBuffer->converterResidual + inputFramesProcessedThisIteration*bpf, (size_t)(AUDIO_BUFFER_RESIDUAL_CAPACITY - inputFramesProcessedThisIteration) * bpf);
+            audioBuffer->converterResidualCount -= (ma_uint32)inputFramesProcessedThisIteration; // Safe cast
 
             totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration; // Safe cast
         }
         else
         {
-            break;  // Ran out of input data.
+            // Getting here means there are no residual frames from the previous read. Fresh data can now be
+            // pulled from the AudioBuffer and processed.
+            //
+            // A best guess needs to be used made to determine how many input frames to pull from the
+            // buffer. There are three possible outcomes: 1) exact; 2) underestimated; 3) overestimated.
+            //
+            // When the guess is exactly correct or underestimated there is nothing special to handle - it'll be
+            // handled naturally by the loop.
+            //
+            // When the guess is overestimated, that's when it gets more complicated. In this case, any overflow
+            // needs to be stored in a buffer for later processing by the next read.
+            ma_uint32 estimatedInputFrameCount = (ma_uint32)(((float)audioBuffer->converter.resampler.sampleRateIn / audioBuffer->converter.resampler.sampleRateOut) * outputFramesToProcessThisIteration);
+            if (estimatedInputFrameCount == 0)
+            {
+                estimatedInputFrameCount = 1;    // Make sure at least one input frame is read.
+            }
+
+            if (estimatedInputFrameCount > inputBufferFrameCap)
+            {
+                estimatedInputFrameCount = inputBufferFrameCap;
+            }
+
+            estimatedInputFrameCount = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, estimatedInputFrameCount);
+
+            ma_uint64 inputFramesProcessedThisIteration = estimatedInputFrameCount;
+            ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
+            ma_data_converter_process_pcm_frames(&audioBuffer->converter, inputBuffer, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
+
+            if (estimatedInputFrameCount > inputFramesProcessedThisIteration)
+            {
+                // Getting here means the estimated input frame count was overestimated. The residual needs
+                // be stored for later use.
+                ma_uint64 residualFrameCount = estimatedInputFrameCount - inputFramesProcessedThisIteration;
+
+                // A safety check to make sure the capacity of the residual cache is not exceeded.
+                if (residualFrameCount > AUDIO_BUFFER_RESIDUAL_CAPACITY)
+                {
+                    residualFrameCount = AUDIO_BUFFER_RESIDUAL_CAPACITY;
+                }
+
+                memcpy(audioBuffer->converterResidual, inputBuffer + inputFramesProcessedThisIteration*bpf, (size_t)(residualFrameCount * bpf));
+                audioBuffer->converterResidualCount = residualFrameCount;
+            }
+
+            totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration;
         }
     }
 
