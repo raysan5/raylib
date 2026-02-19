@@ -211,9 +211,3 @@ audio;audio_stream_effects;★★★★;4.2;5.0;2022;2025;"Ramon Santamaria";@ra
 audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM2501
 audio;audio_sound_positioning;★★☆☆;5.5;5.5;2025;2025;"Le Juez Victor";@Bigfoot71
 audio;audio_spectrum_visualizer;★★★☆;6.0;5.6-dev;2025;2025;"IANN";@meisei4
-others;rlgl_standalone;★★★★;1.6;4.0;2014;2025;"Ramon Santamaria";@raysan5
-others;rlgl_compute_shader;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake41
-others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flashback-fx
-others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
-others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
-others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5
