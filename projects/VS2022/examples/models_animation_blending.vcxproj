@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{AFDDE100-2D36-4749-817D-12E54C56312F}</ProjectGuid>
+    <ProjectGuid>{BB9C957D-34F1-46AE-B64A-9E0499C1746D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>models_animation_blending</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>

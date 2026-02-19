@@ -51,7 +51,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6B1A933E-71B8-4C1F-9E79-02D98830E671}</ProjectGuid>
+    <ProjectGuid>{4E7157E0-6CDB-47AE-A19A-FEC3876FA8A3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>core_window_web</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
