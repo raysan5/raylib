@@ -656,6 +656,7 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blending \
     models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \

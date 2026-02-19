@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Model animation blending
+*   raylib [models] example - animation blending
 * 
-*   Example originally created with raylib 5.5
+*   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
 *
 *   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra)
 *
@@ -37,7 +37,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - Model Animation Blending");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation blending");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
