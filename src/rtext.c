@@ -818,25 +818,11 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         totalWidth += glyphs[i].image.width + 2*padding;
     }
 
-//#define SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE
-#if defined(SUPPORT_FONT_ATLAS_SIZE_CONSERVATIVE)
-    int rowCount = 0;
-    int imageSize = 64;  // Define minimum starting value to avoid unnecessary calculation steps for very small images
-
-    // NOTE: maxGlyphWidth is maximum possible space left at the end of row
-    while (totalWidth > (imageSize - maxGlyphWidth)*rowCount)
-    {
-        imageSize *= 2;                                 // Double the size of image (to keep POT)
-        rowCount = imageSize/(fontSize + 2*padding);    // Calculate new row count for the new image size
-    }
-
-    atlas.width = imageSize;   // Atlas bitmap width
-    atlas.height = imageSize;  // Atlas bitmap height
-#else
     int paddedFontSize = fontSize + 2*padding;
 
-    // No need for a so-conservative atlas generation
-    // NOTE: Multiplying total expected are by 1.2f scale factor
+    // Estimate image atlas size from available data
+    // NOTE: Multiplying total expected area by 1.2f scale factor but in case
+    // some glyphs do not fit, the atlas height is scaled x2 to fit them
     float totalArea = totalWidth*paddedFontSize*1.2f;
     float imageMinSize = sqrtf(totalArea);
     int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
@@ -851,7 +837,6 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         atlas.width = imageSize;   // Atlas bitmap width
         atlas.height = imageSize;  // Atlas bitmap height
     }
-#endif
 
     int atlasDataSize = atlas.width*atlas.height; // Save total size for bounds checking
     atlas.data = (unsigned char *)RL_CALLOC(atlasDataSize, 1); // Create a bitmap to store characters (8 bpp)
