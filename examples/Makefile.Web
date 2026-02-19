@@ -546,6 +546,7 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
+    core/core_window_web \
     core/core_world_screen
 
 SHAPES = \
@@ -873,6 +874,9 @@ core/core_window_letterbox: core/core_window_letterbox.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_window_should_close: core/core_window_should_close.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_window_web: core/core_window_web.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_world_screen: core/core_world_screen.c

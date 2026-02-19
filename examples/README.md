@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 206]
+## EXAMPLES COLLECTION [TOTAL: 207]
 
-### category: core [48]
+### category: core [49]
 
 Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.
 
@@ -73,6 +73,7 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 | [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_window_web](core/core_window_web.c) | <img src="core/core_window_web.png" alt="core_window_web" width="80"> | ⭐☆☆☆ | 1.3 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
 
 ### category: shapes [40]
 

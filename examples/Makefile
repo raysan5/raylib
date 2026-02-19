@@ -561,6 +561,7 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
+    core/core_window_web \
     core/core_world_screen
 
 SHAPES = \
