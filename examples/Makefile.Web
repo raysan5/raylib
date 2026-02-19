@@ -693,6 +693,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching_rendering \
+    shaders/shaders_rlgl_compute \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -1464,6 +1465,9 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 shaders/shaders_raymarching_rendering: shaders/shaders_raymarching_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
+
+shaders/shaders_rlgl_compute: shaders/shaders_rlgl_compute.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shaders/shaders_rounded_rectangle: shaders/shaders_rounded_rectangle.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

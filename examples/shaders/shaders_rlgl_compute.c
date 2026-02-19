@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - compute shader
+*   raylib [shaders] example - rlgl compute
 *
 *   WARNING: This example requires raylib compiled with OpenGL 4.3 version for
 *         compute shaders support, shaders used in this example are #version 430
@@ -58,7 +58,7 @@ int main(void)
     const int screenWidth = GOL_WIDTH;
     const int screenHeight = GOL_WIDTH;
 
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl compute");
 
     const Vector2 resolution = { (float)screenWidth, (float)screenHeight };
     unsigned int brushSize = 8;

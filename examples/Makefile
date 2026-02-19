@@ -708,6 +708,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching_rendering \
+    shaders/shaders_rlgl_compute \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -729,7 +730,6 @@ AUDIO = \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
-
 #EXAMPLES_LIST_END
 
 # Define processes to execute

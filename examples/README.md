@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 203]
+## EXAMPLES COLLECTION [TOTAL: 204]
 
 ### category: core [48]
 
@@ -215,7 +215,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_decals](models/models_decals.c) | <img src="models/models_decals.png" alt="models_decals" width="80"> | ⭐⭐⭐⭐️ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 | [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
 
-### category: shaders [33]
+### category: shaders [34]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -254,6 +254,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 | [shaders_game_of_life](shaders/shaders_game_of_life.c) | <img src="shaders/shaders_game_of_life.png" alt="shaders_game_of_life" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_rlgl_compute](shaders/shaders_rlgl_compute.c) | <img src="shaders/shaders_rlgl_compute.png" alt="shaders_rlgl_compute" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
 
 ### category: audio [9]
 
@@ -270,13 +271,6 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
 | [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 5.6-dev | [IANN](https://github.com/meisei4) |
-
-### category: others [0]
-
-Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.
-
-|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
-|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
 Here is an [examples template](examples_template.c) with instructions to start with!
