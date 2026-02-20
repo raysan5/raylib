@@ -3422,7 +3422,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
     // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 and GL_DEPTH_COMPONENT32F
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
 
-#if (defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_ES3))
+#if defined(GRAPHICS_API_OPENGL_ES2)
     // WARNING: WebGL platform requires unsized internal format definition (GL_DEPTH_COMPONENT)
     // while other platforms using OpenGL ES 2.0 require/support sized internal formats depending on the GPU capabilities
     if (!RLGL.ExtSupported.texDepthWebGL || useRenderBuffer)
