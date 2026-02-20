@@ -116,6 +116,28 @@ extern "C" {
     #define EventType EventType_osx
 #endif
 
+#if defined(__APPLE__)
+    // older macs (unsupported?) are missing these
+    #ifndef kHIDUsage_Button_5
+        #define kHIDUsage_Button_5 0x05
+    #endif
+    #ifndef kHIDUsage_Button_6
+        #define kHIDUsage_Button_6 0x06
+    #endif
+    #ifndef kHIDUsage_Button_7
+        #define kHIDUsage_Button_7 0x07
+    #endif
+    #ifndef kHIDUsage_Button_8
+        #define kHIDUsage_Button_8 0x08
+    #endif
+    #ifndef kHIDUsage_Button_9
+        #define kHIDUsage_Button_9 0x09
+    #endif
+    #ifndef kHIDUsage_Button_10
+        #define kHIDUsage_Button_10 0x0A
+    #endif
+#endif
+
 // minigamepad used for gamepad support
 #define MG_MAX_GAMEPADS MAX_GAMEPADS // copy raylibs define into minigamepad
 #define MG_IMPLEMENTATION
@@ -764,11 +786,27 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    printf("SetWindowSize 1\n");
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+
+        Vector2 scaleDpi = GetWindowScaleDPI();
+
         #if defined(__APPLE__)
+            CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
+
+            CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+            CORE.Window.currentFbo.width = CORE.Window.render.width;
+            CORE.Window.currentFbo.height = CORE.Window.render.height;
+        #else
+            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
         #endif
+
+        CORE.Window.currentFbo.width = CORE.Window.render.width;
+        CORE.Window.currentFbo.height = CORE.Window.render.height;
     }
     else
     {
@@ -777,19 +815,6 @@ void SetWindowSize(int width, int height)
     }
     
     RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
-    // printf("SetWindowSize 3\n");
-
-    // if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
-    //     #if defined(__APPLE__)
-    //         Vector2 scaleDpi = GetWindowScaleDPI();
-    //         CORE.Window.screenScale = MatrixScale(2.0f, 2.0f, 1.0f);
-
-    //         CORE.Window.render.width = CORE.Window.screen.width * 2;
-    //         CORE.Window.render.height = CORE.Window.screen.height * 2;
-    //         CORE.Window.currentFbo.width = CORE.Window.render.width;
-    //         CORE.Window.currentFbo.height = CORE.Window.render.height;
-    //     #endif
-    // }
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -1519,12 +1544,7 @@ int InitPlatform(void)
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
-        #if defined(__APPLE__)
-        //     // apple is 0.66, 0.5, etc
-        //     CORE.Window.screen.width = CORE.Window.screen.width / GetWindowScaleDPI().x;
-        //     CORE.Window.screen.height = CORE.Window.screen.height / GetWindowScaleDPI().y;
-        #else
-        //     // other platforms are 1.5, 2.0, etc
+        #if !defined(__APPLE__)
             CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
             CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
         #endif
