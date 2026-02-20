@@ -153,7 +153,7 @@ extern "C" {
 typedef struct {
     double startTime;
     RGFW_window *window;                // Native display device (physical screen connection)
-    RGFW_monitor *mon;
+    RGFW_monitor *monitor;
     mg_gamepads minigamepad;
 } PlatformData;
 
@@ -459,22 +459,22 @@ void ToggleFullscreen(void)
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
 
-        platform.mon = RGFW_window_getMonitor(platform.window);
+        platform.monitor = RGFW_window_getMonitor(platform.window);
         FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
-        RGFW_monitor_scaleToWindow(platform.mon, platform.window);
+        RGFW_monitor_scaleToWindow(platform.monitor, platform.window);
         RGFW_window_setFullscreen(platform.window, 1);
     }
     else
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
-        if (platform.mon->mode.w)
+        if (platform.monitor->mode.w)
         {
             RGFW_monitor *monitor = RGFW_window_getMonitor(platform.window);
-            RGFW_monitor_requestMode(monitor, &platform.mon->mode, RGFW_monitorScale);
+            RGFW_monitor_requestMode(monitor, &platform.monitor->mode, RGFW_monitorScale);
 
-            platform.mon->mode.w = 0;
+            platform.monitor->mode.w = 0;
         }
 
         // we update the window position right away
@@ -881,7 +881,11 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    if (platform.window == NULL) return (Vector2){ 0.0f, 0.0f };
+    if (platform.window == NULL)
+    {
+        return (Vector2){ 0.0f, 0.0f };
+    }
+
     return (Vector2){ (float)platform.window->x, (float)platform.window->y };
 }
 
@@ -1450,6 +1454,12 @@ int InitPlatform(void)
 
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
 
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
+        CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
+        CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
+    }
+
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
     platform.startTime = get_time_seconds();
@@ -1497,6 +1507,17 @@ int InitPlatform(void)
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
 
+    // adjust scale if using highdpi
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+
+        SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+
+        CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+        CORE.Window.screen.width /= scaleDpi.x;
+        CORE.Window.screen.height /= scaleDpi.y;
+    }
+
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
@@ -1516,6 +1537,12 @@ int InitPlatform(void)
 
     // Initialize storage system
     //----------------------------------------------------------------------------
+    #if defined(__APPLE__)
+        // mac defaults to the users home folder for some reason
+        // this is done to help them read relative paths to the binary
+        ChangeDirectory(GetApplicationDirectory());
+    #endif
+
     CORE.Storage.basePath = GetWorkingDirectory();
     //----------------------------------------------------------------------------
 
