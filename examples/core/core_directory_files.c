@@ -81,27 +81,6 @@ int main(void)
             GuiListViewEx((Rectangle){ 0, 50, GetScreenWidth(), GetScreenHeight() - 50 },
                 files.paths, files.count, &listScrollIndex, &listItemActive, &listItemFocused);
 
-            /*
-            for (int i = 0; i < (int)files.count; i++)
-            {
-                Color color = Fade(LIGHTGRAY, 0.3f);
-
-                if (!IsPathFile(files.paths[i]) && DirectoryExists(files.paths[i]))
-                {
-                    if (GuiButton((Rectangle){0.0f, 85.0f + 40.0f*(float)i, screenWidth, 40}, ""))
-                    {
-                        TextCopy(directory, files.paths[i]);
-                        UnloadDirectoryFiles(files);
-                        files = LoadDirectoryFiles(directory);
-                        continue;
-                    }
-                }
-
-                DrawRectangle(0, 85 + 40*i, screenWidth, 40, color);
-                DrawText(GetFileName(files.paths[i]), 120, 100 + 40*i, 10, GRAY);
-            }
-            */
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
