@@ -2017,21 +2017,14 @@ int InitPlatform(void)
 #if defined(USING_VERSION_SDL3)
     platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 
-    // NOTE: SDL3 no longer enables TextInput by default, so this is needed to preserve the behaviour and keep GetCharPressed working.
-    // This code is derived from SDL before the change was made: https://github.com/libsdl-org/SDL/commit/72fc6f86e5d605a3787222bc7dc18c5379047f4a.
+
+    // NOTE: SDL3 no longer enables text input by default, 
+    // it is needed to be enabled manually to keep GetCharPressed() working
+    // REF: https://github.com/libsdl-org/SDL/commit/72fc6f86e5d605a3787222bc7dc18c5379047f4a
     const char *enableOSK = SDL_GetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD);
-    if (enableOSK == NULL)
-    {
-        SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "0");
-    }
-    if (!SDL_StartTextInput(platform.window))
-    {
-        TRACELOG(LOG_WARNING, "SDL: Failed to start text input: %s", SDL_GetError());
-    }
-    if (enableOSK == NULL) 
-    {
-        SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, NULL);
-    }
+    if (enableOSK == NULL) SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "0");
+    if (!SDL_StartTextInput(platform.window)) TRACELOG(LOG_WARNING, "SDL: Failed to start text input: %s", SDL_GetError());
+    if (enableOSK == NULL) SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, NULL);
 #else
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 #endif
