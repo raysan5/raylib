@@ -764,10 +764,32 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    printf("SetWindowSize 1\n");
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
+        #if defined(__APPLE__)
+        #endif
+    }
+    else
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+    
+    RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
+    // printf("SetWindowSize 3\n");
 
-    RGFW_window_resize(platform.window, width, height);
+    // if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
+    //     #if defined(__APPLE__)
+    //         Vector2 scaleDpi = GetWindowScaleDPI();
+    //         CORE.Window.screenScale = MatrixScale(2.0f, 2.0f, 1.0f);
+
+    //         CORE.Window.render.width = CORE.Window.screen.width * 2;
+    //         CORE.Window.render.height = CORE.Window.screen.height * 2;
+    //         CORE.Window.currentFbo.width = CORE.Window.render.width;
+    //         CORE.Window.currentFbo.height = CORE.Window.render.height;
+    //     #endif
+    // }
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -901,7 +923,21 @@ Vector2 GetWindowScaleDPI(void)
     if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
     else monitor = RGFW_getPrimaryMonitor();
 
-    return (Vector2){ monitor->scaleX, monitor->scaleX };
+    #if defined(__APPLE__)
+        return (Vector2){ 1.0f / monitor->scaleX, 1.0f / monitor->scaleX };
+    #else
+        return (Vector2){ monitor->scaleX, monitor->scaleX };
+    #endif
+}
+
+float GetMonitorPixelRatio(void)
+{
+    RGFW_monitor *monitor = NULL;
+
+    if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
+    else monitor = RGFW_getPrimaryMonitor();
+
+    return monitor->pixelRatio;
 }
 
 // Set clipboard text content
@@ -1179,22 +1215,45 @@ void PollInputEvents(void)
             // Window events are also polled (Minimized, maximized, close...)
             case RGFW_windowResized:
             {
-                SetupViewport(platform.window->w, platform.window->h);
+                #if defined(__APPLE__)
+                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+                    {
+                        SetupViewport(platform.window->w * platform.monitor->pixelRatio, platform.window->h * platform.monitor->pixelRatio);
+                        CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
 
-                // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
-                if (IsWindowState(FLAG_WINDOW_HIGHDPI))
-                {
-                    CORE.Window.screen.width = (int)(platform.window->w/GetWindowScaleDPI().x);
-                    CORE.Window.screen.height = (int)(platform.window->h/GetWindowScaleDPI().y);
-                }
-                else
-                {
-                    CORE.Window.screen.width = platform.window->w;
-                    CORE.Window.screen.height = platform.window->h;
-                }
+                        CORE.Window.screen.width = platform.window->w;
+                        CORE.Window.screen.height = platform.window->h;
+                        CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+                    }
+                    else
+                    {
+                        SetupViewport(platform.window->w, platform.window->h);
+                        CORE.Window.screen.width = platform.window->w;
+                        CORE.Window.screen.height = platform.window->h;
+                        CORE.Window.render.width = CORE.Window.screen.width;
+                        CORE.Window.render.height = CORE.Window.screen.height;
+                    }
 
-                CORE.Window.currentFbo.width = platform.window->w;
-                CORE.Window.currentFbo.height = platform.window->h;
+                    CORE.Window.currentFbo.width = CORE.Window.render.width;
+                    CORE.Window.currentFbo.height = CORE.Window.render.height;
+                #else
+                    SetupViewport(platform.window->w, platform.window->h);
+                    // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+                    {
+                        CORE.Window.screen.width = (int)(platform.window->w/GetWindowScaleDPI().x);
+                        CORE.Window.screen.height = (int)(platform.window->h/GetWindowScaleDPI().y);
+                    }
+                    else
+                    {
+                        CORE.Window.screen.width = platform.window->w;
+                        CORE.Window.screen.height = platform.window->h;
+                    }
+
+                    CORE.Window.currentFbo.width = platform.window->w;
+                    CORE.Window.currentFbo.height = platform.window->h;
+                #endif
                 CORE.Window.resizedLastFrame = true;
             } break;
             case RGFW_windowMaximized:
@@ -1460,8 +1519,15 @@ int InitPlatform(void)
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
-        CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
-        CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
+        #if defined(__APPLE__)
+        //     // apple is 0.66, 0.5, etc
+        //     CORE.Window.screen.width = CORE.Window.screen.width / GetWindowScaleDPI().x;
+        //     CORE.Window.screen.height = CORE.Window.screen.height / GetWindowScaleDPI().y;
+        #else
+        //     // other platforms are 1.5, 2.0, etc
+            CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
+            CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
+        #endif
     }
 
     RGFW_setGlobalHints_OpenGL(hints);
@@ -1500,6 +1566,7 @@ int InitPlatform(void)
     // must be set to NULL to not interfere
     RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
     RGFW_window_makeCurrentWindow_OpenGL(platform.window);
+    platform.monitor = RGFW_window_getMonitor(platform.window);
 
     //----------------------------------------------------------------------------
 
@@ -1515,11 +1582,19 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
         Vector2 scaleDpi = GetWindowScaleDPI();
 
-        SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+        #if defined(__APPLE__)
+            CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
 
-        CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
-        CORE.Window.screen.width /= scaleDpi.x;
-        CORE.Window.screen.height /= scaleDpi.y;
+            CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+            CORE.Window.currentFbo.width = CORE.Window.render.width;
+            CORE.Window.currentFbo.height = CORE.Window.render.height;
+        #else
+            SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+            CORE.Window.screen.width /= scaleDpi.x;
+            CORE.Window.screen.height /= scaleDpi.y;
+        #endif
     }
 
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
