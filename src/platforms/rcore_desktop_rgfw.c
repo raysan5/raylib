@@ -45,10 +45,26 @@
 *
 **********************************************************************************************/
 
-// minigamepad used for gamepad support
-#define MG_MAX_GAMEPADS MAX_GAMEPADS // copy raylibs define into minigamepad
-#define MG_IMPLEMENTATION
-#include "../external/minigamepad.h"
+#if defined(_WIN32) || defined(_WIN64)
+    #define BI_ALPHABITFIELDS 4
+    #define LoadImage LoadImageA
+
+    // Temporarily rename conflicting symbols
+    #define CloseWindow CloseWindowWin32
+    #define Rectangle RectangleWin32
+    #define ShowCursor ShowCursorWin32
+
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+
+    // Restore for raylib/RGFW
+    #undef CloseWindow
+    #undef Rectangle
+    #undef ShowCursor
+    #undef LoadImage
+
+    #include "../external/fix_win32_compatibility.h"
+#endif
 
 #if defined(PLATFORM_WEB_RGFW)
     #define RGFW_NO_GL_HEADER
@@ -76,8 +92,6 @@ double get_time_seconds(void);
     #define ShowCursor __imp_ShowCursor
     #define _APISETSTRING_
 
-    #undef MAX_PATH
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -91,13 +105,28 @@ extern "C" {
 #if defined(__APPLE__)
     #define Point NSPOINT
     #define Size NSSIZE
+
+    #ifdef GetColor
+        #undef GetColor
+    #endif
+    #define GetColor GetColor_osx
+    #ifdef EventType
+        #undef EventType
+    #endif
+    #define EventType EventType_osx
 #endif
+
+// minigamepad used for gamepad support
+#define MG_MAX_GAMEPADS MAX_GAMEPADS // copy raylibs define into minigamepad
+#define MG_IMPLEMENTATION
+#include "../external/RGFW/deps/minigamepad.h"
 
 #define RGFW_ALLOC RL_MALLOC
 #define RGFW_FREE RL_FREE
 #define RGFW_CALLOC RL_CALLOC
+#define RGFW_INT_DEFINED 1 // to avoid issues with minigamepad+RGFW definitions
 
-#include "../external/RGFW.h"
+#include "../external/RGFW/RGFW.h"
 
 #if defined(_WIN32) || defined(_WIN64)
     #undef DrawText
@@ -105,8 +134,10 @@ extern "C" {
     #undef CloseWindow
     #undef Rectangle
 
-    #undef MAX_PATH
-    #define MAX_PATH 1025
+    #ifdef MAX_PATH
+        #undef MAX_PATH
+        #define MAX_PATH 1025
+    #endif
 #endif
 
 #if defined(__APPLE__)
@@ -756,8 +787,10 @@ void *GetWindowHandle(void)
 {
     if (platform.window == NULL) return NULL;
 
-#ifdef RGFW_WASM
+#if defined(RGFW_WASM)
     return (void *)&platform.window->src.ctx;
+#elif defined(RGFW_WAYLAND)
+    return (void *)platform.window->src.surface;
 #else
     return (void *)platform.window->src.window;
 #endif
@@ -1317,29 +1350,30 @@ void PollInputEvents(void)
                     }
                 } break;
             case MG_EVENT_AXIS_MOVE:
-                int axis = mg_axisConvertTable[gamepad_event.axis];
+                {
+                    int axis = mg_axisConvertTable[gamepad_event.axis];
 
-                switch (axis) {
-                    case GAMEPAD_AXIS_LEFT_X:
-                    case GAMEPAD_AXIS_LEFT_Y:
-                    case GAMEPAD_AXIS_RIGHT_X:
-                    case GAMEPAD_AXIS_RIGHT_Y:
-                            CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
-                        break;
-                    case GAMEPAD_AXIS_LEFT_TRIGGER:
-                    case GAMEPAD_AXIS_RIGHT_TRIGGER:
-                            CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
+                    switch (axis) {
+                        case GAMEPAD_AXIS_LEFT_X:
+                        case GAMEPAD_AXIS_LEFT_Y:
+                        case GAMEPAD_AXIS_RIGHT_X:
+                        case GAMEPAD_AXIS_RIGHT_Y:
+                                CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
+                            break;
+                        case GAMEPAD_AXIS_LEFT_TRIGGER:
+                        case GAMEPAD_AXIS_RIGHT_TRIGGER:
+                                CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
 
-                            /* trigger button press when axis is all the way */
-                            int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
-                            int pressed = (platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value >= 1.0f);
+                                /* trigger button press when axis is all the way */
+                                int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
+                                int pressed = (platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value >= 1.0f);
 
-                            CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = pressed;
-                            if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
-                            else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
-                        break;
-                }
-                break;
+                                CORE.Input.Gamepad.currentButtonState[gamepadIndex][button] = pressed;
+                                if (pressed) CORE.Input.Gamepad.lastButtonPressed = button;
+                                else if (CORE.Input.Gamepad.lastButtonPressed == button) CORE.Input.Gamepad.lastButtonPressed = 0;
+                            break;
+                    }
+                } break;
             case MG_EVENT_GAMEPAD_CONNECT:
                 CORE.Input.Gamepad.ready[gamepadIndex] = true;
                 CORE.Input.Gamepad.axisState[gamepadIndex][GAMEPAD_AXIS_LEFT_TRIGGER] = -1.0f;
@@ -1486,7 +1520,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
 
 #if defined(RGFW_WAYLAND)
-    if (RGFW_useWaylandBool) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
+    if (RGFW_usingWayland()) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
     else TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
 #elif defined(RGFW_X11)
     #if defined(__APPLE__)
