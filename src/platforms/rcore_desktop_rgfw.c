@@ -886,7 +886,11 @@ Vector2 GetWindowPosition(void)
         return (Vector2){ 0.0f, 0.0f };
     }
 
-    return (Vector2){ (float)platform.window->x, (float)platform.window->y };
+    if (RGFW_window_getPosition(platform.window, &platform.window->x, &platform.window->y)) {
+        return (Vector2){ (float)platform.window->x, (float)platform.window->y };
+    }
+
+    return (Vector2){ 0.0f, 0.0f };
 }
 
 // Get window scale DPI factor for current monitor
