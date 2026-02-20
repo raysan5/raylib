@@ -115,11 +115,6 @@ USE_EXTERNAL_GLFW     ?= FALSE
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
-# Enable support for X11 by default on Linux when using GLFW
-# NOTE: Wayland is disabled by default, only enable if you are sure
-RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
-RGFW_LINUX_ENABLE_X11      ?= TRUE
-
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
@@ -324,17 +319,6 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # It seems from Android NDK r22 onwards we need to use llvm-ar
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
-    ifeq ($(PLATFORM_OS),OSX)
-        # OSX default compiler
-        CC = clang
-        GLFW_OSX = -x objective-c
-    endif
-    ifeq ($(PLATFORM_OS),BSD)
-        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
-        CC = clang
-    endif
-endif
 
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
@@ -488,38 +472,6 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         endif
     endif
 endif
-ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
-    ifeq ($(PLATFORM_OS), LINUX)
-        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
-            CFLAGS += -DRGFW_X11 -DRGFW_UNIX
-        endif
-        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
-            CFLAGS += -DRGFW_WAYLAND -DRGFW_UNIX -DEGLAPIENTRY=
-            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
-
-            WL_PROTOCOLS_DIR := external/RGFW/deps/wayland
-
-            wl_generate = \
-                $(eval protocol=$(1)) \
-                $(eval basename=$(2)) \
-                $(shell wayland-scanner client-header $(protocol) $(RAYLIB_SRC_PATH)/$(basename).h) \
-                $(shell wayland-scanner private-code $(protocol) $(RAYLIB_SRC_PATH)/$(basename)-code.h)
-
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-shell.xml, xdg-shell)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-toplevel-icon-v1.xml, xdg-toplevel-icon-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/wayland.xml, wayland-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-decoration-unstable-v1.xml, xdg-decoration-unstable-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/viewporter.xml, viewporter-client-protocol)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/relative-pointer-unstable-v1.xml, relative-pointer-unstable-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-constraints-unstable-v1.xml, pointer-constraints-unstable-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/fractional-scale-v1.xml, fractional-scale-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-activation-v1.xml, xdg-activation-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/idle-inhibit-unstable-v1.xml, idle-inhibit-unstable-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-output-unstable-v1.xml, xdg-output-unstable-v1)
-            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-warp-v1.xml, pointer-warp-v1)
-        endif
-    endif
-endif
 
 CFLAGS += $(CUSTOM_CFLAGS)
 
@@ -666,12 +618,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compipling
         # NOTE: Required packages: libegl1-mesa-dev
-        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
-            LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
-        endif
-        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
-            LDLIBS += -lEGL $(shell pkg-config --libs wayland-client wayland-cursor wayland-egl xkbcommon --libs)
-        endif
+        LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
 
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -684,7 +631,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for Debian MacOS desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = -lm -framework Foundation -framework AppKit -framework IOKit  -framework OpenGL -framework CoreVideo
+        LDLIBS += -lm -framework Foundation -framework AppKit -framework IOKit  -framework OpenGL -framework CoreVideo
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)

@@ -5038,6 +5038,7 @@ void RGFW_attribStack_pushAttribs(RGFW_attribStack* stack, i32 attrib1, i32 attr
 
 /* EGL */
 #ifdef RGFW_EGL
+#include <EGL/eglplatform.h>
 #include <EGL/egl.h>
 
 PFNEGLINITIALIZEPROC RGFW_eglInitialize;
