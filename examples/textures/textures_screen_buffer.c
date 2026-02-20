@@ -66,11 +66,9 @@ int main(void)
         // Grow flameRoot
         for (int x = 2; x < flameWidth; x++)
         {
-            unsigned char flame = flameRootBuffer[x];
-            if (flame == 255) continue;
+            int flame = (int)flameRootBuffer[x];
             flame += GetRandomValue(0, 2);
-            if (flame > 255) flame = 255;
-            flameRootBuffer[x] = flame;
+            flameRootBuffer[x] = (flameInc > 255)? 255: (unsigned char)flame;
         }
 
         // Transfer flameRoot to indexBuffer
