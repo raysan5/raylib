@@ -772,7 +772,7 @@ RAYGUIAPI int GuiWindowBox(Rectangle bounds, const char *title);                
 RAYGUIAPI int GuiGroupBox(Rectangle bounds, const char *text);                                         // Group Box control with text name
 RAYGUIAPI int GuiLine(Rectangle bounds, const char *text);                                             // Line separator control, could contain text
 RAYGUIAPI int GuiPanel(Rectangle bounds, const char *text);                                            // Panel control, useful to group controls
-RAYGUIAPI int GuiTabBar(Rectangle bounds, const char **text, int count, int *active);                  // Tab Bar control, returns TAB to be closed or -1
+RAYGUIAPI int GuiTabBar(Rectangle bounds, char **text, int count, int *active);                        // Tab Bar control, returns TAB to be closed or -1
 RAYGUIAPI int GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, Vector2 *scroll, Rectangle *view); // Scroll Panel control
 
 // Basic controls set
@@ -800,7 +800,7 @@ RAYGUIAPI int GuiGrid(Rectangle bounds, const char *text, float spacing, int sub
 
 // Advance controls set
 RAYGUIAPI int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int *active);          // List View control
-RAYGUIAPI int GuiListViewEx(Rectangle bounds, const char **text, int count, int *scrollIndex, int *active, int *focus); // List View with extended parameters
+RAYGUIAPI int GuiListViewEx(Rectangle bounds, char **text, int count, int *scrollIndex, int *active, int *focus); // List View with extended parameters
 RAYGUIAPI int GuiMessageBox(Rectangle bounds, const char *title, const char *message, const char *buttons); // Message Box control, displays a message
 RAYGUIAPI int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, const char *buttons, char *text, int textMaxSize, bool *secretViewActive); // Text Input Box control, ask for text, supports secret
 RAYGUIAPI int GuiColorPicker(Rectangle bounds, const char *text, Color *color);                        // Color Picker control (multiple color controls)
@@ -1526,7 +1526,7 @@ static Color GetColor(int hexValue);                // Returns a Color struct fr
 static int ColorToInt(Color color);                 // Returns hexadecimal value for a Color
 static bool CheckCollisionPointRec(Vector2 point, Rectangle rec);   // Check if point is inside rectangle
 static const char *TextFormat(const char *text, ...);               // Formatting of text with variables to 'embed'
-static const char **TextSplit(const char *text, char delimiter, int *count);    // Split text into multiple strings
+static char **TextSplit(const char *text, char delimiter, int *count);    // Split text into multiple strings
 static int TextToInteger(const char *text);         // Get integer value from text
 static float TextToFloat(const char *text);         // Get float value from text
 
@@ -1549,7 +1549,7 @@ static const char *GetTextIcon(const char *text, int *iconId);  // Get text icon
 static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, Color tint);     // Gui draw text using default font
 static void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color color);   // Gui draw rectangle using default raygui style
 
-static const char **GuiTextSplit(const char *text, char delimiter, int *count, int *textRow);   // Split controls text into multiple strings
+static char **GuiTextSplit(const char *text, char delimiter, int *count, int *textRow);   // Split controls text into multiple strings
 static Vector3 ConvertHSVtoRGB(Vector3 hsv);                    // Convert color data from HSV to RGB
 static Vector3 ConvertRGBtoHSV(Vector3 rgb);                    // Convert color data from RGB to HSV
 
@@ -1783,7 +1783,7 @@ int GuiPanel(Rectangle bounds, const char *text)
 
 // Tab Bar control
 // NOTE: Using GuiToggle() for the TABS
-int GuiTabBar(Rectangle bounds, const char **text, int count, int *active)
+int GuiTabBar(Rectangle bounds, char **text, int count, int *active)
 {
     #define RAYGUI_TABBAR_ITEM_WIDTH    148
 
@@ -2168,7 +2168,7 @@ int GuiToggleGroup(Rectangle bounds, const char *text, int *active)
     // Get substrings items from text (items pointers)
     int rows[RAYGUI_TOGGLEGROUP_MAX_ITEMS] = { 0 };
     int itemCount = 0;
-    const char **items = GuiTextSplit(text, ';', &itemCount, rows);
+    char **items = GuiTextSplit(text, ';', &itemCount, rows);
 
     int prevRow = rows[0];
 
@@ -2212,7 +2212,7 @@ int GuiToggleSlider(Rectangle bounds, const char *text, int *active)
 
     // Get substrings items from text (items pointers)
     int itemCount = 0;
-    const char **items = NULL;
+    char **items = NULL;
 
     if (text != NULL) items = GuiTextSplit(text, ';', &itemCount, NULL);
 
@@ -2356,7 +2356,7 @@ int GuiComboBox(Rectangle bounds, const char *text, int *active)
 
     // Get substrings items from text (items pointers, lengths and count)
     int itemCount = 0;
-    const char **items = GuiTextSplit(text, ';', &itemCount, NULL);
+    char **items = GuiTextSplit(text, ';', &itemCount, NULL);
 
     if (*active < 0) *active = 0;
     else if (*active > (itemCount - 1)) *active = itemCount - 1;
@@ -2422,7 +2422,7 @@ int GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMod
 
     // Get substrings items from text (items pointers, lengths and count)
     int itemCount = 0;
-    const char **items = GuiTextSplit(text, ';', &itemCount, NULL);
+    char **items = GuiTextSplit(text, ';', &itemCount, NULL);
 
     Rectangle boundsOpen = bounds;
     boundsOpen.height = (itemCount + 1)*(bounds.height + GuiGetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING));
@@ -3602,7 +3602,7 @@ int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int *activ
 {
     int result = 0;
     int itemCount = 0;
-    const char **items = NULL;
+    char **items = NULL;
 
     if (text != NULL) items = GuiTextSplit(text, ';', &itemCount, NULL);
 
@@ -3612,7 +3612,7 @@ int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int *activ
 }
 
 // List View control with extended parameters
-int GuiListViewEx(Rectangle bounds, const char **text, int count, int *scrollIndex, int *active, int *focus)
+int GuiListViewEx(Rectangle bounds, char **text, int count, int *scrollIndex, int *active, int *focus)
 {
     int result = 0;
     GuiState state = guiState;
@@ -4140,7 +4140,7 @@ int GuiMessageBox(Rectangle bounds, const char *title, const char *message, cons
     int result = -1;    // Returns clicked button from buttons list, 0 refers to closed window button
 
     int buttonCount = 0;
-    const char **buttonsText = GuiTextSplit(buttons, ';', &buttonCount, NULL);
+    char **buttonsText = GuiTextSplit(buttons, ';', &buttonCount, NULL);
     Rectangle buttonBounds = { 0 };
     buttonBounds.x = bounds.x + RAYGUI_MESSAGEBOX_BUTTON_PADDING;
     buttonBounds.y = bounds.y + bounds.height - RAYGUI_MESSAGEBOX_BUTTON_HEIGHT - RAYGUI_MESSAGEBOX_BUTTON_PADDING;
@@ -4199,7 +4199,7 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
     int result = -1;
 
     int buttonCount = 0;
-    const char **buttonsText = GuiTextSplit(buttons, ';', &buttonCount, NULL);
+    char **buttonsText = GuiTextSplit(buttons, ';', &buttonCount, NULL);
     Rectangle buttonBounds = { 0 };
     buttonBounds.x = bounds.x + RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
     buttonBounds.y = bounds.y + bounds.height - RAYGUI_TEXTINPUTBOX_BUTTON_HEIGHT - RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
@@ -5119,11 +5119,11 @@ static const char *GetTextIcon(const char *text, int *iconId)
 
 // Get text divided into lines (by line-breaks '\n')
 // WARNING: It returns pointers to new lines but it does not add NULL ('\0') terminator!
-static const char **GetTextLines(const char *text, int *count)
+static char **GetTextLines(const char *text, int *count)
 {
     #define RAYGUI_MAX_TEXT_LINES   128
 
-    static const char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
+    static char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
     for (int i = 0; i < RAYGUI_MAX_TEXT_LINES; i++) lines[i] = NULL;    // Init NULL pointers to substrings
 
     int textLength = (int)strlen(text);
@@ -5131,12 +5131,11 @@ static const char **GetTextLines(const char *text, int *count)
     lines[0] = text;
     *count = 1;
 
-    for (int i = 0, k = 0; (i < textLength) && (*count < RAYGUI_MAX_TEXT_LINES); i++)
+    for (int i = 0; (i < textLength) && (*count < RAYGUI_MAX_TEXT_LINES); i++)
     {
-        if (text[i] == '\n')
+        if ((text[i] == '\n') && ((i + 1) < textLength))
         {
-            k++;
-            lines[k] = &text[i + 1]; // WARNING: next value is valid?
+            lines[*count] = &text[i + 1];
             *count += 1;
         }
     }
@@ -5194,7 +5193,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
     // WARNING: GuiTextSplit() function can't be used now because it can have already been used
     // before the GuiDrawText() call and its buffer is static, it would be overriden :(
     int lineCount = 0;
-    const char **lines = GetTextLines(text, &lineCount);
+    char **lines = GetTextLines(text, &lineCount);
 
     // Text style variables
     //int alignment = GuiGetStyle(DEFAULT, TEXT_ALIGNMENT);
@@ -5444,7 +5443,7 @@ static void GuiTooltip(Rectangle controlRec)
 
 // Split controls text into multiple strings
 // Also check for multiple columns (required by GuiToggleGroup())
-static const char **GuiTextSplit(const char *text, char delimiter, int *count, int *textRow)
+static char **GuiTextSplit(const char *text, char delimiter, int *count, int *textRow)
 {
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
     // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,
@@ -5463,8 +5462,8 @@ static const char **GuiTextSplit(const char *text, char delimiter, int *count, i
         #define RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE     1024
     #endif
 
-    static const char *result[RAYGUI_TEXTSPLIT_MAX_ITEMS] = { NULL };   // String pointers array (points to buffer data)
-    static char buffer[RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE] = { 0 };         // Buffer data (text input copy with '\0' added)
+    static char *result[RAYGUI_TEXTSPLIT_MAX_ITEMS] = { NULL }; // String pointers array (points to buffer data)
+    static char buffer[RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE] = { 0 }; // Buffer data (text input copy with '\0' added)
     memset(buffer, 0, RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE);
 
     result[0] = buffer;
@@ -5863,7 +5862,7 @@ static void DrawRectangleGradientV(int posX, int posY, int width, int height, Co
 }
 
 // Split string into multiple strings
-const char **TextSplit(const char *text, char delimiter, int *count)
+char **TextSplit(const char *text, char delimiter, int *count)
 {
     // NOTE: Current implementation returns a copy of the provided string with '\0' (string end delimiter)
     // inserted between strings defined by "delimiter" parameter. No memory is dynamically allocated,

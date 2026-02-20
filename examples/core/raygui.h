@@ -5131,12 +5131,11 @@ static char **GetTextLines(const char *text, int *count)
     lines[0] = text;
     *count = 1;
 
-    for (int i = 0, k = 0; (i < textLength) && (*count < RAYGUI_MAX_TEXT_LINES); i++)
+    for (int i = 0; (i < textLength) && (*count < RAYGUI_MAX_TEXT_LINES); i++)
     {
-        if (text[i] == '\n')
+        if ((text[i] == '\n') && ((i + 1) < textLength))
         {
-            k++;
-            lines[k] = &text[i + 1]; // WARNING: next value is valid?
+            lines[*count] = &text[i + 1];
             *count += 1;
         }
     }
@@ -5463,8 +5462,8 @@ static char **GuiTextSplit(const char *text, char delimiter, int *count, int *te
         #define RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE     1024
     #endif
 
-    static char *result[RAYGUI_TEXTSPLIT_MAX_ITEMS] = { NULL };   // String pointers array (points to buffer data)
-    static char buffer[RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE] = { 0 };         // Buffer data (text input copy with '\0' added)
+    static char *result[RAYGUI_TEXTSPLIT_MAX_ITEMS] = { NULL }; // String pointers array (points to buffer data)
+    static char buffer[RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE] = { 0 }; // Buffer data (text input copy with '\0' added)
     memset(buffer, 0, RAYGUI_TEXTSPLIT_MAX_TEXT_SIZE);
 
     result[0] = buffer;
