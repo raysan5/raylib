@@ -17,9 +17,9 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 208]
+## EXAMPLES COLLECTION [TOTAL: 207]
 
-### category: core [48]
+### category: core [49]
 
 Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.
 
@@ -73,8 +73,9 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_text_file_loading](core/core_text_file_loading.c) | <img src="core/core_text_file_loading.png" alt="core_text_file_loading" width="80"> | ⭐☆☆☆ | 5.5 | 5.6 | [Aanjishnu Bhattacharyya](https://github.com/NimComPoo-04) |
 | [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
+| [core_window_web](core/core_window_web.c) | <img src="core/core_window_web.png" alt="core_window_web" width="80"> | ⭐☆☆☆ | 1.3 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [39]
+### category: shapes [40]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -119,6 +120,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_ball_physics](shapes/shapes_ball_physics.c) | <img src="shapes/shapes_ball_physics.png" alt="shapes_ball_physics" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
 | [shapes_penrose_tile](shapes/shapes_penrose_tile.c) | <img src="shapes/shapes_penrose_tile.png" alt="shapes_penrose_tile" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
 | [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
+| [shapes_easings_testbed](shapes/shapes_easings_testbed.c) | <img src="shapes/shapes_easings_testbed.png" alt="shapes_easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Juan Miguel López](https://github.com/flashback-fx) |
 
 ### category: textures [30]
 
@@ -180,7 +182,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_words_alignment](text/text_words_alignment.c) | <img src="text/text_words_alignment.png" alt="text_words_alignment" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 | [text_strings_management](text/text_strings_management.c) | <img src="text/text_strings_management.png" alt="text_strings_management" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [David Buzatto](https://github.com/davidbuzatto) |
 
-### category: models [27]
+### category: models [29]
 
 Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.
 
@@ -213,8 +215,10 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_rotating_cube](models/models_rotating_cube.c) | <img src="models/models_rotating_cube.png" alt="models_rotating_cube" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Jopestpe](https://github.com/jopestpe) |
 | [models_decals](models/models_decals.c) | <img src="models/models_decals.png" alt="models_decals" width="80"> | ⭐⭐⭐⭐️ | 5.6-dev | 5.6-dev | [JP Mortiboys](https://github.com/themushroompirates) |
 | [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
+| [models_animation_bone_blending](models/models_animation_bone_blending.c) | <img src="models/models_animation_bone_blending.png" alt="models_animation_bone_blending" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.5 | [dmitrii-brand](https://github.com/dmitrii-brand) |
+| [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation_blending" width="80"> | ☆☆☆☆ | 5.5 | 5.6-dev | [Kirandeep](https://github.com/Kirandeep-Singh-Khehra) |
 
-### category: shaders [33]
+### category: shaders [34]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.
 
@@ -253,6 +257,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 5.6-dev | 5.6-dev | [Luís Almeida](https://github.com/luis605) |
 | [shaders_game_of_life](shaders/shaders_game_of_life.c) | <img src="shaders/shaders_game_of_life.png" alt="shaders_game_of_life" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_rlgl_compute](shaders/shaders_rlgl_compute.c) | <img src="shaders/shaders_rlgl_compute.png" alt="shaders_rlgl_compute" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
 
 ### category: audio [9]
 
@@ -269,19 +274,6 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
 | [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 5.6-dev | [IANN](https://github.com/meisei4) |
-
-### category: others [6]
-
-Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.
-
-|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
-|-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
-| [rlgl_standalone](others/rlgl_standalone.c) | <img src="others/rlgl_standalone.png" alt="rlgl_standalone" width="80"> | ⭐⭐⭐⭐️ | 1.6 | 4.0 | [Ramon Santamaria](https://github.com/raysan5) |
-| [rlgl_compute_shader](others/rlgl_compute_shader.c) | <img src="others/rlgl_compute_shader.png" alt="rlgl_compute_shader" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
-| [easings_testbed](others/easings_testbed.c) | <img src="others/easings_testbed.png" alt="easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 3.0 | [Juan Miguel López](https://github.com/flashback-fx) |
-| [raylib_opengl_interop](others/raylib_opengl_interop.c) | <img src="others/raylib_opengl_interop.png" alt="raylib_opengl_interop" width="80"> | ⭐⭐⭐⭐️ | 3.8 | 4.0 | [Stephan Soller](https://github.com/arkanis) |
-| [embedded_files_loading](others/embedded_files_loading.c) | <img src="others/embedded_files_loading.png" alt="embedded_files_loading" width="80"> | ⭐⭐☆☆ | 3.0 | 3.5 | [Kristian Holmgren](https://github.com/defutura) |
-| [web_basic_window](others/web_basic_window.c) | <img src="others/web_basic_window.png" alt="web_basic_window" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Ramon Santamaria](https://github.com/raysan5) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
 Here is an [examples template](examples_template.c) with instructions to start with!

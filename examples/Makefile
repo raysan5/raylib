@@ -393,14 +393,14 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
 
-        # On X11 requires also below libraries
-        LDLIBS += -lX11
-        # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
-        #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
-
-        # On Wayland windowing system, additional libraries requires
+        # On Wayland, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
+        else
+            # On X11, additional libraries required
+            LDLIBS += -lX11
+            # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
+            #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
         endif
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -439,15 +439,16 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
         # NOTE: Required packages: libegl1-mesa-dev
         LDLIBS = -lraylib $(SDL_LIBRARIES) -lGL -lm -lpthread -ldl -lrt
 
-        # On X11 requires also below libraries
+        # On X11, addition libraries required
         LDLIBS += -lX11
         # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
         #LDLIBS += -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor
 
-        # On Wayland windowing system, additional libraries requires
+        # On Wayland, additional libraries requires
         ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
         endif
+
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
             LDLIBS += -lc
@@ -560,6 +561,7 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
+    core/core_window_web \
     core/core_world_screen
 
 SHAPES = \
@@ -577,6 +579,7 @@ SHAPES = \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
+    shapes/shapes_easings_testbed \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
@@ -654,6 +657,8 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blending \
+    models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \
     models/models_basic_voxel \
@@ -706,6 +711,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching_rendering \
+    shaders/shaders_rlgl_compute \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -727,14 +733,6 @@ AUDIO = \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
-
-OTHERS = \
-    others/easings_testbed \
-    others/embedded_files_loading \
-    others/raylib_opengl_interop \
-    others/rlgl_compute_shader \
-    others/rlgl_standalone \
-    others/web_basic_window
 #EXAMPLES_LIST_END
 
 # Define processes to execute

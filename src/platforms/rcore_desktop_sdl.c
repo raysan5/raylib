@@ -255,9 +255,9 @@ static const int CursorsLUT[] = {
 
 // SDL3 Migration:
 // SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
-// and you can call SDL_GetWindowFullscreenMode()
+// SDL_GetWindowFullscreenMode() can be called
 // to see whether an exclusive fullscreen mode will be used
-// or the borderless fullscreen desktop mode will be used
+// or the borderless fullscreen desktop mode
 #define SDL_WINDOW_FULLSCREEN_DESKTOP SDL_WINDOW_FULLSCREEN
 
 #define SDL_IGNORE  false
@@ -1269,9 +1269,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 // REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1287,7 +1287,25 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    return SDL_GameControllerAddMapping(mappings);
+    const int mappingsLength = strlen(mappings);
+    char *buffer = (char *)RL_CALLOC(mappingsLength + 1, sizeof(char));
+    memcpy(buffer, mappings, mappingsLength);
+    char *p = strtok(buffer, "\n");
+    bool succeed = true;
+
+    while (p != NULL)
+    {
+        if (SDL_GameControllerAddMapping(p) == -1)
+        {
+            succeed = false;
+        }
+        p = strtok(NULL, "\n");
+    }
+
+    RL_FREE(buffer);
+
+    // To make return value is consistent with the GLFW version.
+    return (succeed)? 1 : 0;
 }
 
 // Set gamepad vibration
@@ -1419,9 +1437,9 @@ void PollInputEvents(void)
 
                 #if defined(USING_VERSION_SDL3)
                     // const char *data;   // The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events
-                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE,
-                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
-                    // you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
+                    // Event memory is now managed by SDL, so it should not be freed in SDL_EVENT_DROP_FILE,
+                    // in case data needs to be hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
+                    // a copy is required, SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
                     strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
                     strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
@@ -1450,10 +1468,10 @@ void PollInputEvents(void)
             // Window events are also polled (minimized, maximized, close...)
 
             #ifndef USING_VERSION_SDL3
-            // SDL3 states:
             // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
             // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
-            // and then checking for window events. You can compare the event >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST if you need to see whether it's a window event
+            // and then checking for window events; Events >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST can be compared
+            // to see whether it's a window event
             case SDL_WINDOWEVENT:
             {
                 switch (event.window.event)

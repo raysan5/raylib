@@ -2015,7 +2015,7 @@ void UpdateMusicStream(Music music)
         #if defined(SUPPORT_FILEFORMAT_MOD)
             case MUSIC_MODULE_MOD:
             {
-                // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples you want, so sampleCount/2
+                // NOTE: 3rd parameter (nbsample) specify the number of stereo 16bits samples desired, so sampleCount/2
                 jar_mod_fillbuffer((jar_mod_context_t *)music.ctxData, (short *)AUDIO.System.pcmBuffer, framesToStream, 0);
                 //jar_mod_seek_start((jar_mod_context_t *)music.ctxData);
 
@@ -2504,7 +2504,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     memset(pFramesOut, 0, frameCount*pDevice->playback.channels*ma_get_bytes_per_sample(pDevice->playback.format));
 
     // Using a mutex here for thread-safety which makes things not real-time
-    // This is unlikely to be necessary for this project, but may want to consider how you might want to avoid this
+    // This is unlikely to be necessary for this project, but it can be reconsidered
     ma_mutex_lock(&AUDIO.System.lock);
     {
         for (AudioBuffer *audioBuffer = AUDIO.Buffer.first; audioBuffer != NULL; audioBuffer = audioBuffer->next)

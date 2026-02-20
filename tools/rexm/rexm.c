@@ -63,7 +63,7 @@
 #endif
 
 #define REXM_MAX_EXAMPLES               512
-#define REXM_MAX_EXAMPLE_CATEGORIES     8
+#define REXM_MAX_EXAMPLE_CATEGORIES     7
 
 #define REXM_MAX_BUFFER_SIZE            (2*1024*1024)      // 2MB
 
@@ -83,7 +83,7 @@
 //----------------------------------------------------------------------------------
 // raylib example info struct
 typedef struct {
-    char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio, [others]
+    char category[16];      // Example category: core, shapes, textures, text, models, shaders, audio
     char name[128];         // Example name: <category>_name_part
     int stars;              // Example stars count: ★☆☆☆
     char verCreated[12];    // Example raylib creation version
@@ -151,7 +151,7 @@ typedef enum {
     OP_TESTLOG  = 9,        // Process available examples logs to generate report
 } rlExampleOperation;
 
-static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
+static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio" };
 
 // Paths required for examples management
 // NOTE: Paths can be provided with environment variables
@@ -170,7 +170,7 @@ static const char *exVSProjectSolutionFile = NULL; // Env REXM_EXAMPLES_VS2022_S
 static int UpdateRequiredFiles(void);
 
 // Load examples collection information
-// NOTE 1: Load by category: "ALL", "core", "shapes", "textures", "text", "models", "shaders", others"
+// NOTE 1: Load by category: "ALL", "core", "shapes", "textures", "text", "models", "shaders", audio"
 // NOTE 2: Sort examples list on request flag
 static rlExampleInfo *LoadExampleData(const char *filter, bool sort, int *exCount);
 static void UnloadExampleData(rlExampleInfo *exInfo);
@@ -590,7 +590,6 @@ int main(int argc, char *argv[])
                 else if (TextIsEqual(exCategory, "models")) nextCategoryIndex = 5;
                 else if (TextIsEqual(exCategory, "shaders")) nextCategoryIndex = 6;
                 else if (TextIsEqual(exCategory, "audio")) nextCategoryIndex = 7;
-                else if (TextIsEqual(exCategory, "others")) nextCategoryIndex = -1; // Add to EOF
 
                 // Get required example info from example file header (if provided)
 
@@ -1039,7 +1038,7 @@ int main(int argc, char *argv[])
                         if (nextCatIndex > (REXM_MAX_EXAMPLE_CATEGORIES - 1)) nextCatIndex = -1; // EOF
 
                         // Find position to add new example on list, just before the following category
-                        // Category order: core, shapes, textures, text, models, shaders, audio, [others]
+                        // Category order: core, shapes, textures, text, models, shaders, audio
                         int exListNextCatIndex = -1;
                         if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, exCategories[nextCatIndex]);
                         else exListNextCatIndex = exListLen; // EOF
@@ -1972,7 +1971,6 @@ static int UpdateRequiredFiles(void)
     //------------------------------------------------------------------------------------------------
 
     // Edit: raylib/examples/Makefile.Web --> Update from collection
-    // NOTE: We avoid the "others" category on web building
     //------------------------------------------------------------------------------------------------
     LOG("INFO: Updating raylib/examples/Makefile.Web\n");
     char *mkwText = LoadFileText(TextFormat("%s/Makefile.Web", exBasePath));
@@ -1985,8 +1983,7 @@ static int UpdateRequiredFiles(void)
     memcpy(mkwTextUpdated, mkwText, mkwListStartIndex);
     mkwIndex = sprintf(mkwTextUpdated + mkwListStartIndex, "#EXAMPLES_LIST_START\n");
 
-    // NOTE: We avoid the "others" category on web building
-    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("%s = \\\n", TextToUpper(exCategories[i])));
 
@@ -2011,8 +2008,7 @@ static int UpdateRequiredFiles(void)
     mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "shaders: $(SHADERS)\n");
     mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, "audio: $(AUDIO)\n\n");
 
-    // NOTE: We avoid the "others" category on web building
-    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
+    for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
     {
         mkwIndex += sprintf(mkwTextUpdated + mkwListStartIndex + mkwIndex, TextFormat("# Compile %s examples\n", TextToUpper(exCategories[i])));
 
@@ -2159,12 +2155,6 @@ static int UpdateRequiredFiles(void)
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
                 "Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.\n\n");
         }
-        else if (i == 7)    // "others"
-        {
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: others [%i]\n\n", exCollectionCount));
-            mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                "Examples showing raylib misc functionality that does not fit in other categories, like standalone modules usage or examples integrating external libraries.\n\n");
-        }
 
         // Table header required
         mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, "|  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |\n");
@@ -2227,8 +2217,7 @@ static int UpdateRequiredFiles(void)
 
             char starsText[16] = { 0 };
 
-            // NOTE: We avoid "others" category
-            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES - 1; i++)
+            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
             {
                 int exCollectionCount = 0;
                 rlExampleInfo *exCollection = LoadExampleData(exCategories[i], false, &exCollectionCount);
@@ -2295,8 +2284,7 @@ static rlExampleInfo *LoadExampleData(const char *filter, bool sort, int *exCoun
                  (lines[i][0] == 's') ||      // shapes, shaders
                  (lines[i][0] == 't') ||      // textures, text
                  (lines[i][0] == 'm') ||      // models
-                 (lines[i][0] == 'a') ||      // audio
-                 (lines[i][0] == 'o')))       // TODO: Get others category?
+                 (lines[i][0] == 'a')))       // audio
             {
                 rlExampleInfo info = { 0 };
                 int result = ParseExampleInfoLine(lines[i], &info);

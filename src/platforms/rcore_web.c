@@ -173,7 +173,7 @@ bool WindowShouldClose(void)
     // and encapsulating one frame execution on a UpdateDrawFrame() function,
     // allowing the browser to manage execution asynchronously
 
-    // Optionally we can manage the time we give-control-back-to-browser if required,
+    // Optionally, time to give-control-back-to-browser can be managed here,
     // but it seems below line could generate stuttering on some browsers
     emscripten_sleep(12);
 
@@ -921,9 +921,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform
@@ -1252,11 +1252,11 @@ int InitPlatform(void)
 #else
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        // remember center for switchinging from fullscreen to window
+        // Remember center for switchinging from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
-            // If screen width/height equal to the display, we can't calculate the window pos for toggling full-screened/windowed
-            // Toggling full-screened/windowed with pos(0, 0) can cause problems in some platforms, such as X11
+            // If screen width/height equal to the display, it's not possible to 
+            // calculate the window position for toggling full-screened/windowed
             CORE.Window.position.x = CORE.Window.display.width/4;
             CORE.Window.position.y = CORE.Window.display.height/4;
         }
@@ -1367,7 +1367,7 @@ int InitPlatform(void)
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
-    // If graphic device is no properly initialized, we end program
+    // If graphic device is no properly initialized, end program
     if (!CORE.Window.ready) { TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device"); return -1; }
 
     // Load OpenGL extensions
@@ -1491,7 +1491,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 {
     if (count > 0)
     {
-        // In case previous dropped filepaths have not been freed, we free them
+        // In case previous dropped filepaths have not been freed, free them
         if (CORE.Window.dropFileCount > 0)
         {
             for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++) RL_FREE(CORE.Window.dropFilepaths[i]);
@@ -1502,7 +1502,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
             CORE.Window.dropFilepaths = NULL;
         }
 
-        // WARNING: Paths are freed by GLFW when the callback returns, we must keep an internal copy
+        // WARNING: Paths are freed by GLFW when the callback returns, an internal copy must freed
         CORE.Window.dropFileCount = count;
         CORE.Window.dropFilepaths = (char **)RL_CALLOC(CORE.Window.dropFileCount, sizeof(char *));
 
@@ -1519,7 +1519,7 @@ static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     if (key < 0) return;    // Security check, macOS fn key generates -1
 
-    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // WARNING: GLFW could return GLFW_REPEAT, it needs to be considered as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
     if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[key] = 0;
     else if (action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[key] = 1;
@@ -1721,7 +1721,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     double canvasWidth = 0.0;
     double canvasHeight = 0.0;
     // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
-    // we are looking for actual CSS size: canvas.style.width and canvas.style.height
+    // actual CSS size needs to be considered: canvas.style.width and canvas.style.height
     // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
     emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
 
@@ -1741,7 +1741,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
     }
 
-    // Update mouse position if we detect a single touch
+    // Update mouse position when single touch detected
     if (CORE.Input.Touch.pointCount == 1)
     {
         CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;

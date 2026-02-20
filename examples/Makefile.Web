@@ -546,6 +546,7 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
+    core/core_window_web \
     core/core_world_screen
 
 SHAPES = \
@@ -563,6 +564,7 @@ SHAPES = \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
+    shapes/shapes_easings_testbed \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
@@ -640,6 +642,8 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blending \
+    models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
     models/models_animation_playing \
     models/models_basic_voxel \
@@ -692,6 +696,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching_rendering \
+    shaders/shaders_rlgl_compute \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -871,6 +876,9 @@ core/core_window_letterbox: core/core_window_letterbox.c
 core/core_window_should_close: core/core_window_should_close.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_window_web: core/core_window_web.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_world_screen: core/core_world_screen.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -915,6 +923,9 @@ shapes/shapes_easings_box: shapes/shapes_easings_box.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_rectangles: shapes/shapes_easings_rectangles.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_easings_testbed: shapes/shapes_easings_testbed.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
@@ -1188,6 +1199,18 @@ text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile MODELS examples
+models/models_animation_blending: models/models_animation_blending.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+
+models/models_animation_bone_blending: models/models_animation_bone_blending.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
+    --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
+
 models/models_animation_gpu_skinning: models/models_animation_gpu_skinning.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
@@ -1460,6 +1483,9 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
 shaders/shaders_raymarching_rendering: shaders/shaders_raymarching_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
+
+shaders/shaders_rlgl_compute: shaders/shaders_rlgl_compute.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shaders/shaders_rounded_rectangle: shaders/shaders_rounded_rectangle.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

@@ -290,8 +290,8 @@ FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writ
 // Module Functions Definition: Application
 //----------------------------------------------------------------------------------
 
-// To allow easier porting to android, we allow the user to define a
-// main function which we call from android_main, defined by ourselves
+// To allow easier porting to android, allow the user to define a
+// custom main function which is called from android_main
 extern int main(int argc, char *argv[]);
 
 // Android main function
@@ -313,7 +313,7 @@ void android_main(struct android_app *app)
     // Waiting for application events before complete finishing
     while (!app->destroyRequested)
     {
-        // Poll all events until we reach return value TIMEOUT, meaning no events left to process
+        // Poll all events until return value TIMEOUT is reached, meaning no events left to process
         while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, (void **)&platform.source)) > ALOOPER_POLL_TIMEOUT)
         {
             if (platform.source != NULL) platform.source->process(app, platform.source);
@@ -640,9 +640,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
@@ -757,7 +757,7 @@ void PollInputEvents(void)
     int pollResult = 0;
     int pollEvents = 0;
 
-    // Poll Events (registered events) until we reach TIMEOUT which indicates there are no events left to poll
+    // Poll Events (registered events) until TIMEOUT is reached which indicates there are no events left to poll
     // NOTE: Activity is paused if not enabled (platform.appEnabled) and always run flag is not set (FLAG_WINDOW_ALWAYS_RUN)
     while ((pollResult = ALooper_pollOnce((platform.appEnabled || FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN))? 0 : -1, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
     {
@@ -843,7 +843,7 @@ int InitPlatform(void)
     // Wait for window to be initialized (display and context)
     while (!CORE.Window.ready)
     {
-        // Process events until we reach TIMEOUT, which indicates no more events queued
+        // Process events until TIMEOUT is reached, which indicates no more events queued
         while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
         {
             // Process this event
@@ -964,10 +964,10 @@ static int InitGraphicsDevice(void)
     EGLint displayFormat = 0;
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
-    // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
+    // As soon as an EGLConfig is picked, it's safe to reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
     eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
-    // At this point we need to manage render size vs screen size
+    // At this point render size vs screen size needs to be managed
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1075,12 +1075,12 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     Rectangle rec = GetFontDefault().recs[95];
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
                     {
-                        // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+                        // NOTE: Trying to maxime rec padding to avoid pixel bleeding on MSAA filtering
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
                     }
                     else
                     {
-                        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+                        // NOTE: Setting up a 1px padding on char rectangle to avoid pixel bleeding
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
                     }
                     #endif
@@ -1450,7 +1450,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
 static void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
+    // Calculate CORE.Window.render.width and CORE.Window.render.height, having the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
@@ -1478,8 +1478,8 @@ static void SetupFramebuffer(int width, int height)
         float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
         CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
+        // NOTE: Rendering to full display resolution
+        // Above parameters need to be calculate for downscale matrix and offsets
         CORE.Window.render.width = CORE.Window.display.width;
         CORE.Window.render.height = CORE.Window.display.height;
 
@@ -1533,8 +1533,8 @@ FILE *android_fopen(const char *fileName, const char *mode)
     if (mode[0] == 'w')
     {
         // NOTE: fopen() is mapped to android_fopen() that only grants read access to
-        // assets directory through AAssetManager but we want to also be able to
-        // write data when required using the standard stdio FILE access functions
+        // assets directory through AAssetManager but it could be required to write data
+        // using the standard stdio FILE access functions
         // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
         #undef fopen
         file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
