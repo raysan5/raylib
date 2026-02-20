@@ -2346,12 +2346,70 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
     }
 }
 
-// at least 2x speed up vs the old method
-// Update model animated vertex data (positions and normals) for a given frame
-// NOTE: Updated data is uploaded to GPU
-void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
+// Update model animated bones transform matrices by interpolating between two different given frames of different ModelAnimation(could be same too)
+// NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
+// to be uploaded to shader at drawing, in case GPU skinning is enabled
+void UpdateModelAnimationBonesLerp(Model model, ModelAnimation animA, int frameA, ModelAnimation animB, int frameB, float value)
 {
-    UpdateModelAnimationBones(model,anim,frame);
+    if ((animA.frameCount > 0) && (animA.bones != NULL) && (animA.framePoses != NULL) &&
+        (animB.frameCount > 0) && (animB.bones != NULL) && (animB.framePoses != NULL) &&
+        (value >= 0.0f) && (value <= 1.0f))
+    {
+        frameA = frameA % animA.frameCount;
+        frameB = frameB % animB.frameCount;
+
+        for (int i = 0; i < model.meshCount; i++)
+        {
+            if (model.meshes[i].boneMatrices)
+            {
+                assert(model.meshes[i].boneCount == animA.boneCount);
+                assert(model.meshes[i].boneCount == animB.boneCount);
+
+                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
+                {
+                    Vector3 inTranslation = model.bindPose[boneId].translation;
+                    Quaternion inRotation = model.bindPose[boneId].rotation;
+                    Vector3 inScale = model.bindPose[boneId].scale;
+
+                    Vector3 outATranslation = animA.framePoses[frameA][boneId].translation;
+                    Quaternion outARotation = animA.framePoses[frameA][boneId].rotation;
+                    Vector3 outAScale = animA.framePoses[frameA][boneId].scale;
+
+                    Vector3 outBTranslation = animB.framePoses[frameB][boneId].translation;
+                    Quaternion outBRotation = animB.framePoses[frameB][boneId].rotation;
+                    Vector3 outBScale = animB.framePoses[frameB][boneId].scale;
+
+                    Vector3 outTranslation = Vector3Lerp(outATranslation, outBTranslation, value);
+                    Quaternion outRotation = QuaternionSlerp(outARotation, outBRotation, value);
+                    Vector3 outScale = Vector3Lerp(outAScale, outBScale, value);
+
+                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
+                    Quaternion invRotation = QuaternionInvert(inRotation);
+                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+
+                    Vector3 boneTranslation = Vector3Add(
+                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
+                        outRotation), outTranslation);
+                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
+                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+
+                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
+                        QuaternionToMatrix(boneRotation),
+                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+
+                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
+                }
+            }
+        }
+    }
+}
+
+// Update model vertex data (positions and normals) from mesh bone data
+// NOTE: Updated data is uploaded to GPU
+void UpdateModelVertsToCurrentBones(Model model)
+{
+    //UpdateModelAnimationBones(model, anim, frame); // TODO: Review
 
     for (int m = 0; m < model.meshCount; m++)
     {
@@ -2414,6 +2472,15 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
             if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0); // Update vertex normals
         }
     }
+}
+
+// at least 2x speed up vs the old method
+// Update model animated vertex data (positions and normals) for a given frame
+// NOTE: Updated data is uploaded to GPU
+void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
+{
+    UpdateModelAnimationBones(model,anim,frame);
+    UpdateModelVertsToCurrentBones(model);
 }
 
 // Unload animation array data
@@ -5373,6 +5440,7 @@ static Model LoadGLTF(const char *fileName)
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
 
         int primitivesCount = 0;
+        bool dracoCompression = false;
 
         // NOTE: We will load every primitive in the glTF as a separate raylib Mesh
         // Determine total number of meshes needed from the node hierarchy
@@ -5384,9 +5452,22 @@ static Model LoadGLTF(const char *fileName)
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
-                if (mesh->primitives[p].type == cgltf_primitive_type_triangles) primitivesCount++;
+                if (mesh->primitives[p].has_draco_mesh_compression)
+                {
+                    dracoCompression = true;
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load mesh data, Draco compression not supported", fileName);
+                    break;
+                }
+                else if (mesh->primitives[p].type == cgltf_primitive_type_triangles) primitivesCount++;
             }
         }
+
+        if (dracoCompression)
+        {
+            return model;
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
+        }
+
         TRACELOG(LOG_DEBUG, "    > Primitives (triangles only) count based on hierarchy : %i", primitivesCount);
 
         // Load our model data: meshes and materials

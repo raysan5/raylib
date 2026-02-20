@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
 #define WORLD_SIZE 8   // Size of our voxel world (8x8x8 cubes)
@@ -32,7 +33,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - basic voxel");
 
-    DisableCursor();                    // Lock mouse to window center
+    DisableCursor(); // Lock mouse to window center
 
     // Define the camera to look into our 3d world (first person)
     Camera3D camera = { 0 };
@@ -59,7 +60,7 @@ int main(void)
             }
         }
     }
-
+    
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -74,7 +75,7 @@ int main(void)
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             // Cast a ray from the screen center (where crosshair would be)
-            Vector2 screenCenter = { screenWidth/2.0f, screenHeight/2.0f };
+            Vector2 screenCenter = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
             Ray ray = GetMouseRay(screenCenter, camera);
 
             // Check ray collision with all voxels
@@ -132,8 +133,11 @@ int main(void)
                         }
                     }
                 }
-
+                
             EndMode3D();
+            
+            // Draw reference point for raycasting to delete blocks
+            DrawCircle(GetRenderWidth()/2, GetScreenHeight()/2, 4, RED);
 
             DrawText("Left-click a voxel to remove it!", 10, 10, 20, DARKGRAY);
             DrawText("WASD to move, mouse to look around", 10, 35, 10, GRAY);
@@ -145,6 +149,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(cubeModel);
+    
     CloseWindow();
     //--------------------------------------------------------------------------------------
 

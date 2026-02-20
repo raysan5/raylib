@@ -678,7 +678,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="599">
+    <Functions count="601">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2917,6 +2917,17 @@
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
             <Param type="int" name="frame" desc="" />
+        </Function>
+        <Function name="UpdateModelAnimationBonesLerp" retType="void" paramCount="6" desc="Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)">
+            <Param type="Model" name="model" desc="" />
+            <Param type="ModelAnimation" name="animA" desc="" />
+            <Param type="int" name="frameA" desc="" />
+            <Param type="ModelAnimation" name="animB" desc="" />
+            <Param type="int" name="frameB" desc="" />
+            <Param type="float" name="value" desc="" />
+        </Function>
+        <Function name="UpdateModelVertsToCurrentBones" retType="void" paramCount="1" desc="Update model vertices according to mesh bone matrices (CPU)">
+            <Param type="Model" name="model" desc="" />
         </Function>
         <Function name="UnloadModelAnimation" retType="void" paramCount="1" desc="Unload animation data">
             <Param type="ModelAnimation" name="anim" desc="" />

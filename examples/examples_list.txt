@@ -57,6 +57,7 @@ core;core_clipboard_text;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ananth S";@Anan
 core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@NimComPoo-04
 core;core_compute_hash;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
 core;core_keyboard_testbed;★★☆☆;5.6;5.6;2026;2026;"Ramon Santamaria";@raysan5
+core;core_window_web;★☆☆☆;1.3;5.5;2015;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
@@ -96,6 +97,7 @@ shapes;shapes_rlgl_triangle;★★☆☆;5.6-dev;5.6-dev;2025;2025;"Robin";@Robi
 shapes;shapes_ball_physics;★★☆☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 shapes;shapes_penrose_tile;★★★★;5.5;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
 shapes;shapes_hilbert_curve;★★★☆;5.6;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
+shapes;shapes_easings_testbed;★★★☆;2.5;2.5;2019;2025;"Juan Miguel López";@flashback-fx
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 textures;textures_srcrec_dstrec;★★★☆;1.3;1.3;2015;2025;"Ramon Santamaria";@raysan5
 textures;textures_image_drawing;★★☆☆;1.4;1.4;2016;2025;"Ramon Santamaria";@raysan5
@@ -169,6 +171,8 @@ models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
 models;models_rotating_cube;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 models;models_decals;★★★★;5.6-dev;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 models;models_directional_billboard;★★☆☆;5.6-dev;5.6;2025;2025;"Robin";@RobinsAviary
+models;models_animation_bone_blending;★★★★;5.5;5.5;2026;2026;"dmitrii-brand";@dmitrii-brand
+models;models_animation_blending;☆☆☆☆;5.5;5.6-dev;2024;2024;"Kirandeep";@Kirandeep-Singh-Khehra
 shaders;shaders_ascii_rendering;★★☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5
@@ -202,6 +206,7 @@ shaders;shaders_lightmap_rendering;★★★☆;4.5;4.5;2019;2025;"Jussi Viitala
 shaders;shaders_rounded_rectangle;★★★☆;5.5;5.5;2025;2025;"Anstro Pleuton";@anstropleuton
 shaders;shaders_depth_rendering;★★★☆;5.6-dev;5.6-dev;2025;2025;"Luís Almeida";@luis605
 shaders;shaders_game_of_life;★★★☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
+shaders;shaders_rlgl_compute;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake41
 audio;audio_module_playing;★☆☆☆;1.5;3.5;2016;2025;"Ramon Santamaria";@raysan5
 audio;audio_music_stream;★☆☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 audio;audio_raw_stream;★★★☆;1.6;4.2;2015;2025;"Ramon Santamaria";@raysan5
@@ -211,9 +216,3 @@ audio;audio_stream_effects;★★★★;4.2;5.0;2022;2025;"Ramon Santamaria";@ra
 audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM2501
 audio;audio_sound_positioning;★★☆☆;5.5;5.5;2025;2025;"Le Juez Victor";@Bigfoot71
 audio;audio_spectrum_visualizer;★★★☆;6.0;5.6-dev;2025;2025;"IANN";@meisei4
-others;rlgl_standalone;★★★★;1.6;4.0;2014;2025;"Ramon Santamaria";@raysan5
-others;rlgl_compute_shader;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake41
-others;easings_testbed;★★★☆;2.5;3.0;2019;2025;"Juan Miguel López";@flashback-fx
-others;raylib_opengl_interop;★★★★;3.8;4.0;2021;2025;"Stephan Soller";@arkanis
-others;embedded_files_loading;★★☆☆;3.0;3.5;2020;2025;"Kristian Holmgren";@defutura
-others;web_basic_window;★☆☆☆;5.6-dev;5.6-dev;2014;2025;"Ramon Santamaria";@raysan5

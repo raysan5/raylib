@@ -1,10 +1,10 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - easings testbed
-*
-*   Example originally created with raylib 2.5, last time updated with raylib 2.5
+*   raylib [shapes] example - easings testbed
 *
 *   Example complexity rating: [★★★☆] 3/4
+*
+*   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
 *   Example contributed by Juan Miguel López (@flashback-fx) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -26,6 +26,9 @@
 #define D_MIN           1.0f
 #define D_MAX       10000.0f
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Easing types
 enum EasingTypes {
     EASE_LINEAR_NONE = 0,
@@ -60,13 +63,22 @@ enum EasingTypes {
     EASING_NONE = NUM_EASING_TYPES
 };
 
-static float NoEase(float t, float b, float c, float d);  // NoEase function declaration, function used when "no easing" is selected for any axis
-
-// Easing functions reference data
-static const struct {
+typedef struct EasingFuncs {
     const char *name;
     float (*func)(float, float, float, float);
-} Easings[] = {
+} EasingFuncs;
+
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+// Function used when "no easing" is selected for any axis
+static float NoEase(float t, float b, float c, float d);  
+
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
+// Easing functions reference data
+static const EasingFuncs easings[] = {
     [EASE_LINEAR_NONE] = { .name = "EaseLinearNone", .func = EaseLinearNone },
     [EASE_LINEAR_IN] = { .name = "EaseLinearIn", .func = EaseLinearIn },
     [EASE_LINEAR_OUT] = { .name = "EaseLinearOut", .func = EaseLinearOut },
@@ -108,7 +120,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - easings testbed");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - easings testbed");
 
     Vector2 ballPosition = { 100.0f, 100.0f };
 
@@ -157,11 +169,11 @@ int main(void)
         }
 
         // Change d (duration) value
-        if (IsKeyPressed(KEY_W) && d < D_MAX - D_STEP) d += D_STEP;
-        else if (IsKeyPressed(KEY_Q) && d > D_MIN + D_STEP) d -= D_STEP;
+        if (IsKeyPressed(KEY_W) && (d < D_MAX - D_STEP)) d += D_STEP;
+        else if (IsKeyPressed(KEY_Q) && (d > D_MIN + D_STEP)) d -= D_STEP;
 
-        if (IsKeyDown(KEY_S) && d < D_MAX - D_STEP_FINE) d += D_STEP_FINE;
-        else if (IsKeyDown(KEY_A) && d > D_MIN + D_STEP_FINE) d -= D_STEP_FINE;
+        if (IsKeyDown(KEY_S) && (d < D_MAX - D_STEP_FINE)) d += D_STEP_FINE;
+        else if (IsKeyDown(KEY_A) && (d > D_MIN + D_STEP_FINE)) d -= D_STEP_FINE;
 
         // Play, pause and restart controls
         if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_T) ||
@@ -182,8 +194,8 @@ int main(void)
         // Movement computation
         if (!paused && ((boundedT && t < d) || !boundedT))
         {
-            ballPosition.x = Easings[easingX].func(t, 100.0f, 700.0f - 170.0f, d);
-            ballPosition.y = Easings[easingY].func(t, 100.0f, 400.0f - 170.0f, d);
+            ballPosition.x = easings[easingX].func(t, 100.0f, 700.0f - 170.0f, d);
+            ballPosition.y = easings[easingY].func(t, 100.0f, 400.0f - 170.0f, d);
             t += 1.0f;
         }
         //----------------------------------------------------------------------------------
@@ -195,8 +207,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw information text
-            DrawText(TextFormat("Easing x: %s", Easings[easingX].name), 20, FONT_SIZE, FONT_SIZE, LIGHTGRAY);
-            DrawText(TextFormat("Easing y: %s", Easings[easingY].name), 20, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing x: %s", easings[easingX].name), 20, FONT_SIZE, FONT_SIZE, LIGHTGRAY);
+            DrawText(TextFormat("Easing y: %s", easings[easingY].name), 20, FONT_SIZE*2, FONT_SIZE, LIGHTGRAY);
             DrawText(TextFormat("t (%c) = %.2f d = %.2f", (boundedT == true)? 'b' : 'u', t, d), 20, FONT_SIZE*3, FONT_SIZE, LIGHTGRAY);
 
             // Draw instructions text
@@ -220,7 +232,9 @@ int main(void)
     return 0;
 }
 
-
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // NoEase function, used when "no easing" is selected for any axis
 // It just ignores all parameters besides b
 static float NoEase(float t, float b, float c, float d)
