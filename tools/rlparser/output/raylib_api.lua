@@ -1030,6 +1030,11 @@ return {
       description = "ModelAnimation",
       fields = {
         {
+          type = "char[32]",
+          name = "name",
+          description = "Animation name"
+        },
+        {
           type = "int",
           name = "boneCount",
           description = "Number of bones"
@@ -1048,11 +1053,6 @@ return {
           type = "Transform **",
           name = "framePoses",
           description = "Poses array by frame"
-        },
-        {
-          type = "char[32]",
-          name = "name",
-          description = "Animation name"
         }
       }
     },
@@ -1324,11 +1324,6 @@ return {
       name = "FilePathList",
       description = "File path list",
       fields = {
-        {
-          type = "unsigned int",
-          name = "capacity",
-          description = "Filepaths max entries"
-        },
         {
           type = "unsigned int",
           name = "count",
@@ -3865,6 +3860,14 @@ return {
       }
     },
     {
+      name = "SetTraceLogLevel",
+      description = "Set the current threshold (minimum) log level",
+      returnType = "void",
+      params = {
+        {type = "int", name = "logLevel"}
+      }
+    },
+    {
       name = "TraceLog",
       description = "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)",
       returnType = "void",
@@ -3875,11 +3878,11 @@ return {
       }
     },
     {
-      name = "SetTraceLogLevel",
-      description = "Set the current threshold (minimum) log level",
+      name = "SetTraceLogCallback",
+      description = "Set custom trace log",
       returnType = "void",
       params = {
-        {type = "int", name = "logLevel"}
+        {type = "TraceLogCallback", name = "callback"}
       }
     },
     {
@@ -3905,46 +3908,6 @@ return {
       returnType = "void",
       params = {
         {type = "void *", name = "ptr"}
-      }
-    },
-    {
-      name = "SetTraceLogCallback",
-      description = "Set custom trace log",
-      returnType = "void",
-      params = {
-        {type = "TraceLogCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetLoadFileDataCallback",
-      description = "Set custom file binary data loader",
-      returnType = "void",
-      params = {
-        {type = "LoadFileDataCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetSaveFileDataCallback",
-      description = "Set custom file binary data saver",
-      returnType = "void",
-      params = {
-        {type = "SaveFileDataCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetLoadFileTextCallback",
-      description = "Set custom file text data loader",
-      returnType = "void",
-      params = {
-        {type = "LoadFileTextCallback", name = "callback"}
-      }
-    },
-    {
-      name = "SetSaveFileTextCallback",
-      description = "Set custom file text data saver",
-      returnType = "void",
-      params = {
-        {type = "SaveFileTextCallback", name = "callback"}
       }
     },
     {
@@ -4007,6 +3970,38 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "const char *", name = "text"}
+      }
+    },
+    {
+      name = "SetLoadFileDataCallback",
+      description = "Set custom file binary data loader",
+      returnType = "void",
+      params = {
+        {type = "LoadFileDataCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetSaveFileDataCallback",
+      description = "Set custom file binary data saver",
+      returnType = "void",
+      params = {
+        {type = "SaveFileDataCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetLoadFileTextCallback",
+      description = "Set custom file text data loader",
+      returnType = "void",
+      params = {
+        {type = "LoadFileTextCallback", name = "callback"}
+      }
+    },
+    {
+      name = "SetSaveFileTextCallback",
+      description = "Set custom file text data saver",
+      returnType = "void",
+      params = {
+        {type = "SaveFileTextCallback", name = "callback"}
       }
     },
     {
@@ -4228,6 +4223,24 @@ return {
       returnType = "void",
       params = {
         {type = "FilePathList", name = "files"}
+      }
+    },
+    {
+      name = "GetDirectoryFileCount",
+      description = "Get the file count in a directory",
+      returnType = "unsigned int",
+      params = {
+        {type = "const char *", name = "dirPath"}
+      }
+    },
+    {
+      name = "GetDirectoryFileCountEx",
+      description = "Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result",
+      returnType = "unsigned int",
+      params = {
+        {type = "const char *", name = "basePath"},
+        {type = "const char *", name = "filter"},
+        {type = "bool", name = "scanSubdirs"}
       }
     },
     {
@@ -7797,6 +7810,27 @@ return {
         {type = "Model", name = "model"},
         {type = "ModelAnimation", name = "anim"},
         {type = "int", name = "frame"}
+      }
+    },
+    {
+      name = "UpdateModelAnimationBonesLerp",
+      description = "Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "ModelAnimation", name = "animA"},
+        {type = "int", name = "frameA"},
+        {type = "ModelAnimation", name = "animB"},
+        {type = "int", name = "frameB"},
+        {type = "float", name = "value"}
+      }
+    },
+    {
+      name = "UpdateModelVertsToCurrentBones",
+      description = "Update model vertices according to mesh bone matrices (CPU)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"}
       }
     },
     {

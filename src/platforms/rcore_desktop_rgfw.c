@@ -13,10 +13,7 @@
 *       - TODO
 *
 *   POSSIBLE IMPROVEMENTS:
-*       - TODO
-*
-*   ADDITIONAL NOTES:
-*       - TRACELOG() function is located in raylib [utils] module
+*       - TBD
 *
 *   CONFIGURATION:
 *       #define RCORE_PLATFORM_RGFW
@@ -29,7 +26,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5), Colleague Riley and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5), Colleague Riley and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -290,14 +287,13 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    if (!CORE.Window.fullscreen)
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         // Store previous window position (in case we exit fullscreen)
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
 
         platform.mon = RGFW_window_getMonitor(platform.window);
-        CORE.Window.fullscreen = true;
         FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         RGFW_monitor_scaleToWindow(platform.mon, platform.window);
@@ -305,7 +301,6 @@ void ToggleFullscreen(void)
     }
     else
     {
-        CORE.Window.fullscreen = false;
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
         if (platform.mon.mode.area.w)
@@ -331,7 +326,9 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (CORE.Window.fullscreen)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) ToggleFullscreen();
+
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         CORE.Window.previousPosition = CORE.Window.position;
         CORE.Window.previousScreen = CORE.Window.screen;
@@ -348,8 +345,6 @@ void ToggleBorderlessWindowed(void)
         CORE.Window.position = CORE.Window.previousPosition;
         RGFW_window_resize(platform.window, RGFW_AREA(CORE.Window.previousScreen.width, CORE.Window.previousScreen.height));
     }
-
-    CORE.Window.fullscreen = !CORE.Window.fullscreen;
 }
 
 // Set window state: maximized, if resizable
@@ -385,7 +380,7 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
-        if (!CORE.Window.fullscreen) ToggleFullscreen();
+        ToggleFullscreen();
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -459,7 +454,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
-        if (CORE.Window.fullscreen) ToggleFullscreen();
+        ToggleFullscreen();
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
     {
@@ -510,7 +505,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        if (CORE.Window.fullscreen) ToggleBorderlessWindowed();
+        ToggleBorderlessWindowed();
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
@@ -1258,13 +1253,11 @@ int InitPlatform(void)
     // Check window creation flags
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        CORE.Window.fullscreen = true;
         FLAG_SET(flags, RGFW_windowFullscreen);
     }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        CORE.Window.fullscreen = true;
         FLAG_SET(flags, RGFW_windowedFullscreen);
     }
 
@@ -1297,7 +1290,7 @@ int InitPlatform(void)
 
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
 
-    platform.window = RGFW_createWindow(CORE.Window.title, RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
+    platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", RGFW_RECT(0, 0, CORE.Window.screen.width, CORE.Window.screen.height), flags);
     platform.mon.mode.area.w = 0;
 
     if (platform.window != NULL)
@@ -1315,10 +1308,6 @@ int InitPlatform(void)
     CORE.Window.display.width = CORE.Window.screen.width;
     CORE.Window.display.height = CORE.Window.screen.height;
 #endif
-    // TODO: Is this needed by raylib now?
-    // If so, rcore_desktop_sdl should be updated too
-    //SetupFramebuffer(CORE.Window.display.width, CORE.Window.display.height);
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_VSYNC_HINT)) RGFW_window_swapInterval(platform.window, 1);
     RGFW_window_makeCurrent(platform.window);
 

@@ -42,7 +42,7 @@ float GetCharacter(float n, vec2 p)
 // Main shader logic
 // -----------------------------------------------------------------------------
 
-void main() 
+void main()
 {
     vec2 charPixelSize = vec2(fontSize, fontSize);
     vec2 uvCellSize = charPixelSize / resolution;

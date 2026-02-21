@@ -258,8 +258,8 @@ int main(void)
             UnloadImage(pattern);
             
             mode = MODE_PAUSE;
-            offsetX = worldWidth*presetPatterns[preset].position.x - windowWidth/zoom/2.0f;
-            offsetY = worldHeight*presetPatterns[preset].position.y - windowHeight/zoom/2.0f;
+            offsetX = worldWidth*presetPatterns[preset].position.x - (float)windowWidth/zoom/2.0f;
+            offsetY = worldHeight*presetPatterns[preset].position.y - (float)windowHeight/zoom/2.0f;
         }
 
         // Check window draw inside world limits

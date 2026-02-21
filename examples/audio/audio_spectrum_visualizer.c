@@ -115,7 +115,7 @@ int main(void)
         .tapbackPos = 0.01f
     };
 
-    size_t wavCursor = 0;
+    int wavCursor = 0;
     const short *wavPCM16 = wav.data;
 
     short chunkSamples[AUDIO_STREAM_RING_BUFFER_SIZE] = { 0 };

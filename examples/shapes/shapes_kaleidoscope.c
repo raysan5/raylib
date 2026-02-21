@@ -50,9 +50,9 @@ int main(void)
     int symmetry = 6;
     float angle = 360.0f/(float)symmetry;
     float thickness = 3.0f;
-    Rectangle resetButtonRec = { screenWidth - 55, 5, 50, 25 };
-    Rectangle backButtonRec = { screenWidth - 55, screenHeight - 30, 25, 25 };
-    Rectangle nextButtonRec = { screenWidth - 30, screenHeight - 30, 25, 25 };
+    Rectangle resetButtonRec = { screenWidth - 55.0f, 5.0f, 50, 25 };
+    Rectangle backButtonRec = { screenWidth - 55.0f, screenHeight - 30.0f, 25, 25 };
+    Rectangle nextButtonRec = { screenWidth - 30.0f, screenHeight - 30.0f, 25, 25 };
     Vector2 mousePos = { 0 };
     Vector2 prevMousePos = { 0 };
     Vector2 scaleVector = { 1.0f, -1.0f };

@@ -277,7 +277,7 @@ int main(void)
                 DrawTriangle(a, b, c, emoji[selected].color);
 
                 // Draw the main text message
-                Rectangle textRect = { msgRect.x + horizontalPadding/2, msgRect.y + verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
+                Rectangle textRect = { msgRect.x + (float)horizontalPadding/2, msgRect.y + (float)verticalPadding/2, msgRect.width - horizontalPadding, msgRect.height };
                 DrawTextBoxed(*font, messages[message].text, textRect, (float)font->baseSize, 1.0f, true, WHITE);
 
                 // Draw the info text below the main message
@@ -421,7 +421,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap)
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
             }
@@ -429,7 +429,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap && ((textOffsetX + glyphWidth) > rec.width))
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
 
@@ -453,7 +453,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 
             if (wordWrap && (i == endLine))
             {
-                textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                 textOffsetX = 0;
                 startLine = endLine;
                 endLine = -1;

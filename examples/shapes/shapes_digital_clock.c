@@ -311,7 +311,7 @@ static void DrawDisplaySegment(Vector2 center, int length, int thick, bool verti
             (Vector2){ center.x + thick/2.0f, center.y - length/2.0f },   // Point 3
             (Vector2){ center.x - thick/2.0f,  center.y + length/2.0f },  // Point 4
             (Vector2){ center.x + thick/2.0f,  center.y + length/2.0f },  // Point 5
-            (Vector2){ center.x,  center.y + length/2 + thick/2.0f },     // Point 6
+            (Vector2){ center.x,  center.y + (float)length/2 + thick/2.0f },     // Point 6
         };
 
         DrawTriangleStrip(segmentPointsV, 6, color);

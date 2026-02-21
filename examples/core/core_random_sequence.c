@@ -96,8 +96,6 @@ int main(void)
             {
                 DrawRectangleRec(rectangles[i].rect, rectangles[i].color);
 
-                DrawText("Press SPACE to shuffle the sequence", 10, screenHeight - 96, 20, BLACK);
-
                 DrawText("Press SPACE to shuffle the current sequence", 10, screenHeight - 96, 20, BLACK);
                 DrawText("Press UP to add a rectangle and generate a new sequence", 10, screenHeight - 64, 20, BLACK);
                 DrawText("Press DOWN to remove a rectangle and generate a new sequence", 10, screenHeight - 32, 20, BLACK);

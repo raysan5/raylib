@@ -117,7 +117,7 @@ int main(void)
 
             DrawRectangleV(position, size, releaseAction? BLUE : RED);
 
-            DrawText((actionSet == 0)? "Current input set: WASD (default)" : "Current input set: Cursor", 10, 10, 20, WHITE);
+            DrawText((actionSet == 0)? "Current input set: WASD (default)" : "Current input set: Arrow keys", 10, 10, 20, WHITE);
             DrawText("Use TAB key to toggles Actions keyset", 10, 50, 20, GREEN);
 
         EndDrawing();

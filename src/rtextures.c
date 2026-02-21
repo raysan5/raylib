@@ -42,7 +42,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -63,14 +63,10 @@
 
 #include "raylib.h"             // Declares module functions
 
-// Check if config flags have been externally provided on compilation line
-#if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"         // Defines module configuration flags
-#endif
+#include "config.h"             // Defines module configuration flags
 
 #if defined(SUPPORT_MODULE_RTEXTURES)
 
-#include "utils.h"              // Required for: TRACELOG()
 #include "rlgl.h"               // OpenGL abstraction layer to multiple versions
 
 #include <stdlib.h>             // Required for: malloc(), calloc(), free()
@@ -765,7 +761,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
     byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2026 Ramon Santamaria (@raysan5)                                //\n");
     byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
     byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
@@ -887,7 +883,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
             float factor = (dist - radius*density)/(radius*(1.0f - density));
 
             factor = (float)fmax(factor, 0.0f);
-            factor = (float)fmin(factor, 1.f); // dist can be bigger than radius, so we have to check
+            factor = (float)fmin(factor, 1.f); // Distance can be bigger than radius, so it needs to be checked
 
             pixels[y*width + x].r = (int)((float)outer.r*factor + (float)inner.r*(1.0f - factor));
             pixels[y*width + x].g = (int)((float)outer.g*factor + (float)inner.g*(1.0f - factor));
@@ -1036,7 +1032,7 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
             if (p < -1.0f) p = -1.0f;
             if (p > 1.0f) p = 1.0f;
 
-            // We need to normalize the data from [-1..1] to [0..1]
+            // Data needs to be normalized from [-1..1] to [0..1]
             float np = (p + 1.0f)/2.0f;
 
             unsigned char intensity = (unsigned char)(np*255.0f);
@@ -1125,7 +1121,7 @@ Image GenImageCellular(int width, int height, int tileSize)
 Image GenImageText(int width, int height, const char *text)
 {
     Image image = { 0 };
-    
+
     int imageSize = width*height;
     image.width = width;
     image.height = height;
@@ -1268,7 +1264,7 @@ void ImageFormat(Image *image, int newFormat)
         {
             Vector4 *pixels = LoadImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
 
-            RL_FREE(image->data);      // WARNING! We loose mipmaps data --> Regenerated at the end...
+            RL_FREE(image->data);      // WARNING! Loosing mipmaps data --> Regenerated at the end
             image->data = NULL;
             image->format = newFormat;
 
@@ -1487,7 +1483,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     Image imText = { 0 };
 #if defined(SUPPORT_MODULE_RTEXT)
     if (text == NULL) return imText;
-    
+
     int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
@@ -1763,7 +1759,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Check if we can use a fast path on image scaling
+    // Check if a fast path can be used on image scaling
     // It can be for 8 bit per channel images with 1 to 4 channels per pixel
     if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
         (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
@@ -2030,7 +2026,7 @@ void ImageAlphaMask(Image *image, Image alphaMask)
         Image mask = ImageCopy(alphaMask);
         if (mask.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
-        // In case image is only grayscale, we just add alpha channel
+        // In case image is only grayscale, just add alpha channel
         if (image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
             unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
@@ -2395,7 +2391,7 @@ void ImageMipmaps(Image *image)
         if (mipWidth < 1) mipWidth = 1;
         if (mipHeight < 1) mipHeight = 1;
 
-        TRACELOGD("IMAGE: Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
+        TRACELOG(LOG_DEBUG, "IMAGE: Next mipmap level: %i x %i - current size %i", mipWidth, mipHeight, mipSize);
 
         mipCount++;
         mipSize += GetPixelDataSize(mipWidth, mipHeight, image->format);       // Add mipmap size (in bytes)
@@ -2432,7 +2428,7 @@ void ImageMipmaps(Image *image)
 
             if (i < image->mipmaps) continue;
 
-            TRACELOGD("IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+            TRACELOG(LOG_DEBUG, "IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
             ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
             memcpy(nextmip, imCopy.data, mipSize);
         }
@@ -2483,7 +2479,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
             TRACELOG(LOG_WARNING, "IMAGE: Unsupported dithered OpenGL internal format: %ibpp (R%iG%iB%iA%i)", (rBpp+gBpp+bBpp+aBpp), rBpp, gBpp, bBpp, aBpp);
         }
 
-        // NOTE: We will store the dithered data as unsigned short (16bpp)
+        // NOTE: Storing the dithered data as unsigned short (16bpp)
         image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
 
         Color oldPixel = WHITE;
@@ -2511,8 +2507,8 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
                 newPixel.b = oldPixel.b >> (8 - bBpp);     // B bits
                 newPixel.a = oldPixel.a >> (8 - aBpp);     // A bits (not used on dithering)
 
-                // NOTE: Error must be computed between new and old pixel but using same number of bits!
-                // We want to know how much color precision we have lost...
+                // NOTE: Error must be computed between new and old pixel but using same number of bits,
+                // to know how much color precision has been lost
                 rError = (int)oldPixel.r - (int)(newPixel.r << (8 - rBpp));
                 gError = (int)oldPixel.g - (int)(newPixel.g << (8 - gBpp));
                 bError = (int)oldPixel.b - (int)(newPixel.b << (8 - bBpp));
@@ -3138,7 +3134,7 @@ Color *LoadImagePalette(Image image, int maxPaletteSize, int *colorCount)
                     palette[palCount] = pixels[i];      // Add pixels[i] to palette
                     palCount++;
 
-                    // We reached the limit of colors supported by palette
+                    // Reached the limit of colors supported by palette
                     if (palCount >= maxPaletteSize)
                     {
                         i = image.width*image.height;   // Finish palette get
@@ -3299,9 +3295,9 @@ Color GetImageColor(Image image, int x, int y)
             case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
             {
                 color.r = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
-                color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4]*255.0f);
+                color.g = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 1]*255.0f);
+                color.b = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 2]*255.0f);
+                color.a = (unsigned char)(((float *)image.data)[(y*image.width + x)*4 + 3]*255.0f);
 
             } break;
             case PIXELFORMAT_UNCOMPRESSED_R16:
@@ -3323,9 +3319,9 @@ Color GetImageColor(Image image, int x, int y)
             case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
             {
                 color.r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
-                color.a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4])*255.0f);
+                color.g = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 1])*255.0f);
+                color.b = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 2])*255.0f);
+                color.a = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[(y*image.width + x)*4 + 3])*255.0f);
 
             } break;
             default: TRACELOG(LOG_WARNING, "Compressed image format does not support color reading"); break;
@@ -3629,7 +3625,7 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
 }
 
 // Draw circle within an image
-void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color color)
+void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
 {
     int x = 0;
     int y = radius;
@@ -3653,7 +3649,7 @@ void ImageDrawCircle(Image* dst, int centerX, int centerY, int radius, Color col
 }
 
 // Draw circle within an image (Vector version)
-void ImageDrawCircleV(Image* dst, Vector2 center, int radius, Color color)
+void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
 {
     ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
 }
@@ -3810,7 +3806,7 @@ void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color col
         for (int x = xMin; x <= xMax; x++)
         {
             // Check if the pixel is inside the triangle using barycentric coordinates
-            // If it is then we can draw the pixel with the given color
+            // If it is, the pixel can be drawn with the given color
             if ((w1 | w2 | w3) >= 0) ImageDrawPixel(dst, x, y, color);
 
             // Increment the barycentric coordinates for the next pixel
@@ -3867,9 +3863,6 @@ void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c
     int w3Row = (int)((xMin - v1.x)*w3XStep + w3YStep*(yMin - v1.y));
 
     // Calculate the inverse of the sum of the barycentric coordinates for normalization
-    // NOTE 1: Here, we act as if we multiply by 255 the reciprocal, which avoids additional
-    //         calculations in the loop. This is acceptable because we are only interpolating colors
-    // NOTE 2: This sum remains constant throughout the triangle
     float wInvSum = 255.0f/(w1Row + w2Row + w3Row);
 
     // Rasterization loop
@@ -3969,11 +3962,11 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
         if ((srcRec.y + srcRec.height) > src.height) srcRec.height = src.height - srcRec.y;
 
         // Check if source rectangle needs to be resized to destination rectangle
-        // In that case, we make a copy of source, and we apply all required transform
+        // In that case, make a copy of source, and apply all required transform
         if (((int)srcRec.width != (int)dstRec.width) || ((int)srcRec.height != (int)dstRec.height))
         {
-            srcMod = ImageFromImage(src, srcRec);   // Create image from another image
-            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height);   // Resize to destination rectangle
+            srcMod = ImageFromImage(src, srcRec); // Create image from another image
+            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height); // Resize to destination rectangle
             srcRec = (Rectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
 
             srcPtr = &srcMod;
@@ -5130,7 +5123,7 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     else if (src.a == 255) out = src;
     else
     {
-        unsigned int alpha = (unsigned int)src.a + 1;     // We are shifting by 8 (dividing by 256), so we need to take that excess into account
+        unsigned int alpha = (unsigned int)src.a + 1; // Shifting by 8 (dividing by 256), so need to take that excess into account
         out.a = (unsigned char)(((unsigned int)alpha*256 + (unsigned int)dst.a*(256 - alpha)) >> 8);
 
         if (out.a > 0)

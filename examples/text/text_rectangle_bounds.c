@@ -226,7 +226,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap)
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
             }
@@ -234,7 +234,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
             {
                 if (!wordWrap && ((textOffsetX + glyphWidth) > rec.width))
                 {
-                    textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                    textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                     textOffsetX = 0;
                 }
 
@@ -258,7 +258,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 
             if (wordWrap && (i == endLine))
             {
-                textOffsetY += (font.baseSize + font.baseSize/2)*scaleFactor;
+                textOffsetY += (font.baseSize + (float)font.baseSize/2)*scaleFactor;
                 textOffsetX = 0;
                 startLine = endLine;
                 endLine = -1;

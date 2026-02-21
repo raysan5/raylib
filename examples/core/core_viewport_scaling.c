@@ -112,16 +112,16 @@ int main(void)
         if (CheckCollisionPointRec(mousePosition, decreaseResolutionButton) && mousePressed)
         {
             resolutionIndex = (resolutionIndex + RESOLUTION_COUNT - 1)%RESOLUTION_COUNT;
-            gameWidth = resolutionList[resolutionIndex].x;
-            gameHeight = resolutionList[resolutionIndex].y;
+            gameWidth = (int)resolutionList[resolutionIndex].x;
+            gameHeight = (int)resolutionList[resolutionIndex].y;
             ResizeRenderSize(viewportType, &screenWidth, &screenHeight, gameWidth, gameHeight, &sourceRect, &destRect, &target);
         }
 
         if (CheckCollisionPointRec(mousePosition, increaseResolutionButton) && mousePressed)
         {
             resolutionIndex = (resolutionIndex + 1)%RESOLUTION_COUNT;
-            gameWidth = resolutionList[resolutionIndex].x;
-            gameHeight = resolutionList[resolutionIndex].y;
+            gameWidth = (int)resolutionList[resolutionIndex].x;
+            gameHeight = (int)resolutionList[resolutionIndex].y;
             ResizeRenderSize(viewportType, &screenWidth, &screenHeight, gameWidth, gameHeight, &sourceRect, &destRect, &target);
         }
 
@@ -145,7 +145,7 @@ int main(void)
         // Draw our scene to the render texture
         BeginTextureMode(target);
             ClearBackground(WHITE);
-            DrawCircle(textureMousePosition.x, textureMousePosition.y, 20.0f, LIME);
+            DrawCircleV(textureMousePosition, 20.0f, LIME);
         EndTextureMode();
 
         // Draw render texture to main framebuffer
@@ -159,7 +159,7 @@ int main(void)
             // Draw info box
             Rectangle infoRect = (Rectangle){5, 5, 330, 105};
             DrawRectangleRec(infoRect, Fade(LIGHTGRAY, 0.7f));
-            DrawRectangleLines(infoRect.x, infoRect.y, infoRect.width, infoRect.height, BLUE);
+            DrawRectangleLinesEx(infoRect, 1, BLUE);
 
             DrawText(TextFormat("Window Resolution: %d x %d", screenWidth, screenHeight), 15, 15, 10, BLACK);
             DrawText(TextFormat("Game Resolution: %d x %d", gameWidth, gameHeight), 15, 30, 10, BLACK);
@@ -216,7 +216,7 @@ static void KeepAspectCenteredInteger(int screenWidth, int screenHeight, int gam
 
 static void KeepHeightCenteredInteger(int screenWidth, int screenHeight, int gameWidth, int gameHeight, Rectangle *sourceRect, Rectangle *destRect)
 {
-    const float resizeRatio = (float)(screenHeight/gameHeight);
+    const float resizeRatio = (float)screenHeight/gameHeight;
     sourceRect->x = 0.0f;
     sourceRect->y = 0.0f;
     sourceRect->width = (float)(int)(screenWidth/resizeRatio);
@@ -230,7 +230,7 @@ static void KeepHeightCenteredInteger(int screenWidth, int screenHeight, int gam
 
 static void KeepWidthCenteredInteger(int screenWidth, int screenHeight, int gameWidth, int gameHeight, Rectangle *sourceRect, Rectangle *destRect)
 {
-    const float resizeRatio = (float)(screenWidth/gameWidth);
+    const float resizeRatio = (float)screenWidth/gameWidth;
     sourceRect->x = 0.0f;
     sourceRect->y = 0.0f;
     sourceRect->width = (float)gameWidth;

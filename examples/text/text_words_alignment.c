@@ -19,8 +19,6 @@
 
 #include "raymath.h"    // Required for: Lerp()
 
-#include <stdio.h>
-
 typedef enum TextAlignment {
     TEXT_ALIGN_LEFT   = 0,
     TEXT_ALIGN_TOP    = 0,
@@ -43,7 +41,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [text] example - words alignment");
 
     // Define the rectangle we will draw the text in
-    Rectangle textContainerRect = (Rectangle){ screenWidth/2-screenWidth/4, screenHeight/2-screenHeight/3, screenWidth/2, screenHeight*2/3 };
+    Rectangle textContainerRect = (Rectangle){ (float)screenWidth/2-(float)screenWidth/4, (float)screenHeight/2-(float)screenHeight/3, (float)screenWidth/2, (float)screenHeight*2/3 };
 
     // Some text to display the current alignment
     const char *textAlignNameH[] = { "Left", "Centre", "Right" };

@@ -49,8 +49,8 @@ int main(void)
     float totalM = m1 + m2;
 
     Vector2 previousPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-    previousPosition.x += (screenWidth/2);
-    previousPosition.y += (screenHeight/2 - 100);
+    previousPosition.x += ((float)screenWidth/2);
+    previousPosition.y += ((float)screenHeight/2 - 100);
 
     // Scale length
     float L1 = l1*lengthScaler;
@@ -105,8 +105,8 @@ int main(void)
 
         // Calculate position
         Vector2 currentPosition = CalculateDoublePendulumEndPoint(l1, theta1, l2, theta2);
-        currentPosition.x += screenWidth/2;
-        currentPosition.y += screenHeight/2 - 100;
+        currentPosition.x += (float)screenWidth/2;
+        currentPosition.y += (float)screenHeight/2 - 100;
 
         // Draw to render texture
         BeginTextureMode(target);

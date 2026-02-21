@@ -1,13 +1,13 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - basic window
-*
-*   This example has been adapted to compile for PLATFORM_WEB and PLATFORM_DESKTOP
-*   As you will notice, code structure is slightly different to the other examples
+*   raylib [core] example - window web
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 1.3, last time updated with raylib 5.5
+*
+*   This example has been adapted to compile for PLATFORM_WEB and PLATFORM_DESKTOP
+*   As you will notice, code structure is slightly different to the other examples
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -40,7 +40,7 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - web basic window");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - window web");
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -79,7 +79,7 @@ void UpdateDrawFrame(void)
 
         ClearBackground(RAYWHITE);
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        DrawText("Welcome to raylib web structure!", 220, 200, 20, SKYBLUE);
 
     EndDrawing();
     //----------------------------------------------------------------------------------

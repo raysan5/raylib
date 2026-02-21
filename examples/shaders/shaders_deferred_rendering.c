@@ -40,13 +40,13 @@
 //----------------------------------------------------------------------------------
 // GBuffer data
 typedef struct GBuffer {
-    unsigned int framebuffer;
+    unsigned int framebufferId;
 
-    unsigned int positionTexture;
-    unsigned int normalTexture;
-    unsigned int albedoSpecTexture;
+    unsigned int positionTextureId;
+    unsigned int normalTextureId;
+    unsigned int albedoSpecTextureId;
 
-    unsigned int depthRenderbuffer;
+    unsigned int depthRenderbufferId;
 } GBuffer;
 
 // Deferred mode passes
@@ -90,15 +90,10 @@ int main(void)
 
     // Initialize the G-buffer
     GBuffer gBuffer = { 0 };
-    gBuffer.framebuffer = rlLoadFramebuffer();
+    gBuffer.framebufferId = rlLoadFramebuffer();
+    if (gBuffer.framebufferId == 0) TraceLog(LOG_WARNING, "Failed to create framebufferId");
 
-    if (!gBuffer.framebuffer)
-    {
-        TraceLog(LOG_WARNING, "Failed to create framebuffer");
-        exit(1);
-    }
-
-    rlEnableFramebuffer(gBuffer.framebuffer);
+    rlEnableFramebuffer(gBuffer.framebufferId);
 
     // NOTE: Vertex positions are stored in a texture for simplicity. A better approach would use a depth texture
     // (instead of a detph renderbuffer) to reconstruct world positions in the final render shader via clip-space position,
@@ -107,46 +102,42 @@ int main(void)
     // 16-bit precision ensures OpenGL ES 3 compatibility, though it may lack precision for real scenarios
     // But as mentioned above, the positions could be reconstructed instead of stored. If not targeting OpenGL ES
     // and you wish to maintain this approach, consider using `RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32`
-    gBuffer.positionTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    gBuffer.positionTextureId = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
 
     // Similarly, 16-bit precision is used for normals ensures OpenGL ES 3 compatibility
     // This is generally sufficient, but a 16-bit fixed-point format offer a better uniform precision in all orientations
-    gBuffer.normalTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
+    gBuffer.normalTextureId = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16, 1);
 
     // Albedo (diffuse color) and specular strength can be combined into one texture
     // The color in RGB, and the specular strength in the alpha channel
-    gBuffer.albedoSpecTexture = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+    gBuffer.albedoSpecTextureId = rlLoadTexture(NULL, screenWidth, screenHeight, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
 
-    // Activate the draw buffers for our framebuffer
+    // Activate the draw buffers for our framebufferId
     rlActiveDrawBuffers(3);
 
-    // Now we attach our textures to the framebuffer
-    rlFramebufferAttach(gBuffer.framebuffer, gBuffer.positionTexture, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-    rlFramebufferAttach(gBuffer.framebuffer, gBuffer.normalTexture, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
-    rlFramebufferAttach(gBuffer.framebuffer, gBuffer.albedoSpecTexture, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
+    // Now we attach our textures to the framebufferId
+    rlFramebufferAttach(gBuffer.framebufferId, gBuffer.positionTextureId, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
+    rlFramebufferAttach(gBuffer.framebufferId, gBuffer.normalTextureId, RL_ATTACHMENT_COLOR_CHANNEL1, RL_ATTACHMENT_TEXTURE2D, 0);
+    rlFramebufferAttach(gBuffer.framebufferId, gBuffer.albedoSpecTextureId, RL_ATTACHMENT_COLOR_CHANNEL2, RL_ATTACHMENT_TEXTURE2D, 0);
 
     // Finally we attach the depth buffer
-    gBuffer.depthRenderbuffer = rlLoadTextureDepth(screenWidth, screenHeight, true);
-    rlFramebufferAttach(gBuffer.framebuffer, gBuffer.depthRenderbuffer, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
+    gBuffer.depthRenderbufferId = rlLoadTextureDepth(screenWidth, screenHeight, true);
+    rlFramebufferAttach(gBuffer.framebufferId, gBuffer.depthRenderbufferId, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
 
-    // Make sure our framebuffer is complete
-    // NOTE: rlFramebufferComplete() automatically unbinds the framebuffer, so we don't have
-    // to rlDisableFramebuffer() here
-    if (!rlFramebufferComplete(gBuffer.framebuffer))
-    {
-        TraceLog(LOG_WARNING, "Framebuffer is not complete");
-    }
+    // Make sure our framebufferId is complete
+    // NOTE: rlFramebufferComplete() automatically unbinds the framebufferId, so we don't have to rlDisableFramebuffer() here
+    if (!rlFramebufferComplete(gBuffer.framebufferId)) TraceLog(LOG_WARNING, "Framebuffer is not complete");
 
     // Now we initialize the sampler2D uniform's in the deferred shader
     // We do this by setting the uniform's values to the texture units that
     // we later bind our g-buffer textures to
     rlEnableShader(deferredShader.id);
-        int texUnitPosition = 0;
-        int texUnitNormal = 1;
-        int texUnitAlbedoSpec = 2;
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
-        SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
+    int texUnitPosition = 0;
+    int texUnitNormal = 1;
+    int texUnitAlbedoSpec = 2;
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gPosition"), &texUnitPosition, RL_SHADER_UNIFORM_SAMPLER2D);
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gNormal"), &texUnitNormal, RL_SHADER_UNIFORM_SAMPLER2D);
+    SetShaderValue(deferredShader, rlGetLocationUniform(deferredShader.id, "gAlbedoSpec"), &texUnitAlbedoSpec, RL_SHADER_UNIFORM_SAMPLER2D);
     rlDisableShader();
 
     // Assign out lighting shader to model
@@ -176,7 +167,7 @@ int main(void)
         cubeRotations[i] = (float)(rand()%360);
     }
 
-    DeferredMode mode = DEFERRED_SHADING;
+    int mode = DEFERRED_SHADING;
 
     rlEnableDepthTest();
 
@@ -215,17 +206,16 @@ int main(void)
         BeginDrawing();
 
             // Draw to the geometry buffer by first activating it
-            rlEnableFramebuffer(gBuffer.framebuffer);
+            rlEnableFramebuffer(gBuffer.framebufferId);
             rlClearColor(0, 0, 0, 0);
             rlClearScreenBuffers();  // Clear color and depth buffer
-
             rlDisableColorBlend();
+            
             BeginMode3D(camera);
                 // NOTE: We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
                 // will not work, as they won't immediately load the shader program
                 rlEnableShader(gbufferShader.id);
-                    // When drawing a model here, make sure that the material's shaders
-                    // are set to the gbuffer shader!
+                    // When drawing a model here, make sure that the material's shaders are set to the gbuffer shader!
                     DrawModel(model, Vector3Zero(), 1.0f, WHITE);
                     DrawModel(cube, (Vector3) { 0.0, 1.0f, 0.0 }, 1.0f, WHITE);
 
@@ -234,12 +224,12 @@ int main(void)
                         Vector3 position = cubePositions[i];
                         DrawModelEx(cube, position, (Vector3) { 1, 1, 1 }, cubeRotations[i], (Vector3) { CUBE_SCALE, CUBE_SCALE, CUBE_SCALE }, WHITE);
                     }
-
                 rlDisableShader();
             EndMode3D();
+            
             rlEnableColorBlend();
 
-            // Go back to the default framebuffer (0) and draw our deferred shading
+            // Go back to the default framebufferId (0) and draw our deferred shading
             rlDisableFramebuffer();
             rlClearScreenBuffers(); // Clear color & depth buffer
 
@@ -254,21 +244,21 @@ int main(void)
                             // We are binding them to locations that we earlier set in sampler2D uniforms `gPosition`, `gNormal`,
                             // and `gAlbedoSpec`
                             rlActiveTextureSlot(texUnitPosition);
-                            rlEnableTexture(gBuffer.positionTexture);
+                            rlEnableTexture(gBuffer.positionTextureId);
                             rlActiveTextureSlot(texUnitNormal);
-                            rlEnableTexture(gBuffer.normalTexture);
+                            rlEnableTexture(gBuffer.normalTextureId);
                             rlActiveTextureSlot(texUnitAlbedoSpec);
-                            rlEnableTexture(gBuffer.albedoSpecTexture);
+                            rlEnableTexture(gBuffer.albedoSpecTextureId);
 
-                            // Finally, we draw a fullscreen quad to our default framebuffer
+                            // Finally, we draw a fullscreen quad to our default framebufferId
                             // This will now be shaded using our deferred shader
                             rlLoadDrawQuad();
                         rlDisableShader();
                         rlEnableColorBlend();
                     EndMode3D();
 
-                    // As a last step, we now copy over the depth buffer from our g-buffer to the default framebuffer
-                    rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebuffer);
+                    // As a last step, we now copy over the depth buffer from our g-buffer to the default framebufferId
+                    rlBindFramebuffer(RL_READ_FRAMEBUFFER, gBuffer.framebufferId);
                     rlBindFramebuffer(RL_DRAW_FRAMEBUFFER, 0);
                     rlBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight, 0x00000100); // GL_DEPTH_BUFFER_BIT
                     rlDisableFramebuffer();
@@ -290,7 +280,7 @@ int main(void)
                 case DEFERRED_POSITION:
                 {
                     DrawTextureRec((Texture2D){
-                        .id = gBuffer.positionTexture,
+                        .id = gBuffer.positionTextureId,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
@@ -300,7 +290,7 @@ int main(void)
                 case DEFERRED_NORMAL:
                 {
                     DrawTextureRec((Texture2D){
-                        .id = gBuffer.normalTexture,
+                        .id = gBuffer.normalTextureId,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
@@ -310,7 +300,7 @@ int main(void)
                 case DEFERRED_ALBEDO:
                 {
                     DrawTextureRec((Texture2D){
-                        .id = gBuffer.albedoSpecTexture,
+                        .id = gBuffer.albedoSpecTextureId,
                         .width = screenWidth,
                         .height = screenHeight,
                     }, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, Vector2Zero(), RAYWHITE);
@@ -331,18 +321,20 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(model);     // Unload the models
+    // Unload the models
+    UnloadModel(model);
     UnloadModel(cube);
 
-    UnloadShader(deferredShader); // Unload shaders
+    // Unload shaders
+    UnloadShader(deferredShader);
     UnloadShader(gbufferShader);
 
     // Unload geometry buffer and all attached textures
-    rlUnloadFramebuffer(gBuffer.framebuffer);
-    rlUnloadTexture(gBuffer.positionTexture);
-    rlUnloadTexture(gBuffer.normalTexture);
-    rlUnloadTexture(gBuffer.albedoSpecTexture);
-    rlUnloadTexture(gBuffer.depthRenderbuffer);
+    rlUnloadFramebuffer(gBuffer.framebufferId);
+    rlUnloadTexture(gBuffer.positionTextureId);
+    rlUnloadTexture(gBuffer.normalTextureId);
+    rlUnloadTexture(gBuffer.albedoSpecTextureId);
+    rlUnloadTexture(gBuffer.depthRenderbufferId);
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

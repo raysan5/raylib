@@ -52,6 +52,7 @@ int main(void)
         float hue = t*t;
         float saturation = t;
         float value = t;
+        
         palette[i] = ColorFromHSV(250.0f + 150.0f*hue, saturation, value);
     }
 
@@ -66,11 +67,9 @@ int main(void)
         // Grow flameRoot
         for (int x = 2; x < flameWidth; x++)
         {
-            unsigned short flame = flameRootBuffer[x];
-            if (flame == 255) continue;
+            int flame = (int)flameRootBuffer[x];
             flame += GetRandomValue(0, 2);
-            if (flame > 255) flame = 255;
-            flameRootBuffer[x] = flame;
+            flameRootBuffer[x] = (flame > 255)? 255: (unsigned char)flame;
         }
 
         // Transfer flameRoot to indexBuffer
@@ -83,8 +82,7 @@ int main(void)
         // Clear top row, because it can't move any higher
         for (int x = 0; x < imageWidth; x++)
         {
-            if (indexBuffer[x] == 0) continue;
-            indexBuffer[x] = 0;
+            if (indexBuffer[x] != 0) indexBuffer[x] = 0;
         }
 
         // Skip top row, it is already cleared
@@ -94,18 +92,22 @@ int main(void)
             {
                 unsigned int i = x + y*imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
-                if (colorIndex == 0) continue;
-
-                // Move pixel a row above
-                indexBuffer[i] = 0;
-                int moveX = GetRandomValue(0, 2) - 1;
-                int newX = x + moveX;
-                if (newX < 0 || newX >= imageWidth) continue;
-
-                unsigned int iabove = i - imageWidth + moveX;
-                int decay = GetRandomValue(0, 3);
-                colorIndex -= (decay < colorIndex)? decay : colorIndex;
-                indexBuffer[iabove] = colorIndex;
+                
+                if (colorIndex != 0)
+                {
+                    // Move pixel a row above
+                    indexBuffer[i] = 0;
+                    int moveX = GetRandomValue(0, 2) - 1;
+                    int newX = x + moveX;
+                    
+                    if ((newX > 0) && (newX < imageWidth))
+                    {
+                        unsigned int iabove = i - imageWidth + moveX;
+                        int decay = GetRandomValue(0, 3);
+                        colorIndex -= (decay < colorIndex)? decay : colorIndex;
+                        indexBuffer[iabove] = colorIndex;
+                    }
+                }
             }
         }
 
@@ -117,6 +119,7 @@ int main(void)
                 unsigned int i = x + y*imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
                 Color col = palette[colorIndex];
+
                 ImageDrawPixel(&screenImage, x, y, col);
             }
         }

@@ -31,7 +31,7 @@ void main()
     // Here: z = a + bi. Iterations: z -> z^2 + c = (a + bi)^2 + (c.x + c.yi) = (a^2 - b^2 + c.x) + (2ab + c.y)i
 
     int iter = 0;
-    for (iter = 0; iter < maxIterations; ++iter)
+    for (iter = 0; iter < maxIterations; iter++)
     {
         float aa = a*a;
         float bb = b*b;

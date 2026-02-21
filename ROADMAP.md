@@ -15,13 +15,13 @@ _Current version of raylib is complete and functional but there is always room f
 
 **raylib 5.x**
  - [ ] `rcore`: Support additional platforms: iOS, consoles?
- - [ ] `rcore_web`: Avoid GLFW dependency, functionality can be directly implemented using emscripten SDK
+ - [x] `rcore_web`: Avoid GLFW dependency, functionality can be directly implemented using emscripten SDK
  - [ ] `rlgl`: Review GLSL shaders naming conventions for consistency
  - [ ] `textures`: Improve compressed textures support, loading and saving
  - [ ] `rmodels`: Improve 3d objects loading, specially animations (obj, gltf)
  - [ ] `raudio`: Implement miniaudio high-level provided features
- - [ ] `examples`: Review all examples, add more and better code explanations
- - [ ] Software renderer backend? Maybe using `Image` provided API
+ - [x] `examples`: Review all examples, add more and better code explanations
+ - [x] Software renderer backend? Maybe using `Image` provided API
 
 **raylib 4.x**
  - [x] Split core module into separate platforms?

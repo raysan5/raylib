@@ -41,7 +41,7 @@ void main()
         a = aa - bb + c.x;
         b = twoab + c.y;
 
-        ++iter;
+        iter++;
     }
 
     if (iter >= maxIterations)

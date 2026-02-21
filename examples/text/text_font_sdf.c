@@ -97,8 +97,8 @@ int main(void)
         if (currentFont == 0) textSize = MeasureTextEx(fontDefault, msg, fontSize, 0);
         else textSize = MeasureTextEx(fontSDF, msg, fontSize, 0);
 
-        fontPosition.x = GetScreenWidth()/2 - textSize.x/2;
-        fontPosition.y = GetScreenHeight()/2 - textSize.y/2 + 80;
+        fontPosition.x = (float)GetScreenWidth()/2 - textSize.x/2;
+        fontPosition.y = (float)GetScreenHeight()/2 - textSize.y/2 + 80;
         //----------------------------------------------------------------------------------
 
         // Draw

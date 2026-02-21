@@ -148,10 +148,11 @@ int main(void)
             DrawText("Controls:", 20, 20, 10, BLACK);
             DrawText("- Right/Left to move", 40, 40, 10, DARKGRAY);
             DrawText("- Space to jump", 40, 60, 10, DARKGRAY);
-            DrawText("- Mouse Wheel to Zoom in-out, R to reset zoom", 40, 80, 10, DARKGRAY);
-            DrawText("- C to change camera mode", 40, 100, 10, DARKGRAY);
-            DrawText("Current camera mode:", 20, 120, 10, BLACK);
-            DrawText(cameraDescriptions[cameraOption], 40, 140, 10, DARKGRAY);
+            DrawText("- Mouse Wheel to Zoom in-out", 40, 80, 10, DARKGRAY);
+            DrawText("- R to reset position + zoom", 40, 100, 10, DARKGRAY);
+            DrawText("- C to change camera mode", 40, 120, 10, DARKGRAY);
+            DrawText("Current camera mode:", 20, 140, 10, BLACK);
+            DrawText(cameraDescriptions[cameraOption], 40, 160, 10, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -226,10 +227,10 @@ void UpdateCameraCenterInsideMap(Camera2D *camera, Player *player, EnvItem *envI
     Vector2 max = GetWorldToScreen2D((Vector2){ maxX, maxY }, *camera);
     Vector2 min = GetWorldToScreen2D((Vector2){ minX, minY }, *camera);
 
-    if (max.x < width) camera->offset.x = width - (max.x - width/2);
-    if (max.y < height) camera->offset.y = height - (max.y - height/2);
-    if (min.x > 0) camera->offset.x = width/2 - min.x;
-    if (min.y > 0) camera->offset.y = height/2 - min.y;
+    if (max.x < width) camera->offset.x = width - (max.x - (float)width/2);
+    if (max.y < height) camera->offset.y = height - (max.y - (float)height/2);
+    if (min.x > 0) camera->offset.x = (float)width/2 - min.x;
+    if (min.y > 0) camera->offset.y = (float)height/2 - min.y;
 }
 
 void UpdateCameraCenterSmoothFollow(Camera2D *camera, Player *player, EnvItem *envItems, int envItemsLength, float delta, int width, int height)

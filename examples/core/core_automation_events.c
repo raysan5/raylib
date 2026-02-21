@@ -225,10 +225,10 @@ int main(void)
         Vector2 max = GetWorldToScreen2D((Vector2){ maxX, maxY }, camera);
         Vector2 min = GetWorldToScreen2D((Vector2){ minX, minY }, camera);
 
-        if (max.x < screenWidth) camera.offset.x = screenWidth - (max.x - screenWidth/2);
-        if (max.y < screenHeight) camera.offset.y = screenHeight - (max.y - screenHeight/2);
-        if (min.x > 0) camera.offset.x = screenWidth/2 - min.x;
-        if (min.y > 0) camera.offset.y = screenHeight/2 - min.y;
+        if (max.x < screenWidth) camera.offset.x = screenWidth - (max.x - (float)screenWidth/2);
+        if (max.y < screenHeight) camera.offset.y = screenHeight - (max.y - (float)screenHeight/2);
+        if (min.x > 0) camera.offset.x = (float)screenWidth/2 - min.x;
+        if (min.y > 0) camera.offset.y = (float)screenHeight/2 - min.y;
         //----------------------------------------------------------------------------------
 
         // Events management

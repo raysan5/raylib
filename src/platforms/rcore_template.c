@@ -27,7 +27,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -454,7 +454,6 @@ int InitPlatform(void)
     // raylib uses OpenGL so, platform should create that kind of connection
     // Below example illustrates that process using EGL library
     //----------------------------------------------------------------------------
-    CORE.Window.fullscreen = true;
     FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))

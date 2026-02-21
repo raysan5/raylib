@@ -582,7 +582,6 @@
     <ClCompile Include="..\..\..\src\rshapes.c" />
     <ClCompile Include="..\..\..\src\rtext.c" />
     <ClCompile Include="..\..\..\src\rtextures.c" />
-    <ClCompile Include="..\..\..\src\utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\external\cgltf.h" />
@@ -602,7 +601,6 @@
     <ClInclude Include="..\..\..\src\raylib.h" />
     <ClInclude Include="..\..\..\src\raymath.h" />
     <ClInclude Include="..\..\..\src\rlgl.h" />
-    <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\src\raylib.dll.rc" />
