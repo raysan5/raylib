@@ -290,6 +290,9 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef AUDIO_DEVICE_SAMPLE_RATE
     #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device output sample rate
 #endif
+#ifndef AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES
+    #define AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES 0    // Device latency. 0 defaults to 10ms
+#endif
 
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
@@ -478,6 +481,7 @@ void InitAudioDevice(void)
     config.playback.format = AUDIO_DEVICE_FORMAT;
     config.playback.channels = AUDIO_DEVICE_CHANNELS;
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+    config.periodSizeInFrames = AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES;
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
     config.noPreSilencedOutputBuffer = true;    // raylib pre-silences the output buffer manually
