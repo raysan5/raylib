@@ -158,8 +158,8 @@ extern "C" {
 
     #ifdef MAX_PATH
         #undef MAX_PATH
-        #define MAX_PATH 1025
     #endif
+    #define MAX_PATH 1025
 #endif
 
 #if defined(__APPLE__)
