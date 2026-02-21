@@ -766,20 +766,20 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
 		del *.o *.exe /s
     endif
     ifeq ($(PLATFORM_OS),BSD)
-		find . -type f -perm -ugo+x -delete
+		find . -type f -executable -exec file {} + 2>/dev/null | grep 'executable' | cut -d: -f1 | xargs -r rm
 		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-		find . -type f -executable -delete
+		find . -type f -executable -exec file {} + 2>/dev/null | grep 'executable' | cut -d: -f1 | xargs -r rm
 		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		find . -type f -perm +ugo+x -delete
+		find . -type f -executable -exec file {} + 2>/dev/null | grep 'executable' | cut -d: -f1 | xargs -r rm
 		rm -f *.o
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
-	find . -type f -executable -delete
+	find . -type f -executable -exec file {} + 2>/dev/null | grep 'executable' | cut -d: -f1 | xargs -r rm
 	rm -fv *.o
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
