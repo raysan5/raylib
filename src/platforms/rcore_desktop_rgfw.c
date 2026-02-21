@@ -118,6 +118,7 @@ extern "C" {
 
 #if defined(__APPLE__)
     // older macs (unsupported?) are missing these
+    #include <IOKit/hid/IOHIDUsageTables.h>
     #ifndef kHIDUsage_Button_5
         #define kHIDUsage_Button_5 0x05
     #endif
