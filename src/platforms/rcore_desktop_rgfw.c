@@ -477,27 +477,20 @@ void ToggleFullscreen(void)
 {
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
+        FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         // Store previous window position (in case we exit fullscreen)
-        CORE.Window.previousPosition = CORE.Window.position;
+        Vector2 currentPosition = GetWindowPosition();
+        CORE.Window.previousPosition.x = currentPosition.x;
+        CORE.Window.previousPosition.y = currentPosition.y;
         CORE.Window.previousScreen = CORE.Window.screen;
 
-        platform.monitor = RGFW_window_getMonitor(platform.window);
-        FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-
-        RGFW_monitor_scaleToWindow(platform.monitor, platform.window);
+        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+        RGFW_monitor_scaleToWindow(currentMonitor, platform.window);
         RGFW_window_setFullscreen(platform.window, 1);
     }
     else
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-
-        if (platform.monitor->mode.w)
-        {
-            RGFW_monitor *monitor = RGFW_window_getMonitor(platform.window);
-            RGFW_monitor_requestMode(monitor, &platform.monitor->mode, RGFW_monitorScale);
-
-            platform.monitor->mode.w = 0;
-        }
 
         // we update the window position right away
         CORE.Window.position = CORE.Window.previousPosition;
@@ -514,24 +507,37 @@ void ToggleFullscreen(void)
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) ToggleFullscreen();
-
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        CORE.Window.previousPosition = CORE.Window.position;
+        ToggleFullscreen();
+
+        // it seems like returning here is a more desireable outcome
+        return;
+    }
+
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
+
+        Vector2 currentPosition = GetWindowPosition();
+        CORE.Window.previousPosition.x = (int)currentPosition.x;
+        CORE.Window.previousPosition.y = (int)currentPosition.y;
         CORE.Window.previousScreen = CORE.Window.screen;
 
+        RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
         RGFW_window_setBorder(platform.window, 0);
-
-        RGFW_monitor *mon = RGFW_window_getMonitor(platform.window);
-        RGFW_window_resize(platform.window, mon->mode.w, mon->mode.h);
+        RGFW_window_move(platform.window, 0, 0);
+        RGFW_window_resize(platform.window, currentMonitor->mode.w, currentMonitor->mode.h);
     }
     else
     {
+        FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
         RGFW_window_setBorder(platform.window, 1);
-
+        
         CORE.Window.position = CORE.Window.previousPosition;
+
         RGFW_window_resize(platform.window, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
+        RGFW_window_move(platform.window, CORE.Window.position.x, CORE.Window.position.y);
     }
 }
 
@@ -794,10 +800,11 @@ void SetWindowSize(int width, int height)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
+            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
@@ -949,12 +956,17 @@ Vector2 GetWindowScaleDPI(void)
     else monitor = RGFW_getPrimaryMonitor();
 
     #if defined(__APPLE__)
+        // apple does < 1.0f scaling, example: 0.66f, 0.5f
+        // we want to convert this to be consistent
         return (Vector2){ 1.0f / monitor->scaleX, 1.0f / monitor->scaleX };
     #else
+        // linux and windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
         return (Vector2){ monitor->scaleX, monitor->scaleX };
     #endif
 }
 
+// Not part of raylib. Mac has a different pixel ratio for retina displays
+// and we want to be able to handle it
 float GetMonitorPixelRatio(void)
 {
     RGFW_monitor *monitor = NULL;
@@ -1243,13 +1255,14 @@ void PollInputEvents(void)
                 #if defined(__APPLE__)
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
-                        SetupViewport(platform.window->w * platform.monitor->pixelRatio, platform.window->h * platform.monitor->pixelRatio);
-                        CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
+                        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+                        CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
                         CORE.Window.screen.width = platform.window->w;
                         CORE.Window.screen.height = platform.window->h;
-                        CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
                     }
                     else
                     {
@@ -1586,7 +1599,6 @@ int InitPlatform(void)
     // must be set to NULL to not interfere
     RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
     RGFW_window_makeCurrentWindow_OpenGL(platform.window);
-    platform.monitor = RGFW_window_getMonitor(platform.window);
 
     //----------------------------------------------------------------------------
 
@@ -1603,10 +1615,11 @@ int InitPlatform(void)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            CORE.Window.screenScale = MatrixScale(platform.monitor->pixelRatio, platform.monitor->pixelRatio, 1.0f);
+            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * platform.monitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * platform.monitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
