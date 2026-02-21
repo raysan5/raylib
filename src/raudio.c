@@ -352,7 +352,7 @@ struct rAudioBuffer {
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
-    float pan;                      // Audio buffer pan (0.0f to 1.0f)
+    float pan;                      // Audio buffer pan (-1.0f to 1.0f)
 
     bool playing;                   // Audio buffer state: AUDIO_PLAYING
     bool paused;                    // Audio buffer state: AUDIO_PAUSED
