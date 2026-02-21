@@ -290,6 +290,9 @@ typedef struct tagBITMAPINFOHEADER {
 #ifndef AUDIO_DEVICE_SAMPLE_RATE
     #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device output sample rate
 #endif
+#ifndef AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES
+    #define AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES 0    // Device latency. 0 defaults to 10ms
+#endif
 
 #ifndef MAX_AUDIO_BUFFER_POOL_CHANNELS
     #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Audio pool channels
@@ -349,7 +352,7 @@ struct rAudioBuffer {
 
     float volume;                   // Audio buffer volume
     float pitch;                    // Audio buffer pitch
-    float pan;                      // Audio buffer pan (0.0f to 1.0f)
+    float pan;                      // Audio buffer pan (-1.0f to 1.0f)
 
     bool playing;                   // Audio buffer state: AUDIO_PLAYING
     bool paused;                    // Audio buffer state: AUDIO_PAUSED
@@ -477,12 +480,12 @@ void InitAudioDevice(void)
     config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device
     config.playback.format = AUDIO_DEVICE_FORMAT;
     config.playback.channels = AUDIO_DEVICE_CHANNELS;
-    config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.System.device
-    config.capture.format = ma_format_s16;
-    config.capture.channels = 1;
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
+    config.periodSizeInFrames = AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES;
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
+    config.noPreSilencedOutputBuffer = true;    // raylib pre-silences the output buffer manually
+    config.noFixedSizedCallback = true;         // raylib does not require fixed sized callback guarantees. This bypasses an internal intermediary buffer
 
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)

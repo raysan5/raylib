@@ -303,6 +303,7 @@
 #define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (miniaudio: float-32bit)
 #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
 #define AUDIO_DEVICE_SAMPLE_RATE           0    // Device sample rate (device default)
+#define AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES 0    // Device period size (controls latency, 0 defaults to 10ms)
 
 #define MAX_AUDIO_BUFFER_POOL_CHANNELS    16    // Maximum number of audio pool channels
 
