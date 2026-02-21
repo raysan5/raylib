@@ -481,6 +481,7 @@ void InitAudioDevice(void)
     config.dataCallback = OnSendAudioDataToDevice;
     config.pUserData = NULL;
     config.noPreSilencedOutputBuffer = true;    // raylib pre-silences the output buffer manually
+    config.noFixedSizedCallback = true;         // raylib does not require fixed sized callback guarantees. This bypasses an internal intermediary buffer
 
     result = ma_device_init(&AUDIO.System.context, &config, &AUDIO.System.device);
     if (result != MA_SUCCESS)
