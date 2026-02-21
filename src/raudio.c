@@ -2374,6 +2374,12 @@ static void OnLog(void *pUserData, ma_uint32 level, const char *pMessage)
 // Reads audio data from an AudioBuffer object in internal format
 static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer, void *framesOut, ma_uint32 frameCount)
 {
+    // Don't read anything if the sound is not playing
+    if (!audioBuffer->playing)
+    {
+        return 0;
+    }
+
     // Using audio buffer callback
     if (audioBuffer->callback)
     {
@@ -2519,18 +2525,20 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
             {
                 estimatedInputFrameCount = inputBufferFrameCap;
             }
+            
+            ma_uint32 inputFramesInInternalFormatCount = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, estimatedInputFrameCount);
 
-            estimatedInputFrameCount = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, estimatedInputFrameCount);
-
-            ma_uint64 inputFramesProcessedThisIteration = estimatedInputFrameCount;
+            ma_uint64 inputFramesProcessedThisIteration = inputFramesInInternalFormatCount;
             ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
             ma_data_converter_process_pcm_frames(&audioBuffer->converter, inputBuffer, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
 
-            if (estimatedInputFrameCount > inputFramesProcessedThisIteration)
+            totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration;
+
+            if (inputFramesInInternalFormatCount > inputFramesProcessedThisIteration)
             {
                 // Getting here means the estimated input frame count was overestimated. The residual needs
                 // be stored for later use.
-                ma_uint64 residualFrameCount = estimatedInputFrameCount - inputFramesProcessedThisIteration;
+                ma_uint64 residualFrameCount = inputFramesInInternalFormatCount - inputFramesProcessedThisIteration;
 
                 // A safety check to make sure the capacity of the residual cache is not exceeded.
                 if (residualFrameCount > AUDIO_BUFFER_RESIDUAL_CAPACITY)
@@ -2542,7 +2550,9 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
                 audioBuffer->converterResidualCount = residualFrameCount;
             }
 
-            totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration;
+            if (inputFramesInInternalFormatCount < estimatedInputFrameCount) {
+                break;  // Reached the end of the sound
+            }
         }
     }
 
