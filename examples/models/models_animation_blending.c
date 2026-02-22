@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
 *   raylib [models] example - animation blending
+*
+*   Example complexity rating: [★★★☆] 3/4
 * 
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
 *
@@ -47,30 +49,25 @@ int main(void)
     camera.fovy = 45.0f;                            // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
 
-    // Load gltf model
+    // Load model
     Model characterModel = LoadModel("resources/models/gltf/robot.glb"); // Load character model
     
-/* INFO: Uncomment this to use GPU skinning
     // Load skinning shader
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
+    
+    // Assign skinning shader to all materials shaders
+    for (int i = 0; i < characterModel.materialCount; i++) characterModel.materials[i].shader = skinningShader;
 
-    for (int i = 0; i < characterModel.materialCount; i++)
-    {
-        characterModel.materials[i].shader = skinningShader;
-    }
-*/
-
-    // Load gltf model animations
+    // Load model animations
     int animsCount = 0;
-    unsigned int animIndex0 = 0;
-    unsigned int animIndex1 = 0;
-    unsigned int animCurrentFrame = 0;
     ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
 
+    // Define animation variables
+    unsigned int animIndex0 = 0;
+    unsigned int animIndex1 = 0;
+    float animCurrentFrame = 0;
     float blendFactor = 0.5f;
-
-    DisableCursor();                    // Limit cursor to relative movement inside the window
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -80,7 +77,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_THIRD_PERSON);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         
         // Select current animation
         if (IsKeyPressed(KEY_T)) animIndex0 = (animIndex0 + 1)%animsCount;
@@ -93,14 +90,12 @@ int main(void)
         else if (IsKeyPressed(KEY_J)) blendFactor = clamp(blendFactor + 0.1, 0.0f, 1.0f);
 
         // Update animation
-        animCurrentFrame++;
+        animCurrentFrame += 0.2f;
 
         // Update bones
         // Note: Same animation frame index is used below. By default it loops both animations
-        UpdateModelAnimationBonesLerp(characterModel, modelAnimations[animIndex0], animCurrentFrame, modelAnimations[animIndex1], animCurrentFrame, blendFactor);
-
-// INFO: Comment the following line to use GPU skinning
-        UpdateModelVertsToCurrentBones(characterModel);
+        UpdateModelAnimationEx(characterModel, modelAnimations[animIndex0], animCurrentFrame, 
+            modelAnimations[animIndex1], animCurrentFrame, blendFactor);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -111,18 +106,7 @@ int main(void)
 
             BeginMode3D(camera);
 
-/* INFO: Uncomment this to use GPU skinning
-                // Draw character mesh, pose calculation is done in shader (GPU skinning)
-                for (int i = 0; i < characterModel.meshCount; i++)
-                {
-                    DrawMesh(characterModel.meshes[i], characterModel.materials[characterModel.meshMaterial[i]], characterModel.transform);
-                }
-*/
-
-// INFO: Comment the following line to use GPU skinning
                 DrawModel(characterModel, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
-
-
                 DrawGrid(10, 1.0f);
                 
             EndMode3D();
@@ -142,8 +126,7 @@ int main(void)
     UnloadModelAnimations(modelAnimations, animsCount); // Unload model animation
     UnloadModel(characterModel);    // Unload model and meshes/material
 
-// INFO: Uncomment the following line to use GPU skinning
-    // UnloadShader(skinningShader);   // Unload GPU skinning shader
+    UnloadShader(skinningShader);   // Unload GPU skinning shader
     
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
