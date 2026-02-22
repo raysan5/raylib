@@ -1276,13 +1276,20 @@ void PollInputEvents(void)
 
                     CORE.Window.currentFbo.width = CORE.Window.render.width;
                     CORE.Window.currentFbo.height = CORE.Window.render.height;
+                #elif defined(PLATFORM_WEB_RGFW)
+                    // do nothing for web
+                    return;
                 #else
                     SetupViewport(platform.window->w, platform.window->h);
                     // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
-                        CORE.Window.screen.width = (int)(platform.window->w/GetWindowScaleDPI().x);
-                        CORE.Window.screen.height = (int)(platform.window->h/GetWindowScaleDPI().y);
+                        Vector2 scaleDpi = GetWindowScaleDPI();
+                        CORE.Window.screen.width = (int)(platform.window->w/scaleDpi.x);
+                        CORE.Window.screen.height = (int)(platform.window->h/scaleDpi.y);
+                        CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+                        // mouse scale doesnt seem needed
+                        // SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
                     }
                     else
                     {
@@ -1290,8 +1297,8 @@ void PollInputEvents(void)
                         CORE.Window.screen.height = platform.window->h;
                     }
 
-                    CORE.Window.currentFbo.width = platform.window->w;
-                    CORE.Window.currentFbo.height = platform.window->h;
+                    CORE.Window.currentFbo.width = CORE.Window.screen.width;
+                    CORE.Window.currentFbo.height = CORE.Window.screen.height;
                 #endif
                 CORE.Window.resizedLastFrame = true;
             } break;
