@@ -645,7 +645,7 @@ MODELS = \
     models/models_animation_blending \
     models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
-    models/models_animation_playing \
+    models/models_loading_iqm \
     models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -1217,7 +1217,7 @@ models/models_animation_gpu_skinning: models/models_animation_gpu_skinning.c
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
-models/models_animation_playing: models/models_animation_playing.c
+models/models_loading_iqm: models/models_loading_iqm.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \

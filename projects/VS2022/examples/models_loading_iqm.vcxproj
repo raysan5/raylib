@@ -53,9 +53,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AFDDE100-2D36-4749-817D-12E54C56312F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>models_animation_playing</RootNamespace>
+    <RootNamespace>models_loading_iqm</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>models_animation_playing</ProjectName>
+    <ProjectName>models_loading_iqm</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\models\models_animation_playing.c" />
+    <ClCompile Include="..\..\..\examples\models\models_loading_iqm.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - animation playing
+*   raylib [models] example - loading iqm
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -33,7 +33,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation playing");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - loading iqm");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -52,7 +52,7 @@ int main(void)
     // Load animation data
     int animsCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/iqm/guyanim.iqm", &animsCount);
-    int animFrameCounter = 0;
+    float animFrameCounter = 0;
 
     DisableCursor();                    // Catch cursor
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -63,15 +63,12 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Play animation when spacebar is held down
-        if (IsKeyDown(KEY_SPACE))
-        {
-            animFrameCounter++;
-            UpdateModelAnimation(model, anims[0], animFrameCounter);
-            if (animFrameCounter >= anims[0].frameCount) animFrameCounter = 0;
-        }
+        animFrameCounter += 1.0f;
+        UpdateModelAnimation(model, anims[0], animFrameCounter);
+        if (animFrameCounter >= anims[0].keyframeCount) animFrameCounter = 0;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -84,9 +81,9 @@ int main(void)
 
                 DrawModelEx(model, position, (Vector3){ 1.0f, 0.0f, 0.0f }, -90.0f, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
 
-                for (int i = 0; i < model.boneCount; i++)
+                for (int i = 0; i < model.skeleton.boneCount; i++)
                 {
-                    DrawCube(anims[0].framePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
+                    //DrawCube(anims[0].keyframePoses[animFrameCounter][i].translation, 0.2f, 0.2f, 0.2f, RED);
                 }
 
                 DrawGrid(10, 1.0f);         // Draw a grid

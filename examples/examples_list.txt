@@ -144,7 +144,7 @@ text;text_codepoints_loading;★★★☆;4.2;4.2;2022;2025;"Ramon Santamaria";@
 text;text_inline_styling;★★★☆;5.6-dev;5.6-dev;2025;2025;"Wagner Barongello";@SultansOfCode
 text;text_words_alignment;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 text;text_strings_management;★★★☆;5.6-dev;5.6-dev;2025;2025;"David Buzatto";@davidbuzatto
-models;models_animation_playing;★★☆☆;2.5;3.5;2019;2025;"Culacant";@culacant
+models;models_loading_iqm;★★☆☆;2.5;3.5;2019;2025;"Culacant";@culacant
 models;models_billboard_rendering;★★★☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_box_collisions;★☆☆☆;1.3;3.5;2015;2025;"Ramon Santamaria";@raysan5
 models;models_cubicmap_rendering;★★☆☆;1.8;3.5;2015;2025;"Ramon Santamaria";@raysan5
