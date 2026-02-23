@@ -6,7 +6,7 @@
 attribute vec3 vertexPosition;
 attribute vec2 vertexTexCoord;
 attribute vec4 vertexColor;
-attribute vec4 vertexBoneIds;
+attribute vec4 vertexBoneIndices;
 attribute vec4 vertexBoneWeights;
 
 // Input uniform values
@@ -19,10 +19,10 @@ varying vec4 fragColor;
 
 void main()
 {
-    int boneIndex0 = int(vertexBoneIds.x);
-    int boneIndex1 = int(vertexBoneIds.y);
-    int boneIndex2 = int(vertexBoneIds.z);
-    int boneIndex3 = int(vertexBoneIds.w);
+    int boneIndex0 = int(vertexBoneIndices.x);
+    int boneIndex1 = int(vertexBoneIndices.y);
+    int boneIndex2 = int(vertexBoneIndices.z);
+    int boneIndex3 = int(vertexBoneIndices.w);
     
     // WARNING: OpenGL ES 2.0 does not support automatic matrix transposing, neither transpose() function
     mat4 boneMatrixTransposed0 = mat4(
