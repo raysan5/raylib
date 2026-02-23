@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - animation bone blending
+*   raylib [models] example - animation blend custom
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -53,7 +53,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation bone blending");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation blend custom");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -80,7 +80,7 @@ int main(void)
     TraceLog(LOG_INFO, "Found %d animations:", animsCount);
     for (int i = 0; i < animsCount; i++)
     {
-        TraceLog(LOG_INFO, "  Animation %d: %s (%d frames)", i, modelAnimations[i].name, modelAnimations[i].frameCount);
+        TraceLog(LOG_INFO, "  Animation %d: %s (%d frames)", i, modelAnimations[i].name, modelAnimations[i].keyframeCount);
     }
 
     // Use specific indices: walk/move = 2, attack = 3
@@ -118,8 +118,8 @@ int main(void)
         ModelAnimation anim1 = modelAnimations[animIndex1];
         ModelAnimation anim2 = modelAnimations[animIndex2];
         
-        animCurrentFrame1 = (animCurrentFrame1 + 1)%anim1.frameCount;
-        animCurrentFrame2 = (animCurrentFrame2 + 1)%anim2.frameCount;
+        animCurrentFrame1 = (animCurrentFrame1 + 1)%anim1.keyframeCount;
+        animCurrentFrame2 = (animCurrentFrame2 + 1)%anim2.keyframeCount;
 
         // Blend the two animations
         characterModel.transform = MatrixTranslate(position.x, position.y, position.z);
@@ -203,9 +203,9 @@ static void BlendModelAnimationsBones(Model *model, ModelAnimation *anim1, int f
     ModelAnimation *anim2, int frame2, float blendFactor, bool upperBodyBlend)
 {
     // Validate inputs
-    if (anim1->boneCount == 0 || anim1->framePoses == NULL ||
-        anim2->boneCount == 0 || anim2->framePoses == NULL ||
-        model->boneCount == 0 || model->bindPose == NULL)
+    if (anim1->boneCount == 0 || anim1->keyframePoses == NULL ||
+        anim2->boneCount == 0 || anim2->keyframePoses == NULL ||
+        model->skeleton.boneCount == 0 || model->skeleton.bindPose == NULL)
     {
         return;
     }
@@ -214,26 +214,13 @@ static void BlendModelAnimationsBones(Model *model, ModelAnimation *anim1, int f
     blendFactor = fminf(1.0f, fmaxf(0.0f, blendFactor));
     
     // Ensure frame indices are valid
-    if (frame1 >= anim1->frameCount) frame1 = anim1->frameCount - 1;
-    if (frame2 >= anim2->frameCount) frame2 = anim2->frameCount - 1;
+    if (frame1 >= anim1->keyframeCount) frame1 = anim1->keyframeCount - 1;
+    if (frame2 >= anim2->keyframeCount) frame2 = anim2->keyframeCount - 1;
     if (frame1 < 0) frame1 = 0;
     if (frame2 < 0) frame2 = 0;
     
-    // Find first mesh with bones
-    int firstMeshWithBones = -1;
-    for (int i = 0; i < model->meshCount; i++)
-    {
-        if (model->meshes[i].boneMatrices)
-        {
-            firstMeshWithBones = i;
-            break;
-        }
-    }
-    
-    if (firstMeshWithBones == -1) return;
-    
     // Get bone count (use minimum of all to be safe)
-    int boneCount = model->boneCount;
+    int boneCount = model->skeleton.boneCount;
     if (anim1->boneCount < boneCount) boneCount = anim1->boneCount;
     if (anim2->boneCount < boneCount) boneCount = anim2->boneCount;
     
@@ -246,7 +233,7 @@ static void BlendModelAnimationsBones(Model *model, ModelAnimation *anim1, int f
         // If upper body blending is enabled, use different blend factors for upper vs lower body
         if (upperBodyBlend)
         {
-            const char *boneName = model->bones[boneId].name;
+            const char *boneName = model->skeleton.bones[boneId].name;
             bool isUpperBody = IsUpperBodyBone(boneName);
             
             // Upper body: use anim2 (attack), Lower body: use anim1 (walk)
@@ -256,12 +243,12 @@ static void BlendModelAnimationsBones(Model *model, ModelAnimation *anim1, int f
         }
         
         // Get transforms from both animations
-        Transform *bindTransform = &model->bindPose[boneId];
-        Transform *anim1Transform = &anim1->framePoses[frame1][boneId];
-        Transform *anim2Transform = &anim2->framePoses[frame2][boneId];
+        Transform *bindTransform = &model->skeleton.bindPose[boneId];
+        Transform *anim1Transform = &anim1->keyframePoses[frame1][boneId];
+        Transform *anim2Transform = &anim2->keyframePoses[frame2][boneId];
         
         // Blend the transforms
-        Transform blended;
+        Transform blended = { 0 };
         blended.translation = Vector3Lerp(anim1Transform->translation, anim2Transform->translation, boneBlendFactor);
         blended.rotation = QuaternionSlerp(anim1Transform->rotation, anim2Transform->rotation, boneBlendFactor);
         blended.scale = Vector3Lerp(anim1Transform->scale, anim2Transform->scale, boneBlendFactor);
@@ -279,18 +266,7 @@ static void BlendModelAnimationsBones(Model *model, ModelAnimation *anim1, int f
             MatrixTranslate(blended.translation.x, blended.translation.y, blended.translation.z));
         
         // Calculate final bone matrix (similar to UpdateModelAnimationBones)
-        model->meshes[firstMeshWithBones].boneMatrices[boneId] = MatrixMultiply(MatrixInvert(bindMatrix), blendedMatrix);
-    }
-    
-    // Copy bone matrices to remaining meshes
-    for (int i = firstMeshWithBones + 1; i < model->meshCount; i++)
-    {
-        if (model->meshes[i].boneMatrices)
-        {
-            memcpy(model->meshes[i].boneMatrices,
-                   model->meshes[firstMeshWithBones].boneMatrices,
-                   model->meshes[i].boneCount*sizeof(model->meshes[i].boneMatrices[0]));
-        }
+        model->boneMatrices[boneId] = MatrixMultiply(MatrixInvert(bindMatrix), blendedMatrix);
     }
 }
 

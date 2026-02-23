@@ -2,7 +2,7 @@
 *
 *   raylib [models] example - animation blending
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [☆☆☆☆] 0/4
 * 
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
 *

@@ -171,8 +171,9 @@ models;models_basic_voxel;★★☆☆;5.5;5.5;2025;2025;"Tim Little";@timlittle
 models;models_rotating_cube;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Jopestpe";@jopestpe
 models;models_decals;★★★★;5.6-dev;5.6-dev;2025;2025;"JP Mortiboys";@themushroompirates
 models;models_directional_billboard;★★☆☆;5.6-dev;5.6;2025;2025;"Robin";@RobinsAviary
-models;models_animation_bone_blending;★★★★;5.5;5.5;2026;2026;"dmitrii-brand";@dmitrii-brand
+models;models_animation_blend_custom;★★★★;5.5;5.5;2026;2026;"dmitrii-brand";@dmitrii-brand
 models;models_animation_blending;☆☆☆☆;5.5;5.6-dev;2024;2024;"Kirandeep";@Kirandeep-Singh-Khehra
+models;models_animation_timming;★★☆☆;5.6;5.6;2026;2026;"Ramon Santamaria";@raysan5
 shaders;shaders_ascii_rendering;★★☆☆;5.5;5.6;2025;2025;"Maicon Santana";@maiconpintoabreu
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5

@@ -642,10 +642,10 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blend_custom \
     models/models_animation_blending \
-    models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
-    models/models_loading_iqm \
+    models/models_animation_timming \
     models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -658,6 +658,7 @@ MODELS = \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
+    models/models_loading_iqm \
     models/models_loading_m3d \
     models/models_loading_vox \
     models/models_mesh_generation \
@@ -1199,15 +1200,15 @@ text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile MODELS examples
-models/models_animation_blending: models/models_animation_blending.c
+models/models_animation_blend_custom: models/models_animation_blend_custom.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb \
+    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
-models/models_animation_bone_blending: models/models_animation_bone_blending.c
+models/models_animation_blending: models/models_animation_blending.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/gltf/greenman.glb@resources/models/gltf/greenman.glb \
+    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb \
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
@@ -1217,11 +1218,9 @@ models/models_animation_gpu_skinning: models/models_animation_gpu_skinning.c
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
-models/models_loading_iqm: models/models_loading_iqm.c
+models/models_animation_timming: models/models_animation_timming.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
-    --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
-    --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
+    --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
 
 models/models_basic_voxel: models/models_basic_voxel.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1275,6 +1274,12 @@ models/models_loading: models/models_loading.c
 models/models_loading_gltf: models/models_loading_gltf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/gltf/robot.glb@resources/models/gltf/robot.glb
+
+models/models_loading_iqm: models/models_loading_iqm.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
+    --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
+    --preload-file models/resources/models/iqm/guyanim.iqm@resources/models/iqm/guyanim.iqm
 
 models/models_loading_m3d: models/models_loading_m3d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

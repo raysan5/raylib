@@ -60,25 +60,25 @@ int main(void)
     unsigned int animCurrentFrame = 0;
     ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/greenman.glb", &animsCount);
 
-    // indices of bones for sockets
+    // Indices of bones for sockets
     int boneSocketIndex[BONE_SOCKETS] = { -1, -1, -1 };
 
-    // search bones for sockets
-    for (int i = 0; i < characterModel.boneCount; i++)
+    // Search bones for sockets
+    for (int i = 0; i < characterModel.skeleton.boneCount; i++)
     {
-        if (TextIsEqual(characterModel.bones[i].name, "socket_hat"))
+        if (TextIsEqual(characterModel.skeleton.bones[i].name, "socket_hat"))
         {
             boneSocketIndex[BONE_SOCKET_HAT] = i;
             continue;
         }
 
-        if (TextIsEqual(characterModel.bones[i].name, "socket_hand_R"))
+        if (TextIsEqual(characterModel.skeleton.bones[i].name, "socket_hand_R"))
         {
             boneSocketIndex[BONE_SOCKET_HAND_R] = i;
             continue;
         }
 
-        if (TextIsEqual(characterModel.bones[i].name, "socket_hand_L"))
+        if (TextIsEqual(characterModel.skeleton.bones[i].name, "socket_hand_L"))
         {
             boneSocketIndex[BONE_SOCKET_HAND_L] = i;
             continue;
@@ -115,7 +115,7 @@ int main(void)
 
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
-        animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
+        animCurrentFrame = (animCurrentFrame + 1)%anim.keyframeCount;
         UpdateModelAnimation(characterModel, anim, animCurrentFrame);
         //----------------------------------------------------------------------------------
 
@@ -137,8 +137,8 @@ int main(void)
                 {
                     if (!showEquip[i]) continue;
 
-                    Transform *transform = &anim.framePoses[animCurrentFrame][boneSocketIndex[i]];
-                    Quaternion inRotation = characterModel.bindPose[boneSocketIndex[i]].rotation;
+                    Transform *transform = &anim.keyframePoses[animCurrentFrame][boneSocketIndex[i]];
+                    Quaternion inRotation = characterModel.skeleton.bindPose[boneSocketIndex[i]].rotation;
                     Quaternion outRotation = transform->rotation;
 
                     // Calculate socket rotation (angle between bone in initial pose and same bone in current animation frame)

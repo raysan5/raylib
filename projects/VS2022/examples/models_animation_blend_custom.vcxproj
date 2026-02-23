@@ -53,9 +53,9 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AC751FE1-C986-4B6A-92A8-28ED89DEE671}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>models_animation_bone_blending</RootNamespace>
+    <RootNamespace>models_animation_blend_custom</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>models_animation_bone_blending</ProjectName>
+    <ProjectName>models_animation_blend_custom</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\models\models_animation_bone_blending.c" />
+    <ClCompile Include="..\..\..\examples\models\models_animation_blend_custom.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

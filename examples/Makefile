@@ -657,10 +657,10 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blend_custom \
     models/models_animation_blending \
-    models/models_animation_bone_blending \
     models/models_animation_gpu_skinning \
-    models/models_loading_iqm \
+    models/models_animation_timming \
     models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -673,6 +673,7 @@ MODELS = \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
+    models/models_loading_iqm \
     models/models_loading_m3d \
     models/models_loading_vox \
     models/models_mesh_generation \
