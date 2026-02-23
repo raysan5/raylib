@@ -317,7 +317,9 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
             // If (bih.biCompression == BI_RGB) no need to be offset more
 
             if (bih.biCompression == BI_BITFIELDS) offset += 3*rgbaSize;
-            else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4*rgbaSize; // Not widely supported, but valid
+#if defined(_WIN32_WCE) && _WIN32_WCE >= 0x0400 // BI_ALPHABITFIELDS is supported only on Windows CE 4.0+
+            else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4 * rgbaSize; // Not widely supported, but valid
+#endif
         }
     }
 
