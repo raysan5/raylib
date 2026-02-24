@@ -167,6 +167,9 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
 #endif
 
+// Update model vertex data (positions and normals)
+static void UpdateModelAnimationVertexBuffers(Model model);
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -1182,7 +1185,7 @@ bool IsModelValid(Model model)
         if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }  // Vertex tangents buffer not uploaded to GPU
         if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; }  // Vertex texcoords2 buffer not uploaded to GPU
         if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }  // Vertex indices buffer not uploaded to GPU
-        if ((model.meshes[i].boneIds != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIds buffer not uploaded to GPU
+        if ((model.meshes[i].boneIndices != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIndices buffer not uploaded to GPU
         if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
 
         // NOTE: Some OpenGL versions do not support VAO, so we don't check it
@@ -1212,8 +1215,8 @@ void UnloadModel(Model model)
     RL_FREE(model.meshMaterial);
 
     // Unload animation data
-    RL_FREE(model.bones);
-    RL_FREE(model.bindPose);
+    RL_FREE(model.skeleton.bones);
+    RL_FREE(model.skeleton.bindPose);
 
     TRACELOG(LOG_INFO, "MODEL: Unloaded model (and meshes) from RAM and VRAM");
 }
@@ -1273,9 +1276,8 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT] = 0;      // Vertex buffer: tangents
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2] = 0;    // Vertex buffer: texcoords2
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = 0;      // Vertex buffer: indices
-
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = 0;      // Vertex buffer: boneIds
+#ifdef SUPPORT_GPU_SKINNING
+    mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES] = 0;  // Vertex buffer: boneIndices
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = 0;  // Vertex buffer: boneWeights
 #endif
 
@@ -1375,21 +1377,21 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
 
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    if (mesh->boneIds != NULL)
+#ifdef SUPPORT_GPU_SKINNING
+    if (mesh->boneIndices != NULL)
     {
-        // Enable vertex attribute: boneIds (shader-location = 7)
-        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS] = rlLoadVertexBuffer(mesh->boneIds, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
-        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, 4, RL_UNSIGNED_BYTE, 0, 0, 0);
-        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+        // Enable vertex attribute: boneIndices (shader-location = 7)
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES] = rlLoadVertexBuffer(mesh->boneIndices, mesh->vertexCount*4*sizeof(unsigned char), dynamic);
+        rlSetVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES, 4, RL_UNSIGNED_BYTE, 0, 0, 0);
+        rlEnableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES);
     }
     else
     {
-        // Default vertex attribute: boneIds
+        // Default vertex attribute: boneIndices
         // WARNING: Default value provided to shader if location available
         float value[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS, value, SHADER_ATTRIB_VEC4, 4);
-        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS);
+        rlSetVertexAttributeDefault(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES, value, SHADER_ATTRIB_VEC4, 4);
+        rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES);
     }
 
     if (mesh->boneWeights != NULL)
@@ -1436,17 +1438,17 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     #define GL_COLOR_ARRAY          0x8076
     #define GL_TEXTURE_COORD_ARRAY  0x8078
 
-    if (mesh.texcoords && material.maps[MATERIAL_MAP_DIFFUSE].texture.id > 0) rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
+    if ((mesh.texcoords != NULL) && (material.maps[MATERIAL_MAP_DIFFUSE].texture.id > 0)) rlEnableTexture(material.maps[MATERIAL_MAP_DIFFUSE].texture.id);
 
-    if (mesh.animVertices) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
+    if (mesh.animVertices != NULL) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animVertices);
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
     if (mesh.texcoords) rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
 
-    if (mesh.animNormals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
-    else if (mesh.normals) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
+    if (mesh.animNormals != NULL) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.animNormals);
+    else if (mesh.normals != NULL) rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
-    if (mesh.colors) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
+    if (mesh.colors != NULL) rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
 
     rlPushMatrix();
         rlMultMatrixf(MatrixToFloat(transform));
@@ -1528,14 +1530,6 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
-
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    // Upload Bone Transforms
-    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
-    {
-        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
-    }
-#endif
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1615,11 +1609,11 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+#ifdef SUPPORT_GPU_SKINNING
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
         }
@@ -1743,7 +1737,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
     // Create instances buffer
-    instanceTransforms = (float16 *)RL_MALLOC(instances*sizeof(float16));
+    instanceTransforms = (float16 *)RL_CALLOC(instances, sizeof(float16));
 
     // Fill buffer with instances transformations as float16 arrays
     for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
@@ -1757,14 +1751,14 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // no faster, since all the transform matrices are transferred anyway
     instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
 
-    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCE_TX
-    if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] != -1)
+    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCETRANSFORMS
+    if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] != -1)
     {
         for (unsigned int i = 0; i < 4; i++)
         {
-            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
-            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] + i, 1);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
+            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i, 1);
         }
     }
 
@@ -1777,15 +1771,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Upload model normal matrix (if locations available)
     if (material.shader.locs[SHADER_LOC_MATRIX_NORMAL] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_NORMAL], MatrixTranspose(MatrixInvert(matModel)));
-
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-    // Upload Bone Transforms
-    if ((material.shader.locs[SHADER_LOC_BONE_MATRICES] != -1) && mesh.boneMatrices)
-    {
-        rlSetUniformMatrices(material.shader.locs[SHADER_LOC_BONE_MATRICES], mesh.boneMatrices, mesh.boneCount);
-    }
-#endif
-
     //-----------------------------------------------------
 
     // Bind active texture maps (if available)
@@ -1863,11 +1848,11 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
+#ifdef SUPPORT_GPU_SKINNING
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
-            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS]);
+            rlEnableVertexBuffer(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES]);
             rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS], 4, RL_UNSIGNED_BYTE, 0, 0, 0);
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_BONEIDS]);
         }
@@ -1946,6 +1931,7 @@ void UnloadMesh(Mesh mesh)
     if (mesh.vboId != NULL) for (int i = 0; i < MAX_MESH_VERTEX_BUFFERS; i++) rlUnloadVertexBuffer(mesh.vboId[i]);
     RL_FREE(mesh.vboId);
 
+    // Unload mesh vertex buffers
     RL_FREE(mesh.vertices);
     RL_FREE(mesh.texcoords);
     RL_FREE(mesh.normals);
@@ -1954,11 +1940,13 @@ void UnloadMesh(Mesh mesh)
     RL_FREE(mesh.texcoords2);
     RL_FREE(mesh.indices);
 
+    // Unload mesh skin animation data
+    RL_FREE(mesh.boneWeights);
+    RL_FREE(mesh.boneIndices);
+
+    // Unload mesh runtime CPU skinning data
     RL_FREE(mesh.animVertices);
     RL_FREE(mesh.animNormals);
-    RL_FREE(mesh.boneWeights);
-    RL_FREE(mesh.boneIds);
-    RL_FREE(mesh.boneMatrices);
 }
 
 // Export mesh data to file
@@ -2189,7 +2177,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
         int result = tinyobj_parse_mtl_file(&mats, &count, fileName);
         if (result != TINYOBJ_SUCCESS) TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to parse materials file", fileName);
 
-        materials = (Material *)RL_MALLOC(count*sizeof(Material));
+        materials = (Material *)RL_CALLOC(count, sizeof(Material));
         ProcessMaterialsOBJ(materials, mats, count);
 
         tinyobj_materials_free(mats, count);
@@ -2228,10 +2216,11 @@ bool IsMaterialValid(Material material)
 {
     bool result = false;
 
-    if ((material.maps != NULL) &&      // Validate material contain some map
+    if ((material.maps != NULL) && // Validate material contain some map
         (material.shader.id > 0)) result = true; // Validate material shader is valid
 
-    // TODO: Check if available maps contain loaded textures
+    // NOTE: Checking if available maps contain loaded textures does not determine if
+    // a material is valid, there can be maps without a texture assigned, only properties
 
     return result;
 }
@@ -2287,146 +2276,205 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
     return animations;
 }
 
-// Update model animated bones transform matrices for a given frame
-// NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
-// to be uploaded to shader at drawing, in case GPU skinning is enabled
-void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame)
+// Update model animation data (vertex buffers / bone matrices) for a specific pose
+// NOTE 1: Request frame could be fractional, using a lerp interpolation between two frames
+// NOTE 2: Updated vertex animation data is uploaded to GPU in case of CPU skinning,
+// for GPU skinning, bone matrices are uploaded to shader on DrawModelEx()
+void UpdateModelAnimation(Model model, ModelAnimation anim, float frame)
 {
-    if ((anim.frameCount > 0) && (anim.bones != NULL) && (anim.framePoses != NULL))
+    if (model.boneMatrices == NULL) return;
+
+    //UpdateModelAnimationEx(model, anim, frame, anim, frame, 0.0f);
+
+    // Update model animated bones transform matrices for a given frame
+    if ((anim.keyframeCount > 0) && (model.skeleton.bones != NULL) && (anim.keyframePoses != NULL))
     {
-        if (frame >= anim.frameCount) frame = frame%anim.frameCount;
+        // Get frame and blending from frame factor required
+        int currentFrame = (int)frame;
+        int nextFrame = currentFrame + 1;
+        float blend = frame - currentFrame;
+        blend = Clamp(blend, 0.0f, 1.0f);
+        if (currentFrame >= anim.keyframeCount) currentFrame = currentFrame%anim.keyframeCount;
+        if (nextFrame >= anim.keyframeCount) nextFrame = nextFrame%anim.keyframeCount;
 
-        // Get first mesh which have bones
-        int firstMeshWithBones = -1;
+        Matrix bindPoseMatrix = { 0 };
+        Matrix currentPoseMatrix = { 0 };
 
-        for (int i = 0; i < model.meshCount; i++)
+        // Update all bones and bone matrices of model
+        for (int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
         {
-            if (model.meshes[i].boneMatrices)
-            {
-                if (firstMeshWithBones == -1)
-                {
-                    firstMeshWithBones = i;
-                    break;
-                }
-            }
+            // Compute interpolated pose between current and next frame
+            // NOTE: Storing animation frame data in model.currentPose
+            model.currentPose[boneIndex].translation = Vector3Lerp(
+                anim.keyframePoses[currentFrame][boneIndex].translation,
+                anim.keyframePoses[nextFrame][boneIndex].translation, blend);
+            model.currentPose[boneIndex].rotation = QuaternionSlerp(
+                anim.keyframePoses[currentFrame][boneIndex].rotation,
+                anim.keyframePoses[nextFrame][boneIndex].rotation, blend);
+            model.currentPose[boneIndex].scale = Vector3Lerp(
+                anim.keyframePoses[currentFrame][boneIndex].scale,
+                anim.keyframePoses[nextFrame][boneIndex].scale, blend);
+
+            // Compute runtime bone matrix from model current pose
+            //-----------------------------------------------------------------------------------
+            Transform *bindPoseTransform = &model.skeleton.bindPose[boneIndex];
+            bindPoseMatrix = MatrixMultiply(
+                MatrixMultiply(MatrixScale(bindPoseTransform->scale.x, bindPoseTransform->scale.y, bindPoseTransform->scale.z),
+                    QuaternionToMatrix(bindPoseTransform->rotation)),
+                MatrixTranslate(bindPoseTransform->translation.x, bindPoseTransform->translation.y, bindPoseTransform->translation.z));
+
+            Transform *currentPoseTransform = &model.currentPose[boneIndex];
+            currentPoseMatrix = MatrixMultiply(
+                MatrixMultiply(MatrixScale(currentPoseTransform->scale.x, currentPoseTransform->scale.y, currentPoseTransform->scale.z),
+                    QuaternionToMatrix(currentPoseTransform->rotation)),
+                MatrixTranslate(currentPoseTransform->translation.x, currentPoseTransform->translation.y, currentPoseTransform->translation.z));
+
+            model.boneMatrices[boneIndex] = MatrixMultiply(MatrixInvert(bindPoseMatrix), currentPoseMatrix);
+            //-----------------------------------------------------------------------------------
         }
 
-        if (firstMeshWithBones != -1)
-        {
-            // Update all bones and boneMatrices of first mesh with bones
-            for (int boneId = 0; boneId < anim.boneCount; boneId++)
-            {
-                Transform *bindTransform = &model.bindPose[boneId];
-                Matrix bindMatrix = MatrixMultiply(MatrixMultiply(
-                    MatrixScale(bindTransform->scale.x, bindTransform->scale.y, bindTransform->scale.z),
-                    QuaternionToMatrix(bindTransform->rotation)),
-                    MatrixTranslate(bindTransform->translation.x, bindTransform->translation.y, bindTransform->translation.z));
-
-                Transform *targetTransform = &anim.framePoses[frame][boneId];
-                Matrix targetMatrix = MatrixMultiply(MatrixMultiply(
-                    MatrixScale(targetTransform->scale.x, targetTransform->scale.y, targetTransform->scale.z),
-                    QuaternionToMatrix(targetTransform->rotation)),
-                    MatrixTranslate(targetTransform->translation.x, targetTransform->translation.y, targetTransform->translation.z));
-
-                model.meshes[firstMeshWithBones].boneMatrices[boneId] = MatrixMultiply(MatrixInvert(bindMatrix), targetMatrix);
-            }
-
-            // Update remaining meshes with bones
-            // NOTE: Using deep copy because shallow copy results in double free with 'UnloadModel()'
-            for (int i = firstMeshWithBones + 1; i < model.meshCount; i++)
-            {
-                if (model.meshes[i].boneMatrices)
-                {
-                    memcpy(model.meshes[i].boneMatrices,
-                        model.meshes[firstMeshWithBones].boneMatrices,
-                        model.meshes[i].boneCount*sizeof(model.meshes[i].boneMatrices[0]));
-                }
-            }
-        }
+        // CPU skinning, updates CPU buffers and uploads them to GPU
+        // NOTE: On GPU skinning not supported, use CPU skinning
+        UpdateModelAnimationVertexBuffers(model);
     }
 }
 
-// Update model animated bones transform matrices by interpolating between two different given frames of different ModelAnimation(could be same too)
-// NOTE: Updated data is not uploaded to GPU but kept at model.meshes[i].boneMatrices[boneId],
-// to be uploaded to shader at drawing, in case GPU skinning is enabled
-void UpdateModelAnimationBonesLerp(Model model, ModelAnimation animA, int frameA, ModelAnimation animB, int frameB, float value)
+// Update model animation data (vertex buffers / bone matrices) for a specific pose,
+// defined by two different animations at specific frames blended together
+// NOTE 1: Request frames could be fractional, using a lerp interpolation between two frames
+// NOTE 2: Updated vertex animation data is uploaded to GPU in case of CPU skinning,
+// for GPU skinning, bone matrices are uploaded to shader on DrawModelEx()
+void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, ModelAnimation animB, float frameB, float blend)
 {
-    if ((animA.frameCount > 0) && (animA.bones != NULL) && (animA.framePoses != NULL) &&
-        (animB.frameCount > 0) && (animB.bones != NULL) && (animB.framePoses != NULL) &&
-        (value >= 0.0f) && (value <= 1.0f))
+    if (model.boneMatrices == NULL) return;
+
+    if ((animA.keyframeCount > 0) && (animA.keyframePoses != NULL) &&
+        (animB.keyframeCount > 0) && (animB.keyframePoses != NULL) &&
+        (blend >= 0.0f) && (blend <= 1.0f))
     {
-        frameA = frameA % animA.frameCount;
-        frameB = frameB % animB.frameCount;
+        // Inter-frame interpolation values for first animation
+        int currentFrameA = (int)frameA%animA.keyframeCount;
+        int nextFrameA = currentFrameA + 1;
+        float blendA = frameA - currentFrameA;
+        blendA = Clamp(blendA, 0.0f, 1.0f);
+        if (currentFrameA >= animA.keyframeCount) currentFrameA = currentFrameA%animA.keyframeCount;
+        if (nextFrameA >= animA.keyframeCount) nextFrameA = nextFrameA%animA.keyframeCount;
 
-        for (int i = 0; i < model.meshCount; i++)
+        // Inter-frame interpolation values for second animation
+        int currentFrameB = (int)frameB%animB.keyframeCount;
+        int nextFrameB = currentFrameB + 1;
+        float blendB = frameB - currentFrameB;
+        blendB = Clamp(blendB, 0.0f, 1.0f);
+        if (currentFrameB >= animB.keyframeCount) currentFrameB = currentFrameB%animB.keyframeCount;
+        if (nextFrameB >= animB.keyframeCount) nextFrameB = nextFrameB%animB.keyframeCount;
+
+        Matrix bindPoseMatrix = { 0 };
+        Matrix currentPoseMatrix = { 0 };
+
+        for (int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
         {
-            if (model.meshes[i].boneMatrices)
-            {
-                assert(model.meshes[i].boneCount == animA.boneCount);
-                assert(model.meshes[i].boneCount == animB.boneCount);
+            // Get frame-interpolation for first animation
+            Vector3 frameATranslation = Vector3Lerp(
+                animA.keyframePoses[currentFrameA][boneIndex].translation,
+                animA.keyframePoses[nextFrameA][boneIndex].translation, blendA);
+            Quaternion frameARotation = QuaternionSlerp(
+                animA.keyframePoses[currentFrameA][boneIndex].rotation,
+                animA.keyframePoses[nextFrameA][boneIndex].rotation, blendA);
+            Vector3 frameAScale = Vector3Lerp(
+                animA.keyframePoses[currentFrameA][boneIndex].scale,
+                animA.keyframePoses[nextFrameA][boneIndex].scale, blendA);
 
-                for (int boneId = 0; boneId < model.meshes[i].boneCount; boneId++)
-                {
-                    Vector3 inTranslation = model.bindPose[boneId].translation;
-                    Quaternion inRotation = model.bindPose[boneId].rotation;
-                    Vector3 inScale = model.bindPose[boneId].scale;
+            // Get frame-interpolation for second animation
+            Vector3 frameBTranslation = Vector3Lerp(
+                animB.keyframePoses[currentFrameB][boneIndex].translation,
+                animB.keyframePoses[nextFrameB][boneIndex].translation, blendB);
+            Quaternion frameBRotation = QuaternionSlerp(
+                animB.keyframePoses[currentFrameB][boneIndex].rotation,
+                animB.keyframePoses[nextFrameB][boneIndex].rotation, blendB);
+            Vector3 frameBScale = Vector3Lerp(
+                animB.keyframePoses[currentFrameB][boneIndex].scale,
+                animB.keyframePoses[nextFrameB][boneIndex].scale, blendB);
+            
+            // Compute interpolated pose between both animations frames
+            // NOTE: Storing animation frame data in model.currentPose
+            model.currentPose[boneIndex].translation = Vector3Lerp(frameATranslation, frameBTranslation, blend);
+            model.currentPose[boneIndex].rotation = QuaternionSlerp(frameARotation, frameBRotation, blend);
+            model.currentPose[boneIndex].scale = Vector3Lerp(frameAScale, frameBScale, blend);
 
-                    Vector3 outATranslation = animA.framePoses[frameA][boneId].translation;
-                    Quaternion outARotation = animA.framePoses[frameA][boneId].rotation;
-                    Vector3 outAScale = animA.framePoses[frameA][boneId].scale;
+            // Compute runtime bone matrix from model current pose
+            //-----------------------------------------------------------------------------------
+            Transform *bindPoseTransform = &model.skeleton.bindPose[boneIndex];
+            bindPoseMatrix = MatrixMultiply(
+                MatrixMultiply(MatrixScale(bindPoseTransform->scale.x, bindPoseTransform->scale.y, bindPoseTransform->scale.z),
+                    QuaternionToMatrix(bindPoseTransform->rotation)),
+                MatrixTranslate(bindPoseTransform->translation.x, bindPoseTransform->translation.y, bindPoseTransform->translation.z));
 
-                    Vector3 outBTranslation = animB.framePoses[frameB][boneId].translation;
-                    Quaternion outBRotation = animB.framePoses[frameB][boneId].rotation;
-                    Vector3 outBScale = animB.framePoses[frameB][boneId].scale;
+            Transform *currentPoseTransform = &model.currentPose[boneIndex];
+            currentPoseMatrix = MatrixMultiply(
+                MatrixMultiply(MatrixScale(currentPoseTransform->scale.x, currentPoseTransform->scale.y, currentPoseTransform->scale.z),
+                    QuaternionToMatrix(currentPoseTransform->rotation)),
+                MatrixTranslate(currentPoseTransform->translation.x, currentPoseTransform->translation.y, currentPoseTransform->translation.z));
 
-                    Vector3 outTranslation = Vector3Lerp(outATranslation, outBTranslation, value);
-                    Quaternion outRotation = QuaternionSlerp(outARotation, outBRotation, value);
-                    Vector3 outScale = Vector3Lerp(outAScale, outBScale, value);
+            model.boneMatrices[boneIndex] = MatrixMultiply(MatrixInvert(bindPoseMatrix), currentPoseMatrix);
+            //-----------------------------------------------------------------------------------
 
-                    Vector3 invTranslation = Vector3RotateByQuaternion(Vector3Negate(inTranslation), QuaternionInvert(inRotation));
-                    Quaternion invRotation = QuaternionInvert(inRotation);
-                    Vector3 invScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, inScale);
+            /*
+            Vector3 outATranslation = animA.keyframePoses[currentFrameA][boneIndex].translation;
+            Quaternion outARotation = animA.keyframePoses[currentFrameA][boneIndex].rotation;
+            Vector3 outAScale = animA.keyframePoses[currentFrameA][boneIndex].scale;
 
-                    Vector3 boneTranslation = Vector3Add(
-                        Vector3RotateByQuaternion(Vector3Multiply(outScale, invTranslation),
-                        outRotation), outTranslation);
-                    Quaternion boneRotation = QuaternionMultiply(outRotation, invRotation);
-                    Vector3 boneScale = Vector3Multiply(outScale, invScale);
+            Vector3 outBTranslation = animB.keyframePoses[currentFrameB][boneIndex].translation;
+            Quaternion outBRotation = animB.keyframePoses[currentFrameB][boneIndex].rotation;
+            Vector3 outBScale = animB.keyframePoses[currentFrameB][boneIndex].scale;
 
-                    Matrix boneMatrix = MatrixMultiply(MatrixMultiply(
-                        QuaternionToMatrix(boneRotation),
-                        MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
-                        MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+            // Invert bind pose transformation
+            Vector3 invBindTranslation = Vector3RotateByQuaternion(
+                Vector3Negate(model.skeleton.bindPose[boneIndex].translation), 
+                QuaternionInvert(model.skeleton.bindPose[boneIndex].rotation));
+            Quaternion invBindRotation = QuaternionInvert(model.skeleton.bindPose[boneIndex].rotation);
+            Vector3 invBindScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, model.skeleton.bindPose[boneIndex].scale);
 
-                    model.meshes[i].boneMatrices[boneId] = boneMatrix;
-                }
-            }
+            Vector3 boneTranslation = Vector3Add(Vector3RotateByQuaternion(
+                Vector3Multiply(model.currentPose[boneIndex].scale, invBindTranslation), 
+                    model.currentPose[boneIndex].rotation), 
+                    model.currentPose[boneIndex].translation);
+            Quaternion boneRotation = QuaternionMultiply(model.currentPose[boneIndex].rotation, invBindRotation);
+            Vector3 boneScale = Vector3Multiply(model.currentPose[boneIndex].scale, invBindScale);
+
+            model.boneMatrices[boneIndex] = MatrixMultiply(
+                MatrixMultiply(QuaternionToMatrix(boneRotation), 
+                    MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
+                MatrixScale(boneScale.x, boneScale.y, boneScale.z));
+            */
         }
+
+        // CPU skinning, updates CPU buffers and uploads them to GPU (if available)
+        // NOTE: Fallback in case GPU skinning is not supported or enabled
+        UpdateModelAnimationVertexBuffers(model);
     }
 }
 
-// Update model vertex data (positions and normals) from mesh bone data
-// NOTE: Updated data is uploaded to GPU
-void UpdateModelVertsToCurrentBones(Model model)
+// Update model vertex animation buffers (positions and normals)
+// NOTE: Required for CPU skinning, uploads animated vertex buffers to GPU
+static void UpdateModelAnimationVertexBuffers(Model model)
 {
-    //UpdateModelAnimationBones(model, anim, frame); // TODO: Review
-
     for (int m = 0; m < model.meshCount; m++)
     {
         Mesh mesh = model.meshes[m];
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
-        const int vValues = mesh.vertexCount*3;
+        const int vertexValuesCount = mesh.vertexCount*3;
         
-        int boneId = 0;
+        int boneIndex = 0;
         int boneCounter = 0;
         float boneWeight = 0.0f;
-        bool updated = false; // Flag to check when anim vertex information is updated
+        bool bufferUpdateRequired = false; // Flag to check when anim vertex information is updated
 
-        // Skip if missing bone data, causes segfault without on some models
-        if ((mesh.boneWeights == NULL) || (mesh.boneIds == NULL)) continue;
+        // Skip if missing bone data or missing anim buffers initialization
+        if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) || 
+            (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
 
-        for (int vCounter = 0; vCounter < vValues; vCounter += 3)
+        for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
         {
             mesh.animVertices[vCounter] = 0;
             mesh.animVertices[vCounter + 1] = 0;
@@ -2442,23 +2490,23 @@ void UpdateModelVertsToCurrentBones(Model model)
             for (int j = 0; j < 4; j++, boneCounter++)
             {
                 boneWeight = mesh.boneWeights[boneCounter];
-                boneId = mesh.boneIds[boneCounter];
+                boneIndex = mesh.boneIndices[boneCounter];
 
                 // Early stop when no transformation will be applied
                 if (boneWeight == 0.0f) continue;
                 animVertex = (Vector3){ mesh.vertices[vCounter], mesh.vertices[vCounter + 1], mesh.vertices[vCounter + 2] };
-                animVertex = Vector3Transform(animVertex, model.meshes[m].boneMatrices[boneId]);
+                animVertex = Vector3Transform(animVertex, model.boneMatrices[boneIndex]);
                 mesh.animVertices[vCounter] += animVertex.x*boneWeight;
-                mesh.animVertices[vCounter+1] += animVertex.y*boneWeight;
-                mesh.animVertices[vCounter+2] += animVertex.z*boneWeight;
-                updated = true;
+                mesh.animVertices[vCounter + 1] += animVertex.y*boneWeight;
+                mesh.animVertices[vCounter + 2] += animVertex.z*boneWeight;
+                bufferUpdateRequired = true;
 
                 // Normals processing
                 // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
                 if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.meshes[m].boneMatrices[boneId])));
+                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.boneMatrices[boneIndex])));
                     mesh.animNormals[vCounter] += animNormal.x*boneWeight;
                     mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
                     mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
@@ -2466,37 +2514,27 @@ void UpdateModelVertsToCurrentBones(Model model)
             }
         }
 
-        if (updated)
+        if (bufferUpdateRequired)
         {
-            rlUpdateVertexBuffer(mesh.vboId[0], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0); // Update vertex position
-            if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[2], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0); // Update vertex normals
+            // Update GPU vertex buffers with updated data (position + normals)
+            rlUpdateVertexBuffer(mesh.vboId[SHADER_LOC_VERTEX_POSITION], mesh.animVertices, mesh.vertexCount*3*sizeof(float), 0);
+            if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[SHADER_LOC_VERTEX_NORMAL], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);
         }
     }
-}
-
-// at least 2x speed up vs the old method
-// Update model animated vertex data (positions and normals) for a given frame
-// NOTE: Updated data is uploaded to GPU
-void UpdateModelAnimation(Model model, ModelAnimation anim, int frame)
-{
-    UpdateModelAnimationBones(model,anim,frame);
-    UpdateModelVertsToCurrentBones(model);
 }
 
 // Unload animation array data
 void UnloadModelAnimations(ModelAnimation *animations, int animCount)
 {
-    for (int i = 0; i < animCount; i++) UnloadModelAnimation(animations[i]);
+    for (int a = 0; a < animCount; a++)
+    {
+        for (int i = 0; i < animations[a].keyframeCount; i++) 
+            RL_FREE(animations[a].keyframePoses[i]);
+
+        RL_FREE(animations[a].keyframePoses);
+    }
+
     RL_FREE(animations);
-}
-
-// Unload animation data
-void UnloadModelAnimation(ModelAnimation anim)
-{
-    for (int i = 0; i < anim.frameCount; i++) RL_FREE(anim.framePoses[i]);
-
-    RL_FREE(anim.bones);
-    RL_FREE(anim.framePoses);
 }
 
 // Check model animation skeleton match
@@ -2505,14 +2543,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
 {
     int result = true;
 
-    if (model.boneCount != anim.boneCount) result = false;
-    else
-    {
-        for (int i = 0; i < model.boneCount; i++)
-        {
-            if (model.bones[i].parent != anim.bones[i].parent) { result = false; break; }
-        }
-    }
+    if (model.skeleton.boneCount != anim.boneCount) result = false;
 
     return result;
 }
@@ -3883,17 +3914,31 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        Color color = model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color;
+        Material mat = model.materials[model.meshMaterial[i]];
+        Color colDiffuse = mat.maps[MATERIAL_MAP_DIFFUSE].color;
 
-        Color colorTint = WHITE;
-        colorTint.r = (unsigned char)(((int)color.r*(int)tint.r)/255);
-        colorTint.g = (unsigned char)(((int)color.g*(int)tint.g)/255);
-        colorTint.b = (unsigned char)(((int)color.b*(int)tint.b)/255);
-        colorTint.a = (unsigned char)(((int)color.a*(int)tint.a)/255);
+        // Applying color tint directly to material diffuse map,
+        // because is comes as an input paramter to the function
+        Color colTinted = { 0 };
+        colTinted.r = (unsigned char)(((int)colDiffuse.r*(int)tint.r)/255);
+        colTinted.g = (unsigned char)(((int)colDiffuse.g*(int)tint.g)/255);
+        colTinted.b = (unsigned char)(((int)colDiffuse.b*(int)tint.b)/255);
+        colTinted.a = (unsigned char)(((int)colDiffuse.a*(int)tint.a)/255);
 
-        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = colorTint;
-        DrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
-        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
+        mat.maps[MATERIAL_MAP_DIFFUSE].color = colTinted;
+
+        // Upload runtime bone transforms matrices, to compute skinning on the shader (GPU-skinning)
+        // NOTE: Required location must be found and Mesh bones indices and weights must be also uploaded to shader
+        if ((mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] != -1) && (model.boneMatrices != NULL))
+        {
+            rlEnableShader(mat.shader.id); // Enable shader to set bone transform matrices
+            rlSetUniformMatrices(mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS], model.boneMatrices, model.skeleton.boneCount);
+        }
+
+        DrawMesh(model.meshes[i], mat, model.transform);
+
+        // Restore material diffuse map color (before tint applied)
+        mat.maps[MATERIAL_MAP_DIFFUSE].color = colDiffuse;
     }
 }
 
@@ -4344,7 +4389,7 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
         {
             if (bones[i].parent > i)
             {
-                TRACELOG(LOG_WARNING, "Assumes bones are toplogically sorted, but bone %d has parent %d. Skipping.", i, bones[i].parent);
+                TRACELOG(LOG_WARNING, "Skipping bone not topologically sorted: Bone %d has parent %d", i, bones[i].parent);
                 continue;
             }
             transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
@@ -4762,11 +4807,11 @@ static Model LoadIQM(const char *fileName)
 
     for (int i = 0; i < model.meshCount; i++)
     {
-        //fseek(iqmFile, iqmHeader->ofs_text + imesh[i].name, SEEK_SET);
+        //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].name, SEEK_SET);
         //fread(name, sizeof(char), MESH_NAME_LENGTH, iqmFile);
         memcpy(name, fileDataPtr + iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH*sizeof(char));
 
-        //fseek(iqmFile, iqmHeader->ofs_text + imesh[i].material, SEEK_SET);
+        //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].material, SEEK_SET);
         //fread(material, sizeof(char), MATERIAL_NAME_LENGTH, iqmFile);
         memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
 
@@ -4783,16 +4828,18 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].normals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));        // Default vertex normals
         model.meshes[i].texcoords = (float *)RL_CALLOC(model.meshes[i].vertexCount*2, sizeof(float));      // Default vertex texcoords
 
-        model.meshes[i].boneIds = (unsigned char *)RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(unsigned char));  // Up-to 4 bones supported!
+        model.meshes[i].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(unsigned char));  // Up-to 4 bones supported!
         model.meshes[i].boneWeights = (float *)RL_CALLOC(model.meshes[i].vertexCount*4, sizeof(float));      // Up-to 4 bones supported!
 
         model.meshes[i].triangleCount = imesh[i].num_triangles;
         model.meshes[i].indices = (unsigned short *)RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
+#if !defined(SUPPORT_GPU_SKINNING)
         // Animated vertex data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
+#endif
     }
 
     // Triangles data processing
@@ -4830,7 +4877,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_POSITION:
             {
                 vertex = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(vertex, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(vertex, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
 
@@ -4840,7 +4887,7 @@ static Model LoadIQM(const char *fileName)
                     for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
                         model.meshes[m].vertices[vCounter] = vertex[i];
-                        model.meshes[m].animVertices[vCounter] = vertex[i];
+                        if (model.meshes[m].animVertices != NULL) model.meshes[m].animVertices[vCounter] = vertex[i];
                         vCounter++;
                     }
                 }
@@ -4848,7 +4895,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_NORMAL:
             {
                 normal = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(normal, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(normal, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
 
@@ -4858,7 +4905,7 @@ static Model LoadIQM(const char *fileName)
                     for (unsigned int i = imesh[m].first_vertex*3; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*3; i++)
                     {
                         model.meshes[m].normals[vCounter] = normal[i];
-                        model.meshes[m].animNormals[vCounter] = normal[i];
+                        if (model.meshes[m].animNormals != NULL) model.meshes[m].animNormals[vCounter] = normal[i];
                         vCounter++;
                     }
                 }
@@ -4866,7 +4913,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_TEXCOORD:
             {
                 text = (float *)RL_MALLOC(iqmHeader->num_vertexes*2*sizeof(float));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(text, iqmHeader->num_vertexes*2*sizeof(float), 1, iqmFile);
                 memcpy(text, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*2*sizeof(float));
 
@@ -4883,7 +4930,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_BLENDINDEXES:
             {
                 blendi = (char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(char));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendi, iqmHeader->num_vertexes*4*sizeof(char), 1, iqmFile);
                 memcpy(blendi, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(char));
 
@@ -4892,7 +4939,7 @@ static Model LoadIQM(const char *fileName)
                     int boneCounter = 0;
                     for (unsigned int i = imesh[m].first_vertex*4; i < (imesh[m].first_vertex + imesh[m].num_vertexes)*4; i++)
                     {
-                        model.meshes[m].boneIds[boneCounter] = blendi[i];
+                        model.meshes[m].boneIndices[boneCounter] = blendi[i];
                         boneCounter++;
                     }
                 }
@@ -4900,7 +4947,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_BLENDWEIGHTS:
             {
                 blendw = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(blendw, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
 
@@ -4917,7 +4964,7 @@ static Model LoadIQM(const char *fileName)
             case IQM_COLOR:
             {
                 color = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
-                //fseek(iqmFile, va[i].offset, SEEK_SET);
+                //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
 
@@ -4942,45 +4989,39 @@ static Model LoadIQM(const char *fileName)
     //fread(ijoint, sizeof(IQMJoint), iqmHeader->num_joints, iqmFile);
     memcpy(ijoint, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
-    model.boneCount = iqmHeader->num_joints;
-    model.bones = (BoneInfo *)RL_MALLOC(iqmHeader->num_joints*sizeof(BoneInfo));
-    model.bindPose = (Transform *)RL_MALLOC(iqmHeader->num_joints*sizeof(Transform));
+    model.skeleton.boneCount = iqmHeader->num_joints;
+    model.skeleton.bones = (BoneInfo *)RL_CALLOC(iqmHeader->num_joints, sizeof(BoneInfo));
+    model.skeleton.bindPose = (Transform *)RL_CALLOC(iqmHeader->num_joints, sizeof(Transform));
 
     for (unsigned int i = 0; i < iqmHeader->num_joints; i++)
     {
         // Bones
-        model.bones[i].parent = ijoint[i].parent;
-        //fseek(iqmFile, iqmHeader->ofs_text + ijoint[i].name, SEEK_SET);
-        //fread(model.bones[i].name, sizeof(char), BONE_NAME_LENGTH, iqmFile);
-        memcpy(model.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
+        model.skeleton.bones[i].parent = ijoint[i].parent;
+        //fseek(iqmFile, iqmHeader->ofs_text + ijoint[a].name, SEEK_SET);
+        //fread(model.bones[a].name, sizeof(char), BONE_NAME_LENGTH, iqmFile);
+        memcpy(model.skeleton.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
 
         // Bind pose (base pose)
-        model.bindPose[i].translation.x = ijoint[i].translate[0];
-        model.bindPose[i].translation.y = ijoint[i].translate[1];
-        model.bindPose[i].translation.z = ijoint[i].translate[2];
+        model.skeleton.bindPose[i].translation.x = ijoint[i].translate[0];
+        model.skeleton.bindPose[i].translation.y = ijoint[i].translate[1];
+        model.skeleton.bindPose[i].translation.z = ijoint[i].translate[2];
 
-        model.bindPose[i].rotation.x = ijoint[i].rotate[0];
-        model.bindPose[i].rotation.y = ijoint[i].rotate[1];
-        model.bindPose[i].rotation.z = ijoint[i].rotate[2];
-        model.bindPose[i].rotation.w = ijoint[i].rotate[3];
+        model.skeleton.bindPose[i].rotation.x = ijoint[i].rotate[0];
+        model.skeleton.bindPose[i].rotation.y = ijoint[i].rotate[1];
+        model.skeleton.bindPose[i].rotation.z = ijoint[i].rotate[2];
+        model.skeleton.bindPose[i].rotation.w = ijoint[i].rotate[3];
 
-        model.bindPose[i].scale.x = ijoint[i].scale[0];
-        model.bindPose[i].scale.y = ijoint[i].scale[1];
-        model.bindPose[i].scale.z = ijoint[i].scale[2];
+        model.skeleton.bindPose[i].scale.x = ijoint[i].scale[0];
+        model.skeleton.bindPose[i].scale.y = ijoint[i].scale[1];
+        model.skeleton.bindPose[i].scale.z = ijoint[i].scale[2];
     }
 
-    BuildPoseFromParentJoints(model.bones, model.boneCount, model.bindPose);
+    BuildPoseFromParentJoints(model.skeleton.bones, model.skeleton.boneCount, model.skeleton.bindPose);
 
-    for (int i = 0; i < model.meshCount; i++)
-    {
-        model.meshes[i].boneCount = model.boneCount;
-        model.meshes[i].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-
-        for (int j = 0; j < model.meshes[i].boneCount; j++)
-        {
-            model.meshes[i].boneMatrices[j] = MatrixIdentity();
-        }
-    }
+    // Initialize runtime animation data: current pose and bone matrices
+    model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
+    model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
+    for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
 
     UnloadFileData(fileData);
 
@@ -5078,37 +5119,42 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
     //fread(anim, sizeof(IQMAnim), iqmHeader->num_anims, iqmFile);
     memcpy(anim, fileDataPtr + iqmHeader->ofs_anims, iqmHeader->num_anims*sizeof(IQMAnim));
 
-    ModelAnimation *animations = (ModelAnimation *)RL_MALLOC(iqmHeader->num_anims*sizeof(ModelAnimation));
+    ModelAnimation *animations = (ModelAnimation *)RL_CALLOC(iqmHeader->num_anims, sizeof(ModelAnimation));
 
     // frameposes
-    unsigned short *framedata = (unsigned short *)RL_MALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
+    unsigned short *framedata = (unsigned short *)RL_CALLOC(iqmHeader->num_frames*iqmHeader->num_framechannels, sizeof(unsigned short));
     //fseek(iqmFile, iqmHeader->ofs_frames, SEEK_SET);
     //fread(framedata, sizeof(unsigned short), iqmHeader->num_frames*iqmHeader->num_framechannels, iqmFile);
     memcpy(framedata, fileDataPtr + iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short));
 
     // joints
-    IQMJoint *joints = (IQMJoint *)RL_MALLOC(iqmHeader->num_joints*sizeof(IQMJoint));
+    IQMJoint *joints = (IQMJoint *)RL_CALLOC(iqmHeader->num_joints, sizeof(IQMJoint));
     memcpy(joints, fileDataPtr + iqmHeader->ofs_joints, iqmHeader->num_joints*sizeof(IQMJoint));
 
     for (unsigned int a = 0; a < iqmHeader->num_anims; a++)
     {
-        animations[a].frameCount = anim[a].num_frames;
         animations[a].boneCount = iqmHeader->num_poses;
-        animations[a].bones = (BoneInfo *)RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
-        animations[a].framePoses = (Transform **)RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
+        BoneInfo *bones = (BoneInfo *)RL_CALLOC(iqmHeader->num_poses, sizeof(BoneInfo));
+
+        animations[a].keyframeCount = anim[a].num_frames;
+        animations[a].keyframePoses = (Transform **)RL_CALLOC(anim[a].num_frames, sizeof(Transform *));
         memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
-        TRACELOG(LOG_INFO, "IQM Anim %s", animations[a].name);
-        //animations[a].framerate = anim.framerate; // TODO: Use animation framerate data?
+        // TODO: Use animation framerate data?
+        //animations[a].framerate = anim.framerate;
+
+        TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Framerate: %f", fileName, animations[a].name, animations[a].keyframeCount, anim[a].framerate);
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
-            // If animations and skeleton are in the same file, copy bone names to anim
-            if (iqmHeader->num_joints > 0) memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
-            else memcpy(animations[a].bones[j].name, "ANIMJOINTNAME", 13); // Default bone name otherwise
-            animations[a].bones[j].parent = poses[j].parent;
+            bones[j].parent = poses[j].parent;
+
+            // NOTE: No need to store bones names, bones only required to generate keyframe poses
+            //if (iqmHeader->num_joints > 0) memcpy(bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
+            //else memcpy(bones[j].name, "ANIMJOINTNAME", 13); // Default bone name otherwise
         }
 
-        for (unsigned int j = 0; j < anim[a].num_frames; j++) animations[a].framePoses[j] = (Transform *)RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
+        for (unsigned int j = 0; j < anim[a].num_frames; j++) 
+            animations[a].keyframePoses[j] = (Transform *)RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
 
@@ -5116,87 +5162,87 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         {
             for (unsigned int i = 0; i < iqmHeader->num_poses; i++)
             {
-                animations[a].framePoses[frame][i].translation.x = poses[i].channeloffset[0];
+                animations[a].keyframePoses[frame][i].translation.x = poses[i].channeloffset[0];
 
                 if (poses[i].mask & 0x01)
                 {
-                    animations[a].framePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
+                    animations[a].keyframePoses[frame][i].translation.x += framedata[dcounter]*poses[i].channelscale[0];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].translation.y = poses[i].channeloffset[1];
+                animations[a].keyframePoses[frame][i].translation.y = poses[i].channeloffset[1];
 
                 if (poses[i].mask & 0x02)
                 {
-                    animations[a].framePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
+                    animations[a].keyframePoses[frame][i].translation.y += framedata[dcounter]*poses[i].channelscale[1];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].translation.z = poses[i].channeloffset[2];
+                animations[a].keyframePoses[frame][i].translation.z = poses[i].channeloffset[2];
 
                 if (poses[i].mask & 0x04)
                 {
-                    animations[a].framePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
+                    animations[a].keyframePoses[frame][i].translation.z += framedata[dcounter]*poses[i].channelscale[2];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].rotation.x = poses[i].channeloffset[3];
+                animations[a].keyframePoses[frame][i].rotation.x = poses[i].channeloffset[3];
 
                 if (poses[i].mask & 0x08)
                 {
-                    animations[a].framePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
+                    animations[a].keyframePoses[frame][i].rotation.x += framedata[dcounter]*poses[i].channelscale[3];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].rotation.y = poses[i].channeloffset[4];
+                animations[a].keyframePoses[frame][i].rotation.y = poses[i].channeloffset[4];
 
                 if (poses[i].mask & 0x10)
                 {
-                    animations[a].framePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
+                    animations[a].keyframePoses[frame][i].rotation.y += framedata[dcounter]*poses[i].channelscale[4];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].rotation.z = poses[i].channeloffset[5];
+                animations[a].keyframePoses[frame][i].rotation.z = poses[i].channeloffset[5];
 
                 if (poses[i].mask & 0x20)
                 {
-                    animations[a].framePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
+                    animations[a].keyframePoses[frame][i].rotation.z += framedata[dcounter]*poses[i].channelscale[5];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].rotation.w = poses[i].channeloffset[6];
+                animations[a].keyframePoses[frame][i].rotation.w = poses[i].channeloffset[6];
 
                 if (poses[i].mask & 0x40)
                 {
-                    animations[a].framePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
+                    animations[a].keyframePoses[frame][i].rotation.w += framedata[dcounter]*poses[i].channelscale[6];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].scale.x = poses[i].channeloffset[7];
+                animations[a].keyframePoses[frame][i].scale.x = poses[i].channeloffset[7];
 
                 if (poses[i].mask & 0x80)
                 {
-                    animations[a].framePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
+                    animations[a].keyframePoses[frame][i].scale.x += framedata[dcounter]*poses[i].channelscale[7];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].scale.y = poses[i].channeloffset[8];
+                animations[a].keyframePoses[frame][i].scale.y = poses[i].channeloffset[8];
 
                 if (poses[i].mask & 0x100)
                 {
-                    animations[a].framePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
+                    animations[a].keyframePoses[frame][i].scale.y += framedata[dcounter]*poses[i].channelscale[8];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].scale.z = poses[i].channeloffset[9];
+                animations[a].keyframePoses[frame][i].scale.z = poses[i].channeloffset[9];
 
                 if (poses[i].mask & 0x200)
                 {
-                    animations[a].framePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
+                    animations[a].keyframePoses[frame][i].scale.z += framedata[dcounter]*poses[i].channelscale[9];
                     dcounter++;
                 }
 
-                animations[a].framePoses[frame][i].rotation = QuaternionNormalize(animations[a].framePoses[frame][i].rotation);
+                animations[a].keyframePoses[frame][i].rotation = QuaternionNormalize(animations[a].keyframePoses[frame][i].rotation);
             }
         }
 
@@ -5205,15 +5251,17 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         {
             for (int i = 0; i < animations[a].boneCount; i++)
             {
-                if (animations[a].bones[i].parent >= 0)
+                if (bones[i].parent >= 0)
                 {
-                    animations[a].framePoses[frame][i].rotation = QuaternionMultiply(animations[a].framePoses[frame][animations[a].bones[i].parent].rotation, animations[a].framePoses[frame][i].rotation);
-                    animations[a].framePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].rotation);
-                    animations[a].framePoses[frame][i].translation = Vector3Add(animations[a].framePoses[frame][i].translation, animations[a].framePoses[frame][animations[a].bones[i].parent].translation);
-                    animations[a].framePoses[frame][i].scale = Vector3Multiply(animations[a].framePoses[frame][i].scale, animations[a].framePoses[frame][animations[a].bones[i].parent].scale);
+                    animations[a].keyframePoses[frame][i].rotation = QuaternionMultiply(animations[a].keyframePoses[frame][bones[i].parent].rotation, animations[a].keyframePoses[frame][i].rotation);
+                    animations[a].keyframePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].keyframePoses[frame][i].translation, animations[a].keyframePoses[frame][bones[i].parent].rotation);
+                    animations[a].keyframePoses[frame][i].translation = Vector3Add(animations[a].keyframePoses[frame][i].translation, animations[a].keyframePoses[frame][bones[i].parent].translation);
+                    animations[a].keyframePoses[frame][i].scale = Vector3Multiply(animations[a].keyframePoses[frame][i].scale, animations[a].keyframePoses[frame][bones[i].parent].scale);
                 }
             }
         }
+
+        RL_FREE(bones);
     }
 
     UnloadFileData(fileData);
@@ -5375,7 +5423,7 @@ static Model LoadGLTF(const char *fileName)
           - Supports basic animations
           - Transforms, including parent-child relations, are applied on the mesh data,
             but the hierarchy is not kept (as it can't be represented)
-          - Mesh instances in the glTF file (i.e. same mesh linked from multiple nodes)
+          - Mesh instances in the glTF file (a.e. same mesh linked from multiple nodes)
             are turned into separate raylib Meshes
 
         RESTRICTIONS:
@@ -5604,7 +5652,7 @@ static Model LoadGLTF(const char *fileName)
         // NOTE: Visit each node in the hierarchy and process any mesh linked from it
         //  - Each primitive within a glTF node becomes a raylib Mesh
         //  - The local-to-world transform of each node is used to transform the points/normals/tangents of the created Mesh(es)
-        //  - Any glTF mesh linked from more than one Node (i.e. instancing) is turned into multiple Mesh's, as each Node will have its own transform applied
+        //  - Any glTF mesh linked from more than one Node (a.e. instancing) is turned into multiple Mesh's, as each Node will have its own transform applied
         //
         // WARNING: The code below disregards the scenes defined in the file, all nodes are used
         //----------------------------------------------------------------------------------------------------
@@ -6092,15 +6140,15 @@ static Model LoadGLTF(const char *fileName)
         // LIMITATIONS:
         //  - Only supports 1 armature per file, and skips loading it if there are multiple armatures
         //  - Only supports linear interpolation (default method in Blender when checked "Always Sample Animations" when exporting a GLTF file)
-        //  - Only supports translation/rotation/scale animation channel.path, weights not considered (i.e. morph targets)
+        //  - Only supports translation/rotation/scale animation channel.path, weights not considered (a.e. morph targets)
         //----------------------------------------------------------------------------------------------------
         if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
-            model.bones = LoadBoneInfoGLTF(skin, &model.boneCount);
-            model.bindPose = (Transform *)RL_MALLOC(model.boneCount*sizeof(Transform));
+            model.skeleton.bones = LoadBoneInfoGLTF(skin, &model.skeleton.boneCount);
+            model.skeleton.bindPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
 
-            for (int i = 0; i < model.boneCount; i++)
+            for (int i = 0; i < model.skeleton.boneCount; i++)
             {
                 cgltf_node *node = skin.joints[i];
                 cgltf_float worldTransform[16];
@@ -6111,7 +6159,11 @@ static Model LoadGLTF(const char *fileName)
                     worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
                     worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
                 };
-                MatrixDecompose(worldMatrix, &(model.bindPose[i].translation), &(model.bindPose[i].rotation), &(model.bindPose[i].scale));
+
+                MatrixDecompose(worldMatrix, 
+                    &(model.skeleton.bindPose[i].translation), 
+                    &(model.skeleton.bindPose[i].rotation), 
+                    &(model.skeleton.bindPose[i].scale));
             }
 
             if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
@@ -6143,7 +6195,7 @@ static Model LoadGLTF(const char *fileName)
                         // NOTE: JOINTS_n can only be vec4 and u8/u16
                         // SPECS: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
 
-                        // WARNING: raylib only supports model.meshes[].boneIds as u8 (unsigned char),
+                        // WARNING: raylib only supports model.meshes[].boneIndices as u8 (unsigned char),
                         // if data is provided in any other format, it is converted to supported format but
                         // it could imply data loss (a warning message is issued in that case)
 
@@ -6151,16 +6203,16 @@ static Model LoadGLTF(const char *fileName)
                         {
                             if (attribute->component_type == cgltf_component_type_r_8u)
                             {
-                                // Init raylib mesh boneIds to copy glTF attribute data
-                                model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                                // Init raylib mesh boneIndices to copy glTF attribute data
+                                model.meshes[meshIndex].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                                 // Load attribute: vec4, u8 (unsigned char)
-                                LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIds)
+                                LOAD_ATTRIBUTE(attribute, 4, unsigned char, model.meshes[meshIndex].boneIndices)
                             }
                             else if (attribute->component_type == cgltf_component_type_r_16u)
                             {
-                                // Init raylib mesh boneIds to copy glTF attribute data
-                                model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                                // Init raylib mesh boneIndices to copy glTF attribute data
+                                model.meshes[meshIndex].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
 
                                 // Load data into a temp buffer to be converted to raylib data type
                                 unsigned short *temp = (unsigned short *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned short));
@@ -6177,7 +6229,7 @@ static Model LoadGLTF(const char *fileName)
                                     }
 
                                     // Despite the possible overflow, we convert data to unsigned char
-                                    model.meshes[meshIndex].boneIds[b] = (unsigned char)temp[b];
+                                    model.meshes[meshIndex].boneIndices[b] = (unsigned char)temp[b];
                                 }
 
                                 RL_FREE(temp);
@@ -6243,7 +6295,7 @@ static Model LoadGLTF(const char *fileName)
                 if (data->skins_count > 0 && !hasJoints && node->parent != NULL && node->parent->mesh == NULL)
                 {
                     int parentBoneId = -1;
-                    for (int joint = 0; joint < model.boneCount; joint++)
+                    for (int joint = 0; joint < model.skeleton.boneCount; joint++)
                     {
                         if (data->skins[0].joints[joint] == node->parent)
                         {
@@ -6254,38 +6306,34 @@ static Model LoadGLTF(const char *fileName)
 
                     if (parentBoneId >= 0)
                     {
-                        model.meshes[meshIndex].boneIds = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
+                        model.meshes[meshIndex].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(unsigned char));
                         model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                         for (int vertexIndex = 0; vertexIndex < model.meshes[meshIndex].vertexCount*4; vertexIndex += 4)
                         {
-                            model.meshes[meshIndex].boneIds[vertexIndex] = (unsigned char)parentBoneId;
+                            model.meshes[meshIndex].boneIndices[vertexIndex] = (unsigned char)parentBoneId;
                             model.meshes[meshIndex].boneWeights[vertexIndex] = 1.0f;
                         }
                     }
                 }
 
-                // Animated vertex data
+#if !defined(SUPPORT_GPU_SKINNING)
+                // Animated vertex data (CPU skinning)
                 model.meshes[meshIndex].animVertices = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 model.meshes[meshIndex].animNormals = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
-                if (model.meshes[meshIndex].normals != NULL)
-                {
-                    memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
-                }
-
-                // Bone Transform Matrices
-                model.meshes[meshIndex].boneCount = model.boneCount;
-                model.meshes[meshIndex].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[meshIndex].boneCount, sizeof(Matrix));
-
-                for (int j = 0; j < model.meshes[meshIndex].boneCount; j++)
-                {
-                    model.meshes[meshIndex].boneMatrices[j] = MatrixIdentity();
-                }
+                if (model.meshes[meshIndex].normals != NULL) memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
+#endif
+                model.meshes[meshIndex].boneCount = model.skeleton.boneCount;
 
                 meshIndex++; // Move to next mesh
             }
         }
+
+        // Initialize runtime animation data: current pose and bone matrices
+        model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
+        model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
+        for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         //----------------------------------------------------------------------------------------------------
 
         // Free all cgltf loaded data
@@ -6484,11 +6532,11 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
             };
             MatrixDecompose(worldMatrix, &worldTransform.translation, &worldTransform.rotation, &worldTransform.scale);
 
-            for (unsigned int i = 0; i < data->animations_count; i++)
+            for (unsigned int a = 0; a < data->animations_count; a++)
             {
-                animations[i].bones = LoadBoneInfoGLTF(skin, &animations[i].boneCount);
+                BoneInfo *bones = LoadBoneInfoGLTF(skin, &animations[a].boneCount);
 
-                cgltf_animation animData = data->animations[i];
+                cgltf_animation animData = data->animations[a];
 
                 struct Channels {
                     cgltf_animation_channel *translate;
@@ -6497,7 +6545,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     cgltf_interpolation_type interpolationType;
                 };
 
-                struct Channels *boneChannels = (struct Channels *)RL_CALLOC(animations[i].boneCount, sizeof(struct Channels));
+                struct Channels *boneChannels = (struct Channels *)RL_CALLOC(animations[a].boneCount, sizeof(struct Channels));
                 float animDuration = 0.0f;
 
                 for (unsigned int j = 0; j < animData.channels_count; j++)
@@ -6514,11 +6562,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         }
                     }
 
-                    if (boneIndex == -1)
-                    {
-                        // Animation channel for a node not in the armature
-                        continue;
-                    }
+                    if (boneIndex == -1) continue; // Animation channel for a node not in the skeleton
 
                     boneChannels[boneIndex].interpolationType = animData.channels[j].sampler->interpolation;
 
@@ -6538,34 +6582,34 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         }
                         else
                         {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, i);
+                            TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, a);
                         }
                     }
                     else TRACELOG(LOG_WARNING, "MODEL: [%s] Invalid interpolation curve encountered for GLTF animation.", fileName);
 
-                    float t = 0.0f;
-                    cgltf_bool r = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &t, 1);
+                    float time = 0.0f;
+                    cgltf_bool result = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &time, 1);
 
-                    if (!r)
+                    if (!result)
                     {
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load input time", fileName);
                         continue;
                     }
 
-                    animDuration = (t > animDuration)? t : animDuration;
+                    animDuration = (time > animDuration)? time : animDuration;
                 }
 
-                if (animData.name != NULL) strncpy(animations[i].name, animData.name, sizeof(animations[i].name) - 1);
+                if (animData.name != NULL) strncpy(animations[a].name, animData.name, sizeof(animations[a].name) - 1);
 
-                animations[i].frameCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
-                animations[i].framePoses = (Transform **)RL_MALLOC(animations[i].frameCount*sizeof(Transform *));
+                animations[a].keyframeCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
+                animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
 
-                for (int j = 0; j < animations[i].frameCount; j++)
+                for (int j = 0; j < animations[a].keyframeCount; j++)
                 {
-                    animations[i].framePoses[j] = (Transform *)RL_MALLOC(animations[i].boneCount*sizeof(Transform));
+                    animations[a].keyframePoses[j] = (Transform *)RL_CALLOC(animations[a].boneCount, sizeof(Transform));
                     float time = (float)j / GLTF_FRAMERATE;
 
-                    for (int k = 0; k < animations[i].boneCount; k++)
+                    for (int k = 0; k < animations[a].boneCount; k++)
                     {
                         Vector3 translation = {skin.joints[k]->translation[0], skin.joints[k]->translation[1], skin.joints[k]->translation[2]};
                         Quaternion rotation = {skin.joints[k]->rotation[0], skin.joints[k]->rotation[1], skin.joints[k]->rotation[2], skin.joints[k]->rotation[3]};
@@ -6575,7 +6619,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         {
                             if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].translate->sampler->input, boneChannels[k].translate->sampler->output, time, &translation))
                             {
-                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load translate pose data for bone %s", fileName, animations[i].bones[k].name);
+                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load translate pose data for bone %s", fileName, bones[k].name);
                             }
                         }
 
@@ -6583,7 +6627,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         {
                             if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].rotate->sampler->input, boneChannels[k].rotate->sampler->output, time, &rotation))
                             {
-                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load rotate pose data for bone %s", fileName, animations[i].bones[k].name);
+                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load rotate pose data for bone %s", fileName, bones[k].name);
                             }
                         }
 
@@ -6591,40 +6635,43 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                         {
                             if (!GetPoseAtTimeGLTF(boneChannels[k].interpolationType, boneChannels[k].scale->sampler->input, boneChannels[k].scale->sampler->output, time, &scale))
                             {
-                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load scale pose data for bone %s", fileName, animations[i].bones[k].name);
+                                TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load scale pose data for bone %s", fileName, bones[k].name);
                             }
                         }
 
-                        animations[i].framePoses[j][k] = (Transform){
+                        animations[a].keyframePoses[j][k] = (Transform){
                             .translation = translation,
                             .rotation = rotation,
                             .scale = scale
                         };
                     }
 
-                    Transform *root = &animations[i].framePoses[j][0];
+                    Transform *root = &animations[a].keyframePoses[j][0];
                     root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
                     root->scale = Vector3Multiply(root->scale, worldTransform.scale);
                     root->translation = Vector3Multiply(root->translation, worldTransform.scale);
                     root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
                     root->translation = Vector3Add(root->translation, worldTransform.translation);
 
-                    BuildPoseFromParentJoints(animations[i].bones, animations[i].boneCount, animations[i].framePoses[j]);
+                    BuildPoseFromParentJoints(bones, animations[a].boneCount, animations[a].keyframePoses[j]);
                 }
 
-                TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s (%d frames, %fs)", fileName, (animData.name != NULL)? animData.name : "NULL", animations[i].frameCount, animDuration);
+                TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %fs", fileName, (animData.name != NULL)? animData.name : "NULL", animations[a].keyframeCount, animDuration);
                 RL_FREE(boneChannels);
+                RL_FREE(bones);
             }
         }
 
         if (data->skins_count > 1)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] expected exactly one skin to load animation data from, but found %i", fileName, data->skins_count);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Expected one unique skin to load animation data from, but found %i", fileName, data->skins_count);
         }
 
         cgltf_free(data);
     }
+
     UnloadFileData(fileData);
+
     return animations;
 }
 #endif
@@ -6795,13 +6842,13 @@ static Model LoadM3D(const char *fileName)
         // WARNING: Sorting is not needed, valid M3D model files should already be sorted
         // Just keeping the sorting function for reference (Check PR #3363 #3385)
         /*
-        for (i = 1; i < m3d->numface; i++)
+        for (a = 1; a < m3d->numface; a++)
         {
-            if (m3d->face[i-1].materialid <= m3d->face[i].materialid) continue;
+            if (m3d->face[a-1].materialid <= m3d->face[a].materialid) continue;
 
-            // face[i-1] > face[i].  slide face[i] lower
-            m3df_t slider = m3d->face[i];
-            j = i-1;
+            // face[a-1] > face[a].  slide face[a] lower
+            m3df_t slider = m3d->face[a];
+            j = a-1;
 
             do
             {   // face[j] > slider, face[j+1] is svailable vacant gap
@@ -6875,10 +6922,12 @@ static Model LoadM3D(const char *fileName)
 
                 if (m3d->numbone && m3d->numskin)
                 {
-                    model.meshes[k].boneIds = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
+                    model.meshes[k].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
                     model.meshes[k].boneWeights = (float *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(float));
+#if !defined(SUPPORT_GPU_SKINNING)
                     model.meshes[k].animVertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                     model.meshes[k].animNormals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
+#endif
                 }
 
                 model.meshMaterial[k] = mi + 1;
@@ -6942,7 +6991,7 @@ static Model LoadM3D(const char *fileName)
                     {
                         for (j = 0; j < 4; j++)
                         {
-                            model.meshes[k].boneIds[l*12 + n*4 + j] = m3d->skin[skinid].boneid[j];
+                            model.meshes[k].boneIndices[l*12 + n*4 + j] = m3d->skin[skinid].boneid[j];
                             model.meshes[k].boneWeights[l*12 + n*4 + j] = m3d->skin[skinid].weight[j];
                         }
                     }
@@ -6950,7 +6999,7 @@ static Model LoadM3D(const char *fileName)
                     {
                         // raylib does not handle boneless meshes with skeletal animations, so
                         // we put all vertices without a bone into a special "no bone" bone
-                        model.meshes[k].boneIds[l*12 + n*4] = m3d->numbone;
+                        model.meshes[k].boneIndices[l*12 + n*4] = m3d->numbone;
                         model.meshes[k].boneWeights[l*12 + n*4] = 1.0f;
                     }
                 }
@@ -7031,47 +7080,47 @@ static Model LoadM3D(const char *fileName)
         // Load bones
         if (m3d->numbone)
         {
-            model.boneCount = m3d->numbone + 1;
-            model.bones = (BoneInfo *)RL_CALLOC(model.boneCount, sizeof(BoneInfo));
-            model.bindPose = (Transform *)RL_CALLOC(model.boneCount, sizeof(Transform));
+            model.skeleton.boneCount = m3d->numbone + 1;
+            model.skeleton.bones = (BoneInfo *)RL_CALLOC(model.skeleton.boneCount, sizeof(BoneInfo));
+            model.skeleton.bindPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
-                model.bones[i].parent = m3d->bone[i].parent;
-                strncpy(model.bones[i].name, m3d->bone[i].name, sizeof(model.bones[i].name) - 1);
-                model.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
-                model.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
-                model.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
-                model.bindPose[i].rotation.x = m3d->vertex[m3d->bone[i].ori].x;
-                model.bindPose[i].rotation.y = m3d->vertex[m3d->bone[i].ori].y;
-                model.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
-                model.bindPose[i].rotation.w = m3d->vertex[m3d->bone[i].ori].w;
+                model.skeleton.bones[i].parent = m3d->bone[i].parent;
+                strncpy(model.skeleton.bones[i].name, m3d->bone[i].name, sizeof(model.skeleton.bones[i].name) - 1);
+                model.skeleton.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
+                model.skeleton.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
+                model.skeleton.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
+                model.skeleton.bindPose[i].rotation.x = m3d->vertex[m3d->bone[i].ori].x;
+                model.skeleton.bindPose[i].rotation.y = m3d->vertex[m3d->bone[i].ori].y;
+                model.skeleton.bindPose[i].rotation.z = m3d->vertex[m3d->bone[i].ori].z;
+                model.skeleton.bindPose[i].rotation.w = m3d->vertex[m3d->bone[i].ori].w;
 
-                // TODO: If the orientation quaternion is not normalized, then that's encoding scaling
-                model.bindPose[i].rotation = QuaternionNormalize(model.bindPose[i].rotation);
-                model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
+                // NOTE: If the orientation quaternion is not normalized, then that's encoding scaling
+                model.skeleton.bindPose[i].rotation = QuaternionNormalize(model.skeleton.bindPose[i].rotation);
+                model.skeleton.bindPose[i].scale.x = model.skeleton.bindPose[i].scale.y = model.skeleton.bindPose[i].scale.z = 1.0f;
 
                 // Child bones are stored in parent bone relative space, convert that into model space
-                if (model.bones[i].parent >= 0)
+                if (model.skeleton.bones[i].parent >= 0)
                 {
-                    model.bindPose[i].rotation = QuaternionMultiply(model.bindPose[model.bones[i].parent].rotation, model.bindPose[i].rotation);
-                    model.bindPose[i].translation = Vector3RotateByQuaternion(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].rotation);
-                    model.bindPose[i].translation = Vector3Add(model.bindPose[i].translation, model.bindPose[model.bones[i].parent].translation);
-                    model.bindPose[i].scale = Vector3Multiply(model.bindPose[i].scale, model.bindPose[model.bones[i].parent].scale);
+                    model.skeleton.bindPose[i].rotation = QuaternionMultiply(model.skeleton.bindPose[model.skeleton.bones[i].parent].rotation, model.skeleton.bindPose[i].rotation);
+                    model.skeleton.bindPose[i].translation = Vector3RotateByQuaternion(model.skeleton.bindPose[i].translation, model.skeleton.bindPose[model.skeleton.bones[i].parent].rotation);
+                    model.skeleton.bindPose[i].translation = Vector3Add(model.skeleton.bindPose[i].translation, model.skeleton.bindPose[model.skeleton.bones[i].parent].translation);
+                    model.skeleton.bindPose[i].scale = Vector3Multiply(model.skeleton.bindPose[i].scale, model.skeleton.bindPose[model.skeleton.bones[i].parent].scale);
                 }
             }
 
             // Add a special "no bone" bone
-            model.bones[i].parent = -1;
-            memcpy(model.bones[i].name, "NO BONE", 7);
-            model.bindPose[i].translation.x = 0.0f;
-            model.bindPose[i].translation.y = 0.0f;
-            model.bindPose[i].translation.z = 0.0f;
-            model.bindPose[i].rotation.x = 0.0f;
-            model.bindPose[i].rotation.y = 0.0f;
-            model.bindPose[i].rotation.z = 0.0f;
-            model.bindPose[i].rotation.w = 1.0f;
-            model.bindPose[i].scale.x = model.bindPose[i].scale.y = model.bindPose[i].scale.z = 1.0f;
+            model.skeleton.bones[i].parent = -1;
+            memcpy(model.skeleton.bones[i].name, "NO BONE", 7);
+            model.skeleton.bindPose[i].translation.x = 0.0f;
+            model.skeleton.bindPose[i].translation.y = 0.0f;
+            model.skeleton.bindPose[i].translation.z = 0.0f;
+            model.skeleton.bindPose[i].rotation.x = 0.0f;
+            model.skeleton.bindPose[i].rotation.y = 0.0f;
+            model.skeleton.bindPose[i].rotation.z = 0.0f;
+            model.skeleton.bindPose[i].rotation.w = 1.0f;
+            model.skeleton.bindPose[i].scale.x = model.skeleton.bindPose[i].scale.y = model.skeleton.bindPose[i].scale.z = 1.0f;
         }
 
         // Load bone-pose default mesh into animation vertices. These will be updated when UpdateModelAnimation gets
@@ -7080,16 +7129,19 @@ static Model LoadM3D(const char *fileName)
         {
             for (i = 0; i < model.meshCount; i++)
             {
+                model.meshes[i].boneCount = model.skeleton.boneCount;
+
+#if !defined(SUPPORT_GPU_SKINNING)
+                // Initialize vertex buffers for CPU skinning
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
-
-                model.meshes[i].boneCount = model.boneCount;
-                model.meshes[i].boneMatrices = (Matrix *)RL_CALLOC(model.meshes[i].boneCount, sizeof(Matrix));
-                for (j = 0; j < model.meshes[i].boneCount; j++)
-                {
-                    model.meshes[i].boneMatrices[j] = MatrixIdentity();
-                }
+#endif
             }
+
+            // Initialize runtime animation data: current pose and bone matrices
+            model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
+            model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
+            for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         }
 
         m3d_free(m3d);
@@ -7123,8 +7175,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             UnloadFileData(fileData);
             return NULL;
         }
-        else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i animations, %i bones, %i skins", fileName,
-            m3d->numaction, m3d->numbone, m3d->numskin);
+        else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i animations, %i bones, %i skins", fileName, m3d->numaction, m3d->numbone, m3d->numskin);
 
         // No animation or bones, exit out. skins are not required because some people use one animation for N models
         if (!m3d->numaction || !m3d->numbone)
@@ -7139,29 +7190,30 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
         for (unsigned int a = 0; a < m3d->numaction; a++)
         {
-            animations[a].frameCount = m3d->action[a].durationmsec/M3D_ANIMDELAY;
             animations[a].boneCount = m3d->numbone + 1;
-            animations[a].bones = (BoneInfo *)RL_MALLOC((m3d->numbone + 1)*sizeof(BoneInfo));
-            animations[a].framePoses = (Transform **)RL_MALLOC(animations[a].frameCount*sizeof(Transform *));
+            BoneInfo *bones = (BoneInfo *)RL_CALLOC((m3d->numbone + 1), sizeof(BoneInfo));
+
+            animations[a].keyframeCount = m3d->action[a].durationmsec/M3D_ANIMDELAY;
+            animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
             strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name) - 1);
 
-            TRACELOG(LOG_INFO, "MODEL: [%s] animation #%i: %i msec, %i frames", fileName, a, m3d->action[a].durationmsec, animations[a].frameCount);
+            TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %fs", fileName, animations[a].name, animations[a].keyframeCount, m3d->action[a].durationmsec);
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
-                animations[a].bones[i].parent = m3d->bone[i].parent;
-                strncpy(animations[a].bones[i].name, m3d->bone[i].name, sizeof(animations[a].bones[i].name) - 1);
+                bones[i].parent = m3d->bone[i].parent;
+                strncpy(bones[i].name, m3d->bone[i].name, sizeof(bones[i].name) - 1);
             }
 
             // A special, never transformed "no bone" bone, used for boneless vertices
-            animations[a].bones[i].parent = -1;
-            memcpy(animations[a].bones[i].name, "NO BONE", 7);
+            bones[i].parent = -1;
+            memcpy(bones[i].name, "NO BONE", 7);
 
             // M3D stores frames at arbitrary intervals with sparse skeletons. We need full skeletons at
             // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones
-            for (i = 0; i < animations[a].frameCount; i++)
+            for (i = 0; i < animations[a].keyframeCount; i++)
             {
-                animations[a].framePoses[i] = (Transform *)RL_MALLOC((m3d->numbone + 1)*sizeof(Transform));
+                animations[a].keyframePoses[i] = (Transform *)RL_CALLOC((m3d->numbone + 1), sizeof(Transform));
 
                 m3db_t *pose = m3d_pose(m3d, a, i*M3D_ANIMDELAY);
 
@@ -7169,38 +7221,43 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
                 {
                     for (j = 0; j < (int)m3d->numbone; j++)
                     {
-                        animations[a].framePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x*m3d->scale;
-                        animations[a].framePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y*m3d->scale;
-                        animations[a].framePoses[i][j].translation.z = m3d->vertex[pose[j].pos].z*m3d->scale;
-                        animations[a].framePoses[i][j].rotation.x = m3d->vertex[pose[j].ori].x;
-                        animations[a].framePoses[i][j].rotation.y = m3d->vertex[pose[j].ori].y;
-                        animations[a].framePoses[i][j].rotation.z = m3d->vertex[pose[j].ori].z;
-                        animations[a].framePoses[i][j].rotation.w = m3d->vertex[pose[j].ori].w;
-                        animations[a].framePoses[i][j].rotation = QuaternionNormalize(animations[a].framePoses[i][j].rotation);
-                        animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
+                        animations[a].keyframePoses[i][j].translation.x = m3d->vertex[pose[j].pos].x*m3d->scale;
+                        animations[a].keyframePoses[i][j].translation.y = m3d->vertex[pose[j].pos].y*m3d->scale;
+                        animations[a].keyframePoses[i][j].translation.z = m3d->vertex[pose[j].pos].z*m3d->scale;
+                        animations[a].keyframePoses[i][j].rotation.x = m3d->vertex[pose[j].ori].x;
+                        animations[a].keyframePoses[i][j].rotation.y = m3d->vertex[pose[j].ori].y;
+                        animations[a].keyframePoses[i][j].rotation.z = m3d->vertex[pose[j].ori].z;
+                        animations[a].keyframePoses[i][j].rotation.w = m3d->vertex[pose[j].ori].w;
+                        animations[a].keyframePoses[i][j].rotation = QuaternionNormalize(animations[a].keyframePoses[i][j].rotation);
+                        animations[a].keyframePoses[i][j].scale.x = animations[a].keyframePoses[i][j].scale.y = animations[a].keyframePoses[i][j].scale.z = 1.0f;
 
                         // Child bones are stored in parent bone relative space, convert that into model space
-                        if (animations[a].bones[j].parent >= 0)
+                        if (bones[j].parent >= 0)
                         {
-                            animations[a].framePoses[i][j].rotation = QuaternionMultiply(animations[a].framePoses[i][animations[a].bones[j].parent].rotation, animations[a].framePoses[i][j].rotation);
-                            animations[a].framePoses[i][j].translation = Vector3RotateByQuaternion(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].rotation);
-                            animations[a].framePoses[i][j].translation = Vector3Add(animations[a].framePoses[i][j].translation, animations[a].framePoses[i][animations[a].bones[j].parent].translation);
-                            animations[a].framePoses[i][j].scale = Vector3Multiply(animations[a].framePoses[i][j].scale, animations[a].framePoses[i][animations[a].bones[j].parent].scale);
+                            animations[a].keyframePoses[i][j].rotation = QuaternionMultiply(animations[a].keyframePoses[i][bones[j].parent].rotation, animations[a].keyframePoses[i][j].rotation);
+                            animations[a].keyframePoses[i][j].translation = Vector3RotateByQuaternion(animations[a].keyframePoses[i][j].translation, animations[a].keyframePoses[i][bones[j].parent].rotation);
+                            animations[a].keyframePoses[i][j].translation = Vector3Add(animations[a].keyframePoses[i][j].translation, animations[a].keyframePoses[i][bones[j].parent].translation);
+                            animations[a].keyframePoses[i][j].scale = Vector3Multiply(animations[a].keyframePoses[i][j].scale, animations[a].keyframePoses[i][bones[j].parent].scale);
                         }
                     }
 
                     // Default transform for the "no bone" bone
-                    animations[a].framePoses[i][j].translation.x = 0.0f;
-                    animations[a].framePoses[i][j].translation.y = 0.0f;
-                    animations[a].framePoses[i][j].translation.z = 0.0f;
-                    animations[a].framePoses[i][j].rotation.x = 0.0f;
-                    animations[a].framePoses[i][j].rotation.y = 0.0f;
-                    animations[a].framePoses[i][j].rotation.z = 0.0f;
-                    animations[a].framePoses[i][j].rotation.w = 1.0f;
-                    animations[a].framePoses[i][j].scale.x = animations[a].framePoses[i][j].scale.y = animations[a].framePoses[i][j].scale.z = 1.0f;
+                    animations[a].keyframePoses[i][j].translation.x = 0.0f;
+                    animations[a].keyframePoses[i][j].translation.y = 0.0f;
+                    animations[a].keyframePoses[i][j].translation.z = 0.0f;
+                    animations[a].keyframePoses[i][j].rotation.x = 0.0f;
+                    animations[a].keyframePoses[i][j].rotation.y = 0.0f;
+                    animations[a].keyframePoses[i][j].rotation.z = 0.0f;
+                    animations[a].keyframePoses[i][j].rotation.w = 1.0f;
+                    animations[a].keyframePoses[i][j].scale.x = 1.0f;
+                    animations[a].keyframePoses[i][j].scale.y = 1.0f;
+                    animations[a].keyframePoses[i][j].scale.z = 1.0f;
+
                     RL_FREE(pose);
                 }
             }
+
+            RL_FREE(bones);
         }
 
         m3d_free(m3d);

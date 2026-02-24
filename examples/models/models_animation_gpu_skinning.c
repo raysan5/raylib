@@ -10,7 +10,6 @@
 *
 *   WARNING: GPU skinning must be enabled in raylib with a compilation flag,
 *   if not enabled, CPU skinning will be used instead
-*   NOTE: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software

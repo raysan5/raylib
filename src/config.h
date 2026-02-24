@@ -131,13 +131,13 @@
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
 #if !defined(EXTERNAL_CONFIG_FLAGS)
+//#define SUPPORT_GPU_SKINNING                   1    // GPU skinning, comment if your GPU does not support more than 8 VBOs
+
 // Enable OpenGL Debug Context (only available on OpenGL 4.3)
-//#define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       1
+//#define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       1    // OpenGL debug context requested
 
 // Show OpenGL extensions and capabilities detailed logs on init
-//#define RLGL_SHOW_GL_DETAILS_INFO              1
-
-#define RL_SUPPORT_MESH_GPU_SKINNING           1      // GPU skinning, comment if your GPU does not support more than 8 VBOs
+//#define RLGL_SHOW_GL_DETAILS_INFO              1    // Show OpenGL detailed info on initialization (limits and extensions)
 #endif
 
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096    // Default internal render batch elements limits
@@ -149,8 +149,8 @@
 
 #define RL_MAX_SHADER_LOCATIONS               32      // Maximum number of shader locations supported
 
-#define RL_CULL_DISTANCE_NEAR              0.05       // Default projection matrix near cull distance
-#define RL_CULL_DISTANCE_FAR             4000.0       // Default projection matrix far cull distance
+#define RL_CULL_DISTANCE_NEAR                  0.05   // Default projection matrix near cull distance
+#define RL_CULL_DISTANCE_FAR                4000.0    // Default projection matrix far cull distance
 
 // Default shader vertex attribute locations
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
@@ -160,27 +160,31 @@
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
 #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
-#if defined(RL_SUPPORT_MESH_GPU_SKINNING)
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEIDS     7
+#if defined(SUPPORT_GPU_SKINNING)
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES 7
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
 #endif
-#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCE_TX 9
+#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORMS 9
 
-// Default shader vertex attribute names to set location points
-// NOTE: When a new shader is loaded, the following locations are tried to be set for convenience
+// Default shader vertex attribute/uniform names to set location points
+// NOTE: When a new shader is loaded, locations are tried to be set for convenience,
+// if the following names are found in the shader, if not, it's up to the user to set locations
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION     "vertexPosition"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD     "vertexTexCoord"    // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL       "vertexNormal"      // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR        "vertexColor"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT      "vertexTangent"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT
 #define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2    "vertexTexCoord2"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEINDICES  "vertexBoneIndices" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES
+#define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS  "vertexBoneWeights" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
 
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP         "mvp"               // model-view-projection matrix
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW        "matView"           // view matrix
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION  "matProjection"     // projection matrix
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL       "matModel"          // model matrix
 #define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL      "matNormal"         // normal matrix (transpose(inverse(matModelView))
-#define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (base tint color, multiplied by texture color)
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR       "colDiffuse"        // color diffuse (tint color, multiplied by texture color)
+#define RL_DEFAULT_SHADER_UNIFORM_NAME_BONEMATRICES "boneMatrices"     // bone matrices
 #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0  "texture0"          // texture0 (texture slot active 0)
 #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
@@ -278,10 +282,11 @@
 //------------------------------------------------------------------------------------
 #define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
 
-#ifdef RL_SUPPORT_MESH_GPU_SKINNING
-#define MAX_MESH_VERTEX_BUFFERS         9       // Maximum vertex buffers (VBO) per mesh
+#ifdef SUPPORT_GPU_SKINNING
+    // NOTE: Two additional vertex buffers required to store bone indices and bone weights
+    #define MAX_MESH_VERTEX_BUFFERS     9       // Maximum vertex buffers (VBO) per mesh
 #else
-#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
+    #define MAX_MESH_VERTEX_BUFFERS     7       // Maximum vertex buffers (VBO) per mesh
 #endif
 
 //------------------------------------------------------------------------------------

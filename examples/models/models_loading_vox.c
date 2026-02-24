@@ -25,9 +25,9 @@
 #include "rlights.h"
 
 #if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
+    #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            100
+    #define GLSL_VERSION            100
 #endif
 
 //------------------------------------------------------------------------------------
@@ -130,6 +130,7 @@ int main(void)
             camerarot.y = 0;
         }
 
+        // Update camere movement, custom controls
         UpdateCameraPro(&camera,
             (Vector3){ (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP))*0.1f - (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN))*0.1f, // Move forward-backward
                        (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT))*0.1f - (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))*0.1f, // Move right-left
@@ -173,7 +174,7 @@ int main(void)
             DrawText("- MOUSE LEFT BUTTON: CYCLE VOX MODELS", 20, 50, 10, BLUE);
             DrawText("- MOUSE MIDDLE BUTTON: ZOOM OR ROTATE CAMERA", 20, 70, 10, BLUE);
             DrawText("- UP-DOWN-LEFT-RIGHT KEYS: MOVE CAMERA", 20, 90, 10, BLUE);
-            DrawText(TextFormat("Model file: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
+            DrawText(TextFormat("VOX model file: %s", GetFileName(voxFileNames[currentModel])), 10, 10, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

@@ -21,6 +21,8 @@
 
 #include "raylib.h"
 
+static void DrawModelSkeleton(ModelSkeleton skeleton, ModelAnimPose pose, float scale, Color color);
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -41,22 +43,17 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Vector3 position = { 0.0f, 0.0f, 0.0f };            // Set model position
-
-    char modelFileName[128] = "resources/models/m3d/cesium_man.m3d";
-    bool drawMesh = 1;
-    bool drawSkeleton = 1;
-    bool animPlaying = false;   // Store anim state, what to draw
-
     // Load model
-    Model model = LoadModel(modelFileName); // Load the bind-pose model mesh and basic data
+    Model model = LoadModel("resources/models/m3d/cesium_man.m3d");             // Load the animated model mesh and basic data
+    Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
 
-    // Load animations
-    int animsCount = 0;
-    int animFrameCounter = 0, animId = 0;
-    ModelAnimation *anims = LoadModelAnimations(modelFileName, &animsCount); // Load skeletal animation data
+    // Load animation data
+    int animCount = 0;
+    ModelAnimation *anims = LoadModelAnimations("resources/models/m3d/cesium_man.m3d", &animCount);
 
-    DisableCursor();                    // Limit cursor to relative movement inside the window
+    // Animation playing variables
+    unsigned int animIndex = 0;         // Current animation playing
+    float animCurrentFrame = 0.0f;      // Current animation frame (supporting interpolated frames)
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -66,38 +63,16 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        if (animsCount)
-        {
-            // Play animation when spacebar is held down (or step one frame with N)
-            if (IsKeyDown(KEY_SPACE) || IsKeyPressed(KEY_N))
-            {
-                animFrameCounter++;
+        // Select current animation
+        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1)%animCount;
+        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1)%animCount;
 
-                if (animFrameCounter >= anims[animId].frameCount) animFrameCounter = 0;
-
-                UpdateModelAnimation(model, anims[animId], animFrameCounter);
-                animPlaying = true;
-            }
-
-            // Select animation by pressing C
-            if (IsKeyPressed(KEY_C))
-            {
-                animFrameCounter = 0;
-                animId++;
-
-                if (animId >= (int)animsCount) animId = 0;
-                UpdateModelAnimation(model, anims[animId], 0);
-                animPlaying = true;
-            }
-        }
-
-        // Toggle skeleton drawing
-        if (IsKeyPressed(KEY_B)) drawSkeleton ^= 1;
-
-        // Toggle mesh drawing
-        if (IsKeyPressed(KEY_M)) drawMesh ^= 1;
+        // Update model animation
+        animCurrentFrame += 1.0f;
+        if (animCurrentFrame >= anims[animIndex].keyframeCount) animCurrentFrame = 0.0f;
+        UpdateModelAnimation(model, anims[animIndex], animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -109,52 +84,19 @@ int main(void)
             BeginMode3D(camera);
 
                 // Draw 3d model with texture
-                if (drawMesh) DrawModel(model, position, 1.0f, WHITE);
-
-                // Draw the animated skeleton
-                if (drawSkeleton)
+                if (!IsKeyDown(KEY_SPACE)) DrawModel(model, position, 1.0f, WHITE);
+                else
                 {
-                    // Loop to (boneCount - 1) because the last one is a special "no bone" bone,
-                    // needed to workaround buggy models
-                    // without a -1, we would always draw a cube at the origin
-                    for (int i = 0; i < model.boneCount - 1; i++)
-                    {
-                        // By default the model is loaded in bind-pose by LoadModel()
-                        // But if UpdateModelAnimation() has been called at least once
-                        // then the model is already in animation pose, so we need the animated skeleton
-                        if (!animPlaying || !animsCount)
-                        {
-                            // Display the bind-pose skeleton
-                            DrawCube(model.bindPose[i].translation, 0.04f, 0.04f, 0.04f, RED);
-
-                            if (model.bones[i].parent >= 0)
-                            {
-                                DrawLine3D(model.bindPose[i].translation,
-                                    model.bindPose[model.bones[i].parent].translation, RED);
-                            }
-                        }
-                        else
-                        {
-                            // Display the frame-pose skeleton
-                            DrawCube(anims[animId].framePoses[animFrameCounter][i].translation, 0.05f, 0.05f, 0.05f, RED);
-
-                            if (anims[animId].bones[i].parent >= 0)
-                            {
-                                DrawLine3D(anims[animId].framePoses[animFrameCounter][i].translation,
-                                    anims[animId].framePoses[animFrameCounter][anims[animId].bones[i].parent].translation, RED);
-                            }
-                        }
-                    }
+                    // Draw the animated skeleton
+                    DrawModelSkeleton(model.skeleton, anims[animIndex].keyframePoses[(int)animCurrentFrame], 1.0f, RED);
                 }
 
-                DrawGrid(10, 1.0f);         // Draw a grid
+                DrawGrid(10, 1.0f);
 
             EndMode3D();
 
-            DrawText("PRESS SPACE to PLAY MODEL ANIMATION", 10, GetScreenHeight() - 80, 10, MAROON);
-            DrawText("PRESS N to STEP ONE ANIMATION FRAME", 10, GetScreenHeight() - 60, 10, DARKGRAY);
-            DrawText("PRESS C to CYCLE THROUGH ANIMATIONS", 10, GetScreenHeight() - 40, 10, DARKGRAY);
-            DrawText("PRESS M to toggle MESH, B to toggle SKELETON DRAWING", 10, GetScreenHeight() - 20, 10, DARKGRAY);
+            DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 10, 20, LIGHTGRAY);
+            DrawText("Press SPACE to draw skeleton", 10, 40, 20, MAROON);
             DrawText("(c) CesiumMan model by KhronosGroup", GetScreenWidth() - 210, GetScreenHeight() - 20, 10, GRAY);
 
         EndDrawing();
@@ -163,14 +105,28 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    // Unload model animations data
-    UnloadModelAnimations(anims, animsCount);
-
-    UnloadModel(model);         // Unload model
+    UnloadModelAnimations(anims, animCount);   // Unload model animations data
+    UnloadModel(model);                        // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+// Draw model skeleton
+static void DrawModelSkeleton(ModelSkeleton skeleton, ModelAnimPose pose, float scale, Color color)
+{
+    // Loop to (boneCount - 1) because the last one is a special "no bone" bone,
+    // needed to workaround buggy models without a -1, a cube is always drawn at the origin
+    for (int i = 0; i < skeleton.boneCount - 1; i++)
+    {
+        // Display the frame-pose skeleton
+        DrawCube(pose[i].translation, scale*0.05f, scale*0.05f, scale*0.05f, color);
+
+        if (skeleton.bones[i].parent >= 0)
+        {
+            DrawLine3D(pose[i].translation, pose[skeleton.bones[i].parent].translation, color);
+        }
+    }
 }

@@ -55,7 +55,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// Platform-specific required data for timming (Win32)
+// Platform-specific required data for timing (Win32)
 #if defined(_WIN32)
 typedef struct _LARGE_INTEGER { int64_t QuadPart; } LARGE_INTEGER;
 __declspec(dllimport) int __stdcall QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount);

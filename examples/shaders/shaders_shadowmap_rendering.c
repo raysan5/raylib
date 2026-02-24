@@ -79,8 +79,9 @@ int main(void)
     cube.materials[0].shader = shadowShader;
     Model robot = LoadModel("resources/models/robot.glb");
     for (int i = 0; i < robot.materialCount; i++) robot.materials[i].shader = shadowShader;
+
     int animCount = 0;
-    ModelAnimation *robotAnimations = LoadModelAnimations("resources/models/robot.glb", &animCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/models/robot.glb", &animCount);
 
     RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
 
@@ -115,8 +116,8 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         frameCounter++;
-        frameCounter %= (robotAnimations[0].frameCount);
-        UpdateModelAnimation(robot, robotAnimations[0], frameCounter);
+        frameCounter %= (anims[0].keyframeCount);
+        UpdateModelAnimation(robot, anims[0], frameCounter);
 
         // Move light with arrow keys
         const float cameraSpeed = 0.05f;
@@ -190,7 +191,7 @@ int main(void)
     UnloadShader(shadowShader);
     UnloadModel(cube);
     UnloadModel(robot);
-    UnloadModelAnimations(robotAnimations, animCount);
+    UnloadModelAnimations(anims, animCount);
     UnloadShadowmapRenderTexture(shadowMap);
 
     CloseWindow();        // Close window and OpenGL context
