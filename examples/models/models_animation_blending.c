@@ -184,7 +184,7 @@ int main(void)
                     if (animCurrentFrame0 >= anims[animIndex0].keyframeCount) animCurrentFrame0 = 0.0f;
                     UpdateModelAnimation(model, anims[animIndex0], animCurrentFrame0);
                     //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0, 
-                    //    anims[animIndex1], animCurrentFrame1, 0.0f);
+                    //    anims[animIndex1], animCurrentFrame1, 0.0f); // Same as above, first animation frame blend
                 }
                 else if (currentAnimPlaying == 1)
                 {
@@ -193,7 +193,7 @@ int main(void)
                     if (animCurrentFrame1 >= anims[animIndex1].keyframeCount) animCurrentFrame1 = 0.0f;
                     UpdateModelAnimation(model, anims[animIndex1], animCurrentFrame1);
                     //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0, 
-                    //    anims[animIndex1], animCurrentFrame1, 1.0f);
+                    //    anims[animIndex1], animCurrentFrame1, 1.0f); // Same as above, second animation frame blend
                 }
             }
         }
@@ -221,6 +221,15 @@ int main(void)
 
             // Draw UI elements
             //---------------------------------------------------------------------------------------------
+            if (dropdownEditMode0) GuiDisable();
+            GuiSlider((Rectangle){ 10, 38, 160, 12 }, 
+                NULL, TextFormat("x%.1f", animFrameSpeed0), &animFrameSpeed0, 0.1f, 2.0f);
+            GuiEnable();
+            if (dropdownEditMode1) GuiDisable();
+            GuiSlider((Rectangle){ GetScreenWidth() - 170, 38, 160, 12 }, 
+                TextFormat("%.1fx", animFrameSpeed1), NULL, &animFrameSpeed1, 0.1f, 2.0f);
+            GuiEnable();
+
             // Draw animation selectors for blending transition
             // NOTE: Transition does not start until requested 
             GuiSetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING, 1);
