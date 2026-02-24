@@ -59,7 +59,7 @@
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
         <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
-    <Structs count="34">
+    <Structs count="35">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
             <Field type="float" name="x" desc="Vector x component" />
             <Field type="float" name="y" desc="Vector y component" />
@@ -160,7 +160,7 @@
             <Field type="float" name="rotation" desc="Camera rotation in degrees (pivots around target)" />
             <Field type="float" name="zoom" desc="Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale" />
         </Struct>
-        <Struct name="Mesh" fieldCount="17" desc="Mesh, vertex data and vao/vbo">
+        <Struct name="Mesh" fieldCount="16" desc="Mesh, vertex data and vao/vbo">
             <Field type="int" name="vertexCount" desc="Number of vertices stored in arrays" />
             <Field type="int" name="triangleCount" desc="Number of triangles stored (indexed or not)" />
             <Field type="float *" name="vertices" desc="Vertex position (XYZ - 3 components per vertex) (shader-location = 0)" />
@@ -170,12 +170,11 @@
             <Field type="float *" name="tangents" desc="Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)" />
             <Field type="unsigned char *" name="colors" desc="Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)" />
             <Field type="unsigned short *" name="indices" desc="Vertex indices (in case vertex data comes indexed)" />
+            <Field type="int" name="boneCount" desc="Number of bones (MAX: 256 bones)" />
+            <Field type="unsigned char *" name="boneIndices" desc="Vertex bone indices, up to 4 bones influence by vertex (skinning) (shader-location = 6)" />
+            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)" />
             <Field type="float *" name="animVertices" desc="Animated vertex positions (after bones transformations)" />
             <Field type="float *" name="animNormals" desc="Animated normals (after bones transformations)" />
-            <Field type="unsigned char *" name="boneIds" desc="Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)" />
-            <Field type="float *" name="boneWeights" desc="Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)" />
-            <Field type="Matrix *" name="boneMatrices" desc="Bones animated transformation matrices" />
-            <Field type="int" name="boneCount" desc="Number of bones" />
             <Field type="unsigned int" name="vaoId" desc="OpenGL Vertex Array Object id" />
             <Field type="unsigned int *" name="vboId" desc="OpenGL Vertex Buffer Objects id (default vertex data)" />
         </Struct>
@@ -202,6 +201,11 @@
             <Field type="char[32]" name="name" desc="Bone name" />
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
+        <Struct name="ModelSkeleton" fieldCount="3" desc="Skeleton, animation bones hierarchy">
+            <Field type="int" name="boneCount" desc="Number of bones" />
+            <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
+            <Field type="ModelAnimPose" name="bindPose" desc="Bones base transformation (Transform[])" />
+        </Struct>
         <Struct name="Model" fieldCount="9" desc="Model, meshes, materials and animation data">
             <Field type="Matrix" name="transform" desc="Local transform matrix" />
             <Field type="int" name="meshCount" desc="Number of meshes" />
@@ -209,16 +213,15 @@
             <Field type="Mesh *" name="meshes" desc="Meshes array" />
             <Field type="Material *" name="materials" desc="Materials array" />
             <Field type="int *" name="meshMaterial" desc="Mesh material number" />
-            <Field type="int" name="boneCount" desc="Number of bones" />
-            <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
-            <Field type="Transform *" name="bindPose" desc="Bones base transformation (pose)" />
+            <Field type="ModelSkeleton" name="skeleton" desc="Skeleton for animation" />
+            <Field type="ModelAnimPose" name="currentPose" desc="Current animation pose (Transform[])" />
+            <Field type="Matrix *" name="boneMatrices" desc="Bones animated transformation matrices" />
         </Struct>
-        <Struct name="ModelAnimation" fieldCount="5" desc="ModelAnimation">
+        <Struct name="ModelAnimation" fieldCount="4" desc="ModelAnimation, contains a full animation sequence">
             <Field type="char[32]" name="name" desc="Animation name" />
-            <Field type="int" name="boneCount" desc="Number of bones" />
-            <Field type="int" name="frameCount" desc="Number of animation frames" />
-            <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
-            <Field type="Transform **" name="framePoses" desc="Poses array by frame" />
+            <Field type="int" name="boneCount" desc="Number of bones (per pose)" />
+            <Field type="int" name="keyframeCount" desc="Number of animation key frames" />
+            <Field type="ModelAnimPose *" name="keyframePoses" desc="Animation sequence keyframe poses [keyframe][pose]" />
         </Struct>
         <Struct name="Ray" fieldCount="2" desc="Ray, ray for raycasting">
             <Field type="Vector3" name="position" desc="Ray position (origin)" />
@@ -295,12 +298,13 @@
             <Field type="AutomationEvent *" name="events" desc="Events entries" />
         </Struct>
     </Structs>
-    <Aliases count="5">
+    <Aliases count="6">
         <Alias type="Quaternion" name="Vector4" desc="Quaternion, 4 components (Vector4 alias)" />
         <Alias type="Texture2D" name="Texture" desc="Texture2D, same as Texture" />
         <Alias type="TextureCubemap" name="Texture" desc="TextureCubemap, same as Texture" />
         <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
         <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
+        <Alias type="*ModelAnimPose" name="Transform" desc="Anim pose, an array of Transform[]" />
     </Aliases>
     <Enums count="21">
         <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
@@ -528,15 +532,15 @@
             <Value name="SHADER_LOC_MAP_ROUGHNESS" integer="18" desc="Shader location: sampler2d texture: roughness" />
             <Value name="SHADER_LOC_MAP_OCCLUSION" integer="19" desc="Shader location: sampler2d texture: occlusion" />
             <Value name="SHADER_LOC_MAP_EMISSION" integer="20" desc="Shader location: sampler2d texture: emission" />
-            <Value name="SHADER_LOC_MAP_HEIGHT" integer="21" desc="Shader location: sampler2d texture: height" />
+            <Value name="SHADER_LOC_MAP_HEIGHT" integer="21" desc="Shader location: sampler2d texture: heightmap" />
             <Value name="SHADER_LOC_MAP_CUBEMAP" integer="22" desc="Shader location: samplerCube texture: cubemap" />
             <Value name="SHADER_LOC_MAP_IRRADIANCE" integer="23" desc="Shader location: samplerCube texture: irradiance" />
             <Value name="SHADER_LOC_MAP_PREFILTER" integer="24" desc="Shader location: samplerCube texture: prefilter" />
             <Value name="SHADER_LOC_MAP_BRDF" integer="25" desc="Shader location: sampler2d texture: brdf" />
-            <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: boneIds" />
-            <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: boneWeights" />
-            <Value name="SHADER_LOC_BONE_MATRICES" integer="28" desc="Shader location: array of matrices uniform: boneMatrices" />
-            <Value name="SHADER_LOC_VERTEX_INSTANCE_TX" integer="29" desc="Shader location: vertex attribute: instanceTransform" />
+            <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: bone indices" />
+            <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: bone weights" />
+            <Value name="SHADER_LOC_MATRIX_BONETRANSFORMS" integer="28" desc="Shader location: matrix attribute: bone transforms (animation)" />
+            <Value name="SHADER_LOC_VERTEX_INSTANCETRANSFORMS" integer="29" desc="Shader location: vertex attribute: instance transforms" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="13" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
@@ -678,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="601">
+    <Functions count="598">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2908,29 +2912,18 @@
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int *" name="animCount" desc="" />
         </Function>
-        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose (CPU)">
+        <Function name="UpdateModelAnimation" retType="void" paramCount="3" desc="Update model animation pose (vertex buffers and bone matrices)">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="anim" desc="" />
-            <Param type="int" name="frame" desc="" />
+            <Param type="float" name="frame" desc="" />
         </Function>
-        <Function name="UpdateModelAnimationBones" retType="void" paramCount="3" desc="Update model animation mesh bone matrices (GPU skinning)">
-            <Param type="Model" name="model" desc="" />
-            <Param type="ModelAnimation" name="anim" desc="" />
-            <Param type="int" name="frame" desc="" />
-        </Function>
-        <Function name="UpdateModelAnimationBonesLerp" retType="void" paramCount="6" desc="Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)">
+        <Function name="UpdateModelAnimationEx" retType="void" paramCount="6" desc="Update model animation pose, blending two animations">
             <Param type="Model" name="model" desc="" />
             <Param type="ModelAnimation" name="animA" desc="" />
-            <Param type="int" name="frameA" desc="" />
+            <Param type="float" name="frameA" desc="" />
             <Param type="ModelAnimation" name="animB" desc="" />
-            <Param type="int" name="frameB" desc="" />
-            <Param type="float" name="value" desc="" />
-        </Function>
-        <Function name="UpdateModelVertsToCurrentBones" retType="void" paramCount="1" desc="Update model vertices according to mesh bone matrices (CPU)">
-            <Param type="Model" name="model" desc="" />
-        </Function>
-        <Function name="UnloadModelAnimation" retType="void" paramCount="1" desc="Unload animation data">
-            <Param type="ModelAnimation" name="anim" desc="" />
+            <Param type="float" name="frameB" desc="" />
+            <Param type="float" name="blend" desc="" />
         </Function>
         <Function name="UnloadModelAnimations" retType="void" paramCount="2" desc="Unload animation array data">
             <Param type="ModelAnimation *" name="animations" desc="" />
