@@ -5128,11 +5128,11 @@ static const char *GetTextIcon(const char *text, int *iconId)
 
 // Get text divided into lines (by line-breaks '\n')
 // WARNING: It returns pointers to new lines but it does not add NULL ('\0') terminator!
-static char **GetTextLines(const char *text, int *count)
+static const char **GetTextLines(const char *text, int *count)
 {
     #define RAYGUI_MAX_TEXT_LINES   128
 
-    static char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
+    static const char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
     for (int i = 0; i < RAYGUI_MAX_TEXT_LINES; i++) lines[i] = NULL;    // Init NULL pointers to substrings
 
     int textLength = (int)strlen(text);
@@ -5202,7 +5202,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
     // WARNING: GuiTextSplit() function can't be used now because it can have already been used
     // before the GuiDrawText() call and its buffer is static, it would be overriden :(
     int lineCount = 0;
-    char **lines = GetTextLines(text, &lineCount);
+    const char **lines = GetTextLines(text, &lineCount);
 
     // Text style variables
     //int alignment = GuiGetStyle(DEFAULT, TEXT_ALIGNMENT);
