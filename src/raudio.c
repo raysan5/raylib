@@ -180,6 +180,10 @@ typedef struct tagBITMAPINFOHEADER {
 #include <stdio.h>                      // Required for: FILE, fopen(), fclose(), fread()
 #include <string.h>                     // Required for: strcmp() [Used in IsFileExtension(), LoadWaveFromMemory(), LoadMusicStreamFromMemory()]
 
+#if defined(PLATFORM_ANDROID)
+    #define fopen(name, mode) android_fopen(name, mode)
+#endif
+
 #if defined(RAUDIO_STANDALONE)
     #ifndef TRACELOG
         #define TRACELOG(level, ...)    printf(__VA_ARGS__)
