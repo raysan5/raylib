@@ -2,20 +2,19 @@
 *
 *   raylib [models] example - animation blending
 *
-*   Example complexity rating: [☆☆☆☆] 0/4
+*   Example complexity rating: [★★★★] 4/4
 * 
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
 *
-*   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra)
+*   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   WARNING: GPU skinning must be enabled in raylib with a compilation flag,
+*   if not enabled, CPU skinning will be used instead
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Kirandeep (@Kirandeep-Singh-Khehra)
-* 
-*   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
-*   Note: This example uses CPU for updating meshes.
-*           For GPU skinning see comments with 'INFO:'.
+*   Copyright (c) 2024-2026 Kirandeep (@Kirandeep-Singh-Khehra) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 

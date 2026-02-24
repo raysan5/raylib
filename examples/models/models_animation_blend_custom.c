@@ -6,15 +6,16 @@
 *
 *   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
+*   Example contributed by dmitrii-brand (@dmitrii-brand) and reviewed by Ramon Santamaria (@raysan5)
+*
 *   DETAILS: Example demonstrates per-bone animation blending, allowing smooth transitions
 *   between two animations by interpolating bone transforms. This is useful for:
 *    - Blending movement animations (walk/run) with action animations (jump/attack)
 *    - Creating smooth animation transitions
 *    - Layering animations (e.g., upper body attack while lower body walks)
 *
-*   Example contributed by dmitrii-brand (@dmitrii-brand) and reviewed by Ramon Santamaria (@raysan5)
-*
-*   NOTE: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
+*   WARNING: GPU skinning must be enabled in raylib with a compilation flag,
+*   if not enabled, CPU skinning will be used instead
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
