@@ -178,7 +178,9 @@ typedef struct tagRGBQUAD {
 #define BI_CMYK      0x000B
 #define BI_CMYKRLE8  0x000C
 #define BI_CMYKRLE4  0x000D
+#endif
 
+#ifndef BI_ALPHABITFIELDS
 // Bitmap not compressed and that the color table consists of four DWORD color masks, 
 // that specify the red, green, blue, and alpha components of each pixel
 #define BI_ALPHABITFIELDS 0x0006
@@ -317,9 +319,7 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
             // If (bih.biCompression == BI_RGB) no need to be offset more
 
             if (bih.biCompression == BI_BITFIELDS) offset += 3*rgbaSize;
-#if defined(_WIN32_WCE) && _WIN32_WCE >= 0x0400 // BI_ALPHABITFIELDS is supported only on Windows CE 4.0+
             else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4 * rgbaSize; // Not widely supported, but valid
-#endif
         }
     }
 
