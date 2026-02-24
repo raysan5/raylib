@@ -1593,7 +1593,7 @@ Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: Timming
+// Module Functions Definition: Timing
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c

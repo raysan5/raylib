@@ -199,8 +199,8 @@ int main(void)
         }
 
         // Update progress bars values with current frame for each animation
-        float animFrameProgress0 = animCurrentFrame0;
-        float animFrameProgress1 = animCurrentFrame1;
+        animFrameProgress0 = animCurrentFrame0;
+        animFrameProgress1 = animCurrentFrame1;
         //----------------------------------------------------------------------------------
 
         // Draw

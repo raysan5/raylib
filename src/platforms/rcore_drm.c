@@ -1613,7 +1613,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // Initialize timing system
     //----------------------------------------------------------------------------
-    // NOTE: timming system must be initialized before the input events system
+    // NOTE: timing system must be initialized before the input events system
     InitTimer();
     //----------------------------------------------------------------------------
 

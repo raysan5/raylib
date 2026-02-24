@@ -667,7 +667,7 @@ MODELS = \
     models/models_animation_blend_custom \
     models/models_animation_blending \
     models/models_animation_gpu_skinning \
-    models/models_animation_timming \
+    models/models_animation_timing \
     models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \

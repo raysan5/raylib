@@ -1655,7 +1655,7 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
     }
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     LARGE_INTEGER time = { 0 };
     QueryPerformanceCounter(&time);
