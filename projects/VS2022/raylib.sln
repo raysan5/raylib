@@ -435,7 +435,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_blending",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_window_web", "examples\core_window_web.vcxproj", "{4E7157E0-6CDB-47AE-A19A-FEC3876FA8A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_timming", "examples\models_animation_timming.vcxproj", "{89D5A0E9-683C-465C-BF85-A880865175C8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_timing", "examples\models_animation_timing.vcxproj", "{89D5A0E9-683C-465C-BF85-A880865175C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

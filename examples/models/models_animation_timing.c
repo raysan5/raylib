@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - animation timming
+*   raylib [models] example - animation timing
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -16,7 +16,7 @@
 #include "raylib.h"
 
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"                         // Required for: UI controls
+#include "raygui.h"             // Required for: UI controls
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -28,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation timming");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - animation timing");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -43,13 +43,21 @@ int main(void)
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model world position
 
     // Load model animations
-    int animsCount = 0;
-    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
+    int animCount = 0;
+    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
 
     // Animation playing variables
-    unsigned int animIndex = 0;         // Current animation playing
+    int animIndex = 10;                  // Current animation playing
     float animCurrentFrame = 0.0f;      // Current animation frame (supporting interpolated frames)
-    float animFrameSpeed = 0.1f;        // Animation play speed
+    float animFrameSpeed = 0.5f;        // Animation play speed
+    bool animPause = false;             // Pause animation
+
+    // UI required variables
+    char *animNames[64] = { 0 };
+    for (int i = 0; i < animCount; i++) animNames[i] = anims[i].name;
+
+    bool dropdownEditMode = false;
+    float animFrameProgress = 0.0f;
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -61,17 +69,20 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        // Select current animation
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) animIndex = (animIndex + 1)%animsCount;
-        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) animIndex = (animIndex + animsCount - 1)%animsCount;
+        if (IsKeyPressed(KEY_P)) animPause = !animPause;
 
-        // Select animation playing speed
-        if (IsKeyPressed(KEY_RIGHT)) animFrameSpeed += 0.1f;
-        else if (IsKeyPressed(KEY_LEFT)) animFrameSpeed -= 0.1f;
+        if (!animPause && (animIndex < animCount))
+        {
+            // Update model animation
+            animCurrentFrame += animFrameSpeed;
+            if (animCurrentFrame >= anims[animIndex].keyframeCount) animCurrentFrame = 0.0f;
+            UpdateModelAnimation(model, anims[animIndex], animCurrentFrame);
+        }
 
-        // Update model animation
-        animCurrentFrame += animFrameSpeed;
-        UpdateModelAnimation(model, modelAnimations[animIndex], animCurrentFrame);
+        // NOTE: Animation and playing speed selected through UI
+
+        // Update progressbar value with current frame
+        animFrameProgress = animCurrentFrame;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -88,13 +99,22 @@ int main(void)
             
             EndMode3D();
 
-            // Draw UI
-            //GuiDropdownBox((Rectangle){ 10, 20, 240, 30 }, "text", &animIndex, editMode);
+            // Draw UI, select anim and playing speed
+            GuiSetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING, 1);
+            if (GuiDropdownBox((Rectangle){ 10, 10, 140, 24 }, TextJoin(animNames, animCount, ";"), 
+                &animIndex, dropdownEditMode)) dropdownEditMode = !dropdownEditMode;
 
-            DrawText(TextFormat("FRAME SPEED: x%.1f", animFrameSpeed), 10, 40, 20, RED);
+            GuiSlider((Rectangle){ 260, 10, 500, 24 }, "FRAME SPEED: ", TextFormat("x%.1f", animFrameSpeed),
+                &animFrameSpeed, 0.1f, 2.0f);
 
-            DrawText("Use the LEFT/RIGHT mouse buttons to switch animation", 10, 10, 20, GRAY);
-            DrawText(TextFormat("Animation: %s", modelAnimations[animIndex].name), 10, GetScreenHeight() - 20, 10, DARKGRAY);
+            // Draw playing timeline with keyframes
+            GuiLabel((Rectangle){ 10, GetScreenHeight() - 64, GetScreenWidth() - 20, 24 }, 
+                TextFormat("CURRENT FRAME: %.2f / %i", animFrameProgress, anims[animIndex].keyframeCount));
+            GuiProgressBar((Rectangle){ 10, GetScreenHeight() - 40, GetScreenWidth() - 20, 24 }, NULL, NULL,
+                &animFrameProgress, 0.0f, (float)anims[animIndex].keyframeCount);
+            for (int i = 0; i < anims[animIndex].keyframeCount; i++)
+                DrawRectangle(10 + ((float)(GetScreenWidth() - 20)/(float)anims[animIndex].keyframeCount)*(float)i, 
+                    GetScreenHeight() - 40, 1, 24, BLUE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -102,6 +122,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadModelAnimations(anims, animCount); // Unload model animation
     UnloadModel(model);         // Unload model and meshes/material
 
     CloseWindow();              // Close window and OpenGL context
@@ -109,6 +130,4 @@ int main(void)
 
     return 0;
 }
-
-
 
