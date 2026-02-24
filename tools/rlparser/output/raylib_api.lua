@@ -838,6 +838,21 @@ return {
           description = "Vertex indices (in case vertex data comes indexed)"
         },
         {
+          type = "int",
+          name = "boneCount",
+          description = "Number of bones (MAX: 256 bones)"
+        },
+        {
+          type = "unsigned char *",
+          name = "boneIndices",
+          description = "Vertex bone indices, up to 4 bones influence by vertex (skinning) (shader-location = 6)"
+        },
+        {
+          type = "float *",
+          name = "boneWeights",
+          description = "Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)"
+        },
+        {
           type = "float *",
           name = "animVertices",
           description = "Animated vertex positions (after bones transformations)"
@@ -846,26 +861,6 @@ return {
           type = "float *",
           name = "animNormals",
           description = "Animated normals (after bones transformations)"
-        },
-        {
-          type = "unsigned char *",
-          name = "boneIds",
-          description = "Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)"
-        },
-        {
-          type = "float *",
-          name = "boneWeights",
-          description = "Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)"
-        },
-        {
-          type = "Matrix *",
-          name = "boneMatrices",
-          description = "Bones animated transformation matrices"
-        },
-        {
-          type = "int",
-          name = "boneCount",
-          description = "Number of bones"
         },
         {
           type = "unsigned int",
@@ -975,6 +970,27 @@ return {
       }
     },
     {
+      name = "ModelSkeleton",
+      description = "Skeleton, animation bones hierarchy",
+      fields = {
+        {
+          type = "int",
+          name = "boneCount",
+          description = "Number of bones"
+        },
+        {
+          type = "BoneInfo *",
+          name = "bones",
+          description = "Bones information (skeleton)"
+        },
+        {
+          type = "ModelAnimPose",
+          name = "bindPose",
+          description = "Bones base transformation (Transform[])"
+        }
+      }
+    },
+    {
       name = "Model",
       description = "Model, meshes, materials and animation data",
       fields = {
@@ -1009,25 +1025,25 @@ return {
           description = "Mesh material number"
         },
         {
-          type = "int",
-          name = "boneCount",
-          description = "Number of bones"
+          type = "ModelSkeleton",
+          name = "skeleton",
+          description = "Skeleton for animation"
         },
         {
-          type = "BoneInfo *",
-          name = "bones",
-          description = "Bones information (skeleton)"
+          type = "ModelAnimPose",
+          name = "currentPose",
+          description = "Current animation pose (Transform[])"
         },
         {
-          type = "Transform *",
-          name = "bindPose",
-          description = "Bones base transformation (pose)"
+          type = "Matrix *",
+          name = "boneMatrices",
+          description = "Bones animated transformation matrices"
         }
       }
     },
     {
       name = "ModelAnimation",
-      description = "ModelAnimation",
+      description = "ModelAnimation, contains a full animation sequence",
       fields = {
         {
           type = "char[32]",
@@ -1037,22 +1053,17 @@ return {
         {
           type = "int",
           name = "boneCount",
-          description = "Number of bones"
+          description = "Number of bones (per pose)"
         },
         {
           type = "int",
-          name = "frameCount",
-          description = "Number of animation frames"
+          name = "keyframeCount",
+          description = "Number of animation key frames"
         },
         {
-          type = "BoneInfo *",
-          name = "bones",
-          description = "Bones information (skeleton)"
-        },
-        {
-          type = "Transform **",
-          name = "framePoses",
-          description = "Poses array by frame"
+          type = "ModelAnimPose *",
+          name = "keyframePoses",
+          description = "Animation sequence keyframe poses [keyframe][pose]"
         }
       }
     },
@@ -1404,6 +1415,11 @@ return {
       type = "Camera3D",
       name = "Camera",
       description = "Camera type fallback, defaults to Camera3D"
+    },
+    {
+      type = "Transform",
+      name = "*ModelAnimPose",
+      description = "Anim pose, an array of Transform[]"
     }
   },
   enums = {
@@ -2502,7 +2518,7 @@ return {
         {
           name = "SHADER_LOC_MAP_HEIGHT",
           value = 21,
-          description = "Shader location: sampler2d texture: height"
+          description = "Shader location: sampler2d texture: heightmap"
         },
         {
           name = "SHADER_LOC_MAP_CUBEMAP",
@@ -2527,22 +2543,22 @@ return {
         {
           name = "SHADER_LOC_VERTEX_BONEIDS",
           value = 26,
-          description = "Shader location: vertex attribute: boneIds"
+          description = "Shader location: vertex attribute: bone indices"
         },
         {
           name = "SHADER_LOC_VERTEX_BONEWEIGHTS",
           value = 27,
-          description = "Shader location: vertex attribute: boneWeights"
+          description = "Shader location: vertex attribute: bone weights"
         },
         {
-          name = "SHADER_LOC_BONE_MATRICES",
+          name = "SHADER_LOC_MATRIX_BONETRANSFORMS",
           value = 28,
-          description = "Shader location: array of matrices uniform: boneMatrices"
+          description = "Shader location: matrix attribute: bone transforms (animation)"
         },
         {
-          name = "SHADER_LOC_VERTEX_INSTANCE_TX",
+          name = "SHADER_LOC_VERTEX_INSTANCETRANSFORMS",
           value = 29,
-          description = "Shader location: vertex attribute: instanceTransform"
+          description = "Shader location: vertex attribute: instance transforms"
         }
       }
     },
@@ -7794,51 +7810,25 @@ return {
     },
     {
       name = "UpdateModelAnimation",
-      description = "Update model animation pose (CPU)",
+      description = "Update model animation pose (vertex buffers and bone matrices)",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
         {type = "ModelAnimation", name = "anim"},
-        {type = "int", name = "frame"}
+        {type = "float", name = "frame"}
       }
     },
     {
-      name = "UpdateModelAnimationBones",
-      description = "Update model animation mesh bone matrices (GPU skinning)",
-      returnType = "void",
-      params = {
-        {type = "Model", name = "model"},
-        {type = "ModelAnimation", name = "anim"},
-        {type = "int", name = "frame"}
-      }
-    },
-    {
-      name = "UpdateModelAnimationBonesLerp",
-      description = "Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)",
+      name = "UpdateModelAnimationEx",
+      description = "Update model animation pose, blending two animations",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
         {type = "ModelAnimation", name = "animA"},
-        {type = "int", name = "frameA"},
+        {type = "float", name = "frameA"},
         {type = "ModelAnimation", name = "animB"},
-        {type = "int", name = "frameB"},
-        {type = "float", name = "value"}
-      }
-    },
-    {
-      name = "UpdateModelVertsToCurrentBones",
-      description = "Update model vertices according to mesh bone matrices (CPU)",
-      returnType = "void",
-      params = {
-        {type = "Model", name = "model"}
-      }
-    },
-    {
-      name = "UnloadModelAnimation",
-      description = "Unload animation data",
-      returnType = "void",
-      params = {
-        {type = "ModelAnimation", name = "anim"}
+        {type = "float", name = "frameB"},
+        {type = "float", name = "blend"}
       }
     },
     {
