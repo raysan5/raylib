@@ -2487,7 +2487,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
     {
         float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
-        ma_uint64 inputFramesToProcessThisIteration = 0;
+        //ma_uint64 inputFramesToProcessThisIteration = 0;
         
         // Process any residual input frames from the previous read first.
         if (audioBuffer->converterResidualCount > 0)
