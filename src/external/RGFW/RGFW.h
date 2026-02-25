@@ -8667,13 +8667,13 @@ struct wl_surface* RGFW_window_getWindow_Wayland(RGFW_window* win) { return win-
 
 
 /* wayland global garbage (wayland bad, X11 is fine (ish) (not really)) */
-#include "xdg-shell.h"
-#include "xdg-toplevel-icon-v1.h"
-#include "xdg-decoration-unstable-v1.h"
-#include "relative-pointer-unstable-v1.h"
-#include "pointer-constraints-unstable-v1.h"
-#include "xdg-output-unstable-v1.h"
-#include "pointer-warp-v1.h"
+#include "xdg-shell-client-protocol.h"
+#include "xdg-toplevel-icon-v1-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "relative-pointer-unstable-v1-client-protocol.h"
+#include "pointer-constraints-unstable-v1-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
+#include "pointer-warp-v1-client-protocol.h"
 
 void RGFW_toggleWaylandMaximized(RGFW_window* win, RGFW_bool maximized);
 
