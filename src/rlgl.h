@@ -345,16 +345,14 @@
 #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES
     #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
 #endif
-#ifdef SUPPORT_GPU_SKINNING
-    #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES
-        #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES 7
-    #endif
-    #ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
-        #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
-    #endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES 7
 #endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORMS
-    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORMS 9
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+#endif
+#ifndef RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM
+    #define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM 9
 #endif
 
 //----------------------------------------------------------------------------------
@@ -1018,8 +1016,8 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_BONEMATRICES
     #define RL_DEFAULT_SHADER_UNIFORM_NAME_BONEMATRICES "boneMatrices"   // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEMATRICES
 #endif
-#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORMS
-    #define RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORMS "instanceTransform" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORMS
+#ifndef RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORM
+    #define RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORM "instanceTransform" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM
 #endif
 
 #ifndef RL_DEFAULT_SHADER_UNIFORM_NAME_MVP
@@ -4335,20 +4333,18 @@ unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId)
     glAttachShader(programId, vShaderId);
     glAttachShader(programId, fShaderId);
 
-    // NOTE: Default attribute shader locations must be Bound before linking
+    // Default attribute shader locations must be bound before linking
+    // NOTE: There is no problem with binding a generic attribute index to an attribute variable name
+    // that is never used; if some attrib name is no found on the shader, it locations becomes -1
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION, RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2, RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD2);
-    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORMS, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORMS);
-#ifdef SUPPORT_GPU_SKINNING
+    glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORM);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEINDICES);
     glBindAttribLocation(programId, RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
-#endif
-
-    // NOTE: If some attrib name is no found on the shader, it locations becomes -1
 
     glLinkProgram(programId);
 
