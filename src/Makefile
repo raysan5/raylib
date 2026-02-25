@@ -115,6 +115,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
+# Enable support for X11 by default on Linux when using GLFW
+# NOTE: Wayland is disabled by default, only enable if you are sure
+RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
+RGFW_LINUX_ENABLE_X11      ?= TRUE
+
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
@@ -289,6 +294,17 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         CC = clang
     endif
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS),OSX)
+        # OSX default compiler
+        CC = clang
+        GLFW_OSX = -x objective-c
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
+        CC = clang
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     ifeq ($(USE_RPI_CROSSCOMPILER),TRUE)
         # Define RPI cross-compiler
@@ -450,7 +466,6 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         endif
         ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
-            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
 
             WL_PROTOCOLS_DIR := external/glfw/deps/wayland
 
@@ -469,6 +484,33 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/fractional-scale-v1.xml, fractional-scale-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-activation-v1.xml, xdg-activation-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/idle-inhibit-unstable-v1.xml, idle-inhibit-unstable-v1-client-protocol)
+        endif
+    endif
+endif
+# Use Wayland display on Linux desktop
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS), LINUX)
+        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
+            CFLAGS += -DRGFW_X11 -DRGFW_UNIX
+        endif
+        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+            CFLAGS += -DRGFW_WAYLAND -DEGLAPIENTRY=
+
+            WL_PROTOCOLS_DIR := external/RGFW/deps/wayland
+
+            wl_generate = \
+                $(eval protocol=$(1)) \
+                $(eval basename=$(2)) \
+                $(shell wayland-scanner client-header $(protocol) $(RAYLIB_SRC_PATH)/$(basename).h) \
+                $(shell wayland-scanner private-code $(protocol) $(RAYLIB_SRC_PATH)/$(basename)-code.c)
+
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-constraints-unstable-v1.xml, pointer-constraints-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-warp-v1.xml, pointer-warp-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/relative-pointer-unstable-v1.xml, relative-pointer-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-decoration-unstable-v1.xml, xdg-decoration-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-output-unstable-v1.xml, xdg-output-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-shell.xml, xdg-shell-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-toplevel-icon-v1.xml, xdg-toplevel-icon-v1-client-protocol)
         endif
     endif
 endif
@@ -583,6 +625,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         ifeq ($(GLFW_LINUX_ENABLE_X11),TRUE)
             LDLIBS += -lX11
         endif
+
+        ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
+            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
+        endif
         # TODO: On ARM 32bit arch, miniaudio requires atomics library
         #LDLIBS += -latomic
     endif
@@ -618,7 +664,15 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compipling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
+        LDLIBS = -lm
+
+        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
+            LDLIBS += -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lpthread -ldl -lrt
+        endif
+
+        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
+        endif
 
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -664,6 +718,21 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(USE_EXTERNAL_GLFW),FALSE)
         OBJS += rglfw.o
     endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+	ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+	    PROTOCOL_CODE_FILES = \
+	    	pointer-constraints-unstable-v1-client-protocol-code \
+	        pointer-warp-v1-client-protocol-code \
+	        relative-pointer-unstable-v1-client-protocol-code \
+	        xdg-decoration-unstable-v1-client-protocol-code \
+	        xdg-output-unstable-v1-client-protocol-code \
+	        xdg-shell-client-protocol-code \
+	        xdg-toplevel-icon-v1-client-protocol-code
+
+	    PROTO_OBJS = $(addsuffix .o, $(PROTOCOL_CODE_FILES))
+	    OBJS += $(PROTO_OBJS)
+	endif
 endif
 ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
     OBJS += rmodels.o
@@ -801,6 +870,17 @@ endif
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
+# Compile Wayland files
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+	ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+		%-client-protocol-code.o: %-client-protocol-code.c
+			$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+
+		%-client-protocol-code.h: external/RGFW/deps/wayland/%.xml
+			wayland-scanner private-code $< $@
+	endif
+endif
+
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
 # libraries and header files. These directories (often /usr/local/lib and
@@ -885,7 +965,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.c
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif

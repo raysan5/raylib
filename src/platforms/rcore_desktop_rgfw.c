@@ -1691,6 +1691,7 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+    mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 }
 
