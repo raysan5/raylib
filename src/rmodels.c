@@ -1688,7 +1688,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Instancing required variables
-    float16 *instanceTransforms = NULL;
+    float16 *instanceTransform = NULL;
     unsigned int instancesVboId = 0;
 
     // Bind shader program
@@ -1737,10 +1737,10 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
     // Create instances buffer
-    instanceTransforms = (float16 *)RL_CALLOC(instances, sizeof(float16));
+    instanceTransform = (float16 *)RL_CALLOC(instances, sizeof(float16));
 
     // Fill buffer with instances transformations as float16 arrays
-    for (int i = 0; i < instances; i++) instanceTransforms[i] = MatrixToFloatV(transforms[i]);
+    for (int i = 0; i < instances; i++) instanceTransform[i] = MatrixToFloatV(transforms[i]);
 
     // Enable mesh VAO to attach new buffer
     rlEnableVertexArray(mesh.vaoId);
@@ -1749,16 +1749,16 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     // It isn't clear which would be reliably faster in all cases and on all platforms,
     // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
     // no faster, since all the transform matrices are transferred anyway
-    instancesVboId = rlLoadVertexBuffer(instanceTransforms, instances*sizeof(float16), false);
+    instancesVboId = rlLoadVertexBuffer(instanceTransform, instances*sizeof(float16), false);
 
-    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCETRANSFORMS
-    if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] != -1)
+    // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCETRANSFORM
+    if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] != -1)
     {
         for (unsigned int i = 0; i < 4; i++)
         {
-            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i);
-            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
-            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORMS] + i, 1);
+            rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] + i);
+            rlSetVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] + i, 4, RL_FLOAT, 0, sizeof(Matrix), i*sizeof(Vector4));
+            rlSetVertexAttributeDivisor(material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] + i, 1);
         }
     }
 
@@ -1918,7 +1918,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Remove instance transforms buffer
     rlUnloadVertexBuffer(instancesVboId);
-    RL_FREE(instanceTransforms);
+    RL_FREE(instanceTransform);
 #endif
 }
 
@@ -4404,11 +4404,10 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 
 #if defined(SUPPORT_FILEFORMAT_OBJ)
 // Load OBJ mesh data
-//
-// Keep the following information in mind when reading this
+// Notes to keep in mind:
 //  - A mesh is created for every material present in the obj file
-//  - the model.meshCount is therefore the materialCount returned from tinyobj
-//  - the mesh is automatically triangulated by tinyobj
+//  - The model.meshCount is therefore the materialCount returned from tinyobj
+//  - The mesh is automatically triangulated by tinyobj
 static Model LoadOBJ(const char *fileName)
 {
     tinyobj_attrib_t objAttributes = { 0 };
@@ -4555,7 +4554,8 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
         model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
     #else
-        if (objAttributes.texcoords != NULL && objAttributes.num_texcoords > 0) model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
+        if (objAttributes.texcoords != NULL && objAttributes.num_texcoords > 0) 
+            model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
         else model.meshes[i].texcoords = NULL;
         model.meshes[i].colors = NULL;
     #endif
@@ -4657,12 +4657,12 @@ static Model LoadOBJ(const char *fileName)
 // Load IQM mesh data
 static Model LoadIQM(const char *fileName)
 {
-    #define IQM_MAGIC     "INTERQUAKEMODEL" // IQM file magic number
-    #define IQM_VERSION          2          // only IQM version 2 supported
+    #define IQM_MAGIC        "INTERQUAKEMODEL"  // IQM file magic number
+    #define IQM_VERSION              2          // Only IQM version 2 supported
 
-    #define BONE_NAME_LENGTH    32          // BoneInfo name string length
-    #define MESH_NAME_LENGTH    32          // Mesh name string length
-    #define MATERIAL_NAME_LENGTH 32         // Material name string length
+    #define BONE_NAME_LENGTH        32          // BoneInfo name string length
+    #define MESH_NAME_LENGTH        32          // Mesh name string length
+    #define MATERIAL_NAME_LENGTH    32          // Material name string length
 
     int dataSize = 0;
     unsigned char *fileData = LoadFileData(fileName, &dataSize);

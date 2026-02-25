@@ -2556,7 +2556,7 @@ return {
           description = "Shader location: matrix attribute: bone transforms (animation)"
         },
         {
-          name = "SHADER_LOC_VERTEX_INSTANCETRANSFORMS",
+          name = "SHADER_LOC_VERTEX_INSTANCETRANSFORM",
           value = 29,
           description = "Shader location: vertex attribute: instance transforms"
         }
