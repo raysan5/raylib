@@ -1482,8 +1482,8 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 // GLFW3: Called on windows get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
-    if (focused) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);   // The window was focused
-    else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);           // The window lost focus
+    if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);   // The window was focused
+    else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);           // The window lost focus
 }
 
 // GLFW3: Called on file-drop over the window
