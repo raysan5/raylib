@@ -814,7 +814,7 @@ typedef enum {
     SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: bone indices
     SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: bone weights
     SHADER_LOC_MATRIX_BONETRANSFORMS, // Shader location: matrix attribute: bone transforms (animation)
-    SHADER_LOC_VERTEX_INSTANCETRANSFORMS // Shader location: vertex attribute: instance transforms
+    SHADER_LOC_VERTEX_INSTANCETRANSFORM // Shader location: vertex attribute: instance transforms
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
