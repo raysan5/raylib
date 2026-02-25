@@ -181,6 +181,7 @@ typedef struct tagBITMAPINFOHEADER {
 #include <string.h>                     // Required for: strcmp() [Used in IsFileExtension(), LoadWaveFromMemory(), LoadMusicStreamFromMemory()]
 
 #if defined(PLATFORM_ANDROID)
+    FILE *android_fopen(const char *fileName, const char *mode);
     #define fopen(name, mode) android_fopen(name, mode)
 #endif
 
