@@ -540,7 +540,7 @@
             <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: bone indices" />
             <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: bone weights" />
             <Value name="SHADER_LOC_MATRIX_BONETRANSFORMS" integer="28" desc="Shader location: matrix attribute: bone transforms (animation)" />
-            <Value name="SHADER_LOC_VERTEX_INSTANCETRANSFORMS" integer="29" desc="Shader location: vertex attribute: instance transforms" />
+            <Value name="SHADER_LOC_VERTEX_INSTANCETRANSFORM" integer="29" desc="Shader location: vertex attribute: instance transforms" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="13" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />

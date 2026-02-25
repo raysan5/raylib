@@ -834,7 +834,7 @@ Enum 09: ShaderLocationIndex (30 values)
   Value[SHADER_LOC_VERTEX_BONEIDS]: 26
   Value[SHADER_LOC_VERTEX_BONEWEIGHTS]: 27
   Value[SHADER_LOC_MATRIX_BONETRANSFORMS]: 28
-  Value[SHADER_LOC_VERTEX_INSTANCETRANSFORMS]: 29
+  Value[SHADER_LOC_VERTEX_INSTANCETRANSFORM]: 29
 Enum 10: ShaderUniformDataType (13 values)
   Name: ShaderUniformDataType
   Description: Shader uniform data type
