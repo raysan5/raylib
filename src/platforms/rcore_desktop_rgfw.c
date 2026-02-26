@@ -992,7 +992,7 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if SUPPORT_CLIPBOARD_IMAGE
 #if defined(_WIN32)
     #define WIN32_CLIPBOARD_IMPLEMENTATION
     #define WINUSER_ALREADY_INCLUDED
@@ -1006,7 +1006,7 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if SUPPORT_CLIPBOARD_IMAGE
 #if defined(_WIN32)
     unsigned long long int dataSize = 0; // moved into _WIN32 scope until other platforms gain support
     void *fileData = NULL; // moved into _WIN32 scope until other platforms gain support
@@ -1142,7 +1142,7 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
@@ -1408,7 +1408,7 @@ void PollInputEvents(void)
             default: break;
         }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
         if (touchAction > -1)
         {
             // Process mouse events as touches to be able to use mouse-gestures

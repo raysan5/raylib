@@ -71,31 +71,31 @@
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
 
 // Support only desired texture formats on stb_image
-#if !defined(SUPPORT_FILEFORMAT_BMP)
+#if !SUPPORT_FILEFORMAT_BMP
     #define STBI_NO_BMP
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PNG)
+#if !SUPPORT_FILEFORMAT_PNG
     #define STBI_NO_PNG
 #endif
-#if !defined(SUPPORT_FILEFORMAT_TGA)
+#if !SUPPORT_FILEFORMAT_TGA
     #define STBI_NO_TGA
 #endif
-#if !defined(SUPPORT_FILEFORMAT_JPG)
+#if !SUPPORT_FILEFORMAT_JPG
     #define STBI_NO_JPEG        // Image format .jpg and .jpeg
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PSD)
+#if !SUPPORT_FILEFORMAT_PSD
     #define STBI_NO_PSD
 #endif
-#if !defined(SUPPORT_FILEFORMAT_GIF)
+#if !SUPPORT_FILEFORMAT_GIF
     #define STBI_NO_GIF
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PIC)
+#if !SUPPORT_FILEFORMAT_PIC
     #define STBI_NO_PIC
 #endif
-#if !defined(SUPPORT_FILEFORMAT_HDR)
+#if !SUPPORT_FILEFORMAT_HDR
     #define STBI_NO_HDR
 #endif
-#if !defined(SUPPORT_FILEFORMAT_PNM)
+#if !SUPPORT_FILEFORMAT_PNM
     #define STBI_NO_PNM
 #endif
 
@@ -150,11 +150,11 @@
     #endif
 #endif
 
-#if (defined(SUPPORT_FILEFORMAT_DDS) || \
-     defined(SUPPORT_FILEFORMAT_PKM) || \
-     defined(SUPPORT_FILEFORMAT_KTX) || \
-     defined(SUPPORT_FILEFORMAT_PVR) || \
-     defined(SUPPORT_FILEFORMAT_ASTC))
+#if (SUPPORT_FILEFORMAT_DDS || \
+     SUPPORT_FILEFORMAT_PKM || \
+     SUPPORT_FILEFORMAT_KTX || \
+     SUPPORT_FILEFORMAT_PVR || \
+     SUPPORT_FILEFORMAT_ASTC)
 
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
