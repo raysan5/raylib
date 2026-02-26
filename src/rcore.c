@@ -529,22 +529,6 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-// Using '#pragma message' because '#warning' is not adopted by MSVC
-#if SUPPORT_CLIPBOARD_IMAGE
-    #if !SUPPORT_MODULE_RTEXTURES
-        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
-    #endif
-
-    // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
-    #if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
-        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
-    #endif
-
-    // From what I've tested applications on Wayland saves images on clipboard as PNG
-    #if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
-        #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
-    #endif
-#endif
 
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)

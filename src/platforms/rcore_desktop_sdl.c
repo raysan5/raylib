@@ -1163,6 +1163,22 @@ Image GetClipboardImage(void)
     Image image = { 0 };
 
 #if SUPPORT_CLIPBOARD_IMAGE
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
+    return image;
+#endif
+
+// It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
+#if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
+    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
+    return image;
+#endif
+
+// From what I've tested applications on Wayland saves images on clipboard as PNG
+#if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
+    TRACELOG(LOG_WARNING, "WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
+    return image;
+#endif
     // Let's hope compiler put these arrays in static memory
     const char *imageFormats[] = {
         "image/bmp",
@@ -1197,7 +1213,7 @@ Image GetClipboardImage(void)
     }
 
     if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
-#endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
 }
