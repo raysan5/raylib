@@ -2545,7 +2545,7 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
                 }
 
                 memcpy(audioBuffer->converterResidual, inputBuffer + inputFramesProcessedThisIteration*bpf, (size_t)(residualFrameCount * bpf));
-                audioBuffer->converterResidualCount = residualFrameCount;
+                audioBuffer->converterResidualCount = (unsigned int)residualFrameCount;
             }
 
             if (inputFramesInInternalFormatCount < estimatedInputFrameCount) break;  // Reached the end of the sound
