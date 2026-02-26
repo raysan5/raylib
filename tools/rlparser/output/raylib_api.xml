@@ -2,10 +2,10 @@
 <raylibAPI>
     <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
-        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="6" desc="" />
+        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="6" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="0" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="5.6-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="6.0" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />

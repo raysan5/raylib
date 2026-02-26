@@ -9,12 +9,12 @@ Define 001: RAYLIB_H
 Define 002: RAYLIB_VERSION_MAJOR
   Name: RAYLIB_VERSION_MAJOR
   Type: INT
-  Value: 5
+  Value: 6
   Description: 
 Define 003: RAYLIB_VERSION_MINOR
   Name: RAYLIB_VERSION_MINOR
   Type: INT
-  Value: 6
+  Value: 0
   Description: 
 Define 004: RAYLIB_VERSION_PATCH
   Name: RAYLIB_VERSION_PATCH
@@ -24,7 +24,7 @@ Define 004: RAYLIB_VERSION_PATCH
 Define 005: RAYLIB_VERSION
   Name: RAYLIB_VERSION
   Type: STRING
-  Value: "5.6-dev"
+  Value: "6.0"
   Description: 
 Define 006: __declspec(x)
   Name: __declspec(x)
