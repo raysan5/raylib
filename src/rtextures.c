@@ -150,11 +150,11 @@
     #endif
 #endif
 
-#if (defined(SUPPORT_FILEFORMAT_DDS) || \
-     defined(SUPPORT_FILEFORMAT_PKM) || \
-     defined(SUPPORT_FILEFORMAT_KTX) || \
-     defined(SUPPORT_FILEFORMAT_PVR) || \
-     defined(SUPPORT_FILEFORMAT_ASTC))
+#if (SUPPORT_FILEFORMAT_DDS || \
+     SUPPORT_FILEFORMAT_PKM || \
+     SUPPORT_FILEFORMAT_KTX || \
+     SUPPORT_FILEFORMAT_PVR || \
+     SUPPORT_FILEFORMAT_ASTC)
 
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push

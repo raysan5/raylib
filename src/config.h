@@ -85,11 +85,11 @@
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
     #define SUPPORT_WINMM_HIGHRES_TIMER     1
 #endif
-#if !defined(SUPPORT_BUSY_WAIT_LOOP) && !SUPPORT_PARTIALBUSY_WAIT_LOOP
+#if !SUPPORT_BUSY_WAIT_LOOP && !SUPPORT_PARTIALBUSY_WAIT_LOOP
     // Use busy wait loop for timing sync, if not defined, a high-resolution timer is set up and used
     #define SUPPORT_BUSY_WAIT_LOOP          0       // Disabled by default
 #endif
-#if !defined(SUPPORT_PARTIALBUSY_WAIT_LOOP) && !SUPPORT_BUSY_WAIT_LOOP
+#if !SUPPORT_PARTIALBUSY_WAIT_LOOP && !SUPPORT_BUSY_WAIT_LOOP
     // Use a partial-busy wait loop, in this case frame sleeps for most of the time, 
     // but then runs a busy loop at the end for accuracy
     #define SUPPORT_PARTIALBUSY_WAIT_LOOP   1
