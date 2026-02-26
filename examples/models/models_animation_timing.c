@@ -108,12 +108,12 @@ int main(void)
                 &animFrameSpeed, 0.1f, 2.0f);
 
             // Draw playing timeline with keyframes
-            GuiLabel((Rectangle){ 10, GetScreenHeight() - 64, GetScreenWidth() - 20, 24 }, 
+            GuiLabel((Rectangle){ 10, GetScreenHeight() - 64.0f, GetScreenWidth() - 20.0f, 24 }, 
                 TextFormat("CURRENT FRAME: %.2f / %i", animFrameProgress, anims[animIndex].keyframeCount));
-            GuiProgressBar((Rectangle){ 10, GetScreenHeight() - 40, GetScreenWidth() - 20, 24 }, NULL, NULL,
+            GuiProgressBar((Rectangle){ 10, GetScreenHeight() - 40.0f, GetScreenWidth() - 20.0f, 24 }, NULL, NULL,
                 &animFrameProgress, 0.0f, (float)anims[animIndex].keyframeCount);
             for (int i = 0; i < anims[animIndex].keyframeCount; i++)
-                DrawRectangle(10 + ((float)(GetScreenWidth() - 20)/(float)anims[animIndex].keyframeCount)*(float)i, 
+                DrawRectangle(10 + (int)(((float)(GetScreenWidth() - 20)/(float)anims[animIndex].keyframeCount)*(float)i), 
                     GetScreenHeight() - 40, 1, 24, BLUE);
 
         EndDrawing();

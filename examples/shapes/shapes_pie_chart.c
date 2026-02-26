@@ -160,7 +160,7 @@ int main(void)
 
                 // Draw inner circle to create donut effect
                 // TODO: This is a hacky solution, better use DrawRing()
-                if (showDonut) DrawCircle(center.x, center.y, donutInnerRadius, RAYWHITE);
+                if (showDonut) DrawCircleV(center, donutInnerRadius, RAYWHITE);
 
                 startAngle += sweepAngle;
             }

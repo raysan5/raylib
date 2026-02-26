@@ -1564,7 +1564,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     CORE.Input.Mouse.currentButtonState[button] = action;
     CORE.Input.Touch.currentTouchState[button] = action;
 
-#if SUPPORT_GESTURES_SYSTEM && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -1605,7 +1605,7 @@ static void MouseMoveCallback(GLFWwindow *window, double x, double y)
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     }
 
-#if SUPPORT_GESTURES_SYSTEM && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 

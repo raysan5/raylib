@@ -177,10 +177,10 @@ int main(void)
             DrawRectangleRec(increaseTypeButton, SKYBLUE);
             DrawRectangleRec(decreaseResolutionButton, SKYBLUE);
             DrawRectangleRec(increaseResolutionButton, SKYBLUE);
-            DrawText("<", decreaseTypeButton.x + 3, decreaseTypeButton.y + 1, 10, BLACK);
-            DrawText(">", increaseTypeButton.x + 3, increaseTypeButton.y + 1, 10, BLACK);
-            DrawText("<", decreaseResolutionButton.x + 3, decreaseResolutionButton.y + 1, 10, BLACK);
-            DrawText(">", increaseResolutionButton.x + 3, increaseResolutionButton.y + 1, 10, BLACK);
+            DrawText("<", (int)decreaseTypeButton.x + 3, (int)decreaseTypeButton.y + 1, 10, BLACK);
+            DrawText(">", (int)increaseTypeButton.x + 3, (int)increaseTypeButton.y + 1, 10, BLACK);
+            DrawText("<", (int)decreaseResolutionButton.x + 3, (int)decreaseResolutionButton.y + 1, 10, BLACK);
+            DrawText(">", (int)increaseResolutionButton.x + 3, (int)increaseResolutionButton.y + 1, 10, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -308,7 +308,7 @@ static void ResizeRenderSize(ViewportType viewportType, int *screenWidth, int *s
     }
 
     UnloadRenderTexture(*target);
-    *target = LoadRenderTexture(sourceRect->width, -sourceRect->height);
+    *target = LoadRenderTexture((int)sourceRect->width, -(int)sourceRect->height);
 }
 
 // Example how to calculate position on RenderTexture
