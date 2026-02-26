@@ -48,7 +48,7 @@
 
 #include "config.h"     // Defines module configuration flags
 
-#if defined(SUPPORT_MODULE_RSHAPES)
+#if SUPPORT_MODULE_RSHAPES
 
 #include "rlgl.h"       // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 
@@ -128,7 +128,7 @@ void DrawPixel(int posX, int posY, Color color)
 // Draw a pixel (Vector version)
 void DrawPixelV(Vector2 position, Color color)
 {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -353,7 +353,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     float stepLength = (endAngle - startAngle)/(float)segments;
     float angle = startAngle;
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -594,7 +594,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
     float stepLength = (endAngle - startAngle)/(float)segments;
     float angle = startAngle;
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -774,7 +774,7 @@ void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color
         bottomRight.y = y + (dx + rec.width)*sinRotation + (dy + rec.height)*cosRotation;
     }
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -884,7 +884,7 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 
 /*
 // Previous implementation, it has issues... but it does not require view matrix...
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     DrawRectangle(posX, posY, width, 1, color);
     DrawRectangle(posX + width - 1, posY + 1, 1, height - 2, color);
     DrawRectangle(posX, posY + height - 1, width, 1, color);
@@ -994,7 +994,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     const Vector2 centers[4] = { point[8], point[9], point[10], point[11] };
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -1248,7 +1248,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 
     if (lineThick > 1)
     {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
         rlSetTexture(GetShapesTexture().id);
         Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -1422,7 +1422,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -1538,7 +1538,7 @@ void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color col
     float centralAngle = rotation*DEG2RAD;
     float angleStep = 360.0f/(float)sides*DEG2RAD;
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -1607,7 +1607,7 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
     float exteriorAngle = 360.0f/(float)sides*DEG2RAD;
     float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
 
-#if defined(SUPPORT_QUADS_DRAW_MODE)
+#if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
@@ -1663,7 +1663,7 @@ void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color 
 {
     if (pointCount < 2) return;
 
-#if defined(SUPPORT_SPLINE_MITERS)
+#if SUPPORT_SPLINE_MITERS
     Vector2 prevNormal = (Vector2){-(points[1].y - points[0].y), (points[1].x - points[0].x)};
     float prevLength = sqrtf(prevNormal.x*prevNormal.x + prevNormal.y*prevNormal.y);
 
@@ -1770,8 +1770,8 @@ void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color 
     }
 #endif
 
-#if defined(SUPPORT_SPLINE_SEGMENT_CAPS)
-    // TODO: Add spline segment rounded caps at the begin/end of the spline
+#if SUPPORT_SPLINE_SEGMENT_CAPS
+    // TODO: Add spline segment rounded caps at the begin/end of the spline?
 #endif
 }
 
@@ -2484,4 +2484,4 @@ static float EaseCubicInOut(float t, float b, float c, float d)
     return result;
 }
 
-#endif      // SUPPORT_MODULE_RSHAPES
+#endif // SUPPORT_MODULE_RSHAPES

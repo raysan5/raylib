@@ -6,26 +6,22 @@
 *       #define SUPPORT_MODULE_RTEXT
 *           rtext module is included in the build
 *
-*       #define SUPPORT_DEFAULT_FONT
-*           Load default raylib font on initialization to be used by DrawText() and MeasureText()
-*           If no default font loaded, DrawTextEx() and MeasureTextEx() are required
-*
 *       #define SUPPORT_FILEFORMAT_FNT
 *       #define SUPPORT_FILEFORMAT_TTF
 *       #define SUPPORT_FILEFORMAT_BDF
 *           Selected desired fileformats to be supported for loading. Some of those formats are
 *           supported by default, to remove support, just comment unrequired #define in this module
 *
-*       #define SUPPORT_FONT_ATLAS_WHITE_REC
-*           On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
-*           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
-*           drawing text and shapes with a single draw call [SetShapesTexture()]
-*
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
 *
 *       #define MAX_TEXTSPLIT_COUNT
 *           TextSplit() function static substrings pointers array (pointing to static buffer)
+*
+*       #define FONT_ATLAS_CORNER_REC_SIZE
+*           On font atlas image generation [GenImageFontAtlas()], add a NxN pixels white rectangle
+*           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
+*           drawing text and shapes with a single draw call [SetShapesTexture()]
 *
 *   DEPENDENCIES:
 *       stb_truetype  - Load TTF file and rasterize characters data
@@ -57,7 +53,7 @@
 
 #include "config.h"         // Defines module configuration flags
 
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
 
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2 -> Only DrawTextPro()
 
@@ -67,7 +63,7 @@
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-function"
@@ -83,7 +79,7 @@
     #endif
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wunused-function"
@@ -105,14 +101,18 @@
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef MAX_TEXT_BUFFER_LENGTH
-    #define MAX_TEXT_BUFFER_LENGTH              1024        // Size of internal static buffers used on some functions:
-                                                            // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
-#endif
-#ifndef MAX_TEXT_UNICODE_CHARS
-    #define MAX_TEXT_UNICODE_CHARS               512        // Maximum number of unicode codepoints: GetCodepoints()
+    #define MAX_TEXT_BUFFER_LENGTH     1024         // Size of internal static buffers used on some functions:
+                                                    // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
 #endif
 #ifndef MAX_TEXTSPLIT_COUNT
-    #define MAX_TEXTSPLIT_COUNT                  128        // Maximum number of substrings to split: TextSplit()
+    #define MAX_TEXTSPLIT_COUNT         128         // Maximum number of substrings to split: TextSplit()
+#endif
+
+#ifndef FONT_ATLAS_CORNER_REC_SIZE
+    // On font atlas image generation [GenImageFontAtlas()], add a 3x3 pixels white rectangle
+    // at the bottom-right corner of the atlas. It can be useful for shapes drawing, to allow
+    // drawing text and shapes with a single draw call [SetShapesTexture()]
+    #define FONT_ATLAS_CORNER_REC_SIZE    3         // Size of white rectangle drawn on font atlas on font loading
 #endif
 
 //----------------------------------------------------------------------------------
@@ -123,12 +123,12 @@
 //----------------------------------------------------------------------------------
 // Global variables
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_DEFAULT_FONT)
 // Default font provided by raylib
 // NOTE: Default font is loaded on InitWindow() and disposed on CloseWindow() [module: core]
 static Font defaultFont = { 0 };
-#endif
-static int textLineSpacing = 2; // Text vertical line spacing in pixels (between lines)
+
+// Text vertical line spacing in pixels (between lines)
+static int textLineSpacing = 2; 
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -138,22 +138,19 @@ static int textLineSpacing = 2; // Text vertical line spacing in pixels (between
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
 static Font LoadBMFont(const char *fileName);   // Load a BMFont file (AngelCode font file)
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
 static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, const int *codepoints, int codepointCount, int *outFontSize);
 #endif
 
-#if defined(SUPPORT_DEFAULT_FONT)
 extern void LoadFontDefault(void);
 extern void UnloadFontDefault(void);
-#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_DEFAULT_FONT)
 // Load raylib default font
 extern void LoadFontDefault(void)
 {
@@ -329,17 +326,11 @@ extern void UnloadFontDefault(void)
     defaultFont.glyphs = NULL;
     defaultFont.recs = NULL;
 }
-#endif      // SUPPORT_DEFAULT_FONT
 
 // Get the default font, useful to be used with extended parameters
 Font GetFontDefault()
 {
-#if defined(SUPPORT_DEFAULT_FONT)
     return defaultFont;
-#else
-    Font font = { 0 };
-    return font;
-#endif
 }
 
 // Load Font from file into GPU memory (VRAM)
@@ -361,15 +352,15 @@ Font LoadFont(const char *fileName)
 
     Font font = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     if (IsFileExtension(fileName, ".ttf") || IsFileExtension(fileName, ".otf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
     if (IsFileExtension(fileName, ".fnt")) font = LoadBMFont(fileName);
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
     if (IsFileExtension(fileName, ".bdf")) font = LoadFontEx(fileName, FONT_TTF_DEFAULT_SIZE, NULL, FONT_TTF_DEFAULT_NUMCHARS);
     else
 #endif
@@ -548,7 +539,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     font.baseSize = fontSize;
     font.glyphPadding = 0;
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     if (TextIsEqual(fileExtLower, ".ttf") ||
         TextIsEqual(fileExtLower, ".otf"))
     {
@@ -556,7 +547,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     }
     else
 #endif
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
     if (TextIsEqual(fileExtLower, ".bdf"))
     {
         font.glyphs = LoadFontDataBDF(fileData, dataSize, codepoints, (codepointCount > 0)? codepointCount : 95, &font.baseSize);
@@ -568,7 +559,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
         font.glyphs = NULL;
     }
 
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     if (font.glyphs != NULL)
     {
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
@@ -629,7 +620,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     GlyphInfo *glyphs = NULL;
     int glyphCounter = 0;
 
-#if defined(SUPPORT_FILEFORMAT_TTF)
+#if SUPPORT_FILEFORMAT_TTF
     // Load font data (including pixel data) from TTF memory file
     // NOTE: Loaded information should be enough to generate font image atlas, using any packaging method
     if (fileData != NULL)
@@ -789,7 +780,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
 // Generate image font atlas using chars info
 // NOTE: Packing method: 0-Default, 1-Skyline
-#if defined(SUPPORT_FILEFORMAT_TTF) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
 Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod)
 {
     Image atlas = { 0 };
@@ -961,13 +952,12 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         RL_FREE(context);
     }
 
-#if defined(SUPPORT_FONT_ATLAS_WHITE_REC)
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
     // useful to use as the white texture to draw shapes with raylib
     // Security: ensure the atlas is large enough to hold a 3x3 rectangle
-    if ((atlas.width >= 3) && (atlas.height >= 3))
+    if ((FONT_ATLAS_CORNER_REC_SIZE > 0) && (atlas.width >= 3) && (atlas.height >= 3))
     {
-        for (int i = 0, k = atlas.width*atlas.height - 1; i < 3; i++)
+        for (int i = 0, k = atlas.width*atlas.height - 1; i < FONT_ATLAS_CORNER_REC_SIZE; i++)
         {
             ((unsigned char *)atlas.data)[k - 0] = 255;
             ((unsigned char *)atlas.data)[k - 1] = 255;
@@ -975,7 +965,6 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
             k -= atlas.width;
         }
     }
-#endif
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
     unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
@@ -1601,7 +1590,6 @@ float TextToFloat(const char *text)
     return value*sign;
 }
 
-#if defined(SUPPORT_TEXT_MANIPULATION)
 // Copy one string to another, returns bytes copied
 // NOTE: Alternative implementation to strcpy(dst, src) from C standard library
 int TextCopy(char *dst, const char *src)
@@ -2195,7 +2183,6 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
 
     return utf8;
 }
-#endif      // SUPPORT_TEXT_MANIPULATION
 
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
 // When an invalid UTF-8 byte is encountered we exit as soon as possible and a '?'(0x3f) codepoint is returned
@@ -2370,7 +2357,7 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_FNT) || defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_FNT || SUPPORT_FILEFORMAT_BDF
 // Read a line from memory
 // REQUIRES: memcpy()
 // NOTE: Returns the number of bytes read
@@ -2384,7 +2371,7 @@ static int GetLine(const char *origin, char *buffer, int maxLength)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_FNT)
+#if SUPPORT_FILEFORMAT_FNT
 // Load a BMFont file (AngelCode font file)
 // REQUIRES: strstr(), sscanf(), strrchr(), memcpy()
 static Font LoadBMFont(const char *fileName)
@@ -2561,7 +2548,7 @@ static Font LoadBMFont(const char *fileName)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_BDF)
+#if SUPPORT_FILEFORMAT_BDF
 // Convert hexadecimal to decimal (single digit)
 static unsigned char HexToInt(char hex)
 {

@@ -80,7 +80,7 @@
     #include <errno.h>      // Required for: EBUSY, EAGAIN
 
     #define MAX_DRM_CACHED_BUFFERS  3
-#endif // SUPPORT_DRM_CACHE
+#endif
 
 #ifndef EGL_OPENGL_ES3_BIT
     #define EGL_OPENGL_ES3_BIT  0x40
@@ -160,7 +160,7 @@ static FramebufferCache fbCache[MAX_DRM_CACHED_BUFFERS] = { 0 };
 static volatile int fbCacheCount = 0;
 static volatile bool pendingFlip = false;
 static bool crtcSet = false;
-#endif // SUPPORT_DRM_CACHE
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -253,7 +253,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
 static void InitKeyboard(void);                 // Initialize raw keyboard system
 static void RestoreKeyboard(void);              // Restore keyboard system
 static void ProcessKeyboard(void);              // Process keyboard events
@@ -1065,7 +1065,7 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
     // because ProcessGestureEvent() is just called on an event, not every frame
     UpdateGestures();
@@ -1088,7 +1088,7 @@ void PollInputEvents(void)
 
     PollKeyboardEvents();
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
     // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
     if (!platform.eventKeyboardMode) ProcessKeyboard();
@@ -1621,7 +1621,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     InitEvdevInput();   // Evdev inputs initialization
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
     InitKeyboard();     // Keyboard init (stdin)
 #endif
     //----------------------------------------------------------------------------
@@ -1741,7 +1741,7 @@ void ClosePlatform(void)
     }
 }
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
@@ -1900,7 +1900,7 @@ static void ProcessKeyboard(void)
         }
     }
 }
-#endif  // SUPPORT_SSH_KEYBOARD_RPI
+#endif // SUPPORT_SSH_KEYBOARD_RPI
 
 // Initialize user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
@@ -2196,7 +2196,7 @@ static void PollKeyboardEvents(void)
         // Check if the event is a key event
         if (event.type != EV_KEY) continue;
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
         // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
@@ -2552,7 +2552,7 @@ static void PollMouseEvents(void)
             CORE.Input.Touch.pointId[i] = -1;
         }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
         if (touchAction > -1)
         {
             GestureEvent gestureEvent = { 0 };

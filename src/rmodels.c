@@ -44,7 +44,7 @@
 
 #include "config.h"         // Defines module configuration flags
 
-#if defined(SUPPORT_MODULE_RMODELS)
+#if SUPPORT_MODULE_RMODELS
 
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 #include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
@@ -54,7 +54,7 @@
 #include <string.h>         // Required for: memcmp(), strlen(), strncpy()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
     #define TINYOBJ_MALLOC RL_MALLOC
     #define TINYOBJ_CALLOC RL_CALLOC
     #define TINYOBJ_REALLOC RL_REALLOC
@@ -64,7 +64,7 @@
     #include "external/tinyobj_loader_c.h"      // OBJ/MTL file formats loading
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     #define CGLTF_MALLOC RL_MALLOC
     #define CGLTF_FREE RL_FREE
 
@@ -72,7 +72,7 @@
     #include "external/cgltf.h"         // glTF file format loading
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
     #define VOX_MALLOC RL_MALLOC
     #define VOX_CALLOC RL_CALLOC
     #define VOX_REALLOC RL_REALLOC
@@ -82,7 +82,7 @@
     #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
     #define M3D_MALLOC RL_MALLOC
     #define M3D_REALLOC RL_REALLOC
     #define M3D_FREE RL_FREE
@@ -91,7 +91,7 @@
     #include "external/m3d.h"           // Model3D file format loading
 #endif
 
-#if defined(SUPPORT_MESH_GENERATION)
+#if SUPPORT_MESH_GENERATION
     #define PAR_MALLOC(T, N) ((T *)RL_MALLOC(N*sizeof(T)))
     #define PAR_CALLOC(T, N) ((T *)RL_CALLOC(N*sizeof(T), 1))
     #define PAR_REALLOC(T, BUF, N) ((T *)RL_REALLOC(BUF, sizeof(T)*(N)))
@@ -126,7 +126,13 @@
     #define MAX_MATERIAL_MAPS       12      // Maximum number of maps supported
 #endif
 #ifndef MAX_MESH_VERTEX_BUFFERS
+#if SUPPORT_GPU_SKINNING
+    // NOTE: Two additional vertex buffers required to store bone indices and bone weights
+    // WARNING: Some GPUs could not support more than 8 VBOs
     #define MAX_MESH_VERTEX_BUFFERS  9      // Maximum vertex buffers (VBO) per mesh
+#else
+    #define MAX_MESH_VERTEX_BUFFERS  7      // Maximum vertex buffers (VBO) per mesh
+#endif
 #endif
 #ifndef MAX_FILEPATH_LENGTH
     #define MAX_FILEPATH_LENGTH   4096      // Maximum length for filepaths (Linux PATH_MAX default value)
@@ -145,25 +151,25 @@
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
 static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount);   // Load IQM animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
 static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCount);  // Load GLTF animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
 static Model LoadVOX(const char *filename);     // Load VOX mesh data
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
 static Model LoadM3D(const char *filename);     // Load M3D mesh data
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount);   // Load M3D animation data
 #endif
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
 static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *materials, int materialCount);  // Process obj materials
 #endif
 
@@ -1099,19 +1105,19 @@ Model LoadModel(const char *fileName)
 {
     Model model = { 0 };
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
     if (IsFileExtension(fileName, ".obj")) model = LoadOBJ(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
     if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     if (IsFileExtension(fileName, ".gltf") || IsFileExtension(fileName, ".glb")) model = LoadGLTF(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
     if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
     if (IsFileExtension(fileName, ".m3d")) model = LoadM3D(fileName);
 #endif
 
@@ -1276,7 +1282,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT] = 0;      // Vertex buffer: tangents
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2] = 0;    // Vertex buffer: texcoords2
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = 0;      // Vertex buffer: indices
-#ifdef SUPPORT_GPU_SKINNING
+#if SUPPORT_GPU_SKINNING
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES] = 0;  // Vertex buffer: boneIndices
     mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS] = 0;  // Vertex buffer: boneWeights
 #endif
@@ -1377,7 +1383,7 @@ void UploadMesh(Mesh *mesh, bool dynamic)
         rlDisableVertexAttribute(RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2);
     }
 
-#ifdef SUPPORT_GPU_SKINNING
+#if SUPPORT_GPU_SKINNING
     if (mesh->boneIndices != NULL)
     {
         // Enable vertex attribute: boneIndices (shader-location = 7)
@@ -1609,7 +1615,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-#ifdef SUPPORT_GPU_SKINNING
+#if SUPPORT_GPU_SKINNING
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
@@ -1848,7 +1854,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
             rlEnableVertexAttribute(material.shader.locs[SHADER_LOC_VERTEX_TEXCOORD02]);
         }
 
-#ifdef SUPPORT_GPU_SKINNING
+#if SUPPORT_GPU_SKINNING
         // Bind mesh VBO data: vertex bone ids (shader-location = 6, if available)
         if (material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1)
         {
@@ -2125,7 +2131,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     return success;
 }
 
-#if defined(SUPPORT_FILEFORMAT_OBJ) || defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
 // Process obj materials
 static void ProcessMaterialsOBJ(Material *materials, tinyobj_material_t *mats, int materialCount)
 {
@@ -2169,7 +2175,7 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 
     // TODO: Support IQM and GLTF for materials parsing
 
-#if defined(SUPPORT_FILEFORMAT_MTL)
+#if SUPPORT_FILEFORMAT_MTL
     if (IsFileExtension(fileName, ".mtl"))
     {
         tinyobj_material_t *mats = NULL;
@@ -2263,13 +2269,13 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
 {
     ModelAnimation *animations = NULL;
 
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
     if (IsFileExtension(fileName, ".iqm")) animations = LoadModelAnimationsIQM(fileName, animCount);
 #endif
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
     if (IsFileExtension(fileName, ".m3d")) animations = LoadModelAnimationsM3D(fileName, animCount);
 #endif
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
     if (IsFileExtension(fileName, ".gltf;.glb")) animations = LoadModelAnimationsGLTF(fileName, animCount);
 #endif
 
@@ -2548,7 +2554,7 @@ bool IsModelAnimationValid(Model model, ModelAnimation anim)
     return result;
 }
 
-#if defined(SUPPORT_MESH_GENERATION)
+#if SUPPORT_MESH_GENERATION
 // Generate polygonal mesh
 Mesh GenMeshPoly(int sides, float radius)
 {
@@ -3691,7 +3697,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     return mesh;
 }
-#endif      // SUPPORT_MESH_GENERATION
+#endif // SUPPORT_MESH_GENERATION
 
 // Compute mesh bounding box limits
 // NOTE: minVertex and maxVertex should be transformed by model transform matrix
@@ -4378,7 +4384,7 @@ RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Ve
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
-#if defined(SUPPORT_FILEFORMAT_IQM) || defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_IQM || SUPPORT_FILEFORMAT_GLTF
 // Build pose from parent joints
 // NOTE: Required for animations loading (required by IQM and GLTF)
 static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform *transforms)
@@ -4402,7 +4408,7 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_OBJ)
+#if SUPPORT_FILEFORMAT_OBJ
 // Load OBJ mesh data
 // Notes to keep in mind:
 //  - A mesh is created for every material present in the obj file
@@ -4653,7 +4659,7 @@ static Model LoadOBJ(const char *fileName)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_IQM)
+#if SUPPORT_FILEFORMAT_IQM
 // Load IQM mesh data
 static Model LoadIQM(const char *fileName)
 {
@@ -4834,7 +4840,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].triangleCount = imesh[i].num_triangles;
         model.meshes[i].indices = (unsigned short *)RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
-#if !defined(SUPPORT_GPU_SKINNING)
+#if !SUPPORT_GPU_SKINNING
         // Animated vertex data, what we actually process for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
@@ -5276,7 +5282,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_GLTF)
+#if SUPPORT_FILEFORMAT_GLTF
 // Load file data callback for cgltf
 static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, const char *path, cgltf_size *size, void **data)
 {
@@ -6317,7 +6323,7 @@ static Model LoadGLTF(const char *fileName)
                     }
                 }
 
-#if !defined(SUPPORT_GPU_SKINNING)
+#if !SUPPORT_GPU_SKINNING
                 // Animated vertex data (CPU skinning)
                 model.meshes[meshIndex].animVertices = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
@@ -6676,7 +6682,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_VOX)
+#if SUPPORT_FILEFORMAT_VOX
 // Load VOX (MagicaVoxel) mesh data
 static Model LoadVOX(const char *fileName)
 {
@@ -6786,7 +6792,7 @@ static Model LoadVOX(const char *fileName)
 }
 #endif
 
-#if defined(SUPPORT_FILEFORMAT_M3D)
+#if SUPPORT_FILEFORMAT_M3D
 // Hook LoadFileData()/UnloadFileData() calls to M3D loaders
 unsigned char *m3d_loaderhook(char *fn, unsigned int *len) { return LoadFileData((const char *)fn, (int *)len); }
 void m3d_freehook(void *data) { UnloadFileData((unsigned char *)data); }
@@ -6924,7 +6930,7 @@ static Model LoadM3D(const char *fileName)
                 {
                     model.meshes[k].boneIndices = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
                     model.meshes[k].boneWeights = (float *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(float));
-#if !defined(SUPPORT_GPU_SKINNING)
+#if !SUPPORT_GPU_SKINNING
                     model.meshes[k].animVertices = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
                     model.meshes[k].animNormals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
 #endif
@@ -7131,7 +7137,7 @@ static Model LoadM3D(const char *fileName)
             {
                 model.meshes[i].boneCount = model.skeleton.boneCount;
 
-#if !defined(SUPPORT_GPU_SKINNING)
+#if !SUPPORT_GPU_SKINNING
                 // Initialize vertex buffers for CPU skinning
                 memcpy(model.meshes[i].animVertices, model.meshes[i].vertices, model.meshes[i].vertexCount*3*sizeof(float));
                 memcpy(model.meshes[i].animNormals, model.meshes[i].normals, model.meshes[i].vertexCount*3*sizeof(float));
@@ -7268,4 +7274,4 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 }
 #endif
 
-#endif      // SUPPORT_MODULE_RMODELS
+#endif // SUPPORT_MODULE_RMODELS

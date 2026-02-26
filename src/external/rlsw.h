@@ -644,7 +644,7 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_ARCH_RISCV
 #endif
 
-#if defined(RLSW_USE_SIMD_INTRINSICS)
+#if RLSW_USE_SIMD_INTRINSICS
     // Check for SIMD vector instructions
     // NOTE: Compiler is responsible to enable required flags for host device,
     // supported features are detected at compiler init but varies depending on compiler
@@ -695,7 +695,7 @@ SWAPI void swBindTexture(uint32_t id);
         #define SW_HAS_RVV
         #include <riscv_vector.h>
     #endif
-#endif  // RLSW_USE_SIMD_INTRINSICS
+#endif
 
 #ifdef __cplusplus
     #define SW_CURLY_INIT(name) name

@@ -30,7 +30,7 @@
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *
-*       #define RAYMATH_USE_SIMD_INTRINSICS
+*       #define RAYMATH_USE_SIMD_INTRINSICS   1
 *           Try to enable SIMD intrinsics for MatrixMultiply()
 *           Note that users enabling it must be aware of the target platform where application will
 *           run to support the selected SIMD intrinsic, for now, only SSE is supported
@@ -180,7 +180,7 @@ typedef struct float16 {
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
 
-#if defined(RAYMATH_USE_SIMD_INTRINSICS)
+#if RAYMATH_USE_SIMD_INTRINSICS
     // SIMD is used on the most costly raymath function MatrixMultiply()
     // NOTE: Only SSE intrinsics support implemented
     // TODO: Consider support for other SIMD instrinsics:
@@ -3112,6 +3112,6 @@ inline const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
     return lhs;
 }
 //-------------------------------------------------------------------------------
-#endif  // C++ operators
+#endif // C++ operators
 
-#endif  // RAYMATH_H
+#endif // RAYMATH_H
