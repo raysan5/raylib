@@ -20,15 +20,22 @@
 #         - Linux (X11 desktop mode)
 #         - macOS/OSX (x64, arm64 (not tested))
 #         - Others (not tested)
-#     > PLATFORM_WEB_RGFW:
+#     > PLATFORM_DESKTOP_WIN32 (native Win32):
+#         - Windows (Win32, Win64)
+#     > PLATFORM_WEB (GLFW + Emscripten):
 #         - HTML5 (WebAssembly)
-#     > PLATFORM_WEB:
+#     > PLATFORM_WEB_EMSCRIPTEN (Emscripten):
 #         - HTML5 (WebAssembly)
-#     > PLATFORM_DRM:
+#     > PLATFORM_WEB_RGFW (Emscripten):
+#         - HTML5 (WebAssembly)
+#     > PLATFORM_DRM (native DRM):
 #         - Raspberry Pi 0-5 (DRM/KMS)
 #         - Linux DRM subsystem (KMS mode)
-#     > PLATFORM_ANDROID:
+#         - Embedded devices (with GPU)
+#     > PLATFORM_ANDROID (native NDK):
 #         - Android (ARM, ARM64)
+#     > PLATFORM_MEMORY
+#         - Memory framebuffer output, using software renderer, no OS required
 #
 #   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -68,8 +75,8 @@ else
 endif
 
 # Define required raylib variables
-RAYLIB_VERSION        = 5.5.0
-RAYLIB_API_VERSION    = 550
+RAYLIB_VERSION        = 6.0.0
+RAYLIB_API_VERSION    = 600
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
