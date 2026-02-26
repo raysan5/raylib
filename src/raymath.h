@@ -2708,7 +2708,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].x));
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].y));
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].z));
-    };
+    }
     matColumns[0] = Vector3Scale(matColumns[0], 1.0f / stabilizer);
     matColumns[1] = Vector3Scale(matColumns[1], 1.0f / stabilizer);
     matColumns[2] = Vector3Scale(matColumns[2], 1.0f / stabilizer);
