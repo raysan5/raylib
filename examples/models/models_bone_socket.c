@@ -116,7 +116,7 @@ int main(void)
         // Update model animation
         ModelAnimation anim = modelAnimations[animIndex];
         animCurrentFrame = (animCurrentFrame + 1)%anim.keyframeCount;
-        UpdateModelAnimation(characterModel, anim, animCurrentFrame);
+        UpdateModelAnimation(characterModel, anim, (float)animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -129,7 +129,7 @@ int main(void)
                 // Draw character
                 Quaternion characterRotate = QuaternionFromAxisAngle((Vector3){ 0.0f, 1.0f, 0.0f }, angle*DEG2RAD);
                 characterModel.transform = MatrixMultiply(QuaternionToMatrix(characterRotate), MatrixTranslate(position.x, position.y, position.z));
-                UpdateModelAnimation(characterModel, anim, animCurrentFrame);
+                UpdateModelAnimation(characterModel, anim, (float)animCurrentFrame);
                 DrawMesh(characterModel.meshes[0], characterModel.materials[1], characterModel.transform);
 
                 // Draw equipments (hat, sword, shield)

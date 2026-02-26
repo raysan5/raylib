@@ -117,7 +117,7 @@ int main(void)
 
         frameCounter++;
         frameCounter %= (anims[0].keyframeCount);
-        UpdateModelAnimation(robot, anims[0], frameCounter);
+        UpdateModelAnimation(robot, anims[0], (float)frameCounter);
 
         // Move light with arrow keys
         const float cameraSpeed = 0.05f;
