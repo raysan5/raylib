@@ -78,7 +78,7 @@ int main(void)
 
             GuiSetStyle(LISTVIEW, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
             GuiSetStyle(LISTVIEW, TEXT_PADDING, 40);
-            GuiListViewEx((Rectangle){ 0, 50, GetScreenWidth(), GetScreenHeight() - 50 },
+            GuiListViewEx((Rectangle){ 0, 50, (float)GetScreenWidth(), (float)GetScreenHeight() - 50 },
                 files.paths, files.count, &listScrollIndex, &listItemActive, &listItemFocused);
 
         EndDrawing();

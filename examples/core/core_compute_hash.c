@@ -60,7 +60,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (btnComputeHashes)
         {
-            int textInputLen = strlen(textInput);
+            int textInputLen = (int)strlen(textInput);
 
             // Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
             base64Text = EncodeDataBase64((unsigned char *)textInput, textInputLen, &base64TextSize);
