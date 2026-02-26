@@ -275,11 +275,11 @@ static int android_write(void *cookie, const char *buf, int size);
 static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
 static int android_close(void *cookie);
 
-FILE *android_fopen(const char *fileName, const char *mode); // Replacement for fopen() -> Read-only!
+FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)
+FILE *__wrap_fopen(const char *fileName, const char *mode); // Replacement for fopen()
+
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
-
-#define fopen(name, mode) android_fopen(name, mode)
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -1524,25 +1524,20 @@ static void SetupFramebuffer(int width, int height)
     }
 }
 
-// Replacement for fopen()
+// Replacement for fopen(), used as linker wrap entry point (-Wl,--wrap=fopen)
 // REF: https://developer.android.com/ndk/reference/group/asset
-FILE *android_fopen(const char *fileName, const char *mode)
+FILE *__wrap_fopen(const char *fileName, const char *mode)
 {
     FILE *file = NULL;
-    
+
+    // NOTE: AAsset provides access to read-only asset, write operations use regular fopen
     if (mode[0] == 'w')
     {
-        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
-        // assets directory through AAssetManager but it could be required to write data
-        // using the standard stdio FILE access functions
-        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
-        #undef fopen
-        file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-        #define fopen(name, mode) android_fopen(name, mode)
+        file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+        if (file == NULL) file = __real_fopen(fileName, mode);
     }
     else
     {
-        // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(platform.app->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
 
         if (asset != NULL)
@@ -1552,14 +1547,12 @@ FILE *android_fopen(const char *fileName, const char *mode)
         }
         else
         {
-            #undef fopen
             // Just do a regular open if file is not found in the assets
-            file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-            if (file == NULL) file = fopen(fileName, mode);
-            #define fopen(name, mode) android_fopen(name, mode)
+            file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+            if (file == NULL) file = __real_fopen(fileName, mode);
         }
     }
-    
+
     return file;
 }
 
