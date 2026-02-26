@@ -1049,7 +1049,10 @@ Image GetClipboardImage(void)
     Image image = { 0 };
 
 #if SUPPORT_CLIPBOARD_IMAGE
+#if SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
+
+#if SUPPORT_FILEFORMAT_BMP
     unsigned long long int dataSize = 0;
     void *bmpData = NULL;
     int width = 0;
@@ -1060,9 +1063,15 @@ Image GetClipboardImage(void)
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
 #else
+    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
+#endif // SUPPORT_FILEFORMAT_BMP
+#else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif
-#endif
+#endif // defined(_WIN32)
+#else // !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
+#endif // SUPPORT_MODULE_RTEXTURES
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
 }
@@ -2049,7 +2058,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     CORE.Input.Mouse.currentButtonState[button] = action;
     CORE.Input.Touch.currentTouchState[button] = action;
 
-#if SUPPORT_GESTURES_SYSTEM && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -2084,7 +2093,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.currentPosition.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-#if SUPPORT_GESTURES_SYSTEM && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
