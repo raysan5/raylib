@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 208]
+## EXAMPLES COLLECTION [TOTAL: 209]
 
 ### category: core [49]
 
@@ -122,7 +122,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_easings_testbed](shapes/shapes_easings_testbed.c) | <img src="shapes/shapes_easings_testbed.png" alt="shapes_easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Juan Miguel López](https://github.com/flashback-fx) |
 
-### category: textures [30]
+### category: textures [31]
 
 Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
@@ -158,6 +158,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_sprite_stacking](textures/textures_sprite_stacking.c) | <img src="textures/textures_sprite_stacking.png" alt="textures_sprite_stacking" width="80"> | ⭐⭐☆☆ | 5.6-dev | 6.0 | [Robin](https://github.com/RobinsAviary) |
 | [textures_cellular_automata](textures/textures_cellular_automata.c) | <img src="textures/textures_cellular_automata.png" alt="textures_cellular_automata" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [textures_framebuffer_rendering](textures/textures_framebuffer_rendering.c) | <img src="textures/textures_framebuffer_rendering.png" alt="textures_framebuffer_rendering" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jack Boakes](https://github.com/jackboakes) |
+| [core_render_texture](textures/textures_clipboard_image.c.c) | <img src="textures/textures_clipboard_image.c.png" alt="core_render_texture" width="80"> | ⭐☆☆☆ | 5.6-dev | 5.6-dev | [Maicon Santana](https://github.com/maiconpintoabreu) |
 
 ### category: text [16]
 
@@ -217,7 +218,7 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 5.6-dev | 5.6 | [Robin](https://github.com/RobinsAviary) |
 | [models_animation_blend_custom](models/models_animation_blend_custom.c) | <img src="models/models_animation_blend_custom.png" alt="models_animation_blend_custom" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 5.5 | [dmitrii-brand](https://github.com/dmitrii-brand) |
 | [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation_blending" width="80"> | ☆☆☆☆ | 5.5 | 5.6-dev | [Kirandeep](https://github.com/Kirandeep-Singh-Khehra) |
-| [models_animation_timming](models/models_animation_timming.c) | <img src="models/models_animation_timming.png" alt="models_animation_timming" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
+| [models_animation_timing](models/models_animation_timing.c) | <img src="models/models_animation_timing.png" alt="models_animation_timing" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 
 ### category: shaders [34]
 
