@@ -1059,6 +1059,43 @@ Image GetClipboardImage(void)
 
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
+#elif defined(__linux__)
+    // Try to detect if we are on Wayland or X11
+    const char *waylandDisplay = getenv("WAYLAND_DISPLAY");
+    FILE *pipe = NULL;
+
+    if (waylandDisplay != NULL) {
+        // Wayland: Use wl-paste (requires wl-clipboard package)
+        pipe = popen("wl-paste --type image/png", "r");
+    } else {
+        // X11: Use xclip (requires xclip package)
+        pipe = popen("xclip -selection clipboard -t image/png -o", "r");
+    }
+
+    if (pipe != NULL) {
+        // Read the pipe into a dynamic buffer
+        unsigned char *buffer = NULL;
+        size_t size = 0;
+        size_t capacity = 1024 * 1024; // Start with 1MB
+        buffer = (unsigned char *)RL_MALLOC(capacity);
+
+        while (!feof(pipe)) {
+            if (size + 1024 > capacity) {
+                capacity *= 2;
+                buffer = (unsigned char *)RL_REALLOC(buffer, capacity);
+            }
+            size += fread(buffer + size, 1, 1024, pipe);
+        }
+        
+        int exitCode = pclose(pipe);
+
+        if (exitCode == 0 && size > 0) {
+            // Raylib's LoadImageFromMemory is smart enough to detect PNG data
+            image = LoadImageFromMemory(".png", buffer, (int)size);
+        }
+
+        free(buffer);
+    }
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif // defined(_WIN32)
