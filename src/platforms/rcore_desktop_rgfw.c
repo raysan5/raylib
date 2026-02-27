@@ -1006,11 +1006,9 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-#if SUPPORT_CLIPBOARD_IMAGE
-#if SUPPORT_MODULE_RTEXTURES
+#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
 
-#if SUPPORT_FILEFORMAT_BMP
     unsigned long long int dataSize = 0; // moved into _WIN32 scope until other platforms gain support
     void *fileData = NULL; // moved into _WIN32 scope until other platforms gain support
 
@@ -1021,14 +1019,10 @@ Image GetClipboardImage(void)
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
 #else
-    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
-#endif // SUPPORT_FILEFORMAT_BMP
-#else
     TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
 #endif // defined(_WIN32)
-#else // !SUPPORT_MODULE_RTEXTURES
-    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_MODULE_RTEXTURES
+#else
+    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;

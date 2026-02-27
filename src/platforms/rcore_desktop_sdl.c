@@ -1177,7 +1177,6 @@ Image GetClipboardImage(void)
 // From what I've tested applications on Wayland saves images on clipboard as PNG
 #if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
     TRACELOG(LOG_WARNING, "WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
-    return image;
 #endif
     // Let's hope compiler put these arrays in static memory
     const char *imageFormats[] = {
