@@ -1072,7 +1072,15 @@ Image GetClipboardImage(void)
     if (!dpy) return image;
 
     Window root = DefaultRootWindow(dpy);
-    Window win = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
+    Window win = XCreateSimpleWindow(
+        dpy,      // The connection to the X Server
+        root,     // The 'Parent' window (usually the desktop/root)
+        0, 0,     // X and Y position on the screen
+        1, 1,     // Width and Height (1x1 pixel)
+        0,        // Border width
+        0,        // Border color
+        0         // Background color
+    );
 
     Atom clipboard = XInternAtom(dpy, "CLIPBOARD", False);
     Atom targetType = XInternAtom(dpy, "image/png", False); // Ask for PNG
