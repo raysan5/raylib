@@ -858,14 +858,15 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 if (offsetY > (atlas.height - fontSize - padding))
                 {
                     TRACELOG(LOG_WARNING, "FONT: Updating atlas size to fit all characters");
-                    
-                    // TODO: Increment atlas size (atlas.height*2) and continue adding glyphs
+
+                    // Update atlas size to fit all characters
                     int updatedAtlasHeight = atlas.height*2;
-                    int updatedAtlasDataSize = atlas.width*atlas.height;
+                    int updatedAtlasDataSize = atlas.width*updatedAtlasHeight;
                     unsigned char *updatedAtlasData = (unsigned char *)RL_CALLOC(updatedAtlasDataSize, 1);
                     
                     memcpy(updatedAtlasData, atlas.data, atlasDataSize);
                     RL_FREE(atlas.data);
+                    atlas.data = updatedAtlasData;
                     atlas.height = updatedAtlasHeight;
                     atlasDataSize = updatedAtlasDataSize;
                 }
