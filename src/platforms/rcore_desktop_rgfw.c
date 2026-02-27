@@ -999,7 +999,7 @@ const char *GetClipboardText(void)
     #define WINBASE_ALREADY_INCLUDED
     #define WINGDI_ALREADY_INCLUDED
     #include "../external/win32_clipboard.h"
-#elif defined(__linux__)
+#elif defined(__linux__) && defined(DRGFW_X11)
     #include <X11/Xlib.h>
     #include <X11/Xatom.h>
 #endif
@@ -1023,7 +1023,7 @@ Image GetClipboardImage(void)
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
 
-#elif defined(__linux__)
+#elif defined(__linux__) && defined(DRGFW_X11)
 
     // Implementation based on https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
     Display* dpy = XOpenDisplay(NULL);

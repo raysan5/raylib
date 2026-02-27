@@ -1043,7 +1043,7 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(platform.handle);
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE && defined(__linux__)
+#if SUPPORT_CLIPBOARD_IMAGE && defined(__linux__) && defined(_GLFW_X11)
     #include <X11/Xlib.h>
     #include <X11/Xatom.h>
 #endif
@@ -1065,7 +1065,7 @@ Image GetClipboardImage(void)
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
 
-#elif defined(__linux__)
+#elif defined(__linux__) && defined(_GLFW_X11)
 
     // Implementation based on https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
     Display* dpy = XOpenDisplay(NULL);
