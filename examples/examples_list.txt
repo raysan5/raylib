@@ -47,7 +47,6 @@ core;core_random_sequence;★☆☆☆;5.0;5.0;2023;2025;"Dalton Overmyer";@REDl
 core;core_automation_events;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
 core;core_highdpi_demo;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
 core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
-textures_clipboard_image;★☆☆☆;5.6-dev;5.6-dev;2026;2026;"Maicon Santana";@maiconpintoabreu
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
 core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
@@ -129,6 +128,7 @@ textures;textures_textured_curve;★★★☆;4.5;4.5;2022;2025;"Jeffery Myers";
 textures;textures_sprite_stacking;★★☆☆;5.6-dev;6.0;2025;2025;"Robin";@RobinsAviary
 textures;textures_cellular_automata;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 textures;textures_framebuffer_rendering;★★☆☆;5.6;5.6;2026;2026;"Jack Boakes";@jackboakes
+textures;textures_clipboard_image;★☆☆☆;5.6-dev;5.6-dev;2026;2026;"Maicon Santana";@maiconpintoabreu
 text;text_sprite_fonts;★☆☆☆;1.7;3.7;2017;2025;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 text;text_font_filters;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
