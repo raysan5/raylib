@@ -1043,6 +1043,11 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(platform.handle);
 }
 
+#if SUPPORT_CLIPBOARD_IMAGE && defined(__linux__)
+    #include <X11/Xlib.h>
+    #include <X11/Xatom.h>
+#endif
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
@@ -1059,43 +1064,43 @@ Image GetClipboardImage(void)
 
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
+
 #elif defined(__linux__)
-    // Try to detect if we are on Wayland or X11
-    const char *waylandDisplay = getenv("WAYLAND_DISPLAY");
-    FILE *pipe = NULL;
 
-    if (waylandDisplay != NULL) {
-        // Wayland: Use wl-paste (requires wl-clipboard package)
-        pipe = popen("wl-paste --type image/png", "r");
-    } else {
-        // X11: Use xclip (requires xclip package)
-        pipe = popen("xclip -selection clipboard -t image/png -o", "r");
+    // Implementation based on https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
+    Display* dpy = XOpenDisplay(NULL);
+    if (!dpy) return image;
+
+    Window root = DefaultRootWindow(dpy);
+    Window win = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
+
+    Atom clipboard = XInternAtom(dpy, "CLIPBOARD", False);
+    Atom targetType = XInternAtom(dpy, "image/png", False); // Ask for PNG
+    Atom property = XInternAtom(dpy, "RAYLIB_CLIPBOARD_MANAGER", False);
+
+    // Request the data: "Convert whatever is in CLIPBOARD to image/png and put it in RAYLIB_CLIPBOARD_MANAGER"
+    XConvertSelection(dpy, clipboard, targetType, property, win, CurrentTime);
+
+    // Wait for the SelectionNotify event
+    XEvent ev;
+    XNextEvent(dpy, &ev);
+
+    Atom actualType;
+    int actualFormat;
+    unsigned long nitems, bytesAfter;
+    unsigned char* data = NULL;
+
+    // Read the data from our ghost window's property
+    XGetWindowProperty(dpy, win, property, 0, ~0L, False, AnyPropertyType,
+                        &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+
+    if (data != NULL) {
+        image = LoadImageFromMemory(".png", data, (int)nitems);
+        XFree(data);
     }
 
-    if (pipe != NULL) {
-        // Read the pipe into a dynamic buffer
-        unsigned char *buffer = NULL;
-        size_t size = 0;
-        size_t capacity = 1024 * 1024; // Start with 1MB
-        buffer = (unsigned char *)RL_MALLOC(capacity);
-
-        while (!feof(pipe)) {
-            if (size + 1024 > capacity) {
-                capacity *= 2;
-                buffer = (unsigned char *)RL_REALLOC(buffer, capacity);
-            }
-            size += fread(buffer + size, 1, 1024, pipe);
-        }
-        
-        int exitCode = pclose(pipe);
-
-        if (exitCode == 0 && size > 0) {
-            // Raylib's LoadImageFromMemory is smart enough to detect PNG data
-            image = LoadImageFromMemory(".png", buffer, (int)size);
-        }
-
-        free(buffer);
-    }
+    XDestroyWindow(dpy, win);
+    XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif // defined(_WIN32)

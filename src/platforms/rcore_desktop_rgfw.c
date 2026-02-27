@@ -999,6 +999,9 @@ const char *GetClipboardText(void)
     #define WINBASE_ALREADY_INCLUDED
     #define WINGDI_ALREADY_INCLUDED
     #include "../external/win32_clipboard.h"
+#elif defined(__linux__)
+    #include <X11/Xlib.h>
+    #include <X11/Xatom.h>
 #endif
 #endif
 
@@ -1006,6 +1009,7 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
+    
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
 
@@ -1018,6 +1022,43 @@ Image GetClipboardImage(void)
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
+
+#elif defined(__linux__)
+
+    // Implementation based on https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
+    Display* dpy = XOpenDisplay(NULL);
+    if (!dpy) return image;
+
+    Window root = DefaultRootWindow(dpy);
+    Window win = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, 0);
+
+    Atom clipboard = XInternAtom(dpy, "CLIPBOARD", False);
+    Atom targetType = XInternAtom(dpy, "image/png", False); // Ask for PNG
+    Atom property = XInternAtom(dpy, "RAYLIB_CLIPBOARD_MANAGER", False);
+
+    // Request the data: "Convert whatever is in CLIPBOARD to image/png and put it in RAYLIB_CLIPBOARD_MANAGER"
+    XConvertSelection(dpy, clipboard, targetType, property, win, CurrentTime);
+
+    // Wait for the SelectionNotify event
+    XEvent ev;
+    XNextEvent(dpy, &ev);
+
+    Atom actualType;
+    int actualFormat;
+    unsigned long nitems, bytesAfter;
+    unsigned char* data = NULL;
+
+    // Read the data from our ghost window's property
+    XGetWindowProperty(dpy, win, property, 0, ~0L, False, AnyPropertyType,
+                        &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+
+    if (data != NULL) {
+        image = LoadImageFromMemory(".png", data, (int)nitems);
+        XFree(data);
+    }
+
+    XDestroyWindow(dpy, win);
+    XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
 #endif // defined(_WIN32)
