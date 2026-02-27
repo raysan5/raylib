@@ -596,6 +596,7 @@ TEXTURES = \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
+    textures/textures_clipboard_image \
     textures/textures_fog_of_war \
     textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
@@ -1021,6 +1022,9 @@ textures/textures_bunnymark: textures/textures_bunnymark.c
     --preload-file textures/resources/raybunny.png@resources/raybunny.png
 
 textures/textures_cellular_automata: textures/textures_cellular_automata.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+textures/textures_clipboard_image: textures/textures_clipboard_image.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_fog_of_war: textures/textures_fog_of_war.c

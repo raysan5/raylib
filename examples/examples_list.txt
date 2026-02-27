@@ -47,6 +47,7 @@ core;core_random_sequence;★☆☆☆;5.0;5.0;2023;2025;"Dalton Overmyer";@REDl
 core;core_automation_events;★★★☆;5.0;5.0;2023;2025;"Ramon Santamaria";@raysan5
 core;core_highdpi_demo;★★☆☆;5.0;5.5;2025;2025;"Jonathan Marler";@marler8997
 core;core_render_texture;★☆☆☆;5.6-dev;5.6-dev;2025;2025;"Ramon Santamaria";@raysan5
+textures_clipboard_image;★☆☆☆;5.6-dev;5.6-dev;2026;2026;"Maicon Santana";@maiconpintoabreu
 core;core_undo_redo;★★★☆;5.5;5.6;2025;2025;"Ramon Santamaria";@raysan5
 core;core_viewport_scaling;★★☆☆;5.5;5.5;2025;2025;"Agnis Aldiņš";@nezvers
 core;core_input_actions;★★☆☆;5.5;5.6;2025;2025;"Jett";@JettMonstersGoBoom
