@@ -75,6 +75,12 @@ if (${PLATFORM} MATCHES "Web")
     endif()
 endif()
 
+if (${PLATFORM} MATCHES "Android")
+    # Wrap fopen at link time so all code (including third-party libs) goes
+    # through __wrap_fopen, which handles Android APK asset loading
+    target_link_options(raylib INTERFACE -Wl,--wrap=fopen)
+endif()
+
 set_target_properties(raylib PROPERTIES
                       PUBLIC_HEADER "${raylib_public_headers}"
                       VERSION ${PROJECT_VERSION}

@@ -614,6 +614,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Lsrc
     # Avoid unresolved symbol pointing to external main()
     LDFLAGS += -Wl,-undefined,dynamic_lookup
+    # Wrap fopen at link time so all code (including third-party libs) goes
+    # through __wrap_fopen, which handles Android APK asset loading
+    LDFLAGS += -Wl,--wrap=fopen
 endif
 
 # Define libraries required on linking: LDLIBS
