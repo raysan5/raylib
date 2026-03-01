@@ -4994,7 +4994,7 @@ static void rlLoadShaderDefault(void)
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
-    "in vec3 vertexPosition;            \n"
+    "in highp vec3 vertexPosition;      \n"
     "in vec2 vertexTexCoord;            \n"
     "in vec4 vertexColor;               \n"
     "out vec2 fragTexCoord;             \n"
@@ -5002,14 +5002,14 @@ static void rlLoadShaderDefault(void)
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
-    "attribute vec3 vertexPosition;     \n"
+    "attribute highp vec3 vertexPosition; \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
 #endif
 
-    "uniform mat4 mvp;                  \n"
+    "uniform highp mat4 mvp;            \n"
     "void main()                        \n"
     "{                                  \n"
     "    fragTexCoord = vertexTexCoord; \n"
