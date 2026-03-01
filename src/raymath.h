@@ -27,6 +27,11 @@
 *           Define static inline functions code, so #include header suffices for use
 *           This may use up lots of memory
 *
+*       #define RAYMATH_CPP_CONSTEXPR
+*           Adds constexpr to RMAPI if compiling in C++.
+*            By default, this is false.
+*
+*
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *
@@ -63,6 +68,12 @@
     #error "Specifying both RAYMATH_IMPLEMENTATION and RAYMATH_STATIC_INLINE is contradictory"
 #endif
 
+#if defined(__cplusplus) && defined(RAYMATH_CPP_CONSTEXPR)
+    #define RM_CPP_CONSTEXPR constexpr
+#else
+    #define RM_CPP_CONSTEXPR 
+#endif
+
 // Function specifiers definition
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
@@ -76,7 +87,7 @@
     #endif
 #elif defined(RAYMATH_STATIC_INLINE)
 #if defined(__cplusplus)
-    #define RMAPI static inline constexpr
+    #define RMAPI static inline RM_CPP_CONSTEXPR
 #else
     #define RMAPI static inline // Functions may be inlined, no external out-of-line definition
 #endif
@@ -85,7 +96,7 @@
         #define RMAPI static inline // plain inline not supported by tinycc (See issue #435)
     #else
         #if defined(__cplusplus)
-            #define RMAPI static inline constexpr
+            #define RMAPI static inline RM_CPP_CONSTEXPR
         #else
             #define RMAPI inline        // Functions may be inlined or external definition used
         #endif
@@ -186,7 +197,11 @@ typedef struct float16 {
 #define RL_FLOAT16_TYPE
 #endif
 
-#include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
+#if defined(__cplusplus)
+    #include <cmath>        // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
+#else
+    #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
+#endif
 
 #if RAYMATH_USE_SIMD_INTRINSICS
     // SIMD is used on the most costly raymath function MatrixMultiply()
@@ -2782,370 +2797,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
 }
 
 #if defined(__cplusplus) && !defined(RAYMATH_DISABLE_CPP_OPERATORS)
-
-// Optional C++ math operators
-//-------------------------------------------------------------------------------
-
-// Vector2 operators
-static constexpr Vector2 Vector2Zeros = { 0, 0 };
-static constexpr Vector2 Vector2Ones = { 1, 1 };
-static constexpr Vector2 Vector2UnitX = { 1, 0 };
-static constexpr Vector2 Vector2UnitY = { 0, 1 };
-
-inline constexpr Vector2 operator + (const Vector2& lhs, const Vector2& rhs)
-{
-    return Vector2Add(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator += (Vector2& lhs, const Vector2& rhs)
-{
-    lhs = Vector2Add(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator - (const Vector2& lhs, const Vector2& rhs)
-{
-    return Vector2Subtract(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator -= (Vector2& lhs, const Vector2& rhs)
-{
-    lhs = Vector2Subtract(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator * (const Vector2& lhs, const float& rhs)
-{
-    return Vector2Scale(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator *= (Vector2& lhs, const float& rhs)
-{
-    lhs = Vector2Scale(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator * (const Vector2& lhs, const Vector2& rhs)
-{
-    return Vector2Multiply(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator *= (Vector2& lhs, const Vector2& rhs)
-{
-    lhs = Vector2Multiply(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator * (const Vector2& lhs, const Matrix& rhs)
-{
-    return Vector2Transform(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator *= (Vector2& lhs, const Matrix& rhs)
-{
-    lhs = Vector2Transform(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator / (const Vector2& lhs, const float& rhs)
-{
-    return Vector2Scale(lhs, 1.0f/rhs);
-}
-
-inline constexpr const Vector2& operator /= (Vector2& lhs, const float& rhs)
-{
-    lhs = Vector2Scale(lhs, 1.0f/rhs);
-    return lhs;
-}
-
-inline constexpr Vector2 operator / (const Vector2& lhs, const Vector2& rhs)
-{
-    return Vector2Divide(lhs, rhs);
-}
-
-inline constexpr const Vector2& operator /= (Vector2& lhs, const Vector2& rhs)
-{
-    lhs = Vector2Divide(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr bool operator == (const Vector2& lhs, const Vector2& rhs)
-{
-    return FloatEquals(lhs.x, rhs.x) && FloatEquals(lhs.y, rhs.y);
-}
-
-inline constexpr bool operator != (const Vector2& lhs, const Vector2& rhs)
-{
-    return !FloatEquals(lhs.x, rhs.x) || !FloatEquals(lhs.y, rhs.y);
-}
-
-// Vector3 operators
-static constexpr Vector3 Vector3Zeros = { 0, 0, 0 };
-static constexpr Vector3 Vector3Ones = { 1, 1, 1 };
-static constexpr Vector3 Vector3UnitX = { 1, 0, 0 };
-static constexpr Vector3 Vector3UnitY = { 0, 1, 0 };
-static constexpr Vector3 Vector3UnitZ = { 0, 0, 1 };
-
-inline constexpr Vector3 operator + (const Vector3& lhs, const Vector3& rhs)
-{
-    return Vector3Add(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator += (Vector3& lhs, const Vector3& rhs)
-{
-    lhs = Vector3Add(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator - (const Vector3& lhs, const Vector3& rhs)
-{
-    return Vector3Subtract(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator -= (Vector3& lhs, const Vector3& rhs)
-{
-    lhs = Vector3Subtract(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator * (const Vector3& lhs, const float& rhs)
-{
-    return Vector3Scale(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator *= (Vector3& lhs, const float& rhs)
-{
-    lhs = Vector3Scale(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator * (const Vector3& lhs, const Vector3& rhs)
-{
-    return Vector3Multiply(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator *= (Vector3& lhs, const Vector3& rhs)
-{
-    lhs = Vector3Multiply(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator * (const Vector3& lhs, const Matrix& rhs)
-{
-    return Vector3Transform(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator *= (Vector3& lhs, const Matrix& rhs)
-{
-    lhs = Vector3Transform(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator / (const Vector3& lhs, const float& rhs)
-{
-    return Vector3Scale(lhs, 1.0f/rhs);
-}
-
-inline constexpr const Vector3& operator /= (Vector3& lhs, const float& rhs)
-{
-    lhs = Vector3Scale(lhs, 1.0f/rhs);
-    return lhs;
-}
-
-inline constexpr Vector3 operator / (const Vector3& lhs, const Vector3& rhs)
-{
-    return Vector3Divide(lhs, rhs);
-}
-
-inline constexpr const Vector3& operator /= (Vector3& lhs, const Vector3& rhs)
-{
-    lhs = Vector3Divide(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr bool operator == (const Vector3& lhs, const Vector3& rhs)
-{
-    return FloatEquals(lhs.x, rhs.x) && FloatEquals(lhs.y, rhs.y) && FloatEquals(lhs.z, rhs.z);
-}
-
-inline constexpr bool operator != (const Vector3& lhs, const Vector3& rhs)
-{
-    return !FloatEquals(lhs.x, rhs.x) || !FloatEquals(lhs.y, rhs.y) || !FloatEquals(lhs.z, rhs.z);
-}
-
-// Vector4 operators
-static constexpr Vector4 Vector4Zeros = { 0, 0, 0, 0 };
-static constexpr Vector4 Vector4Ones = { 1, 1, 1, 1 };
-static constexpr Vector4 Vector4UnitX = { 1, 0, 0, 0 };
-static constexpr Vector4 Vector4UnitY = { 0, 1, 0, 0 };
-static constexpr Vector4 Vector4UnitZ = { 0, 0, 1, 0 };
-static constexpr Vector4 Vector4UnitW = { 0, 0, 0, 1 };
-
-inline constexpr Vector4 operator + (const Vector4& lhs, const Vector4& rhs)
-{
-    return Vector4Add(lhs, rhs);
-}
-
-inline constexpr const Vector4& operator += (Vector4& lhs, const Vector4& rhs)
-{
-    lhs = Vector4Add(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector4 operator - (const Vector4& lhs, const Vector4& rhs)
-{
-    return Vector4Subtract(lhs, rhs);
-}
-
-inline constexpr const Vector4& operator -= (Vector4& lhs, const Vector4& rhs)
-{
-    lhs = Vector4Subtract(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector4 operator * (const Vector4& lhs, const float& rhs)
-{
-    return Vector4Scale(lhs, rhs);
-}
-
-inline constexpr const Vector4& operator *= (Vector4& lhs, const float& rhs)
-{
-    lhs = Vector4Scale(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector4 operator * (const Vector4& lhs, const Vector4& rhs)
-{
-    return Vector4Multiply(lhs, rhs);
-}
-
-inline constexpr const Vector4& operator *= (Vector4& lhs, const Vector4& rhs)
-{
-    lhs = Vector4Multiply(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Vector4 operator / (const Vector4& lhs, const float& rhs)
-{
-    return Vector4Scale(lhs, 1.0f/rhs);
-}
-
-inline constexpr const Vector4& operator /= (Vector4& lhs, const float& rhs)
-{
-    lhs = Vector4Scale(lhs, 1.0f/rhs);
-    return lhs;
-}
-
-inline constexpr Vector4 operator / (const Vector4& lhs, const Vector4& rhs)
-{
-    return Vector4Divide(lhs, rhs);
-}
-
-inline constexpr const Vector4& operator /= (Vector4& lhs, const Vector4& rhs)
-{
-    lhs = Vector4Divide(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr bool operator == (const Vector4& lhs, const Vector4& rhs)
-{
-    return FloatEquals(lhs.x, rhs.x) && FloatEquals(lhs.y, rhs.y) && FloatEquals(lhs.z, rhs.z) && FloatEquals(lhs.w, rhs.w);
-}
-
-inline constexpr bool operator != (const Vector4& lhs, const Vector4& rhs)
-{
-    return !FloatEquals(lhs.x, rhs.x) || !FloatEquals(lhs.y, rhs.y) || !FloatEquals(lhs.z, rhs.z) || !FloatEquals(lhs.w, rhs.w);
-}
-
-// Quaternion operators
-static constexpr Quaternion QuaternionZeros = { 0, 0, 0, 0 };
-static constexpr Quaternion QuaternionOnes = { 1, 1, 1, 1 };
-static constexpr Quaternion QuaternionUnitX = { 0, 0, 0, 1 };
-
-inline constexpr Quaternion operator + (const Quaternion& lhs, const float& rhs)
-{
-    return QuaternionAddValue(lhs, rhs);
-}
-
-inline constexpr const Quaternion& operator += (Quaternion& lhs, const float& rhs)
-{
-    lhs = QuaternionAddValue(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Quaternion operator - (const Quaternion& lhs, const float& rhs)
-{
-    return QuaternionSubtractValue(lhs, rhs);
-}
-
-inline constexpr const Quaternion& operator -= (Quaternion& lhs, const float& rhs)
-{
-    lhs = QuaternionSubtractValue(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Quaternion operator * (const Quaternion& lhs, const Matrix& rhs)
-{
-    return QuaternionTransform(lhs, rhs);
-}
-
-inline constexpr const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
-{
-    lhs = QuaternionTransform(lhs, rhs);
-    return lhs;
-}
-
-// Matrix operators
-static constexpr Matrix MatrixZeros = {};
-static constexpr Matrix MatrixUnit = { 1, 0, 0, 0, 
-                                        0, 1, 0, 0, 
-                                        0, 0, 1, 0,
-                                        0, 0, 0, 1 };
-inline constexpr Matrix operator + (const Matrix& lhs, const Matrix& rhs)
-{
-    return MatrixAdd(lhs, rhs);
-}
-
-inline constexpr const Matrix& operator += (Matrix& lhs, const Matrix& rhs)
-{
-    lhs = MatrixAdd(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Matrix operator - (const Matrix& lhs, const Matrix& rhs)
-{
-    return MatrixSubtract(lhs, rhs);
-}
-
-inline constexpr const Matrix& operator -= (Matrix& lhs, const Matrix& rhs)
-{
-    lhs = MatrixSubtract(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Matrix operator * (const Matrix& lhs, const Matrix& rhs)
-{
-    return MatrixMultiply(lhs, rhs);
-}
-
-inline constexpr const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
-{
-    lhs = MatrixMultiply(lhs, rhs);
-    return lhs;
-}
-
-inline constexpr Matrix operator * (const Matrix& lhs, const float value)
-{
-    return MatrixMultiplyValue(lhs, value);
-}
-
-inline constexpr const Matrix& operator *= (Matrix& lhs, const float value)
-{
-    lhs = MatrixMultiplyValue(lhs, value);
-    return lhs;
-}
-
-//-------------------------------------------------------------------------------
-#endif // C++ operators
+    #include "raymath_cpp_addon.h"
+#endif
 
 #endif // RAYMATH_H
