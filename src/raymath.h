@@ -24,7 +24,7 @@
 *           or source files without problems. But only ONE file should hold the implementation
 *
 *       #define RAYMATH_STATIC_INLINE
-*           Define static inline constexpr functions code, so #include header suffices for use
+*           Define static inline functions code, so #include header suffices for use
 *           This may use up lots of memory
 *
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
