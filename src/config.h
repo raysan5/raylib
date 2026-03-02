@@ -361,6 +361,8 @@
 //------------------------------------------------------------------------------------
 #endif // !EXTERNAL_CONFIG_FLAGS
 
+// NOTE: Following macro depends on config flag that can
+// be externally defined, so, it needs to be outside EXTERNAL_CONFIG_FLAGS
 #if SUPPORT_TRACELOG
     #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
 #else
