@@ -124,10 +124,11 @@
     #define SUPPORT_CLIPBOARD_IMAGE         1
 #endif
 
-#if SUPPORT_TRACELOG
-    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
-#else
+#if !defined(SUPPORT_TRACELOG) || !SUPPORT_TRACELOG
+    // Not defined or disabled
     #define TRACELOG(level, ...) (void)0
+#else
+    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
 #endif
 
 // rcore: Configuration values
