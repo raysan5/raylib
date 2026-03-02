@@ -1765,6 +1765,18 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     return result;
 }
 
+RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
+{
+    Matrix result = {
+        left.m0 * value, left.m4 * value, left.m8  * value, left.m12 * value, 
+        left.m1 * value, left.m5 * value, left.m9  * value, left.m13 * value, 
+        left.m2 * value, left.m6 * value, left.m10 * value, left.m14 * value, 
+        left.m3 * value, left.m7 * value, left.m11 * value, left.m15 * value
+    };
+
+    return result;
+}
+
 // Get translation matrix
 RMAPI Matrix MatrixTranslate(float x, float y, float z)
 {
@@ -3079,6 +3091,11 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
 }
 
 // Matrix operators
+static constexpr Matrix MatrixUnit = { 1, 0, 0, 0, 
+                                       0, 1, 0, 0, 
+                                       0, 0, 1, 0, 
+                                       0, 0, 0, 1 };
+
 inline Matrix operator + (const Matrix& lhs, const Matrix& rhs)
 {
     return MatrixAdd(lhs, rhs);
@@ -3111,6 +3128,18 @@ inline const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
     lhs = MatrixMultiply(lhs, rhs);
     return lhs;
 }
+
+inline Matrix operator * (const Matrix& lhs, const float value)
+{
+    return MatrixMultiplyValue(lhs, value);
+}
+
+inline const Matrix& operator *= (Matrix& lhs, const float value)
+{
+    lhs = MatrixMultiplyValue(lhs, value);
+    return lhs;
+}
+
 //-------------------------------------------------------------------------------
 #endif // C++ operators
 
