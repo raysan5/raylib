@@ -124,12 +124,6 @@
     #define SUPPORT_CLIPBOARD_IMAGE         1
 #endif
 
-#if SUPPORT_TRACELOG
-    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
-#else
-    #define TRACELOG(level, ...) (void)0
-#endif
-
 // rcore: Configuration values
 // NOTE: Below values are alread defined inside [rcore.c] so there is no need to be
 // redefined here, in case it must be done, just uncomment the required line and update
@@ -365,7 +359,12 @@
 //#define AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES  0    // Device period size (controls latency, 0 defaults to 10ms)
 //#define MAX_AUDIO_BUFFER_POOL_CHANNELS     16    // Maximum number of audio pool channels
 //------------------------------------------------------------------------------------
-
 #endif // !EXTERNAL_CONFIG_FLAGS
+
+#if SUPPORT_TRACELOG
+    #define TRACELOG(level, ...) TraceLog(level, __VA_ARGS__)
+#else
+    #define TRACELOG(level, ...) (void)0
+#endif
 
 #endif // CONFIG_H
