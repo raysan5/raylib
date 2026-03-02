@@ -390,7 +390,7 @@ typedef uint64_t stbir_uint64;
 #endif
 #endif
 
-#if defined(_x86_64) || defined( __x86_64__ ) || defined( _M_X64 ) || defined(__x86_64) || defined(_M_AMD64) || defined(__SSE2__) || defined(STBIR_SSE) || defined(STBIR_SSE2)
+#if defined(_x86_64) || defined( __x86_64__ ) || ((defined(_M_X64) || defined(_M_AMD64)) && !defined(_M_ARM64EC)) || defined(__x86_64) || defined(__SSE2__) || defined(STBIR_SSE) || defined(STBIR_SSE2)
   #ifndef STBIR_SSE2
     #define STBIR_SSE2
   #endif
@@ -420,7 +420,7 @@ typedef uint64_t stbir_uint64;
   #endif
 #endif
 
-#if defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ ) || ((__ARM_NEON_FP & 4) != 0) || defined(__ARM_NEON__)
+#if defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ ) || ((__ARM_NEON_FP & 4) != 0) || defined(__ARM_NEON__)
 #ifndef STBIR_NEON
 #define STBIR_NEON
 #endif
@@ -1779,7 +1779,7 @@ static stbir__inline stbir_uint8 stbir__linear_to_srgb_uchar(float in)
   #define stbir__simdf_a1a1( out, alp, ones ) (out) = vzipq_f32(vuzpq_f32(alp, alp).val[1], ones).val[0]
   #define stbir__simdf_1a1a( out, alp, ones ) (out) = vzipq_f32(ones, vuzpq_f32(alp, alp).val[0]).val[0]
 
-  #if defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ )
+  #if defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ )
 
     #define stbir__simdf_aaa1( out, alp, ones ) (out) = vcopyq_laneq_f32(vdupq_n_f32(vgetq_lane_f32(alp, 3)), 3, ones, 3)
     #define stbir__simdf_1aaa( out, alp, ones ) (out) = vcopyq_laneq_f32(vdupq_n_f32(vgetq_lane_f32(alp, 0)), 0, ones, 0)
@@ -1912,7 +1912,7 @@ static stbir__inline stbir_uint8 stbir__linear_to_srgb_uchar(float in)
   #define STBIR_FLOORF stbir_simd_floorf
   static stbir__inline float stbir_simd_floorf(float x)
   {
-    #if defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ )
+    #if defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ )
     return vget_lane_f32( vrndm_f32( vdup_n_f32(x) ), 0);
     #else
     float32x2_t f = vdup_n_f32(x);
@@ -1930,7 +1930,7 @@ static stbir__inline stbir_uint8 stbir__linear_to_srgb_uchar(float in)
   #define STBIR_CEILF stbir_simd_ceilf
   static stbir__inline float stbir_simd_ceilf(float x)
   {
-    #if defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ )
+    #if defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ )
     return vget_lane_f32( vrndp_f32( vdup_n_f32(x) ), 0);
     #else
     float32x2_t f = vdup_n_f32(x);
@@ -2430,7 +2430,7 @@ static stbir__inline stbir_uint8 stbir__linear_to_srgb_uchar(float in)
     stbir__simdi_store( output,final );
   }
 
-#elif defined(STBIR_NEON) && defined(_MSC_VER) && defined(_M_ARM64) && !defined(__clang__) // 64-bit ARM on MSVC (not clang)
+#elif defined(STBIR_NEON) && defined(_MSC_VER) && (defined(_M_ARM64) || defined(_M_ARM64EC)) && !defined(__clang__) // 64-bit ARM on MSVC (not clang)
 
   static stbir__inline void stbir__half_to_float_SIMD(float * output, stbir__FP16 const * input)
   {
@@ -2458,7 +2458,7 @@ static stbir__inline stbir_uint8 stbir__linear_to_srgb_uchar(float in)
     return vget_lane_f16(vcvt_f16_f32(vdupq_n_f32(f)), 0).n16_u16[0];
   }
 
-#elif defined(STBIR_NEON) && ( defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ ) ) // 64-bit ARM
+#elif defined(STBIR_NEON) && ( defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ ) ) // 64-bit ARM
 
   static stbir__inline void stbir__half_to_float_SIMD(float * output, stbir__FP16 const * input)
   {
@@ -2705,6 +2705,10 @@ static void stbir_overlapping_memcpy( void * dest, void const * src, size_t byte
 
 #ifdef _MSC_VER
 
+#if defined (_M_ARM64EC)
+#include <intrin.h>
+#endif
+
   STBIRDEF stbir_uint64 __rdtsc();
   #define STBIR_PROFILE_FUNC() __rdtsc()
 
@@ -2719,7 +2723,7 @@ static void stbir_overlapping_memcpy( void * dest, void const * src, size_t byte
 
 #endif  // msvc
 
-#elif defined( _M_ARM64 ) || defined( __aarch64__ ) || defined( __arm64__ ) || defined(__ARM_NEON__)
+#elif defined( _M_ARM64 ) || defined( _M_ARM64EC ) || defined( __aarch64__ ) || defined( __arm64__ ) || defined(__ARM_NEON__)
 
 #if defined( _MSC_VER ) && !defined(__clang__)
 

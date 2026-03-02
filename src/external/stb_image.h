@@ -689,7 +689,7 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 #endif
 
 // x86/x64 detection
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC))
 #define STBI__X64_TARGET
 #elif defined(__i386) || defined(_M_IX86)
 #define STBI__X86_TARGET
