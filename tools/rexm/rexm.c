@@ -1040,7 +1040,7 @@ int main(int argc, char *argv[])
                         // Find position to add new example on list, just before the following category
                         // Category order: core, shapes, textures, text, models, shaders, audio
                         int exListNextCatIndex = -1;
-                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, exCategories[nextCatIndex]);
+                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, TextFormat("\n%s", exCategories[nextCatIndex])) + 1;
                         else exListNextCatIndex = exListLen; // EOF
 
                         strncpy(exListUpdated, exList, exListNextCatIndex);
