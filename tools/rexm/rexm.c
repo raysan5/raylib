@@ -1034,13 +1034,13 @@ int main(int argc, char *argv[])
 
                     if (catIndex > -1)
                     {
-                        int nextCatIndex = catIndex;
+                        int nextCatIndex = catIndex + 1;
                         if (nextCatIndex > (REXM_MAX_EXAMPLE_CATEGORIES - 1)) nextCatIndex = -1; // EOF
 
                         // Find position to add new example on list, just before the following category
                         // Category order: core, shapes, textures, text, models, shaders, audio
                         int exListNextCatIndex = -1;
-                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, exCategories[nextCatIndex]);
+                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, TextFormat("\n%s", exCategories[nextCatIndex])) + 1;
                         else exListNextCatIndex = exListLen; // EOF
 
                         strncpy(exListUpdated, exList, exListNextCatIndex);
