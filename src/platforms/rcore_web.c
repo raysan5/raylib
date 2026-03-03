@@ -801,35 +801,92 @@ void SetClipboardText(const char *text)
     else EM_ASM({ navigator.clipboard.writeText(UTF8ToString($0)); }, text);
 }
 
+// Async EM_JS to be able to await clickboard read asynchronous function
+EM_ASYNC_JS(void, RequestClipboardData, (void), {
+    if (navigator.clipboard && window.isSecureContext) {
+        let items = await navigator.clipboard.read();
+        for (const item of items) {
+
+            // Check if this item contains plain text or image
+            if (item.types.includes("text/plain")) {
+                const blob = await item.getType("text/plain");
+                const text = await blob.text();
+                window._lastClipboardString = text;
+            }
+            else if (item.types.find(t => t.startsWith("image/"))) {
+                const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
+                const bitmap = await createImageBitmap(blob);
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+                
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                
+                // Store image and data for the Fetch function
+                window._lastImgWidth = canvas.width;
+                window._lastImgHeight = canvas.height;
+                window._lastImgData = imgData; 
+            }
+        }
+    } else {
+        console.warn("Clipboard read() requires HTTPS/Localhost");
+    }
+});
+
+// Returns the string created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(char*, GetLastPastedText, (void), {
+    var str = window._lastClipboardString || "";
+    var length = lengthBytesUTF8(str) + 1;
+    var ptr = _malloc(length);
+    stringToUTF8(str, ptr, length);
+    return ptr;
+});
+
+// Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(unsigned char*, GetLastPastedImage, (int* width, int* height), {
+    if (!window._lastImgData) return 0;
+
+    const data = window._lastImgData;
+    const ptr = _malloc(data.length);
+    HEAPU8.set(data, ptr);
+    
+    // Set the width and height via the pointers passed from C
+    // HEAP32 handles the 4-byte integers
+    if (width)  setValue(width, window._lastImgWidth,  'i32');
+    if (height) setValue(height, window._lastImgHeight, 'i32');
+    
+    // Clear the JS buffer so we don't fetch the same image twice
+    window._lastImgData = null; 
+    
+    return ptr;
+});
+
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-/*
-    // Accessing clipboard data from browser is tricky due to security reasons
-    // The method to use is navigator.clipboard.readText() but this is an asynchronous method
-    // that will return at some moment after the function is called with the required data
-    emscripten_run_script_string("navigator.clipboard.readText() \
-        .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
-        .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
-    );
-
-    // The main issue is getting that data, one approach could be using ASYNCIFY and wait
-    // for the data but it requires adding Asyncify emscripten library on compilation
-
-    // Another approach could be just copy the data in a HTML text field and try to retrieve it
-    // later on if available... and clean it for future accesses
-*/
-    return NULL;
+    RequestClipboardData();
+    return GetLastPastedText();
 }
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-
+    int w = 0, h = 0;
+    RequestClipboardData();
+    unsigned char* data = GetLastPastedImage(&w, &h);
+    if (data != NULL) {
+        image.data = data;
+        image.width = w;
+        image.height = h;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    }
+    
     return image;
 }
 
