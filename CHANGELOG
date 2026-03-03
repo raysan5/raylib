@@ -7,7 +7,16 @@ Current Release:    raylib 5.5 (18 November 2024)
 Release:     raylib 6.0 (?? March 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - TODO...
+ - New Software Renderer backend [rlsw]
+ - New rcore platform backend: Memory (memory buffer)
+ - New rcore platform backend: Win32 (experimental)
+ - New rcore platform backend: Emscripten (experimental)
+ - Redesigned Skeletal Animation System
+ - Redesigned fullscreen modes and high-dpi content scaling
+ - Redesigned Build Config System [config.h]
+ - New File System API
+ - New Text Management API
+ - New tool: [rexm] raylib examples manager
 
 Detailed changes:
 
