@@ -10,7 +10,7 @@ Here is a wishlist with features and ideas to improve the library. Note that fea
     - [raylib 5.0 wishlist](https://github.com/raysan5/raylib/discussions/2952)
     - [raylib wishlist 2022](https://github.com/raysan5/raylib/discussions/2272)
     - [raylib wishlist 2021](https://github.com/raysan5/raylib/discussions/1502)
-    
+
 _Current version of raylib is complete and functional but there is always room for improvements._
 
 **raylib 5.x**
