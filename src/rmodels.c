@@ -2400,7 +2400,7 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
             Vector3 frameBScale = Vector3Lerp(
                 animB.keyframePoses[currentFrameB][boneIndex].scale,
                 animB.keyframePoses[nextFrameB][boneIndex].scale, blendB);
-            
+
             // Compute interpolated pose between both animations frames
             // NOTE: Storing animation frame data in model.currentPose
             model.currentPose[boneIndex].translation = Vector3Lerp(frameATranslation, frameBTranslation, blend);
@@ -2435,20 +2435,20 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
 
             // Invert bind pose transformation
             Vector3 invBindTranslation = Vector3RotateByQuaternion(
-                Vector3Negate(model.skeleton.bindPose[boneIndex].translation), 
+                Vector3Negate(model.skeleton.bindPose[boneIndex].translation),
                 QuaternionInvert(model.skeleton.bindPose[boneIndex].rotation));
             Quaternion invBindRotation = QuaternionInvert(model.skeleton.bindPose[boneIndex].rotation);
             Vector3 invBindScale = Vector3Divide((Vector3){ 1.0f, 1.0f, 1.0f }, model.skeleton.bindPose[boneIndex].scale);
 
             Vector3 boneTranslation = Vector3Add(Vector3RotateByQuaternion(
-                Vector3Multiply(model.currentPose[boneIndex].scale, invBindTranslation), 
-                    model.currentPose[boneIndex].rotation), 
+                Vector3Multiply(model.currentPose[boneIndex].scale, invBindTranslation),
+                    model.currentPose[boneIndex].rotation),
                     model.currentPose[boneIndex].translation);
             Quaternion boneRotation = QuaternionMultiply(model.currentPose[boneIndex].rotation, invBindRotation);
             Vector3 boneScale = Vector3Multiply(model.currentPose[boneIndex].scale, invBindScale);
 
             model.boneMatrices[boneIndex] = MatrixMultiply(
-                MatrixMultiply(QuaternionToMatrix(boneRotation), 
+                MatrixMultiply(QuaternionToMatrix(boneRotation),
                     MatrixTranslate(boneTranslation.x, boneTranslation.y, boneTranslation.z)),
                 MatrixScale(boneScale.x, boneScale.y, boneScale.z));
             */
@@ -2470,14 +2470,14 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
         const int vertexValuesCount = mesh.vertexCount*3;
-        
+
         int boneIndex = 0;
         int boneCounter = 0;
         float boneWeight = 0.0f;
         bool bufferUpdateRequired = false; // Flag to check when anim vertex information is updated
 
         // Skip if missing bone data or missing anim buffers initialization
-        if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) || 
+        if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) ||
             (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
@@ -2534,7 +2534,7 @@ void UnloadModelAnimations(ModelAnimation *animations, int animCount)
 {
     for (int a = 0; a < animCount; a++)
     {
-        for (int i = 0; i < animations[a].keyframeCount; i++) 
+        for (int i = 0; i < animations[a].keyframeCount; i++)
             RL_FREE(animations[a].keyframePoses[i]);
 
         RL_FREE(animations[a].keyframePoses);
@@ -4560,7 +4560,7 @@ static Model LoadOBJ(const char *fileName)
         model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
         model.meshes[i].colors = (unsigned char *)MemAlloc(sizeof(unsigned char)*vertexCount*4);
     #else
-        if (objAttributes.texcoords != NULL && objAttributes.num_texcoords > 0) 
+        if (objAttributes.texcoords != NULL && objAttributes.num_texcoords > 0)
             model.meshes[i].texcoords = (float *)MemAlloc(sizeof(float)*vertexCount*2);
         else model.meshes[i].texcoords = NULL;
         model.meshes[i].colors = NULL;
@@ -5159,7 +5159,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
             //else memcpy(bones[j].name, "ANIMJOINTNAME", 13); // Default bone name otherwise
         }
 
-        for (unsigned int j = 0; j < anim[a].num_frames; j++) 
+        for (unsigned int j = 0; j < anim[a].num_frames; j++)
             animations[a].keyframePoses[j] = (Transform *)RL_MALLOC(iqmHeader->num_poses*sizeof(Transform));
 
         int dcounter = anim[a].first_frame*iqmHeader->num_framechannels;
@@ -6166,9 +6166,9 @@ static Model LoadGLTF(const char *fileName)
                     worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
                 };
 
-                MatrixDecompose(worldMatrix, 
-                    &(model.skeleton.bindPose[i].translation), 
-                    &(model.skeleton.bindPose[i].rotation), 
+                MatrixDecompose(worldMatrix,
+                    &(model.skeleton.bindPose[i].translation),
+                    &(model.skeleton.bindPose[i].rotation),
                     &(model.skeleton.bindPose[i].scale));
             }
 

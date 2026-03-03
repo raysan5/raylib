@@ -58,7 +58,7 @@
 #include <linux/joystick.h> // Linux: Joystick support library
 
 // WARNING: Both 'linux/input.h' and 'raylib.h' define KEY_F12
-// To avoid conflict with the capturing code in rcore.c we undefine the macro KEY_F12,
+// To avoid conflict with the capturing code in rcore.c, undefine the macro KEY_F12,
 // so the enum KEY_F12 from raylib is used
 #undef KEY_F12
 
@@ -97,7 +97,7 @@
 
 #define DEFAULT_EVDEV_PATH "/dev/input/"    // Path to the linux input events
 
-// Actually biggest key is KEY_CNT but we only really map the keys up to KEY_ALS_TOGGLE
+// Actually biggest key is KEY_CNT but only mapping keys up to KEY_ALS_TOGGLE
 #define KEYMAP_SIZE KEY_ALS_TOGGLE
 
 //----------------------------------------------------------------------------------
@@ -1428,7 +1428,7 @@ int InitPlatform(void)
     if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
     {
         PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-        
+
         if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
     }
 

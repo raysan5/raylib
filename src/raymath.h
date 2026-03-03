@@ -1523,7 +1523,7 @@ RMAPI float MatrixDeterminant(Matrix mat)
              a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
 */
     // Using Laplace expansion (https://en.wikipedia.org/wiki/Laplace_expansion),
-    // previous operation can be simplified to 40 multiplications, decreasing matrix 
+    // previous operation can be simplified to 40 multiplications, decreasing matrix
     // size from 4x4 to 2x2 using minors
 
     // Cache the matrix values (speed optimization)
@@ -1686,20 +1686,20 @@ RMAPI Matrix MatrixSubtract(Matrix left, Matrix right)
 RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
-    
+
 #if defined(RAYMATH_SSE_ENABLED)
     // Load left side and right side
     __m128 c0 = _mm_set_ps(right.m12, right.m8,  right.m4,  right.m0);
     __m128 c1 = _mm_set_ps(right.m13, right.m9,  right.m5,  right.m1);
     __m128 c2 = _mm_set_ps(right.m14, right.m10, right.m6,  right.m2);
     __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
-    
+
     // Transpose so c0..c3 become *rows* of the right matrix in semantic order
     _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
 
     float tmp[4] = { 0 };
     __m128 row;
-    
+
     // Row 0 of result: [m0, m1, m2, m3]
     row  = _mm_mul_ps(_mm_set1_ps(left.m0),  c0);
     row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m1),  c1));
@@ -1768,9 +1768,9 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
 {
     Matrix result = {
-        left.m0 * value, left.m4 * value, left.m8  * value, left.m12 * value, 
-        left.m1 * value, left.m5 * value, left.m9  * value, left.m13 * value, 
-        left.m2 * value, left.m6 * value, left.m10 * value, left.m14 * value, 
+        left.m0 * value, left.m4 * value, left.m8  * value, left.m12 * value,
+        left.m1 * value, left.m5 * value, left.m9  * value, left.m13 * value,
+        left.m2 * value, left.m6 * value, left.m10 * value, left.m14 * value,
         left.m3 * value, left.m7 * value, left.m11 * value, left.m15 * value
     };
 
@@ -2679,7 +2679,7 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     right = Vector3RotateByQuaternion(right, rotation);
     up = Vector3RotateByQuaternion(up, rotation);
     forward = Vector3RotateByQuaternion(forward, rotation);
-    
+
     // Set result matrix output
     Matrix result = {
         right.x, up.x, forward.x, translation.x,
@@ -3091,9 +3091,9 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
 }
 
 // Matrix operators
-static constexpr Matrix MatrixUnit = { 1, 0, 0, 0, 
-                                       0, 1, 0, 0, 
-                                       0, 0, 1, 0, 
+static constexpr Matrix MatrixUnit = { 1, 0, 0, 0,
+                                       0, 1, 0, 0,
+                                       0, 0, 1, 0,
                                        0, 0, 0, 1 };
 
 inline Matrix operator + (const Matrix& lhs, const Matrix& rhs)

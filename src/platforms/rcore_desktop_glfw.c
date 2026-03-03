@@ -1522,7 +1522,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
 #if defined(_GLFW_WAYLAND) && !defined(_GLFW_X11)
-        // GLFW 3.4+ defaults GLFW_SCALE_FRAMEBUFFER to TRUE, 
+        // GLFW 3.4+ defaults GLFW_SCALE_FRAMEBUFFER to TRUE,
         // causing framebuffer/window size mismatch on Wayland with display scaling
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
@@ -1727,12 +1727,12 @@ int InitPlatform(void)
 #if !defined(__APPLE__)
             if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
             {
-                // On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling; read actual framebuffer size 
+                // On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling; read actual framebuffer size
                 // instead of resizing the window (which would double-scale)
                 int fbWidth = 0;
                 int fbHeight = 0;
                 glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
-                
+
                 CORE.Window.render.width = fbWidth;
                 CORE.Window.render.height = fbHeight;
             }
@@ -1751,7 +1751,7 @@ int InitPlatform(void)
         // Current active framebuffer size is main framebuffer size
         CORE.Window.currentFbo = CORE.Window.render;
 
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s", 
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
             FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
@@ -1935,14 +1935,14 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
             int winWidth = 0;
             int winHeight = 0;
             glfwGetWindowSize(platform.handle, &winWidth, &winHeight);
-            
+
             if ((winWidth != width) || (winHeight != height))
             {
                 CORE.Window.screen.width = winWidth;
                 CORE.Window.screen.height = winHeight;
                 float scaleX = (float)width/winWidth;
                 float scaleY = (float)height/winHeight;
-                
+
                 CORE.Window.screenScale = MatrixScale(scaleX, scaleY, 1.0f);
             }
         }

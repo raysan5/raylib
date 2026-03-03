@@ -495,8 +495,9 @@ void InitAudioDevice(void)
         return;
     }
 
-    // Mixing happens on a separate thread which means we need to synchronize. I'm using a mutex here to make things simple, but may
-    // want to look at something a bit smarter later on to keep everything real-time, if that's necessary
+    // Mixing happens on a separate thread which means synchronization is needed
+    // A mutex is used here to make things simple, but may want to look at something
+    // a bit smarter later on to keep everything real-time, if that's necessary
     if (ma_mutex_init(&AUDIO.System.lock) != MA_SUCCESS)
     {
         TRACELOG(LOG_WARNING, "AUDIO: Failed to create mutex for mixing");
@@ -822,7 +823,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.channels = wav.channels;
             wave.data = (short *)RL_MALLOC((size_t)wave.frameCount*wave.channels*sizeof(short));
 
-            // NOTE: We are forcing conversion to 16bit sample size on reading
+            // NOTE: Forcing conversion to 16bit sample size on reading
             drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
@@ -845,7 +846,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
             wave.data = (short *)RL_MALLOC(wave.frameCount*wave.channels*sizeof(short));
 
-            // NOTE: Get the number of samples to process (be careful! we ask for number of shorts, not bytes!)
+            // NOTE: Get the number of samples to process (be careful! asking for number of shorts, not bytes!)
             stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.frameCount*wave.channels);
             stb_vorbis_close(oggData);
         }
@@ -858,7 +859,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         drmp3_config config = { 0 };
         unsigned long long int totalFrameCount = 0;
 
-        // NOTE: We are forcing conversion to 32bit float sample size on reading
+        // NOTE: Forcing conversion to 32bit float sample size on reading
         wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
         wave.sampleSize = 32;
 
@@ -896,7 +897,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         unsigned long long int totalFrameCount = 0;
 
-        // NOTE: We are forcing conversion to 16bit sample size on reading
+        // NOTE: Forcing conversion to 16bit sample size on reading
         wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
         wave.sampleSize = 16;
 
@@ -933,7 +934,7 @@ Sound LoadSound(const char *fileName)
 
     Sound sound = LoadSoundFromWave(wave);
 
-    UnloadWave(wave);       // Sound is loaded, we can unload wave
+    UnloadWave(wave); // Sound is loaded, wave can be unloaded
 
     return sound;
 }
@@ -2475,20 +2476,20 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 // Reads audio data from an AudioBuffer object in device format, returned data will be in a format appropriate for mixing
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount)
 {
-    // NOTE: Continuously converting data from the AudioBuffer's internal format to the mixing format, 
-    // which should be defined by the output format of the data converter. 
-    // This is done until frameCount frames have been output. 
+    // NOTE: Continuously converting data from the AudioBuffer's internal format to the mixing format,
+    // which should be defined by the output format of the data converter.
+    // This is done until frameCount frames have been output.
     ma_uint32 bpf = ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
     ma_uint8 inputBuffer[4096] = { 0 };
     ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/bpf;
-    
+
     ma_uint32 totalOutputFramesProcessed = 0;
     while (totalOutputFramesProcessed < frameCount)
     {
         float *runningFramesOut = framesOut + (totalOutputFramesProcessed*audioBuffer->converter.channelsOut);
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
         //ma_uint64 inputFramesToProcessThisIteration = 0;
-        
+
         // Process any residual input frames from the previous read first.
         if (audioBuffer->converterResidualCount > 0)
         {
@@ -2656,7 +2657,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
     const float localVolume = buffer->volume;
     const ma_uint32 channels = AUDIO.System.device.playback.channels;
 
-    if (channels == 2)  // We consider panning
+    if (channels == 2)  // Consider panning
     {
         const float right = (buffer->pan + 1.0f)/2.0f; // Normalize: [-1..1] -> [0..1]
         const float left = 1.0f - right;
@@ -2676,7 +2677,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
             frameIn += 2;
         }
     }
-    else  // We do not consider panning
+    else  // Do not consider panning
     {
         for (ma_uint32 frame = 0; frame < frameCount; frame++)
         {
@@ -2831,7 +2832,7 @@ static const char *GetFileNameWithoutExt(const char *filePath)
     {
         if (fileName[i] == '.')
         {
-            // NOTE: We break on first '.' found
+            // NOTE: Break on first '.' found
             fileName[i] = '\0';
             break;
         }
@@ -2862,7 +2863,7 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
             {
                 data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
 
-                // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                // NOTE: fread() returns number of read elements instead of bytes, so reading [1 byte, size elements]
                 unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);
                 *dataSize = count;
 

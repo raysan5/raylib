@@ -128,7 +128,7 @@
 static Font defaultFont = { 0 };
 
 // Text vertical line spacing in pixels (between lines)
-static int textLineSpacing = 2; 
+static int textLineSpacing = 2;
 
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
@@ -729,7 +729,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
                         glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
-                        
+
                         Image imSpace = {
                             .data = NULL,
                             .width = glyphs[k].advanceX,
@@ -863,7 +863,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     int updatedAtlasHeight = atlas.height*2;
                     int updatedAtlasDataSize = atlas.width*updatedAtlasHeight;
                     unsigned char *updatedAtlasData = (unsigned char *)RL_CALLOC(updatedAtlasDataSize, 1);
-                    
+
                     memcpy(updatedAtlasData, atlas.data, atlasDataSize);
                     RL_FREE(atlas.data);
                     atlas.data = updatedAtlasData;
@@ -1023,7 +1023,7 @@ bool ExportFontAsCode(Font font, const char *fileName)
     // Get file name from path
     char fileNamePascal[256] = { 0 };
     strncpy(fileNamePascal, TextToPascal(GetFileNameWithoutExt(fileName)), 256 - 1);
-    
+
     // Get font atlas image and size, required to estimate code file size
     // NOTE: This mechanism is highly coupled to raylib
     Image image = LoadImageFromTexture(font.texture);
@@ -1032,13 +1032,13 @@ bool ExportFontAsCode(Font font, const char *fileName)
 
     // Image data is usually GRAYSCALE + ALPHA and can be reduced to GRAYSCALE
     //ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
-    
+
     // Estimate text code size
     //  - Image data is stored as "0x%02x", so it requires at least 4 char per byte, let's use 6
     //  - font.recs[] data is stored as "{ %1.0f, %1.0f, %1.0f , %1.0f }", let's reserve 64 per rec
     //  - font.glyphs[] data is stored as "{ %i, %i, %i, %i, { 0 }},\n", let's reserve 64 per glyph
     //  - Comments and additional code, let's reserve 32KB
-    int txtDataSize = imageDataSize*6 + font.glyphCount*64 + font.glyphCount*64 + 32768; 
+    int txtDataSize = imageDataSize*6 + font.glyphCount*64 + font.glyphCount*64 + 32768;
     char *txtData = (char *)RL_CALLOC(txtDataSize, sizeof(char));
 
     int byteCount = 0;
@@ -1493,7 +1493,7 @@ unsigned int TextLength(const char *text)
     unsigned int length = 0;
 
     if (text != NULL)
-    {        
+    {
         while (text[length] != '\0') length++;
     }
 
@@ -1707,7 +1707,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
     char *result = NULL;
 
     if ((text != NULL) && (search != NULL) && (search[0] != '\0'))
-    {   
+    {
         if (replacement == NULL) replacement = "";
 
         char *insertPoint = NULL;   // Next insert point
@@ -1740,18 +1740,18 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
             {
                 insertPoint = (char *)strstr(text, search);
                 lastReplacePos = (int)(insertPoint - text);
-                
+
                 memcpy(temp, text, lastReplacePos);
                 temp += lastReplacePos;
-                
+
                 if (replaceLen > 0)
                 {
                     memcpy(temp, replacement, replaceLen);
-                    temp += replaceLen; 
+                    temp += replaceLen;
                 }
 
                 text += (lastReplacePos + searchLen); // Move to next "end of replace"
-                
+
                 count--;
             }
 

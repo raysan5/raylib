@@ -54,9 +54,9 @@
         #if defined(__TINYC__)
             #define __declspec(x) __attribute__((x))
         #endif
-        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllexport)     // Building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllimport)     // Using the library as a Win32 shared library (.dll)
     #endif
 #endif
 
@@ -191,7 +191,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
                             // IsKeyDown()
                             // IsKeyPressed()
                             // GetFrameTime()
-                            
+
 #include <math.h>           // Required for: fabsf()
 
 //----------------------------------------------------------------------------------
@@ -364,7 +364,7 @@ void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTa
 
     if (lockView)
     {
-        // In these camera modes we clamp the Pitch angle
+        // In these camera modes, clamp the Pitch angle
         // to allow only viewing straight up or down.
 
         // Clamp view up

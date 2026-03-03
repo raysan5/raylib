@@ -2387,11 +2387,11 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
         {
             collisionPoint->x = startPos1.x + t*rx;
             collisionPoint->y = startPos1.y + t*ry;
-            
+
             collision = true;
         }
     }
-    
+
     return collision;
 }
 

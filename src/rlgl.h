@@ -2982,7 +2982,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
     {
         // Activate elements VAO
         if (RLGL.ExtSupported.vao) glBindVertexArray(batch->vertexBuffer[batch->currentBuffer].vaoId);
-        
+
         // TODO: If no data changed on the CPU arrays there is no need to re-upload data to GPU,
         // a flag can be used to detect changes but it would imply keeping a copy buffer and memcmp() both, does it worth it?
 
@@ -3257,6 +3257,7 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 #if defined(GRAPHICS_API_OPENGL_11)
     if (format >= RL_PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
+        // TODO: Support texture data decompression
         TRACELOG(RL_LOG_WARNING, "GL: OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }
@@ -3828,8 +3829,8 @@ unsigned int rlLoadFramebuffer(void)
     if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return fboId; }
 
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
-    glGenFramebuffers(1, &fboId);       // Create the framebuffer object
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);   // Unbind any framebuffer
+    glGenFramebuffers(1, &fboId);         // Create the framebuffer object
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind any framebuffer
 #endif
 
     return fboId;
@@ -4744,7 +4745,7 @@ Matrix rlGetMatrixTransform(void)
     // TODO: Consider possible transform matrices in the RLGL.State.stack
     //Matrix matStackTransform = rlMatrixIdentity();
     //for (int i = RLGL.State.stackCounter; i > 0; i--) matStackTransform = rlMatrixMultiply(RLGL.State.stack[i], matStackTransform);
-    
+
     mat = RLGL.State.transform;
 #endif
     return mat;

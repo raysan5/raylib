@@ -60,7 +60,7 @@
     #define SUPPORT_TRACELOG                1
 #endif
 #ifndef SUPPORT_CAMERA_SYSTEM
-    // Camera module is included (rcamera.h) and multiple predefined 
+    // Camera module is included (rcamera.h) and multiple predefined
     // cameras are available: free, 1st/3rd person, orbital
     #define SUPPORT_CAMERA_SYSTEM           1
 #endif
@@ -90,7 +90,7 @@
     #define SUPPORT_BUSY_WAIT_LOOP          0       // Disabled by default
 #endif
 #if !SUPPORT_PARTIALBUSY_WAIT_LOOP && !SUPPORT_BUSY_WAIT_LOOP
-    // Use a partial-busy wait loop, in this case frame sleeps for most of the time, 
+    // Use a partial-busy wait loop, in this case frame sleeps for most of the time,
     // but then runs a busy loop at the end for accuracy
     #define SUPPORT_PARTIALBUSY_WAIT_LOOP   1
 #endif
@@ -267,7 +267,7 @@
 
 #ifndef SUPPORT_IMAGE_EXPORT
     // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
-    // NOTE: Image export requires stb_image_write.h library 
+    // NOTE: Image export requires stb_image_write.h library
     #define SUPPORT_IMAGE_EXPORT        1
 #endif
 #ifndef SUPPORT_IMAGE_GENERATION
@@ -319,7 +319,7 @@
 #endif
 #ifndef SUPPORT_GPU_SKINNING
     // GPU skinning disabled by default, some GPUs do not support more than 8 VBOs
-    #define SUPPORT_GPU_SKINNING        0    
+    #define SUPPORT_GPU_SKINNING        0
 #endif
 
 //------------------------------------------------------------------------------------

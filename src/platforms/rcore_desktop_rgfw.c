@@ -479,7 +479,7 @@ void ToggleFullscreen(void)
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-        // Store previous window position (in case we exit fullscreen)
+        // Store previous window position (in case of exiting fullscreen)
         Vector2 currentPosition = GetWindowPosition();
         CORE.Window.previousPosition.x = currentPosition.x;
         CORE.Window.previousPosition.y = currentPosition.y;
@@ -493,7 +493,7 @@ void ToggleFullscreen(void)
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
-        // we update the window position right away
+        // Update the window position right away
         CORE.Window.position = CORE.Window.previousPosition;
         RGFW_window_setFullscreen(platform.window, 0);
         RGFW_window_move(platform.window, CORE.Window.position.x, CORE.Window.position.y);
@@ -534,7 +534,7 @@ void ToggleBorderlessWindowed(void)
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
         RGFW_window_setBorder(platform.window, 1);
-        
+
         CORE.Window.position = CORE.Window.previousPosition;
 
         RGFW_window_resize(platform.window, CORE.Window.previousScreen.width, CORE.Window.previousScreen.height);
@@ -821,7 +821,7 @@ void SetWindowSize(int width, int height)
         CORE.Window.screen.width = width;
         CORE.Window.screen.height = height;
     }
-    
+
     RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
 }
 
@@ -957,17 +957,17 @@ Vector2 GetWindowScaleDPI(void)
     else monitor = RGFW_getPrimaryMonitor();
 
     #if defined(__APPLE__)
-        // apple does < 1.0f scaling, example: 0.66f, 0.5f
-        // we want to convert this to be consistent
-        return (Vector2){ 1.0f / monitor->scaleX, 1.0f / monitor->scaleX };
+        // Apple does < 1.0f scaling, example: 0.66f, 0.5f
+        // it needs to be convert to be consistent
+        return (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
     #else
-        // linux and windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
+        // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
         return (Vector2){ monitor->scaleX, monitor->scaleX };
     #endif
 }
 
-// Not part of raylib. Mac has a different pixel ratio for retina displays
-// and we want to be able to handle it
+// Get monitor pixel ratio
+// WARNING: Function not used, neither exposed by raylib
 float GetMonitorPixelRatio(void)
 {
     RGFW_monitor *monitor = NULL;
@@ -1009,7 +1009,7 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    
+
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
 
@@ -1283,8 +1283,8 @@ void PollInputEvents(void)
                 {
                     if (CORE.Window.dropFileCount == 0)
                     {
-                        // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
-                        // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
+                        // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
+                        // at the moment limiting the number of drops at once to 1024 files but this behaviour should probably be reviewed
                         // TODO: Pointers should probably be reallocated for any new file added...
                         CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
@@ -1331,19 +1331,20 @@ void PollInputEvents(void)
                     CORE.Window.currentFbo.width = CORE.Window.render.width;
                     CORE.Window.currentFbo.height = CORE.Window.render.height;
                 #elif defined(PLATFORM_WEB_RGFW)
-                    // do nothing for web
                     return;
                 #else
                     SetupViewport(platform.window->w, platform.window->h);
-                    // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+
+                    // Consider content scaling if required
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
                         Vector2 scaleDpi = GetWindowScaleDPI();
                         CORE.Window.screen.width = (int)(platform.window->w/scaleDpi.x);
                         CORE.Window.screen.height = (int)(platform.window->h/scaleDpi.y);
                         CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
-                        // mouse scale doesnt seem needed
-                        // SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+
+                        // Mouse scale does not seem to be needed
+                        //SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
                     }
                     else
                     {
@@ -1403,7 +1404,7 @@ void PollInputEvents(void)
 
             case RGFW_keyChar:
             {
-                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
+                // NOTE: event.text.text data comes an UTF-8 text sequence but registering codepoints (int)
                 // Check if there is space available in the queue
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                 {
@@ -1664,7 +1665,7 @@ int InitPlatform(void)
 
     //----------------------------------------------------------------------------
 
-    // If everything work as expected, we can continue
+    // If everything work as expected, continue
     CORE.Window.position.x = platform.window->x;
     CORE.Window.position.y = platform.window->y;
     CORE.Window.render.width = CORE.Window.screen.width;

@@ -250,10 +250,10 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
-// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can
+// SDL3 migration layer made to avoid 'ifdefs' inside functions
 #if defined(USING_VERSION_SDL3)
 
-// SDL3 Migration:
+// SDL3 migration:
 // SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
 // SDL_GetWindowFullscreenMode() can be called
 // to see whether an exclusive fullscreen mode will be used
@@ -265,10 +265,10 @@ static const int CursorsLUT[] = {
 #define SDL_ENABLE  true
 
 // SDL3 Migration: SDL_INIT_TIMER - no longer needed before calling SDL_AddTimer()
-#define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+#define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero to be used in a bitor (|)
 
 // SDL3 Migration: The SDL_WINDOW_SHOWN flag has been removed. Windows are shown by default and can be created hidden by using the SDL_WINDOW_HIDDEN flag
-#define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+#define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero to be used in a bitor (|)
 
 // SDL3 Migration: Renamed
 // IMPORTANT: Might need to call SDL_CleanupEvent somewhere see :https://github.com/libsdl-org/SDL/issues/3540#issuecomment-1793449852
@@ -414,13 +414,14 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 
 #else // SDL2 fallback
 
-// Since SDL2 doesn't have this function we leave a stub
+// Since SDL2 doesn't have this function, leaving a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
 void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
     TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text not available in SDL2");
 
-    // We could possibly implement it ourselves in this case for some easier platforms
+    // TODO: Implement getting clipboard data
+
     return NULL;
 }
 #endif // USING_VERSION_SDL3
@@ -573,8 +574,6 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
     {
-        // NOTE: To be able to implement this part it seems that we should
-        // do it ourselves, via 'windows.h', 'X11/Xlib.h' or even 'Cocoa.h'
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
@@ -856,8 +855,8 @@ void SetWindowMonitor(int monitor)
                 // ending up positioned partly outside the target display
                 // NOTE 2: The workaround for that is, previously to moving the window,
                 // setting the window size to the target display size, so they match
-                // NOTE 3: It wasn't done here because we can't assume changing the window size automatically
-                // is acceptable behavior by the user
+                // NOTE 3: It wasn't done here because it can not bee assumed that changing
+                // the window size automatically is acceptable behavior by the user
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
                 CORE.Window.position.x = usableBounds.x;
                 CORE.Window.position.y = usableBounds.y;
@@ -1261,7 +1260,7 @@ void DisableCursor(void)
 void SwapScreenBuffer(void)
 {
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    // NOTE: We use a preprocessor condition here because rlCopyFramebuffer() is only declared for software rendering
+    // NOTE: Using a preprocessor condition here because rlCopyFramebuffer() is only declared for software rendering
     SDL_Surface *surface = SDL_GetWindowSurface(platform.window);
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, surface->pixels);
     SDL_UpdateWindowSurface(platform.window);
@@ -1442,8 +1441,8 @@ void PollInputEvents(void)
             {
                 if (CORE.Window.dropFileCount == 0)
                 {
-                    // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
-                    // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
+                    // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
+                    // at the moment limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
                     // TODO: Pointers should probably be reallocated for any new file added...
                     CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
@@ -1497,7 +1496,8 @@ void PollInputEvents(void)
                         const int width = event.window.data1;
                         const int height = event.window.data2;
                         SetupViewport(width, height);
-                        // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+
+                        // Consider content scaling if required
                         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                         {
                             CORE.Window.screen.width = (int)(width/GetWindowScaleDPI().x);
@@ -1622,7 +1622,7 @@ void PollInputEvents(void)
 
             case SDL_TEXTINPUT:
             {
-                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
+                // NOTE: event.text.text data comes an UTF-8 text sequence but register codepoints (int)
 
                 // Check if there is space available in the queue
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -1885,7 +1885,7 @@ void PollInputEvents(void)
                     {
                         if (platform.gamepadId[i] == event.jaxis.which)
                         {
-                            // SDL axis value range is -32768 to 32767, we normalize it to raylib's -1.0 to 1.0f range
+                            // SDL axis value range is -32768 to 32767, normalizing it to raylib's -1.0 to 1.0f range
                             float value = event.jaxis.value/(float)32767;
                             CORE.Input.Gamepad.axisState[i][axis] = value;
 
@@ -2032,7 +2032,7 @@ int InitPlatform(void)
     platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 
 
-    // NOTE: SDL3 no longer enables text input by default, 
+    // NOTE: SDL3 no longer enables text input by default,
     // it is needed to be enabled manually to keep GetCharPressed() working
     // REF: https://github.com/libsdl-org/SDL/commit/72fc6f86e5d605a3787222bc7dc18c5379047f4a
     const char *enableOSK = SDL_GetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD);

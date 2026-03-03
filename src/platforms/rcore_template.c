@@ -341,7 +341,7 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = 0.0;
-    
+
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
@@ -459,7 +459,7 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
         // TODO: Enable MSAA
-        
+
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
     }
 
@@ -489,7 +489,7 @@ int InitPlatform(void)
     }
     //----------------------------------------------------------------------------
 
-    // If everything work as expected, we can continue
+    // If everything worked as expected, continue
     CORE.Window.render.width = CORE.Window.screen.width;
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
