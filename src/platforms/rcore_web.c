@@ -840,28 +840,34 @@ EM_ASYNC_JS(void, RequestClipboardData, (void), {
 EM_JS(char*, GetLastPastedText, (void), {
     var str = window._lastClipboardString || "";
     var length = lengthBytesUTF8(str) + 1;
-    var ptr = _malloc(length);
-    stringToUTF8(str, ptr, length);
-    return ptr;
+    if (length > 1) {
+        var ptr = _malloc(length);
+        stringToUTF8(str, ptr, length);
+        return ptr;
+    }
+    return 0;
 });
 
 // Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
 EM_JS(unsigned char*, GetLastPastedImage, (int* width, int* height), {
-    if (!window._lastImgData) return 0;
-
-    const data = window._lastImgData;
-    const ptr = _malloc(data.length);
-    HEAPU8.set(data, ptr);
-    
-    // Set the width and height via the pointers passed from C
-    // HEAP32 handles the 4-byte integers
-    if (width)  setValue(width, window._lastImgWidth,  'i32');
-    if (height) setValue(height, window._lastImgHeight, 'i32');
-    
-    // Clear the JS buffer so we don't fetch the same image twice
-    window._lastImgData = null; 
-    
-    return ptr;
+    if (window._lastImgData) {
+        const data = window._lastImgData;
+        if (data.length > 0) {
+            const ptr = _malloc(data.length);
+            HEAPU8.set(data, ptr);
+            
+            // Set the width and height via the pointers passed from C
+            // HEAP32 handles the 4-byte integers
+            if (width)  setValue(width, window._lastImgWidth,  'i32');
+            if (height) setValue(height, window._lastImgHeight, 'i32');
+            
+            // Clear the JS buffer so we don't fetch the same image twice
+            window._lastImgData = null; 
+            
+        return ptr;
+        }
+    }
+    return 0;
 });
 
 // Get clipboard text content
