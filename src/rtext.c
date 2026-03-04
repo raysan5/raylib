@@ -1388,6 +1388,75 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     return textSize;
 }
 
+// Measure string width for an existing array of codepoints for default font
+int MeasureCodepoints(const int *codepoints, int length, int fontSize) {
+    Vector2 textSize = { 0.0f, 0.0f };
+
+    // Check if default font has been loaded
+    if (GetFontDefault().texture.id != 0)
+    {
+        int defaultFontSize = 10;   // Default Font glyphs height in pixel
+        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+        int spacing = fontSize/defaultFontSize;
+
+        textSize = MeasureCodepointsEx(GetFontDefault(), codepoints, length, fontSize, spacing);
+    }
+
+    return (int)textSize.x;
+}
+
+// Measure string size for an existing array of codepoints for Font
+Vector2 MeasureCodepointsEx(Font font, const int *codepoints, int length, float fontSize, float spacing) {
+    Vector2 textSize = { 0 };
+
+    if ((font.texture.id == 0) || (codepoints == NULL) || (length == 0)) return textSize; // Security check
+
+    float textWidth = 0.0f;
+    float tempTextWidth = 0.0f;     // Used to count longer text line width
+
+    int tempGlyphCounter = 0;       // Used to count longer text line num chars
+    int glyphCounter = 0;
+
+    float textHeight = fontSize;
+    float scaleFactor = fontSize/(float)font.baseSize;
+
+    int letter = 0;                 // Current character
+    int index = 0;                  // Index position in sprite font
+
+    for (int i = 0; i < length; i++)
+    {
+        letter = codepoints[i];
+        index = GetGlyphIndex(font, letter);
+
+        if (letter != '\n')
+        {
+            glyphCounter++;
+
+            if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
+            else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
+        }
+        else
+        {
+            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+
+            textWidth = 0;
+            glyphCounter = 0;
+
+            // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+            textHeight += (fontSize + textLineSpacing);
+        }
+
+        if (tempGlyphCounter < glyphCounter) tempGlyphCounter = glyphCounter;
+    }
+
+    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempGlyphCounter - 1)*spacing);
+    textSize.y = textHeight;
+
+    return textSize;
+}
+
 // Get index position for a unicode character on font
 // NOTE: If codepoint is not found in the font it fallbacks to '?'
 int GetGlyphIndex(Font font, int codepoint)
