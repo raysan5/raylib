@@ -10,7 +10,7 @@
 *       #define SUPPORT_FILEFORMAT_TTF
 *       #define SUPPORT_FILEFORMAT_BDF
 *           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, just comment unrequired #define in this module
+*           supported by default, to remove support, comment unrequired #define in this module
 *
 *       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
 *           TextSplit() function static buffer max size
@@ -157,7 +157,7 @@ extern void LoadFontDefault(void)
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
     // Check to see if the font for an image has alreeady been allocated, 
-    // and if no need to upload, then just return
+    // and if no need to upload, then return
     if (defaultFont.glyphs != NULL) return;
 
     // NOTE: Using UTF-8 encoding table for Unicode U+0000..U+00FF Basic Latin + Latin-1 Supplement

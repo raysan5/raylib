@@ -837,7 +837,7 @@ int GetCurrentMonitor(void)
         {
             // In case the window is between two monitors, below logic is used
             // to try to detect the "current monitor" for that window, note that
-            // this is probably an overengineered solution for a very side case
+            // this is probably an overengineered solution for a side case
             // trying to match SDL behaviour
 
             int closestDist = 0x7FFFFFFF;
@@ -1258,7 +1258,7 @@ void PollInputEvents(void)
 {
 #if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1588,7 +1588,7 @@ int InitPlatform(void)
     }
 
     // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions
-    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn
+    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been drawn
     // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);

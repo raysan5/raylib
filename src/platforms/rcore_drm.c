@@ -183,14 +183,14 @@ static const int evkeyToUnicodeLUT[] = {
     0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 0, 113, 119, 101, 114,
     116, 121, 117, 105, 111, 112, 0, 0, 13, 0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59,
     39, 96, 0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 0, 0, 32
-    // LUT currently incomplete, just mapped the most essential keys
+    // LUT currently incomplete, only mapped the most essential keys
 };
 
 // This is the map used to map any keycode returned from linux to a raylib code from 'raylib.h'
 // NOTE: Use short here to save a little memory
 static const short linuxToRaylibMap[KEYMAP_SIZE] = {
-    // We don't map those with designated initialization, because we would getting
-    // into loads of naming conflicts
+    // Don't map with designated initialization,
+    // it will geenrate many naming conflicts
     0,   256, 49,  50,  51,  52,  53,  54,
     55,  56,  57,  48,  45,  61,  259, 258,
     81,  87,  69,  82,  84,  89,  85,  73,
@@ -764,9 +764,9 @@ void SwapScreenBuffer()
     // Attempt page flip
     // NOTE: rmModePageFlip() schedules a buffer-flip for the next vblank and then notifies us about it
     // It takes a CRTC-id, fb-id and an arbitrary data-pointer and then schedules the page-flip
-    // This is fully asynchronous and when the page-flip happens, the DRM-fd will become readable and we can call drmHandleEvent()
-    // This will read all vblank/page-flip events and call our modeset_page_flip_event() callback with the data-pointer that we passed to drmModePageFlip()
-    // We simply call modeset_draw_dev() then so the next frame is rendered... returns immediately
+    // This is fully asynchronous and when the page-flip happens, the DRM-fd will become readable and drmHandleEvent() can be called
+    // This will read all vblank/page-flip events and call our modeset_page_flip_event() callback with the data-pointer passed to drmModePageFlip()
+    // Simply call modeset_draw_dev() then so the next frame is rendered... returns immediately
     if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fbId, DRM_MODE_PAGE_FLIP_EVENT, platform.prevBO))
     {
         if (errno == EBUSY) errCnt[3]++; // Display busy - skip flip
@@ -1067,7 +1067,7 @@ void PollInputEvents(void)
 {
 #if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1089,7 +1089,7 @@ void PollInputEvents(void)
     PollKeyboardEvents();
 
 #if SUPPORT_SSH_KEYBOARD_RPI
-    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here
+    // NOTE: Keyboard reading could be done using input_event(s) or read from stdin, both methods are used here
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 #endif
@@ -1225,7 +1225,7 @@ int InitPlatform(void)
         if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->count_modes > 0))
         {
 #if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-            // For hardware rendering, we need an encoder_id
+            // For hardware rendering, an encoder_id is needed
             if (con->encoder_id)
             {
                 TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected with encoder", i);
@@ -1234,7 +1234,7 @@ int InitPlatform(void)
             }
             else TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected but no encoder", i);
 #else
-            // For software rendering, we can accept even without encoder_id
+            // For software rendering, accept even without encoder_id
             TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i suitable for software rendering", i);
             platform.connector = con;
             break;
@@ -1534,7 +1534,7 @@ int InitPlatform(void)
         return -1;
     }
 
-    // At this point we need to manage render size vs screen size
+    // At this point, manage render size vs screen size
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1572,7 +1572,7 @@ int InitPlatform(void)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 #else
-    // At this point we need to manage render size vs screen size
+    // At this point, manage render size vs screen size
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1596,7 +1596,7 @@ int InitPlatform(void)
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
-    // If graphic device is no properly initialized, we end program
+    // If graphic device is no properly initialized, end program
     if (!CORE.Window.ready)
     {
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device");
@@ -1745,7 +1745,7 @@ void ClosePlatform(void)
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
-    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor,
+    // NOTE: Read directly from Standard Input (stdin) - STDIN_FILENO file descriptor,
     // Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
 
     // Save terminal keyboard settings
@@ -1978,8 +1978,8 @@ static void ConfigureEvdevDevice(char *device)
         return;
     }
 
-    // At this point we have a connection to the device, but we don't yet know what the device is
-    // It could be many things, even as simple as a power button...
+    // At this point, a connection to the device has been stablished, but still left to know what the device is,
+    // it could be many things, even as simple as a power button...
     //-------------------------------------------------------------------------------------------------------
 
     // Identify the device
@@ -1990,8 +1990,8 @@ static void ConfigureEvdevDevice(char *device)
     } absinfo[ABS_CNT] = { 0 };
 
     // These flags aren't really a one of
-    // Some devices could have properties we assosciate with keyboards as well as properties
-    // we assosciate with mice
+    // Some devices could have properties associated with keyboards
+    // as well as properties associated with mice
     bool isKeyboard = false;
     bool isMouse = false;
     bool isTouch = false;
@@ -2027,11 +2027,10 @@ static void ConfigureEvdevDevice(char *device)
             TEST_BIT(keyBits, BTN_TOOL_FINGER) ||
             TEST_BIT(keyBits, BTN_TOUCH))) isTouch = true;
 
-        // Absolute mice should really only exist with VMWare, but it shouldn't
-        // matter if we support them
+        // Absolute mice should really only exist with VMWare
         else if (hasAbsXY && TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
 
-        // If any of the common joystick axes are present, we assume it's a gamepad
+        // If any of the common joystick axes are present, assume it's a gamepad
         else
         {
             for (int axis = (hasAbsXY? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
@@ -2056,7 +2055,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), relBits);
 
-        // If it has any of the gamepad or touch features we tested so far, it's not a mouse
+        // If it has any of the gamepad or touch features tested so far, it's not a mouse
         if (!isTouch &&
             !isGamepad &&
             TEST_BIT(relBits, REL_X) &&
@@ -2067,12 +2066,12 @@ static void ConfigureEvdevDevice(char *device)
     if (TEST_BIT(evBits, EV_KEY))
     {
         // The first 32 keys as defined in input-event-codes.h are pretty much
-        // exclusive to keyboards, so we can test them using a mask
+        // exclusive to keyboards, so they can be tested using a mask
         // Leave out the first bit to not test KEY_RESERVED
         const unsigned long mask = 0xFFFFFFFE;
         if ((keyBits[0] & mask) == mask) isKeyboard = true;
 
-        // If we find any of the common gamepad buttons we assume it's a gamepad
+        // If any of the common gamepad buttons is found, assume it's a gamepad
         else
         {
             for (int button = BTN_JOYSTICK; button < BTN_DIGI; ++button)
@@ -2149,7 +2148,7 @@ static void ConfigureEvdevDevice(char *device)
         if (absAxisCount > 0)
         {
             // TODO: Review GamepadAxis enum matching
-            // So gamepad axes (as in the actual linux joydev.c) are just simply enumerated
+            // So gamepad axes (as in the actual linux joydev.c) are simply enumerated
             // and (at least for some input drivers like xpat) it's convention to use
             // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the shoulder buttons
             // If these are now enumerated, it results to LJOY_X, LJOY_Y, LEFT_SHOULDERB, RJOY_X, ...
@@ -2197,7 +2196,7 @@ static void PollKeyboardEvents(void)
         if (event.type != EV_KEY) continue;
 
 #if SUPPORT_SSH_KEYBOARD_RPI
-        // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
+        // If the event was a key, assume a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
         // Keyboard keys appear for codes 1 to 255, ignore everthing else
@@ -2206,7 +2205,7 @@ static void PollKeyboardEvents(void)
             // Lookup the scancode in the keymap to get a keycode
             keycode = linuxToRaylibMap[event.code];
 
-            // Make sure we got a valid keycode
+            // Make sure a valid keycode is obtained
             if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
             {
                 // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
@@ -2380,8 +2379,8 @@ static void PollMouseEvents(void)
                 {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
 
-                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
-                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    // If this slot is active, it's a move; If not, update the buffer for when it becomes active
+                    // Only set to MOVE if a DOWN or UP event has not been detected this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2392,8 +2391,8 @@ static void PollMouseEvents(void)
                 {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
 
-                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
-                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    // If this slot is active, it's a move; If not, update the buffer for when it becomes active
+                    // Only set to MOVE if a DOWN or UP event have not been detected this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2418,7 +2417,7 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
 
-                        // Force UP action if we haven't already set a DOWN action
+                        // Force UP action if DOWN action has not already been set
                         // (DOWN takes priority over UP if both happen in one frame, though rare)
                         if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                     }
@@ -2665,7 +2664,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
 static void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
+    // Calculate CORE.Window.render.width and CORE.Window.render.height, using the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
@@ -2693,8 +2692,8 @@ static void SetupFramebuffer(int width, int height)
         float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
         CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
+        // NOTE: Rendering to full display resolution,
+        // calculate above parameters for downscale matrix and offsets
         CORE.Window.render.width = CORE.Window.display.width;
         CORE.Window.render.height = CORE.Window.display.height;
 

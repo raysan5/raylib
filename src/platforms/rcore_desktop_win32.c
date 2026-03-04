@@ -2198,7 +2198,7 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 // retry loop that continues until either the desired state is reached or the state stops changing
 static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
 {
-    // Flags that just apply immediately without needing any operations
+    // Flags that apply immediately without needing any operations
     CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
 
     int vsync = (desiredFlags & FLAG_VSYNC_HINT)? 1 : 0;

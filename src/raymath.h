@@ -567,15 +567,9 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -1215,15 +1209,9 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -2574,8 +2562,8 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     }
     else
     {
-        // This occurs when the angle is zero.
-        // Not a problem: just set an arbitrary normalized axis.
+        // This occurs when the angle is zero
+        // Not a problem, set an arbitrary normalized axis
         resAxis.x = 1.0f;
     }
 
@@ -2702,10 +2690,10 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     translation->y = mat.m13;
     translation->z = mat.m14;
 
-    // Matrix Columns - Rotation will be extracted into here.
-    Vector3 matColumns[3] = { { mat.m0, mat.m4, mat.m8 },
+    // Matrix Columns - Rotation will be extracted into here
+    Vector3 matColumns[3] = {{ mat.m0, mat.m4, mat.m8 },
                              { mat.m1, mat.m5, mat.m9 },
-                             { mat.m2, mat.m6, mat.m10 } };
+                             { mat.m2, mat.m6, mat.m10 }};
 
     // Shear Parameters XY, XZ, and YZ (extract and ignored)
     float shear[3] = { 0 };
@@ -2756,7 +2744,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
         shear[2] /= scl.z; // Correct YZ shear
     }
 
-    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1.
+    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1
     if (Vector3DotProduct(matColumns[0], Vector3CrossProduct(matColumns[1], matColumns[2])) < 0)
     {
         scl = Vector3Negate(scl);

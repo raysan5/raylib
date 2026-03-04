@@ -715,7 +715,7 @@ void PollInputEvents(void)
 {
 #if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1055,7 +1055,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     InitGraphicsDevice();
 
                     // Initialize OpenGL context (states and resources)
-                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
                     // Setup default viewport
@@ -1299,7 +1299,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
         {
-            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
+            // Eat BACK_BUTTON and AKEYCODE_MENU, do nothing... and don't let to be handled by OS!
             return 1;
         }
         else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
@@ -1547,7 +1547,7 @@ FILE *__wrap_fopen(const char *fileName, const char *mode)
         }
         else
         {
-            // Just do a regular open if file is not found in the assets
+            // Do a regular open if file is not found in the assets
             file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
             if (file == NULL) file = __real_fopen(fileName, mode);
         }

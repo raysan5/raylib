@@ -48,7 +48,7 @@
 *           recommended under specific situations and only if the developers know
 *           what are they doing; this flag is not defined by default
 *
-*       rlsw capabilities could be customized just defining some internal
+*       rlsw capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
 *
 *           #define SW_GL_FRAMEBUFFER_COPY_BGRA     true

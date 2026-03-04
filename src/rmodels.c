@@ -792,13 +792,9 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
             {
                 for (int j = 0; j < slices; j++)
                 {
+                    // Building up the rings from capCenter in the direction of the 'direction' vector computed earlier
 
-                    // we build up the rings from capCenter in the direction of the 'direction' vector we computed earlier
-
-                    // as we iterate through the rings they must be placed higher above the center, the height we need is sin(angle(i))
-                    // as we iterate through the rings they must get smaller by the cos(angle(i))
-
-                    // compute the four vertices
+                    // Compute the four vertices
                     float ringSin1 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle*( i + 0 ));
                     float ringCos1 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle*( i + 0 ));
                     Vector3 w1 = (Vector3){
@@ -935,13 +931,9 @@ void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices
             {
                 for (int j = 0; j < slices; j++)
                 {
+                    // Building up the rings from capCenter in the direction of the 'direction' vector computed earlier
 
-                    // we build up the rings from capCenter in the direction of the 'direction' vector we computed earlier
-
-                    // as we iterate through the rings they must be placed higher above the center, the height we need is sin(angle(i))
-                    // as we iterate through the rings they must get smaller by the cos(angle(i))
-
-                    // compute the four vertices
+                    // Compute the four vertices
                     float ringSin1 = sinf(baseSliceAngle*(j + 0))*cosf(baseRingAngle*( i + 0 ));
                     float ringCos1 = cosf(baseSliceAngle*(j + 0))*cosf(baseRingAngle*( i + 0 ));
                     Vector3 w1 = (Vector3){
@@ -1147,7 +1139,7 @@ Model LoadModel(const char *fileName)
 
 // Load model from generated mesh
 // WARNING: A shallow copy of mesh is generated, passed by value,
-// as long as struct contains pointers to data and some values, we get a copy
+// as long as struct contains pointers to data and some values, get a copy
 // of mesh pointing to same data as original version... be careful!
 Model LoadModelFromMesh(Mesh mesh)
 {
@@ -1194,7 +1186,7 @@ bool IsModelValid(Model model)
         if ((model.meshes[i].boneIndices != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIndices buffer not uploaded to GPU
         if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
 
-        // NOTE: Some OpenGL versions do not support VAO, so we don't check it
+        // NOTE: Some OpenGL versions do not support VAO, so avoid below check
         //if (model.meshes[i].vaoId == 0) { result = false; break }
     }
 
@@ -1211,7 +1203,7 @@ void UnloadModel(Model model)
 
     // Unload materials maps
     // NOTE: As the user could be sharing shaders and textures between models,
-    // we don't unload the material but just free its maps,
+    // don't unload the material but free its maps,
     // the user is responsible for freeing models shaders and textures
     for (int i = 0; i < model.materialCount; i++) RL_FREE(model.materials[i].maps);
 
@@ -1510,8 +1502,8 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required, and we need to modify them
-    // NOTE: At this point the modelview matrix just contains the view matrix (camera)
+    // in case stereo render is required, and they need to be modified
+    // NOTE: At this point the modelview matrix contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matModel = MatrixIdentity();
@@ -1729,8 +1721,8 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     }
 
     // Get a copy of current matrices to work with,
-    // just in case stereo render is required, and we need to modify them
-    // NOTE: At this point the modelview matrix just contains the view matrix (camera)
+    // in case stereo render is required, and they need to be modified
+    // NOTE: At this point the modelview matrix contains the view matrix (camera)
     // That's because BeginMode3D() sets it and there is no model-drawing function
     // that modifies it, all use rlPushMatrix() and rlPopMatrix()
     Matrix matModel = MatrixIdentity();
@@ -1753,7 +1745,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData()
     // It isn't clear which would be reliably faster in all cases and on all platforms,
-    // anecdotally glMapBuffer() seems very slow (syncs) while glBufferSubData() seems
+    // anecdotally glMapBuffer() seems quite slow (syncs) while glBufferSubData() seems
     // no faster, since all the transform matrices are transferred anyway
     instancesVboId = rlLoadVertexBuffer(instanceTransform, instances*sizeof(float16), false);
 
@@ -2508,7 +2500,7 @@ static void UpdateModelAnimationVertexBuffers(Model model)
                 bufferUpdateRequired = true;
 
                 // Normals processing
-                // NOTE: We use meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
+                // NOTE: Using meshes.baseNormals (default normal) to calculate meshes.normals (animated normals)
                 if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
@@ -3375,7 +3367,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector2 *mapTexcoords = (Vector2 *)RL_MALLOC(maxTriangles*3*sizeof(Vector2));
     Vector3 *mapNormals = (Vector3 *)RL_MALLOC(maxTriangles*3*sizeof(Vector3));
 
-    // Define the 6 normals of the cube, we will combine them accordingly later...
+    // Define the 6 normals of the cube, combined accordingly later
     Vector3 n1 = { 1.0f, 0.0f, 0.0f };
     Vector3 n2 = { -1.0f, 0.0f, 0.0f };
     Vector3 n3 = { 0.0f, 1.0f, 0.0f };
@@ -3383,7 +3375,8 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector3 n5 = { 0.0f, 0.0f, -1.0f };
     Vector3 n6 = { 0.0f, 0.0f, 1.0f };
 
-    // NOTE: We use texture rectangles to define different textures for top-bottom-front-back-right-left (6)
+    // NOTE: Using texture rectangles to define different 
+    // textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
         float x;
         float y;
@@ -3402,7 +3395,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     {
         for (int x = 0; x < cubicmap.width; x++)
         {
-            // Define the 8 vertex of the cube, we will combine them accordingly later...
+            // Define the 8 vertex of the cube, to be combined accordingly later
             Vector3 v1 = { w*(x - 0.5f), h2, h*(z - 0.5f) };
             Vector3 v2 = { w*(x - 0.5f), h2, h*(z + 0.5f) };
             Vector3 v3 = { w*(x + 0.5f), h2, h*(z + 0.5f) };
@@ -3412,7 +3405,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 v7 = { w*(x - 0.5f), 0, h*(z + 0.5f) };
             Vector3 v8 = { w*(x + 0.5f), 0, h*(z + 0.5f) };
 
-            // We check pixel color to be WHITE -> draw full cube
+            // Check pixel color to be WHITE -> draw full cube
             if (COLOR_EQUAL(pixels[z*cubicmap.width + x], WHITE))
             {
                 // Define triangles and checking collateral cubes
@@ -3589,7 +3582,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
                     tcCounter += 6;
                 }
             }
-            // We check pixel color to be BLACK, we will only draw floor and roof
+            // Check pixel color to be BLACK, in that case only drawing floor and roof
             else if (COLOR_EQUAL(pixels[z*cubicmap.width + x], BLACK))
             {
                 // Define top triangles (2 tris, 6 vertex --> v1-v2-v3, v1-v3-v4)
@@ -4106,8 +4099,8 @@ bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, floa
 {
     bool collision = false;
 
-    // Simple way to check for collision, just checking distance between two points
-    // Unfortunately, sqrtf() is a costly operation, so we avoid it with following solution
+    // Simple way to check for collision, checking distance between two points
+    // Unfortunately, sqrtf() is a costly operation, so avoid it with following solution
     /*
     float dx = center1.x - center2.x;      // X distance between centers
     float dy = center1.y - center2.y;      // Y distance between centers
@@ -4235,7 +4228,7 @@ RayCollision GetRayCollisionBox(Ray ray, BoundingBox box)
     // Get vector center point->hit point
     collision.normal = Vector3Subtract(collision.point, collision.normal);
     // Scale vector to unit cube
-    // NOTE: We use an additional .01 to fix numerical errors
+    // NOTE: Use an additional .01 to fix numerical errors
     collision.normal = Vector3Scale(collision.normal, 2.01f);
     collision.normal = Vector3Divide(collision.normal, Vector3Subtract(box.max, box.min));
     // The relevant elements of the vector are now slightly larger than 1.0f (or smaller than -1.0f)
@@ -4476,7 +4469,7 @@ static Model LoadOBJ(const char *fileName)
         }
         else if ((lastMaterial != -1) && (objAttributes.material_ids[faceId] != lastMaterial))
         {
-            meshIndex++; // If this is a new material, we need to allocate a new mesh
+            meshIndex++; // If this is a new material, a new mesh is allocated
         }
 
         lastMaterial = objAttributes.material_ids[faceId];
@@ -4492,7 +4485,7 @@ static Model LoadOBJ(const char *fileName)
         model.materialCount = objMaterialCount;
         model.materials = (Material *)MemAlloc(sizeof(Material)*objMaterialCount);
     }
-    else // We must allocate at least one material
+    else // Allocate at least one material
     {
         model.materialCount = 1;
         model.materials = (Material *)MemAlloc(sizeof(Material)*1);
@@ -4515,7 +4508,7 @@ static Model LoadOBJ(const char *fileName)
     // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        bool newMesh = false; // Do we need a new mesh?
+        bool newMesh = false; // Is a new mesh required?
         if (faceId >= nextShapeEnd)
         {
             // Try to find the last vert in the next shape
@@ -4585,7 +4578,7 @@ static Model LoadOBJ(const char *fileName)
     // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
     {
-        bool newMesh = false; // Do we need a new mesh?
+        bool newMesh = false; // Is a new mesh required?
         if (faceId >= nextShapeEnd)
         {
             // Try to find the last vert in the next shape
@@ -4595,7 +4588,7 @@ static Model LoadOBJ(const char *fileName)
             newMesh = true;
         }
 
-        // If this is a new material, we need to allocate a new mesh
+        // If this is a new material, a new mesh is allocated
         if (lastMaterial != -1 && objAttributes.material_ids[faceId] != lastMaterial) newMesh = true;
         lastMaterial = objAttributes.material_ids[faceId];
 
@@ -4841,7 +4834,7 @@ static Model LoadIQM(const char *fileName)
         model.meshes[i].indices = (unsigned short *)RL_CALLOC(model.meshes[i].triangleCount*3, sizeof(unsigned short));
 
 #if !SUPPORT_GPU_SKINNING
-        // Animated vertex data, what we actually process for rendering
+        // Animated vertex data, processed for rendering
         // NOTE: Animated vertex should be re-uploaded to GPU (if not using GPU skinning)
         model.meshes[i].animVertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
         model.meshes[i].animNormals = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));
@@ -4861,7 +4854,7 @@ static Model LoadIQM(const char *fileName)
         for (unsigned int i = imesh[m].first_triangle; i < (imesh[m].first_triangle + imesh[m].num_triangles); i++)
         {
             // IQM triangles indexes are stored in counter-clockwise, but raylib processes the index in linear order,
-            // expecting they point to the counter-clockwise vertex triangle, so we need to reverse triangle indexes
+            // expecting they point to the counter-clockwise vertex triangle, so triangle indexes need to be reversed
             // NOTE: raylib renders vertex data in counter-clockwise order (standard convention) by default
             model.meshes[m].indices[tcounter + 2] = tri[i].vertex[0] - imesh[m].first_vertex;
             model.meshes[m].indices[tcounter + 1] = tri[i].vertex[1] - imesh[m].first_vertex;
@@ -5496,7 +5489,7 @@ static Model LoadGLTF(const char *fileName)
         int primitivesCount = 0;
         bool dracoCompression = false;
 
-        // NOTE: We will load every primitive in the glTF as a separate raylib Mesh
+        // NOTE: Load every primitive in the glTF as a separate raylib Mesh
         // Determine total number of meshes needed from the node hierarchy
         for (unsigned int i = 0; i < data->nodes_count; i++)
         {
@@ -5528,7 +5521,7 @@ static Model LoadGLTF(const char *fileName)
         model.meshCount = primitivesCount;
         model.meshes = (Mesh *)RL_CALLOC(model.meshCount, sizeof(Mesh));
 
-        // NOTE: We keep an extra slot for default material, in case some mesh requires it
+        // NOTE: Keep an extra slot for default material, in case some mesh requires it
         model.materialCount = (int)data->materials_count + 1;
         model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
         model.materials[0] = LoadMaterialDefault();     // Load default material (index: 0)
@@ -5684,7 +5677,7 @@ static Model LoadGLTF(const char *fileName)
 
             for (unsigned int p = 0; p < mesh->primitives_count; p++)
             {
-                // NOTE: We only support primitives defined by triangles
+                // NOTE: Only support primitives defined by triangles
                 // Other alternatives: points, lines, line_strip, triangle_strip
                 if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
@@ -6067,7 +6060,7 @@ static Model LoadGLTF(const char *fileName)
                                     float *temp = (float *)RL_MALLOC(attribute->count*4*sizeof(float));
                                     LOAD_ATTRIBUTE(attribute, 4, float, temp);
 
-                                    // Convert data to raylib color data type (4 bytes), we expect the color data normalized
+                                    // Convert data to raylib color data type (4 bytes), color data must be normalized
                                     for (unsigned int c = 0; c < attribute->count*4; c++) model.meshes[meshIndex].colors[c] = (unsigned char)(temp[c]*255.0f);
 
                                     RL_FREE(temp);
@@ -6125,7 +6118,7 @@ static Model LoadGLTF(const char *fileName)
                 {
                     // The primitive actually keeps the pointer to the corresponding material,
                     // raylib instead assigns to the mesh the by its index, as loaded in model.materials array
-                    // To get the index, we check if material pointers match, and we assign the corresponding index,
+                    // To get the index, check if material pointers match, and assign the corresponding index,
                     // skipping index 0, the default material
                     if (&data->materials[m] == mesh->primitives[p].material)
                     {
@@ -6187,7 +6180,7 @@ static Model LoadGLTF(const char *fileName)
             {
                 bool hasJoints = false;
 
-                // NOTE: We only support primitives defined by triangles
+                // NOTE: Only support primitives defined by triangles
                 if (mesh->primitives[p].type != cgltf_primitive_type_triangles) continue;
 
                 for (unsigned int j = 0; j < mesh->primitives[p].attributes_count; j++)
@@ -6234,7 +6227,7 @@ static Model LoadGLTF(const char *fileName)
                                         boneIdOverflowWarning = true;
                                     }
 
-                                    // Despite the possible overflow, we convert data to unsigned char
+                                    // Despite the possible overflow, convert data to unsigned char
                                     model.meshes[meshIndex].boneIndices[b] = (unsigned char)temp[b];
                                 }
 
@@ -6284,8 +6277,7 @@ static Model LoadGLTF(const char *fileName)
                                 model.meshes[meshIndex].boneWeights = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*4, sizeof(float));
 
                                 // Load 4 components of float data type into mesh.boneWeights
-                                // for cgltf_attribute_type_weights we have:
-
+                                // for cgltf_attribute_type_weights:
                                 //   - data.meshes[0] (256 vertices)
                                 //   - 256 values, provided as cgltf_type_vec4 of float (4 byte per joint, stride 16)
                                 LOAD_ATTRIBUTE(attribute, 4, float, model.meshes[meshIndex].boneWeights)
@@ -6296,9 +6288,9 @@ static Model LoadGLTF(const char *fileName)
                     }
                 }
 
-                // Check if we are animated, and the mesh was not given any bone assignments, but is the child of a bone node
-                // in this case we need to fully attach all the verts to the parent bone so it will animate with the bone
-                if (data->skins_count > 0 && !hasJoints && node->parent != NULL && node->parent->mesh == NULL)
+                // Check if animated, and the mesh was not given any bone assignments, but is the child of a bone node
+                // in this case, all the verts need to be attached to the parent bone so it will animate with the bone
+                if ((data->skins_count > 0) && !hasJoints && (node->parent != NULL) && (node->parent->mesh == NULL))
                 {
                     int parentBoneId = -1;
                     for (int joint = 0; joint < model.skeleton.boneCount; joint++)
@@ -6435,7 +6427,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     }
     else if (output->type == cgltf_type_vec4)
     {
-        // Only v4 is for rotations, so we know it's a quaternion
+        // Only v4 is for rotations, so it's a quaternion
         switch (interpolationType)
         {
             case cgltf_interpolation_type_step:
@@ -6822,7 +6814,7 @@ static Model LoadM3D(const char *fileName)
         }
         else TRACELOG(LOG_INFO, "MODEL: [%s] M3D data loaded successfully: %i faces/%i materials", fileName, m3d->numface, m3d->nummaterial);
 
-        // no face? this is probably just a material library
+        // Check if face is found, if not, probably just a material library
         if (!m3d->numface)
         {
             m3d_free(m3d);
@@ -6841,12 +6833,12 @@ static Model LoadM3D(const char *fileName)
             TRACELOG(LOG_INFO, "MODEL: No materials, putting all meshes in a default material");
         }
 
-        // We always need a default material, so we add +1
+        // A default material is always required, so adding +1
         model.materialCount++;
 
         // Faces must be in non-decreasing materialid order. Verify that quickly, sorting them otherwise
         // WARNING: Sorting is not needed, valid M3D model files should already be sorted
-        // Just keeping the sorting function for reference (Check PR #3363 #3385)
+        // Keeping the sorting function for reference (Check PR #3363 #3385)
         /*
         for (a = 1; a < m3d->numface; a++)
         {
@@ -6902,7 +6894,7 @@ static Model LoadM3D(const char *fileName)
                 mi = m3d->face[i].materialid;
 
                 // Only allocate colors VertexBuffer if there's a color vertex in the model for this material batch
-                // if all colors are fully transparent black for all verteces of this materal, then we assume no vertex colors
+                // if all colors are fully transparent black for all verteces of this materal, then assuming no vertex colors
                 for (j = i, l = vcolor = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++)
                 {
                     if (!m3d->vertex[m3d->face[j].vertex[0]].color ||
@@ -6916,11 +6908,11 @@ static Model LoadM3D(const char *fileName)
                 model.meshes[k].texcoords = (float *)RL_CALLOC(model.meshes[k].vertexCount*2, sizeof(float));
                 model.meshes[k].normals = (float *)RL_CALLOC(model.meshes[k].vertexCount*3, sizeof(float));
 
-                // If no map is provided, or we have colors defined, we allocate storage for vertex colors
+                // If no map is provided, or colors are defined, allocate storage for vertex colors
                 // M3D specs only consider vertex colors if no material is provided, however raylib uses both and mixes the colors
                 if ((mi == M3D_UNDEF) || vcolor) model.meshes[k].colors = (unsigned char *)RL_CALLOC(model.meshes[k].vertexCount*4, sizeof(unsigned char));
 
-                // If no map is provided and we allocated vertex colors, set them to white
+                // If no map is provided and vertex colors are allocated, set them to white
                 if ((mi == M3D_UNDEF) && (model.meshes[k].colors != NULL))
                 {
                     for (int c = 0; c < model.meshes[k].vertexCount*4; c++) model.meshes[k].colors[c] = 255;
@@ -6951,7 +6943,7 @@ static Model LoadM3D(const char *fileName)
             model.meshes[k].vertices[l*9 + 7] = m3d->vertex[m3d->face[i].vertex[2]].y*m3d->scale;
             model.meshes[k].vertices[l*9 + 8] = m3d->vertex[m3d->face[i].vertex[2]].z*m3d->scale;
 
-            // Without vertex color (full transparency), we use the default color
+            // Without vertex color (full transparency), using the default color
             if (model.meshes[k].colors != NULL)
             {
                 if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xff000000)
@@ -6992,7 +6984,7 @@ static Model LoadM3D(const char *fileName)
                 {
                     int skinid = m3d->vertex[m3d->face[i].vertex[n]].skinid;
 
-                    // Check if there is a skin for this mesh, should be, just failsafe
+                    // Check if there is a skin for this mesh
                     if ((skinid != M3D_UNDEF) && (skinid < (int)m3d->numskin))
                     {
                         for (j = 0; j < 4; j++)
@@ -7003,8 +6995,8 @@ static Model LoadM3D(const char *fileName)
                     }
                     else
                     {
-                        // raylib does not handle boneless meshes with skeletal animations, so
-                        // we put all vertices without a bone into a special "no bone" bone
+                        // Boneless meshes with skeletal animations are not supported, so
+                        // putting all vertices without a bone into a special "no bone" bone
                         model.meshes[k].boneIndices[l*12 + n*4] = m3d->numbone;
                         model.meshes[k].boneWeights[l*12 + n*4] = 1.0f;
                     }
@@ -7215,7 +7207,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             bones[i].parent = -1;
             memcpy(bones[i].name, "NO BONE", 7);
 
-            // M3D stores frames at arbitrary intervals with sparse skeletons. We need full skeletons at
+            // M3D stores frames at arbitrary intervals with sparse skeletons; Full skeletons is required at
             // regular intervals, so let the M3D SDK do the heavy lifting and calculate interpolated bones
             for (i = 0; i < animations[a].keyframeCount; i++)
             {

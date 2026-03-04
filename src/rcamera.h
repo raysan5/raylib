@@ -365,7 +365,7 @@ void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTa
     if (lockView)
     {
         // In these camera modes, clamp the Pitch angle
-        // to allow only viewing straight up or down.
+        // to allow only viewing straight up or down
 
         // Clamp view up
         float maxAngleUp = Vector3Angle(up, targetPosition);
@@ -460,7 +460,6 @@ void UpdateCamera(Camera *camera, int mode)
     if (mode == CAMERA_CUSTOM) {}
     else if (mode == CAMERA_ORBITAL)
     {
-        // Orbital can just orbit
         Matrix rotation = MatrixRotate(GetCameraUp(camera), cameraOrbitalSpeed);
         Vector3 view = Vector3Subtract(camera->position, camera->target);
         view = Vector3Transform(view, rotation);

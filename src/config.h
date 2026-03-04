@@ -126,7 +126,7 @@
 
 // rcore: Configuration values
 // NOTE: Below values are alread defined inside [rcore.c] so there is no need to be
-// redefined here, in case it must be done, just uncomment the required line and update
+// redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
 //#define MAX_TRACELOG_MSG_LENGTH       256       // Max length of one trace-log message
@@ -160,7 +160,7 @@
 
 // rlgl: Configuration values
 // NOTE: Below values are alread defined inside [rlgl.h] so there is no need to be
-// redefined here, in case it must be done, just uncomment the required line and update
+// redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
 //#define RL_DEFAULT_BATCH_BUFFER_ELEMENTS    4096      // Default internal render batch elements limits
@@ -350,7 +350,7 @@
 
 // raudio: Configuration values
 // NOTE: Below values are alread defined inside [rlgl.h] so there is no need to be
-// redefined here, in case it must be done, just uncomment the required line and update
+// redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
 //#define AUDIO_DEVICE_FORMAT     ma_format_f32    // Device output format (miniaudio: float-32bit)

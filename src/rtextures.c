@@ -22,7 +22,7 @@
 *       #define SUPPORT_FILEFORMAT_PVR
 *       #define SUPPORT_FILEFORMAT_ASTC
 *           Select desired fileformats to be supported for image data loading. Some of those formats are
-*           supported by default, to remove support, just comment unrequired #define in this module
+*           supported by default, to remove support, comment unrequired #define in this module
 *
 *       #define SUPPORT_IMAGE_EXPORT
 *           Support image export in multiple file formats
@@ -1870,7 +1870,7 @@ void ImageToPOT(Image *image, Color fill)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     // Calculate next power-of-two values
-    // NOTE: Just add the required amount of pixels at the right and bottom sides of image...
+    // NOTE: Add the required amount of pixels at the right and bottom sides of image...
     int potWidth = (int)powf(2, ceilf(logf((float)image->width)/logf(2)));
     int potHeight = (int)powf(2, ceilf(logf((float)image->height)/logf(2)));
 
@@ -2014,7 +2014,7 @@ void ImageAlphaMask(Image *image, Image alphaMask)
         Image mask = ImageCopy(alphaMask);
         if (mask.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
-        // In case image is only grayscale, just add alpha channel
+        // In case image is only grayscale, add alpha channel
         if (image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
             unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
@@ -2589,7 +2589,7 @@ void ImageFlipHorizontal(Image *image)
                 // OPTION 1: Move pixels with memcpy()
                 //memcpy(flippedData + (y*image->width + x)*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + (image->width - 1 - x))*bytesPerPixel, bytesPerPixel);
 
-                // OPTION 2: Just copy data pixel by pixel
+                // OPTION 2: Copy data pixel by pixel
                 for (int i = 0; i < bytesPerPixel; i++) flippedData[(y*image->width + x)*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + (image->width - 1 - x))*bytesPerPixel + i];
             }
         }
@@ -4587,10 +4587,10 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         rlSetTexture(0);
 
         // NOTE: Vertex position can be transformed using matrices
-        // but the process is way more costly than just calculating
+        // but the process is way more costly than calculating
         // the vertex positions manually, like done above
         // Old implementation is left here for educational purposes,
-        // just in case someone wants to do some performance test
+        // in case someone wants to do some performance test
         /*
         rlSetTexture(texture.id);
         rlPushMatrix();

@@ -26,7 +26,7 @@
 *       #define SUPPORT_FILEFORMAT_XM
 *       #define SUPPORT_FILEFORMAT_MOD
 *           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, just comment unrequired #define in this module
+*           supported by default, to remove support, comment unrequired #define in this module
 *
 *   DEPENDENCIES:
 *       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
@@ -299,7 +299,7 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #ifndef AUDIO_BUFFER_RESIDUAL_CAPACITY
-    #define AUDIO_BUFFER_RESIDUAL_CAPACITY     8    // In PCM frames. For resampling and pitch shifting.
+    #define AUDIO_BUFFER_RESIDUAL_CAPACITY     8    // In PCM frames, for resampling and pitch shifting
 #endif
 
 //----------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ static AudioData AUDIO = {          // Global AUDIO context
     // NOTE: Music buffer size is defined by number of samples, independent of sample size and channels number
     // After some math, considering a sampleRate of 48000, a buffer refill rate of 1/60 seconds and a
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
-    // In case of music-stalls, just increase this number
+    // In case of music-stalls, increase this number
     .Buffer.defaultSize = 0,
     .mixedProcessor = NULL
 };
@@ -601,7 +601,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
     // be consumed. Any residual input frames need to be kept track of to
     // ensure there are no discontinuities. Since raylib supports pitch
     // shifting, which is done through resampling, a cache will always be
-    // required. This will be kept relatively small to avoid too much wastage.
+    // required. This will be kept relatively small to avoid too much wastage
     audioBuffer->converterResidualCount = 0;
     audioBuffer->converterResidual = (unsigned char*)RL_CALLOC(AUDIO_BUFFER_RESIDUAL_CAPACITY*ma_get_bytes_per_frame(format, channels), 1);
 
@@ -721,7 +721,7 @@ void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
     if ((buffer != NULL) && (pitch > 0.0f))
     {
         ma_mutex_lock(&AUDIO.System.lock);
-        // Pitching is just an adjustment of the sample rate
+        // Pitching is an adjustment of the sample rate
         // Note that this changes the duration of the sound:
         //  - higher pitches will make the sound faster
         //  - lower pitches make it slower
@@ -1046,7 +1046,7 @@ void UnloadSound(Sound sound)
 
 void UnloadSoundAlias(Sound alias)
 {
-    // Untrack and unload just the sound buffer, not the sample data, it is shared with the source for the alias
+    // Untrack and unload the sound buffer, not the sample data, it is shared with the source for the alias
     if (alias.stream.buffer != NULL)
     {
         UntrackAudioBuffer(alias.stream.buffer);
@@ -2316,7 +2316,7 @@ void DetachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 
 // Add processor to audio pipeline. Order of processors is important
 // Works the same way as {Attach,Detach}AudioStreamProcessor() functions, except
-// these two work on the already mixed output just before sending it to the sound hardware
+// these two work on the already mixed output before sending it to the sound hardware
 void AttachAudioMixedProcessor(AudioCallback process)
 {
     ma_mutex_lock(&AUDIO.System.lock);
@@ -2397,7 +2397,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     if (currentSubBufferIndex > 1) return 0;
 
     // Another thread can update the processed state of buffers, so
-    // just take a copy here to try and avoid potential synchronization problems
+    // take a copy here to try and avoid potential synchronization problems
     bool isSubBufferProcessed[2] = { 0 };
     isSubBufferProcessed[0] = audioBuffer->isSubBufferProcessed[0];
     isSubBufferProcessed[1] = audioBuffer->isSubBufferProcessed[1];
@@ -2478,8 +2478,8 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount)
 {
     // NOTE: Continuously converting data from the AudioBuffer's internal format to the mixing format,
-    // which should be defined by the output format of the data converter.
-    // This is done until frameCount frames have been output.
+    // which should be defined by the output format of the data converter
+    // This is done until frameCount frames have been output
     ma_uint32 bpf = ma_get_bytes_per_frame(audioBuffer->converter.formatIn, audioBuffer->converter.channelsIn);
     ma_uint8 inputBuffer[4096] = { 0 };
     ma_uint32 inputBufferFrameCap = sizeof(inputBuffer)/bpf;
@@ -2491,34 +2491,34 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
         ma_uint64 outputFramesToProcessThisIteration = frameCount - totalOutputFramesProcessed;
         //ma_uint64 inputFramesToProcessThisIteration = 0;
 
-        // Process any residual input frames from the previous read first.
+        // Process any residual input frames from the previous read first
         if (audioBuffer->converterResidualCount > 0)
         {
             ma_uint64 inputFramesProcessedThisIteration = audioBuffer->converterResidualCount;
             ma_uint64 outputFramesProcessedThisIteration = outputFramesToProcessThisIteration;
             ma_data_converter_process_pcm_frames(&audioBuffer->converter, audioBuffer->converterResidual, &inputFramesProcessedThisIteration, runningFramesOut, &outputFramesProcessedThisIteration);
 
-            // Make sure the data in the cache is consumed. This can be optimized to use a cursor instead of a memmove().
-            memmove(audioBuffer->converterResidual, audioBuffer->converterResidual + inputFramesProcessedThisIteration*bpf, (size_t)(AUDIO_BUFFER_RESIDUAL_CAPACITY - inputFramesProcessedThisIteration) * bpf);
+            // Make sure the data in the cache is consumed, this can be optimized to use a cursor instead of a memmove()
+            memmove(audioBuffer->converterResidual, audioBuffer->converterResidual + inputFramesProcessedThisIteration*bpf, (size_t)(AUDIO_BUFFER_RESIDUAL_CAPACITY - inputFramesProcessedThisIteration)*bpf);
             audioBuffer->converterResidualCount -= (ma_uint32)inputFramesProcessedThisIteration; // Safe cast
 
             totalOutputFramesProcessed += (ma_uint32)outputFramesProcessedThisIteration; // Safe cast
         }
         else
         {
-            // Getting here means there are no residual frames from the previous read. Fresh data can now be
-            // pulled from the AudioBuffer and processed.
+            // Getting here means there are no residual frames from the previous read
+            // Fresh data can now be pulled from the AudioBuffer and processed
             //
-            // A best guess needs to be used made to determine how many input frames to pull from the
-            // buffer. There are three possible outcomes: 1) exact; 2) underestimated; 3) overestimated.
+            // A best guess needs to be used made to determine how many input frames to pull from the buffer
+            // There are three possible outcomes: 1) exact; 2) underestimated; 3) overestimated
             //
-            // When the guess is exactly correct or underestimated there is nothing special to handle - it'll be
-            // handled naturally by the loop.
+            // When the guess is exactly correct or underestimated there is nothing special to handle,
+            // it'll be handled naturally by the loop
             //
-            // When the guess is overestimated, that's when it gets more complicated. In this case, any overflow
-            // needs to be stored in a buffer for later processing by the next read.
-            ma_uint32 estimatedInputFrameCount = (ma_uint32)(((float)audioBuffer->converter.resampler.sampleRateIn / audioBuffer->converter.resampler.sampleRateOut) * outputFramesToProcessThisIteration);
-            if (estimatedInputFrameCount == 0) estimatedInputFrameCount = 1;    // Make sure at least one input frame is read.
+            // When the guess is overestimated, that's when it gets more complicated
+            // In this case, any overflow needs to be stored in a buffer for later processing by the next read
+            ma_uint32 estimatedInputFrameCount = (ma_uint32)(((float)audioBuffer->converter.resampler.sampleRateIn / audioBuffer->converter.resampler.sampleRateOut)*outputFramesToProcessThisIteration);
+            if (estimatedInputFrameCount == 0) estimatedInputFrameCount = 1; // Make sure at least one input frame is read
             if (estimatedInputFrameCount > inputBufferFrameCap) estimatedInputFrameCount = inputBufferFrameCap;
 
             ma_uint32 inputFramesInInternalFormatCount = ReadAudioBufferFramesInInternalFormat(audioBuffer, inputBuffer, estimatedInputFrameCount);
@@ -2531,17 +2531,17 @@ static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, f
 
             if (inputFramesInInternalFormatCount > inputFramesProcessedThisIteration)
             {
-                // Getting here means the estimated input frame count was overestimated. The residual needs
-                // be stored for later use.
+                // Getting here means the estimated input frame count was overestimated
+                // The residual needs be stored for later use
                 ma_uint64 residualFrameCount = inputFramesInInternalFormatCount - inputFramesProcessedThisIteration;
 
-                // A safety check to make sure the capacity of the residual cache is not exceeded.
+                // A safety check to make sure the capacity of the residual cache is not exceeded
                 if (residualFrameCount > AUDIO_BUFFER_RESIDUAL_CAPACITY)
                 {
                     residualFrameCount = AUDIO_BUFFER_RESIDUAL_CAPACITY;
                 }
 
-                memcpy(audioBuffer->converterResidual, inputBuffer + inputFramesProcessedThisIteration*bpf, (size_t)(residualFrameCount * bpf));
+                memcpy(audioBuffer->converterResidual, inputBuffer + inputFramesProcessedThisIteration*bpf, (size_t)(residualFrameCount*bpf));
                 audioBuffer->converterResidualCount = (unsigned int)residualFrameCount;
             }
 
@@ -2559,7 +2559,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
 {
     (void)pDevice;
 
-    // Mixing is basically just an accumulation, need to initialize the output buffer to 0
+    // Mixing is basically an accumulation, need to initialize the output buffer to 0
     memset(pFramesOut, 0, frameCount*pDevice->playback.channels*ma_get_bytes_per_sample(pDevice->playback.format));
 
     // Using a mutex here for thread-safety which makes things not real-time
@@ -2577,7 +2577,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
             {
                 if (framesRead >= frameCount) break;
 
-                // Just read as much data as possible from the stream
+                // Read as much data as possible from the stream
                 ma_uint32 framesToRead = (frameCount - framesRead);
 
                 while (framesToRead > 0)
@@ -2626,7 +2626,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                         }
                         else
                         {
-                            // Should never get here, but just for safety,
+                            // Should never get here, but for safety,
                             // move the cursor position back to the start and continue the loop
                             audioBuffer->frameCursorPos = 0;
                             continue;
@@ -2651,7 +2651,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     ma_mutex_unlock(&AUDIO.System.lock);
 }
 
-// Main mixing function, pretty simple in this project, just an accumulation
+// Main mixing function, pretty simple in this project, only an accumulation
 // NOTE: framesOut is both an input and an output, it is initially filled with zeros outside of this function
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer)
 {
@@ -2739,7 +2739,7 @@ static void UpdateAudioStreamInLockedState(AudioStream stream, const void *data,
             }
             else
             {
-                // Just update whichever sub-buffer is processed
+                // Update whichever sub-buffer is processed
                 subBufferToUpdate = (stream.buffer->isSubBufferProcessed[0])? 0 : 1;
             }
 

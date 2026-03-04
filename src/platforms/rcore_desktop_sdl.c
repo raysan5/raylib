@@ -49,7 +49,7 @@
     #define USING_SDL3_PROJECT
 #endif
 #ifndef SDL_ENABLE_OLD_NAMES
-    #define SDL_ENABLE_OLD_NAMES    // Just in case on SDL3, some in-between compatibily is needed
+    #define SDL_ENABLE_OLD_NAMES    // In case on SDL3, some in-between compatibily is needed
 #endif
 // SDL base library (window/rendered, input, timing... functionality)
 #ifdef USING_SDL3_PROJECT
@@ -1365,7 +1365,7 @@ void PollInputEvents(void)
 {
 #if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1482,7 +1482,7 @@ void PollInputEvents(void)
 
             #ifndef USING_VERSION_SDL3
             // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
-            // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
+            // In general, handling this change means checking for the individual events instead of first checking for SDL_WINDOWEVENT
             // and then checking for window events; Events >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST can be compared
             // to see whether it's a window event
             case SDL_WINDOWEVENT:

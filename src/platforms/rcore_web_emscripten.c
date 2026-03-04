@@ -781,17 +781,20 @@ void SetClipboardText(const char *text)
 
 // Async EM_JS to be able to await clickboard read asynchronous function
 EM_ASYNC_JS(void, RequestClipboardData, (void), {
-    if (navigator.clipboard && window.isSecureContext) {
+    if (navigator.clipboard && window.isSecureContext)
+    {
         let items = await navigator.clipboard.read();
-        for (const item of items) {
-
+        for (const item of items)
+        {
             // Check if this item contains plain text or image
-            if (item.types.includes("text/plain")) {
+            if (item.types.includes("text/plain"))
+            {
                 const blob = await item.getType("text/plain");
                 const text = await blob.text();
                 window._lastClipboardString = text;
             }
-            else if (item.types.find(t => t.startsWith("image/"))) {
+            else if (item.types.find(t => t.startsWith("image/")))
+            {
                 const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
                 const bitmap = await createImageBitmap(blob);
                 
@@ -809,16 +812,16 @@ EM_ASYNC_JS(void, RequestClipboardData, (void), {
                 window._lastImgData = imgData; 
             }
         }
-    } else {
-        console.warn("Clipboard read() requires HTTPS/Localhost");
-    }
+    } 
+    else console.warn("Clipboard read() requires HTTPS/Localhost");
 });
 
 // Returns the string created by RequestClipboardData from JS memory to Emscripten C memory
-EM_JS(char*, GetLastPastedText, (void), {
+EM_JS(char *, GetLastPastedText, (void), {
     var str = window._lastClipboardString || "";
     var length = lengthBytesUTF8(str) + 1;
-    if (length > 1) {
+    if (length > 1)
+    {
         var ptr = _malloc(length);
         stringToUTF8(str, ptr, length);
         return ptr;
@@ -827,10 +830,12 @@ EM_JS(char*, GetLastPastedText, (void), {
 });
 
 // Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
-EM_JS(unsigned char*, GetLastPastedImage, (int* width, int* height), {
-    if (window._lastImgData) {
+EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
+    if (window._lastImgData)
+    {
         const data = window._lastImgData;
-        if (data.length > 0) {
+        if (data.length > 0)
+        {
             const ptr = _malloc(data.length);
             HEAPU8.set(data, ptr);
             
@@ -839,12 +844,13 @@ EM_JS(unsigned char*, GetLastPastedImage, (int* width, int* height), {
             if (width)  setValue(width, window._lastImgWidth,  'i32');
             if (height) setValue(height, window._lastImgHeight, 'i32');
             
-            // Clear the JS buffer so we don't fetch the same image twice
+            // Clear the JS buffer so there is no need to fetch the same image twice
             window._lastImgData = null; 
             
-        return ptr;
+            return ptr;
         }
     }
+
     return 0;
 });
 
@@ -1046,7 +1052,7 @@ void PollInputEvents(void)
 {
 #if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 

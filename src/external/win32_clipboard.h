@@ -14,7 +14,7 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
 #include <assert.h>
 
 // NOTE: These search for architecture is taken from "windows.h", and it's necessary to avoid including windows.h
-// and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined.
+// and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined
 #if !defined(_X86_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IX86)
     #define _X86_
     #if !defined(_CHPE_X86_ARM64_) && defined(_M_HYBRID)
