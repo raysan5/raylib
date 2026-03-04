@@ -42,7 +42,7 @@ features
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - Multiple **Fonts** formats supported (TTF, OTF, FNT, BDF, sprite fonts)
   - Multiple texture formats supported, including **compressed formats** (DXT, ETC, ASTC)
-  - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more! 
+  - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more!
   - Flexible Materials system, supporting classic maps and **PBR maps**
   - **Animated 3D models** supported (skeletal bones animation) (IQM, M3D, glTF)
   - Shaders support, including model shaders and **postprocessing** shaders
@@ -111,7 +111,7 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 learning and docs
 ------------------
 
-raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works. 
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works.
 
 Some additional documentation about raylib design can be found in [raylib GitHub Wiki](https://github.com/raysan5/raylib/wiki). Here are the relevant links:
 
