@@ -2178,23 +2178,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // GLFW3: Joystick connected/disconnected callback
 static void JoystickCallback(int jid, int event)
 {
-    if (jid >= MAX_GAMEPADS)
+    if (jid < MAX_GAMEPADS)
     {
-        // WARNING: If jid is higher than maximum supported joysticks, just return. This
-        // prevents an out-of-bounds crash on linux when connecting a gamepad to a running app
-        return;
-    }
-
-    if (event == GLFW_CONNECTED)
-    {
-        // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
-        // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
-        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
-        strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
-    }
-    else if (event == GLFW_DISCONNECTED)
-    {
-        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+        if (event == GLFW_CONNECTED)
+        {
+            // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
+            // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
+            memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+            strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
+        }
+        else if (event == GLFW_DISCONNECTED)
+        {
+            memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+        }
     }
 }
 
