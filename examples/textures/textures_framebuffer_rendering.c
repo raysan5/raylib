@@ -65,7 +65,7 @@ int main(void)
     // Rectangles for cropping render texture
     const float captureSize = 128.0f;
     Rectangle cropSource = { (subjectTarget.texture.width - captureSize)/2.0f, (subjectTarget.texture.height - captureSize)/2.0f, captureSize, -captureSize };
-    Rectangle cropDest = { splitWidth + 20, 20, captureSize, captureSize};
+    Rectangle cropDest = { splitWidth + 20.0f, 20.0f, captureSize, captureSize};
 
     SetTargetFPS(60);
     DisableCursor();
@@ -115,7 +115,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangleLines((subjectTarget.texture.width - captureSize)/2, (subjectTarget.texture.height - captureSize)/2, captureSize, captureSize, GREEN);
+            DrawRectangleLines((int)((subjectTarget.texture.width - captureSize)/2.0f), (int)((subjectTarget.texture.height - captureSize)/2.0f), captureSize, captureSize, GREEN);
             DrawText("Subject View", 10, subjectTarget.texture.height - 30, 20, BLACK);
 
         EndTextureMode();
