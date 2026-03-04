@@ -2220,7 +2220,7 @@ return {
         {
           name = "GAMEPAD_BUTTON_UNKNOWN",
           value = 0,
-          description = "Unknown button, just for error checking"
+          description = "Unknown button, for error checking"
         },
         {
           name = "GAMEPAD_BUTTON_LEFT_FACE_UP",
@@ -2792,7 +2792,7 @@ return {
         {
           name = "TEXTURE_FILTER_POINT",
           value = 0,
-          description = "No filter, just pixel approximation"
+          description = "No filter, pixel approximation"
         },
         {
           name = "TEXTURE_FILTER_BILINEAR",

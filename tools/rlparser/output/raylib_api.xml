@@ -470,7 +470,7 @@
             <Value name="MOUSE_CURSOR_NOT_ALLOWED" integer="10" desc="The operation-not-allowed shape" />
         </Enum>
         <Enum name="GamepadButton" valueCount="18" desc="Gamepad buttons">
-            <Value name="GAMEPAD_BUTTON_UNKNOWN" integer="0" desc="Unknown button, just for error checking" />
+            <Value name="GAMEPAD_BUTTON_UNKNOWN" integer="0" desc="Unknown button, for error checking" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_UP" integer="1" desc="Gamepad left DPAD up button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_RIGHT" integer="2" desc="Gamepad left DPAD right button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_DOWN" integer="3" desc="Gamepad left DPAD down button" />
@@ -590,7 +590,7 @@
             <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="24" desc="2 bpp" />
         </Enum>
         <Enum name="TextureFilter" valueCount="6" desc="Texture parameters: filter mode">
-            <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, just pixel approximation" />
+            <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, pixel approximation" />
             <Value name="TEXTURE_FILTER_BILINEAR" integer="1" desc="Linear filtering" />
             <Value name="TEXTURE_FILTER_TRILINEAR" integer="2" desc="Trilinear filtering (linear with mipmaps)" />
             <Value name="TEXTURE_FILTER_ANISOTROPIC_4X" integer="3" desc="Anisotropic filtering 4x" />
