@@ -3935,7 +3935,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
         // Upload runtime bone transforms matrices, to compute skinning on the shader (GPU-skinning)
         // NOTE: Required location must be found and Mesh bones indices and weights must be also uploaded to shader
-        if ((mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] != -1) && (model.boneMatrices != NULL))
+        if (mat.shader.locs != NULL && (mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] != -1) && (model.boneMatrices != NULL))
         {
             rlEnableShader(mat.shader.id); // Enable shader to set bone transform matrices
             rlSetUniformMatrices(mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS], model.boneMatrices, model.skeleton.boneCount);
