@@ -36,6 +36,9 @@
 #include <windowsx.h>
 #include <shellapi.h>
 
+void TriggerModalMoveResizeCallback(void);
+void ResetKeyboardState(void);
+
 // Returns the window style for the specified window
 //
 static DWORD getWindowStyle(const _GLFWwindow* window)
@@ -529,10 +532,18 @@ static void maximizeWindowManually(_GLFWwindow* window)
                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
+#ifndef USER_TIMER_MINIMUM
+#define USER_TIMER_MINIMUM 0x0000000A
+#endif
+
+int in_modal_loop = 0;
+
 // Window procedure for user-created windows
 //
 static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    static BOOL modalMoveResizeLoop = FALSE;
+
     _GLFWwindow* window = GetPropW(hWnd, L"GLFW");
     if (!window)
     {
@@ -992,6 +1003,13 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
         case WM_ENTERSIZEMOVE:
         case WM_ENTERMENULOOP:
         {
+            ++in_modal_loop;
+            if (in_modal_loop == 1)
+            {
+                SetTimer(hWnd, (UINT_PTR)&TriggerModalMoveResizeCallback, USER_TIMER_MINIMUM, NULL);
+                ResetKeyboardState();
+            }
+
             if (window->win32.frameAction)
                 break;
 
@@ -1005,9 +1023,30 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             break;
         }
 
+        case WM_TIMER:
+        {
+            if (wParam == (UINT_PTR)&TriggerModalMoveResizeCallback)
+            {
+                // TODO: we have no access to modalMoveResize
+                TriggerModalMoveResizeCallback();
+                return 0;
+            }
+        } break;
+
         case WM_EXITSIZEMOVE:
         case WM_EXITMENULOOP:
         {
+            --in_modal_loop;
+            if (in_modal_loop == 0) 
+            {
+                KillTimer(hWnd, (UINT_PTR)&TriggerModalMoveResizeCallback);
+                MSG msg;
+                while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE))
+                {
+                }
+                ResetKeyboardState();
+            }
+
             if (window->win32.frameAction)
                 break;
 

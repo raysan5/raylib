@@ -397,11 +397,12 @@ CoreData CORE = { 0 };                              // Global CORE state context
 
 static int logTypeLevel = LOG_INFO;                 // Minimum log type level
 
-static TraceLogCallback traceLog = NULL;            // TraceLog callback function pointer
-static LoadFileDataCallback loadFileData = NULL;    // LoadFileData callback function pointer
-static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback function pointer
-static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
-static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
+static TraceLogCallback traceLog = NULL;               // TraceLog callback function pointer
+static LoadFileDataCallback    loadFileData = NULL;    // LoadFileData callback function pointer
+static SaveFileDataCallback    saveFileData = NULL;    // SaveFileText callback function pointer
+static LoadFileTextCallback    loadFileText = NULL;    // LoadFileText callback function pointer
+static SaveFileTextCallback    saveFileText = NULL;    // SaveFileText callback function pointer
+static ModalMoveResizeCallback modalMoveResize = NULL; // ModalMoveResize callback function pointer
 
 #if SUPPORT_SCREEN_CAPTURE
 static int screenshotCounter = 0;                   // Screenshots counter
@@ -850,6 +851,11 @@ bool IsCursorHidden(void)
 bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
+}
+
+void SetModalMoveResizeCallback(ModalMoveResizeCallback callback)
+{
+    modalMoveResize = callback;
 }
 
 //----------------------------------------------------------------------------------
@@ -3902,6 +3908,20 @@ void SetExitKey(int key)
     CORE.Input.Keyboard.exitKey = key;
 }
 
+// Reset the keyboard state
+void ResetKeyboardState(void)
+{
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.currentKeyState[i]  = 0;
+        CORE.Input.Keyboard.previousKeyState[i] = 0;
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
+
+    CORE.Input.Keyboard.keyPressedQueueCount = 0;
+    CORE.Input.Keyboard.charPressedQueueCount = 0;
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Input Handling: Gamepad
 //----------------------------------------------------------------------------------
@@ -4202,6 +4222,12 @@ int GetTouchPointCount(void)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //int InitPlatform(void)
 //void ClosePlatform(void)
+
+
+void TriggerModalMoveResizeCallback(void)
+{
+    if (modalMoveResize) modalMoveResize();
+}
 
 // Initialize hi-resolution timer
 void InitTimer(void)

@@ -967,6 +967,7 @@ typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSi
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); // FileIO: Save text data
+typedef void (*ModalMoveResizeCallback)(); // Window: Callback to user code while the window is being dragged or resized
 
 //------------------------------------------------------------------------------------
 // Global Variables Definition
@@ -1031,6 +1032,7 @@ RLAPI const char *GetClipboardText(void);                         // Get clipboa
 RLAPI Image GetClipboardImage(void);                              // Get clipboard image content
 RLAPI void EnableEventWaiting(void);                              // Enable waiting for events on EndDrawing(), no automatic event polling
 RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling
+RLAPI void SetModalMoveResizeCallback(ModalMoveResizeCallback callback); // Set a callback that is invoked periodically while the window is being dragged or resized, frequency is platform dependant
 
 // Cursor-related functions
 RLAPI void ShowCursor(void);                                      // Shows cursor
