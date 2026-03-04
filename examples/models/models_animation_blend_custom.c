@@ -82,10 +82,10 @@ int main(void)
     ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
 
     // Use specific animation indices: 2-walk/move, 3-attack
-    unsigned int animIndex0 = 2; // Walk/Move animation (index 2)
-    unsigned int animIndex1 = 3; // Attack animation (index 3)
-    unsigned int animCurrentFrame0 = 0;
-    unsigned int animCurrentFrame1 = 0;
+    int animIndex0 = 2; // Walk/Move animation (index 2)
+    int animIndex1 = 3; // Attack animation (index 3)
+    int animCurrentFrame0 = 0;
+    int animCurrentFrame1 = 0;
     
     // Validate indices
     if (animIndex0 >= animCount) animIndex0 = 0;
