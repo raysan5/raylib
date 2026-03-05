@@ -1388,40 +1388,29 @@ Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing
     return textSize;
 }
 
-// Measure string width for an existing array of codepoints for default font
-int MeasureCodepoints(const int *codepoints, int length, int fontSize) {
-    Vector2 textSize = { 0.0f, 0.0f };
-
-    // Check if default font has been loaded
-    if (GetFontDefault().texture.id != 0)
-    {
-        int defaultFontSize = 10;   // Default Font glyphs height in pixel
-        if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-        int spacing = fontSize/defaultFontSize;
-
-        textSize = MeasureCodepointsEx(GetFontDefault(), codepoints, length, fontSize, spacing);
-    }
-
-    return (int)textSize.x;
-}
-
 // Measure string size for an existing array of codepoints for Font
-Vector2 MeasureCodepointsEx(Font font, const int *codepoints, int length, float fontSize, float spacing) {
+Vector2 MeasureTextCodepoints(Font font, const int *codepoints, int length, float fontSize, float spacing)
+{
     Vector2 textSize = { 0 };
 
-    if ((font.texture.id == 0) || (codepoints == NULL) || (length == 0)) return textSize; // Security check
+    // Security check
+    if ((font.texture.id == 0) || (codepoints == NULL) || (length == 0)) return textSize;
 
     float textWidth = 0.0f;
-    float tempTextWidth = 0.0f;     // Used to count longer text line width
+    // Used to count longer text line width
+    float tempTextWidth = 0.0f;
 
-    int tempGlyphCounter = 0;       // Used to count longer text line num chars
+    // Used to count longer text line num chars
+    int tempGlyphCounter = 0;
     int glyphCounter = 0;
 
     float textHeight = fontSize;
     float scaleFactor = fontSize/(float)font.baseSize;
 
-    int letter = 0;                 // Current character
-    int index = 0;                  // Index position in sprite font
+    // Current character
+    int letter = 0;
+    // Index position in sprite font
+    int index = 0;
 
     for (int i = 0; i < length; i++)
     {
