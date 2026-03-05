@@ -682,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="598">
+    <Functions count="599">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2434,6 +2434,13 @@
         <Function name="MeasureTextEx" retType="Vector2" paramCount="4" desc="Measure string size for Font">
             <Param type="Font" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
+            <Param type="float" name="fontSize" desc="" />
+            <Param type="float" name="spacing" desc="" />
+        </Function>
+        <Function name="MeasureTextCodepoints" retType="Vector2" paramCount="5" desc="Measure string size for an existing array of codepoints for Font">
+            <Param type="Font" name="font" desc="" />
+            <Param type="const int *" name="codepoints" desc="" />
+            <Param type="int" name="length" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
         </Function>

@@ -6846,6 +6846,18 @@ return {
       }
     },
     {
+      name = "MeasureTextCodepoints",
+      description = "Measure string size for an existing array of codepoints for Font",
+      returnType = "Vector2",
+      params = {
+        {type = "Font", name = "font"},
+        {type = "const int *", name = "codepoints"},
+        {type = "int", name = "length"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"}
+      }
+    },
+    {
       name = "GetGlyphIndex",
       description = "Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found",
       returnType = "int",
