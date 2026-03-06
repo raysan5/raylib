@@ -1989,7 +1989,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
                     {
                         *dataSize = (int)count;
 
-                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, dataSize, count);
+                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %zu)", fileName, *dataSize, count);
                         else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
                     }
                 }

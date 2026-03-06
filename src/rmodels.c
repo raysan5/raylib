@@ -5367,7 +5367,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
         {
             image = LoadImageFromMemory(".jpg", data, (int)cgltfImage->buffer_view->size);
         }
-        else TRACELOG(LOG_WARNING, "MODEL: glTF image data MIME type not recognized", TextFormat("%s/%s", texPath, cgltfImage->uri));
+        else TRACELOG(LOG_WARNING, "MODEL: [%s] glTF image data MIME type not recognized", TextFormat("%s/%s", texPath, cgltfImage->uri));
 
         RL_FREE(data);
     }
@@ -5475,11 +5475,11 @@ static Model LoadGLTF(const char *fileName)
         else if (data->file_type == cgltf_file_type_gltf) TRACELOG(LOG_INFO, "MODEL: [%s] Model basic data (glTF) loaded successfully", fileName);
         else TRACELOG(LOG_WARNING, "MODEL: [%s] Model format not recognized", fileName);
 
-        TRACELOG(LOG_INFO, "    > Meshes count: %i", data->meshes_count);
-        TRACELOG(LOG_INFO, "    > Materials count: %i (+1 default)", data->materials_count);
-        TRACELOG(LOG_DEBUG, "    > Buffers count: %i", data->buffers_count);
-        TRACELOG(LOG_DEBUG, "    > Images count: %i", data->images_count);
-        TRACELOG(LOG_DEBUG, "    > Textures count: %i", data->textures_count);
+        TRACELOG(LOG_INFO, "    > Meshes count: %zu", data->meshes_count);
+        TRACELOG(LOG_INFO, "    > Materials count: %zu (+1 default)", data->materials_count);
+        TRACELOG(LOG_DEBUG, "    > Buffers count: %zu", data->buffers_count);
+        TRACELOG(LOG_DEBUG, "    > Images count: %zu", data->images_count);
+        TRACELOG(LOG_DEBUG, "    > Textures count: %zu", data->textures_count);
 
         // Force reading data buffers (fills buffer_view->buffer->data)
         // NOTE: If an uri is defined to base64 data or external path, it's automatically loaded
@@ -6165,7 +6165,7 @@ static Model LoadGLTF(const char *fileName)
                     &(model.skeleton.bindPose[i].scale));
             }
 
-            if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %i", fileName, data->skins_count);
+            if (data->skins_count > 1) TRACELOG(LOG_WARNING, "MODEL: [%s] can only load one skin (armature) per model, but gltf skins_count == %zu", fileName, data->skins_count);
         }
 
         meshIndex = 0;
@@ -6662,7 +6662,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
         if (data->skins_count > 1)
         {
-            TRACELOG(LOG_WARNING, "MODEL: [%s] Expected one unique skin to load animation data from, but found %i", fileName, data->skins_count);
+            TRACELOG(LOG_WARNING, "MODEL: [%s] Expected one unique skin to load animation data from, but found %zu", fileName, data->skins_count);
         }
 
         cgltf_free(data);
@@ -7195,7 +7195,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
             animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
             strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name) - 1);
 
-            TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %fs", fileName, animations[a].name, animations[a].keyframeCount, m3d->action[a].durationmsec);
+            TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %ums", fileName, animations[a].name, animations[a].keyframeCount, m3d->action[a].durationmsec);
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {

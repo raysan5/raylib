@@ -2416,7 +2416,7 @@ void ImageMipmaps(Image *image)
 
             if (i < image->mipmaps) continue;
 
-            TRACELOG(LOG_DEBUG, "IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: 0x%x", i, mipWidth, mipHeight, mipSize, nextmip);
+            TRACELOG(LOG_DEBUG, "IMAGE: Generating mipmap level: %i (%i x %i) - size: %i - offset: %p", i, mipWidth, mipHeight, mipSize, (void *)nextmip);
             ImageResize(&imCopy, mipWidth, mipHeight); // Uses internally Mitchell cubic downscale filter
             memcpy(nextmip, imCopy.data, mipSize);
         }
