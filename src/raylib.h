@@ -112,6 +112,13 @@
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
+// Printf style formatting to enable -Wformat, used for TextFormat and TraceLog
+#if defined(__GNUC__) // GCC and Clang
+    #define RL_ATT_FMT(fmt, va) __attribute__((format(printf, fmt, va)))
+#else
+    #define RL_ATT_FMT(fmt, va) 
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -1114,8 +1121,8 @@ RLAPI void OpenURL(const char *url);                            // Open URL with
 
 // Logging system
 RLAPI void SetTraceLogLevel(int logLevel);                      // Set the current threshold (minimum) log level
-RLAPI void TraceLog(int logLevel, const char *text, ...);       // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
 RLAPI void SetTraceLogCallback(TraceLogCallback callback);      // Set custom trace log
+RLAPI void TraceLog(int logLevel, const char *text, ...) RL_ATT_FMT(2, 3);       // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
 
 // Memory management, using internal allocators
 RLAPI void *MemAlloc(unsigned int size);                        // Internal memory allocator
@@ -1533,7 +1540,7 @@ RLAPI void UnloadTextLines(char **text, int lineCount);                         
 RLAPI int TextCopy(char *dst, const char *src);                                             // Copy one string to another, returns bytes copied
 RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
-RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf() style)
+RLAPI const char *TextFormat(const char *text, ...) RL_ATT_FMT(1, 2) ;                                        // Text formatting with variables (sprintf() style)
 RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
 RLAPI const char *TextRemoveSpaces(const char *text);                                       // Remove text spaces, concat words
 RLAPI char *GetTextBetween(const char *text, const char *begin, const char *end);           // Get text between two strings
