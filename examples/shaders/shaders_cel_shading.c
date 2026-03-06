@@ -81,7 +81,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - cel shading");
 
     Camera camera = { 0 };
-    camera.position   = (Vector3){ 9.0f, 10.0f, 9.0f };
+    camera.position   = (Vector3){ 9.0f, 6.0f, 9.0f };
     camera.target     = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy       = 45.0f;
@@ -106,7 +106,7 @@ int main(void)
     // Single directional white light, angled so toon bands are visible on the model sides.
     // Spins opposite to CAMERA_ORBITAL (0.5 rad/s) so lighting changes as you watch.
     Light lights[MAX_LIGHTS] = { 0 };
-    lights[0] = CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 5.0f, 5.0f, 0.0f }, Vector3Zero(), WHITE, celShader);
+    lights[0] = CreateLight(LIGHT_DIRECTIONAL, (Vector3){ 50.0f, 50.0f, 50.0f }, Vector3Zero(), WHITE, celShader);
 
 
     bool celEnabled     = true;
@@ -147,9 +147,9 @@ int main(void)
         // Spin light opposite to CAMERA_ORBITAL (0.5 rad/s), angled 45 degrees off vertical
         float t = (float)GetTime();
         lights[0].position = (Vector3){
-            sinf(-t * 0.5f) * 5.0f,
+            sinf(-t * 0.3f) * 5.0f,
             5.0f,
-            cosf(-t * 0.5f) * 5.0f
+            cosf(-t * 0.3f) * 5.0f
         };
 
         for (int i = 0; i < MAX_LIGHTS; i++) UpdateLightValues(celShader, lights[i]);
@@ -176,8 +176,8 @@ int main(void)
                 }
 
                 DrawModel(model, Vector3Zero(), MODEL.scale, WHITE);
-                DrawSphereEx(lights[0].position, 0.2f, 10, 10, YELLOW);  // Light position indicator
-                DrawGrid(20, 1.0f);
+                DrawSphereEx(lights[0].position, 0.2f, 50, 50, YELLOW);  // Light position indicator
+                DrawGrid(10, 10.0f);
 
             EndMode3D();
 
