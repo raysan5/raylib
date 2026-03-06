@@ -7,7 +7,7 @@ in vec3 fragNormal;
 
 // Raylib standard uniforms
 uniform sampler2D texture0;
-uniform vec4      colDiffuse;
+uniform vec4 colDiffuse;
 
 // View position for future specular / fresnel use.
 uniform vec3 viewPos;
@@ -18,7 +18,7 @@ uniform float numBands;
 // rlights.h compatible light block.
 struct Light {
     int  enabled;
-    int  type;       // 0 = directional, 1 = point
+    int  type; // 0 = directional, 1 = point
     vec3 position;
     vec3 target;
     vec4 color;
@@ -29,9 +29,9 @@ uniform Light lights[4];
 out vec4 finalColor;
 
 void main() {
-    vec4 texColor  = texture(texture0, fragTexCoord);
+    vec4 texColor = texture(texture0, fragTexCoord);
     vec3 baseColor = texColor.rgb * fragColor.rgb * colDiffuse.rgb;
-    vec3 norm      = normalize(fragNormal);
+    vec3 norm = normalize(fragNormal);
 
     float lightAccum = 0.08; // ambient floor
 

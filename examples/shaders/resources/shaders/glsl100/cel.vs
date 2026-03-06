@@ -13,7 +13,6 @@ varying vec2 fragTexCoord;
 varying vec4 fragColor;
 varying vec3 fragNormal;
 
-// inverse() and transpose() are not built-in until GLSL 1.40 / ES 3.0
 mat3 inverse(mat3 m)
 {
     float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
@@ -39,10 +38,10 @@ void main()
 {
     fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));
     fragTexCoord = vertexTexCoord;
-    fragColor    = vertexColor;
+    fragColor = vertexColor;
 
     mat3 normalMatrix = transpose(inverse(mat3(matModel)));
-    fragNormal   = normalize(normalMatrix * vertexNormal);
+    fragNormal = normalize(normalMatrix * vertexNormal);
 
-    gl_Position  = mvp * vec4(vertexPosition, 1.0);
+    gl_Position = mvp * vec4(vertexPosition, 1.0);
 }

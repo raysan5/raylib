@@ -6,13 +6,13 @@ varying vec4 fragColor;
 varying vec3 fragNormal;
 
 uniform sampler2D texture0;
-uniform vec4      colDiffuse;
-uniform vec3      viewPos;
-uniform float     numBands;
+uniform vec4 colDiffuse;
+uniform vec3 viewPos;
+uniform float numBands;
 
 struct Light {
-    int  enabled;
-    int  type;
+    int enabled;
+    int type;
     vec3 position;
     vec3 target;
     vec4 color;
@@ -21,9 +21,9 @@ uniform Light lights[4];
 
 void main()
 {
-    vec4 texColor  = texture2D(texture0, fragTexCoord);
+    vec4 texColor = texture2D(texture0, fragTexCoord);
     vec3 baseColor = texColor.rgb * fragColor.rgb * colDiffuse.rgb;
-    vec3 norm      = normalize(fragNormal);
+    vec3 norm = normalize(fragNormal);
 
     float lightAccum = 0.08; // ambient floor
 
