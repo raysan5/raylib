@@ -446,7 +446,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int charHeight = 0;
     int j = 0;
 
-    while ((lineSpacing + j) < image.height && 
+    while (((lineSpacing + j) < image.height) && 
           !COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
@@ -470,8 +470,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
             int charWidth = 0;
 
-            while ((xPosToRead + charWidth) < image.width && 
-                  !COLOR_EQUAL(pixels[(lineSpacing + (charHeight+lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
+            while (((xPosToRead + charWidth) < image.width) && 
+                  !COLOR_EQUAL(pixels[(lineSpacing + (charHeight + lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = (float)charWidth;
 
