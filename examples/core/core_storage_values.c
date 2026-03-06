@@ -133,7 +133,7 @@ bool SaveStorageValue(unsigned int position, int value)
             else
             {
                 // RL_REALLOC failed
-                TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", STORAGE_DATA_FILE, dataSize, position*sizeof(int));
+                TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%lu) bigger than actual file size", STORAGE_DATA_FILE, dataSize, position*sizeof(int));
 
                 // We store the old size of the file
                 newFileData = fileData;

@@ -67,7 +67,7 @@ int main(void)
         models[i] = LoadModel(voxFileNames[i]);
         double t1 = GetTime()*1000.0;
 
-        TraceLog(LOG_INFO, TextFormat("[%s] Model file loaded in %.3f ms", voxFileNames[i], t1 - t0));
+        TraceLog(LOG_INFO, "%s", TextFormat("[%s] Model file loaded in %.3f ms", voxFileNames[i], t1 - t0));
 
         // Compute model translation matrix to center model on draw position (0, 0 , 0)
         BoundingBox bb = GetModelBoundingBox(models[i]);
