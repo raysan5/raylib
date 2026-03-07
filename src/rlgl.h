@@ -461,7 +461,7 @@ typedef enum {
     RL_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
-    RL_PIXELFORMAT_UNCOMPRESSED_DEPTH,             // Depth component (24 or 16 bit, depending on OpenGL version)
+    RL_PIXELFORMAT_UNCOMPRESSED_DEPTH,             // Depth component (32 or 24 or 16 bit, depending on OpenGL version)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
