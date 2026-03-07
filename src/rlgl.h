@@ -461,6 +461,7 @@ typedef enum {
     RL_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
+    RL_PIXELFORMAT_UNCOMPRESSED_DEPTH,             // Depth component (24 or 16 bit, depending on OpenGL version)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -3630,6 +3631,36 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         #endif
         #endif
         #endif
+        case RL_PIXELFORMAT_UNCOMPRESSED_DEPTH:
+            if (RLGL.ExtSupported.texDepth)
+            {
+                *glFormat = GL_DEPTH_COMPONENT;
+
+                if (RLGL.ExtSupported.texDepthWebGL)
+                {
+                    *glInternalFormat = GL_DEPTH_COMPONENT;
+                    *glType = GL_UNSIGNED_SHORT;
+                }
+                else
+                {
+                    if (RLGL.ExtSupported.maxDepthBits == 32)
+                    {
+                        *glInternalFormat = GL_DEPTH_COMPONENT32_OES;
+                        *glType = GL_UNSIGNED_INT;
+                    }
+                    else if (RLGL.ExtSupported.maxDepthBits == 24)
+                    {
+                        *glInternalFormat = GL_DEPTH_COMPONENT24_OES;
+                        *glType = GL_UNSIGNED_INT;
+                    }
+                    else
+                    {
+                        *glInternalFormat = GL_DEPTH_COMPONENT16_OES;
+                        *glType = GL_UNSIGNED_SHORT;
+                    }
+                }
+            }
+            break;
     #elif defined(GRAPHICS_API_OPENGL_33)
         case RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
@@ -3644,6 +3675,27 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_R16F; *glFormat = GL_RED; *glType = GL_HALF_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB16F; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA16F; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_DEPTH:
+            if (RLGL.ExtSupported.texDepth)
+            {
+                *glFormat = GL_DEPTH_COMPONENT;
+                if (RLGL.ExtSupported.maxDepthBits == 32)
+                {
+                    *glInternalFormat = GL_DEPTH_COMPONENT32F;
+                    *glType = GL_FLOAT;
+                }
+                else if (RLGL.ExtSupported.maxDepthBits == 24)
+                {
+                    *glInternalFormat = GL_DEPTH_COMPONENT24;
+                    *glType = GL_UNSIGNED_INT;
+                }
+                else
+                {
+                    *glInternalFormat = GL_DEPTH_COMPONENT16;
+                    *glType = GL_UNSIGNED_SHORT;
+                }
+            }
+            break;
     #endif
     #if !defined(GRAPHICS_API_OPENGL_11)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
