@@ -752,6 +752,7 @@ RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, const void 
 RLAPI unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount); // Load texture data
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer); // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mipmapCount); // Load texture cubemap data
+RLAPI unsigned int rlLoadTextureCubemapDepth(int size); // Load depth cubemap texture (to be attached to fbo)
 RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data); // Update texture with new data on GPU
 RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType); // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
@@ -3576,7 +3577,7 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
 // Load depth cubemap (to be attached to fbo)
 // WARNING: OpenGL ES 2.0 requires GL_OES_depth_texture and WebGL requires WEBGL_depth_texture extensions
 // Stored the following convention: +X, -X, +Y, -Y, +Z, -Z
-unsigned int rlLoadTextureCubemapDepth(int width, int height)
+unsigned int rlLoadTextureCubemapDepth(int size)
 {
     unsigned int id = 0;
     if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return id; }
@@ -3640,7 +3641,7 @@ unsigned int rlLoadTextureCubemapDepth(int width, int height)
     // Load cubemap faces
     for (int i = 0; i < 6; i++)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, width, height, 0, GL_DEPTH_COMPONENT, glType, NULL);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, size, size, 0, GL_DEPTH_COMPONENT, glType, NULL);
     }
 
     // Set cubemap texture sampling parameters
@@ -3655,7 +3656,7 @@ unsigned int rlLoadTextureCubemapDepth(int width, int height)
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 #endif
 
-    if (id > 0) TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Depth cubemap texture loaded successfully (%ix%i)", id, width, height);
+    if (id > 0) TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Depth cubemap texture loaded successfully (%ix%i)", id, size, size);
     else TRACELOG(RL_LOG_WARNING, "TEXTURE: Failed to load depth cubemap texture");
 
     return id;
