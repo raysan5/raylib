@@ -3573,6 +3573,94 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
     return id;
 }
 
+// Load depth cubemap (to be attached to fbo)
+// WARNING: OpenGL ES 2.0 requires GL_OES_depth_texture and WebGL requires WEBGL_depth_texture extensions
+// Stored the following convention: +X, -X, +Y, -Y, +Z, -Z
+unsigned int rlLoadTextureCubemapDepth(int width, int height)
+{
+    unsigned int id = 0;
+    if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return id; }
+
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    if (!RLGL.ExtSupported.texDepth)
+    {
+        TRACELOG(RL_LOG_WARNING, "GL: Depth cubemap textures not supported");
+        return id;
+    }
+
+    unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
+    unsigned int glType = GL_FLOAT;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    // WARNING: WebGL platform requires unsized internal format definition (GL_DEPTH_COMPONENT)
+    // while other platforms using OpenGL ES 2.0 require/support sized internal formats depending on the GPU capabilities
+    if (!RLGL.ExtSupported.texDepthWebGL)
+    {
+        if (RLGL.ExtSupported.maxDepthBits == 32) 
+        {
+            glInternalFormat = GL_DEPTH_COMPONENT32_OES; 
+            glType = GL_FLOAT;
+        }
+        else if (RLGL.ExtSupported.maxDepthBits == 24)
+        {
+            glInternalFormat = GL_DEPTH_COMPONENT24_OES;
+            glType = GL_UNSIGNED_INT;
+        }
+        else
+        {
+            glInternalFormat = GL_DEPTH_COMPONENT16;
+            glType = GL_UNSIGNED_SHORT;
+        }
+    }
+#endif
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    // NOTE: This sized internal format should also work for WebGL 2.0
+    // WARNING: Specification only allows GL_DEPTH_COMPONENT32F for GL_FLOAT type
+    // REF: https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
+    if (RLGL.ExtSupported.maxDepthBits == 32)
+    {
+        glInternalFormat = GL_DEPTH_COMPONENT32F;
+        glType = GL_FLOAT;
+    }
+    else if (RLGL.ExtSupported.maxDepthBits == 24) 
+    {
+        glInternalFormat = GL_DEPTH_COMPONENT24;
+        glType = GL_UNSIGNED_INT;
+    }
+    else
+    {
+        glInternalFormat = GL_DEPTH_COMPONENT16;
+        glType = GL_UNSIGNED_SHORT;
+    }
+#endif
+
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+    
+    // Load cubemap faces
+    for (int i = 0; i < 6; i++)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, width, height, 0, GL_DEPTH_COMPONENT, glType, NULL);
+    }
+
+    // Set cubemap texture sampling parameters
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(GRAPHICS_API_OPENGL_33)|| defined(GRAPHICS_API_OPENGL_ES3)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  // Flag not supported on OpenGL ES 2.0
+#endif
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+#endif
+
+    if (id > 0) TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Depth cubemap texture loaded successfully (%ix%i)", id, width, height);
+    else TRACELOG(RL_LOG_WARNING, "TEXTURE: Failed to load depth cubemap texture");
+
+    return id;
+}
+
 // Update already loaded texture in GPU with new data
 // WARNING: Not possible to know safely if internal texture format is the expected one...
 void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data)
