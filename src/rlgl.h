@@ -772,6 +772,7 @@ RLAPI void rlResizeFramebuffer(int width, int height);                    // Res
 // Shaders management
 RLAPI unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode);    // Load shader from code strings
 RLAPI unsigned int rlCompileShader(const char *shaderCode, int type);           // Compile custom shader and return shader id (type: RL_VERTEX_SHADER, RL_FRAGMENT_SHADER, RL_COMPUTE_SHADER)
+RLAPI void rlUnloadShader(unsigned int id);                                     // Unload shader, loaded with rlCompileShader()
 RLAPI unsigned int rlLoadShaderProgram(unsigned int vShaderId, unsigned int fShaderId); // Load custom shader program
 RLAPI void rlUnloadShaderProgram(unsigned int id);                              // Unload shader program
 RLAPI int rlGetLocationUniform(unsigned int shaderId, const char *uniformName); // Get shader location uniform, requires shader program id
@@ -4182,7 +4183,7 @@ void rlUnloadVertexBuffer(unsigned int vboId)
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
 unsigned int rlLoadShaderCode(const char *vsCode, const char *fsCode)
 {
-    unsigned int id = 0;
+    unsigned int id = 0; // Shader program id
     if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return id; }
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
@@ -4394,6 +4395,16 @@ void rlUnloadShaderProgram(unsigned int id)
     glDeleteProgram(id);
 
     TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Unloaded shader program data from VRAM (GPU)", id);
+#endif
+}
+
+// Delete shader
+void rlUnloadShader(unsigned int id)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    glDeleteShader(id);
+    
+    TRACELOG(RL_LOG_INFO, "SHADER: [ID %i] Unloaded shader data from VRAM (GPU)", id);
 #endif
 }
 
@@ -4612,7 +4623,6 @@ void rlUnloadShaderBuffer(unsigned int ssboId)
 #else
     TRACELOG(RL_LOG_WARNING, "SSBO: SSBO not enabled. Define GRAPHICS_API_OPENGL_43");
 #endif
-
 }
 
 // Update SSBO buffer data
