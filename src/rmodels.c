@@ -6336,12 +6336,13 @@ static Model LoadGLTF(const char *fileName)
         for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         //----------------------------------------------------------------------------------------------------
 
+        // Free unused allocated memory in case of no bones defined
         if (model.skeleton.boneCount == 0)
         {
-                RL_FREE(model.currentPose);
-                RL_FREE(model.boneMatrices);
-                model.currentPose = NULL;
-                model.boneMatrices = NULL;
+            RL_FREE(model.currentPose);
+            RL_FREE(model.boneMatrices);
+            model.currentPose = NULL;
+            model.boneMatrices = NULL;
         }
 
         // Free all cgltf loaded data
