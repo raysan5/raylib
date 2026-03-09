@@ -65,8 +65,8 @@ int main(void)
 
     // Game of Life logic compute shader
     char *golLogicCode = LoadFileText("resources/shaders/glsl430/gol.glsl");
-    unsigned int golLogicShader = rlCompileShader(golLogicCode, RL_COMPUTE_SHADER);
-    unsigned int golLogicProgram = rlLoadComputeShaderProgram(golLogicShader);
+    unsigned int golLogicShader = rlLoadShader(golLogicCode, RL_COMPUTE_SHADER);
+    unsigned int golLogicProgram = rlLoadShaderProgramCompute(golLogicShader);
     UnloadFileText(golLogicCode);
 
     // Game of Life logic render shader
@@ -75,8 +75,8 @@ int main(void)
 
     // Game of Life transfert shader (CPU<->GPU download and upload)
     char *golTransfertCode = LoadFileText("resources/shaders/glsl430/gol_transfert.glsl");
-    unsigned int golTransfertShader = rlCompileShader(golTransfertCode, RL_COMPUTE_SHADER);
-    unsigned int golTransfertProgram = rlLoadComputeShaderProgram(golTransfertShader);
+    unsigned int golTransfertShader = rlLoadShader(golTransfertCode, RL_COMPUTE_SHADER);
+    unsigned int golTransfertProgram = rlLoadShaderProgramCompute(golTransfertShader);
     UnloadFileText(golTransfertCode);
 
     // Load shader storage buffer object (SSBO), id returned
@@ -169,7 +169,9 @@ int main(void)
     rlUnloadShaderBuffer(ssboB);
     rlUnloadShaderBuffer(ssboTransfert);
 
-    // Unload compute shader programs
+    // Unload compute shader
+    rlUnloadShader(golLogicShader);
+    rlUnloadShader(golTransfertShader);
     rlUnloadShaderProgram(golTransfertProgram);
     rlUnloadShaderProgram(golLogicProgram);
 

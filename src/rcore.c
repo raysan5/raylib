@@ -1243,7 +1243,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
 
-    shader.id = rlLoadShaderCode(vsCode, fsCode);
+    shader.id = rlLoadShaderProgram(vsCode, fsCode);
 
     if (shader.id == 0)
     {
