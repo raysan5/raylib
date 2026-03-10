@@ -341,6 +341,7 @@ typedef struct Camera2D {
 
 // Mesh, vertex data and vao/vbo
 typedef struct Mesh {
+    char name[32];          // Mesh name
     int vertexCount;        // Number of vertices stored in arrays
     int triangleCount;      // Number of triangles stored (indexed or not)
 

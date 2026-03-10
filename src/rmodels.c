@@ -4569,11 +4569,14 @@ static Model LoadOBJ(const char *fileName)
     nextShapeEnd = objAttributes.num_face_num_verts;
 
     // See how many verts till the next shape
+    unsigned int currentShape = 0;
     nextShape = 1;
     if (objShapeCount > 1) nextShapeEnd = objShapes[nextShape].face_offset;
     lastMaterial = -1;
     meshIndex = 0;
     localMeshVertexCount = 0;
+
+    strncpy(model.meshes[meshIndex].name, objShapes[currentShape].name, sizeof(model.meshes[meshIndex].name) - 1);
 
     // Walk all the faces
     for (unsigned int faceId = 0; faceId < objAttributes.num_faces; faceId++)
@@ -4583,6 +4586,7 @@ static Model LoadOBJ(const char *fileName)
         {
             // Try to find the last vert in the next shape
             nextShape++;
+            currentShape++;
             if (nextShape < objShapeCount) nextShapeEnd = objShapes[nextShape].face_offset;
             else nextShapeEnd = objAttributes.num_face_num_verts; // This is actually the total number of face verts in the file, not faces
             newMesh = true;
@@ -4596,6 +4600,7 @@ static Model LoadOBJ(const char *fileName)
         {
             localMeshVertexCount = 0;
             meshIndex++;
+            strncpy(model.meshes[meshIndex].name, objShapes[currentShape].name, sizeof(model.meshes[meshIndex].name) - 1);
         }
 
         int matId = 0;
@@ -4821,6 +4826,7 @@ static Model LoadIQM(const char *fileName)
 
         TRACELOG(LOG_DEBUG, "MODEL: [%s] mesh name (%s), material (%s)", fileName, name, material);
 
+        strncpy(model.meshes[i].name, name, sizeof(model.meshes[i].name) - 1);
         model.meshes[i].vertexCount = imesh[i].num_vertexes;
 
         model.meshes[i].vertices = (float *)RL_CALLOC(model.meshes[i].vertexCount*3, sizeof(float));       // Default vertex positions
@@ -5701,6 +5707,10 @@ static Model LoadGLTF(const char *fileName)
                             if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_32f))
                             {
                                 // Init raylib mesh vertices to copy glTF attribute data
+                                if (node->name)
+                                {
+                                    strncpy(model.meshes[meshIndex].name, node->name, sizeof(model.meshes[meshIndex].name) - 1);
+                                }
                                 model.meshes[meshIndex].vertexCount = (int)attribute->count;
                                 model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
@@ -5720,6 +5730,10 @@ static Model LoadGLTF(const char *fileName)
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_16u))
                             {
                                 // Init raylib mesh vertices to copy glTF attribute data
+                                if (node->name)
+                                {
+                                    strncpy(model.meshes[meshIndex].name, node->name, sizeof(model.meshes[meshIndex].name) - 1);
+                                }
                                 model.meshes[meshIndex].vertexCount = (int)attribute->count;
                                 model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
@@ -5745,6 +5759,10 @@ static Model LoadGLTF(const char *fileName)
                             else if ((attribute->type == cgltf_type_vec3) && (attribute->component_type == cgltf_component_type_r_16))
                             {
                                 // Init raylib mesh vertices to copy glTF attribute data
+                                if (node->name)
+                                {
+                                    strncpy(model.meshes[meshIndex].name, node->name, sizeof(model.meshes[meshIndex].name) - 1);
+                                }
                                 model.meshes[meshIndex].vertexCount = (int)attribute->count;
                                 model.meshes[meshIndex].vertices = (float *)RL_MALLOC(attribute->count*3*sizeof(float));
 
