@@ -3181,7 +3181,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetAudioStreamPan" retType="void" paramCount="2" desc="Set pan for audio stream (0.5 is centered)">
+        <Function name="SetAudioStreamPan" retType="void" paramCount="2" desc="Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
