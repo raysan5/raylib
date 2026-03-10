@@ -137,7 +137,7 @@ int main(void)
             EndMode3D();
             
             // Draw reference point for raycasting to delete blocks
-            DrawCircle(GetRenderWidth()/2, GetScreenHeight()/2, 4, RED);
+            DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 4, RED);
 
             DrawText("Left-click a voxel to remove it!", 10, 10, 20, DARKGRAY);
             DrawText("WASD to move, mouse to look around", 10, 35, 10, GRAY);
