@@ -4768,7 +4768,7 @@ Function 592: SetAudioStreamPitch() (2 input parameters)
 Function 593: SetAudioStreamPan() (2 input parameters)
   Name: SetAudioStreamPan
   Return type: void
-  Description: Set pan for audio stream (0.5 is centered)
+  Description: Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)
   Param[1]: stream (type: AudioStream)
   Param[2]: pan (type: float)
 Function 594: SetAudioStreamBufferSizeDefault() (1 input parameters)

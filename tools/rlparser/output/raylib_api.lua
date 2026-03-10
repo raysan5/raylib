@@ -8431,7 +8431,7 @@ return {
     },
     {
       name = "SetAudioStreamPan",
-      description = "Set pan for audio stream (0.5 is centered)",
+      description = "Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
