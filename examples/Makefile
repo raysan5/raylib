@@ -155,15 +155,6 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     endif
 endif
 
-# RAYLIB_PATH adjustment for LINUX platform
-# TODO: Do we really need this?
-ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
-    ifeq ($(PLATFORM_OS),LINUX)
-        RAYLIB_PREFIX  ?= ..
-        RAYLIB_PATH     = $(realpath $(RAYLIB_PREFIX))
-    endif
-endif
-
 # Default path for raylib on Raspberry Pi
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     RAYLIB_PATH        ?= /home/pi/raylib
