@@ -32,7 +32,6 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - raw stream");
-    SetTargetFPS(30);
 
     InitAudioDevice();
 
@@ -51,6 +50,7 @@ int main(void)
     int sineIndex = 0;
     double sineStartTime = 0.0;
 
+    SetTargetFPS(30);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
