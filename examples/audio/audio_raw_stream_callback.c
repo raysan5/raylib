@@ -83,35 +83,27 @@ int main(void)
         if (IsKeyDown(KEY_UP))
         {
             newSineFrequency += 10;
-
-            if (newSineFrequency > 12500)
-                newSineFrequency = 12500;
+            if (newSineFrequency > 12500) newSineFrequency = 12500;
         }
 
         if (IsKeyDown(KEY_DOWN))
         {
             newSineFrequency -= 10;
-
-            if (newSineFrequency < 20)
-                newSineFrequency = 20;
+            if (newSineFrequency < 20) newSineFrequency = 20;
         }
 
         if (IsKeyDown(KEY_LEFT))
         {
             pan -= 0.01f;
+            if (pan < -1.0f) pan = -1.0f;
             SetAudioStreamPan(stream, pan);
-
-            if (pan < -1.0f)
-                pan = -1.0f;
         }
 
         if (IsKeyDown(KEY_RIGHT))
         {
             pan += 0.01f;
+            if (pan > 1.0f) pan = 1.0f;
             SetAudioStreamPan(stream, pan);
-
-            if (pan > 1.0f)
-                pan = 1.0f;
         }
 
         //----------------------------------------------------------------------------------
@@ -131,7 +123,8 @@ int main(void)
         int wavelength = SAMPLE_RATE/sineFrequency;
 
         // Draw a sine wave with the same frequency as the one being sent to the audio stream
-        for (int i = 0; i < screenWidth; i++) {
+        for (int i = 0; i < screenWidth; i++)
+        {
             int t0 = windowStart + i*windowSize/screenWidth;
             int t1 = windowStart + (i + 1)*windowSize/screenWidth;
             Vector2 startPos = { i, 250 + 50*sin(2*PI*t0/wavelength) };
