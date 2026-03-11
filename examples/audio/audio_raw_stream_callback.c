@@ -56,7 +56,6 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - raw stream callback");
-    SetTargetFPS(30);
 
     InitAudioDevice();
 
@@ -72,6 +71,7 @@ int main(void)
     // Configure it so AudioStreamCallback is called whenever stream is out of samples
     SetAudioStreamCallback(stream, AudioStreamCallback);
 
+    SetTargetFPS(30);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
