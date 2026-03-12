@@ -109,26 +109,26 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        DrawText(TextFormat("sine frequency: %i", sineFrequency), screenWidth - 220, 10, 20, RED);
-        DrawText(TextFormat("pan: %.2f", pan), screenWidth - 220, 30, 20, RED);
-        DrawText("Up/down to change frequency", 10, 10, 20, DARKGRAY);
-        DrawText("Left/right to pan", 10, 30, 20, DARKGRAY);
-
-        int windowStart = (GetTime() - sineStartTime)*SAMPLE_RATE;
-        int windowSize = 0.1f*SAMPLE_RATE;
-        int wavelength = SAMPLE_RATE/sineFrequency;
-
-        // Draw a sine wave with the same frequency as the one being sent to the audio stream
-        for (int i = 0; i < screenWidth; i++)
-        {
-            int t0 = windowStart + i*windowSize/screenWidth;
-            int t1 = windowStart + (i + 1)*windowSize/screenWidth;
-            Vector2 startPos = { i, 250 + 50*sin(2*PI*t0/wavelength) };
-            Vector2 endPos = { i + 1, 250 + 50*sin(2*PI*t1/wavelength) };
-            DrawLineV(startPos, endPos, RED);
-        }
+            ClearBackground(RAYWHITE);
+    
+            DrawText(TextFormat("sine frequency: %i", sineFrequency), screenWidth - 220, 10, 20, RED);
+            DrawText(TextFormat("pan: %.2f", pan), screenWidth - 220, 30, 20, RED);
+            DrawText("Up/down to change frequency", 10, 10, 20, DARKGRAY);
+            DrawText("Left/right to pan", 10, 30, 20, DARKGRAY);
+    
+            int windowStart = (GetTime() - sineStartTime)*SAMPLE_RATE;
+            int windowSize = 0.1f*SAMPLE_RATE;
+            int wavelength = SAMPLE_RATE/sineFrequency;
+    
+            // Draw a sine wave with the same frequency as the one being sent to the audio stream
+            for (int i = 0; i < screenWidth; i++)
+            {
+                int t0 = windowStart + i*windowSize/screenWidth;
+                int t1 = windowStart + (i + 1)*windowSize/screenWidth;
+                Vector2 startPos = { i, 250 + 50*sin(2*PI*t0/wavelength) };
+                Vector2 endPos = { i + 1, 250 + 50*sin(2*PI*t1/wavelength) };
+                DrawLineV(startPos, endPos, RED);
+            }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
