@@ -304,7 +304,7 @@ endif
 
 # Define library paths containing required libs: LDFLAGS
 #------------------------------------------------------------------------------------------------
-LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH) -L$(RAYLIB_PATH)/src
+LDFLAGS = -L. -L$(RAYLIB_RELEASE_PATH)
 
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
