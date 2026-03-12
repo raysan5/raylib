@@ -16,41 +16,10 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <math.h>
 
-#include <stdlib.h>         // Required for: malloc(), free()
-#include <math.h>           // Required for: sinf()
-#include <string.h>         // Required for: memcpy()
-
-#define MAX_SAMPLES               512
-#define MAX_SAMPLES_PER_UPDATE   4096
-
-// Cycles per second (hz)
-float frequency = 440.0f;
-
-// Audio frequency, for smoothing
-float audioFrequency = 440.0f;
-
-// Previous value, used to test if sine needs to be rewritten, and to smoothly modulate frequency
-float oldFrequency = 1.0f;
-
-// Index for audio rendering
-float sineIdx = 0.0f;
-
-// Audio input processing callback
-void AudioInputCallback(void *buffer, unsigned int frames)
-{
-    audioFrequency = frequency + (audioFrequency - frequency)*0.95f;
-
-    float incr = audioFrequency/44100.0f;
-    short *d = (short *)buffer;
-
-    for (unsigned int i = 0; i < frames; i++)
-    {
-        d[i] = (short)(32000.0f*sinf(2*PI*sineIdx));
-        sineIdx += incr;
-        if (sineIdx > 1.0f) sineIdx -= 1.0f;
-    }
-}
+#define BUFFER_SIZE 4096
+#define SAMPLE_RATE 44100
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -64,43 +33,24 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - raw stream");
 
-    InitAudioDevice();              // Initialize audio device
+    InitAudioDevice();
 
-    SetAudioStreamBufferSizeDefault(MAX_SAMPLES_PER_UPDATE);
+    // Set the number of samples the stream will keep in memory at a time to BUFFER_SIZE
+    SetAudioStreamBufferSizeDefault(BUFFER_SIZE);
+    float buffer[BUFFER_SIZE] = {};
 
-    // Init raw audio stream (sample rate: 44100, sample size: 16bit-short, channels: 1-mono)
-    AudioStream stream = LoadAudioStream(44100, 16, 1);
+    // Init raw audio stream (sample rate: 44100, sample size: 32bit-float, channels: 1-mono)
+    AudioStream stream = LoadAudioStream(SAMPLE_RATE, 32, 1);
+    float pan = 0.0f;
+    SetAudioStreamPan(stream, pan);
+    PlayAudioStream(stream);
 
-    SetAudioStreamCallback(stream, AudioInputCallback);
+    int sineFrequency = 440;
+    int newSineFrequency = 440;
+    int sineIndex = 0;
+    double sineStartTime = 0.0;
 
-    // Buffer for the single cycle waveform we are synthesizing
-    short *data = (short *)malloc(sizeof(short)*MAX_SAMPLES);
-
-    // Frame buffer, describing the waveform when repeated over the course of a frame
-    short *writeBuf = (short *)malloc(sizeof(short)*MAX_SAMPLES_PER_UPDATE);
-
-    PlayAudioStream(stream);        // Start processing stream buffer (no data loaded currently)
-
-    // Position read in to determine next frequency
-    Vector2 mousePosition = { -100.0f, -100.0f };
-
-    /*
-    // Cycles per second (hz)
-    float frequency = 440.0f;
-
-    // Previous value, used to test if sine needs to be rewritten, and to smoothly modulate frequency
-    float oldFrequency = 1.0f;
-
-    // Cursor to read and copy the samples of the sine wave buffer
-    int readCursor = 0;
-    */
-
-    // Computed size in samples of the sine wave
-    int waveLength = 1;
-
-    Vector2 position = { 0, 0 };
-
-    SetTargetFPS(30);               // Set our game to run at 30 frames-per-second
+    SetTargetFPS(30);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -108,92 +58,77 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        mousePosition = GetMousePosition();
 
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        if (IsKeyDown(KEY_UP))
         {
-            float fp = (float)(mousePosition.y);
-            frequency = 40.0f + (float)(fp);
+            newSineFrequency += 10;
+            if (newSineFrequency > 12500) newSineFrequency = 12500;
+        }
 
-            float pan = (float)(mousePosition.x)/(float)screenWidth;
+        if (IsKeyDown(KEY_DOWN))
+        {
+            newSineFrequency -= 10;
+            if (newSineFrequency < 20) newSineFrequency = 20;
+        }
+
+        if (IsKeyDown(KEY_LEFT))
+        {
+            pan -= 0.01f;
+            if (pan < -1.0f) pan = -1.0f;
             SetAudioStreamPan(stream, pan);
         }
 
-        // Rewrite the sine wave
-        // Compute two cycles to allow the buffer padding, simplifying any modulation, resampling, etc.
-        if (frequency != oldFrequency)
+        if (IsKeyDown(KEY_RIGHT))
         {
-            // Compute wavelength. Limit size in both directions
-            //int oldWavelength = waveLength;
-            waveLength = (int)(22050/frequency);
-            if (waveLength > MAX_SAMPLES/2) waveLength = MAX_SAMPLES/2;
-            if (waveLength < 1) waveLength = 1;
-
-            // Write sine wave
-            for (int i = 0; i < waveLength*2; i++)
-            {
-                data[i] = (short)(sinf(((2*PI*(float)i/waveLength)))*32000);
-            }
-            // Make sure the rest of the line is flat
-            for (int j = waveLength*2; j < MAX_SAMPLES; j++)
-            {
-                data[j] = (short)0;
-            }
-
-            // Scale read cursor's position to minimize transition artifacts
-            //readCursor = (int)(readCursor*((float)waveLength/(float)oldWavelength));
-            oldFrequency = frequency;
+            pan += 0.01f;
+            if (pan > 1.0f) pan = 1.0f;
+            SetAudioStreamPan(stream, pan);
         }
 
-        /*
-        // Refill audio stream if required
         if (IsAudioStreamProcessed(stream))
         {
-            // Synthesize a buffer that is exactly the requested size
-            int writeCursor = 0;
-
-            while (writeCursor < MAX_SAMPLES_PER_UPDATE)
+            for (int i = 0; i < BUFFER_SIZE; i++)
             {
-                // Start by trying to write the whole chunk at once
-                int writeLength = MAX_SAMPLES_PER_UPDATE-writeCursor;
+                int wavelength = SAMPLE_RATE/sineFrequency;
+                buffer[i] = sin(2*PI*sineIndex/wavelength);
+                sineIndex++;
 
-                // Limit to the maximum readable size
-                int readLength = waveLength-readCursor;
-
-                if (writeLength > readLength) writeLength = readLength;
-
-                // Write the slice
-                memcpy(writeBuf + writeCursor, data + readCursor, writeLength*sizeof(short));
-
-                // Update cursors and loop audio
-                readCursor = (readCursor + writeLength)%waveLength;
-
-                writeCursor += writeLength;
+                if (sineIndex >= wavelength)
+                {
+                    sineFrequency = newSineFrequency;
+                    sineIndex = 0;
+                    sineStartTime = GetTime();
+                }
             }
 
-            // Copy finished frame to audio stream
-            UpdateAudioStream(stream, writeBuf, MAX_SAMPLES_PER_UPDATE);
+            UpdateAudioStream(stream, buffer, BUFFER_SIZE);
         }
-        */
+
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+        ClearBackground(RAYWHITE);
 
-            ClearBackground(RAYWHITE);
+        DrawText(TextFormat("sine frequency: %i", sineFrequency), screenWidth - 220, 10, 20, RED);
+        DrawText(TextFormat("pan: %.2f", pan), screenWidth - 220, 30, 20, RED);
+        DrawText("Up/down to change frequency", 10, 10, 20, DARKGRAY);
+        DrawText("Left/right to pan", 10, 30, 20, DARKGRAY);
 
-            DrawText(TextFormat("sine frequency: %i",(int)frequency), GetScreenWidth() - 220, 10, 20, RED);
-            DrawText("click mouse button to change frequency or pan", 10, 10, 20, DARKGRAY);
+        int windowStart = (GetTime() - sineStartTime)*SAMPLE_RATE;
+        int windowSize = 0.1f*SAMPLE_RATE;
+        int wavelength = SAMPLE_RATE/sineFrequency;
 
-            // Draw the current buffer state proportionate to the screen
-            for (int i = 0; i < screenWidth; i++)
-            {
-                position.x = (float)i;
-                position.y = 250 + 50*data[i*MAX_SAMPLES/screenWidth]/32000.0f;
-
-                DrawPixelV(position, RED);
-            }
+        // Draw a sine wave with the same frequency as the one being sent to the audio stream
+        for (int i = 0; i < screenWidth; i++)
+        {
+            int t0 = windowStart + i*windowSize/screenWidth;
+            int t1 = windowStart + (i + 1)*windowSize/screenWidth;
+            Vector2 startPos = { i, 250 + 50*sin(2*PI*t0/wavelength) };
+            Vector2 endPos = { i + 1, 250 + 50*sin(2*PI*t1/wavelength) };
+            DrawLineV(startPos, endPos, RED);
+        }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -201,9 +136,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(data);                 // Unload sine wave data
-    free(writeBuf);             // Unload write buffer
-
     UnloadAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
