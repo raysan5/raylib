@@ -280,15 +280,15 @@ static int android_close(void *cookie);
 // The flag MUST be applied at every final link step that needs wrapping,
 // it has no effect when only building a static archive (.a)
 //
-//         CMake: no action required, raylib's CMakeLists.txt already sets 
+//         CMake: no action required, raylib's CMakeLists.txt already sets
 //                target_link_options(raylib INTERFACE -Wl,--wrap=fopen) which propagates to
 //                the final app link, wrapping app code and all static (.a) dependencies too
-// Make (SHARED): no action required for raylib itself, src/Makefile already sets 
+// Make (SHARED): no action required for raylib itself, src/Makefile already sets
 //                LDFLAGS += -Wl,--wrap=fopen wrapping fopen inside libraylib.so only;
 //                app code and static (.a) dependencies are NOT wrapped unless -Wl,--wrap=fopen
 //                is also added to the final app link step
 // Make (STATIC): pass -Wl,--wrap=fopen to the linker command producing the final artifact
-//     build.zig: no dedicated wrap helper; pass -Wl,--wrap=fopen to the linker command producing 
+//     build.zig: no dedicated wrap helper; pass -Wl,--wrap=fopen to the linker command producing
 //                the final artifact
 //        custom: pass -Wl,--wrap=fopen to the linker command producing the final artifact
 FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)

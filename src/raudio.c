@@ -1634,7 +1634,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
         {
             music.ctxType = MUSIC_AUDIO_QOA;
             music.ctxData = ctxQoa;
-            
+
             // NOTE: Loading samples are 32bit float normalized data, so,
             // configure the output audio stream to also use float 32bit
             music.stream = LoadAudioStream(ctxQoa->info.samplerate, 32, ctxQoa->info.channels);

@@ -124,10 +124,10 @@ if (PLATFORM STREQUAL "Desktop")
 
             target_compile_definitions(raylib PRIVATE _GLFW_X11)
 
-            target_link_libraries(raylib PRIVATE 
+            target_link_libraries(raylib PRIVATE
                 ${X11_LIBRARIES}
             )
-            
+
             message(STATUS "X11 support enabled for raylib")
         endif()
     endif()

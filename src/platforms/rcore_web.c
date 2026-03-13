@@ -819,22 +819,22 @@ EM_ASYNC_JS(void, RequestClipboardData, (void), {
             {
                 const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
                 const bitmap = await createImageBitmap(blob);
-                
+
                 const canvas = document.createElement('canvas');
                 canvas.width = bitmap.width;
                 canvas.height = bitmap.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(bitmap, 0, 0);
-                
+
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-                
+
                 // Store image and data for the Fetch function
                 window._lastImgWidth = canvas.width;
                 window._lastImgHeight = canvas.height;
-                window._lastImgData = imgData; 
+                window._lastImgData = imgData;
             }
         }
-    } 
+    }
     else console.warn("Clipboard read() requires HTTPS/Localhost");
 });
 
@@ -856,19 +856,19 @@ EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
     if (window._lastImgData)
     {
         const data = window._lastImgData;
-        if (data.length > 0) 
+        if (data.length > 0)
         {
             const ptr = _malloc(data.length);
             HEAPU8.set(data, ptr);
-            
+
             // Set the width and height via the pointers passed from C
             // HEAP32 handles the 4-byte integers
             if (width)  setValue(width, window._lastImgWidth,  'i32');
             if (height) setValue(height, window._lastImgHeight, 'i32');
-            
+
             // Clear the JS buffer so there is no need to fetch the same image twice
-            window._lastImgData = null; 
-            
+            window._lastImgData = null;
+
             return ptr;
         }
     }
@@ -898,7 +898,7 @@ Image GetClipboardImage(void)
         image.mipmaps = 1;
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     }
-    
+
     return image;
 }
 

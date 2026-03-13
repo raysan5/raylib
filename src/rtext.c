@@ -156,7 +156,7 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
-    // Check to see if the font for an image has alreeady been allocated, 
+    // Check to see if the font for an image has alreeady been allocated,
     // and if no need to upload, then return
     if (defaultFont.glyphs != NULL) return;
 
@@ -242,7 +242,7 @@ extern void LoadFontDefault(void)
         {
             if (BIT_CHECK(defaultFontData[counter], j))
             {
-                // NOTE: Unreferencing data as short, so, 
+                // NOTE: Unreferencing data as short, so,
                 // considering data as little-endian (alpha + gray)
                 ((unsigned short *)imFont.data)[i + j] = 0xffff;
             }
@@ -446,7 +446,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int charHeight = 0;
     int j = 0;
 
-    while (((lineSpacing + j) < image.height) && 
+    while (((lineSpacing + j) < image.height) &&
           !COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
@@ -470,7 +470,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
             int charWidth = 0;
 
-            while (((xPosToRead + charWidth) < image.width) && 
+            while (((xPosToRead + charWidth) < image.width) &&
                   !COLOR_EQUAL(pixels[(lineSpacing + (charHeight + lineSpacing)*lineToRead)*image.width + xPosToRead + charWidth], key)) charWidth++;
 
             tempCharRecs[index].width = (float)charWidth;

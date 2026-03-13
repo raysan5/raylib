@@ -3375,7 +3375,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector3 n5 = { 0.0f, 0.0f, -1.0f };
     Vector3 n6 = { 0.0f, 0.0f, 1.0f };
 
-    // NOTE: Using texture rectangles to define different 
+    // NOTE: Using texture rectangles to define different
     // textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
         float x;
