@@ -90,41 +90,7 @@ fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend
     }
 }
 
-/// A list of all flags from `src/config.h` that one may override
-const config_h_flags = outer: {
-    // Set this value higher if compile errors happen as `src/config.h` gets larger
-    @setEvalBranchQuota(1 << 20);
-
-    const config_h = @embedFile("src/config.h");
-    var flags: [std.mem.count(u8, config_h, "\n") + 1][]const u8 = undefined;
-
-    var i = 0;
-    var lines = std.mem.tokenizeScalar(u8, config_h, '\n');
-    while (lines.next()) |line| {
-        if (!std.mem.containsAtLeast(u8, line, 1, "SUPPORT")) continue;
-        if (std.mem.containsAtLeast(u8, line, 1, "MODULE")) continue;
-        if (std.mem.startsWith(u8, line, "//")) continue;
-        if (std.mem.startsWith(u8, line, "#if")) continue;
-
-        var flag = std.mem.trimStart(u8, line, " \t"); // Trim whitespace
-        flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimStart(u8, flag, " \t"); // Trim whitespace
-        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        flag = "-D" ++ flag; // Prepend with -D
-
-        flags[i] = flag;
-        i += 1;
-    }
-
-    // Uncomment this to check what flags normally get passed
-    //@compileLog(flags[0..i].*);
-    break :outer flags[0..i].*;
-};
-
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
-    var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
-    defer raylib_flags_arr.deinit(b.allocator);
-
     const raylib = b.addLibrary(.{
         .name = "raylib",
         .linkage = options.linkage,
@@ -135,29 +101,27 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         }),
     });
 
-    try raylib_flags_arr.appendSlice(
+    raylib.root_module.addCMacro("_GNU_SOURCE", "");
+    raylib.root_module.addCMacro("GL_SILENCE_DEPRECATION", "199309L");
+
+    var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
+    defer raylib_flags_arr.deinit(b.allocator);
+
+    try raylib_flags_arr.append(
         b.allocator,
-        &[_][]const u8{
-            "-std=gnu99",
-            "-D_GNU_SOURCE",
-            "-DGL_SILENCE_DEPRECATION=199309L",
-            "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
-        },
+        "-std=gnu99",
     );
 
     if (options.linkage == .dynamic) {
-        try raylib_flags_arr.appendSlice(
+        try raylib_flags_arr.append(
             b.allocator,
-            &[_][]const u8{
-                "-fPIC",
-                "-DBUILD_LIBTYPE_SHARED",
-            },
+            "-fPIC",
         );
+
+        raylib.root_module.addCMacro("BUILD_LIBTYPE_SHARED", "");
     }
 
     if (options.config.len > 0) {
-        // Sets a flag indicating the use of a custom `config.h`
-        try raylib_flags_arr.append(b.allocator, "-DEXTERNAL_CONFIG_FLAGS");
         // Splits a space-separated list of config flags into multiple flags
         //
         // Note: This means certain flags like `-x c++` won't be processed properly.
@@ -165,30 +129,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         var config_iter = std.mem.tokenizeScalar(u8, options.config, ' ');
 
         // Apply config flags supplied by the user
-        while (config_iter.next()) |config_flag|
+        while (config_iter.next()) |config_flag| {
             try raylib_flags_arr.append(b.allocator, config_flag);
-
-        // Apply all relevant configs from `src/config.h` *except* the user-specified ones
-        //
-        // Note: Currently using a suboptimal `O(m*n)` time algorithm where:
-        // `m` corresponds roughly to the number of lines in `src/config.h`
-        // `n` corresponds to the number of user-specified flags
-        outer: for (config_h_flags) |flag| {
-            // If a user already specified the flag, skip it
-            config_iter.reset();
-            while (config_iter.next()) |config_flag| {
-                // For a user-specified flag to match, it must share the same prefix and have the
-                // same length or be followed by an equals sign
-                if (!std.mem.startsWith(u8, config_flag, flag)) continue;
-                if (config_flag.len == flag.len or config_flag[flag.len] == '=') continue :outer;
-            }
-
-            // Otherwise, append default value from config.h to compile flags
-            try raylib_flags_arr.append(b.allocator, flag);
         }
-    } else {
-        // Set default config if no custom config got set
-        try raylib_flags_arr.appendSlice(b.allocator, &config_h_flags);
     }
 
     // No GLFW required on PLATFORM_DRM
@@ -200,24 +143,38 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     c_source_files.appendSliceAssumeCapacity(&.{"src/rcore.c"});
 
     if (options.rshapes) {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RSHAPES", "1");
         try c_source_files.append(b.allocator, "src/rshapes.c");
-        try raylib_flags_arr.append(b.allocator, "-DSUPPORT_MODULE_RSHAPES");
+    } else {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RSHAPES", "0");
     }
+
     if (options.rtextures) {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXTURES", "1");
         try c_source_files.append(b.allocator, "src/rtextures.c");
-        try raylib_flags_arr.append(b.allocator, "-DSUPPORT_MODULE_RTEXTURES");
+    } else {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXTURES", "0");
     }
+
     if (options.rtext) {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXT", "1");
         try c_source_files.append(b.allocator, "src/rtext.c");
-        try raylib_flags_arr.append(b.allocator, "-DSUPPORT_MODULE_RTEXT");
+    } else {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXT", "0");
     }
+
     if (options.rmodels) {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RMODELS", "1");
         try c_source_files.append(b.allocator, "src/rmodels.c");
-        try raylib_flags_arr.append(b.allocator, "-DSUPPORT_MODULE_RMODELS");
+    } else {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RMODELS", "0");
     }
+
     if (options.raudio) {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RAUDIO", "1");
         try c_source_files.append(b.allocator, "src/raudio.c");
-        try raylib_flags_arr.append(b.allocator, "-DSUPPORT_MODULE_RAUDIO");
+    } else {
+        raylib.root_module.addCMacro("SUPPORT_MODULE_RAUDIO", "0");
     }
 
     if (options.opengl_version != .auto) {

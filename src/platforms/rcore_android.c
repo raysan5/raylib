@@ -277,20 +277,28 @@ static int android_close(void *cookie);
 
 // WARNING: fopen() calls are intercepted via linker flag -Wl,--wrap=fopen: the linker renames
 // the original fopen -> __real_fopen and redirects all call sites to __wrap_fopen
-// The flag MUST be applied at every final link step that needs wrapping,
+// The flag MUST be applied at every final link step that needs wrapping;
 // it has no effect when only building a static archive (.a)
 //
-//         CMake: no action required, raylib's CMakeLists.txt already sets
-//                target_link_options(raylib INTERFACE -Wl,--wrap=fopen) which propagates to
-//                the final app link, wrapping app code and all static (.a) dependencies too
-// Make (SHARED): no action required for raylib itself, src/Makefile already sets
-//                LDFLAGS += -Wl,--wrap=fopen wrapping fopen inside libraylib.so only;
-//                app code and static (.a) dependencies are NOT wrapped unless -Wl,--wrap=fopen
-//                is also added to the final app link step
-// Make (STATIC): pass -Wl,--wrap=fopen to the linker command producing the final artifact
-//     build.zig: no dedicated wrap helper; pass -Wl,--wrap=fopen to the linker command producing
-//                the final artifact
-//        custom: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+// STATIC library (.a) — wrapping deferred to consumer's final link step:
+//   both raylib and consumer fopen calls are wrapped together in one link
+//       CMake: handled automatically — the PUBLIC flag propagates as INTERFACE_LINK_OPTIONS
+//              to the consumer's final link via target_link_libraries
+//        Make: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//   build.zig: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//      custom: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//
+// SHARED library (.so) — wrapping is self-contained:
+//   only fopen calls linked into the .so are wrapped; the consumer's own fopen calls
+//   are NOT wrapped unless the consumer also links with -Wl,--wrap=fopen independently
+//       CMake: handled automatically — CMakeLists.txt sets target_link_options(raylib PUBLIC
+//              -Wl,--wrap=fopen) which applies the flag to the .so link;
+//              only raylib internals are wrapped, app code requires a separate flag
+//        Make: handled automatically — src/Makefile sets LDFLAGS += -Wl,--wrap=fopen;
+//              only raylib internals are wrapped, app code requires a separate flag
+//   build.zig: NOT supported — std.Build has no dedicated linker wrap helper, the flag
+//              is not correctly applied at the .so link step
+//      custom: apply -Wl,--wrap=fopen to the linker command producing the .so
 FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)
 FILE *__wrap_fopen(const char *fileName, const char *mode); // Replacement for fopen()
 
@@ -1542,7 +1550,7 @@ static void SetupFramebuffer(int width, int height)
 
 // Replacement for fopen(), used as linker wrap entry point (-Wl,--wrap=fopen)
 // REF: https://developer.android.com/ndk/reference/group/asset
-FILE *__wrap_fopen(const char *fileName, const char *mode)
+__attribute__((visibility("default"))) FILE *__wrap_fopen(const char *fileName, const char *mode)
 {
     FILE *file = NULL;
 
