@@ -107,10 +107,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
     defer raylib_flags_arr.deinit(b.allocator);
 
-    try raylib_flags_arr.append(
-        b.allocator,
+    try raylib_flags_arr.appendSlice(b.allocator, &.{
         "-std=gnu99",
-    );
+        "-fno-sanitize=undefined", // https://github.com/raysan5/raylib/issues/3674
+    });
 
     if (options.linkage == .dynamic) {
         try raylib_flags_arr.append(
