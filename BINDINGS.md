@@ -32,7 +32,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [DenoRaylib550](https://github.com/JJLDonley/DenoRaylib550)                              | **5.5**          | [Deno](https://deno.land)                                            | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
-| [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 4.5              | [Factor](https://factorcode.org)                                     | BSD                  |
+| [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 5.5              | [Factor](https://factorcode.org)                                     | BSD                  |
 | [raylib-freebasic](https://github.com/WIITD/raylib-freebasic)                            | **5.0**          | [FreeBASIC](https://www.freebasic.net)                               | MIT                  |
 | [raylib.f](https://github.com/cthulhuology/raylib.f)                                     | **5.5**          | [Forth](https://forth.com)                                           | Zlib                 |
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **5.5**          | [Fortran](https://fortran-lang.org)                                  | ISC                  |
@@ -59,7 +59,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 5.6-dev          | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
 | [naylib](https://github.com/planetis-m/naylib)                                           | **5.6-dev**      | [Nim](https://nim-lang.org)                                          | MIT                  |
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 4.5              | [Node.js](https://nodejs.org/en)                                     | Zlib                 |
-| [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | BSD-3Clause          |
+| [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | Zlib                 |
 | [raylib_odin_bindings](https://github.com/Deathbat2190/raylib_odin_bindings)             | 4.0-dev          | [Odin](https://odin-lang.org)                                        | MIT                  |
 | [raylib-ocaml](https://github.com/tjammer/raylib-ocaml)                                  | **5.0**          | [OCaml](https://ocaml.org)                                           | MIT                  |
 | [TurboRaylib](https://github.com/turborium/TurboRaylib)                                  | 4.5              | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal)         | MIT                  |
