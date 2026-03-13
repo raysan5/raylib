@@ -256,7 +256,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    TakeScreenshot("hello.png");
     UnloadAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
