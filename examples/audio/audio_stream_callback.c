@@ -182,50 +182,20 @@ int main(void)
 
         if (IsKeyPressed(KEY_LEFT))
         {
-            switch (waveType)
-            {
-                case SINE:
-                {
-                    waveType = SAWTOOTH;
-                } break;
-                case SQUARE:
-                {
-                    waveType = SINE;
-                } break;
-                case TRIANGLE:
-                {
-                    waveType = SQUARE;
-                } break;
-                case SAWTOOTH:
-                {
-                    waveType = TRIANGLE;
-                } break;
-            }
+            if (waveType == SINE) waveType = SAWTOOTH;
+            else if (waveType == SQUARE) waveType = SINE;
+            else if (waveType == TRIANGLE) waveType = SQUARE;
+            else waveType = TRIANGLE;
 
             SetAudioStreamCallback(stream, waveCallbacks[waveType]);
         }
 
         if (IsKeyPressed(KEY_RIGHT))
         {
-            switch (waveType)
-            {
-                case SINE:
-                {
-                    waveType = SQUARE;
-                } break;
-                case SQUARE:
-                {
-                    waveType = TRIANGLE;
-                } break;
-                case TRIANGLE:
-                {
-                    waveType = SAWTOOTH;
-                } break;
-                case SAWTOOTH:
-                {
-                    waveType = SINE;
-                } break;
-            }
+            if (waveType == SINE) waveType = SQUARE;
+            else if (waveType == SQUARE) waveType = TRIANGLE;
+            else if (waveType == TRIANGLE) waveType = SAWTOOTH;
+            else waveType = SINE;
 
             SetAudioStreamCallback(stream, waveCallbacks[waveType]);
         }
