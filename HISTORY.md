@@ -530,11 +530,11 @@ A new raylib release is finally ready, after almost 1.5 years since last release
 
 Some astonishing numbers for this release:
 
- - **+310** closed issues (for a TOTAL of **+2120**!)
- - **+1800** commits since previous RELEASE (for a TOTAL of **+9550**!)
- - **18** functions ADDED to raylib API (for a TOTAL of **598**!)
+ - **+320** closed issues (for a TOTAL of **+2130**!)
+ - **+1800** commits since previous RELEASE (for a TOTAL of **+9600**!)
+ - **18** functions ADDED to raylib API (for a TOTAL of **599**!)
  - **??** functions REVIEWED with fixes and improvements
- - **+190** new contributors (for a TOTAL of **+830**!)
+ - **+200** new contributors (for a TOTAL of **+840**!)
 
 Highlights for `raylib 6.0`:
 
