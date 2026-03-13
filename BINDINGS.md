@@ -59,7 +59,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 5.6-dev          | [Ruby](https://www.ruby-lang.org/en)                                 | Zlib                 |
 | [naylib](https://github.com/planetis-m/naylib)                                           | **5.6-dev**      | [Nim](https://nim-lang.org)                                          | MIT                  |
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 4.5              | [Node.js](https://nodejs.org/en)                                     | Zlib                 |
-| [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | BSD-3Clause          |
+| [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | Zlib                 |
 | [raylib_odin_bindings](https://github.com/Deathbat2190/raylib_odin_bindings)             | 4.0-dev          | [Odin](https://odin-lang.org)                                        | MIT                  |
 | [raylib-ocaml](https://github.com/tjammer/raylib-ocaml)                                  | **5.0**          | [OCaml](https://ocaml.org)                                           | MIT                  |
 | [TurboRaylib](https://github.com/turborium/TurboRaylib)                                  | 4.5              | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal)         | MIT                  |
