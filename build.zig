@@ -107,10 +107,17 @@ const config_h_flags = outer: {
         if (std.mem.startsWith(u8, line, "#if")) continue;
 
         var flag = std.mem.trimStart(u8, line, " \t"); // Trim whitespace
-        flag = flag["#define ".len - 1 ..]; // Remove #define
-        flag = std.mem.trimStart(u8, flag, " \t"); // Trim whitespace
-        flag = flag[0 .. std.mem.indexOf(u8, flag, " ") orelse continue]; // Flag is only one word, so capture till space
-        flag = "-D" ++ flag; // Prepend with -D
+
+        if (!std.mem.startsWith(u8, flag, "#define ")) continue; // Skip non-#define lines
+
+        // '#define<whitespace><flag name><whitespace><flag value>
+        flag = flag["#define ".len - 1 ..]; // remove #define
+        flag = std.mem.trimStart(u8, flag, " \t"); // trim whitespace after "#define"
+        const whitespace_idx = std.mem.find(u8, flag, " \t") orelse continue;
+        const flag_name = flag[0..whitespace_idx];
+        const flag_value = std.mem.trim(u8, flag[whitespace_idx + 1 ..], " \t");
+
+        flag = "-D" ++ flag_name ++ "=" ++ flag_value;
 
         flags[i] = flag;
         i += 1;

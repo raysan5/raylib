@@ -116,6 +116,7 @@ GRTAGS
 GTAGS
 
 # Zig programming language
+zig-pkg/
 .zig-cache/
 zig-cache/
 zig-out/
