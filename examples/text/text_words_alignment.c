@@ -109,7 +109,7 @@ int main(void)
             DrawRectangleRec(textContainerRect, BLUE);
 
             // Get the size of the text to draw
-            Vector2 textSize = MeasureTextEx(font, words[wordIndex], fontSize, fontSize*.1f);
+            Vector2 textSize = MeasureTextEx(font, words[wordIndex], (float)fontSize, fontSize*.1f);
 
             // Calculate the top-left text position based on the rectangle and alignment
             Vector2 textPos = (Vector2){
@@ -118,7 +118,7 @@ int main(void)
             };
 
             // Draw the text
-            DrawTextEx(font, words[wordIndex], textPos, fontSize, fontSize*.1f, RAYWHITE);
+            DrawTextEx(font, words[wordIndex], textPos, (float)fontSize, fontSize*.1f, RAYWHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

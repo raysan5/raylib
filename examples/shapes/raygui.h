@@ -357,7 +357,9 @@
     #elif defined(USE_LIBTYPE_SHARED)
         #define RAYGUIAPI __declspec(dllimport)     // Using the library as a Win32 shared library (.dll)
     #endif
-    #define _CRT_SECURE_NO_WARNINGS                 // Disable unsafe warnings on scanf() functions in MSVC
+#if !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS                 // Disable unsafe warnings on scanf() functions in MSVC
+#endif
 #endif
 
 // Function specifiers definition
@@ -646,6 +648,7 @@ typedef enum {
 // ProgressBar
 typedef enum {
     PROGRESS_PADDING = 16,      // ProgressBar internal padding
+    PROGRESS_SIDE,              // ProgressBar increment side: 0-left->right, 1-right-left 
 } GuiProgressBarProperty;
 
 // ScrollBar
@@ -3522,7 +3525,15 @@ int GuiProgressBar(Rectangle bounds, const char *textLeft, const char *textRight
         }
 
         // Draw slider internal progress bar (depends on state)
-        GuiDrawRectangle(progress, 0, BLANK, GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)));
+        if (GuiGetStyle(PROGRESSBAR, PROGRESS_SIDE) == 0) // Left-->Right
+        {
+            GuiDrawRectangle(progress, 0, BLANK, GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)));
+        }
+        else // Right-->Left
+        {
+            progress.x = bounds.x + bounds.width - progress.width - GuiGetStyle(PROGRESSBAR, BORDER_WIDTH);
+            GuiDrawRectangle(progress, 0, BLANK, GetColor(GuiGetStyle(PROGRESSBAR, BASE_COLOR_PRESSED)));
+        }
     }
 
     // Draw left/right text if provided
@@ -5119,11 +5130,11 @@ static const char *GetTextIcon(const char *text, int *iconId)
 
 // Get text divided into lines (by line-breaks '\n')
 // WARNING: It returns pointers to new lines but it does not add NULL ('\0') terminator!
-static char **GetTextLines(const char *text, int *count)
+static const char **GetTextLines(const char *text, int *count)
 {
     #define RAYGUI_MAX_TEXT_LINES   128
 
-    static char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
+    static const char *lines[RAYGUI_MAX_TEXT_LINES] = { 0 };
     for (int i = 0; i < RAYGUI_MAX_TEXT_LINES; i++) lines[i] = NULL;    // Init NULL pointers to substrings
 
     int textLength = (int)strlen(text);
@@ -5193,7 +5204,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
     // WARNING: GuiTextSplit() function can't be used now because it can have already been used
     // before the GuiDrawText() call and its buffer is static, it would be overriden :(
     int lineCount = 0;
-    char **lines = GetTextLines(text, &lineCount);
+    const char **lines = GetTextLines(text, &lineCount);
 
     // Text style variables
     //int alignment = GuiGetStyle(DEFAULT, TEXT_ALIGNMENT);

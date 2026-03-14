@@ -72,6 +72,7 @@ int main(void)
         UpdateCamera(&camera, CAMERA_FIRST_PERSON);
 
         // Handle voxel removal with mouse click
+        // This method is quite inefficient. Ray marching through the voxel grid using DDA would be faster, but more complex.
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             // Cast a ray from the screen center (where crosshair would be)
@@ -79,12 +80,14 @@ int main(void)
             Ray ray = GetMouseRay(screenCenter, camera);
 
             // Check ray collision with all voxels
-            bool voxelRemoved = false;
-            for (int x = 0; (x < WORLD_SIZE) && !voxelRemoved; x++)
+            float closestDistance = 99999.0f;
+            Vector3 closestVoxelPosition = { -1, -1, -1 };
+            bool voxelFound = false;
+            for (int x = 0; x < WORLD_SIZE; x++)
             {
-                for (int y = 0; (y < WORLD_SIZE) && !voxelRemoved; y++)
+                for (int y = 0; y < WORLD_SIZE; y++)
                 {
-                    for (int z = 0; (z < WORLD_SIZE) && !voxelRemoved; z++)
+                    for (int z = 0; z < WORLD_SIZE; z++)
                     {
                         if (!voxels[x][y][z]) continue; // Skip empty voxels
 
@@ -97,13 +100,22 @@ int main(void)
 
                         // Check ray-box collision
                         RayCollision collision = GetRayCollisionBox(ray, box);
-                        if (collision.hit)
+                        if (collision.hit && (collision.distance < closestDistance))
                         {
-                            voxels[x][y][z] = false;    // Remove this voxel
-                            voxelRemoved = true;        // Exit all loops
+                            closestDistance = collision.distance;
+                            closestVoxelPosition = (Vector3){ x, y, z };
+                            voxelFound = true;
                         }
                     }
                 }
+            }
+            
+            // Remove the closest voxel if one was hit
+            if (voxelFound)
+            {
+                voxels[(int)closestVoxelPosition.x]
+                      [(int)closestVoxelPosition.y]
+                      [(int)closestVoxelPosition.z] = false;
             }
         }
         //----------------------------------------------------------------------------------
@@ -137,7 +149,7 @@ int main(void)
             EndMode3D();
             
             // Draw reference point for raycasting to delete blocks
-            DrawCircle(GetRenderWidth()/2, GetScreenHeight()/2, 4, RED);
+            DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 4, RED);
 
             DrawText("Left-click a voxel to remove it!", 10, 10, 20, DARKGRAY);
             DrawText("WASD to move, mouse to look around", 10, 35, 10, GRAY);

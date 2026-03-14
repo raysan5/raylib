@@ -659,7 +659,7 @@ int main(int argc, char *argv[])
             // we must store provided file paths because pointers will be overwriten
             // TODO: It seems projects are added to solution BUT not to required solution folder,
             // that process still requires to be done manually
-            LOG("INFO: [%s] Adding project to raylib solution (.sln)\n", 
+            LOG("INFO: [%s] Adding project to raylib solution (.sln)\n",
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
             AddVSProjectToSolution(exVSProjectSolutionFile,
                 TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exCategory);
@@ -1040,7 +1040,7 @@ int main(int argc, char *argv[])
                         // Find position to add new example on list, just before the following category
                         // Category order: core, shapes, textures, text, models, shaders, audio
                         int exListNextCatIndex = -1;
-                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, exCategories[nextCatIndex]);
+                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, TextFormat("\n%s", exCategories[nextCatIndex])) + 1;
                         else exListNextCatIndex = exListLen; // EOF
 
                         strncpy(exListUpdated, exList, exListNextCatIndex);
@@ -1254,7 +1254,7 @@ int main(int argc, char *argv[])
                     exCollection[i].status &= ~VALID_NOT_IN_README;
                     exCollection[i].status &= ~VALID_NOT_IN_JS;
                 }
-                
+
                 // Check examples "status" information
                 for (int i = 0; i < exCollectionCount; i++)
                 {
@@ -2686,21 +2686,21 @@ static int AddVSProjectToSolution(const char *slnFile, const char *projFile, con
 
     // Add project folder line
     // NOTE: Folder uuid depends on category
-    if (strcmp(category, "core") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    if (strcmp(category, "core") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {6C82BAAE-BDDF-457D-8FA8-7E2490B07035}\n", uuid));
-    else if (strcmp(category, "shapes") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "shapes") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {278D8859-20B1-428F-8448-064F46E1F021}\n", uuid));
-    else if (strcmp(category, "textures") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "textures") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {DA049009-21FF-4AC0-84E4-830DD1BCD0CE}\n", uuid));
-    else if (strcmp(category, "text") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "text") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {8D3C83B7-F1E0-4C2E-9E34-EE5F6AB2502A}\n", uuid));
-    else if (strcmp(category, "models") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "models") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {AF5BEC5C-1F2B-4DA8-B12D-D09FE569237C}\n", uuid));
-    else if (strcmp(category, "shaders") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "shaders") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {5317807F-61D4-4E0F-B6DC-2D9F12621ED9}\n", uuid));
-    else if (strcmp(category, "audio") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "audio") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {CC132A4D-D081-4C26-BFB9-AB11984054F8}\n", uuid));
-    else if (strcmp(category, "other") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex, 
+    else if (strcmp(category, "other") == 0) offsetIndex += sprintf(slnTextUpdated + offsetIndex,
         TextFormat("\t\t{%s} = {E9D708A5-9C1F-4B84-A795-C5F191801762}\n", uuid));
     else LOG("WARNING: Provided category is not valid: %s\n", category);
     //----------------------------------------------------------------------------------------

@@ -30,7 +30,7 @@
 //----------------------------------------------------------------------------------
 typedef struct TurtleState {
     Vector2 origin;
-    double angle;
+    float angle;
 } TurtleState;
 
 typedef struct PenroseLSystem {

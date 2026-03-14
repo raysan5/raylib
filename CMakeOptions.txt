@@ -6,7 +6,7 @@ if(EMSCRIPTEN)
     # When configuring web builds with "emcmake cmake -B build -S .", set PLATFORM to Web by default
     SET(PLATFORM Web CACHE STRING "Platform to build for.")
 endif()
-enum_option(PLATFORM "Desktop;Web;Android;Raspberry Pi;DRM;SDL;RGFW" "Platform to build for.")
+enum_option(PLATFORM "Desktop;Web;WebRGFW;Android;Raspberry Pi;DRM;SDL;RGFW" "Platform to build for.")
 
 enum_option(OPENGL_VERSION "OFF;4.3;3.3;2.1;1.1;ES 2.0;ES 3.0;Software" "Force a specific OpenGL Version?")
 

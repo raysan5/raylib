@@ -7,11 +7,11 @@
 *   NOTE: raylib supports multiple models file formats:
 *
 *     - OBJ  > Text file format. Must include vertex position-texcoords-normals information,
-*              if files references some .mtl materials file, it will be loaded (or try to)
-*     - GLTF > Text/binary file format. Includes lot of information and it could
-*              also reference external files, raylib will try loading mesh and materials data
+*              if .obj references some .mtl materials file, it will be tried to be loaded
+*     - GLTF/GLB > Text/binary file formats. Includes lot of information and it could
+*              also reference external files, mesh and materials data will be tried to be loaded
 *     - IQM  > Binary file format. Includes mesh vertex data but also animation data,
-*              raylib can load .iqm animations
+*              meshes and animation data can be loaded
 *     - VOX  > Binary file format. MagikaVoxel mesh format:
 *              https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
 *     - M3D  > Binary file format. Model 3D format:
@@ -43,10 +43,10 @@ int main(void)
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
     camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
-    camera.target = (Vector3){ 0.0f, 10.0f, 0.0f };     // Camera looking at point
+    camera.target = (Vector3){ 0.0f, 12.0f, 0.0f };     // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
     Model model = LoadModel("resources/models/obj/castle.obj");                 // Load model
     Texture2D texture = LoadTexture("resources/models/obj/castle_diffuse.png"); // Load model texture
@@ -61,8 +61,6 @@ int main(void)
 
     bool selected = false;          // Selected object flag
 
-    DisableCursor();                // Limit cursor to relative movement inside the window
-
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -71,7 +69,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_FIRST_PERSON);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Load new models/textures on drag&drop
         if (IsFileDropped())
@@ -93,7 +91,10 @@ int main(void)
 
                     bounds = GetMeshBoundingBox(model.meshes[0]);
 
-                    // TODO: Move camera position from target enough distance to visualize model properly
+                    // Move camera position from target enough distance to visualize model properly
+                    camera.position.x = bounds.max.x + 10.0f;
+                    camera.position.y = bounds.max.y + 10.0f;
+                    camera.position.z = bounds.max.z + 10.0f;
                 }
                 else if (IsFileExtension(droppedFiles.paths[0], ".png"))  // Texture file formats supported
                 {

@@ -115,7 +115,7 @@ int main(void)
         .tapbackPos = 0.01f
     };
 
-    int wavCursor = 0;
+    unsigned int wavCursor = 0;
     const short *wavPCM16 = wav.data;
 
     short chunkSamples[AUDIO_STREAM_RING_BUFFER_SIZE] = { 0 };
@@ -274,8 +274,8 @@ static void CaptureFrame(FFTData *fftData, const float *audioSamples)
 
 static void RenderFrame(const FFTData *fftData, Image *fftImage)
 {
-    double framesSinceTapback = floor(fftData->tapbackPos/WINDOW_TIME);
-    framesSinceTapback = Clamp(framesSinceTapback, 0.0, fftData->fftHistoryLen - 1);
+    float framesSinceTapback = floorf((float)(fftData->tapbackPos/WINDOW_TIME));
+    framesSinceTapback = Clamp(framesSinceTapback, 0.0f, (float)(fftData->fftHistoryLen - 1));
 
     int historyPosition = (fftData->historyPos - 1 - (int)framesSinceTapback)%fftData->fftHistoryLen;
     if (historyPosition < 0) historyPosition += fftData->fftHistoryLen;

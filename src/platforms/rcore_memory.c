@@ -55,7 +55,7 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
-// Platform-specific required data for timming (Win32)
+// Platform-specific required data for timing (Win32)
 #if defined(_WIN32)
 typedef struct _LARGE_INTEGER { int64_t QuadPart; } LARGE_INTEGER;
 __declspec(dllimport) int __stdcall QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount);
@@ -435,9 +435,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 

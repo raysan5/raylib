@@ -86,10 +86,10 @@ int main(void)
 
             // Draw mouse position
             DrawCircleV(GetMousePosition(), 20, MAROON);
-            DrawRectangle(mousePos.x - 25, mousePos.y, 50, 2, BLACK);
-            DrawRectangle(mousePos.x, mousePos.y - 25, 2, 50, BLACK);
+            DrawRectangleRec((Rectangle) { mousePos.x - 25, mousePos.y, 50, 2 }, BLACK);
+            DrawRectangleRec((Rectangle) { mousePos.x, mousePos.y - 25, 2, 50 }, BLACK);
             DrawText(TextFormat("[%i,%i]", GetMouseX(), GetMouseY()), mousePos.x - 44,
-                (mousePos.y > GetScreenHeight() - 60)? mousePos.y - 46 : mousePos.y + 30, 20, BLACK);
+                (mousePos.y > GetScreenHeight() - 60)? (int)mousePos.y - 46 : (int)mousePos.y + 30, 20, BLACK);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

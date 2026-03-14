@@ -48,7 +48,7 @@
 *           recommended under specific situations and only if the developers know
 *           what are they doing; this flag is not defined by default
 *
-*       rlsw capabilities could be customized just defining some internal
+*       rlsw capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
 *
 *           #define SW_GL_FRAMEBUFFER_COPY_BGRA     true
@@ -644,7 +644,7 @@ SWAPI void swBindTexture(uint32_t id);
     #define SW_ARCH_RISCV
 #endif
 
-#if defined(RLSW_USE_SIMD_INTRINSICS)
+#if RLSW_USE_SIMD_INTRINSICS
     // Check for SIMD vector instructions
     // NOTE: Compiler is responsible to enable required flags for host device,
     // supported features are detected at compiler init but varies depending on compiler
@@ -695,7 +695,7 @@ SWAPI void swBindTexture(uint32_t id);
         #define SW_HAS_RVV
         #include <riscv_vector.h>
     #endif
-#endif  // RLSW_USE_SIMD_INTRINSICS
+#endif
 
 #ifdef __cplusplus
     #define SW_CURLY_INIT(name) name
@@ -3446,7 +3446,7 @@ static inline bool sw_is_texture_valid(uint32_t id)
     else if (id >= SW_MAX_TEXTURES) valid = false;
     else if (RLSW.loadedTextures[id].pixels == NULL) valid = false;
 
-    return true;
+    return valid;
 }
 
 static inline bool sw_is_texture_filter_valid(int filter)

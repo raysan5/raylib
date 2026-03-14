@@ -801,34 +801,103 @@ void SetClipboardText(const char *text)
     else EM_ASM({ navigator.clipboard.writeText(UTF8ToString($0)); }, text);
 }
 
+// Async EM_JS to be able to await clickboard read asynchronous function
+EM_ASYNC_JS(void, RequestClipboardData, (void), {
+    if (navigator.clipboard && window.isSecureContext)
+    {
+        let items = await navigator.clipboard.read();
+        for (const item of items)
+        {
+            // Check if this item contains plain text or image
+            if (item.types.includes("text/plain"))
+            {
+                const blob = await item.getType("text/plain");
+                const text = await blob.text();
+                window._lastClipboardString = text;
+            }
+            else if (item.types.find(t => t.startsWith("image/")))
+            {
+                const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
+                const bitmap = await createImageBitmap(blob);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+                // Store image and data for the Fetch function
+                window._lastImgWidth = canvas.width;
+                window._lastImgHeight = canvas.height;
+                window._lastImgData = imgData;
+            }
+        }
+    }
+    else console.warn("Clipboard read() requires HTTPS/Localhost");
+});
+
+// Returns the string created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(char *, GetLastPastedText, (void), {
+    var str = window._lastClipboardString || "";
+    var length = lengthBytesUTF8(str) + 1;
+    if (length > 1)
+    {
+        var ptr = _malloc(length);
+        stringToUTF8(str, ptr, length);
+        return ptr;
+    }
+    return 0;
+});
+
+// Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
+    if (window._lastImgData)
+    {
+        const data = window._lastImgData;
+        if (data.length > 0)
+        {
+            const ptr = _malloc(data.length);
+            HEAPU8.set(data, ptr);
+
+            // Set the width and height via the pointers passed from C
+            // HEAP32 handles the 4-byte integers
+            if (width)  setValue(width, window._lastImgWidth,  'i32');
+            if (height) setValue(height, window._lastImgHeight, 'i32');
+
+            // Clear the JS buffer so there is no need to fetch the same image twice
+            window._lastImgData = null;
+
+            return ptr;
+        }
+    }
+
+    return 0;
+});
+
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-/*
-    // Accessing clipboard data from browser is tricky due to security reasons
-    // The method to use is navigator.clipboard.readText() but this is an asynchronous method
-    // that will return at some moment after the function is called with the required data
-    emscripten_run_script_string("navigator.clipboard.readText() \
-        .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
-        .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
-    );
-
-    // The main issue is getting that data, one approach could be using ASYNCIFY and wait
-    // for the data but it requires adding Asyncify emscripten library on compilation
-
-    // Another approach could be just copy the data in a HTML text field and try to retrieve it
-    // later on if available... and clean it for future accesses
-*/
-    return NULL;
+    RequestClipboardData();
+    return GetLastPastedText();
 }
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    int w = 0, h = 0;
+    RequestClipboardData();
+    unsigned char* data = GetLastPastedImage(&w, &h);
+    if (data != NULL) {
+        image.data = data;
+        image.width = w;
+        image.height = h;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    }
 
     return image;
 }
@@ -1007,9 +1076,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1210,7 +1279,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
-#if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+#if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Enable OpenGL Debug Context
 #endif
     }
@@ -1255,7 +1324,7 @@ int InitPlatform(void)
         // Remember center for switchinging from fullscreen to window
         if ((CORE.Window.screen.height == CORE.Window.display.height) && (CORE.Window.screen.width == CORE.Window.display.width))
         {
-            // If screen width/height equal to the display, it's not possible to 
+            // If screen width/height equal to the display, it's not possible to
             // calculate the window position for toggling full-screened/windowed
             CORE.Window.position.x = CORE.Window.display.width/4;
             CORE.Window.position.y = CORE.Window.display.height/4;
@@ -1475,15 +1544,15 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 // GLFW3: Called on windows minimized/restored
 static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 {
-    if (iconified) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);   // The window was iconified
-    else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);           // The window was restored
+    if (iconified) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
+    else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);          // The window was restored
 }
 
 // GLFW3: Called on windows get/lose focus
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
-    if (focused) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);   // The window was focused
-    else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);           // The window lost focus
+    if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);  // The window was focused
+    else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);            // The window lost focus
 }
 
 // GLFW3: Called on file-drop over the window
@@ -1564,7 +1633,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     CORE.Input.Mouse.currentButtonState[button] = action;
     CORE.Input.Touch.currentTouchState[button] = action;
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -1605,7 +1674,7 @@ static void MouseMoveCallback(GLFWwindow *window, double x, double y)
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -1748,7 +1817,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     GestureEvent gestureEvent = { 0 };
     gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 

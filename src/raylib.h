@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v5.6-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v6.0 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -26,7 +26,7 @@
 *       - One default RenderBatch is loaded on rlglInit()->rlLoadRenderBatch() [rlgl] (OpenGL 3.3 or ES2)
 *
 *   DEPENDENCIES:
-*       [rcore] Depends on the selected platform backend, check rcore.c header for details 
+*       [rcore] Depends on the selected platform backend, check rcore.c header for details
 *       [rlgl] glad/glad_gles2 (David Herberth - github.com/Dav1dde/glad) for OpenGL extensions loading
 *       [raudio] miniaudio (David Reid - github.com/mackron/miniaudio) for audio device/context management
 *
@@ -39,7 +39,7 @@
 *       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
 *       [rtextures] stb_image_resize2 (Sean Barret) for image resizing algorithms
 *       [rtextures] stb_perlin (Sean Barret) for Perlin Noise image generation
-*       [rtextures] rl_gputex (Ramon Santamaria) for GPU-compressed texture formats 
+*       [rtextures] rl_gputex (Ramon Santamaria) for GPU-compressed texture formats
 *       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
 *       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
 *       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation
@@ -85,10 +85,10 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
-#define RAYLIB_VERSION_MAJOR 5
-#define RAYLIB_VERSION_MINOR 6
+#define RAYLIB_VERSION_MAJOR 6
+#define RAYLIB_VERSION_MINOR 0
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "5.6-dev"
+#define RAYLIB_VERSION  "6.0"
 
 // Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -159,7 +159,7 @@
 // NOTE: Set some defines with some data types declared by raylib
 // Other modules (raymath, rlgl) also require some of those types, so,
 // to be able to use those other modules as standalone (not depending on raylib)
-// this defines are very useful for internal check and avoid type (re)definitions
+// this defines are useful for internal check and avoid type (re)definitions
 #define RL_COLOR_TYPE
 #define RL_RECTANGLE_TYPE
 #define RL_VECTOR2_TYPE
@@ -353,13 +353,15 @@ typedef struct Mesh {
     unsigned char *colors;  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices; // Vertex indices (in case vertex data comes indexed)
 
-    // Animation vertex data
+    // Skin data for animation
+    int boneCount;          // Number of bones (MAX: 256 bones)
+    unsigned char *boneIndices; // Vertex bone indices, up to 4 bones influence by vertex (skinning) (shader-location = 6)
+    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+
+    // Runtime animation vertex data (CPU skinning)
+    // NOTE: In case of GPU skinning, not used, pointers are NULL
     float *animVertices;    // Animated vertex positions (after bones transformations)
     float *animNormals;     // Animated normals (after bones transformations)
-    unsigned char *boneIds; // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
-    float *boneWeights;     // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
-    Matrix *boneMatrices;   // Bones animated transformation matrices
-    int boneCount;          // Number of bones
 
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
@@ -393,11 +395,21 @@ typedef struct Transform {
     Vector3 scale;          // Scale
 } Transform;
 
+// Anim pose, an array of Transform[]
+typedef Transform *ModelAnimPose;
+
 // Bone, skeletal animation bone
 typedef struct BoneInfo {
     char name[32];          // Bone name
     int parent;             // Bone parent
 } BoneInfo;
+
+// Skeleton, animation bones hierarchy
+typedef struct ModelSkeleton {
+    int boneCount;          // Number of bones
+    BoneInfo *bones;        // Bones information (skeleton)
+    ModelAnimPose bindPose; // Bones base transformation (Transform[])
+} ModelSkeleton;
 
 // Model, meshes, materials and animation data
 typedef struct Model {
@@ -410,18 +422,20 @@ typedef struct Model {
     int *meshMaterial;      // Mesh material number
 
     // Animation data
-    int boneCount;          // Number of bones
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform *bindPose;    // Bones base transformation (pose)
+    ModelSkeleton skeleton; // Skeleton for animation
+
+    // Runtime animation data (CPU/GPU skinning)
+    ModelAnimPose currentPose; // Current animation pose (Transform[])
+    Matrix *boneMatrices;   // Bones animated transformation matrices
 } Model;
 
-// ModelAnimation
+// ModelAnimation, contains a full animation sequence
 typedef struct ModelAnimation {
     char name[32];          // Animation name
-    int boneCount;          // Number of bones
-    int frameCount;         // Number of animation frames
-    BoneInfo *bones;        // Bones information (skeleton)
-    Transform **framePoses; // Poses array by frame
+
+    int boneCount;          // Number of bones (per pose)
+    int keyframeCount;      // Number of animation key frames
+    ModelAnimPose *keyframePoses; // Animation sequence keyframe poses [keyframe][pose]
 } ModelAnimation;
 
 // Ray, ray for raycasting
@@ -719,7 +733,7 @@ typedef enum {
 
 // Gamepad buttons
 typedef enum {
-    GAMEPAD_BUTTON_UNKNOWN = 0,         // Unknown button, just for error checking
+    GAMEPAD_BUTTON_UNKNOWN = 0,         // Unknown button, for error checking
     GAMEPAD_BUTTON_LEFT_FACE_UP,        // Gamepad left DPAD up button
     GAMEPAD_BUTTON_LEFT_FACE_RIGHT,     // Gamepad left DPAD right button
     GAMEPAD_BUTTON_LEFT_FACE_DOWN,      // Gamepad left DPAD down button
@@ -768,6 +782,8 @@ typedef enum {
 #define MATERIAL_MAP_SPECULAR     MATERIAL_MAP_METALNESS
 
 // Shader location index
+// NOTE: Some locations are tried to be set automatically on shader loading,
+// but only if default attributes/uniforms names are found, check config.h for names
 typedef enum {
     SHADER_LOC_VERTEX_POSITION = 0, // Shader location: vertex attribute: position
     SHADER_LOC_VERTEX_TEXCOORD01,   // Shader location: vertex attribute: texcoord01
@@ -790,15 +806,15 @@ typedef enum {
     SHADER_LOC_MAP_ROUGHNESS,       // Shader location: sampler2d texture: roughness
     SHADER_LOC_MAP_OCCLUSION,       // Shader location: sampler2d texture: occlusion
     SHADER_LOC_MAP_EMISSION,        // Shader location: sampler2d texture: emission
-    SHADER_LOC_MAP_HEIGHT,          // Shader location: sampler2d texture: height
+    SHADER_LOC_MAP_HEIGHT,          // Shader location: sampler2d texture: heightmap
     SHADER_LOC_MAP_CUBEMAP,         // Shader location: samplerCube texture: cubemap
     SHADER_LOC_MAP_IRRADIANCE,      // Shader location: samplerCube texture: irradiance
     SHADER_LOC_MAP_PREFILTER,       // Shader location: samplerCube texture: prefilter
     SHADER_LOC_MAP_BRDF,            // Shader location: sampler2d texture: brdf
-    SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
-    SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
-    SHADER_LOC_BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
-    SHADER_LOC_VERTEX_INSTANCE_TX   // Shader location: vertex attribute: instanceTransform
+    SHADER_LOC_VERTEX_BONEIDS,      // Shader location: vertex attribute: bone indices
+    SHADER_LOC_VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: bone weights
+    SHADER_LOC_MATRIX_BONETRANSFORMS, // Shader location: matrix attribute: bone transforms (animation)
+    SHADER_LOC_VERTEX_INSTANCETRANSFORM // Shader location: vertex attribute: instance transforms
 } ShaderLocationIndex;
 
 #define SHADER_LOC_MAP_DIFFUSE      SHADER_LOC_MAP_ALBEDO
@@ -862,7 +878,7 @@ typedef enum {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 typedef enum {
-    TEXTURE_FILTER_POINT = 0,               // No filter, just pixel approximation
+    TEXTURE_FILTER_POINT = 0,               // No filter, pixel approximation
     TEXTURE_FILTER_BILINEAR,                // Linear filtering
     TEXTURE_FILTER_TRILINEAR,               // Trilinear filtering (linear with mipmaps)
     TEXTURE_FILTER_ANISOTROPIC_4X,          // Anisotropic filtering 4x
@@ -1151,7 +1167,7 @@ RLAPI bool IsFileDropped(void);                                     // Check if 
 RLAPI FilePathList LoadDroppedFiles(void);                          // Load dropped filepaths
 RLAPI void UnloadDroppedFiles(FilePathList files);                  // Unload dropped filepaths
 RLAPI unsigned int GetDirectoryFileCount(const char *dirPath);      // Get the file count in a directory
-RLAPI unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs);// Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
+RLAPI unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, bool scanSubdirs); // Get the file count in a directory with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
 
 // Compression/Encoding functionality
 RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize);        // Compress data (DEFLATE algorithm), memory must be MemFree()
@@ -1413,8 +1429,8 @@ RLAPI void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color c
 RLAPI void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color);               // Draw triangle within an image
 RLAPI void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3); // Draw triangle with interpolated colors within an image
 RLAPI void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color);          // Draw triangle outline within an image
-RLAPI void ImageDrawTriangleFan(Image *dst, const Vector2 *points, int pointCount, Color color);               // Draw a triangle fan defined by points within an image (first vertex is the center)
-RLAPI void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, Color color);             // Draw a triangle strip defined by points within an image
+RLAPI void ImageDrawTriangleFan(Image *dst, const Vector2 *points, int pointCount, Color color);         // Draw a triangle fan defined by points within an image (first vertex is the center)
+RLAPI void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, Color color);       // Draw a triangle strip defined by points within an image
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint);             // Draw a source image within a destination image (tint applied to source)
 RLAPI void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color);   // Draw text (using default font) within an image (destination)
 RLAPI void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text (custom sprite font) within an image (destination)
@@ -1493,6 +1509,7 @@ RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int codepointCou
 RLAPI void SetTextLineSpacing(int spacing);                                                 // Set vertical line spacing when drawing with line-breaks
 RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
 RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
+RLAPI Vector2 MeasureTextCodepoints(Font font, const int *codepoints, int length, float fontSize, float spacing); // Measure string size for an existing array of codepoints for Font
 RLAPI int GetGlyphIndex(Font font, int codepoint);                                          // Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found
 RLAPI GlyphInfo GetGlyphInfo(Font font, int codepoint);                                     // Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found
 RLAPI Rectangle GetGlyphAtlasRec(Font font, int codepoint);                                 // Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
@@ -1619,11 +1636,8 @@ RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);      
 
 // Model animations loading/unloading functions
 RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount);            // Load model animations from file
-RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, int frame);               // Update model animation pose (CPU)
-RLAPI void UpdateModelAnimationBones(Model model, ModelAnimation anim, int frame);          // Update model animation mesh bone matrices (GPU skinning)
-RLAPI void UpdateModelAnimationBonesLerp(Model model, ModelAnimation animA, int frameA, ModelAnimation animB, int frameB, float value); // Update model animation mesh bone matrices with interpolation between two poses(GPU skinning)
-RLAPI void UpdateModelVertsToCurrentBones(Model model);                                     // Update model vertices according to mesh bone matrices (CPU)
-RLAPI void UnloadModelAnimation(ModelAnimation anim);                                       // Unload animation data
+RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, float frame);             // Update model animation pose (vertex buffers and bone matrices)
+RLAPI void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, ModelAnimation animB, float frameB, float blend); // Update model animation pose, blending two animations
 RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
 RLAPI bool IsModelAnimationValid(Model model, ModelAnimation anim);                         // Check model animation skeleton match
 
@@ -1710,7 +1724,7 @@ RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check i
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
-RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (0.5 is centered)
+RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback); // Audio thread callback to request new data
 

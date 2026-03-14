@@ -43,7 +43,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - hilbert curve");
 
     int order = 2;
-    float size = GetScreenHeight();
+    float size = (float)GetScreenHeight();
     int strokeCount = 0;
     Vector2 *hilbertPath = LoadHilbertPath(order, size, &strokeCount);
     
@@ -73,7 +73,7 @@ int main(void)
             else counter = strokeCount;
             
             prevOrder = order;
-            prevSize = size;
+            prevSize = (int)size;
         }
         //----------------------------------------------------------------------------------
         
