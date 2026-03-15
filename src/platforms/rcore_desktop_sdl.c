@@ -1276,9 +1276,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    unsigned int ms = SDL_GetTicks();    // Elapsed time in milliseconds since SDL_Init()
-    double time = (double)ms/1000;
-    return time;
+    return (double)SDL_GetPerformanceCounter() / SDL_GetPerformanceFrequency();
 }
 
 // Open URL with default system browser (if available)
