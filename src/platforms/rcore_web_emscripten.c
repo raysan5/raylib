@@ -962,14 +962,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = 0.0;
-    /*
-    struct timespec ts = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    */
-    time = emscripten_get_now()*1000.0;
+    double time = emscripten_get_now()*1000.0;
 
     return time;
 }

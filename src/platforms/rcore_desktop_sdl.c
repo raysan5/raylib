@@ -1276,7 +1276,9 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    return (double)SDL_GetPerformanceCounter() / SDL_GetPerformanceFrequency();
+    double time = (double)(SDL_GetPerformanceCounter()/SDL_GetPerformanceFrequency()) - CORE.Time.base;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)
@@ -2122,12 +2124,14 @@ int InitPlatform(void)
 
     // Initialize timing system
     //----------------------------------------------------------------------------
-    // NOTE: No need to call InitTimer(), let SDL manage it internally
-    CORE.Time.previous = GetTime();     // Get time as double
-
+    // Get base time from window initialization
+    CORE.Time.base = (double)(SDL_GetPerformanceCounter()/SDL_GetPerformanceFrequency());
+    
     #if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1"); // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
     #endif
+    
+    // NOTE: No need to call InitTimer(), let SDL manage it internally
     //----------------------------------------------------------------------------
 
     // Initialize storage system

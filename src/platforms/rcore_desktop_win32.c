@@ -1238,9 +1238,12 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
+    double time = 0.0;
     LARGE_INTEGER now = { 0 };
     QueryPerformanceCounter(&now);
-    return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+    time = (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)

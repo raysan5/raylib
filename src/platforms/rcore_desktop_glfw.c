@@ -1179,6 +1179,7 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = glfwGetTime();   // Elapsed time since glfwInit()
+
     return time;
 }
 

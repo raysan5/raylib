@@ -174,7 +174,6 @@ extern "C" {
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
-    double startTime;
     RGFW_window *window;                // Native display device (physical screen connection)
     RGFW_monitor *monitor;
     mg_gamepads minigamepad;
@@ -1127,7 +1126,9 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    return get_time_seconds() - platform.startTime;
+    double time = get_time_seconds() - CORE.Time.base;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)
@@ -1628,7 +1629,7 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    platform.startTime = get_time_seconds();
+    CORE.Time.base = get_time_seconds();
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
