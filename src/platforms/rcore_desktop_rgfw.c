@@ -1332,7 +1332,7 @@ void PollInputEvents(void)
                     CORE.Window.currentFbo.width = CORE.Window.render.width;
                     CORE.Window.currentFbo.height = CORE.Window.render.height;
                 #elif defined(PLATFORM_WEB_RGFW)
-                    return;
+                    // do nothing but prevent other behavior
                 #else
                     SetupViewport(platform.window->w, platform.window->h);
 
