@@ -122,7 +122,7 @@ USE_EXTERNAL_GLFW     ?= FALSE
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
-# Enable support for X11 by default on Linux when using GLFW
+# Enable support for X11 by default on Linux when using RGFW
 # NOTE: Wayland is disabled by default, only enable if you are sure
 RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 RGFW_LINUX_ENABLE_X11      ?= TRUE
