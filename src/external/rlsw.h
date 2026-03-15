@@ -2752,10 +2752,10 @@ static inline void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start, 
             /* TODO: Implement different depth funcs? */                            \
             float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                        \
             if (z > depth) goto discard;                                            \
-        }                                                                           \
                                                                                     \
-        /* TODO: Implement depth mask */                                            \
-        SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                                       \
+            /* TODO: Implement depth mask */                                        \
+            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                                   \
+        }                                                                           \
                                                                                     \
         if (ENABLE_TEXTURE)                                                         \
         {                                                                           \
@@ -3223,10 +3223,10 @@ static inline void FUNC_NAME(void)                                              
                 /* TODO: Implement different depth funcs? */                    \
                 float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                \
                 if (z > depth) goto discard;                                    \
-            }                                                                   \
                                                                                 \
-            /* TODO: Implement depth mask */                                    \
-            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                               \
+                /* TODO: Implement depth mask */                                \
+                SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                           \
+            }                                                                   \
                                                                                 \
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
@@ -3500,11 +3500,13 @@ static inline void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1) \
                                                                         \
         if (ENABLE_DEPTH_TEST)                                          \
         {                                                               \
+            /* TODO: Implement different depth funcs? */                \
             float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);            \
             if (z > depth) goto discard;                                \
-        }                                                               \
                                                                         \
-        SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                           \
+            /* TODO: Implement depth mask */                            \
+            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                       \
+        }                                                               \
                                                                         \
         float color[4] = {r, g, b, a};                                  \
                                                                         \
@@ -3661,11 +3663,13 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
                                                                             \
     if (ENABLE_DEPTH_TEST)                                                  \
     {                                                                       \
+        /* TODO: Implement different depth funcs? */                        \
         float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                    \
         if (z > depth) return;                                              \
-    }                                                                       \
                                                                             \
-    SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                                   \
+        /* TODO: Implement depth mask */                                    \
+        SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                               \
+    }                                                                       \
                                                                             \
     if (ENABLE_COLOR_BLEND)                                                 \
     {                                                                       \
