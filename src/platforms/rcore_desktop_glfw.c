@@ -111,6 +111,7 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+    GLFWcursor *customCursor;           // GLFW custom cursor handle
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -1238,12 +1239,46 @@ void SetMousePosition(int x, int y)
 // Set mouse cursor
 void SetMouseCursor(int cursor)
 {
+    ClearMouseCursorImage();
+
     CORE.Input.Mouse.cursor = cursor;
     if (cursor == MOUSE_CURSOR_DEFAULT) glfwSetCursor(platform.handle, NULL);
     else
     {
         // NOTE: Mapping internal GLFW enum values to MouseCursor enum values
         glfwSetCursor(platform.handle, glfwCreateStandardCursor(0x00036000 + cursor));
+    }
+}
+
+// Set mouse cursor to custom image
+void SetMouseCursorImage(Image image, int hotX, int hotY)
+{
+    // Ensure image is RGBA format
+    Image copy = ImageCopy(image);
+    ImageFormat(&copy, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+
+    GLFWimage glfwImage = { copy.width, copy.height, (unsigned char *)copy.data };
+
+    if (platform.customCursor != NULL)
+    {
+        glfwDestroyCursor(platform.customCursor);
+        platform.customCursor = NULL;
+    }
+
+    platform.customCursor = glfwCreateCursor(&glfwImage, hotX, hotY);
+    glfwSetCursor(platform.handle, platform.customCursor);
+
+    UnloadImage(copy);
+}
+
+// Restore default mouse cursor
+void ClearMouseCursorImage(void)
+{
+    if (platform.customCursor != NULL)
+    {
+        glfwSetCursor(platform.handle, NULL);
+        glfwDestroyCursor(platform.customCursor);
+        platform.customCursor = NULL;
     }
 }
 
@@ -1870,6 +1905,12 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+    if (platform.customCursor != NULL)
+    {
+        glfwDestroyCursor(platform.customCursor);
+        platform.customCursor = NULL;
+    }
+
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
 
