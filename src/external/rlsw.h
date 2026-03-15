@@ -101,6 +101,9 @@
 #ifndef SW_MALLOC
     #define SW_MALLOC(sz) malloc(sz)
 #endif
+#ifndef SW_CALLOC
+    #define SW_CALLOC(n,sz) calloc(n,sz)
+#endif
 #ifndef SW_REALLOC
     #define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
 #endif
@@ -386,6 +389,7 @@ typedef double              GLclampd;
 #define glGenTextures(c, v)                         swGenTextures((c), (v))
 #define glDeleteTextures(c, v)                      swDeleteTextures((c), (v))
 #define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D((w), (h), (f), (t), (p))
+#define glTexSubImage2D(tr, l, x, y, w, h, f, t, p) swTexSubImage2D((x), (y), (w), (h), (f), (t), (p));
 #define glTexParameteri(tr, pname, param)           swTexParameteri((pname), (param))
 #define glBindTexture(tr, id)                       swBindTexture((id))
 
@@ -397,7 +401,6 @@ typedef double              GLclampd;
 #define glShadeModel(X)                         ((void)(X))
 #define glFrontFace(X)                          ((void)(X))
 #define glDepthFunc(X)                          ((void)(X))
-#define glTexSubImage2D(X,Y,Z,W,A,B,C,D,E)      ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A),(void)(B),(void)(C),(void)(D),(void)(E))
 #define glGetTexImage(X,Y,Z,W,A)                ((void)(X),(void)(Y),(void)(Z),(void)(W),(void)(A))
 #define glNormal3f(X,Y,Z)                       ((void)(X),(void)(Y),(void)(Z))
 #define glNormal3fv(X)                          ((void)(X))
@@ -529,6 +532,7 @@ typedef enum {
     SW_STACK_OVERFLOW = GL_STACK_OVERFLOW,
     SW_STACK_UNDERFLOW = GL_STACK_UNDERFLOW,
     SW_INVALID_OPERATION = GL_INVALID_OPERATION,
+    SW_OUT_OF_MEMORY = GL_OUT_OF_MEMORY,
 } SWerrcode;
 
 //------------------------------------------------------------------------------------
@@ -604,10 +608,10 @@ SWAPI void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
 SWAPI void swGenTextures(int count, uint32_t *textures);
 SWAPI void swDeleteTextures(int count, uint32_t *textures);
-
-SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data);
-SWAPI void swTexParameteri(int param, int value);
 SWAPI void swBindTexture(uint32_t id);
+SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data);
+SWAPI void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
+SWAPI void swTexParameteri(int param, int value);
 
 #endif // RLSW_H
 
@@ -720,6 +724,10 @@ SWAPI void swBindTexture(uint32_t id);
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
+#define SW_HANDLE_NULL          0u
+#define SW_POOL_SLOT_LIVE       0x80u   // bit7 of the generation byte
+#define SW_POOL_SLOT_VER_MASK   0x7Fu   // bits6:0 = anti-ABA counter
+
 #define SW_CONCAT(a, b) a##b
 #define SW_CONCATX(a, b) SW_CONCAT(a, b)
 
@@ -748,6 +756,10 @@ SWAPI void swBindTexture(uint32_t id);
 //----------------------------------------------------------------------------------
 // Module Types and Structures Definition
 //----------------------------------------------------------------------------------
+// Aliases types
+typedef uint32_t sw_handle_t;
+typedef uint16_t sw_half_t;
+
 // Pixel data format type
 typedef enum {
     SW_PIXELFORMAT_UNKNOWN = 0,
@@ -765,12 +777,13 @@ typedef enum {
     SW_PIXELFORMAT_COLOR_R16,               // 16 bpp (1 channel - half float)
     SW_PIXELFORMAT_COLOR_R16G16B16,         // 16*3 bpp (3 channels - half float)
     SW_PIXELFORMAT_COLOR_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
-    SW_PIXELFORMAT_DEPTH_D8,                // 1 bpp (D8)
-    SW_PIXELFORMAT_DEPTH_D16,               // 2 bpp (D16)
-    SW_PIXELFORMAT_DEPTH_D32,               // 4 bpp (D32)
+    SW_PIXELFORMAT_DEPTH_D8,                // 1 bpp
+    SW_PIXELFORMAT_DEPTH_D16,               // 2 bpp
+    SW_PIXELFORMAT_DEPTH_D32,               // 4 bpp
     SW_PIXELFORMAT_COUNT
 } sw_pixelformat_t;
 
+// Blending factor function
 typedef void (*sw_factor_f)(
     float *SW_RESTRICT factor,
     const float *SW_RESTRICT src,
@@ -778,7 +791,6 @@ typedef void (*sw_factor_f)(
 );
 
 typedef float sw_matrix_t[4*4];
-typedef uint16_t sw_half_t;
 
 typedef struct {
     float position[4];          // Position coordinates
@@ -810,6 +822,16 @@ typedef struct {
 } sw_framebuffer_t;
 
 typedef struct {
+    void *data;             // flat storage [capacity*stride] bytes
+    uint8_t *gen;           // generation per slot [capacity]
+    uint32_t *freeList;     // free indices stack [capacity]
+    int freeCount;
+    int watermark;          // next blank index (starts at 1, skips 0)
+    int capacity;
+    size_t stride;
+} sw_pool_t;
+
+typedef struct {
     sw_framebuffer_t framebuffer;   // Main framebuffer
     float clearColor[4];            // Clear color of the framebuffer
     float clearDepth;               // Clear depth of the framebuffer
@@ -824,8 +846,6 @@ typedef struct {
     int scMax[2];                   // Scissor rectangle maximum renderable point (bottom-right)
     float scClipMin[2];             // Scissor rectangle minimum renderable point in clip space
     float scClipMax[2];             // Scissor rectangle maximum renderable point in clip space
-
-    uint32_t currentTexture;        // Current active texture id
 
     struct {
         float *positions;
@@ -858,6 +878,9 @@ typedef struct {
     sw_matrix_t matMVP;                                         // Model view projection matrix, calculated and used internally
     bool isDirtyMVP;                                            // Indicates if the MVP matrix should be rebuilt
 
+    sw_texture_t* texture;                                      // Current bind texture
+    sw_pool_t texturePool;                                      // Texture object pool
+
     SWfactor srcFactor;
     SWfactor dstFactor;
 
@@ -866,12 +889,6 @@ typedef struct {
 
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
-
-    sw_texture_t *loadedTextures;
-    int loadedTextureCount;
-
-    uint32_t *freeTextureIds;
-    int freeTextureIdCount;
 
     uint32_t stateFlags;
 } sw_context_t;
@@ -882,7 +899,7 @@ typedef struct {
 static sw_context_t RLSW = { 0 };
 
 //----------------------------------------------------------------------------------
-// Module Constants Definition
+// Internal Constants Definition
 //----------------------------------------------------------------------------------
 // Pixel formats sizes in bytes
 static const int SW_PIXELFORMAT_SIZE[SW_PIXELFORMAT_COUNT] =
@@ -907,7 +924,10 @@ static const int SW_PIXELFORMAT_SIZE[SW_PIXELFORMAT_COUNT] =
 };
 
 //----------------------------------------------------------------------------------
-// Module Functions Declaration
+// Internal Functions Definitions
+//----------------------------------------------------------------------------------
+
+// Math helper functions
 //----------------------------------------------------------------------------------
 static inline void sw_matrix_id(sw_matrix_t dst)
 {
@@ -948,9 +968,7 @@ static inline void sw_matrix_mul_rst(float *SW_RESTRICT dst, const float *SW_RES
 static inline void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const sw_matrix_t right)
 {
     float result[16];
-
     sw_matrix_mul_rst(result, left, right);
-
     for (int i = 0; i < 16; i++) dst[i] = result[i];
 }
 
@@ -1178,10 +1196,194 @@ static inline uint32_t sw_compress_fto3(float v) { return (uint32_t)(v* 7.0f + 0
 static inline uint32_t sw_compress_fto4(float v) { return (uint32_t)(v*15.0f + 0.5f) & 0x0F; }
 static inline uint32_t sw_compress_fto5(float v) { return (uint32_t)(v*31.0f + 0.5f) & 0x1F; }
 static inline uint32_t sw_compress_fto6(float v) { return (uint32_t)(v*63.0f + 0.5f) & 0x3F; }
+//-------------------------------------------------------------------------------------------
 
-// ------------------------------------------------------------------------------------------
+// Object pool functions
+//-------------------------------------------------------------------------------------------
+static bool sw_pool_init(sw_pool_t *pool, int capacity, size_t stride)
+{
+    *pool = (sw_pool_t) { 0 };
 
-// Pixel format management functions
+    pool->data = SW_CALLOC(capacity, stride);
+    pool->gen = SW_CALLOC(capacity, sizeof(uint8_t));
+    pool->freeList = SW_MALLOC(capacity * sizeof(uint32_t));
+
+    if (!pool->data || !pool->gen || !pool->freeList)
+    {
+        SW_FREE(pool->data);
+        SW_FREE(pool->gen);
+        SW_FREE(pool->freeList);
+        return false;
+    }
+
+    pool->watermark = 1;
+    pool->capacity  = capacity;
+    pool->stride    = stride;
+
+    return true;
+}
+
+static void sw_pool_destroy(sw_pool_t *pool)
+{
+    SW_FREE(pool->data);
+    SW_FREE(pool->gen);
+    SW_FREE(pool->freeList);
+    *pool = (sw_pool_t) { 0 };
+}
+
+static sw_handle_t sw_pool_alloc(sw_pool_t *pool)
+{
+    uint32_t index;
+
+    if (pool->freeCount > 0)
+    {
+        index = pool->freeList[--pool->freeCount];
+    }
+    else
+    {
+        if (pool->watermark >= pool->capacity) return SW_HANDLE_NULL;
+        index = (uint32_t)pool->watermark++;
+    }
+
+    uint8_t ver = ((pool->gen[index] & SW_POOL_SLOT_VER_MASK) + 1) & SW_POOL_SLOT_VER_MASK;
+    if (ver == 0) ver = 1;
+    pool->gen[index] = SW_POOL_SLOT_LIVE | ver;
+
+    uint8_t *slot = (uint8_t *)pool->data + index * pool->stride;
+    for (size_t i = 0; i < pool->stride; i++) slot[i] = 0;
+
+    return (sw_handle_t)index;
+}
+
+static void *sw_pool_get(const sw_pool_t *pool, sw_handle_t handle)
+{
+    if (handle == SW_HANDLE_NULL)          return NULL;
+    if ((int)handle >= pool->capacity)     return NULL;
+    if (!(pool->gen[handle] & SW_POOL_SLOT_LIVE)) return NULL;
+
+    return (char *)pool->data + handle * pool->stride;
+}
+
+static bool sw_pool_valid(const sw_pool_t *pool, sw_handle_t handle)
+{
+    return sw_pool_get(pool, handle) != NULL;
+}
+
+static bool sw_pool_free(sw_pool_t *pool, sw_handle_t handle)
+{
+    if (!sw_pool_valid(pool, handle)) return false;
+
+    pool->gen[handle] &= SW_POOL_SLOT_VER_MASK;   // delete live_flag
+    pool->freeList[pool->freeCount++] = handle;
+    return true;
+}
+//-------------------------------------------------------------------------------------------
+
+// Validity check helper functions
+//-------------------------------------------------------------------------------------------
+static inline bool sw_is_texture_valid(sw_handle_t id)
+{
+    return sw_pool_valid(&RLSW.texturePool, id);
+}
+
+static inline bool sw_is_texture_complete(sw_texture_t* tex)
+{
+    return tex && tex->pixels != NULL;
+}
+
+static inline bool sw_is_texture_filter_valid(int filter)
+{
+    return ((filter == SW_NEAREST) || (filter == SW_LINEAR));
+}
+
+static inline bool sw_is_texture_wrap_valid(int wrap)
+{
+    return ((wrap == SW_REPEAT) || (wrap == SW_CLAMP));
+}
+
+static inline bool sw_is_draw_mode_valid(int mode)
+{
+    bool result = false;
+
+    switch (mode)
+    {
+        case SW_POINTS:
+        case SW_LINES:
+        case SW_TRIANGLES:
+        case SW_QUADS: result = true; break;
+        default: break;
+    }
+
+    return result;
+}
+
+static inline bool sw_is_poly_mode_valid(int mode)
+{
+    bool result = false;
+
+    switch (mode)
+    {
+        case SW_POINT:
+        case SW_LINE:
+        case SW_FILL: result = true; break;
+        default: break;
+    }
+
+    return result;
+}
+
+static inline bool sw_is_face_valid(int face)
+{
+    return (face == SW_FRONT || face == SW_BACK);
+}
+
+static inline bool sw_is_blend_src_factor_valid(int blend)
+{
+    bool result = false;
+
+    switch (blend)
+    {
+        case SW_ZERO:
+        case SW_ONE:
+        case SW_SRC_COLOR:
+        case SW_ONE_MINUS_SRC_COLOR:
+        case SW_SRC_ALPHA:
+        case SW_ONE_MINUS_SRC_ALPHA:
+        case SW_DST_ALPHA:
+        case SW_ONE_MINUS_DST_ALPHA:
+        case SW_DST_COLOR:
+        case SW_ONE_MINUS_DST_COLOR:
+        case SW_SRC_ALPHA_SATURATE: result = true; break;
+        default: break;
+    }
+
+    return result;
+}
+
+static inline bool sw_is_blend_dst_factor_valid(int blend)
+{
+    bool result = false;
+
+    switch (blend)
+    {
+        case SW_ZERO:
+        case SW_ONE:
+        case SW_SRC_COLOR:
+        case SW_ONE_MINUS_SRC_COLOR:
+        case SW_SRC_ALPHA:
+        case SW_ONE_MINUS_SRC_ALPHA:
+        case SW_DST_ALPHA:
+        case SW_ONE_MINUS_DST_ALPHA:
+        case SW_DST_COLOR:
+        case SW_ONE_MINUS_DST_COLOR: result = true; break;
+        default: break;
+    }
+
+    return result;
+}
+//-------------------------------------------------------------------------------------------
+
+// Pixel management functions
 //-------------------------------------------------------------------------------------------
 static inline int sw_pixel_get_format(SWformat format, SWtype type)
 {
@@ -2139,7 +2341,7 @@ static inline void sw_pixel_set_depth(void *pixels, float depth, uint32_t offset
 }
 //-------------------------------------------------------------------------------------------
 
-// Texture sampling functionality
+// Texture functionality
 //-------------------------------------------------------------------------------------------
 static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int w, int h, sw_pixelformat_t format)
 {
@@ -2149,7 +2351,7 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
     if (newSize > texture->allocSz)
     {
         void* ptr = SW_REALLOC(texture->pixels, newSize);
-        if (!ptr) { RLSW.errCode = SW_STACK_OVERFLOW; return false; } // WARNING: Out of memory...
+        if (!ptr) { RLSW.errCode = SW_OUT_OF_MEMORY; return false; }
         texture->allocSz = newSize;
         texture->pixels = ptr;
     }
@@ -2169,6 +2371,11 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
     texture->ty = 1.0f/h;
 
     return true;
+}
+
+static inline void sw_texture_free(sw_texture_t *texture)
+{
+    SW_FREE(texture->pixels);
 }
 
 static inline void sw_texture_fetch(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, int x, int y)
@@ -2755,8 +2962,7 @@ static void sw_triangle_clip_and_project(void)
 }
 
 #define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
-static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,            \
-                      const sw_vertex_t *end, float dUdy, float dVdy)               \
+static void FUNC_NAME(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy) \
 {                                                                                   \
     /* Gets the start and end coordinates */                                        \
     int xStart = (int)start->screen[0];                                             \
@@ -2782,9 +2988,9 @@ static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,        
         (end->color[3] - start->color[3])*dxRcp                                     \
     };                                                                              \
                                                                                     \
-    float dUdx = 0.0f;                                                              \
-    float dVdx = 0.0f;                                                              \
-    if (ENABLE_TEXTURE) {                                                           \
+    float dUdx, dVdx;                                                               \
+    if (ENABLE_TEXTURE)                                                             \
+    {                                                                               \
         dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;                       \
         dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;                       \
     }                                                                               \
@@ -2800,9 +3006,9 @@ static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,        
         start->color[3] + dCdx[3]*xSubstep                                          \
     };                                                                              \
                                                                                     \
-    float u = 0.0f;                                                                 \
-    float v = 0.0f;                                                                 \
-    if (ENABLE_TEXTURE) {                                                           \
+    float u, v;                                                                     \
+    if (ENABLE_TEXTURE)                                                             \
+    {                                                                               \
         u = start->texcoord[0] + dUdx*xSubstep;                                     \
         v = start->texcoord[1] + dVdx*xSubstep;                                     \
     }                                                                               \
@@ -2839,7 +3045,7 @@ static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,        
             float texColor[4];                                                      \
             float s = u*wRcp;                                                       \
             float t = v*wRcp;                                                       \
-            sw_texture_sample(texColor, tex, s, t, dUdx, dUdy, dVdx, dVdy);         \
+            sw_texture_sample(texColor, RLSW.texture, s, t, dUdx, dUdy, dVdx, dVdy); \
             srcColor[0] *= texColor[0];                                             \
             srcColor[1] *= texColor[1];                                             \
             srcColor[2] *= texColor[2];                                             \
@@ -2877,8 +3083,7 @@ static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,        
 }
 
 #define DEFINE_TRIANGLE_RASTER(FUNC_NAME, FUNC_SCANLINE)                            \
-static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1,                 \
-                             const sw_vertex_t *v2, const sw_texture_t *tex)        \
+static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2) \
 {                                                                                   \
     /* Swap vertices by increasing y */                                             \
     if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; } \
@@ -2935,8 +3140,10 @@ static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1,             
     {                                                                               \
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
-        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-        else FUNC_SCANLINE(tex, &vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        if (vLeft.screen[0] < vRight.screen[0])                                     \
+            FUNC_SCANLINE(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        else                                                                        \
+            FUNC_SCANLINE(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
                                                                                     \
         sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
         vLeft.screen[0] += dXdy02;                                                  \
@@ -2955,8 +3162,10 @@ static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1,             
     {                                                                               \
         vLeft.screen[1] = vRight.screen[1] = y;                                     \
                                                                                     \
-        if (vLeft.screen[0] < vRight.screen[0]) FUNC_SCANLINE(tex, &vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-        else FUNC_SCANLINE(tex, &vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        if (vLeft.screen[0] < vRight.screen[0])                                     \
+            FUNC_SCANLINE(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
+        else                                                                        \
+            FUNC_SCANLINE(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
                                                                                     \
         sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
         vLeft.screen[0] += dXdy02;                                                  \
@@ -2986,15 +3195,6 @@ DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND, sw_triangle_raster_sc
 
 static void sw_triangle_render(void)
 {
-    if (RLSW.stateFlags & SW_STATE_CULL_FACE)
-    {
-        if (!sw_triangle_face_culling()) return;
-    }
-
-    sw_triangle_clip_and_project();
-
-    if (RLSW.vertexCounter < 3) return;
-
     #define TRIANGLE_RASTER(RASTER_FUNC)                        \
     {                                                           \
         for (int i = 0; i < RLSW.vertexCounter - 2; i++)        \
@@ -3002,14 +3202,21 @@ static void sw_triangle_render(void)
             RASTER_FUNC(                                        \
                 &RLSW.vertexBuffer[0],                          \
                 &RLSW.vertexBuffer[i + 1],                      \
-                &RLSW.vertexBuffer[i + 2],                      \
-                &RLSW.loadedTextures[RLSW.currentTexture]       \
+                &RLSW.vertexBuffer[i + 2]                       \
             );                                                  \
         }                                                       \
     }
 
+    if (RLSW.stateFlags & SW_STATE_CULL_FACE)
+    {
+        if (!sw_triangle_face_culling()) return;
+    }
+
+    sw_triangle_clip_and_project();
+    if (RLSW.vertexCounter < 3) return;
+
     uint32_t state = RLSW.stateFlags;
-    if (RLSW.currentTexture == 0) state &= ~SW_STATE_TEXTURE_2D;
+    if (!sw_is_texture_complete(RLSW.texture)) state &= ~SW_STATE_TEXTURE_2D;
     if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
 
     if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
@@ -3247,10 +3454,6 @@ static void FUNC_NAME(void)                                                     
     dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                      \
     dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                      \
                                                                                 \
-    /* Start of quad rasterization */                                           \
-    const sw_texture_t *tex;                                                    \
-    if (ENABLE_TEXTURE) tex = &RLSW.loadedTextures[RLSW.currentTexture];        \
-                                                                                \
     uint8_t *cPixels = RLSW.framebuffer.color.pixels;                           \
     uint8_t *dPixels = RLSW.framebuffer.depth.pixels;                           \
     int wDst = RLSW.framebuffer.width;                                          \
@@ -3308,7 +3511,7 @@ static void FUNC_NAME(void)                                                     
             if (ENABLE_TEXTURE)                                                 \
             {                                                                   \
                 float texColor[4];                                              \
-                sw_texture_sample(texColor, tex, u, v, dUdx, dUdy, dVdx, dVdy); \
+                sw_texture_sample(texColor, RLSW.texture, u, v, dUdx, dUdy, dVdx, dVdy); \
                 srcColor[0] *= texColor[0];                                     \
                 srcColor[1] *= texColor[1];                                     \
                 srcColor[2] *= texColor[2];                                     \
@@ -3370,11 +3573,10 @@ static void sw_quad_render(void)
     }
 
     sw_quad_clip_and_project();
-
     if (RLSW.vertexCounter < 3) return;
 
     uint32_t state = RLSW.stateFlags;
-    if (RLSW.currentTexture == 0) state &= ~SW_STATE_TEXTURE_2D;
+    if (!sw_is_texture_complete(RLSW.texture)) state &= ~SW_STATE_TEXTURE_2D;
     if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
 
     if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
@@ -3387,32 +3589,32 @@ static void sw_quad_render(void)
         else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_DEPTH();
         else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) sw_quad_raster_axis_aligned_TEX();
         else sw_quad_raster_axis_aligned();
-        return;
     }
+    else
+    {
+        #define TRIANGLE_RASTER(RASTER_FUNC)                        \
+        {                                                           \
+            for (int i = 0; i < RLSW.vertexCounter - 2; i++)        \
+            {                                                       \
+                RASTER_FUNC(                                        \
+                    &RLSW.vertexBuffer[0],                          \
+                    &RLSW.vertexBuffer[i + 1],                      \
+                    &RLSW.vertexBuffer[i + 2]                       \
+                );                                                  \
+            }                                                       \
+        }
 
-    #define TRIANGLE_RASTER(RASTER_FUNC)                        \
-    {                                                           \
-        for (int i = 0; i < RLSW.vertexCounter - 2; i++)        \
-        {                                                       \
-            RASTER_FUNC(                                        \
-                &RLSW.vertexBuffer[0],                          \
-                &RLSW.vertexBuffer[i + 1],                      \
-                &RLSW.vertexBuffer[i + 2],                      \
-                &RLSW.loadedTextures[RLSW.currentTexture]       \
-            );                                                  \
-        }                                                       \
+        if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
+        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
+        else TRIANGLE_RASTER(sw_triangle_raster)
+
+        #undef TRIANGLE_RASTER
     }
-
-    if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
-    else TRIANGLE_RASTER(sw_triangle_raster)
-
-    #undef TRIANGLE_RASTER
 }
 //-------------------------------------------------------------------------------------------
 
@@ -3920,127 +4122,29 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
 
 //-------------------------------------------------------------------------------------------
 
-// Validity check helper functions
-//-------------------------------------------------------------------------------------------
-static inline bool sw_is_texture_valid(uint32_t id)
-{
-    bool valid = true;
-
-    if (id == 0) valid = false;
-    else if (id >= SW_MAX_TEXTURES) valid = false;
-    else if (RLSW.loadedTextures[id].pixels == NULL) valid = false;
-
-    return valid;
-}
-
-static inline bool sw_is_texture_filter_valid(int filter)
-{
-    return ((filter == SW_NEAREST) || (filter == SW_LINEAR));
-}
-
-static inline bool sw_is_texture_wrap_valid(int wrap)
-{
-    return ((wrap == SW_REPEAT) || (wrap == SW_CLAMP));
-}
-
-static inline bool sw_is_draw_mode_valid(int mode)
-{
-    bool result = false;
-
-    switch (mode)
-    {
-        case SW_POINTS:
-        case SW_LINES:
-        case SW_TRIANGLES:
-        case SW_QUADS: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-
-static inline bool sw_is_poly_mode_valid(int mode)
-{
-    bool result = false;
-
-    switch (mode)
-    {
-        case SW_POINT:
-        case SW_LINE:
-        case SW_FILL: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-
-static inline bool sw_is_face_valid(int face)
-{
-    return (face == SW_FRONT || face == SW_BACK);
-}
-
-static inline bool sw_is_blend_src_factor_valid(int blend)
-{
-    bool result = false;
-
-    switch (blend)
-    {
-        case SW_ZERO:
-        case SW_ONE:
-        case SW_SRC_COLOR:
-        case SW_ONE_MINUS_SRC_COLOR:
-        case SW_SRC_ALPHA:
-        case SW_ONE_MINUS_SRC_ALPHA:
-        case SW_DST_ALPHA:
-        case SW_ONE_MINUS_DST_ALPHA:
-        case SW_DST_COLOR:
-        case SW_ONE_MINUS_DST_COLOR:
-        case SW_SRC_ALPHA_SATURATE: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-
-static inline bool sw_is_blend_dst_factor_valid(int blend)
-{
-    bool result = false;
-
-    switch (blend)
-    {
-        case SW_ZERO:
-        case SW_ONE:
-        case SW_SRC_COLOR:
-        case SW_ONE_MINUS_SRC_COLOR:
-        case SW_SRC_ALPHA:
-        case SW_ONE_MINUS_SRC_ALPHA:
-        case SW_DST_ALPHA:
-        case SW_ONE_MINUS_DST_ALPHA:
-        case SW_DST_COLOR:
-        case SW_ONE_MINUS_DST_COLOR: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-//-------------------------------------------------------------------------------------------
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 bool swInit(int w, int h)
 {
-    if (!sw_framebuffer_alloc(w, h)) { swClose(); return false; }
+    if (!sw_framebuffer_alloc(w, h))
+    {
+        swClose();
+        return false;
+    }
+
+    if (!sw_pool_init(&RLSW.texturePool, SW_MAX_TEXTURES, sizeof(sw_texture_t)))
+    {
+        swClose();
+        return false;
+    }
 
     swViewport(0, 0, w, h);
     swScissor(0, 0, w, h);
 
-    RLSW.loadedTextures = (sw_texture_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(sw_texture_t));
-    if (RLSW.loadedTextures == NULL) { swClose(); return false; }
-
-    RLSW.freeTextureIds = (uint32_t *)SW_MALLOC(SW_MAX_TEXTURES*sizeof(uint32_t));
-    if (RLSW.loadedTextures == NULL) { swClose(); return false; }
-
+    RLSW.clearColor[0] = 0.0f;
+    RLSW.clearColor[1] = 0.0f;
+    RLSW.clearColor[2] = 0.0f;
     RLSW.clearColor[3] = 1.0f;
     RLSW.clearDepth = 1.0f;
 
@@ -4074,27 +4178,6 @@ bool swInit(int w, int h)
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
-    static uint32_t defaultTex[3*2*2] = {
-        0xFFFFFFFF,
-        0xFFFFFFFF,
-        0xFFFFFFFF,
-        0xFFFFFFFF
-    };
-
-    RLSW.loadedTextures[0].pixels = (uint8_t*)defaultTex;
-    RLSW.loadedTextures[0].width = 2;
-    RLSW.loadedTextures[0].height = 2;
-    RLSW.loadedTextures[0].wMinus1 = 1;
-    RLSW.loadedTextures[0].hMinus1 = 1;
-    RLSW.loadedTextures[0].minFilter = SW_NEAREST;
-    RLSW.loadedTextures[0].magFilter = SW_NEAREST;
-    RLSW.loadedTextures[0].sWrap = SW_REPEAT;
-    RLSW.loadedTextures[0].tWrap = SW_REPEAT;
-    RLSW.loadedTextures[0].tx = 0.5f;
-    RLSW.loadedTextures[0].ty = 0.5f;
-
-    RLSW.loadedTextureCount = 1;
-
     SW_LOG("INFO: RLSW: Software renderer initialized successfully\n");
 #if defined(SW_HAS_FMA_AVX) && defined(SW_HAS_FMA_AVX2)
     SW_LOG("INFO: RLSW: Using SIMD instructions: FMA AVX\n");
@@ -4117,19 +4200,17 @@ bool swInit(int w, int h)
 
 void swClose(void)
 {
-    // NOTE: Starts at texture 1, texture 0 does not have to be freed
-    for (int i = 1; i < RLSW.loadedTextureCount; i++)
+    for (int i = 1; i < RLSW.texturePool.watermark; i++)
     {
-        if (sw_is_texture_valid(i))
+        if (RLSW.texturePool.gen[i] & SW_POOL_SLOT_LIVE)
         {
-            SW_FREE(RLSW.loadedTextures[i].pixels);
+            sw_texture_free((sw_texture_t *)RLSW.texturePool.data + i);
         }
     }
+    sw_pool_destroy(&RLSW.texturePool);
 
     SW_FREE(RLSW.framebuffer.color.pixels);
     SW_FREE(RLSW.framebuffer.depth.pixels);
-    SW_FREE(RLSW.loadedTextures);
-    SW_FREE(RLSW.freeTextureIds);
 
     RLSW = SW_CURLY_INIT(sw_context_t) { 0 };
 }
@@ -5093,141 +5174,141 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
     swEnd();
 }
 
-void swGenTextures(int count, uint32_t *textures)
+void swGenTextures(int count, sw_handle_t *textures)
 {
-    if ((count == 0) || (textures == NULL)) return;
+    if (!count || !textures) return;
 
     for (int i = 0; i < count; i++)
     {
-        if (RLSW.loadedTextureCount >= SW_MAX_TEXTURES)
-        {
-            RLSW.errCode = SW_STACK_OVERFLOW; // WARNING: Out of memory, not really stack overflow
-            return;
-        }
-
-        uint32_t id = 0;
-        if (RLSW.freeTextureIdCount > 0) id = RLSW.freeTextureIds[--RLSW.freeTextureIdCount];
-        else id = RLSW.loadedTextureCount++;
-
-        RLSW.loadedTextures[id] = RLSW.loadedTextures[0];
-        textures[i] = id;
+        sw_handle_t h = sw_pool_alloc(&RLSW.texturePool);
+        if (h == SW_HANDLE_NULL) { RLSW.errCode = SW_OUT_OF_MEMORY; return; }
+        textures[i] = h;
     }
 }
 
-void swDeleteTextures(int count, uint32_t *textures)
+void swDeleteTextures(int count, sw_handle_t *textures)
 {
-    if ((count == 0) || (textures == NULL)) return;
+    if (!count || !textures) return;
 
     for (int i = 0; i < count; i++)
     {
-        if (!sw_is_texture_valid(textures[i]))
-        {
-            RLSW.errCode = SW_INVALID_VALUE;
-            continue;
-        }
+        sw_texture_t *tex = sw_pool_get(&RLSW.texturePool, textures[i]);
+        if (!tex) { RLSW.errCode = SW_INVALID_VALUE; continue; }
+        if (tex == RLSW.texture) RLSW.texture = NULL;
 
-        SW_FREE(RLSW.loadedTextures[textures[i]].pixels);
-
-        RLSW.loadedTextures[textures[i]].pixels = NULL;
-        RLSW.freeTextureIds[RLSW.freeTextureIdCount++] = textures[i];
+        sw_texture_free(tex);
+        sw_pool_free(&RLSW.texturePool, textures[i]);
     }
+}
+
+void swBindTexture(sw_handle_t id)
+{
+    if (id == SW_HANDLE_NULL) { RLSW.texture = NULL; return; }
+    if (!sw_is_texture_valid(id)) { RLSW.errCode = SW_INVALID_VALUE; return; }
+
+    RLSW.texture = sw_pool_get(&RLSW.texturePool, id);
 }
 
 void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data)
 {
-    uint32_t id = RLSW.currentTexture;
-    if (!sw_is_texture_valid(id))
+    if (RLSW.texture == NULL) return;
+
+    int pixelFormat = sw_pixel_get_format(format, type);
+    if (pixelFormat <= SW_PIXELFORMAT_UNKNOWN) { RLSW.errCode = SW_INVALID_ENUM; return; }
+
+    *RLSW.texture = (sw_texture_t){ 0 };
+    (void)sw_texture_alloc(RLSW.texture, data, width, height, pixelFormat);
+}
+
+void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
+{
+    if (!sw_is_texture_complete(RLSW.texture) || !pixels || width <= 0 || height <= 0)
     {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
 
-    int pixelFormat = sw_pixel_get_format(format, type);
-    if (pixelFormat <= SW_PIXELFORMAT_UNKNOWN)
+    if (x < 0 || y < 0 || x + width > RLSW.texture->width || y + height > RLSW.texture->height)
+    {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
+
+    sw_pixelformat_t pFormat = sw_pixel_get_format(format, type);
+    if (pFormat <= 0 || pFormat >= SW_PIXELFORMAT_COUNT)
     {
         RLSW.errCode = SW_INVALID_ENUM;
         return;
     }
 
-    sw_texture_t *texture = &RLSW.loadedTextures[id];
-    *texture = (sw_texture_t) { 0 };
+    const int srcPixelSize = SW_PIXELFORMAT_SIZE[pFormat];
+    const int dstPixelSize = SW_PIXELFORMAT_SIZE[RLSW.texture->format];
 
-    (void)sw_texture_alloc(texture, data, width, height, pixelFormat);
+    const uint8_t* srcBytes = (const uint8_t*)pixels;
+    uint8_t* dstBytes = (uint8_t*)RLSW.texture->pixels;
+
+    if (pFormat == RLSW.texture->format)
+    {
+        const int rowSize = width * dstPixelSize;
+        const int dstStride = RLSW.texture->width * dstPixelSize;
+        const int srcStride = width * srcPixelSize;
+
+        uint8_t *dstRow = dstBytes + (y * RLSW.texture->width + x) * dstPixelSize;
+        const uint8_t *srcRow = srcBytes;
+
+        for (int j = 0; j < height; ++j)
+        {
+            for (int i = 0; i < rowSize; ++i) dstRow[i] = srcRow[i];
+            dstRow += dstStride;
+            srcRow += srcStride;
+        }
+        return;
+    }
+
+    for (int j = 0; j < height; ++j)
+    {
+        for (int i = 0; i < width; ++i)
+        {
+            float color[4];
+            const int srcPixelOffset = ((j * width) + i) * srcPixelSize;
+            const int dstPixelOffset = (((y + j) * RLSW.texture->width) + (x + i)) * dstPixelSize;
+
+            sw_pixel_get_color(color, srcBytes, srcPixelOffset, pFormat);
+            sw_pixel_set_color(dstBytes, color, dstPixelOffset, RLSW.texture->format);
+        }
+    }
 }
 
 void swTexParameteri(int param, int value)
 {
-    uint32_t id = RLSW.currentTexture;
-
-    if (!sw_is_texture_valid(id))
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
-
-    sw_texture_t *texture = &RLSW.loadedTextures[id];
+    if (RLSW.texture == NULL) return;
 
     switch (param)
     {
         case SW_TEXTURE_MIN_FILTER:
-        {
-            if (!sw_is_texture_filter_valid(value))
-            {
-                RLSW.errCode = SW_INVALID_ENUM;
-                return;
-            }
+            if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+            RLSW.texture->minFilter = (SWfilter)value;
+            break;
 
-            texture->minFilter = (SWfilter)value;
-        } break;
         case SW_TEXTURE_MAG_FILTER:
-        {
-            if (!sw_is_texture_filter_valid(value))
-            {
-                RLSW.errCode = SW_INVALID_ENUM;
-                return;
-            }
+            if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+            RLSW.texture->magFilter = (SWfilter)value;
+            break;
 
-            texture->magFilter = (SWfilter)value;
-        } break;
         case SW_TEXTURE_WRAP_S:
-        {
-            if (!sw_is_texture_wrap_valid(value))
-            {
-                RLSW.errCode = SW_INVALID_ENUM;
-                return;
-            }
+            if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+            RLSW.texture->sWrap = (SWwrap)value;
+            break;
 
-            texture->sWrap = (SWwrap)value;
-        } break;
         case SW_TEXTURE_WRAP_T:
-        {
-            if (!sw_is_texture_wrap_valid(value))
-            {
-                RLSW.errCode = SW_INVALID_ENUM;
-                return;
-            }
+            if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+            RLSW.texture->tWrap = (SWwrap)value;
+            break;
 
-            texture->tWrap = (SWwrap)value;
-        } break;
-        default: RLSW.errCode = SW_INVALID_ENUM; break;
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            break;
     }
-}
-
-void swBindTexture(uint32_t id)
-{
-    if (id >= SW_MAX_TEXTURES)
-    {
-        RLSW.errCode = SW_INVALID_VALUE;
-        return;
-    }
-
-    if (RLSW.loadedTextures[id].pixels == NULL)
-    {
-        RLSW.errCode = SW_INVALID_OPERATION;
-        return;
-    }
-
-    RLSW.currentTexture = id;
 }
 
 #endif // RLSW_IMPLEMENTATION
