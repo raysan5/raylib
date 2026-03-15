@@ -1137,14 +1137,14 @@ static inline uint32_t sw_half_to_float_ui(uint16_t h)
     return s | r;
 }
 
-static inline uint16_t sw_float_to_half(float i)
+static inline sw_half_t sw_float_to_half(float i)
 {
     union { float f; uint32_t i; } v;
     v.f = i;
     return sw_float_to_half_ui(v.i);
 }
 
-static inline float sw_half_to_float(uint16_t y)
+static inline float sw_half_to_float(sw_half_t y)
 {
     union { float f; uint32_t i; } v;
     v.i = sw_half_to_float_ui(y);
@@ -2223,7 +2223,7 @@ static inline void sw_framebuffer_fill_color(sw_framebuffer_t *fb, const float c
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0]) * SW_FRAMEBUFFER_COLOR_SIZE;
+            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0])*SW_FRAMEBUFFER_COLOR_SIZE;
             for (int x = 0; x < w; x++, row += SW_FRAMEBUFFER_COLOR_SIZE)
             {
                 for (int b = 0; b < SW_FRAMEBUFFER_COLOR_SIZE; b++) row[b] = pixel[b];
@@ -2232,12 +2232,12 @@ static inline void sw_framebuffer_fill_color(sw_framebuffer_t *fb, const float c
     }
     else
     {
-        int size = fb->width * fb->height;
+        int size = fb->width*fb->height;
         for (int i = 0; i < size; i++)
         {
             for (int b = 0; b < SW_FRAMEBUFFER_COLOR_SIZE; b++)
             {
-                dst[i * SW_FRAMEBUFFER_COLOR_SIZE + b] = pixel[b];
+                dst[i*SW_FRAMEBUFFER_COLOR_SIZE + b] = pixel[b];
             }
         }
     }
@@ -2255,7 +2255,7 @@ static inline void sw_framebuffer_fill_depth(sw_framebuffer_t *fb, float depth)
         int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
         for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
         {
-            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0]) * SW_FRAMEBUFFER_DEPTH_SIZE;
+            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0])*SW_FRAMEBUFFER_DEPTH_SIZE;
             for (int x = 0; x < w; x++, row += SW_FRAMEBUFFER_DEPTH_SIZE)
             {
                 for (int b = 0; b < SW_FRAMEBUFFER_DEPTH_SIZE; b++) row[b] = pixel[b];
@@ -2264,12 +2264,12 @@ static inline void sw_framebuffer_fill_depth(sw_framebuffer_t *fb, float depth)
     }
     else
     {
-        int size = fb->width * fb->height;
+        int size = fb->width*fb->height;
         for (int i = 0; i < size; i++)
         {
             for (int b = 0; b < SW_FRAMEBUFFER_DEPTH_SIZE; b++)
             {
-                dst[i * SW_FRAMEBUFFER_DEPTH_SIZE + b] = pixel[b];
+                dst[i*SW_FRAMEBUFFER_DEPTH_SIZE + b] = pixel[b];
             }
         }
     }
@@ -2283,7 +2283,7 @@ static inline void sw_framebuffer_fill(sw_framebuffer_t *fb, const float color[4
 
 static inline void sw_framebuffer_copy_fast(void* dst)
 {
-    int pixelCount = RLSW.framebuffer.width * RLSW.framebuffer.height;
+    int pixelCount = RLSW.framebuffer.width*RLSW.framebuffer.height;
     const uint8_t *src = RLSW.framebuffer.color.pixels;
     uint8_t *d = (uint8_t*)dst;
 
@@ -2303,7 +2303,7 @@ static inline void sw_framebuffer_copy_fast(void* dst)
         d[2] = src[0]; // R
     }
 #else
-    int size = pixelCount * SW_FRAMEBUFFER_COLOR_SIZE;
+    int size = pixelCount*SW_FRAMEBUFFER_COLOR_SIZE;
     for (int i = 0; i < size; i++) d[i] = src[i];
 #endif
 }
@@ -2314,7 +2314,7 @@ static inline void sw_framebuffer_copy(int x, int y, int w, int h, void *dst, sw
     int stride = RLSW.framebuffer.width;
 
     const uint8_t *src = RLSW.framebuffer.color.pixels;
-    src += (y*stride + x) * SW_FRAMEBUFFER_COLOR_SIZE;
+    src += (y*stride + x)*SW_FRAMEBUFFER_COLOR_SIZE;
     uint8_t *d = dst;
 
     for (int iy = 0; iy < h; iy++)
@@ -2339,8 +2339,8 @@ static inline void sw_framebuffer_copy(int x, int y, int w, int h, void *dst, sw
             dline += dstPixelSize;
         }
 
-        src += stride * SW_FRAMEBUFFER_COLOR_SIZE;
-        d += w * dstPixelSize;
+        src += stride*SW_FRAMEBUFFER_COLOR_SIZE;
+        d += w*dstPixelSize;
     }
 }
 
@@ -2360,14 +2360,14 @@ static inline void sw_framebuffer_blit(
 
     for (int dy = 0; dy < hDst; dy++)
     {
-        int sy = (ySrc + (int)(dy * yScale >> 16));
-        const uint8_t *srcLine = srcBase + (sy * fbWidth + xSrc) * SW_FRAMEBUFFER_COLOR_SIZE;
+        int sy = (ySrc + (int)(dy*yScale >> 16));
+        const uint8_t *srcLine = srcBase + (sy*fbWidth + xSrc)*SW_FRAMEBUFFER_COLOR_SIZE;
         uint8_t *dline = d;
 
         for (int dx = 0; dx < wDst; dx++)
         {
-            int sx = (int)(dx * xScale >> 16);
-            const uint8_t *pixel = srcLine + sx * SW_FRAMEBUFFER_COLOR_SIZE;
+            int sx = (int)(dx*xScale >> 16);
+            const uint8_t *pixel = srcLine + sx*SW_FRAMEBUFFER_COLOR_SIZE;
 
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, pixel, 0);
@@ -2383,7 +2383,7 @@ static inline void sw_framebuffer_blit(
             dline += dstPixelSize;
         }
 
-        d += wDst * dstPixelSize;
+        d += wDst*dstPixelSize;
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -2734,8 +2734,8 @@ static void FUNC_NAME(const sw_texture_t *tex, const sw_vertex_t *start,        
     /* Pre-calculate the starting pointers for the framebuffer row */               \
     int y = (int)start->screen[1];                                                  \
     int baseOffset = y*RLSW.framebuffer.width + xStart;                             \
-    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + baseOffset * SW_FRAMEBUFFER_COLOR_SIZE; \
-    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + baseOffset * SW_FRAMEBUFFER_DEPTH_SIZE; \
+    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE; \
+    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE; \
                                                                                     \
     /* Scanline rasterization */                                                    \
     for (int x = xStart; x < xEnd; x++)                                             \
@@ -3193,8 +3193,8 @@ static void FUNC_NAME(void)                                                     
     for (int y = yMin; y < yMax; y++)                                           \
     {                                                                           \
         int baseOffset = y*wDst + xMin;                                         \
-        uint8_t *cPtr = cPixels + baseOffset * SW_FRAMEBUFFER_COLOR_SIZE;       \
-        uint8_t *dPtr = dPixels + baseOffset * SW_FRAMEBUFFER_DEPTH_SIZE;       \
+        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;         \
+        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;         \
                                                                                 \
         float z = zScanline;                                                    \
         float u = uScanline;                                                    \
@@ -3496,8 +3496,8 @@ static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1)     \
         int py = (int)(y - 0.5f);                                       \
                                                                         \
         int baseOffset = py*fbWidth + px;                               \
-        uint8_t *cPtr = cPixels + baseOffset * SW_FRAMEBUFFER_COLOR_SIZE; \
-        uint8_t *dPtr = dPixels + baseOffset * SW_FRAMEBUFFER_DEPTH_SIZE; \
+        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE; \
+        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE; \
                                                                         \
         if (ENABLE_DEPTH_TEST)                                          \
         {                                                               \
@@ -3659,8 +3659,8 @@ static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
     }                                                                       \
                                                                             \
     int offset = y*RLSW.framebuffer.width + x;                              \
-    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + offset * SW_FRAMEBUFFER_COLOR_SIZE; \
-    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + offset * SW_FRAMEBUFFER_DEPTH_SIZE; \
+    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + offset*SW_FRAMEBUFFER_COLOR_SIZE; \
+    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + offset*SW_FRAMEBUFFER_DEPTH_SIZE; \
                                                                             \
     if (ENABLE_DEPTH_TEST)                                                  \
     {                                                                       \
