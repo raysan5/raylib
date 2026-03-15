@@ -220,6 +220,14 @@
     #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS       4      // Maximum number of textures units that can be activated on batch drawing (SetShaderValueTexture())
 #endif
 
+#ifndef RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION
+    // Enable high precision floats in the default GLES shaders.
+    // Useful on some mobile GPUs/drivers where mediump causes visible 2D shape artifacts.
+    // Define RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION as 1 before including rlgl.h
+    // or pass it from the build system, e.g. -DRLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION=1.
+    #define RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION 0
+#endif
+
 // Internal Matrix stack
 #ifndef RL_MAX_MATRIX_STACK_SIZE
     #define RL_MAX_MATRIX_STACK_SIZE                32      // Maximum size of Matrix stack
@@ -5011,7 +5019,11 @@ static void rlLoadShaderDefault(void)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
+#if RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION
+    "precision highp float;             \n"     // Use high precision on GLES to reduce device-specific vertex/edge artifacts
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
+#endif
     "in vec3 vertexPosition;            \n"
     "in vec2 vertexTexCoord;            \n"
     "in vec4 vertexColor;               \n"
@@ -5019,7 +5031,11 @@ static void rlLoadShaderDefault(void)
     "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+#if RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION
+    "precision highp float;             \n"     // Use high precision on GLES to reduce device-specific vertex/edge artifacts
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
+#endif
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
@@ -5064,7 +5080,11 @@ static void rlLoadShaderDefault(void)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
+#if RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION
+    "precision highp float;             \n"     // Use high precision on GLES to reduce device-specific fragment artifacts
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2)
+#endif
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
@@ -5077,7 +5097,11 @@ static void rlLoadShaderDefault(void)
     "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+#if RLGL_ENABLE_GLES_DEFAULT_HIGHP_PRECISION
+    "precision highp float;             \n"     // Use high precision on GLES to reduce device-specific fragment artifacts
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
+#endif
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
     "uniform sampler2D texture0;        \n"
