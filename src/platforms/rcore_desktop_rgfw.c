@@ -1096,7 +1096,7 @@ void HideCursor(void)
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    RGFW_window_captureMouse(platform.window, false);
+    RGFW_window_captureRawMouse(platform.window, false);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -1108,7 +1108,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    RGFW_window_captureMouse(platform.window, true);
+    RGFW_window_captureRawMouse(platform.window, true);
     HideCursor();
 
     CORE.Input.Mouse.cursorLocked = true;
