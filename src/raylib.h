@@ -257,6 +257,13 @@ typedef struct Rectangle {
     float height;           // Rectangle height
 } Rectangle;
 
+// VideoMode, monitor video mode properties
+typedef struct VideoMode {
+    int width;              // Video mode screen width
+    int height;             // Video mode screen height
+    int refreshRate;        // Video mode screen refresh rate
+} VideoMode;
+
 // Image, pixel data stored in CPU memory (RAM)
 typedef struct Image {
     void *data;             // Image raw data
@@ -347,6 +354,8 @@ typedef struct Mesh {
     // Vertex attributes data
     float *vertices;        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
     float *texcoords;       // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+                            // ClearMouseCursorImage();
+                            //
     float *texcoords2;      // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
     float *normals;         // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
     float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
@@ -1023,6 +1032,7 @@ RLAPI int GetMonitorHeight(int monitor);                          // Get specifi
 RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
 RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
 RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
+RLAPI VideoMode *GetMonitorVideoModes(int monitor, int *count);   // Get available video modes for a monitor
 RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
 RLAPI Vector2 GetWindowScaleDPI(void);                            // Get window scale DPI factor
 RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the specified monitor

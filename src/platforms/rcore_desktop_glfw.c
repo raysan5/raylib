@@ -1001,6 +1001,40 @@ int GetMonitorRefreshRate(int monitor)
     return refresh;
 }
 
+// Get available video modes for the specified monitor
+VideoMode *GetMonitorVideoModes(int monitor, int *count)
+{
+    VideoMode *modes = NULL;
+    *count = 0;
+
+    int monitorCount = 0;
+    GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+
+    if ((monitor >= 0) && (monitor < monitorCount))
+    {
+        int modeCount = 0;
+        const GLFWvidmode *glfwModes = glfwGetVideoModes(monitors[monitor], &modeCount);
+
+        if (glfwModes)
+        {
+            modes = (VideoMode *)RL_MALLOC(modeCount*sizeof(VideoMode));
+
+            for (int i = 0; i < modeCount; i++)
+            {
+                modes[i].width = glfwModes[i].width;
+                modes[i].height = glfwModes[i].height;
+                modes[i].refreshRate = glfwModes[i].refreshRate;
+            }
+
+            *count = modeCount;
+        }
+        else TRACELOG(LOG_WARNING, "GLFW: Failed to get video modes for selected monitor");
+    }
+    else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
+
+    return modes;
+}
+
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
