@@ -1185,6 +1185,17 @@ void SetMouseCursor(int cursor)
     RGFW_window_setMouseStandard(platform.window, cursor);
 }
 
+void SetMouseCursorImage(Image image, int hotX, int hotY)
+{
+    TRACELOG(LOG_WARNING, "SetMouseCursorImage() not implemented on target platform");
+}
+
+void ClearMouseCursorImage(void)
+{
+    TRACELOG(LOG_WARNING, "ClearMouseCursorImage() not implemented on target platform");
+}
+
+
 // Get physical key name
 const char *GetKeyName(int key)
 {
