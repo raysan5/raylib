@@ -354,7 +354,7 @@ typedef double              GLclampd;
 //----------------------------------------------------------------------------------
 // OpenGL Bindings to rlsw
 //----------------------------------------------------------------------------------
-#define glReadPixels(x, y, w, h, f, t, p)           swCopyFramebuffer((x), (y), (w), (h), (f), (t), (p))
+#define glReadPixels(x, y, w, h, f, t, p)           swReadPixels((x), (y), (w), (h), (f), (t), (p))
 #define glEnable(state)                             swEnable((state))
 #define glDisable(state)                            swDisable((state))
 #define glGetFloatv(pname, params)                  swGetFloatv((pname), (params))
@@ -593,9 +593,9 @@ typedef enum {
 SWAPI bool swInit(int w, int h);
 SWAPI void swClose(void);
 
-SWAPI bool swResizeFramebuffer(int w, int h);
-SWAPI void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
-SWAPI void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
+SWAPI bool swResize(int w, int h);
+SWAPI void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
+SWAPI void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -2650,40 +2650,53 @@ static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float de
     }
 }
 
-static inline void sw_framebuffer_copy_fast(void* dst, const sw_texture_t* buffer)
+static inline void sw_framebuffer_output_fast(void* dst, const sw_texture_t* buffer)
 {
-    int pixelCount = buffer->width*buffer->height;
-    const uint8_t *src = buffer->pixels;
+    int width  = buffer->width;
+    int height = buffer->height;
+
     uint8_t *d = (uint8_t*)dst;
 
 #if SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
-    for (int i = 0; i < pixelCount; i++, src += 4, d += 4)
+    for (int y = height - 1; y >= 0; y--)
     {
-        d[0] = src[2]; // B
-        d[1] = src[1]; // G
-        d[2] = src[0]; // R
-        d[3] = src[3]; // A
+        const uint8_t *src = (uint8_t*)(buffer->pixels) + y * width * 4;
+        for (int x = 0; x < width; x++, src += 4, d += 4)
+        {
+            d[0] = src[2];
+            d[1] = src[1];
+            d[2] = src[0];
+            d[3] = src[3];
+        }
     }
 #elif SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8)
-    for (int i = 0; i < pixelCount; i++, src += 3, d += 3)
+    for (int y = height - 1; y >= 0; y--)
     {
-        d[0] = src[2]; // B
-        d[1] = src[1]; // G
-        d[2] = src[0]; // R
+        const uint8_t *src = (uint8_t*)(buffer->pixels) + y * width * 3;
+        for (int x = 0; x < width; x++, src += 3, d += 3)
+        {
+            d[0] = src[2];
+            d[1] = src[1];
+            d[2] = src[0];
+        }
     }
 #else
-    int size = pixelCount*SW_FRAMEBUFFER_COLOR_SIZE;
-    for (int i = 0; i < size; i++) d[i] = src[i];
+    int rowBytes = width * SW_FRAMEBUFFER_COLOR_SIZE;
+    for (int y = height - 1; y >= 0; y--)
+    {
+        const uint8_t *src = (uint8_t*)(buffer->pixels) + y * rowBytes;
+        for (int i = 0; i < rowBytes; i++) d[i] = src[i];
+        d += rowBytes;
+    }
 #endif
 }
 
-static inline void sw_framebuffer_copy(void* dst, const sw_texture_t* buffer, int x, int y, int w, int h, sw_pixelformat_t format)
+static inline void sw_framebuffer_output_copy(void* dst, const sw_texture_t* buffer, int x, int y, int w, int h, sw_pixelformat_t format)
 {
     int dstPixelSize = SW_PIXELFORMAT_SIZE[format];
     int stride = buffer->width;
 
-    const uint8_t *src = buffer->pixels;
-    src += (y*stride + x)*SW_FRAMEBUFFER_COLOR_SIZE;
+    const uint8_t *src = (uint8_t*)(buffer->pixels) + ((y + h - 1) * stride + x) * SW_FRAMEBUFFER_COLOR_SIZE;
     uint8_t *d = dst;
 
     for (int iy = 0; iy < h; iy++)
@@ -2704,16 +2717,16 @@ static inline void sw_framebuffer_copy(void* dst, const sw_texture_t* buffer, in
             #endif
 
             sw_pixel_set_color8(dline, color, 0, format);
-            line += SW_FRAMEBUFFER_COLOR_SIZE;
+            line  += SW_FRAMEBUFFER_COLOR_SIZE;
             dline += dstPixelSize;
         }
 
-        src += stride*SW_FRAMEBUFFER_COLOR_SIZE;
-        d += w*dstPixelSize;
+        src -= stride * SW_FRAMEBUFFER_COLOR_SIZE;
+        d   += w * dstPixelSize;
     }
 }
 
-static inline void sw_framebuffer_blit(
+static inline void sw_framebuffer_output_blit(
     void* dst, const sw_texture_t* buffer,
     int xDst, int yDst, int wDst, int hDst,
     int xSrc, int ySrc, int wSrc, int hSrc,
@@ -2727,18 +2740,20 @@ static inline void sw_framebuffer_blit(
     uint32_t xScale = ((uint32_t)wSrc << 16) / (uint32_t)wDst;
     uint32_t yScale = ((uint32_t)hSrc << 16) / (uint32_t)hDst;
 
+    int ySrcLast = ySrc + hSrc - 1;
+
     uint8_t *d = (uint8_t*)dst;
 
     for (int dy = 0; dy < hDst; dy++)
     {
-        int sy = (ySrc + (int)(dy*yScale >> 16));
-        const uint8_t *srcLine = srcBase + (sy*fbWidth + xSrc)*SW_FRAMEBUFFER_COLOR_SIZE;
+        int sy = ySrcLast - (int)(dy * yScale >> 16);
+        const uint8_t *srcLine = srcBase + (sy * fbWidth + xSrc) * SW_FRAMEBUFFER_COLOR_SIZE;
         uint8_t *dline = d;
 
         for (int dx = 0; dx < wDst; dx++)
         {
-            int sx = (int)(dx*xScale >> 16);
-            const uint8_t *pixel = srcLine + sx*SW_FRAMEBUFFER_COLOR_SIZE;
+            int sx = (int)(dx * xScale >> 16);
+            const uint8_t *pixel = srcLine + sx * SW_FRAMEBUFFER_COLOR_SIZE;
 
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, pixel, 0);
@@ -2754,7 +2769,7 @@ static inline void sw_framebuffer_blit(
             dline += dstPixelSize;
         }
 
-        d += wDst*dstPixelSize;
+        d += wDst * dstPixelSize;
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -2840,7 +2855,7 @@ static inline void sw_blend_colors(float *SW_RESTRICT dst/*[4]*/, const float *S
 static inline void sw_project_ndc_to_screen(float screen[2], const float ndc[4])
 {
     screen[0] = RLSW.vpCenter[0] + ndc[0]*RLSW.vpHalf[0] + 0.5f;
-    screen[1] = RLSW.vpCenter[1] - ndc[1]*RLSW.vpHalf[1] + 0.5f;
+    screen[1] = RLSW.vpCenter[1] + ndc[1]*RLSW.vpHalf[1] + 0.5f;
 }
 //-------------------------------------------------------------------------------------------
 
@@ -3902,12 +3917,12 @@ void swClose(void)
     RLSW = SW_CURLY_INIT(sw_context_t) { 0 };
 }
 
-bool swResizeFramebuffer(int w, int h)
+bool swResize(int w, int h)
 {
     return sw_default_framebuffer_alloc(&RLSW.framebuffer, w, h);
 }
 
-void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels)
+void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels)
 {
     // REVIEW: Handle depth buffer copy here or consider it as an error ?
     if (format == SW_DEPTH_COMPONENT) { RLSW.errCode = SW_INVALID_ENUM; return; }
@@ -3928,15 +3943,15 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
 
     if ((pFormat == SW_FRAMEBUFFER_COLOR_FORMAT) && (x == 0) && (y == 0) && (w == RLSW.colorBuffer->width) && (h == RLSW.colorBuffer->height))
     {
-        sw_framebuffer_copy_fast(pixels, RLSW.colorBuffer);
+        sw_framebuffer_output_fast(pixels, RLSW.colorBuffer);
     }
     else
     {
-        sw_framebuffer_copy(pixels, RLSW.colorBuffer, x, y, w, h, pFormat);
+        sw_framebuffer_output_copy(pixels, RLSW.colorBuffer, x, y, w, h, pFormat);
     }
 }
 
-void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels)
+void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels)
 {
     // REVIEW: Handle depth buffer copy here or consider it as an error ?
     if (format == SW_DEPTH_COMPONENT) { RLSW.errCode = SW_INVALID_ENUM; return; }
@@ -3957,11 +3972,11 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
     // TODO: REVIEW: This repeats the operations if true, so a copy function can be made without these checks
     if (xDst == xSrc && yDst == ySrc && wDst == wSrc && hDst == hSrc)
     {
-        swCopyFramebuffer(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
+        swReadPixels(xSrc, ySrc, wSrc, hSrc, format, type, pixels);
     }
     else
     {
-        sw_framebuffer_blit(pixels, RLSW.colorBuffer, xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pFormat);
+        sw_framebuffer_output_blit(pixels, RLSW.colorBuffer, xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pFormat);
     }
 }
 
