@@ -18,20 +18,20 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     env:
       RELEASE_NAME: raylib-dev_webassembly
-    
+
     steps:
     - name: Checkout
       uses: actions/checkout@master
-  
+
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: 5.0.3
         actions-cache-folder: 'emsdk-cache'
-        
+
     - name: Setup Release Version
       run: |
         echo "RELEASE_NAME=raylib-${{ github.event.release.tag_name }}_webassembly" >> $GITHUB_ENV
@@ -39,7 +39,7 @@ jobs:
       if: github.event_name == 'release' && github.event.action == 'published'
 
     - name: Setup Environment
-      run: | 
+      run: |
         mkdir build
         cd build
         mkdir ${{ env.RELEASE_NAME }}
@@ -47,14 +47,14 @@ jobs:
         mkdir include
         mkdir lib
         cd ../..
-   
+
     - name: Build Library
       run: |
         cd src
         emcc -v
         make PLATFORM=PLATFORM_WEB EMSDK_PATH="D:/a/raylib/raylib/emsdk-cache/emsdk-main" RAYLIB_RELEASE_PATH="../build/${{ env.RELEASE_NAME }}/lib" -B
         cd ..
-  
+
     - name: Generate Artifacts
       run: |
         copy /Y .\src\raylib.h .\build\${{ env.RELEASE_NAME }}\include\raylib.h
@@ -67,7 +67,7 @@ jobs:
         7z a ./${{ env.RELEASE_NAME }}.zip ./${{ env.RELEASE_NAME }}
         dir
       shell: cmd
-        
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -75,7 +75,7 @@ jobs:
         path: |
           ./build/${{ env.RELEASE_NAME }}
           !./build/${{ env.RELEASE_NAME }}.zip
-        
+
     - name: Upload Artifact to Release
       uses: softprops/action-gh-release@v1
       with:

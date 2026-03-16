@@ -8,9 +8,9 @@
 *
 *   Example created by Dan Hoang (@dan-hoang) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   NOTE: Example sends a wave to the audio device, 
+*   NOTE: Example sends a wave to the audio device,
 *     user gets the choice of four waves: sine, square, triangle, and sawtooth
-*     A stream is set up to play to the audio device; stream is hooked to a callback that 
+*     A stream is set up to play to the audio device; stream is hooked to a callback that
 *     generates a wave, that is determined by user choice
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
@@ -28,7 +28,7 @@
 #define BUFFER_SIZE 4096
 #define SAMPLE_RATE 44100
 
-// Wave type 
+// Wave type
 typedef enum {
     SINE,
     SQUARE,
@@ -48,7 +48,7 @@ static int waveFrequency = 440;
 static int newWaveFrequency = 440;
 static int waveIndex = 0;
 
-// Buffer to keep the last second of uploaded audio, 
+// Buffer to keep the last second of uploaded audio,
 // part of which will be drawn on the screen
 static float buffer[SAMPLE_RATE] = { 0 };
 static AudioCallback waveCallbacks[] = { SineCallback, SquareCallback, TriangleCallback, SawtoothCallback };
