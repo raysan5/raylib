@@ -143,6 +143,10 @@
     #define SW_MAX_TEXTURE_STACK_SIZE       2
 #endif
 
+#ifndef SW_MAX_FRAMEBUFFERS
+    #define SW_MAX_FRAMEBUFFERS             8
+#endif
+
 #ifndef SW_MAX_TEXTURES
     #define SW_MAX_TEXTURES                 128
 #endif
@@ -310,6 +314,18 @@ typedef double              GLclampd;
 #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
 
+// OpenGL GL_EXT_framebuffer_object
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE           0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME           0x8CD1
+#define GL_FRAMEBUFFER_COMPLETE                         0x8CD5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT            0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT    0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS            0x8CD9
+#define GL_FRAMEBUFFER_UNSUPPORTED                      0x8CDD
+#define GL_COLOR_ATTACHMENT0                            0x8CE0
+#define GL_DEPTH_ATTACHMENT                             0x8D00
+#define GL_STENCIL_ATTACHMENT                           0x8D20  // WARNING: Not implemented (defined for RLGL)
+
 // OpenGL Definitions NOT USED
 #define GL_PERSPECTIVE_CORRECTION_HINT      0x0C50
 #define GL_PACK_ALIGNMENT                   0x0D05
@@ -327,6 +343,13 @@ typedef double              GLclampd;
 #define GL_NOTEQUAL                         0x0205
 #define GL_GEQUAL                           0x0206
 #define GL_ALWAYS                           0x0207
+#define GL_RENDERBUFFER                     0x8D41
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X      0x8516
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y      0x8518
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z      0x851A
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X      0x8515
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y      0x8517
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z      0x8519
 
 //----------------------------------------------------------------------------------
 // OpenGL Bindings to rlsw
@@ -388,10 +411,21 @@ typedef double              GLclampd;
 #define glDrawElements(m,c,t,i)                     swDrawElements((m),(c),(t),(i))
 #define glGenTextures(c, v)                         swGenTextures((c), (v))
 #define glDeleteTextures(c, v)                      swDeleteTextures((c), (v))
+#define glBindTexture(tr, id)                       swBindTexture((id))
 #define glTexImage2D(tr, l, if, w, h, b, f, t, p)   swTexImage2D((w), (h), (f), (t), (p))
 #define glTexSubImage2D(tr, l, x, y, w, h, f, t, p) swTexSubImage2D((x), (y), (w), (h), (f), (t), (p));
 #define glTexParameteri(tr, pname, param)           swTexParameteri((pname), (param))
-#define glBindTexture(tr, id)                       swBindTexture((id))
+
+// OpenGL GL_EXT_framebuffer_object
+#define glGenFramebuffers(c, v)                             swGenFramebuffers((c), (v))
+#define glDeleteFramebuffers(c, v)                          swDeleteFramebuffers((c), (v))
+#define glBindFramebuffer(tr, id)                           swBindFramebuffer((id))
+#define glFramebufferTexture2D(tr, a, t, tex, ml)           swFramebufferTexture2D((a), (tex))
+#define glFramebufferRenderbuffer(tr, a, rbtr, rb)          swFramebufferTexture2D((a), (rb))
+#define glCheckFramebufferStatus(tr)                        swCheckFramebufferStatus()
+#define glGetFramebufferAttachmentParameteriv(tr, a, p, v)  swGetFramebufferAttachmentParameteriv((a), (p), (v))
+#define glGenRenderbuffers(c, v)                            swGenTextures((c), (v))
+#define glDeleteRenderbuffers(c, v)                         swDeleteTextures((c), (v))
 
 // OpenGL functions NOT IMPLEMENTED by rlsw
 #define glDepthMask(X)                          ((void)(X))
@@ -455,6 +489,7 @@ typedef enum {
 } SWarray;
 
 typedef enum {
+    SW_DRAW_INVALID = -1,
     SW_POINTS = GL_POINTS,
     SW_LINES = GL_LINES,
     SW_TRIANGLES = GL_TRIANGLES,
@@ -524,6 +559,23 @@ typedef enum {
     SW_TEXTURE_WRAP_S = GL_TEXTURE_WRAP_S,
     SW_TEXTURE_WRAP_T = GL_TEXTURE_WRAP_T
 } SWtexparam;
+
+typedef enum {
+    SW_COLOR_ATTACHMENT = GL_COLOR_ATTACHMENT0,
+    SW_DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT,
+} SWattachment;
+
+typedef enum {
+    SW_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME = GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,
+    SW_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE = GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+} SWattachget;
+
+typedef enum {
+    SW_FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE,
+    SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,
+    SW_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,
+    SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS,
+} SWfbstatus;
 
 typedef enum {
     SW_NO_ERROR = GL_NO_ERROR,
@@ -613,6 +665,13 @@ SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, con
 SWAPI void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 SWAPI void swTexParameteri(int param, int value);
 
+SWAPI void swGenFramebuffers(int count, uint32_t* framebuffers);
+SWAPI void swDeleteFramebuffers(int count, uint32_t* framebuffers);
+SWAPI void swBindFramebuffer(uint32_t id);
+SWAPI void swFramebufferTexture2D(SWattachment attach, uint32_t texture);
+SWAPI SWfbstatus swCheckFramebufferStatus(void);
+SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget property, int *v);
+
 #endif // RLSW_H
 
 /***********************************************************************************
@@ -620,8 +679,9 @@ SWAPI void swTexParameteri(int param, int value);
 *   RLSW IMPLEMENTATION
 *
 ************************************************************************************/
-#define RLSW_IMPLEMENTATION
 #if defined(RLSW_IMPLEMENTATION)
+
+#undef RLSW_IMPLEMENTATION  // Undef to allow template expanding without implementation redefinition
 
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <stddef.h>         // Required for: NULL, size_t, uint8_t, uint16_t, uint32_t...
@@ -783,13 +843,6 @@ typedef enum {
     SW_PIXELFORMAT_COUNT
 } sw_pixelformat_t;
 
-// Blending factor function
-typedef void (*sw_factor_f)(
-    float *SW_RESTRICT factor,
-    const float *SW_RESTRICT src,
-    const float *SW_RESTRICT dst
-);
-
 typedef float sw_matrix_t[4*4];
 
 typedef struct {
@@ -818,7 +871,11 @@ typedef struct {
 typedef struct {
     sw_texture_t color;
     sw_texture_t depth;
-    int width, height;
+} sw_default_framebuffer_t;
+
+typedef struct {
+    sw_handle_t colorAttachment;
+    sw_handle_t depthAttachment;
 } sw_framebuffer_t;
 
 typedef struct {
@@ -831,21 +888,25 @@ typedef struct {
     size_t stride;
 } sw_pool_t;
 
+typedef void (*sw_blend_factor_t)(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst);
+typedef void (*sw_raster_triangle_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2);
+typedef void (*sw_raster_quad_f)(void);
+typedef void (*sw_raster_line_f)(const sw_vertex_t *v0, const sw_vertex_t *v1);
+typedef void (*sw_raster_point_f)(const sw_vertex_t *v);
+
 typedef struct {
-    sw_framebuffer_t framebuffer;   // Main framebuffer
-    float clearColor[4];            // Clear color of the framebuffer
-    float clearDepth;               // Clear depth of the framebuffer
+    sw_default_framebuffer_t framebuffer;   // Default framebuffer
+    float clearColor[4];                    // Clear color of the framebuffer
+    float clearDepth;                       // Clear depth of the framebuffer
 
-    float vpCenter[2];              // Viewport center
-    float vpHalf[2];                // Viewport half dimensions
-    int vpSize[2];                  // Viewport dimensions (minus one)
-    int vpMin[2];                   // Viewport minimum renderable point (top-left)
-    int vpMax[2];                   // Viewport maximum renderable point (bottom-right)
+    float vpCenter[2];                      // Viewport center
+    float vpHalf[2];                        // Viewport half dimensions
+    int vpSize[2];                          // Viewport dimensions
 
-    int scMin[2];                   // Scissor rectangle minimum renderable point (top-left)
-    int scMax[2];                   // Scissor rectangle maximum renderable point (bottom-right)
-    float scClipMin[2];             // Scissor rectangle minimum renderable point in clip space
-    float scClipMax[2];             // Scissor rectangle maximum renderable point in clip space
+    int scMin[2];                           // Scissor rectangle minimum renderable point (top-left)
+    int scMax[2];                           // Scissor rectangle maximum renderable point (bottom-right)
+    float scClipMin[2];                     // Scissor rectangle minimum renderable point in clip space
+    float scClipMax[2];                     // Scissor rectangle maximum renderable point in clip space
 
     struct {
         float *positions;
@@ -863,7 +924,6 @@ typedef struct {
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
     SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles)
-    int reqVertices;                                            // Number of vertices required for the primitive being drawn
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
@@ -878,14 +938,19 @@ typedef struct {
     sw_matrix_t matMVP;                                         // Model view projection matrix, calculated and used internally
     bool isDirtyMVP;                                            // Indicates if the MVP matrix should be rebuilt
 
-    sw_texture_t* texture;                                      // Current bind texture
+    sw_framebuffer_t* boundFramebuffer;                         // Framebuffer currently bound
+    sw_texture_t* colorBuffer;                                  // Color buffer currently bound
+    sw_texture_t* depthBuffer;                                  // Depth buffer currently bound
+    sw_pool_t framebufferPool;                                  // Framebuffer object pool
+
+    sw_texture_t* boundTexture;                                 // Texture currently bound
     sw_pool_t texturePool;                                      // Texture object pool
 
     SWfactor srcFactor;
     SWfactor dstFactor;
 
-    sw_factor_f srcFactorFunc;
-    sw_factor_f dstFactorFunc;
+    sw_blend_factor_t srcFactorFunc;
+    sw_blend_factor_t dstFactorFunc;
 
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
@@ -921,6 +986,15 @@ static const int SW_PIXELFORMAT_SIZE[SW_PIXELFORMAT_COUNT] =
     [SW_PIXELFORMAT_DEPTH_D8]           = 1,
     [SW_PIXELFORMAT_DEPTH_D16]          = 2,
     [SW_PIXELFORMAT_DEPTH_D32]          = 4,
+};
+
+static const int SW_PRIMITIVE_VERTEX_COUNT[] =
+{
+    // Remember that this is acceptable; these are small indices
+    [SW_POINTS]     = 1,
+    [SW_LINES]      = 2,
+    [SW_TRIANGLES]  = 3,
+    [SW_QUADS]      = 4,
 };
 
 //----------------------------------------------------------------------------------
@@ -1257,8 +1331,8 @@ static sw_handle_t sw_pool_alloc(sw_pool_t *pool)
 
 static void *sw_pool_get(const sw_pool_t *pool, sw_handle_t handle)
 {
-    if (handle == SW_HANDLE_NULL)          return NULL;
-    if ((int)handle >= pool->capacity)     return NULL;
+    if (handle == SW_HANDLE_NULL) return NULL;
+    if ((int)handle >= pool->capacity) return NULL;
     if (!(pool->gen[handle] & SW_POOL_SLOT_LIVE)) return NULL;
 
     return (char *)pool->data + handle * pool->stride;
@@ -1273,7 +1347,7 @@ static bool sw_pool_free(sw_pool_t *pool, sw_handle_t handle)
 {
     if (!sw_pool_valid(pool, handle)) return false;
 
-    pool->gen[handle] &= SW_POOL_SLOT_VER_MASK;   // delete live_flag
+    pool->gen[handle] &= SW_POOL_SLOT_VER_MASK;   // delete live flag
     pool->freeList[pool->freeCount++] = handle;
     return true;
 }
@@ -1380,6 +1454,11 @@ static inline bool sw_is_blend_dst_factor_valid(int blend)
     }
 
     return result;
+}
+
+static inline bool sw_is_ready_to_render(void)
+{
+    return (swCheckFramebufferStatus() == SW_FRAMEBUFFER_COMPLETE);
 }
 //-------------------------------------------------------------------------------------------
 
@@ -2476,38 +2555,46 @@ static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_
 
 // Framebuffer management functions
 //-------------------------------------------------------------------------------------------
-static inline bool sw_framebuffer_alloc(int w, int h)
+static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t* fb, int w, int h)
 {
-    if (!sw_texture_alloc(&RLSW.framebuffer.color, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
+    if (!sw_texture_alloc(&fb->color, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
         return false;
     }
 
-    if (!sw_texture_alloc(&RLSW.framebuffer.depth, NULL, w, h, SW_FRAMEBUFFER_DEPTH_FORMAT))
+    if (!sw_texture_alloc(&fb->depth, NULL, w, h, SW_FRAMEBUFFER_DEPTH_FORMAT))
     {
         return false;
     }
-
-    RLSW.framebuffer.width = w;
-    RLSW.framebuffer.height = h;
 
     return true;
 }
 
-static inline void sw_framebuffer_fill_color(sw_framebuffer_t *fb, const float color[4])
+static inline void sw_default_framebuffer_free(sw_default_framebuffer_t* fb)
+{
+    sw_texture_free(&fb->color);
+    sw_texture_free(&fb->depth);
+}
+
+static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
 {
     uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE];
     SW_FRAMEBUFFER_COLOR_SET(pixel, color, 0);
 
-    uint8_t *dst = (uint8_t*)fb->color.pixels;
+    uint8_t *dst = (uint8_t*)colorBuffer->pixels;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
+        int xMin = sw_clampi(RLSW.scMin[0], 0, colorBuffer->width - 1);
+        int xMax = sw_clampi(RLSW.scMax[0], 0, colorBuffer->width - 1);
+        int yMin = sw_clampi(RLSW.scMin[1], 0, colorBuffer->height - 1);
+        int yMax = sw_clampi(RLSW.scMax[1], 0, colorBuffer->height - 1);
+
+        int w = xMax - xMin;
+        for (int y = yMin; y <= yMax; y++)
         {
-            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0])*SW_FRAMEBUFFER_COLOR_SIZE;
-            for (int x = 0; x < w; x++, row += SW_FRAMEBUFFER_COLOR_SIZE)
+            uint8_t *row = dst + (y*colorBuffer->width + xMin)*SW_FRAMEBUFFER_COLOR_SIZE;
+            for (int x = 0; x <= w; x++, row += SW_FRAMEBUFFER_COLOR_SIZE)
             {
                 for (int b = 0; b < SW_FRAMEBUFFER_COLOR_SIZE; b++) row[b] = pixel[b];
             }
@@ -2515,7 +2602,7 @@ static inline void sw_framebuffer_fill_color(sw_framebuffer_t *fb, const float c
     }
     else
     {
-        int size = fb->width*fb->height;
+        int size = colorBuffer->width*colorBuffer->height;
         for (int i = 0; i < size; i++)
         {
             for (int b = 0; b < SW_FRAMEBUFFER_COLOR_SIZE; b++)
@@ -2526,20 +2613,25 @@ static inline void sw_framebuffer_fill_color(sw_framebuffer_t *fb, const float c
     }
 }
 
-static inline void sw_framebuffer_fill_depth(sw_framebuffer_t *fb, float depth)
+static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float depth)
 {
     uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE];
     SW_FRAMEBUFFER_DEPTH_SET(pixel, depth, 0);
 
-    uint8_t *dst = (uint8_t*)fb->depth.pixels;
+    uint8_t *dst = (uint8_t*)depthBuffer->pixels;
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int w = RLSW.scMax[0] - RLSW.scMin[0] + 1;
-        for (int y = RLSW.scMin[1]; y <= RLSW.scMax[1]; y++)
+        int xMin = sw_clampi(RLSW.scMin[0], 0, depthBuffer->width - 1);
+        int xMax = sw_clampi(RLSW.scMax[0], 0, depthBuffer->width - 1);
+        int yMin = sw_clampi(RLSW.scMin[1], 0, depthBuffer->height - 1);
+        int yMax = sw_clampi(RLSW.scMax[1], 0, depthBuffer->height - 1);
+
+        int w = xMax - xMin;
+        for (int y = yMin; y <= yMax; y++)
         {
-            uint8_t *row = dst + (y*fb->width + RLSW.scMin[0])*SW_FRAMEBUFFER_DEPTH_SIZE;
-            for (int x = 0; x < w; x++, row += SW_FRAMEBUFFER_DEPTH_SIZE)
+            uint8_t *row = dst + (y*depthBuffer->width + xMin)*SW_FRAMEBUFFER_DEPTH_SIZE;
+            for (int x = 0; x <= w; x++, row += SW_FRAMEBUFFER_DEPTH_SIZE)
             {
                 for (int b = 0; b < SW_FRAMEBUFFER_DEPTH_SIZE; b++) row[b] = pixel[b];
             }
@@ -2547,7 +2639,7 @@ static inline void sw_framebuffer_fill_depth(sw_framebuffer_t *fb, float depth)
     }
     else
     {
-        int size = fb->width*fb->height;
+        int size = depthBuffer->width*depthBuffer->height;
         for (int i = 0; i < size; i++)
         {
             for (int b = 0; b < SW_FRAMEBUFFER_DEPTH_SIZE; b++)
@@ -2558,16 +2650,10 @@ static inline void sw_framebuffer_fill_depth(sw_framebuffer_t *fb, float depth)
     }
 }
 
-static inline void sw_framebuffer_fill(sw_framebuffer_t *fb, const float color[4], float depth)
+static inline void sw_framebuffer_copy_fast(void* dst, const sw_texture_t* buffer)
 {
-    sw_framebuffer_fill_color(fb, color);
-    sw_framebuffer_fill_depth(fb, depth);
-}
-
-static inline void sw_framebuffer_copy_fast(void* dst)
-{
-    int pixelCount = RLSW.framebuffer.width*RLSW.framebuffer.height;
-    const uint8_t *src = RLSW.framebuffer.color.pixels;
+    int pixelCount = buffer->width*buffer->height;
+    const uint8_t *src = buffer->pixels;
     uint8_t *d = (uint8_t*)dst;
 
 #if SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
@@ -2591,12 +2677,12 @@ static inline void sw_framebuffer_copy_fast(void* dst)
 #endif
 }
 
-static inline void sw_framebuffer_copy(int x, int y, int w, int h, void *dst, sw_pixelformat_t format)
+static inline void sw_framebuffer_copy(void* dst, const sw_texture_t* buffer, int x, int y, int w, int h, sw_pixelformat_t format)
 {
     int dstPixelSize = SW_PIXELFORMAT_SIZE[format];
-    int stride = RLSW.framebuffer.width;
+    int stride = buffer->width;
 
-    const uint8_t *src = RLSW.framebuffer.color.pixels;
+    const uint8_t *src = buffer->pixels;
     src += (y*stride + x)*SW_FRAMEBUFFER_COLOR_SIZE;
     uint8_t *d = dst;
 
@@ -2628,12 +2714,14 @@ static inline void sw_framebuffer_copy(int x, int y, int w, int h, void *dst, sw
 }
 
 static inline void sw_framebuffer_blit(
+    void* dst, const sw_texture_t* buffer,
     int xDst, int yDst, int wDst, int hDst,
     int xSrc, int ySrc, int wSrc, int hSrc,
-    void *dst, sw_pixelformat_t format)
+    sw_pixelformat_t format)
 {
-    const uint8_t *srcBase = RLSW.framebuffer.color.pixels;
-    int fbWidth = RLSW.framebuffer.width;
+    const uint8_t *srcBase = buffer->pixels;
+
+    int fbWidth = buffer->width;
     int dstPixelSize = SW_PIXELFORMAT_SIZE[format];
 
     uint32_t xScale = ((uint32_t)wSrc << 16) / (uint32_t)wDst;
@@ -2875,6 +2963,332 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     return (n >= 3);
 }
 
+// Triangle rasterizer variant dispatch
+//-------------------------------------------------------------------------------------------
+#ifndef RLSW_TEMPLATE_RASTER_TRIANGLE_EXPANDING
+#define RLSW_TEMPLATE_RASTER_TRIANGLE_EXPANDING
+
+    // State mask to apply before indexing the dispatch table
+    #define SW_RASTER_TRIANGLE_STATE_MASK \
+        (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Single source of truth for all rasterizer specializations
+    // X(NAME, STATE_FLAGS)
+    #define SW_RASTER_VARIANTS(X)                                                       \
+        X(BASE,            0)                                                           \
+        X(TEX,             SW_STATE_TEXTURE_2D)                                         \
+        X(DEPTH,           SW_STATE_DEPTH_TEST)                                         \
+        X(BLEND,           SW_STATE_BLEND)                                              \
+        X(TEX_DEPTH,       SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)                   \
+        X(TEX_BLEND,       SW_STATE_TEXTURE_2D | SW_STATE_BLEND)                        \
+        X(DEPTH_BLEND,     SW_STATE_DEPTH_TEST | SW_STATE_BLEND)                        \
+        X(TEX_DEPTH_BLEND, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
+    // These declarations make all variants visible to static analysis tools without affecting compilation
+    #define SW_FWD_DECL(NAME, _FLAGS) \
+        static void sw_raster_triangle_##NAME(const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*);
+    SW_RASTER_VARIANTS(SW_FWD_DECL) // NOLINT
+    #undef SW_FWD_DECL
+
+    // Specialization generation via self-inclusion
+
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE BASE
+    #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX
+    #define SW_ENABLE_TEXTURE
+    #include __FILE__
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE BLEND
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_BLEND
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH_BLEND
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH_BLEND
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_TRIANGLE
+ 
+    // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
+    #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_triangle_##NAME,
+    static const sw_raster_triangle_f SW_RASTER_TRIANGLE_FUNCS[] = {
+        SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
+    };
+    #undef SW_TABLE_ENTRY
+
+#undef SW_RASTER_VARIANTS
+#undef RLSW_TEMPLATE_RASTER_TRIANGLE_EXPANDING
+
+#endif // RLSW_TEMPLATE_RASTER_TRIANGLE_EXPANDING
+//-------------------------------------------------------------------------------------------
+
+// Quad rasterizer variant dispatch
+//-------------------------------------------------------------------------------------------
+#ifndef RLSW_TEMPLATE_RASTER_QUAD_EXPANDING
+#define RLSW_TEMPLATE_RASTER_QUAD_EXPANDING
+
+    // State mask to apply before indexing the dispatch table
+    #define SW_RASTER_QUAD_STATE_MASK \
+        (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Single source of truth for all rasterizer specializations
+    // X(NAME, STATE_FLAGS)
+    #define SW_RASTER_VARIANTS(X)                                                       \
+        X(BASE,            0)                                                           \
+        X(TEX,             SW_STATE_TEXTURE_2D)                                         \
+        X(DEPTH,           SW_STATE_DEPTH_TEST)                                         \
+        X(BLEND,           SW_STATE_BLEND)                                              \
+        X(TEX_DEPTH,       SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)                   \
+        X(TEX_BLEND,       SW_STATE_TEXTURE_2D | SW_STATE_BLEND)                        \
+        X(DEPTH_BLEND,     SW_STATE_DEPTH_TEST | SW_STATE_BLEND)                        \
+        X(TEX_DEPTH_BLEND, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
+    // These declarations make all variants visible to static analysis tools without affecting compilation
+    #define SW_FWD_DECL(NAME, _FLAGS) \
+        static void sw_raster_quad_##NAME(void);
+    SW_RASTER_VARIANTS(SW_FWD_DECL) // NOLINT
+    #undef SW_FWD_DECL
+
+    // Specialization generation via self-inclusion
+
+    #define RLSW_TEMPLATE_RASTER_QUAD BASE
+    #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD TEX
+    #define SW_ENABLE_TEXTURE
+    #include __FILE__
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD DEPTH
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD BLEND
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD TEX_BLEND
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD DEPTH_BLEND
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH_BLEND
+    #define SW_ENABLE_TEXTURE
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_TEMPLATE_RASTER_QUAD
+ 
+    // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
+    #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_quad_##NAME,
+    static const sw_raster_quad_f SW_RASTER_QUAD_FUNCS[] = {
+        SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
+    };
+    #undef SW_TABLE_ENTRY
+
+#undef SW_RASTER_VARIANTS
+#undef RLSW_TEMPLATE_RASTER_QUAD_EXPANDING
+
+#endif // RLSW_TEMPLATE_RASTER_QUAD_EXPANDING
+//-------------------------------------------------------------------------------------------
+
+// Line rasterizer variant dispatch
+//-------------------------------------------------------------------------------------------
+#ifndef RLSW_TEMPLATE_RASTER_LINE_EXPANDING
+#define RLSW_TEMPLATE_RASTER_LINE_EXPANDING
+
+    // State mask to apply before indexing the dispatch table
+    #define SW_RASTER_LINE_STATE_MASK \
+        (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Single source of truth for all rasterizer specializations
+    // X(NAME, STATE_FLAGS)
+    #define SW_RASTER_VARIANTS(X)                                                       \
+        X(BASE,            0)                                                           \
+        X(DEPTH,           SW_STATE_DEPTH_TEST)                                         \
+        X(BLEND,           SW_STATE_BLEND)                                              \
+        X(DEPTH_BLEND,     SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
+    // These declarations make all variants visible to static analysis tools without affecting compilation
+    #define SW_FWD_DECL(NAME, _FLAGS)                                                       \
+        static void sw_raster_line_##NAME(const sw_vertex_t *v0, const sw_vertex_t *v1);    \
+        static void sw_raster_line_thick_##NAME(const sw_vertex_t *v0, const sw_vertex_t *v1);
+    SW_RASTER_VARIANTS(SW_FWD_DECL) // NOLINT
+    #undef SW_FWD_DECL
+
+    // Specialization generation via self-inclusion
+
+    #define RLSW_TEMPLATE_RASTER_LINE BASE
+    #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_TEMPLATE_RASTER_LINE
+ 
+    #define RLSW_TEMPLATE_RASTER_LINE DEPTH
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_LINE
+ 
+    #define RLSW_TEMPLATE_RASTER_LINE BLEND
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef RLSW_TEMPLATE_RASTER_LINE
+ 
+    #define RLSW_TEMPLATE_RASTER_LINE DEPTH_BLEND
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_LINE
+ 
+    // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
+    #define SW_TABLE_ENTRY0(NAME, FLAGS) [FLAGS] = sw_raster_line_##NAME,
+    #define SW_TABLE_ENTRY1(NAME, FLAGS) [FLAGS] = sw_raster_line_thick_##NAME,
+    static const sw_raster_line_f SW_RASTER_LINE_FUNCS[] = {  SW_RASTER_VARIANTS(SW_TABLE_ENTRY0) };
+    static const sw_raster_line_f SW_RASTER_LINE_THICK_FUNCS[] = { SW_RASTER_VARIANTS(SW_TABLE_ENTRY1) };
+    #undef SW_TABLE_ENTRY0
+    #undef SW_TABLE_ENTRY1
+
+#undef SW_RASTER_VARIANTS
+#undef RLSW_TEMPLATE_RASTER_LINE_EXPANDING
+
+#endif // RLSW_TEMPLATE_RASTER_LINE_EXPANDING
+//-------------------------------------------------------------------------------------------
+
+// Point rasterizer variant dispatch
+//-------------------------------------------------------------------------------------------
+#ifndef RLSW_TEMPLATE_RASTER_POINT_EXPANDING
+#define RLSW_TEMPLATE_RASTER_POINT_EXPANDING
+
+    // State mask to apply before indexing the dispatch table
+    #define SW_RASTER_POINT_STATE_MASK \
+        (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Single source of truth for all rasterizer specializations
+    // X(NAME, STATE_FLAGS)
+    #define SW_RASTER_VARIANTS(X)                                                       \
+        X(BASE,            0)                                                           \
+        X(DEPTH,           SW_STATE_DEPTH_TEST)                                         \
+        X(BLEND,           SW_STATE_BLEND)                                              \
+        X(DEPTH_BLEND,     SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
+
+    // Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
+    // These declarations make all variants visible to static analysis tools without affecting compilation
+    #define SW_FWD_DECL(NAME, _FLAGS) \
+        static void sw_raster_point_##NAME(const sw_vertex_t *v);
+    SW_RASTER_VARIANTS(SW_FWD_DECL) // NOLINT
+    #undef SW_FWD_DECL
+
+    // Specialization generation via self-inclusion
+
+    #define RLSW_TEMPLATE_RASTER_POINT BASE
+    #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_TEMPLATE_RASTER_POINT
+ 
+    #define RLSW_TEMPLATE_RASTER_POINT DEPTH
+    #define SW_ENABLE_DEPTH_TEST
+    #include __FILE__
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_POINT
+ 
+    #define RLSW_TEMPLATE_RASTER_POINT BLEND
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef RLSW_TEMPLATE_RASTER_POINT
+ 
+    #define RLSW_TEMPLATE_RASTER_POINT DEPTH_BLEND
+    #define SW_ENABLE_DEPTH_TEST
+    #define SW_ENABLE_BLEND
+    #include __FILE__
+    #undef SW_ENABLE_BLEND
+    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_TEMPLATE_RASTER_POINT
+ 
+    // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
+    #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_point_##NAME,
+    static const sw_raster_point_f SW_RASTER_POINT_FUNCS[] = {
+        SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
+    };
+    #undef SW_TABLE_ENTRY
+
+#undef SW_RASTER_VARIANTS
+#undef RLSW_TEMPLATE_RASTER_POINT_EXPANDING
+
+#endif // RLSW_TEMPLATE_RASTER_POINT_EXPANDING
+//-------------------------------------------------------------------------------------------
+
 // Triangle rendering logic
 //-------------------------------------------------------------------------------------------
 static inline bool sw_triangle_face_culling(void)
@@ -2961,252 +3375,8 @@ static void sw_triangle_clip_and_project(void)
     }
 }
 
-#define DEFINE_TRIANGLE_RASTER_SCANLINE(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
-static void FUNC_NAME(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy) \
-{                                                                                   \
-    /* Gets the start and end coordinates */                                        \
-    int xStart = (int)start->screen[0];                                             \
-    int xEnd   = (int)end->screen[0];                                               \
-                                                                                    \
-    /* Avoid empty lines */                                                         \
-    if (xStart == xEnd) return;                                                     \
-                                                                                    \
-    /* Compute the subpixel distance to traverse before the first pixel */          \
-    float xSubstep = 1.0f - sw_fract(start->screen[0]);                             \
-                                                                                    \
-    /* Compute the inverse horizontal distance along the X axis */                  \
-    float dxRcp = 1.0f/(end->screen[0] - start->screen[0]);                         \
-                                                                                    \
-    /* Compute the interpolation steps along the X axis */                          \
-    float dZdx = (end->homogeneous[2] - start->homogeneous[2])*dxRcp;               \
-    float dWdx = (end->homogeneous[3] - start->homogeneous[3])*dxRcp;               \
-                                                                                    \
-    float dCdx[4] = {                                                               \
-        (end->color[0] - start->color[0])*dxRcp,                                    \
-        (end->color[1] - start->color[1])*dxRcp,                                    \
-        (end->color[2] - start->color[2])*dxRcp,                                    \
-        (end->color[3] - start->color[3])*dxRcp                                     \
-    };                                                                              \
-                                                                                    \
-    float dUdx, dVdx;                                                               \
-    if (ENABLE_TEXTURE)                                                             \
-    {                                                                               \
-        dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;                       \
-        dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;                       \
-    }                                                                               \
-                                                                                    \
-    /* Initializing the interpolation starting values  */                           \
-    float z = start->homogeneous[2] + dZdx*xSubstep;                                \
-    float w = start->homogeneous[3] + dWdx*xSubstep;                                \
-                                                                                    \
-    float color[4] = {                                                              \
-        start->color[0] + dCdx[0]*xSubstep,                                         \
-        start->color[1] + dCdx[1]*xSubstep,                                         \
-        start->color[2] + dCdx[2]*xSubstep,                                         \
-        start->color[3] + dCdx[3]*xSubstep                                          \
-    };                                                                              \
-                                                                                    \
-    float u, v;                                                                     \
-    if (ENABLE_TEXTURE)                                                             \
-    {                                                                               \
-        u = start->texcoord[0] + dUdx*xSubstep;                                     \
-        v = start->texcoord[1] + dVdx*xSubstep;                                     \
-    }                                                                               \
-                                                                                    \
-    /* Pre-calculate the starting pointers for the framebuffer row */               \
-    int y = (int)start->screen[1];                                                  \
-    int baseOffset = y*RLSW.framebuffer.width + xStart;                             \
-    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE; \
-    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE; \
-                                                                                    \
-    /* Scanline rasterization */                                                    \
-    for (int x = xStart; x < xEnd; x++)                                             \
-    {                                                                               \
-        float wRcp = 1.0f/w;                                                        \
-        float srcColor[4] = {                                                       \
-            color[0]*wRcp,                                                          \
-            color[1]*wRcp,                                                          \
-            color[2]*wRcp,                                                          \
-            color[3]*wRcp                                                           \
-        };                                                                          \
-                                                                                    \
-        if (ENABLE_DEPTH_TEST)                                                      \
-        {                                                                           \
-            /* TODO: Implement different depth funcs? */                            \
-            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                        \
-            if (z > depth) goto discard;                                            \
-                                                                                    \
-            /* TODO: Implement depth mask */                                        \
-            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                                   \
-        }                                                                           \
-                                                                                    \
-        if (ENABLE_TEXTURE)                                                         \
-        {                                                                           \
-            float texColor[4];                                                      \
-            float s = u*wRcp;                                                       \
-            float t = v*wRcp;                                                       \
-            sw_texture_sample(texColor, RLSW.texture, s, t, dUdx, dUdy, dVdx, dVdy); \
-            srcColor[0] *= texColor[0];                                             \
-            srcColor[1] *= texColor[1];                                             \
-            srcColor[2] *= texColor[2];                                             \
-            srcColor[3] *= texColor[3];                                             \
-        }                                                                           \
-                                                                                    \
-        if (ENABLE_COLOR_BLEND)                                                     \
-        {                                                                           \
-            float dstColor[4];                                                      \
-            SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);                            \
-            sw_blend_colors(dstColor, srcColor);                                    \
-            SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);                            \
-        }                                                                           \
-        else                                                                        \
-        {                                                                           \
-            SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);                            \
-        }                                                                           \
-                                                                                    \
-        /* Increment the interpolation parameter, UVs, and pointers */              \
-    discard:                                                                        \
-        z += dZdx;                                                                  \
-        w += dWdx;                                                                  \
-        color[0] += dCdx[0];                                                        \
-        color[1] += dCdx[1];                                                        \
-        color[2] += dCdx[2];                                                        \
-        color[3] += dCdx[3];                                                        \
-        if (ENABLE_TEXTURE)                                                         \
-        {                                                                           \
-            u += dUdx;                                                              \
-            v += dVdx;                                                              \
-        }                                                                           \
-        cPtr += SW_FRAMEBUFFER_COLOR_SIZE;                                          \
-        dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;                                          \
-    }                                                                               \
-}
-
-#define DEFINE_TRIANGLE_RASTER(FUNC_NAME, FUNC_SCANLINE)                            \
-static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2) \
-{                                                                                   \
-    /* Swap vertices by increasing y */                                             \
-    if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; } \
-    if (v1->screen[1] > v2->screen[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; } \
-    if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; } \
-                                                                                    \
-    /* Extracting coordinates from the sorted vertices */                           \
-    float x0 = v0->screen[0], y0 = v0->screen[1];                                   \
-    float x1 = v1->screen[0], y1 = v1->screen[1];                                   \
-    float x2 = v2->screen[0], y2 = v2->screen[1];                                   \
-                                                                                    \
-    /* Compute height differences */                                                \
-    float h02 = y2 - y0;                                                            \
-    float h01 = y1 - y0;                                                            \
-    float h12 = y2 - y1;                                                            \
-                                                                                    \
-    if (h02 < 1e-6f) return;                                                        \
-                                                                                    \
-    /* Precompute the inverse values without additional checks */                   \
-    float h02Rcp = 1.0f/h02;                                                        \
-    float h01Rcp = (h01 > 1e-6f)? 1.0f/h01 : 0.0f;                                  \
-    float h12Rcp = (h12 > 1e-6f)? 1.0f/h12 : 0.0f;                                  \
-                                                                                    \
-    /* Pre-calculation of slopes */                                                 \
-    float dXdy02 = (x2 - x0)*h02Rcp;                                                \
-    float dXdy01 = (x1 - x0)*h01Rcp;                                                \
-    float dXdy12 = (x2 - x1)*h12Rcp;                                                \
-                                                                                    \
-    /* Y subpixel correction */                                                     \
-    float y0Substep = 1.0f - sw_fract(y0);                                          \
-    float y1Substep = 1.0f - sw_fract(y1);                                          \
-                                                                                    \
-    /* Y bounds (vertical clipping) */                                              \
-    int yTop = (int)y0;                                                             \
-    int yMid = (int)y1;                                                             \
-    int yBot = (int)y2;                                                             \
-                                                                                    \
-    /* Compute gradients for each side of the triangle */                           \
-    sw_vertex_t dVXdy02, dVXdy01, dVXdy12;                                          \
-    sw_get_vertex_grad_PTCH(&dVXdy02, v0, v2, h02Rcp);                              \
-    sw_get_vertex_grad_PTCH(&dVXdy01, v0, v1, h01Rcp);                              \
-    sw_get_vertex_grad_PTCH(&dVXdy12, v1, v2, h12Rcp);                              \
-                                                                                    \
-    /* Get a copy of vertices for interpolation and apply substep correction */     \
-    sw_vertex_t vLeft = *v0, vRight = *v0;                                          \
-    sw_add_vertex_grad_scaled_PTCH(&vLeft, &dVXdy02, y0Substep);                    \
-    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy01, y0Substep);                   \
-                                                                                    \
-    vLeft.screen[0] += dXdy02*y0Substep;                                            \
-    vRight.screen[0] += dXdy01*y0Substep;                                           \
-                                                                                    \
-    /* Scanline for the upper part of the triangle */                               \
-    for (int y = yTop; y < yMid; y++)                                               \
-    {                                                                               \
-        vLeft.screen[1] = vRight.screen[1] = y;                                     \
-                                                                                    \
-        if (vLeft.screen[0] < vRight.screen[0])                                     \
-            FUNC_SCANLINE(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-        else                                                                        \
-            FUNC_SCANLINE(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-                                                                                    \
-        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
-        vLeft.screen[0] += dXdy02;                                                  \
-                                                                                    \
-        sw_add_vertex_grad_PTCH(&vRight, &dVXdy01);                                 \
-        vRight.screen[0] += dXdy01;                                                 \
-    }                                                                               \
-                                                                                    \
-    /* Get a copy of next right for interpolation and apply substep correction */   \
-    vRight = *v1;                                                                   \
-    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy12, y1Substep);                   \
-    vRight.screen[0] += dXdy12*y1Substep;                                           \
-                                                                                    \
-    /* Scanline for the lower part of the triangle */                               \
-    for (int y = yMid; y < yBot; y++)                                               \
-    {                                                                               \
-        vLeft.screen[1] = vRight.screen[1] = y;                                     \
-                                                                                    \
-        if (vLeft.screen[0] < vRight.screen[0])                                     \
-            FUNC_SCANLINE(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-        else                                                                        \
-            FUNC_SCANLINE(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]); \
-                                                                                    \
-        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);                                  \
-        vLeft.screen[0] += dXdy02;                                                  \
-                                                                                    \
-        sw_add_vertex_grad_PTCH(&vRight, &dVXdy12);                                 \
-        vRight.screen[0] += dXdy12;                                                 \
-    }                                                                               \
-}
-
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline, 0, 0, 0)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_TEX, 1, 0, 0)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_DEPTH, 0, 1, 0)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_BLEND, 0, 0, 1)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_TEX_DEPTH, 1, 1, 0)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_TEX_BLEND, 1, 0, 1)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_DEPTH_BLEND, 0, 1, 1)
-DEFINE_TRIANGLE_RASTER_SCANLINE(sw_triangle_raster_scanline_TEX_DEPTH_BLEND, 1, 1, 1)
-
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster, sw_triangle_raster_scanline)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX, sw_triangle_raster_scanline_TEX)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_DEPTH, sw_triangle_raster_scanline_DEPTH)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_BLEND, sw_triangle_raster_scanline_BLEND)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH, sw_triangle_raster_scanline_TEX_DEPTH)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND, sw_triangle_raster_scanline_TEX_BLEND)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND, sw_triangle_raster_scanline_DEPTH_BLEND)
-DEFINE_TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND, sw_triangle_raster_scanline_TEX_DEPTH_BLEND)
-
-static void sw_triangle_render(void)
+static void sw_triangle_render(uint32_t state)
 {
-    #define TRIANGLE_RASTER(RASTER_FUNC)                        \
-    {                                                           \
-        for (int i = 0; i < RLSW.vertexCounter - 2; i++)        \
-        {                                                       \
-            RASTER_FUNC(                                        \
-                &RLSW.vertexBuffer[0],                          \
-                &RLSW.vertexBuffer[i + 1],                      \
-                &RLSW.vertexBuffer[i + 2]                       \
-            );                                                  \
-        }                                                       \
-    }
-
     if (RLSW.stateFlags & SW_STATE_CULL_FACE)
     {
         if (!sw_triangle_face_culling()) return;
@@ -3215,20 +3385,16 @@ static void sw_triangle_render(void)
     sw_triangle_clip_and_project();
     if (RLSW.vertexCounter < 3) return;
 
-    uint32_t state = RLSW.stateFlags;
-    if (!sw_is_texture_complete(RLSW.texture)) state &= ~SW_STATE_TEXTURE_2D;
-    if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+    state &= SW_RASTER_TRIANGLE_STATE_MASK;
 
-    if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
-    else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
-    else TRIANGLE_RASTER(sw_triangle_raster)
-
-    #undef TRIANGLE_RASTER
+    for (int i = 0; i < RLSW.vertexCounter - 2; i++)
+    {
+        SW_RASTER_TRIANGLE_FUNCS[state](
+            &RLSW.vertexBuffer[0],
+            &RLSW.vertexBuffer[i + 1],
+            &RLSW.vertexBuffer[i + 2]
+        );
+    }
 }
 //-------------------------------------------------------------------------------------------
 
@@ -3360,212 +3526,7 @@ static bool sw_quad_is_axis_aligned(void)
     return true;
 }
 
-static void sw_quad_sort_cw(const sw_vertex_t* *output)
-{
-    const sw_vertex_t *input = RLSW.vertexBuffer;
-
-    // Calculate the centroid of the quad
-    float cx = (input[0].screen[0] + input[1].screen[0] +
-                input[2].screen[0] + input[3].screen[0])*0.25f;
-    float cy = (input[0].screen[1] + input[1].screen[1] +
-                input[2].screen[1] + input[3].screen[1])*0.25f;
-
-    // Calculate the angle of each vertex relative to the center
-    // and assign them directly to their correct position
-    const sw_vertex_t *corners[4] = { 0 };
-
-    for (int i = 0; i < 4; i++)
-    {
-        float dx = input[i].screen[0] - cx;
-        float dy = input[i].screen[1] - cy;
-
-        // Determine the quadrant (clockwise from top-left)
-        // top-left: dx < 0, dy < 0
-        // top-right: dx >= 0, dy < 0
-        // bottom-right: dx >= 0, dy >= 0
-        // bottom-left: dx < 0, dy >= 0
-
-        int idx;
-        if (dy < 0) idx = (dx < 0)? 0 : 1; // Top row
-        else idx = (dx < 0)? 3 : 2; // Bottom row
-
-        corners[idx] = &input[i];
-    }
-
-    output[0] = corners[0];  // top-left
-    output[1] = corners[1];  // top-right
-    output[2] = corners[2];  // bottom-right
-    output[3] = corners[3];  // bottom-left
-}
-
-// TODO: REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth,
-// still appear perfectly aligned from a certain point of view?
-// Because in that case, it's still needed to perform perspective division for textures and colors...
-#define DEFINE_QUAD_RASTER_AXIS_ALIGNED(FUNC_NAME, ENABLE_TEXTURE, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
-static void FUNC_NAME(void)                                                     \
-{                                                                               \
-    const sw_vertex_t *sortedVerts[4];                                          \
-    sw_quad_sort_cw(sortedVerts);                                               \
-                                                                                \
-    const sw_vertex_t *v0 = sortedVerts[0];                                     \
-    const sw_vertex_t *v1 = sortedVerts[1];                                     \
-    const sw_vertex_t *v2 = sortedVerts[2];                                     \
-    const sw_vertex_t *v3 = sortedVerts[3];                                     \
-                                                                                \
-    /* Screen bounds (axis-aligned) */                                          \
-    int xMin = (int)v0->screen[0];                                              \
-    int yMin = (int)v0->screen[1];                                              \
-    int xMax = (int)v2->screen[0];                                              \
-    int yMax = (int)v2->screen[1];                                              \
-                                                                                \
-    float w = v2->screen[0] - v0->screen[0];                                    \
-    float h = v2->screen[1] - v0->screen[1];                                    \
-                                                                                \
-    if ((w == 0) || (h == 0)) return;                                           \
-                                                                                \
-    float wRcp = (w > 0.0f)? 1.0f/w : 0.0f;                                     \
-    float hRcp = (h > 0.0f)? 1.0f/h : 0.0f;                                     \
-                                                                                \
-    /* Subpixel corrections */                                                  \
-    float xSubstep = 1.0f - sw_fract(v0->screen[0]);                            \
-    float ySubstep = 1.0f - sw_fract(v0->screen[1]);                            \
-                                                                                \
-    /* Calculation of vertex gradients in X and Y */                            \
-    float dUdx = 0.0f, dVdx = 0.0f;                                             \
-    float dUdy = 0.0f, dVdy = 0.0f;                                             \
-    if (ENABLE_TEXTURE) {                                                       \
-        dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;                        \
-        dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;                        \
-        dUdy = (v3->texcoord[0] - v0->texcoord[0])*hRcp;                        \
-        dVdy = (v3->texcoord[1] - v0->texcoord[1])*hRcp;                        \
-    }                                                                           \
-                                                                                \
-    float dCdx[4], dCdy[4];                                                     \
-    dCdx[0] = (v1->color[0] - v0->color[0])*wRcp;                               \
-    dCdx[1] = (v1->color[1] - v0->color[1])*wRcp;                               \
-    dCdx[2] = (v1->color[2] - v0->color[2])*wRcp;                               \
-    dCdx[3] = (v1->color[3] - v0->color[3])*wRcp;                               \
-    dCdy[0] = (v3->color[0] - v0->color[0])*hRcp;                               \
-    dCdy[1] = (v3->color[1] - v0->color[1])*hRcp;                               \
-    dCdy[2] = (v3->color[2] - v0->color[2])*hRcp;                               \
-    dCdy[3] = (v3->color[3] - v0->color[3])*hRcp;                               \
-                                                                                \
-    float dZdx, dZdy;                                                           \
-    dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;                      \
-    dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;                      \
-                                                                                \
-    uint8_t *cPixels = RLSW.framebuffer.color.pixels;                           \
-    uint8_t *dPixels = RLSW.framebuffer.depth.pixels;                           \
-    int wDst = RLSW.framebuffer.width;                                          \
-                                                                                \
-    float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;       \
-    float uScanline = v0->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;          \
-    float vScanline = v0->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;          \
-                                                                                \
-    float colorScanline[4] = {                                                  \
-        v0->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,                     \
-        v0->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,                     \
-        v0->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,                     \
-        v0->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep                      \
-    };                                                                          \
-                                                                                \
-    for (int y = yMin; y < yMax; y++)                                           \
-    {                                                                           \
-        int baseOffset = y*wDst + xMin;                                         \
-        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;         \
-        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;         \
-                                                                                \
-        float z = zScanline;                                                    \
-        float u = uScanline;                                                    \
-        float v = vScanline;                                                    \
-                                                                                \
-        float color[4] = {                                                      \
-            colorScanline[0],                                                   \
-            colorScanline[1],                                                   \
-            colorScanline[2],                                                   \
-            colorScanline[3]                                                    \
-        };                                                                      \
-                                                                                \
-        /* Scanline rasterization */                                            \
-        for (int x = xMin; x < xMax; x++)                                       \
-        {                                                                       \
-            /* Pixel color computation */                                       \
-            float srcColor[4] = {                                               \
-                color[0],                                                       \
-                color[1],                                                       \
-                color[2],                                                       \
-                color[3]                                                        \
-            };                                                                  \
-                                                                                \
-            /* Test and write depth */                                          \
-            if (ENABLE_DEPTH_TEST)                                              \
-            {                                                                   \
-                /* TODO: Implement different depth funcs? */                    \
-                float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                \
-                if (z > depth) goto discard;                                    \
-                                                                                \
-                /* TODO: Implement depth mask */                                \
-                SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                           \
-            }                                                                   \
-                                                                                \
-            if (ENABLE_TEXTURE)                                                 \
-            {                                                                   \
-                float texColor[4];                                              \
-                sw_texture_sample(texColor, RLSW.texture, u, v, dUdx, dUdy, dVdx, dVdy); \
-                srcColor[0] *= texColor[0];                                     \
-                srcColor[1] *= texColor[1];                                     \
-                srcColor[2] *= texColor[2];                                     \
-                srcColor[3] *= texColor[3];                                     \
-            }                                                                   \
-                                                                                \
-            if (ENABLE_COLOR_BLEND)                                             \
-            {                                                                   \
-                float dstColor[4];                                              \
-                SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);                    \
-                sw_blend_colors(dstColor, srcColor);                            \
-                SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);                    \
-            }                                                                   \
-            else SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);                   \
-                                                                                \
-        discard:                                                                \
-            z += dZdx;                                                          \
-            color[0] += dCdx[0];                                                \
-            color[1] += dCdx[1];                                                \
-            color[2] += dCdx[2];                                                \
-            color[3] += dCdx[3];                                                \
-            if (ENABLE_TEXTURE)                                                 \
-            {                                                                   \
-                u += dUdx;                                                      \
-                v += dVdx;                                                      \
-            }                                                                   \
-            cPtr += SW_FRAMEBUFFER_COLOR_SIZE;                                  \
-            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;                                  \
-        }                                                                       \
-                                                                                \
-        zScanline += dZdy;                                                      \
-        colorScanline[0] += dCdy[0];                                            \
-        colorScanline[1] += dCdy[1];                                            \
-        colorScanline[2] += dCdy[2];                                            \
-        colorScanline[3] += dCdy[3];                                            \
-                                                                                \
-        if (ENABLE_TEXTURE)                                                     \
-        {                                                                       \
-            uScanline += dUdy;                                                  \
-            vScanline += dVdy;                                                  \
-        }                                                                       \
-    }                                                                           \
-}
-
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned, 0, 0, 0)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX, 1, 0, 0)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH, 0, 1, 0)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_BLEND, 0, 0, 1)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH, 1, 1, 0)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_BLEND, 1, 0, 1)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_DEPTH_BLEND, 0, 1, 1)
-DEFINE_QUAD_RASTER_AXIS_ALIGNED(sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND, 1, 1, 1)
-
-static void sw_quad_render(void)
+static void sw_quad_render(uint32_t state)
 {
     if (RLSW.stateFlags & SW_STATE_CULL_FACE)
     {
@@ -3575,45 +3536,22 @@ static void sw_quad_render(void)
     sw_quad_clip_and_project();
     if (RLSW.vertexCounter < 3) return;
 
-    uint32_t state = RLSW.stateFlags;
-    if (!sw_is_texture_complete(RLSW.texture)) state &= ~SW_STATE_TEXTURE_2D;
-    if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+    state &= SW_RASTER_QUAD_STATE_MASK;
 
     if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
     {
-        if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_DEPTH_BLEND();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_DEPTH_BLEND();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) sw_quad_raster_axis_aligned_TEX_BLEND();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_TEX_DEPTH();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) sw_quad_raster_axis_aligned_BLEND();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) sw_quad_raster_axis_aligned_DEPTH();
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) sw_quad_raster_axis_aligned_TEX();
-        else sw_quad_raster_axis_aligned();
+        SW_RASTER_QUAD_FUNCS[state]();
     }
     else
     {
-        #define TRIANGLE_RASTER(RASTER_FUNC)                        \
-        {                                                           \
-            for (int i = 0; i < RLSW.vertexCounter - 2; i++)        \
-            {                                                       \
-                RASTER_FUNC(                                        \
-                    &RLSW.vertexBuffer[0],                          \
-                    &RLSW.vertexBuffer[i + 1],                      \
-                    &RLSW.vertexBuffer[i + 2]                       \
-                );                                                  \
-            }                                                       \
+        for (int i = 0; i < RLSW.vertexCounter - 2; i++)
+        {
+            SW_RASTER_TRIANGLE_FUNCS[state](
+                &RLSW.vertexBuffer[0],
+                &RLSW.vertexBuffer[i + 1],
+                &RLSW.vertexBuffer[i + 2]
+            );
         }
-
-        if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH_BLEND)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH_BLEND)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_TEX_BLEND)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_TEX_DEPTH)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_BLEND)) TRIANGLE_RASTER(sw_triangle_raster_BLEND)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_DEPTH_TEST)) TRIANGLE_RASTER(sw_triangle_raster_DEPTH)
-        else if (SW_STATE_CHECK_EX(state, SW_STATE_TEXTURE_2D)) TRIANGLE_RASTER(sw_triangle_raster_TEX)
-        else TRIANGLE_RASTER(sw_triangle_raster)
-
-        #undef TRIANGLE_RASTER
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -3715,171 +3653,19 @@ static bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
     return true;
 }
 
-#define DEFINE_LINE_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND) \
-static void FUNC_NAME(const sw_vertex_t *v0, const sw_vertex_t *v1)     \
-{                                                                       \
-    float x0 = v0->screen[0];                                           \
-    float y0 = v0->screen[1];                                           \
-    float x1 = v1->screen[0];                                           \
-    float y1 = v1->screen[1];                                           \
-                                                                        \
-    float dx = x1 - x0;                                                 \
-    float dy = y1 - y0;                                                 \
-                                                                        \
-    /* Compute dominant axis and subpixel offset */                     \
-    float steps, substep;                                               \
-    if (fabsf(dx) > fabsf(dy))                                          \
-    {                                                                   \
-        steps = fabsf(dx);                                              \
-        if (steps < 1.0f) return;                                       \
-        substep = (dx >= 0.0f)? (1.0f - sw_fract(x0)) : sw_fract(x0);   \
-    }                                                                   \
-    else                                                                \
-    {                                                                   \
-        steps = fabsf(dy);                                              \
-        if (steps < 1.0f) return;                                       \
-        substep = (dy >= 0.0f)? (1.0f - sw_fract(y0)) : sw_fract(y0);   \
-    }                                                                   \
-                                                                        \
-    /* Compute per pixel increments */                                  \
-    float xInc = dx/steps;                                              \
-    float yInc = dy/steps;                                              \
-    float stepRcp = 1.0f/steps;                                         \
-                                                                        \
-    float zInc = (v1->homogeneous[2] - v0->homogeneous[2])*stepRcp;     \
-    float rInc = (v1->color[0] - v0->color[0])*stepRcp;                 \
-    float gInc = (v1->color[1] - v0->color[1])*stepRcp;                 \
-    float bInc = (v1->color[2] - v0->color[2])*stepRcp;                 \
-    float aInc = (v1->color[3] - v0->color[3])*stepRcp;                 \
-                                                                        \
-    /* Initializing the interpolation starting values  */               \
-    float x = x0 + xInc*substep;                                        \
-    float y = y0 + yInc*substep;                                        \
-    float z = v0->homogeneous[2] + zInc*substep;                        \
-    float r = v0->color[0] + rInc*substep;                              \
-    float g = v0->color[1] + gInc*substep;                              \
-    float b = v0->color[2] + bInc*substep;                              \
-    float a = v0->color[3] + aInc*substep;                              \
-                                                                        \
-    const int fbWidth = RLSW.framebuffer.width;                         \
-    uint8_t *cPixels = RLSW.framebuffer.color.pixels;                   \
-    uint8_t *dPixels = RLSW.framebuffer.depth.pixels;                   \
-                                                                        \
-    int numPixels = (int)(steps - substep) + 1;                         \
-                                                                        \
-    for (int i = 0; i < numPixels; i++)                                 \
-    {                                                                   \
-        /* TODO: REVIEW: May require reviewing projection details */    \
-        int px = (int)(x - 0.5f);                                       \
-        int py = (int)(y - 0.5f);                                       \
-                                                                        \
-        int baseOffset = py*fbWidth + px;                               \
-        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE; \
-        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE; \
-                                                                        \
-        if (ENABLE_DEPTH_TEST)                                          \
-        {                                                               \
-            /* TODO: Implement different depth funcs? */                \
-            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);            \
-            if (z > depth) goto discard;                                \
-                                                                        \
-            /* TODO: Implement depth mask */                            \
-            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                       \
-        }                                                               \
-                                                                        \
-        float color[4] = {r, g, b, a};                                  \
-                                                                        \
-        if (ENABLE_COLOR_BLEND)                                         \
-        {                                                               \
-            float dstColor[4];                                          \
-            SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);                \
-            sw_blend_colors(dstColor, color);                           \
-            SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);                \
-        }                                                               \
-        else SW_FRAMEBUFFER_COLOR_SET(cPtr, color, 0);                  \
-                                                                        \
-    discard:                                                            \
-        x += xInc; y += yInc; z += zInc;                                \
-        r += rInc; g += gInc; b += bInc; a += aInc;                     \
-    }                                                                   \
-}
-
-#define DEFINE_LINE_THICK_RASTER(FUNC_NAME, RASTER_FUNC)                \
-static void FUNC_NAME(const sw_vertex_t *v1, const sw_vertex_t *v2)     \
-{                                                                       \
-    sw_vertex_t tv1, tv2;                                               \
-                                                                        \
-    int x1 = (int)v1->screen[0];                                        \
-    int y1 = (int)v1->screen[1];                                        \
-    int x2 = (int)v2->screen[0];                                        \
-    int y2 = (int)v2->screen[1];                                        \
-                                                                        \
-    int dx = x2 - x1;                                                   \
-    int dy = y2 - y1;                                                   \
-                                                                        \
-    RASTER_FUNC(v1, v2);                                                \
-                                                                        \
-    if ((dx != 0) && (abs(dy/dx) < 1))                                  \
-    {                                                                   \
-        int wy = (int)((RLSW.lineWidth - 1.0f)*abs(dx)/sqrtf(dx*dx + dy*dy)); \
-        wy >>= 1;                                                       \
-        for (int i = 1; i <= wy; i++)                                   \
-        {                                                               \
-            tv1 = *v1, tv2 = *v2;                                       \
-            tv1.screen[1] -= i;                                         \
-            tv2.screen[1] -= i;                                         \
-            RASTER_FUNC(&tv1, &tv2);                                    \
-            tv1 = *v1, tv2 = *v2;                                       \
-            tv1.screen[1] += i;                                         \
-            tv2.screen[1] += i;                                         \
-            RASTER_FUNC(&tv1, &tv2);                                    \
-        }                                                               \
-    }                                                                   \
-    else if (dy != 0)                                                   \
-    {                                                                   \
-        int wx = (int)((RLSW.lineWidth - 1.0f)*abs(dy)/sqrtf(dx*dx + dy*dy)); \
-        wx >>= 1;                                                       \
-        for (int i = 1; i <= wx; i++)                                   \
-        {                                                               \
-            tv1 = *v1, tv2 = *v2;                                       \
-            tv1.screen[0] -= i;                                         \
-            tv2.screen[0] -= i;                                         \
-            RASTER_FUNC(&tv1, &tv2);                                    \
-            tv1 = *v1, tv2 = *v2;                                       \
-            tv1.screen[0] += i;                                         \
-            tv2.screen[0] += i;                                         \
-            RASTER_FUNC(&tv1, &tv2);                                    \
-        }                                                               \
-    }                                                                   \
-}
-
-DEFINE_LINE_RASTER(sw_line_raster, 0, 0)
-DEFINE_LINE_RASTER(sw_line_raster_DEPTH, 1, 0)
-DEFINE_LINE_RASTER(sw_line_raster_BLEND, 0, 1)
-DEFINE_LINE_RASTER(sw_line_raster_DEPTH_BLEND, 1, 1)
-
-DEFINE_LINE_THICK_RASTER(sw_line_thick_raster, sw_line_raster)
-DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH, sw_line_raster_DEPTH)
-DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_BLEND, sw_line_raster_BLEND)
-DEFINE_LINE_THICK_RASTER(sw_line_thick_raster_DEPTH_BLEND, sw_line_raster_DEPTH_BLEND)
-
-static void sw_line_render(sw_vertex_t *vertices)
+static void sw_line_render(uint32_t state, sw_vertex_t *vertices)
 {
     if (!sw_line_clip_and_project(&vertices[0], &vertices[1])) return;
 
+    state &= SW_RASTER_LINE_STATE_MASK;
+
     if (RLSW.lineWidth >= 2.0f)
     {
-        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_line_thick_raster_DEPTH_BLEND(&vertices[0], &vertices[1]);
-        else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_line_thick_raster_BLEND(&vertices[0], &vertices[1]);
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_line_thick_raster_DEPTH(&vertices[0], &vertices[1]);
-        else sw_line_thick_raster(&vertices[0], &vertices[1]);
+        SW_RASTER_LINE_THICK_FUNCS[state](&vertices[0], &vertices[1]);
     }
     else
     {
-        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_line_raster_DEPTH_BLEND(&vertices[0], &vertices[1]);
-        else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_line_raster_BLEND(&vertices[0], &vertices[1]);
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_line_raster_DEPTH(&vertices[0], &vertices[1]);
-        else sw_line_raster(&vertices[0], &vertices[1]);
+        SW_RASTER_LINE_FUNCS[state](&vertices[0], &vertices[1]);
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -3903,17 +3689,15 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
 
     sw_project_ndc_to_screen(v->screen, v->homogeneous);
 
-    const int *min = NULL, *max = NULL;
+    int min[2] = { 0, 0 };
+    int max[2] = { RLSW.colorBuffer->width, RLSW.colorBuffer->height };
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        min = RLSW.scMin;
-        max = RLSW.scMax;
-    }
-    else
-    {
-        min = RLSW.vpMin;
-        max = RLSW.vpMax;
+        min[0] = sw_clampi(RLSW.scMin[0], 0, RLSW.colorBuffer->width);
+        min[1] = sw_clampi(RLSW.scMin[1], 0, RLSW.colorBuffer->height);
+        max[0] = sw_clampi(RLSW.scMax[0], 0, RLSW.colorBuffer->width);
+        max[1] = sw_clampi(RLSW.scMax[1], 0, RLSW.colorBuffer->height);
     }
 
     bool insideX = (v->screen[0] - RLSW.pointRadius < max[0]) && (v->screen[0] + RLSW.pointRadius > min[0]);
@@ -3922,143 +3706,22 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
     return (insideX && insideY);
 }
 
-#define DEFINE_POINT_RASTER(FUNC_NAME, ENABLE_DEPTH_TEST, ENABLE_COLOR_BLEND, CHECK_BOUNDS) \
-static inline void FUNC_NAME(int x, int y, float z, const float color[4])   \
-{                                                                           \
-    if (CHECK_BOUNDS == 1)                                                  \
-    {                                                                       \
-        if ((x < RLSW.vpMin[0]) || (x >= RLSW.vpMax[0])) return;            \
-        if ((y < RLSW.vpMin[1]) || (y >= RLSW.vpMax[1])) return;            \
-    }                                                                       \
-    else if (CHECK_BOUNDS == SW_SCISSOR_TEST)                               \
-    {                                                                       \
-        if ((x < RLSW.scMin[0]) || (x >= RLSW.scMax[0])) return;            \
-        if ((y < RLSW.scMin[1]) || (y >= RLSW.scMax[1])) return;            \
-    }                                                                       \
-                                                                            \
-    int offset = y*RLSW.framebuffer.width + x;                              \
-    uint8_t *cPtr = (uint8_t*)(RLSW.framebuffer.color.pixels) + offset*SW_FRAMEBUFFER_COLOR_SIZE; \
-    uint8_t *dPtr = (uint8_t*)(RLSW.framebuffer.depth.pixels) + offset*SW_FRAMEBUFFER_DEPTH_SIZE; \
-                                                                            \
-    if (ENABLE_DEPTH_TEST)                                                  \
-    {                                                                       \
-        /* TODO: Implement different depth funcs? */                        \
-        float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);                    \
-        if (z > depth) return;                                              \
-                                                                            \
-        /* TODO: Implement depth mask */                                    \
-        SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);                               \
-    }                                                                       \
-                                                                            \
-    if (ENABLE_COLOR_BLEND)                                                 \
-    {                                                                       \
-        float dstColor[4];                                                  \
-        SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);                        \
-        sw_blend_colors(dstColor, color);                                   \
-        SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);                        \
-    }                                                                       \
-    else SW_FRAMEBUFFER_COLOR_SET(cPtr, color, 0);                          \
-}
-
-#define DEFINE_POINT_THICK_RASTER(FUNC_NAME, RASTER_FUNC)                   \
-static void FUNC_NAME(sw_vertex_t *v)                                       \
-{                                                                           \
-    int cx = v->screen[0];                                                  \
-    int cy = v->screen[1];                                                  \
-    float cz = v->homogeneous[2];                                           \
-    int radius = RLSW.pointRadius;                                          \
-    const float *color = v->color;                                          \
-                                                                            \
-    int x = 0;                                                              \
-    int y = radius;                                                         \
-    int d = 3 - 2*radius;                                                   \
-                                                                            \
-    while (x <= y)                                                          \
-    {                                                                       \
-        for (int i = -x; i <= x; i++)                                       \
-        {                                                                   \
-            RASTER_FUNC(cx + i, cy + y, cz, color);                         \
-            RASTER_FUNC(cx + i, cy - y, cz, color);                         \
-        }                                                                   \
-        for (int i = -y; i <= y; i++)                                       \
-        {                                                                   \
-            RASTER_FUNC(cx + i, cy + x, cz, color);                         \
-            RASTER_FUNC(cx + i, cy - x, cz, color);                         \
-        }                                                                   \
-        if (d > 0)                                                          \
-        {                                                                   \
-            y--;                                                            \
-            d = d + 4*(x - y) + 10;                                         \
-        }                                                                   \
-        else d = d + 4*x + 6;                                               \
-        x++;                                                                \
-    }                                                                       \
-}
-
-DEFINE_POINT_RASTER(sw_point_raster, 0, 0, 0)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH, 1, 0, 0)
-DEFINE_POINT_RASTER(sw_point_raster_BLEND, 0, 1, 0)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND, 1, 1, 0)
-
-DEFINE_POINT_RASTER(sw_point_raster_CHECK, 0, 0, 1)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH_CHECK, 1, 0, 1)
-DEFINE_POINT_RASTER(sw_point_raster_BLEND_CHECK, 0, 1, 1)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND_CHECK, 1, 1, 1)
-
-DEFINE_POINT_RASTER(sw_point_raster_CHECK_SCISSOR, 0, 0, SW_SCISSOR_TEST)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH_CHECK_SCISSOR, 1, 0, SW_SCISSOR_TEST)
-DEFINE_POINT_RASTER(sw_point_raster_BLEND_CHECK_SCISSOR, 0, 1, SW_SCISSOR_TEST)
-DEFINE_POINT_RASTER(sw_point_raster_DEPTH_BLEND_CHECK_SCISSOR, 1, 1, SW_SCISSOR_TEST)
-
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster, sw_point_raster_CHECK)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH, sw_point_raster_DEPTH_CHECK)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_BLEND, sw_point_raster_BLEND_CHECK)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND, sw_point_raster_DEPTH_BLEND_CHECK)
-
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_SCISSOR, sw_point_raster_CHECK_SCISSOR)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_SCISSOR, sw_point_raster_DEPTH_CHECK_SCISSOR)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_BLEND_SCISSOR, sw_point_raster_BLEND_CHECK_SCISSOR)
-DEFINE_POINT_THICK_RASTER(sw_point_thick_raster_DEPTH_BLEND_SCISSOR, sw_point_raster_DEPTH_BLEND_CHECK_SCISSOR)
-
-static void sw_point_render(sw_vertex_t *v)
+static void sw_point_render(uint32_t state, sw_vertex_t *v)
 {
     if (!sw_point_clip_and_project(v)) return;
-
-    if (RLSW.pointRadius >= 1.0f)
-    {
-        if (SW_STATE_CHECK(SW_STATE_SCISSOR_TEST))
-        {
-            if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_point_thick_raster_DEPTH_BLEND_SCISSOR(v);
-            else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_point_thick_raster_BLEND_SCISSOR(v);
-            else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_point_thick_raster_DEPTH_SCISSOR(v);
-            else sw_point_thick_raster_SCISSOR(v);
-        }
-        else
-        {
-            if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_point_thick_raster_DEPTH_BLEND(v);
-            else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_point_thick_raster_BLEND(v);
-            else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_point_thick_raster_DEPTH(v);
-            else sw_point_thick_raster(v);
-        }
-    }
-    else
-    {
-        if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST | SW_STATE_BLEND)) sw_point_raster_DEPTH_BLEND(v->screen[0], v->screen[1], v->homogeneous[2], v->color);
-        else if (SW_STATE_CHECK(SW_STATE_BLEND)) sw_point_raster_BLEND(v->screen[0], v->screen[1], v->homogeneous[2], v->color);
-        else if (SW_STATE_CHECK(SW_STATE_DEPTH_TEST)) sw_point_raster_DEPTH(v->screen[0], v->screen[1], v->homogeneous[2], v->color);
-        else sw_point_raster(v->screen[0], v->screen[1], v->homogeneous[2], v->color);
-    }
+    state &= SW_RASTER_POINT_STATE_MASK;
+    SW_RASTER_POINT_FUNCS[state](v);
 }
 //-------------------------------------------------------------------------------------------
 
 // Polygon modes rendering logic
 //-------------------------------------------------------------------------------------------
-static inline void sw_poly_point_render(void)
+static inline void sw_poly_point_render(uint32_t state)
 {
-    for (int i = 0; i < RLSW.vertexCounter; i++) sw_point_render(&RLSW.vertexBuffer[i]);
+    for (int i = 0; i < RLSW.vertexCounter; i++) sw_point_render(state, &RLSW.vertexBuffer[i]);
 }
 
-static inline void sw_poly_line_render(void)
+static inline void sw_poly_line_render(uint32_t state)
 {
     const sw_vertex_t *vertices = RLSW.vertexBuffer;
     int cm1 = RLSW.vertexCounter - 1;
@@ -4066,21 +3729,22 @@ static inline void sw_poly_line_render(void)
     for (int i = 0; i < cm1; i++)
     {
         sw_vertex_t verts[2] = { vertices[i], vertices[i + 1] };
-        sw_line_render(verts);
+        sw_line_render(state, verts);
     }
 
     sw_vertex_t verts[2] = { vertices[cm1], vertices[0] };
-    sw_line_render(verts);
+    sw_line_render(state, verts);
 }
 
-static inline void sw_poly_fill_render(void)
+static inline void sw_poly_fill_render(uint32_t state)
 {
     switch (RLSW.drawMode)
     {
-        case SW_POINTS: sw_point_render(&RLSW.vertexBuffer[0]); break;
-        case SW_LINES: sw_line_render(RLSW.vertexBuffer); break;
-        case SW_TRIANGLES: sw_triangle_render(); break;
-        case SW_QUADS: sw_quad_render(); break;
+        case SW_POINTS: sw_point_render(state, &RLSW.vertexBuffer[0]); break;
+        case SW_LINES: sw_line_render(state, RLSW.vertexBuffer); break;
+        case SW_TRIANGLES: sw_triangle_render(state); break;
+        case SW_QUADS: sw_quad_render(state); break;
+        default: break;
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -4089,6 +3753,13 @@ static inline void sw_poly_fill_render(void)
 //-------------------------------------------------------------------------------------------
 static void sw_immediate_push_vertex(const float position[4], const float color[4], const float texcoord[2])
 {
+    // Check if we are in a valid draw mode
+    if (!sw_is_draw_mode_valid(RLSW.drawMode))
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     // Copy the attributes in the current vertex
     sw_vertex_t *vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
     for (int i = 0; i < 4; i++)
@@ -4106,13 +3777,19 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
     vertex->homogeneous[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3];
 
     // Immediate rendering of the primitive if the required number is reached
-    if (RLSW.vertexCounter == RLSW.reqVertices)
+    if (RLSW.vertexCounter == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
     {
+        // Restricts the pipeline state to the minimum required
+        uint32_t state = RLSW.stateFlags;
+        if (!sw_is_texture_complete(RLSW.depthBuffer)) state &= ~SW_STATE_DEPTH_TEST;
+        if (!sw_is_texture_complete(RLSW.boundTexture)) state &= ~SW_STATE_TEXTURE_2D;
+        if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+
         switch (RLSW.polyMode)
         {
-            case SW_FILL: sw_poly_fill_render(); break;
-            case SW_LINE: sw_poly_line_render(); break;
-            case SW_POINT: sw_poly_point_render(); break;
+            case SW_FILL: sw_poly_fill_render(state); break;
+            case SW_LINE: sw_poly_line_render(state); break;
+            case SW_POINT: sw_poly_point_render(state); break;
             default: break;
         }
 
@@ -4127,7 +3804,13 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
 //----------------------------------------------------------------------------------
 bool swInit(int w, int h)
 {
-    if (!sw_framebuffer_alloc(w, h))
+    if (!sw_default_framebuffer_alloc(&RLSW.framebuffer, w, h))
+    {
+        swClose();
+        return false;
+    }
+
+    if (!sw_pool_init(&RLSW.framebufferPool, SW_MAX_FRAMEBUFFERS, sizeof(sw_framebuffer_t)))
     {
         swClose();
         return false;
@@ -4138,6 +3821,9 @@ bool swInit(int w, int h)
         swClose();
         return false;
     }
+
+    RLSW.colorBuffer = &RLSW.framebuffer.color;
+    RLSW.depthBuffer = &RLSW.framebuffer.depth;
 
     swViewport(0, 0, w, h);
     swScissor(0, 0, w, h);
@@ -4175,6 +3861,7 @@ bool swInit(int w, int h)
     RLSW.srcFactorFunc = sw_factor_src_alpha;
     RLSW.dstFactorFunc = sw_factor_one_minus_src_alpha;
 
+    RLSW.drawMode = SW_DRAW_INVALID;
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
@@ -4207,17 +3894,17 @@ void swClose(void)
             sw_texture_free((sw_texture_t *)RLSW.texturePool.data + i);
         }
     }
-    sw_pool_destroy(&RLSW.texturePool);
 
-    SW_FREE(RLSW.framebuffer.color.pixels);
-    SW_FREE(RLSW.framebuffer.depth.pixels);
+    sw_pool_destroy(&RLSW.texturePool);
+    sw_pool_destroy(&RLSW.framebufferPool);
+    sw_default_framebuffer_free(&RLSW.framebuffer);
 
     RLSW = SW_CURLY_INIT(sw_context_t) { 0 };
 }
 
 bool swResizeFramebuffer(int w, int h)
 {
-    return sw_framebuffer_alloc(w, h);
+    return sw_default_framebuffer_alloc(&RLSW.framebuffer, w, h);
 }
 
 void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels)
@@ -4231,21 +3918,21 @@ void swCopyFramebuffer(int x, int y, int w, int h, SWformat format, SWtype type,
     if (w <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
     if (h <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
-    if (w > RLSW.framebuffer.width) w = RLSW.framebuffer.width;
-    if (h > RLSW.framebuffer.height) h = RLSW.framebuffer.height;
+    if (w > RLSW.colorBuffer->width) w = RLSW.colorBuffer->width;
+    if (h > RLSW.colorBuffer->height) h = RLSW.colorBuffer->height;
 
     x = sw_clampi(x, 0, w);
     y = sw_clampi(y, 0, h);
 
     if ((x >= w) || (y >= h)) return;
 
-    if ((pFormat == SW_FRAMEBUFFER_COLOR_FORMAT) && (x == 0) && (y == 0) && (w == RLSW.framebuffer.width) && (h == RLSW.framebuffer.height))
+    if ((pFormat == SW_FRAMEBUFFER_COLOR_FORMAT) && (x == 0) && (y == 0) && (w == RLSW.colorBuffer->width) && (h == RLSW.colorBuffer->height))
     {
-        sw_framebuffer_copy_fast(pixels);
+        sw_framebuffer_copy_fast(pixels, RLSW.colorBuffer);
     }
     else
     {
-        sw_framebuffer_copy(x, y, w, h, pixels, pFormat);
+        sw_framebuffer_copy(pixels, RLSW.colorBuffer, x, y, w, h, pFormat);
     }
 }
 
@@ -4260,8 +3947,8 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
     if (wSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
     if (hSrc <= 0) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
-    if (wSrc > RLSW.framebuffer.width) wSrc = RLSW.framebuffer.width;
-    if (hSrc > RLSW.framebuffer.height) hSrc = RLSW.framebuffer.height;
+    if (wSrc > RLSW.colorBuffer->width) wSrc = RLSW.colorBuffer->width;
+    if (hSrc > RLSW.colorBuffer->height) hSrc = RLSW.colorBuffer->height;
 
     xSrc = sw_clampi(xSrc, 0, wSrc);
     ySrc = sw_clampi(ySrc, 0, hSrc);
@@ -4274,7 +3961,7 @@ void swBlitFramebuffer(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySr
     }
     else
     {
-        sw_framebuffer_blit(xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pixels, pFormat);
+        sw_framebuffer_blit(pixels, RLSW.colorBuffer, xDst, yDst, wDst, hDst, xSrc, ySrc, wSrc, hSrc, pFormat);
     }
 }
 
@@ -4408,11 +4095,6 @@ void swViewport(int x, int y, int width, int height)
 
     RLSW.vpCenter[0] = (float)x + RLSW.vpHalf[0];
     RLSW.vpCenter[1] = (float)y + RLSW.vpHalf[1];
-
-    RLSW.vpMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
-    RLSW.vpMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
-    RLSW.vpMax[0] = sw_clampi(x + width, 0, RLSW.framebuffer.width - 1);
-    RLSW.vpMax[1] = sw_clampi(y + height, 0, RLSW.framebuffer.height - 1);
 }
 
 void swScissor(int x, int y, int width, int height)
@@ -4423,10 +4105,10 @@ void swScissor(int x, int y, int width, int height)
         return;
     }
 
-    RLSW.scMin[0] = sw_clampi(x, 0, RLSW.framebuffer.width - 1);
-    RLSW.scMin[1] = sw_clampi(y, 0, RLSW.framebuffer.height - 1);
-    RLSW.scMax[0] = sw_clampi(x + width, 0, RLSW.framebuffer.width - 1);
-    RLSW.scMax[1] = sw_clampi(y + height, 0, RLSW.framebuffer.height - 1);
+    RLSW.scMin[0] = x;
+    RLSW.scMin[1] = y;
+    RLSW.scMax[0] = x + width;
+    RLSW.scMax[1] = y + height;
 
     RLSW.scClipMin[0] = (2.0f*(float)RLSW.scMin[0]/(float)RLSW.vpSize[0]) - 1.0f;
     RLSW.scClipMax[0] = (2.0f*(float)RLSW.scMax[0]/(float)RLSW.vpSize[0]) - 1.0f;
@@ -4449,19 +4131,16 @@ void swClearDepth(float depth)
 
 void swClear(uint32_t bitmask)
 {
-    int size = RLSW.framebuffer.width*RLSW.framebuffer.height;
+    if ((bitmask & (SW_COLOR_BUFFER_BIT)) && (RLSW.colorBuffer != NULL) && (RLSW.colorBuffer->pixels != NULL))
+    {
+        int size = RLSW.colorBuffer->width*RLSW.colorBuffer->height;
+        sw_framebuffer_fill_color(RLSW.colorBuffer, RLSW.clearColor);
+    }
 
-    if ((bitmask & (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT)) == (SW_COLOR_BUFFER_BIT | SW_DEPTH_BUFFER_BIT))
+    if ((bitmask & (SW_DEPTH_BUFFER_BIT)) && (RLSW.depthBuffer != NULL) && (RLSW.depthBuffer->pixels != NULL))
     {
-        sw_framebuffer_fill(&RLSW.framebuffer, RLSW.clearColor, RLSW.clearDepth);
-    }
-    else if (bitmask & (SW_COLOR_BUFFER_BIT))
-    {
-        sw_framebuffer_fill_color(&RLSW.framebuffer, RLSW.clearColor);
-    }
-    else if (bitmask & SW_DEPTH_BUFFER_BIT)
-    {
-        sw_framebuffer_fill_depth(&RLSW.framebuffer, RLSW.clearDepth);
+        int size = RLSW.depthBuffer->width*RLSW.depthBuffer->height;
+        sw_framebuffer_fill_depth(RLSW.depthBuffer, RLSW.clearDepth);
     }
 }
 
@@ -4811,6 +4490,13 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
 
 void swBegin(SWdraw mode)
 {
+    // Check if we can render
+    if (!sw_is_ready_to_render())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     // Check if the draw mode is valid
     if (!sw_is_draw_mode_valid(mode))
     {
@@ -4828,15 +4514,6 @@ void swBegin(SWdraw mode)
         RLSW.isDirtyMVP = false;
     }
 
-    // Obtain the number of vertices needed for this primitive
-    switch (mode)
-    {
-        case SW_POINTS: RLSW.reqVertices = 1; break;
-        case SW_LINES: RLSW.reqVertices = 2; break;
-        case SW_TRIANGLES: RLSW.reqVertices = 3; break;
-        case SW_QUADS: RLSW.reqVertices = 4; break;
-    }
-
     // Initialize required values
     RLSW.vertexCounter = 0;
     RLSW.drawMode = mode;
@@ -4844,7 +4521,7 @@ void swBegin(SWdraw mode)
 
 void swEnd(void)
 {
-    RLSW.drawMode = (SWdraw)0;
+    RLSW.drawMode = SW_DRAW_INVALID;
 }
 
 void swVertex2i(int x, int y)
@@ -5011,7 +4688,7 @@ void swBindArray(SWarray type, void *buffer)
 
 void swDrawArrays(SWdraw mode, int offset, int count)
 {
-    if (RLSW.array.positions == 0)
+    if ((!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
@@ -5080,13 +4757,13 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
 void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 {
-    if (RLSW.array.positions == 0)
+    if ((!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
     }
 
-    if (count < 0)
+    if ((count < 0) || (indices == NULL))
     {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
@@ -5194,7 +4871,7 @@ void swDeleteTextures(int count, sw_handle_t *textures)
     {
         sw_texture_t *tex = sw_pool_get(&RLSW.texturePool, textures[i]);
         if (!tex) { RLSW.errCode = SW_INVALID_VALUE; continue; }
-        if (tex == RLSW.texture) RLSW.texture = NULL;
+        if (tex == RLSW.boundTexture) RLSW.boundTexture = NULL;
 
         sw_texture_free(tex);
         sw_pool_free(&RLSW.texturePool, textures[i]);
@@ -5203,32 +4880,32 @@ void swDeleteTextures(int count, sw_handle_t *textures)
 
 void swBindTexture(sw_handle_t id)
 {
-    if (id == SW_HANDLE_NULL) { RLSW.texture = NULL; return; }
+    if (id == SW_HANDLE_NULL) { RLSW.boundTexture = NULL; return; }
     if (!sw_is_texture_valid(id)) { RLSW.errCode = SW_INVALID_VALUE; return; }
 
-    RLSW.texture = sw_pool_get(&RLSW.texturePool, id);
+    RLSW.boundTexture = sw_pool_get(&RLSW.texturePool, id);
 }
 
 void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data)
 {
-    if (RLSW.texture == NULL) return;
+    if (RLSW.boundTexture == NULL) return;
 
     int pixelFormat = sw_pixel_get_format(format, type);
     if (pixelFormat <= SW_PIXELFORMAT_UNKNOWN) { RLSW.errCode = SW_INVALID_ENUM; return; }
 
-    *RLSW.texture = (sw_texture_t){ 0 };
-    (void)sw_texture_alloc(RLSW.texture, data, width, height, pixelFormat);
+    *RLSW.boundTexture = (sw_texture_t){ 0 };
+    (void)sw_texture_alloc(RLSW.boundTexture, data, width, height, pixelFormat);
 }
 
 void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
 {
-    if (!sw_is_texture_complete(RLSW.texture) || !pixels || width <= 0 || height <= 0)
+    if (!sw_is_texture_complete(RLSW.boundTexture) || !pixels || width <= 0 || height <= 0)
     {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
     }
 
-    if (x < 0 || y < 0 || x + width > RLSW.texture->width || y + height > RLSW.texture->height)
+    if (x < 0 || y < 0 || x + width > RLSW.boundTexture->width || y + height > RLSW.boundTexture->height)
     {
         RLSW.errCode = SW_INVALID_VALUE;
         return;
@@ -5242,18 +4919,18 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
     }
 
     const int srcPixelSize = SW_PIXELFORMAT_SIZE[pFormat];
-    const int dstPixelSize = SW_PIXELFORMAT_SIZE[RLSW.texture->format];
+    const int dstPixelSize = SW_PIXELFORMAT_SIZE[RLSW.boundTexture->format];
 
     const uint8_t* srcBytes = (const uint8_t*)pixels;
-    uint8_t* dstBytes = (uint8_t*)RLSW.texture->pixels;
+    uint8_t* dstBytes = (uint8_t*)RLSW.boundTexture->pixels;
 
-    if (pFormat == RLSW.texture->format)
+    if (pFormat == RLSW.boundTexture->format)
     {
         const int rowSize = width * dstPixelSize;
-        const int dstStride = RLSW.texture->width * dstPixelSize;
+        const int dstStride = RLSW.boundTexture->width * dstPixelSize;
         const int srcStride = width * srcPixelSize;
 
-        uint8_t *dstRow = dstBytes + (y * RLSW.texture->width + x) * dstPixelSize;
+        uint8_t *dstRow = dstBytes + (y * RLSW.boundTexture->width + x) * dstPixelSize;
         const uint8_t *srcRow = srcBytes;
 
         for (int j = 0; j < height; ++j)
@@ -5271,38 +4948,38 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
         {
             float color[4];
             const int srcPixelOffset = ((j * width) + i) * srcPixelSize;
-            const int dstPixelOffset = (((y + j) * RLSW.texture->width) + (x + i)) * dstPixelSize;
+            const int dstPixelOffset = (((y + j) * RLSW.boundTexture->width) + (x + i)) * dstPixelSize;
 
             sw_pixel_get_color(color, srcBytes, srcPixelOffset, pFormat);
-            sw_pixel_set_color(dstBytes, color, dstPixelOffset, RLSW.texture->format);
+            sw_pixel_set_color(dstBytes, color, dstPixelOffset, RLSW.boundTexture->format);
         }
     }
 }
 
 void swTexParameteri(int param, int value)
 {
-    if (RLSW.texture == NULL) return;
+    if (RLSW.boundTexture == NULL) return;
 
     switch (param)
     {
         case SW_TEXTURE_MIN_FILTER:
             if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-            RLSW.texture->minFilter = (SWfilter)value;
+            RLSW.boundTexture->minFilter = (SWfilter)value;
             break;
 
         case SW_TEXTURE_MAG_FILTER:
             if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-            RLSW.texture->magFilter = (SWfilter)value;
+            RLSW.boundTexture->magFilter = (SWfilter)value;
             break;
 
         case SW_TEXTURE_WRAP_S:
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-            RLSW.texture->sWrap = (SWwrap)value;
+            RLSW.boundTexture->sWrap = (SWwrap)value;
             break;
 
         case SW_TEXTURE_WRAP_T:
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-            RLSW.texture->tWrap = (SWwrap)value;
+            RLSW.boundTexture->tWrap = (SWwrap)value;
             break;
 
         default:
@@ -5311,4 +4988,898 @@ void swTexParameteri(int param, int value)
     }
 }
 
+void swGenFramebuffers(int count, uint32_t* framebuffers)
+{
+    if (!count || !framebuffers) return;
+
+    for (int i = 0; i < count; i++)
+    {
+        sw_handle_t h = sw_pool_alloc(&RLSW.framebufferPool);
+        if (h == SW_HANDLE_NULL) { RLSW.errCode = SW_OUT_OF_MEMORY; return; }
+        framebuffers[i] = h;
+    }
+}
+
+void swDeleteFramebuffers(int count, uint32_t* framebuffers)
+{
+    if (!count || !framebuffers) return;
+
+    for (int i = 0; i < count; i++)
+    {
+        sw_framebuffer_t *fb = sw_pool_get(&RLSW.framebufferPool, framebuffers[i]);
+        if (!fb) { RLSW.errCode = SW_INVALID_VALUE; continue; }
+
+        if (fb == RLSW.boundFramebuffer)
+        {
+            RLSW.boundFramebuffer = NULL;
+            RLSW.colorBuffer = &RLSW.framebuffer.color;
+            RLSW.depthBuffer = &RLSW.framebuffer.depth;
+        }
+
+        sw_pool_free(&RLSW.framebufferPool, framebuffers[i]);
+    }
+}
+
+void swBindFramebuffer(uint32_t id)
+{
+    if (id == SW_HANDLE_NULL)
+    {
+        RLSW.boundFramebuffer = NULL;
+        RLSW.colorBuffer = &RLSW.framebuffer.color;
+        RLSW.depthBuffer = &RLSW.framebuffer.depth;
+        return;
+    }
+
+    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, id);
+    if (fb == NULL)
+    {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
+
+    RLSW.boundFramebuffer = fb;
+    RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, fb->colorAttachment);
+    RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, fb->depthAttachment);
+}
+
+void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
+{
+    if (RLSW.boundFramebuffer == NULL)
+    {
+        RLSW.errCode = SW_INVALID_OPERATION; // not really standard but hey
+        return;
+    }
+
+    switch (attach)
+    {
+        case SW_COLOR_ATTACHMENT:
+            RLSW.boundFramebuffer->colorAttachment = texture;
+            RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, texture);
+            break;
+        case SW_DEPTH_ATTACHMENT:
+            RLSW.boundFramebuffer->depthAttachment = texture;
+            RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, texture);
+            break;
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            break;
+    }
+}
+
+SWfbstatus swCheckFramebufferStatus(void)
+{
+    if (RLSW.boundFramebuffer == NULL)
+    {
+        return SW_FRAMEBUFFER_COMPLETE;
+    }
+
+    if (RLSW.colorBuffer == NULL)
+    {
+        return SW_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT;
+    }
+
+    if (!sw_is_texture_complete(RLSW.colorBuffer))
+    {
+        return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+    }
+
+    if (RLSW.colorBuffer->format != SW_FRAMEBUFFER_COLOR_FORMAT)
+    {
+        return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+    }
+
+    if (RLSW.depthBuffer)
+    {
+        if (!sw_is_texture_complete(RLSW.depthBuffer))
+        {
+            return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+        }
+
+        if (RLSW.depthBuffer->format != SW_FRAMEBUFFER_DEPTH_FORMAT)
+        {
+            return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
+        }
+
+        if ((RLSW.colorBuffer->width != RLSW.depthBuffer->width) ||
+            (RLSW.colorBuffer->height != RLSW.depthBuffer->height))
+        {
+            return SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
+        }
+    }
+
+    return SW_FRAMEBUFFER_COMPLETE;
+}
+
+void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget property, int *v)
+{
+    if (RLSW.boundFramebuffer == NULL)
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
+    if (v == NULL)
+    {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
+
+    switch (property)
+    {
+        case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
+        {
+            switch (attachment)
+            {
+                case SW_COLOR_ATTACHMENT:
+                    *v = RLSW.boundFramebuffer->colorAttachment;
+                    break;
+                case SW_DEPTH_ATTACHMENT:
+                    *v = RLSW.boundFramebuffer->depthAttachment;
+                    break;
+            }
+        }
+        break;
+
+        case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE:
+        {
+            *v = GL_TEXTURE;
+            break;
+        }
+    }
+}
+
 #endif // RLSW_IMPLEMENTATION
+
+//----------------------------------------------------------------------------------
+// Template Rasterization Functions
+//----------------------------------------------------------------------------------
+
+// Triangle rasterization functions
+//-------------------------------------------------------------------------------------------
+#ifdef RLSW_TEMPLATE_RASTER_TRIANGLE
+
+// Options:
+//  - RLSW_TEMPLATE_RASTER_TRIANGLE     -> Contains the suffix name
+//  - SW_ENABLE_DEPTH_TEST
+//  - SW_ENABLE_TEXTURE
+//  - SW_ENABLE_BLEND
+
+#define SW_RASTER_TRIANGLE_SPAN SW_CONCATX(sw_raster_triangle_span_, RLSW_TEMPLATE_RASTER_TRIANGLE)
+#define SW_RASTER_TRIANGLE      SW_CONCATX(sw_raster_triangle_, RLSW_TEMPLATE_RASTER_TRIANGLE)
+
+static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
+{
+    // Gets the start and end coordinates
+    int xStart = (int)start->screen[0];
+    int xEnd   = (int)end->screen[0];
+
+    // Avoid empty lines
+    if (xStart == xEnd) return;
+
+    // Compute the subpixel distance to traverse before the first pixel
+    float xSubstep = 1.0f - sw_fract(start->screen[0]);
+
+    // Compute the inverse horizontal distance along the X axis
+    float dxRcp = 1.0f/(end->screen[0] - start->screen[0]);
+
+    // Compute the interpolation steps along the X axis
+#ifdef SW_ENABLE_DEPTH_TEST
+    float dZdx = (end->homogeneous[2] - start->homogeneous[2])*dxRcp;
+#endif
+    float dWdx = (end->homogeneous[3] - start->homogeneous[3])*dxRcp;
+    float dCdx[4] = {
+        (end->color[0] - start->color[0])*dxRcp,
+        (end->color[1] - start->color[1])*dxRcp,
+        (end->color[2] - start->color[2])*dxRcp,
+        (end->color[3] - start->color[3])*dxRcp
+    };
+#ifdef SW_ENABLE_TEXTURE
+    float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
+    float dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;
+#endif
+
+    // Initializing the interpolation starting values
+#ifdef SW_ENABLE_DEPTH_TEST
+    float z = start->homogeneous[2] + dZdx*xSubstep;
+#endif
+    float w = start->homogeneous[3] + dWdx*xSubstep;
+    float color[4] = {
+        start->color[0] + dCdx[0]*xSubstep,
+        start->color[1] + dCdx[1]*xSubstep,
+        start->color[2] + dCdx[2]*xSubstep,
+        start->color[3] + dCdx[3]*xSubstep
+    };
+#ifdef SW_ENABLE_TEXTURE
+    float u = start->texcoord[0] + dUdx*xSubstep;
+    float v = start->texcoord[1] + dVdx*xSubstep;
+#endif
+
+    // Pre-calculate the starting pointers for the framebuffer row
+    int y = (int)start->screen[1];
+    int baseOffset = y*RLSW.colorBuffer->width + xStart;
+    uint8_t *cPtr = (uint8_t*)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
+#ifdef SW_ENABLE_DEPTH_TEST
+    uint8_t *dPtr = (uint8_t*)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
+#endif
+
+    // Scanline rasterization
+    for (int x = xStart; x < xEnd; x++)
+    {
+        float wRcp = 1.0f/w;
+        float srcColor[4] = {
+            color[0]*wRcp,
+            color[1]*wRcp,
+            color[2]*wRcp,
+            color[3]*wRcp
+        };
+
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            /* TODO: Implement different depth funcs? */
+            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+            if (z > depth) goto discard;
+
+            /* TODO: Implement depth mask */
+            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+        }
+        #endif
+
+        #ifdef SW_ENABLE_TEXTURE
+        {
+            float texColor[4];
+            float s = u*wRcp;
+            float t = v*wRcp;
+            sw_texture_sample(texColor, RLSW.boundTexture, s, t, dUdx, dUdy, dVdx, dVdy);
+            srcColor[0] *= texColor[0];
+            srcColor[1] *= texColor[1];
+            srcColor[2] *= texColor[2];
+            srcColor[3] *= texColor[3];
+        }
+        #endif
+
+        #ifdef SW_ENABLE_BLEND
+        {
+            float dstColor[4];
+            SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+            sw_blend_colors(dstColor, srcColor);
+            SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+        }
+        #else
+        {
+            SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
+        }
+        #endif
+
+        // Increment the interpolation parameter, UVs, and pointers
+    discard:
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            z += dZdx;
+        }
+        #endif
+
+        w += dWdx;
+
+        color[0] += dCdx[0];
+        color[1] += dCdx[1];
+        color[2] += dCdx[2];
+        color[3] += dCdx[3];
+
+        #ifdef SW_ENABLE_TEXTURE
+        {
+            u += dUdx;
+            v += dVdx;
+        }
+        #endif
+
+        cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
+
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+        }
+        #endif
+    }
+}
+
+static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2)
+{
+    // Swap vertices by increasing Y
+    if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
+    if (v1->screen[1] > v2->screen[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; }
+    if (v0->screen[1] > v1->screen[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
+
+    // Extracting coordinates from the sorted vertices
+    float x0 = v0->screen[0], y0 = v0->screen[1];
+    float x1 = v1->screen[0], y1 = v1->screen[1];
+    float x2 = v2->screen[0], y2 = v2->screen[1];
+
+    // Compute height differences
+    float h02 = y2 - y0;
+    float h01 = y1 - y0;
+    float h12 = y2 - y1;
+
+    if (h02 < 1e-6f) return;
+
+    // Precompute the inverse values without additional checks
+    float h02Rcp = 1.0f/h02;
+    float h01Rcp = (h01 > 1e-6f)? 1.0f/h01 : 0.0f;
+    float h12Rcp = (h12 > 1e-6f)? 1.0f/h12 : 0.0f;
+
+    // Pre-calculation of slopes
+    float dXdy02 = (x2 - x0)*h02Rcp;
+    float dXdy01 = (x1 - x0)*h01Rcp;
+    float dXdy12 = (x2 - x1)*h12Rcp;
+
+    // Y subpixel correction
+    float y0Substep = 1.0f - sw_fract(y0);
+    float y1Substep = 1.0f - sw_fract(y1);
+
+    // Y bounds (vertical clipping)
+    int yTop = (int)y0;
+    int yMid = (int)y1;
+    int yBot = (int)y2;
+
+    // Compute gradients for each side of the triangle
+    sw_vertex_t dVXdy02, dVXdy01, dVXdy12;
+    sw_get_vertex_grad_PTCH(&dVXdy02, v0, v2, h02Rcp);
+    sw_get_vertex_grad_PTCH(&dVXdy01, v0, v1, h01Rcp);
+    sw_get_vertex_grad_PTCH(&dVXdy12, v1, v2, h12Rcp);
+
+    // Get a copy of vertices for interpolation and apply substep correction
+    sw_vertex_t vLeft = *v0, vRight = *v0;
+    sw_add_vertex_grad_scaled_PTCH(&vLeft, &dVXdy02, y0Substep);
+    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy01, y0Substep);
+
+    vLeft.screen[0] += dXdy02*y0Substep;
+    vRight.screen[0] += dXdy01*y0Substep;
+
+    // Scanline for the upper part of the triangle
+    for (int y = yTop; y < yMid; y++)
+    {
+        vLeft.screen[1] = vRight.screen[1] = y;
+
+        if (vLeft.screen[0] < vRight.screen[0])
+            SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        else
+            SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+
+        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);
+        vLeft.screen[0] += dXdy02;
+
+        sw_add_vertex_grad_PTCH(&vRight, &dVXdy01);
+        vRight.screen[0] += dXdy01;
+    }
+
+    // Get a copy of next right for interpolation and apply substep correction
+    vRight = *v1;
+    sw_add_vertex_grad_scaled_PTCH(&vRight, &dVXdy12, y1Substep);
+    vRight.screen[0] += dXdy12*y1Substep;
+
+    // Scanline for the lower part of the triangle
+    for (int y = yMid; y < yBot; y++)
+    {
+        vLeft.screen[1] = vRight.screen[1] = y;
+
+        if (vLeft.screen[0] < vRight.screen[0])
+            SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        else
+            SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+
+        sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);
+        vLeft.screen[0] += dXdy02;
+
+        sw_add_vertex_grad_PTCH(&vRight, &dVXdy12);
+        vRight.screen[0] += dXdy12;
+    }
+}
+
+#endif // RLSW_TEMPLATE_RASTER_TRIANGLE
+//-------------------------------------------------------------------------------------------
+
+// Quad rasterization functions
+//-------------------------------------------------------------------------------------------
+#ifdef RLSW_TEMPLATE_RASTER_QUAD
+
+// Options:
+//  - RLSW_TEMPLATE_RASTER_QUAD     -> Contains the suffix name
+//  - SW_ENABLE_DEPTH_TEST
+//  - SW_ENABLE_TEXTURE
+//  - SW_ENABLE_BLEND
+
+#define SW_RASTER_QUAD SW_CONCATX(sw_raster_quad_, RLSW_TEMPLATE_RASTER_QUAD)
+
+#ifndef RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
+#define RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
+static void sw_quad_sort_cw(const sw_vertex_t* *output)
+{
+    const sw_vertex_t *input = RLSW.vertexBuffer;
+
+    // Calculate the centroid of the quad
+    float cx = (input[0].screen[0] + input[1].screen[0] +
+                input[2].screen[0] + input[3].screen[0])*0.25f;
+    float cy = (input[0].screen[1] + input[1].screen[1] +
+                input[2].screen[1] + input[3].screen[1])*0.25f;
+
+    // Calculate the angle of each vertex relative to the center
+    // and assign them directly to their correct position
+    const sw_vertex_t *corners[4] = { 0 };
+
+    for (int i = 0; i < 4; i++)
+    {
+        float dx = input[i].screen[0] - cx;
+        float dy = input[i].screen[1] - cy;
+
+        // Determine the quadrant (clockwise from top-left)
+        // top-left: dx < 0, dy < 0
+        // top-right: dx >= 0, dy < 0
+        // bottom-right: dx >= 0, dy >= 0
+        // bottom-left: dx < 0, dy >= 0
+
+        int idx;
+        if (dy < 0) idx = (dx < 0)? 0 : 1; // Top row
+        else idx = (dx < 0)? 3 : 2; // Bottom row
+
+        corners[idx] = &input[i];
+    }
+
+    output[0] = corners[0];  // top-left
+    output[1] = corners[1];  // top-right
+    output[2] = corners[2];  // bottom-right
+    output[3] = corners[3];  // bottom-left
+}
+#endif // RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
+
+// REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth,
+//         still appear perfectly aligned from a certain point of view?
+//         Because in that case, it's still needed to perform perspective division for textures and colors...
+
+static void SW_RASTER_QUAD(void)
+{
+    const sw_vertex_t *sortedVerts[4];
+    sw_quad_sort_cw(sortedVerts);
+
+    const sw_vertex_t *v0 = sortedVerts[0];
+    const sw_vertex_t *v1 = sortedVerts[1];
+    const sw_vertex_t *v2 = sortedVerts[2];
+    const sw_vertex_t *v3 = sortedVerts[3];
+
+    /* Screen bounds (axis-aligned) */
+    int xMin = (int)v0->screen[0];
+    int yMin = (int)v0->screen[1];
+    int xMax = (int)v2->screen[0];
+    int yMax = (int)v2->screen[1];
+
+    float w = v2->screen[0] - v0->screen[0];
+    float h = v2->screen[1] - v0->screen[1];
+
+    if ((w == 0) || (h == 0)) return;
+
+    float wRcp = (w > 0.0f)? 1.0f/w : 0.0f;
+    float hRcp = (h > 0.0f)? 1.0f/h : 0.0f;
+
+    /* Subpixel corrections */
+    float xSubstep = 1.0f - sw_fract(v0->screen[0]);
+    float ySubstep = 1.0f - sw_fract(v0->screen[1]);
+
+    /* Calculation of vertex gradients in X and Y */
+#ifdef SW_ENABLE_TEXTURE
+    float dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;
+    float dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;
+    float dUdy = (v3->texcoord[0] - v0->texcoord[0])*hRcp;
+    float dVdy = (v3->texcoord[1] - v0->texcoord[1])*hRcp;
+#endif
+
+    float dCdx[4], dCdy[4];
+    dCdx[0] = (v1->color[0] - v0->color[0])*wRcp;
+    dCdx[1] = (v1->color[1] - v0->color[1])*wRcp;
+    dCdx[2] = (v1->color[2] - v0->color[2])*wRcp;
+    dCdx[3] = (v1->color[3] - v0->color[3])*wRcp;
+    dCdy[0] = (v3->color[0] - v0->color[0])*hRcp;
+    dCdy[1] = (v3->color[1] - v0->color[1])*hRcp;
+    dCdy[2] = (v3->color[2] - v0->color[2])*hRcp;
+    dCdy[3] = (v3->color[3] - v0->color[3])*hRcp;
+
+    float dZdx, dZdy;
+    dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;
+    dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;
+
+    int wDst = RLSW.colorBuffer->width;
+    uint8_t *cPixels = RLSW.colorBuffer->pixels;
+#ifdef SW_ENABLE_DEPTH_TEST
+    uint8_t *dPixels = RLSW.depthBuffer->pixels;
+#endif
+
+#ifdef SW_ENABLE_DEPTH_TEST
+    float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;
+#endif
+#ifdef SW_ENABLE_TEXTURE
+    float uScanline = v0->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;
+    float vScanline = v0->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;
+#endif
+
+    float colorScanline[4] = {
+        v0->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,
+        v0->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,
+        v0->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,
+        v0->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep
+    };
+
+    for (int y = yMin; y < yMax; y++)
+    {
+        int baseOffset = y*wDst + xMin;
+        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
+    #ifdef SW_ENABLE_DEPTH_TEST
+        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
+    #endif
+
+    #ifdef SW_ENABLE_DEPTH_TEST
+        float z = zScanline;
+    #endif
+    #ifdef SW_ENABLE_TEXTURE
+        float u = uScanline;
+        float v = vScanline;
+    #endif
+
+        float color[4] = {
+            colorScanline[0],
+            colorScanline[1],
+            colorScanline[2],
+            colorScanline[3]
+        };
+
+        // Span rasterization
+        for (int x = xMin; x < xMax; x++)
+        {
+            // Pixel color computation
+            float srcColor[4] = {
+                color[0],
+                color[1],
+                color[2],
+                color[3]
+            };
+
+            // Test and write depth
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                /* TODO: Implement different depth funcs? */
+                float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+                if (z > depth) goto discard;
+
+                /* TODO: Implement depth mask */
+                SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+            }
+            #endif
+
+            #ifdef SW_ENABLE_TEXTURE
+            {
+                float texColor[4];
+                sw_texture_sample(texColor, RLSW.boundTexture, u, v, dUdx, dUdy, dVdx, dVdy);
+                srcColor[0] *= texColor[0];
+                srcColor[1] *= texColor[1];
+                srcColor[2] *= texColor[2];
+                srcColor[3] *= texColor[3];
+            }
+            #endif
+
+            #ifdef SW_ENABLE_BLEND
+            {
+                float dstColor[4];
+                SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+                sw_blend_colors(dstColor, srcColor);
+                SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+            }
+            #else
+            {
+                SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
+            }
+            #endif
+
+        discard:
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                z += dZdx;
+            }
+            #endif
+
+            color[0] += dCdx[0];
+            color[1] += dCdx[1];
+            color[2] += dCdx[2];
+            color[3] += dCdx[3];
+
+            #ifdef SW_ENABLE_TEXTURE
+            {
+                u += dUdx;
+                v += dVdx;
+            }
+            #endif
+
+            cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
+
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+            }
+            #endif
+        }
+
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            zScanline += dZdy;
+        }
+        #endif
+
+        colorScanline[0] += dCdy[0];
+        colorScanline[1] += dCdy[1];
+        colorScanline[2] += dCdy[2];
+        colorScanline[3] += dCdy[3];
+
+        #ifdef SW_ENABLE_TEXTURE
+        {
+            uScanline += dUdy;
+            vScanline += dVdy;
+        }
+        #endif
+    }
+}
+
+#endif // RLSW_TEMPLATE_RASTER_QUAD
+//-------------------------------------------------------------------------------------------
+
+// Quad rasterization functions
+//-------------------------------------------------------------------------------------------
+#ifdef RLSW_TEMPLATE_RASTER_LINE
+
+// Options:
+//  - RLSW_TEMPLATE_RASTER_LINE     -> Contains the suffix name
+//  - SW_ENABLE_DEPTH_TEST
+//  - SW_ENABLE_BLEND
+
+#define SW_RASTER_LINE       SW_CONCATX(sw_raster_line_, RLSW_TEMPLATE_RASTER_LINE)
+#define SW_RASTER_LINE_THICK SW_CONCATX(sw_raster_line_thick_, RLSW_TEMPLATE_RASTER_LINE)
+
+static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
+{
+    float x0 = v0->screen[0];
+    float y0 = v0->screen[1];
+    float x1 = v1->screen[0];
+    float y1 = v1->screen[1];
+
+    float dx = x1 - x0;
+    float dy = y1 - y0;
+
+    // Compute dominant axis and subpixel offset
+    float steps, substep;
+    if (fabsf(dx) > fabsf(dy))
+    {
+        steps = fabsf(dx);
+        if (steps < 1.0f) return;
+        substep = (dx >= 0.0f)? (1.0f - sw_fract(x0)) : sw_fract(x0);
+    }
+    else
+    {
+        steps = fabsf(dy);
+        if (steps < 1.0f) return;
+        substep = (dy >= 0.0f)? (1.0f - sw_fract(y0)) : sw_fract(y0);
+    }
+
+    // Compute per pixel increments
+    float xInc = dx/steps;
+    float yInc = dy/steps;
+    float stepRcp = 1.0f/steps;
+#ifdef SW_ENABLE_DEPTH_TEST
+    float zInc = (v1->homogeneous[2] - v0->homogeneous[2])*stepRcp;
+#endif
+    float rInc = (v1->color[0] - v0->color[0])*stepRcp;
+    float gInc = (v1->color[1] - v0->color[1])*stepRcp;
+    float bInc = (v1->color[2] - v0->color[2])*stepRcp;
+    float aInc = (v1->color[3] - v0->color[3])*stepRcp;
+
+    // Initializing the interpolation starting values
+    float x = x0 + xInc*substep;
+    float y = y0 + yInc*substep;
+#ifdef SW_ENABLE_DEPTH_TEST
+    float z = v0->homogeneous[2] + zInc*substep;
+#endif
+    float r = v0->color[0] + rInc*substep;
+    float g = v0->color[1] + gInc*substep;
+    float b = v0->color[2] + bInc*substep;
+    float a = v0->color[3] + aInc*substep;
+
+    // Start line rasterization
+    const int fbWidth = RLSW.colorBuffer->width;
+    uint8_t *cPixels = RLSW.colorBuffer->pixels;
+#ifdef SW_ENABLE_DEPTH_TEST
+    uint8_t *dPixels = RLSW.depthBuffer->pixels;
+#endif
+
+    int numPixels = (int)(steps - substep) + 1;
+
+    for (int i = 0; i < numPixels; i++)
+    {
+        // TODO: REVIEW: May require reviewing projection details
+        int px = (int)(x - 0.5f);
+        int py = (int)(y - 0.5f);
+
+        int baseOffset = py*fbWidth + px;
+        uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
+    #ifdef SW_ENABLE_DEPTH_TEST
+        uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
+    #endif
+
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            // TODO: Implement different depth funcs?
+            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+            if (z > depth) goto discard;
+
+            // TODO: Implement depth mask
+            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+        }
+        #endif
+
+        float srcColor[4] = {r, g, b, a};
+
+        #ifdef SW_ENABLE_BLEND
+        {
+            float dstColor[4];
+            SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+            sw_blend_colors(dstColor, srcColor);
+            SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+        }
+        #else
+        {
+            SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
+        }
+        #endif
+
+    discard:
+        x += xInc;
+        y += yInc;
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            z += zInc;
+        }
+        #endif
+        r += rInc;
+        g += gInc;
+        b += bInc;
+        a += aInc;
+    }
+}
+
+static void SW_RASTER_LINE_THICK(const sw_vertex_t *v1, const sw_vertex_t *v2)
+{
+    sw_vertex_t tv1, tv2;
+
+    int x1 = (int)v1->screen[0];
+    int y1 = (int)v1->screen[1];
+    int x2 = (int)v2->screen[0];
+    int y2 = (int)v2->screen[1];
+
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+
+    SW_RASTER_LINE(v1, v2);
+
+    if ((dx != 0) && (abs(dy/dx) < 1))
+    {
+        int wy = (int)((RLSW.lineWidth - 1.0f)*abs(dx)/sqrtf(dx*dx + dy*dy));
+        wy >>= 1;
+        for (int i = 1; i <= wy; i++)
+        {
+            tv1 = *v1, tv2 = *v2;
+            tv1.screen[1] -= i;
+            tv2.screen[1] -= i;
+            SW_RASTER_LINE(&tv1, &tv2);
+            tv1 = *v1, tv2 = *v2;
+            tv1.screen[1] += i;
+            tv2.screen[1] += i;
+            SW_RASTER_LINE(&tv1, &tv2);
+        }
+    }
+    else if (dy != 0)
+    {
+        int wx = (int)((RLSW.lineWidth - 1.0f)*abs(dy)/sqrtf(dx*dx + dy*dy));
+        wx >>= 1;
+        for (int i = 1; i <= wx; i++)
+        {
+            tv1 = *v1, tv2 = *v2;
+            tv1.screen[0] -= i;
+            tv2.screen[0] -= i;
+            SW_RASTER_LINE(&tv1, &tv2);
+            tv1 = *v1, tv2 = *v2;
+            tv1.screen[0] += i;
+            tv2.screen[0] += i;
+            SW_RASTER_LINE(&tv1, &tv2);
+        }
+    }
+}
+
+#endif // RLSW_TEMPLATE_RASTER_LINE
+//-------------------------------------------------------------------------------------------
+
+// Point rasterization functions
+//-------------------------------------------------------------------------------------------
+#ifdef RLSW_TEMPLATE_RASTER_POINT
+
+// Options:
+//  - RLSW_TEMPLATE_RASTER_POINT    -> Contains the suffix name
+//  - SW_ENABLE_DEPTH_TEST
+//  - SW_ENABLE_BLEND
+
+#define SW_RASTER_POINT_PIXEL SW_CONCATX(sw_raster_point_pixel_, RLSW_TEMPLATE_RASTER_POINT)
+#define SW_RASTER_POINT       SW_CONCATX(sw_raster_point_, RLSW_TEMPLATE_RASTER_POINT)
+
+static void SW_RASTER_POINT_PIXEL(int x, int y, float z, const float color[4])
+{
+    int offset = y*RLSW.colorBuffer->width + x;
+
+    #ifdef SW_ENABLE_DEPTH_TEST
+    {
+        uint8_t *dPtr = (uint8_t*)(RLSW.depthBuffer->pixels) + offset*SW_FRAMEBUFFER_DEPTH_SIZE;
+
+        // TODO: Implement different depth funcs?
+        float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+        if (z > depth) return;
+
+        // TODO: Implement depth mask
+        SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+    }
+    #endif
+
+    uint8_t *cPtr = (uint8_t*)(RLSW.colorBuffer->pixels) + offset*SW_FRAMEBUFFER_COLOR_SIZE;
+
+    #ifdef SW_ENABLE_BLEND
+    {
+        float dstColor[4];
+        SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+        sw_blend_colors(dstColor, color);
+        SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+    }
+    #else
+    {
+        SW_FRAMEBUFFER_COLOR_SET(cPtr, color, 0);
+    }
+    #endif
+}
+
+static void SW_RASTER_POINT(const sw_vertex_t *v)
+{
+    int cx = v->screen[0];
+    int cy = v->screen[1];
+    float cz = v->homogeneous[2];
+    int radius = RLSW.pointRadius;
+    const float *color = v->color;
+
+    for (int dy = -radius; dy <= radius; dy++)
+    {
+        for (int dx = -radius; dx <= radius; dx++)
+        {
+            SW_RASTER_POINT_PIXEL(cx + dx, cy + dy, cz, color);
+        }
+    }
+}
+
+#endif // RLSW_TEMPLATE_RASTER_POINT
+//-------------------------------------------------------------------------------------------
