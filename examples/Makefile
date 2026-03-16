@@ -747,6 +747,7 @@ AUDIO = \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
+    audio/audio_stream_callback \
     audio/audio_stream_effects
 #EXAMPLES_LIST_END
 

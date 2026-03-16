@@ -721,6 +721,7 @@ AUDIO = \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
+    audio/audio_stream_callback \
     audio/audio_stream_effects
 
 # Default target entry
@@ -1595,6 +1596,9 @@ audio/audio_spectrum_visualizer: audio/audio_spectrum_visualizer.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/shaders/glsl100/fft.fs@resources/shaders/glsl100/fft.fs \
     --preload-file audio/resources/country.mp3@resources/country.mp3
+
+audio/audio_stream_callback: audio/audio_stream_callback.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

@@ -17,7 +17,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 211]
+## EXAMPLES COLLECTION [TOTAL: 212]
 
 ### category: core [49]
 
@@ -216,10 +216,10 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_basic_voxel](models/models_basic_voxel.c) | <img src="models/models_basic_voxel.png" alt="models_basic_voxel" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Tim Little](https://github.com/timlittle) |
 | [models_rotating_cube](models/models_rotating_cube.c) | <img src="models/models_rotating_cube.png" alt="models_rotating_cube" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Jopestpe](https://github.com/jopestpe) |
 | [models_decals](models/models_decals.c) | <img src="models/models_decals.png" alt="models_decals" width="80"> | ⭐⭐⭐⭐️ | 6.0 | 6.0 | [JP Mortiboys](https://github.com/themushroompirates) |
-| [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 6.0 | 5.6 | [Robin](https://github.com/RobinsAviary) |
+| [models_directional_billboard](models/models_directional_billboard.c) | <img src="models/models_directional_billboard.png" alt="models_directional_billboard" width="80"> | ⭐⭐☆☆ | 6.0 | 6.0 | [Robin](https://github.com/RobinsAviary) |
 | [models_animation_blend_custom](models/models_animation_blend_custom.c) | <img src="models/models_animation_blend_custom.png" alt="models_animation_blend_custom" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [dmitrii-brand](https://github.com/dmitrii-brand) |
 | [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation_blending" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [Kirandeep](https://github.com/Kirandeep-Singh-Khehra) |
-| [models_animation_timing](models/models_animation_timing.c) | <img src="models/models_animation_timing.png" alt="models_animation_timing" width="80"> | ⭐⭐⭐☆ | 5.6 | 6.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [models_animation_timing](models/models_animation_timing.c) | <img src="models/models_animation_timing.png" alt="models_animation_timing" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Ramon Santamaria](https://github.com/raysan5) |
 
 ### category: shaders [35]
 
@@ -227,7 +227,7 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 
 |  example  | image  | difficulty<br>level | version<br>created | last version<br>updated | original<br>developer |
 |-----------|--------|:-------------------:|:------------------:|:-----------------------:|:----------------------|
-| [shaders_ascii_rendering](shaders/shaders_ascii_rendering.c) | <img src="shaders/shaders_ascii_rendering.png" alt="shaders_ascii_rendering" width="80"> | ⭐⭐☆☆ | 5.5 | 5.6 | [Maicon Santana](https://github.com/maiconpintoabreu) |
+| [shaders_ascii_rendering](shaders/shaders_ascii_rendering.c) | <img src="shaders/shaders_ascii_rendering.png" alt="shaders_ascii_rendering" width="80"> | ⭐⭐☆☆ | 5.5 | 6.0 | [Maicon Santana](https://github.com/maiconpintoabreu) |
 | [shaders_basic_lighting](shaders/shaders_basic_lighting.c) | <img src="shaders/shaders_basic_lighting.png" alt="shaders_basic_lighting" width="80"> | ⭐⭐⭐⭐️ | 3.0 | 4.2 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_model_shader](shaders/shaders_model_shader.c) | <img src="shaders/shaders_model_shader.png" alt="shaders_model_shader" width="80"> | ⭐⭐☆☆ | 1.3 | 3.7 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shaders_shapes_textures](shaders/shaders_shapes_textures.c) | <img src="shaders/shaders_shapes_textures.png" alt="shaders_shapes_textures" width="80"> | ⭐⭐☆☆ | 1.7 | 3.7 | [Ramon Santamaria](https://github.com/raysan5) |
@@ -239,15 +239,15 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_texture_outline](shaders/shaders_texture_outline.c) | <img src="shaders/shaders_texture_outline.png" alt="shaders_texture_outline" width="80"> | ⭐⭐⭐☆ | 4.0 | 4.0 | [Serenity Skiff](https://github.com/GoldenThumbs) |
 | [shaders_texture_waves](shaders/shaders_texture_waves.c) | <img src="shaders/shaders_texture_waves.png" alt="shaders_texture_waves" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Anata](https://github.com/anatagawa) |
 | [shaders_julia_set](shaders/shaders_julia_set.c) | <img src="shaders/shaders_julia_set.png" alt="shaders_julia_set" width="80"> | ⭐⭐⭐☆ | 2.5 | 4.0 | [Josh Colclough](https://github.com/joshcol9232) |
-| [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
-| [shaders_color_correction](shaders/shaders_color_correction.c) | <img src="shaders/shaders_color_correction.png" alt="shaders_color_correction" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_mandelbrot_set](shaders/shaders_mandelbrot_set.c) | <img src="shaders/shaders_mandelbrot_set.png" alt="shaders_mandelbrot_set" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_color_correction](shaders/shaders_color_correction.c) | <img src="shaders/shaders_color_correction.png" alt="shaders_color_correction" width="80"> | ⭐⭐☆☆ | 6.0 | 6.0 | [Jordi Santonja](https://github.com/JordSant) |
 | [shaders_eratosthenes_sieve](shaders/shaders_eratosthenes_sieve.c) | <img src="shaders/shaders_eratosthenes_sieve.png" alt="shaders_eratosthenes_sieve" width="80"> | ⭐⭐⭐☆ | 2.5 | 4.0 | [ProfJski](https://github.com/ProfJski) |
 | [shaders_fog_rendering](shaders/shaders_fog_rendering.c) | <img src="shaders/shaders_fog_rendering.png" alt="shaders_fog_rendering" width="80"> | ⭐⭐⭐☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_simple_mask](shaders/shaders_simple_mask.c) | <img src="shaders/shaders_simple_mask.png" alt="shaders_simple_mask" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_hot_reloading](shaders/shaders_hot_reloading.c) | <img src="shaders/shaders_hot_reloading.png" alt="shaders_hot_reloading" width="80"> | ⭐⭐⭐☆ | 3.0 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
 | [shaders_mesh_instancing](shaders/shaders_mesh_instancing.c) | <img src="shaders/shaders_mesh_instancing.png" alt="shaders_mesh_instancing" width="80"> | ⭐⭐⭐⭐️ | 3.7 | 4.2 | [seanpringle](https://github.com/seanpringle) |
 | [shaders_multi_sample2d](shaders/shaders_multi_sample2d.c) | <img src="shaders/shaders_multi_sample2d.png" alt="shaders_multi_sample2d" width="80"> | ⭐⭐☆☆ | 3.5 | 3.5 | [Ramon Santamaria](https://github.com/raysan5) |
-| [shaders_normalmap_rendering](shaders/shaders_normalmap_rendering.c) | <img src="shaders/shaders_normalmap_rendering.png" alt="shaders_normalmap_rendering" width="80"> | ⭐⭐⭐⭐️ | 5.6 | 5.6 | [Jeremy Montgomery](https://github.com/Sir_Irk) |
+| [shaders_normalmap_rendering](shaders/shaders_normalmap_rendering.c) | <img src="shaders/shaders_normalmap_rendering.png" alt="shaders_normalmap_rendering" width="80"> | ⭐⭐⭐⭐️ | 6.0 | 6.0 | [Jeremy Montgomery](https://github.com/Sir_Irk) |
 | [shaders_spotlight_rendering](shaders/shaders_spotlight_rendering.c) | <img src="shaders/shaders_spotlight_rendering.png" alt="shaders_spotlight_rendering" width="80"> | ⭐⭐☆☆ | 2.5 | 3.7 | [Chris Camacho](https://github.com/chriscamacho) |
 | [shaders_deferred_rendering](shaders/shaders_deferred_rendering.c) | <img src="shaders/shaders_deferred_rendering.png" alt="shaders_deferred_rendering" width="80"> | ⭐⭐⭐⭐️ | 4.5 | 4.5 | [Justin Andreas Lacoste](https://github.com/27justin) |
 | [shaders_hybrid_rendering](shaders/shaders_hybrid_rendering.c) | <img src="shaders/shaders_hybrid_rendering.png" alt="shaders_hybrid_rendering" width="80"> | ⭐⭐⭐⭐️ | 4.2 | 4.2 | [Buğra Alptekin Sarı](https://github.com/BugraAlptekinSari) |
@@ -259,11 +259,11 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_lightmap_rendering](shaders/shaders_lightmap_rendering.c) | <img src="shaders/shaders_lightmap_rendering.png" alt="shaders_lightmap_rendering" width="80"> | ⭐⭐⭐☆ | 4.5 | 4.5 | [Jussi Viitala](https://github.com/nullstare) |
 | [shaders_rounded_rectangle](shaders/shaders_rounded_rectangle.c) | <img src="shaders/shaders_rounded_rectangle.png" alt="shaders_rounded_rectangle" width="80"> | ⭐⭐⭐☆ | 5.5 | 5.5 | [Anstro Pleuton](https://github.com/anstropleuton) |
 | [shaders_depth_rendering](shaders/shaders_depth_rendering.c) | <img src="shaders/shaders_depth_rendering.png" alt="shaders_depth_rendering" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Luís Almeida](https://github.com/luis605) |
-| [shaders_game_of_life](shaders/shaders_game_of_life.c) | <img src="shaders/shaders_game_of_life.png" alt="shaders_game_of_life" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
+| [shaders_game_of_life](shaders/shaders_game_of_life.c) | <img src="shaders/shaders_game_of_life.png" alt="shaders_game_of_life" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Jordi Santonja](https://github.com/JordSant) |
 | [shaders_rlgl_compute](shaders/shaders_rlgl_compute.c) | <img src="shaders/shaders_rlgl_compute.png" alt="shaders_rlgl_compute" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
 | [shaders_cel_shading](shaders/shaders_cel_shading.c) | <img src="shaders/shaders_cel_shading.png" alt="shaders_cel_shading" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Gleb A](https://github.com/ggrizzly) |
 
-### category: audio [9]
+### category: audio [10]
 
 Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.
 
@@ -278,6 +278,7 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_sound_multi](audio/audio_sound_multi.c) | <img src="audio/audio_sound_multi.png" alt="audio_sound_multi" width="80"> | ⭐⭐☆☆ | 5.0 | 5.0 | [Jeffery Myers](https://github.com/JeffM2501) |
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Le Juez Victor](https://github.com/Bigfoot71) |
 | [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [IANN](https://github.com/meisei4) |
+| [audio_stream_callback](audio/audio_stream_callback.c) | <img src="audio/audio_stream_callback.png" alt="audio_stream_callback" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Dan Hoang](https://github.com/dan-hoang) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
 Here is an [examples template](examples_template.c) with instructions to start with!
