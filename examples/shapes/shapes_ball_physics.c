@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by David Buzatto (@davidbuzatto) and reviewed by Ramon Santamaria (@raysan5)
 *

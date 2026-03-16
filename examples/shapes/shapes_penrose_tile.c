@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 5.5, last time updated with raylib 6.0
 *   Based on: https://processing.org/examples/penrosetile.html
 *
 *   Example contributed by David Buzatto (@davidbuzatto) and reviewed by Ramon Santamaria (@raysan5)
