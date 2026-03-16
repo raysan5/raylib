@@ -8,16 +8,16 @@ Release:     raylib 6.0 (?? March 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - New Software Renderer backend [rlsw]
- - New rcore platform backend: Memory (memory buffer)
- - New rcore platform backend: Win32 (experimental)
- - New rcore platform backend: Emscripten (experimental)
- - Redesigned Skeletal Animation System
+ - New platform backend: Memory (memory buffer)
+ - New platform backend: Win32 (experimental)
+ - New platform backend: Emscripten (experimental)
  - Redesigned fullscreen modes and high-dpi content scaling
+ - Redesigned Skeletal Animation System
  - Redesigned Build Config System [config.h]
  - New File System API
  - New Text Management API
  - New tool: [rexm] raylib examples manager
- - New examples: +50 new examples and format unification
+     - Added +50 new examples to learn from
 
 Detailed changes:
 
@@ -36,7 +36,7 @@ Detailed changes:
 [rcore] REVIEWED: Automation system, saving to memory buffer and binary file (#5476) by @belan2470
 [rcore] REVIEWED: Check if `shader.locs` is not NULL before try to access (#5622) by @maiconpintoabreu
 [rcore] REVIEWED: Content scaling on macOS (#5186) by @mchcopl
-[rcore] REVIEWED: `GetRandomValue()`, fix modulo bias (#5392) by @Marcos-D
+[rcore] REVIEWED: `GetRandomValue()`, fix modulo bias (#5392) by @Marcos-D -WARNING-
 [rcore] REVIEWED: Controller not available after window init (#5358) by @sergii
 [rcore] REVIEWED: Cursor lock/unlock inconsistent behaviour (#5323) by @tacf
 [rcore] REVIEWED: Description of `RestoreWindow()` by @johnnymarler
@@ -783,8 +783,9 @@ Detailed changes:
 Release:     raylib 5.5 (18 November 2024)
 -------------------------------------------------------------------------
 KEY CHANGES:
- - New tool: raylib project creator
- - New rcore backends: RGFW and SDL3
+ - New tool: raylib project creator [rpc]
+ - New platform backends: RGFW
+ - New platform backends: SDL3 (along SDL2)
  - New platforms supported: Dreamcast, N64, PSP, PSVita, PS4
  - Added GPU Skinning support (all platforms and GL versions)
  - Added raymath C++ operators
