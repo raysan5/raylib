@@ -894,9 +894,9 @@ Detailed changes:
 [rlgl] ADDED: Vertex normals for RLGL immediate drawing mode (#3866) by @bohonghuang -WARNING-
 [rlgl] ADDED: `rlCullDistance*()` variables and getters (#3912) by @KotzaBoss
 [rlgl] ADDED: `rlSetClipPlanes()` function (#3912) by @KotzaBoss
-[rlgl] ADDED: `isGpuReady` flag, allow font loading with no GPU acceleration by @Ray -WARNING-
+[rlgl] ADDED: `isGpuReady` flag, allow font loading with no GPU acceleration by @raysan5 -WARNING-
 [rlgl] REVIEWED: Changed RLGL_VERSION from 4.5 to 5.0 (#3914) by @rsteinke1111
-[rlgl] REVIEWED: Shader load failing returns 0, instead of fallback by @Ray -WARNING-
+[rlgl] REVIEWED: Shader load failing returns 0, instead of fallback by @raysan5 -WARNING-
 [rlgl] REVIEWED: Standalone mode default flags (#4334) by @Asdqwe
 [rlgl] REVIEWED: Fix hardcoded index values in vboID array (#4312) by @JettMonstersGoBoom
 [rlgl] REVIEWED: GLint64 did not exist before OpenGL 3.2 (#4284) by @Tchan0
@@ -960,7 +960,7 @@ Detailed changes:
 [rtextures] ADDED: `ImageFromChannel()` (#4105) by @brccabral
 [rtextures] ADDED: `ImageDrawLineEx()` (#4097) by @Bigfoot71
 [rtextures] ADDED: `ImageDrawTriangle()` (#4094) by @Bigfoot71
-[rtextures] REMOVED: SVG files loading and drawing, moving it to raylib-extras by @Ray -WARNING-
+[rtextures] REMOVED: SVG files loading and drawing, moving it to raylib-extras by @raysan5 -WARNING-
 [rtextures] REVIEWED: `LoadImage()`, added support for 3-channel QOI images (#4384) by @R-YaTian
 [rtextures] REVIEWED: `LoadImageRaw()` #3926 by @raysan5
 [rtextures] REVIEWED: `LoadImageColors()`, advance k in loop (#4120) by @brccabral
@@ -988,7 +988,7 @@ Detailed changes:
 [rtext] ADDED: `TextToCamel()` (#4033) by @IoIxD
 [rtext] ADDED: `TextToSnake()` (#4033) by @IoIxD
 [rtext] ADDED: `TextToFloat()` (#3627) by @Benjamin Schmid Ties
-[rtext] REDESIGNED: `SetTextLineSpacing()` by @Ray -WARNING-
+[rtext] REDESIGNED: `SetTextLineSpacing()` by @raysan5 -WARNING-
 [rtext] REVIEWED: `LoadFontDataBDF()` name and formating by @raysan5
 [rtext] REVIEWED: `LoadFontDefault()`, initialize glyphs and recs to zero #4319 by @raysan5
 [rtext] REVIEWED: `LoadFontEx()`, avoid default font fallback (#4077) by @Peter0x44 -WARNING-
@@ -996,7 +996,7 @@ Detailed changes:
 [rtext] REVIEWED: `LoadBMFont()`, issue on not glyph data initialized by @raysan5
 [rtext] REVIEWED: `LoadFontFromMemory()`, use strncpy() to fix buffer overflow (#3795) by @Mingjie Shen
 [rtext] REVIEWED: `LoadCodepoints()` returning a freed ptr when count is 0 (#4089) by @Alice Nyaa
-[rtext] REVIEWED: `LoadFontData()` avoid fallback glyphs by @Ray -WARNING-
+[rtext] REVIEWED: `LoadFontData()` avoid fallback glyphs by @raysan5 -WARNING-
 [rtext] REVIEWED: `LoadFontData()`, load image only if glyph has been found in font by @raysan5
 [rtext] REVIEWED: `ExportFontAsCode()`, fix C++ compiler errors (#4013) by @DarkAssassin23
 [rtext] REVIEWED: `MeasureTextEx()` height calculation (#3770) by @Marrony Neris
