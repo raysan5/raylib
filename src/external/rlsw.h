@@ -314,6 +314,53 @@ typedef double              GLclampd;
 #define GL_UNSIGNED_SHORT_4_4_4_4           0x8033
 #define GL_UNSIGNED_SHORT_5_5_5_1           0x8034
 
+// OpenGL internal formats (not all are supported; see SWinternalformat)
+#define GL_ALPHA4                           0x803B
+#define GL_ALPHA8                           0x803C
+#define GL_ALPHA12                          0x803D
+#define GL_ALPHA16                          0x803E
+#define GL_LUMINANCE4                       0x803F
+#define GL_LUMINANCE8                       0x8040
+#define GL_LUMINANCE12                      0x8041
+#define GL_LUMINANCE16                      0x8042
+#define GL_LUMINANCE4_ALPHA4                0x8043
+#define GL_LUMINANCE6_ALPHA2                0x8044
+#define GL_LUMINANCE8_ALPHA8                0x8045
+#define GL_LUMINANCE12_ALPHA4               0x8046
+#define GL_LUMINANCE12_ALPHA12              0x8047
+#define GL_LUMINANCE16_ALPHA16              0x8048
+#define GL_INTENSITY                        0x8049
+#define GL_INTENSITY4                       0x804A
+#define GL_INTENSITY8                       0x804B
+#define GL_INTENSITY12                      0x804C
+#define GL_INTENSITY16                      0x804D
+#define GL_R3_G3_B2                         0x2A10
+#define GL_RGB4                             0x804F
+#define GL_RGB5                             0x8050
+#define GL_RGB8                             0x8051
+#define GL_RGB10                            0x8052
+#define GL_RGB12                            0x8053
+#define GL_RGB16                            0x8054
+#define GL_RGBA2                            0x8055
+#define GL_RGBA4                            0x8056
+#define GL_RGB5_A1                          0x8057
+#define GL_RGBA8                            0x8058
+#define GL_RGB10_A2                         0x8059
+#define GL_RGBA12                           0x805A
+#define GL_RGBA16                           0x805B
+
+// OpenGL internal formats extension
+#define GL_DEPTH_COMPONENT16                0x81A5
+#define GL_DEPTH_COMPONENT24                0x81A6
+#define GL_DEPTH_COMPONENT32                0x81A7
+#define GL_DEPTH_COMPONENT32F               0x8CAC
+#define GL_R16F                             0x822D
+#define GL_RGB16F                           0x881B
+#define GL_RGBA16F                          0x881A
+#define GL_R32F                             0x822E
+#define GL_RGB32F                           0x8815
+#define GL_RGBA32F                          0x8814
+
 // OpenGL GL_EXT_framebuffer_object
 #define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE           0x8CD0
 #define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME           0x8CD1
@@ -426,6 +473,8 @@ typedef double              GLclampd;
 #define glGetFramebufferAttachmentParameteriv(tr, a, p, v)  swGetFramebufferAttachmentParameteriv((a), (p), (v))
 #define glGenRenderbuffers(c, v)                            swGenTextures((c), (v))
 #define glDeleteRenderbuffers(c, v)                         swDeleteTextures((c), (v))
+#define glBindRenderbuffer(tr, rb)                          swBindTexture((rb))
+#define glRenderbufferStorage(tr, f, w, h)                  swTexStorage2D((w), (h), (f))
 
 // OpenGL functions NOT IMPLEMENTED by rlsw
 #define glDepthMask(X)                          ((void)(X))
@@ -490,74 +539,95 @@ typedef enum {
 
 typedef enum {
     SW_DRAW_INVALID = -1,
-    SW_POINTS = GL_POINTS,
-    SW_LINES = GL_LINES,
-    SW_TRIANGLES = GL_TRIANGLES,
-    SW_QUADS = GL_QUADS
+    SW_POINTS       = GL_POINTS,
+    SW_LINES        = GL_LINES,
+    SW_TRIANGLES    = GL_TRIANGLES,
+    SW_QUADS        = GL_QUADS
 } SWdraw;
 
 typedef enum {
     SW_POINT = GL_POINT,
-    SW_LINE = GL_LINE,
-    SW_FILL = GL_FILL
+    SW_LINE  = GL_LINE,
+    SW_FILL  = GL_FILL
 } SWpoly;
 
 typedef enum {
     SW_FRONT = GL_FRONT,
-    SW_BACK = GL_BACK,
+    SW_BACK  = GL_BACK,
 } SWface;
 
 typedef enum {
-    SW_ZERO = GL_ZERO,
-    SW_ONE = GL_ONE,
-    SW_SRC_COLOR = GL_SRC_COLOR,
+    SW_ZERO                = GL_ZERO,
+    SW_ONE                 = GL_ONE,
+    SW_SRC_COLOR           = GL_SRC_COLOR,
     SW_ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR,
-    SW_SRC_ALPHA = GL_SRC_ALPHA,
+    SW_SRC_ALPHA           = GL_SRC_ALPHA,
     SW_ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
-    SW_DST_ALPHA = GL_DST_ALPHA,
+    SW_DST_ALPHA           = GL_DST_ALPHA,
     SW_ONE_MINUS_DST_ALPHA = GL_ONE_MINUS_DST_ALPHA,
-    SW_DST_COLOR = GL_DST_COLOR,
+    SW_DST_COLOR           = GL_DST_COLOR,
     SW_ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR,
-    SW_SRC_ALPHA_SATURATE = GL_SRC_ALPHA_SATURATE
+    SW_SRC_ALPHA_SATURATE  = GL_SRC_ALPHA_SATURATE
 } SWfactor;
 
 typedef enum {
-    SW_LUMINANCE = GL_LUMINANCE,
+    SW_LUMINANCE       = GL_LUMINANCE,
     SW_LUMINANCE_ALPHA = GL_LUMINANCE_ALPHA,
-    SW_RGB = GL_RGB,
-    SW_RGBA = GL_RGBA,
+    SW_RGB             = GL_RGB,
+    SW_RGBA            = GL_RGBA,
     SW_DEPTH_COMPONENT = GL_DEPTH_COMPONENT,
 } SWformat;
 
 typedef enum {
-    SW_UNSIGNED_BYTE = GL_UNSIGNED_BYTE,
-    SW_UNSIGNED_BYTE_3_3_2 = GL_UNSIGNED_BYTE_3_3_2,
-    SW_BYTE = GL_BYTE,
-    SW_UNSIGNED_SHORT = GL_UNSIGNED_SHORT,
-    SW_UNSIGNED_SHORT_5_6_5 = GL_UNSIGNED_SHORT_5_6_5,
+    SW_UNSIGNED_BYTE          = GL_UNSIGNED_BYTE,
+    SW_UNSIGNED_BYTE_3_3_2    = GL_UNSIGNED_BYTE_3_3_2,
+    SW_BYTE                   = GL_BYTE,
+    SW_UNSIGNED_SHORT         = GL_UNSIGNED_SHORT,
+    SW_UNSIGNED_SHORT_5_6_5   = GL_UNSIGNED_SHORT_5_6_5,
     SW_UNSIGNED_SHORT_4_4_4_4 = GL_UNSIGNED_SHORT_4_4_4_4,
     SW_UNSIGNED_SHORT_5_5_5_1 = GL_UNSIGNED_SHORT_5_5_5_1,
-    SW_SHORT = GL_SHORT,
-    SW_UNSIGNED_INT = GL_UNSIGNED_INT,
-    SW_INT = GL_INT,
-    SW_FLOAT = GL_FLOAT
+    SW_SHORT                  = GL_SHORT,
+    SW_UNSIGNED_INT           = GL_UNSIGNED_INT,
+    SW_INT                    = GL_INT,
+    SW_FLOAT                  = GL_FLOAT
 } SWtype;
 
 typedef enum {
+    SW_LUMINANCE8         = GL_LUMINANCE8,
+    SW_LUMINANCE8_ALPHA8  = GL_LUMINANCE8_ALPHA8,
+    SW_R3_G3_B2           = GL_R3_G3_B2,
+    SW_RGB8               = GL_RGB8,
+    SW_RGBA4              = GL_RGBA4,
+    SW_RGB5_A1            = GL_RGB5_A1,
+    SW_RGBA8              = GL_RGBA8,
+    SW_R16F               = GL_R16F,
+    SW_RGB16F             = GL_RGB16F,
+    SW_RGBA16F            = GL_RGBA16F,
+    SW_R32F               = GL_R32F,
+    SW_RGB32F             = GL_RGB32F,
+    SW_RGBA32F            = GL_RGBA32F,
+    SW_DEPTH_COMPONENT16  = GL_DEPTH_COMPONENT16,
+    SW_DEPTH_COMPONENT24  = GL_DEPTH_COMPONENT24,
+    SW_DEPTH_COMPONENT32  = GL_DEPTH_COMPONENT32,
+    SW_DEPTH_COMPONENT32F = GL_DEPTH_COMPONENT32F,
+    //SW_R5_G6_B5,       // Not defined by OpenGL
+} SWinternalformat;
+
+typedef enum {
     SW_NEAREST = GL_NEAREST,
-    SW_LINEAR = GL_LINEAR
+    SW_LINEAR  = GL_LINEAR
 } SWfilter;
 
 typedef enum {
     SW_REPEAT = GL_REPEAT,
-    SW_CLAMP = GL_CLAMP,
+    SW_CLAMP  = GL_CLAMP,
 } SWwrap;
 
 typedef enum {
     SW_TEXTURE_MIN_FILTER = GL_TEXTURE_MIN_FILTER,
     SW_TEXTURE_MAG_FILTER = GL_TEXTURE_MAG_FILTER,
-    SW_TEXTURE_WRAP_S = GL_TEXTURE_WRAP_S,
-    SW_TEXTURE_WRAP_T = GL_TEXTURE_WRAP_T
+    SW_TEXTURE_WRAP_S     = GL_TEXTURE_WRAP_S,
+    SW_TEXTURE_WRAP_T     = GL_TEXTURE_WRAP_T
 } SWtexparam;
 
 typedef enum {
@@ -571,20 +641,20 @@ typedef enum {
 } SWattachget;
 
 typedef enum {
-    SW_FRAMEBUFFER_COMPLETE = GL_FRAMEBUFFER_COMPLETE,
-    SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,
+    SW_FRAMEBUFFER_COMPLETE                      = GL_FRAMEBUFFER_COMPLETE,
+    SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT         = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,
     SW_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,
-    SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS,
+    SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS         = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS,
 } SWfbstatus;
 
 typedef enum {
-    SW_NO_ERROR = GL_NO_ERROR,
-    SW_INVALID_ENUM = GL_INVALID_ENUM,
-    SW_INVALID_VALUE = GL_INVALID_VALUE,
-    SW_STACK_OVERFLOW = GL_STACK_OVERFLOW,
-    SW_STACK_UNDERFLOW = GL_STACK_UNDERFLOW,
+    SW_NO_ERROR          = GL_NO_ERROR,
+    SW_INVALID_ENUM      = GL_INVALID_ENUM,
+    SW_INVALID_VALUE     = GL_INVALID_VALUE,
+    SW_STACK_OVERFLOW    = GL_STACK_OVERFLOW,
+    SW_STACK_UNDERFLOW   = GL_STACK_UNDERFLOW,
     SW_INVALID_OPERATION = GL_INVALID_OPERATION,
-    SW_OUT_OF_MEMORY = GL_OUT_OF_MEMORY,
+    SW_OUT_OF_MEMORY     = GL_OUT_OF_MEMORY,
 } SWerrcode;
 
 //------------------------------------------------------------------------------------
@@ -4146,6 +4216,8 @@ void swClearDepth(float depth)
 
 void swClear(uint32_t bitmask)
 {
+    if (!sw_is_ready_to_render()) return;
+
     if ((bitmask & (SW_COLOR_BUFFER_BIT)) && (RLSW.colorBuffer != NULL) && (RLSW.colorBuffer->pixels != NULL))
     {
         int size = RLSW.colorBuffer->width*RLSW.colorBuffer->height;
@@ -4887,8 +4959,12 @@ void swDeleteTextures(int count, sw_handle_t *textures)
         sw_texture_t *tex = sw_pool_get(&RLSW.texturePool, textures[i]);
         if (!tex) { RLSW.errCode = SW_INVALID_VALUE; continue; }
         if (tex == RLSW.boundTexture) RLSW.boundTexture = NULL;
+        if (tex == RLSW.colorBuffer) RLSW.colorBuffer = NULL;
+        if (tex == RLSW.depthBuffer) RLSW.depthBuffer = NULL;
 
         sw_texture_free(tex);
+        *tex = (sw_texture_t) { 0 };
+
         sw_pool_free(&RLSW.texturePool, textures[i]);
     }
 }
@@ -4901,6 +4977,38 @@ void swBindTexture(sw_handle_t id)
     RLSW.boundTexture = sw_pool_get(&RLSW.texturePool, id);
 }
 
+void swTexStorage2D(int width, int height, SWinternalformat format)
+{
+    if (RLSW.boundTexture == NULL) return;
+
+    int pixelFormat = SW_PIXELFORMAT_UNKNOWN;
+    switch (format)
+    {
+        case SW_LUMINANCE8: pixelFormat = SW_PIXELFORMAT_COLOR_GRAYSCALE; break;
+        case SW_LUMINANCE8_ALPHA8: pixelFormat = SW_PIXELFORMAT_COLOR_GRAYALPHA; break;
+        case SW_R3_G3_B2: pixelFormat = SW_PIXELFORMAT_COLOR_R3G3B2; break;
+        case SW_RGB8: pixelFormat = SW_PIXELFORMAT_COLOR_R8G8B8; break;
+        case SW_RGBA4: pixelFormat = SW_PIXELFORMAT_COLOR_R4G4B4A4; break;
+        case SW_RGB5_A1: pixelFormat = SW_PIXELFORMAT_COLOR_R5G5B5A1; break;
+        case SW_RGBA8: pixelFormat = SW_PIXELFORMAT_COLOR_R8G8B8A8; break;
+        case SW_R16F: pixelFormat = SW_PIXELFORMAT_COLOR_R16; break;
+        case SW_RGB16F: pixelFormat = SW_PIXELFORMAT_COLOR_R16G16B16; break;
+        case SW_RGBA16F: pixelFormat = SW_PIXELFORMAT_COLOR_R16G16B16A16; break;
+        case SW_R32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32; break;
+        case SW_RGB32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32G32B32; break;
+        case SW_RGBA32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32G32B32A32; break;
+        case SW_DEPTH_COMPONENT16: pixelFormat = SW_PIXELFORMAT_DEPTH_D16; break;
+        case SW_DEPTH_COMPONENT24: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
+        case SW_DEPTH_COMPONENT32: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
+        case SW_DEPTH_COMPONENT32F: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
+        default:
+            RLSW.errCode = SW_INVALID_ENUM;
+            return;
+    }
+
+    (void)sw_texture_alloc(RLSW.boundTexture, NULL, width, height, pixelFormat);
+}
+
 void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data)
 {
     if (RLSW.boundTexture == NULL) return;
@@ -4908,7 +5016,6 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, const voi
     int pixelFormat = sw_pixel_get_format(format, type);
     if (pixelFormat <= SW_PIXELFORMAT_UNKNOWN) { RLSW.errCode = SW_INVALID_ENUM; return; }
 
-    *RLSW.boundTexture = (sw_texture_t){ 0 };
     (void)sw_texture_alloc(RLSW.boundTexture, data, width, height, pixelFormat);
 }
 
