@@ -960,7 +960,7 @@ typedef struct {
 
 typedef void (*sw_blend_factor_t)(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst);
 typedef void (*sw_raster_triangle_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2);
-typedef void (*sw_raster_quad_f)(void);
+typedef void (*sw_raster_quad_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2, const sw_vertex_t *v3);
 typedef void (*sw_raster_line_f)(const sw_vertex_t *v0, const sw_vertex_t *v1);
 typedef void (*sw_raster_point_f)(const sw_vertex_t *v);
 
@@ -3171,7 +3171,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
     // These declarations make all variants visible to static analysis tools without affecting compilation
     #define SW_FWD_DECL(NAME, _FLAGS) \
-        static void sw_raster_quad_##NAME(void);
+        static void sw_raster_quad_##NAME(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2, const sw_vertex_t *v3);
     SW_RASTER_VARIANTS(SW_FWD_DECL) // NOLINT
     #undef SW_FWD_DECL
 
@@ -3625,7 +3625,12 @@ static void sw_quad_render(uint32_t state)
 
     if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
     {
-        SW_RASTER_QUAD_FUNCS[state]();
+        SW_RASTER_QUAD_FUNCS[state](
+            &RLSW.vertexBuffer[0],
+            &RLSW.vertexBuffer[1],
+            &RLSW.vertexBuffer[2],
+            &RLSW.vertexBuffer[3]
+        );
     }
     else
     {
@@ -5531,164 +5536,107 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
 #define SW_RASTER_QUAD SW_CONCATX(sw_raster_quad_, RLSW_TEMPLATE_RASTER_QUAD)
 
-#ifndef RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
-#define RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
-static void sw_quad_sort_cw(const sw_vertex_t* *output)
-{
-    const sw_vertex_t *input = RLSW.vertexBuffer;
-
-    // Calculate the centroid of the quad
-    float cx = (input[0].screen[0] + input[1].screen[0] +
-                input[2].screen[0] + input[3].screen[0])*0.25f;
-    float cy = (input[0].screen[1] + input[1].screen[1] +
-                input[2].screen[1] + input[3].screen[1])*0.25f;
-
-    // Calculate the angle of each vertex relative to the center
-    // and assign them directly to their correct position
-    const sw_vertex_t *corners[4] = { 0 };
-
-    for (int i = 0; i < 4; i++)
-    {
-        float dx = input[i].screen[0] - cx;
-        float dy = input[i].screen[1] - cy;
-
-        // Determine the quadrant (clockwise from top-left)
-        // top-left: dx < 0, dy < 0
-        // top-right: dx >= 0, dy < 0
-        // bottom-right: dx >= 0, dy >= 0
-        // bottom-left: dx < 0, dy >= 0
-
-        int idx;
-        if (dy < 0) idx = (dx < 0)? 0 : 1; // Top row
-        else idx = (dx < 0)? 3 : 2; // Bottom row
-
-        corners[idx] = &input[i];
-    }
-
-    output[0] = corners[0];  // top-left
-    output[1] = corners[1];  // top-right
-    output[2] = corners[2];  // bottom-right
-    output[3] = corners[3];  // bottom-left
-}
-#endif // RLSW_TEMPLATE_RASTER_QUAD_INTERNAL
-
 // REVIEW: Could a perfectly aligned quad, where one of the four points has a different depth,
 //         still appear perfectly aligned from a certain point of view?
 //         Because in that case, it's still needed to perform perspective division for textures and colors...
 
-static void SW_RASTER_QUAD(void)
+static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
+                           const sw_vertex_t *c, const sw_vertex_t *d)
 {
-    const sw_vertex_t *sortedVerts[4];
-    sw_quad_sort_cw(sortedVerts);
+    // Classify corners
+    // For axis-aligned quads x+y and x-y uniquely identify each corner
+    const sw_vertex_t *verts[4] = { a, b, c, d };
+    const sw_vertex_t *tl = verts[0], *tr = verts[0], *br = verts[0], *bl = verts[0];
+    for (int i = 1; i < 4; i++)
+    {
+        float sum  = verts[i]->screen[0] + verts[i]->screen[1];
+        float diff = verts[i]->screen[0] - verts[i]->screen[1];
+        if (sum  < tl->screen[0] + tl->screen[1]) tl = verts[i];
+        if (diff > tr->screen[0] - tr->screen[1]) tr = verts[i];
+        if (sum  > br->screen[0] + br->screen[1]) br = verts[i];
+        if (diff < bl->screen[0] - bl->screen[1]) bl = verts[i];
+    }
 
-    const sw_vertex_t *v0 = sortedVerts[0];
-    const sw_vertex_t *v1 = sortedVerts[1];
-    const sw_vertex_t *v2 = sortedVerts[2];
-    const sw_vertex_t *v3 = sortedVerts[3];
+    int xMin = (int)tl->screen[0];
+    int yMin = (int)tl->screen[1];
+    int xMax = (int)br->screen[0];
+    int yMax = (int)br->screen[1];
 
-    /* Screen bounds (axis-aligned) */
-    int xMin = (int)v0->screen[0];
-    int yMin = (int)v0->screen[1];
-    int xMax = (int)v2->screen[0];
-    int yMax = (int)v2->screen[1];
+    float w = (float)(xMax - xMin);
+    float h = (float)(yMax - yMin);
+    if (w <= 0 || h <= 0) return;
 
-    float w = v2->screen[0] - v0->screen[0];
-    float h = v2->screen[1] - v0->screen[1];
+    float wRcp = 1.0f / w;
+    float hRcp = 1.0f / h;
 
-    if ((w == 0) || (h == 0)) return;
+    // Subpixel corrections
+    float xSubstep = 1.0f - sw_fract(tl->screen[0]);
+    float ySubstep = 1.0f - sw_fract(tl->screen[1]);
 
-    float wRcp = (w > 0.0f)? 1.0f/w : 0.0f;
-    float hRcp = (h > 0.0f)? 1.0f/h : 0.0f;
+    // Gradients along X (tl->tr) and Y (tl->bl)
+    float dCdx[4] = {
+        (tr->color[0] - tl->color[0]) * wRcp,
+        (tr->color[1] - tl->color[1]) * wRcp,
+        (tr->color[2] - tl->color[2]) * wRcp,
+        (tr->color[3] - tl->color[3]) * wRcp,
+    };
+    float dCdy[4] = {
+        (bl->color[0] - tl->color[0]) * hRcp,
+        (bl->color[1] - tl->color[1]) * hRcp,
+        (bl->color[2] - tl->color[2]) * hRcp,
+        (bl->color[3] - tl->color[3]) * hRcp,
+    };
 
-    /* Subpixel corrections */
-    float xSubstep = 1.0f - sw_fract(v0->screen[0]);
-    float ySubstep = 1.0f - sw_fract(v0->screen[1]);
-
-    /* Calculation of vertex gradients in X and Y */
-#ifdef SW_ENABLE_TEXTURE
-    float dUdx = (v1->texcoord[0] - v0->texcoord[0])*wRcp;
-    float dVdx = (v1->texcoord[1] - v0->texcoord[1])*wRcp;
-    float dUdy = (v3->texcoord[0] - v0->texcoord[0])*hRcp;
-    float dVdy = (v3->texcoord[1] - v0->texcoord[1])*hRcp;
+#ifdef SW_ENABLE_DEPTH_TEST
+    float dZdx = (tr->homogeneous[2] - tl->homogeneous[2]) * wRcp;
+    float dZdy = (bl->homogeneous[2] - tl->homogeneous[2]) * hRcp;
+    float zRow = tl->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;
 #endif
 
-    float dCdx[4], dCdy[4];
-    dCdx[0] = (v1->color[0] - v0->color[0])*wRcp;
-    dCdx[1] = (v1->color[1] - v0->color[1])*wRcp;
-    dCdx[2] = (v1->color[2] - v0->color[2])*wRcp;
-    dCdx[3] = (v1->color[3] - v0->color[3])*wRcp;
-    dCdy[0] = (v3->color[0] - v0->color[0])*hRcp;
-    dCdy[1] = (v3->color[1] - v0->color[1])*hRcp;
-    dCdy[2] = (v3->color[2] - v0->color[2])*hRcp;
-    dCdy[3] = (v3->color[3] - v0->color[3])*hRcp;
+#ifdef SW_ENABLE_TEXTURE
+    float dUdx = (tr->texcoord[0] - tl->texcoord[0]) * wRcp;
+    float dVdx = (tr->texcoord[1] - tl->texcoord[1]) * wRcp;
+    float dUdy = (bl->texcoord[0] - tl->texcoord[0]) * hRcp;
+    float dVdy = (bl->texcoord[1] - tl->texcoord[1]) * hRcp;
+    float uRow = tl->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;
+    float vRow = tl->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;
+#endif
 
-    float dZdx, dZdy;
-    dZdx = (v1->homogeneous[2] - v0->homogeneous[2])*wRcp;
-    dZdy = (v3->homogeneous[2] - v0->homogeneous[2])*hRcp;
+    float cRow[4] = {
+        tl->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,
+        tl->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,
+        tl->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,
+        tl->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep,
+    };
 
-    int wDst = RLSW.colorBuffer->width;
+    int stride = RLSW.colorBuffer->width;
     uint8_t *cPixels = RLSW.colorBuffer->pixels;
 #ifdef SW_ENABLE_DEPTH_TEST
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
-#ifdef SW_ENABLE_DEPTH_TEST
-    float zScanline = v0->homogeneous[2] + dZdx*xSubstep + dZdy*ySubstep;
-#endif
-#ifdef SW_ENABLE_TEXTURE
-    float uScanline = v0->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;
-    float vScanline = v0->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;
-#endif
-
-    float colorScanline[4] = {
-        v0->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,
-        v0->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,
-        v0->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,
-        v0->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep
-    };
-
     for (int y = yMin; y < yMax; y++)
     {
-        int baseOffset = y*wDst + xMin;
+        int baseOffset = y*stride + xMin;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
     #ifdef SW_ENABLE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
-    #endif
-
-    #ifdef SW_ENABLE_DEPTH_TEST
-        float z = zScanline;
+        float z = zRow;
     #endif
     #ifdef SW_ENABLE_TEXTURE
-        float u = uScanline;
-        float v = vScanline;
+        float u = uRow;
+        float v = vRow;
     #endif
+        float color[4] = { cRow[0], cRow[1], cRow[2], cRow[3] };
 
-        float color[4] = {
-            colorScanline[0],
-            colorScanline[1],
-            colorScanline[2],
-            colorScanline[3]
-        };
-
-        // Span rasterization
         for (int x = xMin; x < xMax; x++)
         {
-            // Pixel color computation
-            float srcColor[4] = {
-                color[0],
-                color[1],
-                color[2],
-                color[3]
-            };
+            float srcColor[4] = { color[0], color[1], color[2], color[3] };
 
-            // Test and write depth
             #ifdef SW_ENABLE_DEPTH_TEST
             {
-                /* TODO: Implement different depth funcs? */
                 float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
                 if (z > depth) goto discard;
-
-                /* TODO: Implement depth mask */
                 SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
             }
             #endif
@@ -5718,16 +5666,17 @@ static void SW_RASTER_QUAD(void)
             #endif
 
         discard:
-            #ifdef SW_ENABLE_DEPTH_TEST
-            {
-                z += dZdx;
-            }
-            #endif
-
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
             color[3] += dCdx[3];
+
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                z += dZdx;
+                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+            }
+            #endif
 
             #ifdef SW_ENABLE_TEXTURE
             {
@@ -5737,29 +5686,23 @@ static void SW_RASTER_QUAD(void)
             #endif
 
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
-
-            #ifdef SW_ENABLE_DEPTH_TEST
-            {
-                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
-            }
-            #endif
         }
+
+        cRow[0] += dCdy[0];
+        cRow[1] += dCdy[1];
+        cRow[2] += dCdy[2];
+        cRow[3] += dCdy[3];
 
         #ifdef SW_ENABLE_DEPTH_TEST
         {
-            zScanline += dZdy;
+            zRow += dZdy;
         }
         #endif
 
-        colorScanline[0] += dCdy[0];
-        colorScanline[1] += dCdy[1];
-        colorScanline[2] += dCdy[2];
-        colorScanline[3] += dCdy[3];
-
         #ifdef SW_ENABLE_TEXTURE
         {
-            uScanline += dUdy;
-            vScanline += dVdy;
+            uRow += dUdy;
+            vRow += dVdy;
         }
         #endif
     }
