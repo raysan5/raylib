@@ -1116,7 +1116,14 @@ static inline void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const 
     for (int i = 0; i < 16; i++) dst[i] = result[i];
 }
 
-static inline int sw_clampi(int v, int min, int max)
+static inline int sw_clamp_int(int v, int min, int max)
+{
+    if (v < min) return min;
+    if (v > max) return max;
+    return v;
+}
+
+static inline int sw_clamp(float v, float min, float max)
 {
     if (v < min) return min;
     if (v > max) return max;
@@ -2655,10 +2662,10 @@ static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const fl
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int xMin = sw_clampi(RLSW.scMin[0], 0, colorBuffer->width - 1);
-        int xMax = sw_clampi(RLSW.scMax[0], 0, colorBuffer->width - 1);
-        int yMin = sw_clampi(RLSW.scMin[1], 0, colorBuffer->height - 1);
-        int yMax = sw_clampi(RLSW.scMax[1], 0, colorBuffer->height - 1);
+        int xMin = sw_clamp_int(RLSW.scMin[0], 0, colorBuffer->width - 1);
+        int xMax = sw_clamp_int(RLSW.scMax[0], 0, colorBuffer->width - 1);
+        int yMin = sw_clamp_int(RLSW.scMin[1], 0, colorBuffer->height - 1);
+        int yMax = sw_clamp_int(RLSW.scMax[1], 0, colorBuffer->height - 1);
 
         int w = xMax - xMin;
         for (int y = yMin; y <= yMax; y++)
@@ -2692,10 +2699,10 @@ static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float de
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        int xMin = sw_clampi(RLSW.scMin[0], 0, depthBuffer->width - 1);
-        int xMax = sw_clampi(RLSW.scMax[0], 0, depthBuffer->width - 1);
-        int yMin = sw_clampi(RLSW.scMin[1], 0, depthBuffer->height - 1);
-        int yMax = sw_clampi(RLSW.scMax[1], 0, depthBuffer->height - 1);
+        int xMin = sw_clamp_int(RLSW.scMin[0], 0, depthBuffer->width - 1);
+        int xMax = sw_clamp_int(RLSW.scMax[0], 0, depthBuffer->width - 1);
+        int yMin = sw_clamp_int(RLSW.scMin[1], 0, depthBuffer->height - 1);
+        int yMax = sw_clamp_int(RLSW.scMax[1], 0, depthBuffer->height - 1);
 
         int w = xMax - xMin;
         for (int y = yMin; y <= yMax; y++)
@@ -3740,6 +3747,13 @@ static bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
     sw_project_ndc_to_screen(v0->screen, v0->homogeneous);
     sw_project_ndc_to_screen(v1->screen, v1->homogeneous);
 
+    // NDC +1.0 projects to exactly (width + 0.5f), which truncates out of bounds
+    // The clamp is at most 0.5px on a boundary endpoint, it's visually imperceptible
+    v0->screen[0] = sw_clamp(v0->screen[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+    v0->screen[1] = sw_clamp(v0->screen[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
+    v1->screen[0] = sw_clamp(v1->screen[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+    v1->screen[1] = sw_clamp(v1->screen[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
+
     return true;
 }
 
@@ -3784,10 +3798,10 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
 
     if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
     {
-        min[0] = sw_clampi(RLSW.scMin[0], 0, RLSW.colorBuffer->width);
-        min[1] = sw_clampi(RLSW.scMin[1], 0, RLSW.colorBuffer->height);
-        max[0] = sw_clampi(RLSW.scMax[0], 0, RLSW.colorBuffer->width);
-        max[1] = sw_clampi(RLSW.scMax[1], 0, RLSW.colorBuffer->height);
+        min[0] = sw_clamp_int(RLSW.scMin[0], 0, RLSW.colorBuffer->width);
+        min[1] = sw_clamp_int(RLSW.scMin[1], 0, RLSW.colorBuffer->height);
+        max[0] = sw_clamp_int(RLSW.scMax[0], 0, RLSW.colorBuffer->width);
+        max[1] = sw_clamp_int(RLSW.scMax[1], 0, RLSW.colorBuffer->height);
     }
 
     bool insideX = (v->screen[0] - RLSW.pointRadius < max[0]) && (v->screen[0] + RLSW.pointRadius > min[0]);
@@ -4011,8 +4025,8 @@ void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void
     if (w > RLSW.colorBuffer->width) w = RLSW.colorBuffer->width;
     if (h > RLSW.colorBuffer->height) h = RLSW.colorBuffer->height;
 
-    x = sw_clampi(x, 0, w);
-    y = sw_clampi(y, 0, h);
+    x = sw_clamp_int(x, 0, w);
+    y = sw_clamp_int(y, 0, h);
 
     if ((x >= w) || (y >= h)) return;
 
@@ -4040,8 +4054,8 @@ void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, in
     if (wSrc > RLSW.colorBuffer->width) wSrc = RLSW.colorBuffer->width;
     if (hSrc > RLSW.colorBuffer->height) hSrc = RLSW.colorBuffer->height;
 
-    xSrc = sw_clampi(xSrc, 0, wSrc);
-    ySrc = sw_clampi(ySrc, 0, hSrc);
+    xSrc = sw_clamp_int(xSrc, 0, wSrc);
+    ySrc = sw_clamp_int(ySrc, 0, hSrc);
 
     // Check if the sizes are identical after clamping the source to avoid unexpected issues
     // TODO: REVIEW: This repeats the operations if true, so a copy function can be made without these checks
@@ -5782,9 +5796,8 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 
     for (int i = 0; i < numPixels; i++)
     {
-        // TODO: REVIEW: May require reviewing projection details
-        int px = (int)(x - 0.5f);
-        int py = (int)(y - 0.5f);
+        int px = x;
+        int py = y;
 
         int baseOffset = py*fbWidth + px;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
