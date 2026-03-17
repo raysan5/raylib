@@ -362,6 +362,7 @@ typedef double              GLclampd;
 #define GL_RGBA32F                          0x8814
 
 // OpenGL GL_EXT_framebuffer_object
+#define GL_DRAW_FRAMEBUFFER_BINDING                     0x8CA6
 #define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE           0x8CD0
 #define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME           0x8CD1
 #define GL_FRAMEBUFFER_COMPLETE                         0x8CD5
@@ -404,6 +405,7 @@ typedef double              GLclampd;
 #define glReadPixels(x, y, w, h, f, t, p)           swReadPixels((x), (y), (w), (h), (f), (t), (p))
 #define glEnable(state)                             swEnable((state))
 #define glDisable(state)                            swDisable((state))
+#define glGetIntegerv(pname, params)                swGetIntegerv((pname), (params))
 #define glGetFloatv(pname, params)                  swGetFloatv((pname), (params))
 #define glGetString(pname)                          swGetString((pname))
 #define glGetError()                                swGetError()
@@ -517,7 +519,8 @@ typedef enum {
     SW_PROJECTION_STACK_DEPTH = GL_PROJECTION_STACK_DEPTH,
     SW_TEXTURE_MATRIX = GL_TEXTURE_MATRIX,
     SW_TEXTURE_STACK_DEPTH = GL_TEXTURE_STACK_DEPTH,
-    SW_VIEWPORT = GL_VIEWPORT
+    SW_VIEWPORT = GL_VIEWPORT,
+    SW_DRAW_FRAMEBUFFER_BINDING = GL_DRAW_FRAMEBUFFER_BINDING,
 } SWget;
 
 typedef enum {
@@ -1008,7 +1011,7 @@ typedef struct {
     sw_matrix_t matMVP;                                         // Model view projection matrix, calculated and used internally
     bool isDirtyMVP;                                            // Indicates if the MVP matrix should be rebuilt
 
-    sw_framebuffer_t* boundFramebuffer;                         // Framebuffer currently bound
+    sw_handle_t boundFramebufferId;                             // Framebuffer currently bound
     sw_texture_t* colorBuffer;                                  // Color buffer currently bound
     sw_texture_t* depthBuffer;                                  // Depth buffer currently bound
     sw_pool_t framebufferPool;                                  // Framebuffer object pool
@@ -4102,6 +4105,7 @@ void swGetIntegerv(SWget name, int *v)
         case SW_MODELVIEW_STACK_DEPTH: *v = SW_MODELVIEW_STACK_DEPTH; break;
         case SW_PROJECTION_STACK_DEPTH: *v = SW_PROJECTION_STACK_DEPTH; break;
         case SW_TEXTURE_STACK_DEPTH: *v = SW_TEXTURE_STACK_DEPTH; break;
+        case SW_DRAW_FRAMEBUFFER_BINDING: *v = RLSW.boundFramebufferId; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
@@ -5150,9 +5154,9 @@ void swDeleteFramebuffers(int count, uint32_t* framebuffers)
         sw_framebuffer_t *fb = sw_pool_get(&RLSW.framebufferPool, framebuffers[i]);
         if (!fb) { RLSW.errCode = SW_INVALID_VALUE; continue; }
 
-        if (fb == RLSW.boundFramebuffer)
+        if (framebuffers[i] == RLSW.boundFramebufferId)
         {
-            RLSW.boundFramebuffer = NULL;
+            RLSW.boundFramebufferId = SW_HANDLE_NULL;
             RLSW.colorBuffer = &RLSW.framebuffer.color;
             RLSW.depthBuffer = &RLSW.framebuffer.depth;
         }
@@ -5165,7 +5169,7 @@ void swBindFramebuffer(uint32_t id)
 {
     if (id == SW_HANDLE_NULL)
     {
-        RLSW.boundFramebuffer = NULL;
+        RLSW.boundFramebufferId = SW_HANDLE_NULL;
         RLSW.colorBuffer = &RLSW.framebuffer.color;
         RLSW.depthBuffer = &RLSW.framebuffer.depth;
         return;
@@ -5178,27 +5182,30 @@ void swBindFramebuffer(uint32_t id)
         return;
     }
 
-    RLSW.boundFramebuffer = fb;
+    RLSW.boundFramebufferId = id;
     RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, fb->colorAttachment);
     RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, fb->depthAttachment);
 }
 
 void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
 {
-    if (RLSW.boundFramebuffer == NULL)
+    if (RLSW.boundFramebufferId == SW_HANDLE_NULL)
     {
         RLSW.errCode = SW_INVALID_OPERATION; // not really standard but hey
         return;
     }
 
+    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
+    if (fb == NULL) return; // Should never happen
+
     switch (attach)
     {
         case SW_COLOR_ATTACHMENT:
-            RLSW.boundFramebuffer->colorAttachment = texture;
+            fb->colorAttachment = texture;
             RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, texture);
             break;
         case SW_DEPTH_ATTACHMENT:
-            RLSW.boundFramebuffer->depthAttachment = texture;
+            fb->depthAttachment = texture;
             RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, texture);
             break;
         default:
@@ -5209,7 +5216,7 @@ void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
 
 SWfbstatus swCheckFramebufferStatus(void)
 {
-    if (RLSW.boundFramebuffer == NULL)
+    if (RLSW.boundFramebufferId == SW_HANDLE_NULL)
     {
         return SW_FRAMEBUFFER_COMPLETE;
     }
@@ -5253,7 +5260,7 @@ SWfbstatus swCheckFramebufferStatus(void)
 
 void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget property, int *v)
 {
-    if (RLSW.boundFramebuffer == NULL)
+    if (RLSW.boundFramebufferId == SW_HANDLE_NULL)
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
@@ -5265,6 +5272,9 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
         return;
     }
 
+    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
+    if (fb == NULL) return; // Should never happen
+
     switch (property)
     {
         case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
@@ -5272,10 +5282,10 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
             switch (attachment)
             {
                 case SW_COLOR_ATTACHMENT:
-                    *v = RLSW.boundFramebuffer->colorAttachment;
+                    *v = fb->colorAttachment;
                     break;
                 case SW_DEPTH_ATTACHMENT:
-                    *v = RLSW.boundFramebuffer->depthAttachment;
+                    *v = fb->depthAttachment;
                     break;
             }
         }
