@@ -963,7 +963,7 @@ typedef struct {
     size_t stride;
 } sw_pool_t;
 
-typedef void (*sw_blend_factor_t)(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst);
+typedef void (*sw_blend_f)(float *SW_RESTRICT dst, const float *SW_RESTRICT src);
 typedef void (*sw_raster_triangle_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2);
 typedef void (*sw_raster_quad_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2, const sw_vertex_t *v3);
 typedef void (*sw_raster_line_f)(const sw_vertex_t *v0, const sw_vertex_t *v1);
@@ -1022,11 +1022,9 @@ typedef struct {
     sw_texture_t *boundTexture;                                 // Texture currently bound
     sw_pool_t texturePool;                                      // Texture object pool
 
-    SWfactor srcFactor;                     // Source blending factor
-    SWfactor dstFactor;                     // Destination bleending factor
-
-    sw_blend_factor_t srcFactorFunc;        // Source blend function
-    sw_blend_factor_t dstFactorFunc;        // Destination blend function
+    SWfactor srcFactor;                                         // Source blending factor
+    SWfactor dstFactor;                                         // Destination bleending factor
+    sw_blend_f blendFunc;                                       // Source blend function
 
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
@@ -2735,77 +2733,103 @@ static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buf
 
 // Color blending functionality
 //-------------------------------------------------------------------------------------------
-static inline void sw_factor_zero(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = factor[1] = factor[2] = factor[3] = 0.0f;
+// Blend factor component macros: SW_BF_XXX(src, dst, component_index)
+// Each expands to the scalar factor value for one RGBA channel
+#define SW_BF_ZERO(s,d,i)                0.0f
+#define SW_BF_ONE(s,d,i)                 1.0f
+#define SW_BF_SRC_COLOR(s,d,i)           (s)[i]
+#define SW_BF_ONE_MINUS_SRC_COLOR(s,d,i) (1.0f-(s)[i])
+#define SW_BF_SRC_ALPHA(s,d,i)           (s)[3]
+#define SW_BF_ONE_MINUS_SRC_ALPHA(s,d,i) (1.0f-(s)[3])
+#define SW_BF_DST_ALPHA(s,d,i)           (d)[3]
+#define SW_BF_ONE_MINUS_DST_ALPHA(s,d,i) (1.0f-(d)[3])
+#define SW_BF_DST_COLOR(s,d,i)           (d)[i]
+#define SW_BF_ONE_MINUS_DST_COLOR(s,d,i) (1.0f-(d)[i])
+#define SW_BF_SRC_ALPHA_SATURATE(s,d,i)  (((i)<3)? 1.0f : (((s)[3]<1.0f)?(s)[3]:1.0f))
+
+// Generates one specialized blend function for a (sfactor, dfactor) pair
+#define DEFINE_BLEND_FUNC(sn, dn, SF, DF)                                               \
+static void sw_blend_##sn##_##dn(float *SW_RESTRICT dst, const float *SW_RESTRICT src)  \
+{                                                                                       \
+    dst[0] = SF(src,dst,0)*src[0] + DF(src,dst,0)*dst[0];                               \
+    dst[1] = SF(src,dst,1)*src[1] + DF(src,dst,1)*dst[1];                               \
+    dst[2] = SF(src,dst,2)*src[2] + DF(src,dst,2)*dst[2];                               \
+    dst[3] = SF(src,dst,3)*src[3] + DF(src,dst,3)*dst[3];                               \
 }
 
-static inline void sw_factor_one(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
+// Master factor list: X(c_name, gl_enum, compact_index, SW_BF_macro)
+// compact_index is used to index SW_BLEND_TABLE (GL enums are non contiguous)
+#define FOREACH_FACTOR(X) \
+    X(ZERO,                SW_ZERO,                0,  SW_BF_ZERO               ) \
+    X(ONE,                 SW_ONE,                 1,  SW_BF_ONE                ) \
+    X(SRC_COLOR,           SW_SRC_COLOR,           2,  SW_BF_SRC_COLOR          ) \
+    X(ONE_MINUS_SRC_COLOR, SW_ONE_MINUS_SRC_COLOR, 3,  SW_BF_ONE_MINUS_SRC_COLOR) \
+    X(SRC_ALPHA,           SW_SRC_ALPHA,           4,  SW_BF_SRC_ALPHA          ) \
+    X(ONE_MINUS_SRC_ALPHA, SW_ONE_MINUS_SRC_ALPHA, 5,  SW_BF_ONE_MINUS_SRC_ALPHA) \
+    X(DST_ALPHA,           SW_DST_ALPHA,           6,  SW_BF_DST_ALPHA          ) \
+    X(ONE_MINUS_DST_ALPHA, SW_ONE_MINUS_DST_ALPHA, 7,  SW_BF_ONE_MINUS_DST_ALPHA) \
+    X(DST_COLOR,           SW_DST_COLOR,           8,  SW_BF_DST_COLOR          ) \
+    X(ONE_MINUS_DST_COLOR, SW_ONE_MINUS_DST_COLOR, 9,  SW_BF_ONE_MINUS_DST_COLOR) \
+    X(SRC_ALPHA_SATURATE,  SW_SRC_ALPHA_SATURATE,  10, SW_BF_SRC_ALPHA_SATURATE )
+
+// Same list but forwards 3 extra args (A, B, C) to X
+#define FOREACH_FACTOR_WITH(X, A, B, C) \
+    X(ZERO,                SW_ZERO,                0,  SW_BF_ZERO,               A,B,C) \
+    X(ONE,                 SW_ONE,                 1,  SW_BF_ONE,                A,B,C) \
+    X(SRC_COLOR,           SW_SRC_COLOR,           2,  SW_BF_SRC_COLOR,          A,B,C) \
+    X(ONE_MINUS_SRC_COLOR, SW_ONE_MINUS_SRC_COLOR, 3,  SW_BF_ONE_MINUS_SRC_COLOR,A,B,C) \
+    X(SRC_ALPHA,           SW_SRC_ALPHA,           4,  SW_BF_SRC_ALPHA,          A,B,C) \
+    X(ONE_MINUS_SRC_ALPHA, SW_ONE_MINUS_SRC_ALPHA, 5,  SW_BF_ONE_MINUS_SRC_ALPHA,A,B,C) \
+    X(DST_ALPHA,           SW_DST_ALPHA,           6,  SW_BF_DST_ALPHA,          A,B,C) \
+    X(ONE_MINUS_DST_ALPHA, SW_ONE_MINUS_DST_ALPHA, 7,  SW_BF_ONE_MINUS_DST_ALPHA,A,B,C) \
+    X(DST_COLOR,           SW_DST_COLOR,           8,  SW_BF_DST_COLOR,          A,B,C) \
+    X(ONE_MINUS_DST_COLOR, SW_ONE_MINUS_DST_COLOR, 9,  SW_BF_ONE_MINUS_DST_COLOR,A,B,C) \
+    X(SRC_ALPHA_SATURATE,  SW_SRC_ALPHA_SATURATE,  10, SW_BF_SRC_ALPHA_SATURATE, A,B,C)
+
+// Inner loop: receives dst factor + forwarded (sn, si, sf) from outer loop
+#define GEN_COMBO(dn, de, di, df, sn, si, sf) DEFINE_BLEND_FUNC(sn, dn, sf, df)
+
+// Outer loop: for each src factor, iterate all dst factors
+#define GEN_ROW(sn, se, si, sf) FOREACH_FACTOR_WITH(GEN_COMBO, sn, si, sf)
+
+// Generates all 121 sw_blend_SFACTOR_DFACTOR functions
+FOREACH_FACTOR(GEN_ROW)
+
+#undef GEN_COMBO
+#undef GEN_ROW
+
+// Inner loop: emits one table entry using compact indices (not GL enum values)
+#define GEN_TABLE_ENTRY(dn, de, di, df, sn, si, sf) [si][di] = sw_blend_##sn##_##dn,
+
+// Outer loop: fills one row of the table for a given src factor
+#define GEN_TABLE_ROW(sn, se, si, sf) FOREACH_FACTOR_WITH(GEN_TABLE_ENTRY, sn, si, sf)
+
+// 2D dispatch table indexed by compact src/dst factor indices
+#define SW_BLEND_FACTOR_COUNT 11
+static const sw_blend_f SW_BLEND_TABLE[SW_BLEND_FACTOR_COUNT][SW_BLEND_FACTOR_COUNT] = {
+    FOREACH_FACTOR(GEN_TABLE_ROW)
+};
+
+#undef GEN_TABLE_ENTRY
+#undef GEN_TABLE_ROW
+
+// Maps a GL blend factor enum to its compact table index
+static inline int sw_blend_factor_index(SWfactor f)
 {
-    factor[0] = factor[1] = factor[2] = factor[3] = 1.0f;
-}
-
-static inline void sw_factor_src_color(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = src[0]; factor[1] = src[1]; factor[2] = src[2]; factor[3] = src[3];
-}
-
-static inline void sw_factor_one_minus_src_color(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = 1.0f - src[0]; factor[1] = 1.0f - src[1];
-    factor[2] = 1.0f - src[2]; factor[3] = 1.0f - src[3];
-}
-
-static inline void sw_factor_src_alpha(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = factor[1] = factor[2] = factor[3] = src[3];
-}
-
-static inline void sw_factor_one_minus_src_alpha(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    float invAlpha = 1.0f - src[3];
-    factor[0] = factor[1] = factor[2] = factor[3] = invAlpha;
-}
-
-static inline void sw_factor_dst_alpha(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = factor[1] = factor[2] = factor[3] = dst[3];
-}
-
-static inline void sw_factor_one_minus_dst_alpha(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    float invAlpha = 1.0f - dst[3];
-    factor[0] = factor[1] = factor[2] = factor[3] = invAlpha;
-}
-
-static inline void sw_factor_dst_color(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = dst[0]; factor[1] = dst[1]; factor[2] = dst[2]; factor[3] = dst[3];
-}
-
-static inline void sw_factor_one_minus_dst_color(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = 1.0f - dst[0]; factor[1] = 1.0f - dst[1];
-    factor[2] = 1.0f - dst[2]; factor[3] = 1.0f - dst[3];
-}
-
-static inline void sw_factor_src_alpha_saturate(float *SW_RESTRICT factor, const float *SW_RESTRICT src, const float *SW_RESTRICT dst)
-{
-    factor[0] = factor[1] = factor[2] = 1.0f;
-    factor[3] = (src[3] < 1.0f)? src[3] : 1.0f;
-}
-
-static inline void sw_blend_colors(float *SW_RESTRICT dst/*[4]*/, const float *SW_RESTRICT src/*[4]*/)
-{
-    float srcFactor[4], dstFactor[4];
-
-    RLSW.srcFactorFunc(srcFactor, src, dst);
-    RLSW.dstFactorFunc(dstFactor, src, dst);
-
-    dst[0] = srcFactor[0]*src[0] + dstFactor[0]*dst[0];
-    dst[1] = srcFactor[1]*src[1] + dstFactor[1]*dst[1];
-    dst[2] = srcFactor[2]*src[2] + dstFactor[2]*dst[2];
-    dst[3] = srcFactor[3]*src[3] + dstFactor[3]*dst[3];
+    switch (f) {
+        case SW_ZERO:                return 0;
+        case SW_ONE:                 return 1;
+        case SW_SRC_COLOR:           return 2;
+        case SW_ONE_MINUS_SRC_COLOR: return 3;
+        case SW_SRC_ALPHA:           return 4;
+        case SW_ONE_MINUS_SRC_ALPHA: return 5;
+        case SW_DST_ALPHA:           return 6;
+        case SW_ONE_MINUS_DST_ALPHA: return 7;
+        case SW_DST_COLOR:           return 8;
+        case SW_ONE_MINUS_DST_COLOR: return 9;
+        case SW_SRC_ALPHA_SATURATE:  return 10;
+        default:                     return -1;
+    }
 }
 //-------------------------------------------------------------------------------------------
 
@@ -3844,9 +3868,7 @@ bool swInit(int w, int h)
 
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
-
-    RLSW.srcFactorFunc = sw_factor_src_alpha;
-    RLSW.dstFactorFunc = sw_factor_one_minus_src_alpha;
+    RLSW.blendFunc = sw_blend_SRC_ALPHA_ONE_MINUS_SRC_ALPHA;
 
     RLSW.drawMode = SW_DRAW_INVALID;
     RLSW.polyMode = SW_FILL;
@@ -4146,37 +4168,10 @@ void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
     RLSW.srcFactor = sfactor;
     RLSW.dstFactor = dfactor;
 
-    switch (sfactor)
-    {
-        case SW_ZERO: RLSW.srcFactorFunc = sw_factor_zero; break;
-        case SW_ONE: RLSW.srcFactorFunc = sw_factor_one; break;
-        case SW_SRC_COLOR: RLSW.srcFactorFunc = sw_factor_src_color; break;
-        case SW_ONE_MINUS_SRC_COLOR: RLSW.srcFactorFunc = sw_factor_one_minus_src_color; break;
-        case SW_SRC_ALPHA: RLSW.srcFactorFunc = sw_factor_src_alpha; break;
-        case SW_ONE_MINUS_SRC_ALPHA: RLSW.srcFactorFunc = sw_factor_one_minus_src_alpha; break;
-        case SW_DST_ALPHA: RLSW.srcFactorFunc = sw_factor_dst_alpha; break;
-        case SW_ONE_MINUS_DST_ALPHA: RLSW.srcFactorFunc = sw_factor_one_minus_dst_alpha; break;
-        case SW_DST_COLOR: RLSW.srcFactorFunc = sw_factor_dst_color; break;
-        case SW_ONE_MINUS_DST_COLOR: RLSW.srcFactorFunc = sw_factor_one_minus_dst_color; break;
-        case SW_SRC_ALPHA_SATURATE: RLSW.srcFactorFunc = sw_factor_src_alpha_saturate; break;
-        default: break;
-    }
+    int sIndex = sw_blend_factor_index(sfactor);
+    int dIndex = sw_blend_factor_index(dfactor);
 
-    switch (dfactor)
-    {
-        case SW_ZERO: RLSW.dstFactorFunc = sw_factor_zero; break;
-        case SW_ONE: RLSW.dstFactorFunc = sw_factor_one; break;
-        case SW_SRC_COLOR: RLSW.dstFactorFunc = sw_factor_src_color; break;
-        case SW_ONE_MINUS_SRC_COLOR: RLSW.dstFactorFunc = sw_factor_one_minus_src_color; break;
-        case SW_SRC_ALPHA: RLSW.dstFactorFunc = sw_factor_src_alpha; break;
-        case SW_ONE_MINUS_SRC_ALPHA: RLSW.dstFactorFunc = sw_factor_one_minus_src_alpha; break;
-        case SW_DST_ALPHA: RLSW.dstFactorFunc = sw_factor_dst_alpha; break;
-        case SW_ONE_MINUS_DST_ALPHA: RLSW.dstFactorFunc = sw_factor_one_minus_dst_alpha; break;
-        case SW_DST_COLOR: RLSW.dstFactorFunc = sw_factor_dst_color; break;
-        case SW_ONE_MINUS_DST_COLOR: RLSW.dstFactorFunc = sw_factor_one_minus_dst_color; break;
-        case SW_SRC_ALPHA_SATURATE: break;
-        default: break;
-    }
+    RLSW.blendFunc = SW_BLEND_TABLE[sIndex][dIndex];
 }
 
 void swPolygonMode(SWpoly mode)
@@ -5247,7 +5242,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         {
             float dstColor[4];
             SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-            sw_blend_colors(dstColor, srcColor);
+            RLSW.blendFunc(dstColor, srcColor);
             SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
         }
         #else
@@ -5511,7 +5506,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             {
                 float dstColor[4];
                 SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-                sw_blend_colors(dstColor, srcColor);
+                RLSW.blendFunc(dstColor, srcColor);
                 SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
             }
             #else
@@ -5664,7 +5659,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
         {
             float dstColor[4];
             SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-            sw_blend_colors(dstColor, srcColor);
+            RLSW.blendFunc(dstColor, srcColor);
             SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
         }
         #else
@@ -5774,7 +5769,7 @@ static void SW_RASTER_POINT_PIXEL(int x, int y, float z, const float color[4])
     {
         float dstColor[4];
         SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-        sw_blend_colors(dstColor, color);
+        RLSW.blendFunc(dstColor, color);
         SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
     }
     #else
