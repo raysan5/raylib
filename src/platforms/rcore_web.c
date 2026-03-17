@@ -77,7 +77,7 @@ typedef struct {
     char canvasId[64];                  // Keep current canvas id where wasm app is running
                                         // NOTE: Useful when trying to run multiple wasms in different canvases in same webpage
 
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
 #endif
 } PlatformData;
@@ -949,7 +949,7 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Update framebuffer
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
 
@@ -1306,7 +1306,7 @@ int InitPlatform(void)
     // Init fullscreen toggle required var:
     platform.ourFullscreen = false;
 
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
     emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
     EM_ASM({
