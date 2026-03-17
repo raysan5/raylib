@@ -2353,7 +2353,7 @@ static inline void sw_pixel_set_depth(void *pixels, float depth, uint32_t offset
     switch (format)
     {
         case SW_PIXELFORMAT_DEPTH_D8: sw_pixel_set_depth_D8(pixels, depth, offset); break;
-        case SW_PIXELFORMAT_DEPTH_D16: w_pixel_set_depth_D16(pixels, depth, offset); break;
+        case SW_PIXELFORMAT_DEPTH_D16: sw_pixel_set_depth_D16(pixels, depth, offset); break;
         case SW_PIXELFORMAT_DEPTH_D32: sw_pixel_set_depth_D32(pixels, depth, offset); break;
 
         case SW_PIXELFORMAT_UNKNOWN:
@@ -3565,7 +3565,7 @@ static inline bool sw_line_clip_coord(float q, float p, float *t0, float *t1)
 static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
 {
     float t0 = 0.0f, t1 = 1.0f;
-    float dH[4] = { 0 }
+    float dH[4] = { 0 };
     float dC[4] = { 0 };
 
     for (int i = 0; i < 4; i++)
@@ -5345,10 +5345,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     {
         vLeft.screen[1] = vRight.screen[1] = y;
 
-        if (vLeft.screen[0] < vRight.screen[0])
-            SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        else
-            SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        if (vLeft.screen[0] < vRight.screen[0]) SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        else SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
 
         sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);
         vLeft.screen[0] += dXdy02;
