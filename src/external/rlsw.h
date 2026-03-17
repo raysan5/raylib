@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlsw v1.0 - An OpenGL 1.1-style software renderer implementation
+*   rlsw v1.5 - An OpenGL 1.1-style software renderer implementation
 *
 *   DESCRIPTION:
 *       rlsw is a custom OpenGL 1.1-style implementation on software, intended to provide all
@@ -86,6 +86,8 @@
 
 #ifndef RLSW_H
 #define RLSW_H
+
+#define RLGL_VERSION  "1.5"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -738,8 +740,8 @@ SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, con
 SWAPI void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 SWAPI void swTexParameteri(int param, int value);
 
-SWAPI void swGenFramebuffers(int count, uint32_t* framebuffers);
-SWAPI void swDeleteFramebuffers(int count, uint32_t* framebuffers);
+SWAPI void swGenFramebuffers(int count, uint32_t *framebuffers);
+SWAPI void swDeleteFramebuffers(int count, uint32_t *framebuffers);
 SWAPI void swBindFramebuffer(uint32_t id);
 SWAPI void swFramebufferTexture2D(SWattachment attach, uint32_t texture);
 SWAPI SWfbstatus swCheckFramebufferStatus(void);
@@ -942,21 +944,21 @@ typedef struct {
 } sw_texture_t;
 
 typedef struct {
-    sw_texture_t color;
-    sw_texture_t depth;
+    sw_texture_t color;         // Default framebuffer color texture
+    sw_texture_t depth;         // Default framebuffer depth texture
 } sw_default_framebuffer_t;
 
 typedef struct {
-    sw_handle_t colorAttachment;
-    sw_handle_t depthAttachment;
+    sw_handle_t colorAttachment; // Framebuffer color attachment id
+    sw_handle_t depthAttachment; // Framebuffer depth attachment id
 } sw_framebuffer_t;
 
 typedef struct {
-    void *data;             // flat storage [capacity*stride] bytes
-    uint8_t *gen;           // generation per slot [capacity]
-    uint32_t *freeList;     // free indices stack [capacity]
+    void *data;             // Flat storage [capacity*stride] bytes
+    uint8_t *gen;           // Generation per slot [capacity]
+    uint32_t *freeList;     // Free indices stack [capacity]
     int freeCount;
-    int watermark;          // next blank index (starts at 1, skips 0)
+    int watermark;          // Next blank index (starts at 1, skips 0)
     int capacity;
     size_t stride;
 } sw_pool_t;
@@ -967,6 +969,7 @@ typedef void (*sw_raster_quad_f)(const sw_vertex_t *v0, const sw_vertex_t *v1, c
 typedef void (*sw_raster_line_f)(const sw_vertex_t *v0, const sw_vertex_t *v1);
 typedef void (*sw_raster_point_f)(const sw_vertex_t *v);
 
+// Graphic context data structure
 typedef struct {
     sw_default_framebuffer_t framebuffer;   // Default framebuffer
     float clearColor[4];                    // Clear color of the framebuffer
@@ -1012,18 +1015,18 @@ typedef struct {
     bool isDirtyMVP;                                            // Indicates if the MVP matrix should be rebuilt
 
     sw_handle_t boundFramebufferId;                             // Framebuffer currently bound
-    sw_texture_t* colorBuffer;                                  // Color buffer currently bound
-    sw_texture_t* depthBuffer;                                  // Depth buffer currently bound
+    sw_texture_t *colorBuffer;                                  // Color buffer currently bound
+    sw_texture_t *depthBuffer;                                  // Depth buffer currently bound
     sw_pool_t framebufferPool;                                  // Framebuffer object pool
 
-    sw_texture_t* boundTexture;                                 // Texture currently bound
+    sw_texture_t *boundTexture;                                 // Texture currently bound
     sw_pool_t texturePool;                                      // Texture object pool
 
-    SWfactor srcFactor;
-    SWfactor dstFactor;
+    SWfactor srcFactor;                     // Source blending factor
+    SWfactor dstFactor;                     // Destination bleending factor
 
-    sw_blend_factor_t srcFactorFunc;
-    sw_blend_factor_t dstFactorFunc;
+    sw_blend_factor_t srcFactorFunc;        // Source blend function
+    sw_blend_factor_t dstFactorFunc;        // Destination blend function
 
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
@@ -1242,10 +1245,7 @@ static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->homogeneous[3] += gradients->homogeneous[3];
 }
 
-static inline void sw_add_vertex_grad_scaled_PTCH(
-    sw_vertex_t *SW_RESTRICT out,
-    const sw_vertex_t *SW_RESTRICT gradients,
-    float scale)
+static inline void sw_add_vertex_grad_scaled_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
 {
     // Add gradients to Position
     out->position[0] += gradients->position[0]*scale;
@@ -1276,13 +1276,13 @@ static inline uint16_t sw_float_to_half_ui(uint32_t ui)
     int32_t s = (ui >> 16) & 0x8000;
     int32_t em = ui & 0x7fffffff;
 
-    // bias exponent and round to nearest; 112 is relative exponent bias (127-15)
+    // Bias exponent and round to nearest; 112 is relative exponent bias (127-15)
     int32_t h = (em - (112 << 23) + (1 << 12)) >> 13;
 
-    // underflow: flush to zero; 113 encodes exponent -14
+    // Underflow: flush to zero; 113 encodes exponent -14
     h = (em < (113 << 23))? 0 : h;
 
-    // overflow: infinity; 143 encodes exponent 16
+    // Overflow: infinity; 143 encodes exponent 16
     h = (em >= (143 << 23))? 0x7c00 : h;
 
     // NaN; note that we convert all types of NaN to qNaN
@@ -1296,13 +1296,13 @@ static inline uint32_t sw_half_to_float_ui(uint16_t h)
     uint32_t s = (unsigned)(h & 0x8000) << 16;
     int32_t em = h & 0x7fff;
 
-    // bias exponent and pad mantissa with 0; 112 is relative exponent bias (127-15)
+    // Bias exponent and pad mantissa with 0; 112 is relative exponent bias (127-15)
     int32_t r = (em + (112 << 10)) << 13;
 
-    // denormal: flush to zero
+    // Denormal: flush to zero
     r = (em < (1 << 10))? 0 : r;
 
-    // infinity/NaN; note that we preserve NaN payload as a byproduct of unifying inf/nan cases
+    // Infinity/NaN; note that we preserve NaN payload as a byproduct of unifying inf/nan cases
     // 112 is an exponent bias fixup; since we already applied it once, applying it twice converts 31 to 255
     r += (em >= (31 << 10))? (112 << 23) : 0;
 
@@ -1323,14 +1323,14 @@ static inline float sw_half_to_float(sw_half_t y)
     return v.f;
 }
 
-static inline uint8_t sw_expand_1to8(uint32_t v) { return v ? 255 : 0; }
+static inline uint8_t sw_expand_1to8(uint32_t v) { return v? 255 : 0; }
 static inline uint8_t sw_expand_2to8(uint32_t v) { return (uint8_t)(v*85); }
 static inline uint8_t sw_expand_3to8(uint32_t v) { return (uint8_t)((v << 5) | (v << 2) | (v >> 1)); }
 static inline uint8_t sw_expand_4to8(uint32_t v) { return (uint8_t)((v << 4) | v); }
 static inline uint8_t sw_expand_5to8(uint32_t v) { return (uint8_t)((v << 3) | (v >> 2)); }
 static inline uint8_t sw_expand_6to8(uint32_t v) { return (uint8_t)((v << 2) | (v >> 4)); }
 
-static inline float sw_expand_1tof(uint32_t v) { return v ? 1.0f : 0.0f; }
+static inline float sw_expand_1tof(uint32_t v) { return v? 1.0f : 0.0f; }
 static inline float sw_expand_2tof(uint32_t v) { return (float)v*(1.0f/3.0f); }
 static inline float sw_expand_3tof(uint32_t v) { return (float)v*(1.0f/7.0f); }
 static inline float sw_expand_4tof(uint32_t v) { return (float)v*(1.0f/15.0f); }
@@ -1344,9 +1344,9 @@ static inline uint32_t sw_compress_8to4(uint8_t v) { return v >> 4; }
 static inline uint32_t sw_compress_8to5(uint8_t v) { return v >> 3; }
 static inline uint32_t sw_compress_8to6(uint8_t v) { return v >> 2; }
 
-static inline uint32_t sw_compress_fto1(float v) { return v >= 0.5f ? 1 : 0; }
-static inline uint32_t sw_compress_fto2(float v) { return (uint32_t)(v* 3.0f + 0.5f) & 0x03; }
-static inline uint32_t sw_compress_fto3(float v) { return (uint32_t)(v* 7.0f + 0.5f) & 0x07; }
+static inline uint32_t sw_compress_fto1(float v) { return (v >= 0.5f)? 1 : 0; }
+static inline uint32_t sw_compress_fto2(float v) { return (uint32_t)(v*3.0f + 0.5f) & 0x03; }
+static inline uint32_t sw_compress_fto3(float v) { return (uint32_t)(v*7.0f + 0.5f) & 0x07; }
 static inline uint32_t sw_compress_fto4(float v) { return (uint32_t)(v*15.0f + 0.5f) & 0x0F; }
 static inline uint32_t sw_compress_fto5(float v) { return (uint32_t)(v*31.0f + 0.5f) & 0x1F; }
 static inline uint32_t sw_compress_fto6(float v) { return (uint32_t)(v*63.0f + 0.5f) & 0x3F; }
@@ -1356,7 +1356,7 @@ static inline uint32_t sw_compress_fto6(float v) { return (uint32_t)(v*63.0f + 0
 //-------------------------------------------------------------------------------------------
 static bool sw_pool_init(sw_pool_t *pool, int capacity, size_t stride)
 {
-    *pool = (sw_pool_t) { 0 };
+    *pool = (sw_pool_t){ 0 };
 
     pool->data = SW_CALLOC(capacity, stride);
     pool->gen = SW_CALLOC(capacity, sizeof(uint8_t));
@@ -1371,8 +1371,8 @@ static bool sw_pool_init(sw_pool_t *pool, int capacity, size_t stride)
     }
 
     pool->watermark = 1;
-    pool->capacity  = capacity;
-    pool->stride    = stride;
+    pool->capacity = capacity;
+    pool->stride = stride;
 
     return true;
 }
@@ -1440,7 +1440,7 @@ static inline bool sw_is_texture_valid(sw_handle_t id)
     return sw_pool_valid(&RLSW.texturePool, id);
 }
 
-static inline bool sw_is_texture_complete(sw_texture_t* tex)
+static inline bool sw_is_texture_complete(sw_texture_t *tex)
 {
     return (tex != NULL) && (tex->pixels != NULL);
 }
@@ -1752,48 +1752,20 @@ static inline void sw_pixel_get_color8(uint8_t *SW_RESTRICT color, const void *S
 {
     switch (format)
     {
-        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-            sw_pixel_get_color8_GRAYSCALE(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-            sw_pixel_get_color8_GRAYALPHA(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R3G3B2:
-            sw_pixel_get_color8_R3G3B2(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G6B5:
-            sw_pixel_get_color8_R5G6B5(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8:
-            sw_pixel_get_color8_R8G8B8(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-            sw_pixel_get_color8_R5G5B5A1(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-            sw_pixel_get_color8_R4G4B4A4(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-            sw_pixel_get_color8_R8G8B8A8(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32:
-            sw_pixel_get_color8_R32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32:
-            sw_pixel_get_color8_R32G32B32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-            sw_pixel_get_color8_R32G32B32A32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16:
-            sw_pixel_get_color8_R16(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16:
-            sw_pixel_get_color8_R16G16B16(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-            sw_pixel_get_color8_R16G16B16A16(color, pixels, offset);
-            break;
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE: sw_pixel_get_color8_GRAYSCALE(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA: sw_pixel_get_color8_GRAYALPHA(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R3G3B2: sw_pixel_get_color8_R3G3B2(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G6B5: sw_pixel_get_color8_R5G6B5(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8: sw_pixel_get_color8_R8G8B8(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1: sw_pixel_get_color8_R5G5B5A1(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4: sw_pixel_get_color8_R4G4B4A4(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8: sw_pixel_get_color8_R8G8B8A8(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32: sw_pixel_get_color8_R32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32: sw_pixel_get_color8_R32G32B32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32: sw_pixel_get_color8_R32G32B32A32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16: sw_pixel_get_color8_R16(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16: sw_pixel_get_color8_R16G16B16(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16: sw_pixel_get_color8_R16G16B16A16(color, pixels, offset); break;
 
         case SW_PIXELFORMAT_UNKNOWN:
         case SW_PIXELFORMAT_DEPTH_D8:
@@ -1805,8 +1777,8 @@ static inline void sw_pixel_get_color8(uint8_t *SW_RESTRICT color, const void *S
             color[1] = 0.0f;
             color[2] = 0.0f;
             color[3] = 0.0f;
-            break;
-        }
+        } break;
+        default: break;
     }
 }
 
@@ -1921,55 +1893,27 @@ static inline void sw_pixel_set_color8(void *SW_RESTRICT pixels, const uint8_t *
 {
     switch (format)
     {
-        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-            sw_pixel_set_color8_GRAYSCALE(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-            sw_pixel_set_color8_GRAYALPHA(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R3G3B2:
-            sw_pixel_set_color8_R3G3B2(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G6B5:
-            sw_pixel_set_color8_R5G6B5(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8:
-            sw_pixel_set_color8_R8G8B8(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-            sw_pixel_set_color8_R5G5B5A1(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-            sw_pixel_set_color8_R4G4B4A4(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-            sw_pixel_set_color8_R8G8B8A8(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32:
-            sw_pixel_set_color8_R32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32:
-            sw_pixel_set_color8_R32G32B32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-            sw_pixel_set_color8_R32G32B32A32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16:
-            sw_pixel_set_color8_R16(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16:
-            sw_pixel_set_color8_R16G16B16(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-            sw_pixel_set_color8_R16G16B16A16(pixels, color, offset);
-            break;
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE: sw_pixel_set_color8_GRAYSCALE(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA: sw_pixel_set_color8_GRAYALPHA(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R3G3B2: sw_pixel_set_color8_R3G3B2(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G6B5: sw_pixel_set_color8_R5G6B5(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8: sw_pixel_set_color8_R8G8B8(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1: sw_pixel_set_color8_R5G5B5A1(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4: sw_pixel_set_color8_R4G4B4A4(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8: sw_pixel_set_color8_R8G8B8A8(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32: sw_pixel_set_color8_R32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32: sw_pixel_set_color8_R32G32B32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32: sw_pixel_set_color8_R32G32B32A32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16: sw_pixel_set_color8_R16(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16: sw_pixel_set_color8_R16G16B16(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16: sw_pixel_set_color8_R16G16B16A16(pixels, color, offset); break;
 
         case SW_PIXELFORMAT_UNKNOWN:
         case SW_PIXELFORMAT_DEPTH_D8:
         case SW_PIXELFORMAT_DEPTH_D16:
         case SW_PIXELFORMAT_DEPTH_D32:
-        case SW_PIXELFORMAT_COUNT:
-            break;
+        case SW_PIXELFORMAT_COUNT: break;
+        default: break;
     }
 }
 
@@ -2062,7 +2006,7 @@ static inline void sw_pixel_get_color_R8G8B8A8(float *SW_RESTRICT color, const v
     _mm_storeu_ps(color, fvals);
 
 #elif defined(SW_HAS_RVV)
-    // TODO: Sample code generated by AI, needs testing and review
+    // TODO: WARNING: Sample code generated by AI, needs testing and review
     size_t vl = __riscv_vsetvl_e8m1(4); // Set vector length for 8-bit input elements
     vuint8m1_t vsrc_u8 = __riscv_vle8_v_u8m1(src, vl); // Load 4 unsigned 8-bit integers
     vuint32m1_t vsrc_u32 = __riscv_vwcvt_xu_u_v_u32m1(vsrc_u8, vl); // Widen to 32-bit unsigned integers
@@ -2136,48 +2080,20 @@ static inline void sw_pixel_get_color(float *SW_RESTRICT color, const void *SW_R
 {
     switch (format)
     {
-        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-            sw_pixel_get_color_GRAYSCALE(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-            sw_pixel_get_color_GRAYALPHA(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R3G3B2:
-            sw_pixel_get_color_R3G3B2(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G6B5:
-            sw_pixel_get_color_R5G6B5(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8:
-            sw_pixel_get_color_R8G8B8(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-            sw_pixel_get_color_R5G5B5A1(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-            sw_pixel_get_color_R4G4B4A4(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-            sw_pixel_get_color_R8G8B8A8(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32:
-            sw_pixel_get_color_R32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32:
-            sw_pixel_get_color_R32G32B32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-            sw_pixel_get_color_R32G32B32A32(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16:
-            sw_pixel_get_color_R16(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16:
-            sw_pixel_get_color_R16G16B16(color, pixels, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-            sw_pixel_get_color_R16G16B16A16(color, pixels, offset);
-            break;
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE: sw_pixel_get_color_GRAYSCALE(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA: sw_pixel_get_color_GRAYALPHA(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R3G3B2: sw_pixel_get_color_R3G3B2(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G6B5: sw_pixel_get_color_R5G6B5(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8: sw_pixel_get_color_R8G8B8(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1: sw_pixel_get_color_R5G5B5A1(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4: sw_pixel_get_color_R4G4B4A4(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8: sw_pixel_get_color_R8G8B8A8(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32: sw_pixel_get_color_R32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32: sw_pixel_get_color_R32G32B32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32: sw_pixel_get_color_R32G32B32A32(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16: sw_pixel_get_color_R16(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16: sw_pixel_get_color_R16G16B16(color, pixels, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16: sw_pixel_get_color_R16G16B16A16(color, pixels, offset); break;
 
         case SW_PIXELFORMAT_UNKNOWN:
         case SW_PIXELFORMAT_DEPTH_D8:
@@ -2189,8 +2105,8 @@ static inline void sw_pixel_get_color(float *SW_RESTRICT color, const void *SW_R
             color[1] = 0.0f;
             color[2] = 0.0f;
             color[3] = 0.0f;
-            break;
-        }
+        } break;
+        default: break;
     }
 }
 
@@ -2277,7 +2193,7 @@ static inline void sw_pixel_set_color_R8G8B8A8(void *SW_RESTRICT pixels, const f
     _mm_storeu_si32(dst, i8);
 
 #elif defined(SW_HAS_RVV)
-    // TODO: Sample code generated by AI, needs testing and review
+    // TODO: WARNING: Sample code generated by AI, needs testing and review
     // REVIEW: It shouldn't perform so many operations; take inspiration from other versions
     // NOTE: RVV 1.0 specs define the use of __riscv_ prefix for instrinsic functions
     size_t vl = __riscv_vsetvl_e32m1(4); // Load up to 4 floats into a vector register
@@ -2350,55 +2266,26 @@ static inline void sw_pixel_set_color(void *SW_RESTRICT pixels, const float *SW_
 {
     switch (format)
     {
-        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-            sw_pixel_set_color_GRAYSCALE(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-            sw_pixel_set_color_GRAYALPHA(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R3G3B2:
-            sw_pixel_set_color_R3G3B2(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G6B5:
-            sw_pixel_set_color_R5G6B5(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8:
-            sw_pixel_set_color_R8G8B8(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-            sw_pixel_set_color_R5G5B5A1(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-            sw_pixel_set_color_R4G4B4A4(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-            sw_pixel_set_color_R8G8B8A8(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32:
-            sw_pixel_set_color_R32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32:
-            sw_pixel_set_color_R32G32B32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-            sw_pixel_set_color_R32G32B32A32(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16:
-            sw_pixel_set_color_R16(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16:
-            sw_pixel_set_color_R16G16B16(pixels, color, offset);
-            break;
-        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-            sw_pixel_set_color_R16G16B16A16(pixels, color, offset);
-            break;
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE: sw_pixel_set_color_GRAYSCALE(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA: sw_pixel_set_color_GRAYALPHA(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R3G3B2: sw_pixel_set_color_R3G3B2(pixels, color, offset);  break;
+        case SW_PIXELFORMAT_COLOR_R5G6B5: sw_pixel_set_color_R5G6B5(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8: sw_pixel_set_color_R8G8B8(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1: sw_pixel_set_color_R5G5B5A1(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4: sw_pixel_set_color_R4G4B4A4(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8: sw_pixel_set_color_R8G8B8A8(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32: sw_pixel_set_color_R32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32: sw_pixel_set_color_R32G32B32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32: sw_pixel_set_color_R32G32B32A32(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16: sw_pixel_set_color_R16(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16: sw_pixel_set_color_R16G16B16(pixels, color, offset); break;
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16: sw_pixel_set_color_R16G16B16A16(pixels, color, offset); break;
 
         case SW_PIXELFORMAT_UNKNOWN:
         case SW_PIXELFORMAT_DEPTH_D8:
         case SW_PIXELFORMAT_DEPTH_D16:
         case SW_PIXELFORMAT_DEPTH_D32:
-        case SW_PIXELFORMAT_COUNT:
-            break;
+        case SW_PIXELFORMAT_COUNT: break;
     }
 }
 
@@ -2421,30 +2308,26 @@ static inline float sw_pixel_get_depth(const void *pixels, uint32_t offset, sw_p
 {
     switch (format)
     {
-    case SW_PIXELFORMAT_DEPTH_D8:
-        return sw_pixel_get_depth_D8(pixels, offset);
-    case SW_PIXELFORMAT_DEPTH_D16:
-        return sw_pixel_get_depth_D16(pixels, offset);
-    case SW_PIXELFORMAT_DEPTH_D32:
-        return sw_pixel_get_depth_D32(pixels, offset);
+        case SW_PIXELFORMAT_DEPTH_D8: return sw_pixel_get_depth_D8(pixels, offset);
+        case SW_PIXELFORMAT_DEPTH_D16: return sw_pixel_get_depth_D16(pixels, offset);
+        case SW_PIXELFORMAT_DEPTH_D32: return sw_pixel_get_depth_D32(pixels, offset);
 
-    case SW_PIXELFORMAT_UNKNOWN:
-    case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-    case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-    case SW_PIXELFORMAT_COLOR_R3G3B2:
-    case SW_PIXELFORMAT_COLOR_R5G6B5:
-    case SW_PIXELFORMAT_COLOR_R8G8B8:
-    case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-    case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-    case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-    case SW_PIXELFORMAT_COLOR_R32:
-    case SW_PIXELFORMAT_COLOR_R32G32B32:
-    case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-    case SW_PIXELFORMAT_COLOR_R16:
-    case SW_PIXELFORMAT_COLOR_R16G16B16:
-    case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-    case SW_PIXELFORMAT_COUNT:
-        break;
+        case SW_PIXELFORMAT_UNKNOWN:
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
+        case SW_PIXELFORMAT_COLOR_R3G3B2:
+        case SW_PIXELFORMAT_COLOR_R5G6B5:
+        case SW_PIXELFORMAT_COLOR_R8G8B8:
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
+        case SW_PIXELFORMAT_COLOR_R32:
+        case SW_PIXELFORMAT_COLOR_R32G32B32:
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
+        case SW_PIXELFORMAT_COLOR_R16:
+        case SW_PIXELFORMAT_COLOR_R16G16B16:
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
+        case SW_PIXELFORMAT_COUNT: break;
     }
 
     return 0.0f;
@@ -2469,33 +2352,26 @@ static inline void sw_pixel_set_depth(void *pixels, float depth, uint32_t offset
 {
     switch (format)
     {
-    case SW_PIXELFORMAT_DEPTH_D8:
-        sw_pixel_set_depth_D8(pixels, depth, offset);
-        break;
-    case SW_PIXELFORMAT_DEPTH_D16:
-        sw_pixel_set_depth_D16(pixels, depth, offset);
-        break;
-    case SW_PIXELFORMAT_DEPTH_D32:
-        sw_pixel_set_depth_D32(pixels, depth, offset);
-        break;
+        case SW_PIXELFORMAT_DEPTH_D8: sw_pixel_set_depth_D8(pixels, depth, offset); break;
+        case SW_PIXELFORMAT_DEPTH_D16: w_pixel_set_depth_D16(pixels, depth, offset); break;
+        case SW_PIXELFORMAT_DEPTH_D32: sw_pixel_set_depth_D32(pixels, depth, offset); break;
 
-    case SW_PIXELFORMAT_UNKNOWN:
-    case SW_PIXELFORMAT_COLOR_GRAYSCALE:
-    case SW_PIXELFORMAT_COLOR_GRAYALPHA:
-    case SW_PIXELFORMAT_COLOR_R3G3B2:
-    case SW_PIXELFORMAT_COLOR_R5G6B5:
-    case SW_PIXELFORMAT_COLOR_R8G8B8:
-    case SW_PIXELFORMAT_COLOR_R5G5B5A1:
-    case SW_PIXELFORMAT_COLOR_R4G4B4A4:
-    case SW_PIXELFORMAT_COLOR_R8G8B8A8:
-    case SW_PIXELFORMAT_COLOR_R32:
-    case SW_PIXELFORMAT_COLOR_R32G32B32:
-    case SW_PIXELFORMAT_COLOR_R32G32B32A32:
-    case SW_PIXELFORMAT_COLOR_R16:
-    case SW_PIXELFORMAT_COLOR_R16G16B16:
-    case SW_PIXELFORMAT_COLOR_R16G16B16A16:
-    case SW_PIXELFORMAT_COUNT:
-        break;
+        case SW_PIXELFORMAT_UNKNOWN:
+        case SW_PIXELFORMAT_COLOR_GRAYSCALE:
+        case SW_PIXELFORMAT_COLOR_GRAYALPHA:
+        case SW_PIXELFORMAT_COLOR_R3G3B2:
+        case SW_PIXELFORMAT_COLOR_R5G6B5:
+        case SW_PIXELFORMAT_COLOR_R8G8B8:
+        case SW_PIXELFORMAT_COLOR_R5G5B5A1:
+        case SW_PIXELFORMAT_COLOR_R4G4B4A4:
+        case SW_PIXELFORMAT_COLOR_R8G8B8A8:
+        case SW_PIXELFORMAT_COLOR_R32:
+        case SW_PIXELFORMAT_COLOR_R32G32B32:
+        case SW_PIXELFORMAT_COLOR_R32G32B32A32:
+        case SW_PIXELFORMAT_COLOR_R16:
+        case SW_PIXELFORMAT_COLOR_R16G16B16:
+        case SW_PIXELFORMAT_COLOR_R16G16B16A16:
+        case SW_PIXELFORMAT_COUNT: break;
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -2509,17 +2385,17 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
 
     if (newSize > texture->allocSz)
     {
-        void* ptr = SW_REALLOC(texture->pixels, newSize);
+        void *ptr = SW_REALLOC(texture->pixels, newSize);
         if (!ptr) { RLSW.errCode = SW_OUT_OF_MEMORY; return false; }
         texture->allocSz = newSize;
         texture->pixels = ptr;
     }
 
-    uint8_t* dst = texture->pixels;
-    const uint8_t* src = data;
+    uint8_t *dst = texture->pixels;
+    const uint8_t *src = data;
 
     if (data) for (int i = 0; i < newSize; i++) dst[i] = src[i];
-    else      for (int i = 0; i < newSize; i++) dst[i] = 0;
+    else for (int i = 0; i < newSize; i++) dst[i] = 0;
 
     texture->format = format;
     texture->width = w;
@@ -2635,7 +2511,7 @@ static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_
 
 // Framebuffer management functions
 //-------------------------------------------------------------------------------------------
-static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t* fb, int w, int h)
+static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, int w, int h)
 {
     if (!sw_texture_alloc(&fb->color, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
@@ -2650,7 +2526,7 @@ static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t* fb, in
     return true;
 }
 
-static inline void sw_default_framebuffer_free(sw_default_framebuffer_t* fb)
+static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
@@ -2736,9 +2612,9 @@ static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float de
     }
 }
 
-static inline void sw_framebuffer_output_fast(void* dst, const sw_texture_t* buffer)
+static inline void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buffer)
 {
-    int width  = buffer->width;
+    int width = buffer->width;
     int height = buffer->height;
 
     uint8_t *d = (uint8_t *)dst;
@@ -2777,7 +2653,7 @@ static inline void sw_framebuffer_output_fast(void* dst, const sw_texture_t* buf
 #endif
 }
 
-static inline void sw_framebuffer_output_copy(void* dst, const sw_texture_t* buffer, int x, int y, int w, int h, sw_pixelformat_t format)
+static inline void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buffer, int x, int y, int w, int h, sw_pixelformat_t format)
 {
     int dstPixelSize = SW_PIXELFORMAT_SIZE[format];
     int stride = buffer->width;
@@ -2808,15 +2684,12 @@ static inline void sw_framebuffer_output_copy(void* dst, const sw_texture_t* buf
         }
 
         src -= stride*SW_FRAMEBUFFER_COLOR_SIZE;
-        d   += w*dstPixelSize;
+        d += w*dstPixelSize;
     }
 }
 
-static inline void sw_framebuffer_output_blit(
-    void* dst, const sw_texture_t* buffer,
-    int xDst, int yDst, int wDst, int hDst,
-    int xSrc, int ySrc, int wSrc, int hSrc,
-    sw_pixelformat_t format)
+static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer, 
+    int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, sw_pixelformat_t format)
 {
     const uint8_t *srcBase = buffer->pixels;
 
@@ -3692,7 +3565,8 @@ static inline bool sw_line_clip_coord(float q, float p, float *t0, float *t1)
 static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
 {
     float t0 = 0.0f, t1 = 1.0f;
-    float dH[4], dC[4];
+    float dH[4] = { 0 }
+    float dC[4] = { 0 };
 
     for (int i = 0; i < 4; i++)
     {
@@ -4460,7 +4334,7 @@ void swLoadIdentity(void)
 
 void swTranslatef(float x, float y, float z)
 {
-    sw_matrix_t mat;
+    sw_matrix_t mat = { 0 };
     sw_matrix_id(mat);
 
     mat[12] = x;
@@ -4490,7 +4364,7 @@ void swRotatef(float angle, float x, float y, float z)
     float cosres = cosf(angle);
     float t = 1.0f - cosres;
 
-    sw_matrix_t mat;
+    sw_matrix_t mat = { 0 };
 
     mat[0] = x*x*t + cosres;
     mat[1] = y*x*t + z*sinres;
@@ -4519,7 +4393,7 @@ void swRotatef(float angle, float x, float y, float z)
 
 void swScalef(float x, float y, float z)
 {
-    sw_matrix_t mat;
+    sw_matrix_t mat = { 0 };
 
     mat[0]  = x, mat[1]  = 0, mat[2]  = 0, mat[3]  = 0;
     mat[4]  = 0, mat[5]  = y, mat[6]  = 0, mat[7]  = 0;
@@ -4540,7 +4414,7 @@ void swMultMatrixf(const float *mat)
 
 void swFrustum(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    sw_matrix_t mat;
+    sw_matrix_t mat = { 0 };
 
     double rl = right - left;
     double tb = top - bottom;
@@ -4573,7 +4447,7 @@ void swFrustum(double left, double right, double bottom, double top, double znea
 
 void swOrtho(double left, double right, double bottom, double top, double znear, double zfar)
 {
-    sw_matrix_t mat;
+    sw_matrix_t mat = { 0 };
 
     double rl = right - left;
     double tb = top - bottom;
@@ -4695,7 +4569,7 @@ void swVertex4fv(const float *v)
 
 void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = (float)r*SW_INV_255;
     cv[1] = (float)g*SW_INV_255;
     cv[2] = (float)b*SW_INV_255;
@@ -4706,7 +4580,7 @@ void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
 
 void swColor3ubv(const uint8_t *v)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = (float)v[0]*SW_INV_255;
     cv[1] = (float)v[1]*SW_INV_255;
     cv[2] = (float)v[2]*SW_INV_255;
@@ -4717,7 +4591,7 @@ void swColor3ubv(const uint8_t *v)
 
 void swColor3f(float r, float g, float b)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = r;
     cv[1] = g;
     cv[2] = b;
@@ -4728,7 +4602,7 @@ void swColor3f(float r, float g, float b)
 
 void swColor3fv(const float *v)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = v[0];
     cv[1] = v[1];
     cv[2] = v[2];
@@ -4739,7 +4613,7 @@ void swColor3fv(const float *v)
 
 void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = (float)r*SW_INV_255;
     cv[1] = (float)g*SW_INV_255;
     cv[2] = (float)b*SW_INV_255;
@@ -4750,7 +4624,7 @@ void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 void swColor4ubv(const uint8_t *v)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = (float)v[0]*SW_INV_255;
     cv[1] = (float)v[1]*SW_INV_255;
     cv[2] = (float)v[2]*SW_INV_255;
@@ -4761,7 +4635,7 @@ void swColor4ubv(const uint8_t *v)
 
 void swColor4f(float r, float g, float b, float a)
 {
-    float cv[4];
+    float cv[4] = { 0 };
     cv[0] = r;
     cv[1] = g;
     cv[2] = b;
@@ -4891,18 +4765,10 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
     switch (type)
     {
-        case SW_UNSIGNED_BYTE:
-            indicesUb = (const uint8_t *)indices;
-            break;
-        case SW_UNSIGNED_SHORT:
-            indicesUs = (const uint16_t *)indices;
-            break;
-        case SW_UNSIGNED_INT:
-            indicesUi = (const uint32_t *)indices;
-            break;
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            return;
+        case SW_UNSIGNED_BYTE: indicesUb = (const uint8_t *)indices; break;
+        case SW_UNSIGNED_SHORT: indicesUs = (const uint16_t *)indices; break;
+        case SW_UNSIGNED_INT: indicesUi = (const uint32_t *)indices; break;
+        default: RLSW.errCode = SW_INVALID_ENUM; return;
     }
 
     swBegin(mode);
@@ -4992,7 +4858,7 @@ void swDeleteTextures(int count, sw_handle_t *textures)
         if (tex == RLSW.depthBuffer) RLSW.depthBuffer = NULL;
 
         sw_texture_free(tex);
-        *tex = (sw_texture_t) { 0 };
+        *tex = (sw_texture_t){ 0 };
 
         sw_pool_free(&RLSW.texturePool, textures[i]);
     }
@@ -5030,9 +4896,7 @@ void swTexStorage2D(int width, int height, SWinternalformat format)
         case SW_DEPTH_COMPONENT24: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
         case SW_DEPTH_COMPONENT32: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
         case SW_DEPTH_COMPONENT32F: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            return;
+        default: RLSW.errCode = SW_INVALID_ENUM; return;
     }
 
     (void)sw_texture_alloc(RLSW.boundTexture, NULL, width, height, pixelFormat);
@@ -5072,8 +4936,8 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
     const int srcPixelSize = SW_PIXELFORMAT_SIZE[pFormat];
     const int dstPixelSize = SW_PIXELFORMAT_SIZE[RLSW.boundTexture->format];
 
-    const uint8_t* srcBytes = (const uint8_t *)pixels;
-    uint8_t* dstBytes = (uint8_t *)RLSW.boundTexture->pixels;
+    const uint8_t *srcBytes = (const uint8_t *)pixels;
+    uint8_t *dstBytes = (uint8_t *)RLSW.boundTexture->pixels;
 
     if (pFormat == RLSW.boundTexture->format)
     {
@@ -5114,32 +4978,30 @@ void swTexParameteri(int param, int value)
     switch (param)
     {
         case SW_TEXTURE_MIN_FILTER:
+        {
             if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
             RLSW.boundTexture->minFilter = (SWfilter)value;
-            break;
-
+        } break;
         case SW_TEXTURE_MAG_FILTER:
+        {
             if (!sw_is_texture_filter_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
             RLSW.boundTexture->magFilter = (SWfilter)value;
-            break;
-
+        } break;
         case SW_TEXTURE_WRAP_S:
+        {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
             RLSW.boundTexture->sWrap = (SWwrap)value;
-            break;
-
+        } break;
         case SW_TEXTURE_WRAP_T:
+        {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
             RLSW.boundTexture->tWrap = (SWwrap)value;
-            break;
-
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            break;
+        } break;
+        default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
 
-void swGenFramebuffers(int count, uint32_t* framebuffers)
+void swGenFramebuffers(int count, uint32_t *framebuffers)
 {
     if (!count || !framebuffers) return;
 
@@ -5151,7 +5013,7 @@ void swGenFramebuffers(int count, uint32_t* framebuffers)
     }
 }
 
-void swDeleteFramebuffers(int count, uint32_t* framebuffers)
+void swDeleteFramebuffers(int count, uint32_t *framebuffers)
 {
     if (!count || !framebuffers) return;
 
@@ -5181,7 +5043,7 @@ void swBindFramebuffer(uint32_t id)
         return;
     }
 
-    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, id);
+    sw_framebuffer_t *fb = sw_pool_get(&RLSW.framebufferPool, id);
     if (fb == NULL)
     {
         RLSW.errCode = SW_INVALID_VALUE;
@@ -5201,64 +5063,43 @@ void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
         return;
     }
 
-    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
+    sw_framebuffer_t *fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
     if (fb == NULL) return; // Should never happen
 
     switch (attach)
     {
         case SW_COLOR_ATTACHMENT:
+        {
             fb->colorAttachment = texture;
             RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, texture);
-            break;
+        } break;
         case SW_DEPTH_ATTACHMENT:
+        {        
             fb->depthAttachment = texture;
             RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, texture);
-            break;
-        default:
-            RLSW.errCode = SW_INVALID_ENUM;
-            break;
+        } break;
+        default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
 
 SWfbstatus swCheckFramebufferStatus(void)
 {
-    if (RLSW.boundFramebufferId == SW_HANDLE_NULL)
-    {
-        return SW_FRAMEBUFFER_COMPLETE;
-    }
+    if (RLSW.boundFramebufferId == SW_HANDLE_NULL) return SW_FRAMEBUFFER_COMPLETE;
 
-    if (RLSW.colorBuffer == NULL)
-    {
-        return SW_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT;
-    }
+    if (RLSW.colorBuffer == NULL) return SW_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT;
 
-    if (!sw_is_texture_complete(RLSW.colorBuffer))
-    {
-        return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
-    }
+    if (!sw_is_texture_complete(RLSW.colorBuffer)) return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 
-    if (RLSW.colorBuffer->format != SW_FRAMEBUFFER_COLOR_FORMAT)
-    {
-        return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
-    }
+    if (RLSW.colorBuffer->format != SW_FRAMEBUFFER_COLOR_FORMAT) return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 
     if (RLSW.depthBuffer)
     {
-        if (!sw_is_texture_complete(RLSW.depthBuffer))
-        {
-            return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
-        }
+        if (!sw_is_texture_complete(RLSW.depthBuffer)) return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 
-        if (RLSW.depthBuffer->format != SW_FRAMEBUFFER_DEPTH_FORMAT)
-        {
-            return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
-        }
+        if (RLSW.depthBuffer->format != SW_FRAMEBUFFER_DEPTH_FORMAT) return SW_FRAMEBUFFER_INCOMPLETE_ATTACHMENT;
 
         if ((RLSW.colorBuffer->width != RLSW.depthBuffer->width) ||
-            (RLSW.colorBuffer->height != RLSW.depthBuffer->height))
-        {
-            return SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
-        }
+            (RLSW.colorBuffer->height != RLSW.depthBuffer->height)) return SW_FRAMEBUFFER_INCOMPLETE_DIMENSIONS;
     }
 
     return SW_FRAMEBUFFER_COMPLETE;
@@ -5278,30 +5119,18 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
         return;
     }
 
-    sw_framebuffer_t* fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
+    sw_framebuffer_t *fb = sw_pool_get(&RLSW.framebufferPool, RLSW.boundFramebufferId);
     if (fb == NULL) return; // Should never happen
 
     switch (property)
     {
         case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME:
         {
-            switch (attachment)
-            {
-                case SW_COLOR_ATTACHMENT:
-                    *v = fb->colorAttachment;
-                    break;
-                case SW_DEPTH_ATTACHMENT:
-                    *v = fb->depthAttachment;
-                    break;
-            }
-        }
-        break;
-
-        case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE:
-        {
-            *v = GL_TEXTURE;
-            break;
-        }
+            if (attachment == SW_COLOR_ATTACHMENT) *v = fb->colorAttachment;
+            else if (attachment == SW_DEPTH_ATTACHMENT) *v = fb->depthAttachment;
+        } break;
+        case SW_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE: *v = GL_TEXTURE; break;
+        default: break;
     }
 }
 
@@ -5328,7 +5157,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 {
     // Gets the start and end coordinates
     int xStart = (int)start->screen[0];
-    int xEnd   = (int)end->screen[0];
+    int xEnd = (int)end->screen[0];
 
     // Avoid empty lines
     if (xStart == xEnd) return;
@@ -5538,10 +5367,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     {
         vLeft.screen[1] = vRight.screen[1] = y;
 
-        if (vLeft.screen[0] < vRight.screen[0])
-            SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        else
-            SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        if (vLeft.screen[0] < vRight.screen[0]) SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        else SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
 
         sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);
         vLeft.screen[0] += dXdy02;
