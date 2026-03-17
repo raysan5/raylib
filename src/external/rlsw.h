@@ -5749,10 +5749,11 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 
 static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 {
-    float x0 = v0->screen[0];
-    float y0 = v0->screen[1];
-    float x1 = v1->screen[0];
-    float y1 = v1->screen[1];
+    // Convert from pixel-center convention (n+0.5) to pixel-origin convention (n)
+    float x0 = v0->screen[0] - 0.5f;
+    float y0 = v0->screen[1] - 0.5f;
+    float x1 = v1->screen[0] - 0.5f;
+    float y1 = v1->screen[1] - 0.5f;
 
     float dx = x1 - x0;
     float dy = y1 - y0;
