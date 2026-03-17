@@ -3049,7 +3049,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
  
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_triangle_##NAME,
-    static const sw_raster_triangle_f SW_RASTER_TRIANGLE_FUNCS[] = {
+    static const sw_raster_triangle_f SW_RASTER_TRIANGLE_TABLE[] = {
         SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
     };
     #undef SW_TABLE_ENTRY
@@ -3148,7 +3148,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
  
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_quad_##NAME,
-    static const sw_raster_quad_f SW_RASTER_QUAD_FUNCS[] = {
+    static const sw_raster_quad_f SW_RASTER_QUAD_TABLE[] = {
         SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
     };
     #undef SW_TABLE_ENTRY
@@ -3213,8 +3213,8 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY0(NAME, FLAGS) [FLAGS] = sw_raster_line_##NAME,
     #define SW_TABLE_ENTRY1(NAME, FLAGS) [FLAGS] = sw_raster_line_thick_##NAME,
-    static const sw_raster_line_f SW_RASTER_LINE_FUNCS[] = {  SW_RASTER_VARIANTS(SW_TABLE_ENTRY0) };
-    static const sw_raster_line_f SW_RASTER_LINE_THICK_FUNCS[] = { SW_RASTER_VARIANTS(SW_TABLE_ENTRY1) };
+    static const sw_raster_line_f SW_RASTER_LINE_TABLE[] = {  SW_RASTER_VARIANTS(SW_TABLE_ENTRY0) };
+    static const sw_raster_line_f SW_RASTER_LINE_THICK_TABLE[] = { SW_RASTER_VARIANTS(SW_TABLE_ENTRY1) };
     #undef SW_TABLE_ENTRY0
     #undef SW_TABLE_ENTRY1
 
@@ -3276,7 +3276,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
  
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_point_##NAME,
-    static const sw_raster_point_f SW_RASTER_POINT_FUNCS[] = {
+    static const sw_raster_point_f SW_RASTER_POINT_TABLE[] = {
         SW_RASTER_VARIANTS(SW_TABLE_ENTRY)
     };
     #undef SW_TABLE_ENTRY
@@ -3387,7 +3387,7 @@ static void sw_triangle_render(uint32_t state)
 
     for (int i = 0; i < RLSW.vertexCounter - 2; i++)
     {
-        SW_RASTER_TRIANGLE_FUNCS[state](
+        SW_RASTER_TRIANGLE_TABLE[state](
             &RLSW.vertexBuffer[0],
             &RLSW.vertexBuffer[i + 1],
             &RLSW.vertexBuffer[i + 2]
@@ -3538,7 +3538,7 @@ static void sw_quad_render(uint32_t state)
 
     if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
     {
-        SW_RASTER_QUAD_FUNCS[state](
+        SW_RASTER_QUAD_TABLE[state](
             &RLSW.vertexBuffer[0],
             &RLSW.vertexBuffer[1],
             &RLSW.vertexBuffer[2],
@@ -3549,7 +3549,7 @@ static void sw_quad_render(uint32_t state)
     {
         for (int i = 0; i < RLSW.vertexCounter - 2; i++)
         {
-            SW_RASTER_TRIANGLE_FUNCS[state](
+            SW_RASTER_TRIANGLE_TABLE[state](
                 &RLSW.vertexBuffer[0],
                 &RLSW.vertexBuffer[i + 1],
                 &RLSW.vertexBuffer[i + 2]
@@ -3672,11 +3672,11 @@ static void sw_line_render(uint32_t state, sw_vertex_t *vertices)
 
     if (RLSW.lineWidth >= 2.0f)
     {
-        SW_RASTER_LINE_THICK_FUNCS[state](&vertices[0], &vertices[1]);
+        SW_RASTER_LINE_THICK_TABLE[state](&vertices[0], &vertices[1]);
     }
     else
     {
-        SW_RASTER_LINE_FUNCS[state](&vertices[0], &vertices[1]);
+        SW_RASTER_LINE_TABLE[state](&vertices[0], &vertices[1]);
     }
 }
 //-------------------------------------------------------------------------------------------
@@ -3721,7 +3721,7 @@ static void sw_point_render(uint32_t state, sw_vertex_t *v)
 {
     if (!sw_point_clip_and_project(v)) return;
     state &= SW_RASTER_POINT_STATE_MASK;
-    SW_RASTER_POINT_FUNCS[state](v);
+    SW_RASTER_POINT_TABLE[state](v);
 }
 //-------------------------------------------------------------------------------------------
 
