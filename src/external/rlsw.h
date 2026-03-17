@@ -5345,10 +5345,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     {
         vLeft.screen[1] = vRight.screen[1] = y;
 
-        if (vLeft.screen[0] < vRight.screen[0])
-            SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        else
-            SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        if (vLeft.screen[0] < vRight.screen[0]) SW_RASTER_TRIANGLE_SPAN(&vLeft, &vRight, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        else SW_RASTER_TRIANGLE_SPAN(&vRight, &vLeft, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
 
         sw_add_vertex_grad_PTCH(&vLeft, &dVXdy02);
         vLeft.screen[0] += dXdy02;
