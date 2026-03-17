@@ -1489,51 +1489,6 @@ static inline bool sw_is_face_valid(int face)
     return (face == SW_FRONT || face == SW_BACK);
 }
 
-static inline bool sw_is_blend_src_factor_valid(int blend)
-{
-    bool result = false;
-
-    switch (blend)
-    {
-        case SW_ZERO:
-        case SW_ONE:
-        case SW_SRC_COLOR:
-        case SW_ONE_MINUS_SRC_COLOR:
-        case SW_SRC_ALPHA:
-        case SW_ONE_MINUS_SRC_ALPHA:
-        case SW_DST_ALPHA:
-        case SW_ONE_MINUS_DST_ALPHA:
-        case SW_DST_COLOR:
-        case SW_ONE_MINUS_DST_COLOR:
-        case SW_SRC_ALPHA_SATURATE: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-
-static inline bool sw_is_blend_dst_factor_valid(int blend)
-{
-    bool result = false;
-
-    switch (blend)
-    {
-        case SW_ZERO:
-        case SW_ONE:
-        case SW_SRC_COLOR:
-        case SW_ONE_MINUS_SRC_COLOR:
-        case SW_SRC_ALPHA:
-        case SW_ONE_MINUS_SRC_ALPHA:
-        case SW_DST_ALPHA:
-        case SW_ONE_MINUS_DST_ALPHA:
-        case SW_DST_COLOR:
-        case SW_ONE_MINUS_DST_COLOR: result = true; break;
-        default: break;
-    }
-
-    return result;
-}
-
 static inline bool sw_is_ready_to_render(void)
 {
     return (swCheckFramebufferStatus() == SW_FRAMEBUFFER_COMPLETE);
@@ -4158,19 +4113,14 @@ void swClear(uint32_t bitmask)
 
 void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
 {
-    if (!sw_is_blend_src_factor_valid(sfactor) ||
-        !sw_is_blend_dst_factor_valid(dfactor))
-    {
-        RLSW.errCode = SW_INVALID_ENUM;
-        return;
-    }
+    int sIndex = sw_blend_factor_index(sfactor);
+    if (sIndex < 0) { RLSW.errCode = SW_INVALID_ENUM; return; }
+
+    int dIndex = sw_blend_factor_index(dfactor);
+    if (dIndex < 0) { RLSW.errCode = SW_INVALID_ENUM; return; }
 
     RLSW.srcFactor = sfactor;
     RLSW.dstFactor = dfactor;
-
-    int sIndex = sw_blend_factor_index(sfactor);
-    int dIndex = sw_blend_factor_index(dfactor);
-
     RLSW.blendFunc = SW_BLEND_TABLE[sIndex][dIndex];
 }
 
