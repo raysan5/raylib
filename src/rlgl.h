@@ -838,6 +838,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
         #define RLSW_IMPLEMENTATION
         #define SW_MALLOC(sz) RL_MALLOC(sz)
+        #define SW_CALLOC(n,sz) RL_CALLOC(n, sz)
         #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
         #define SW_FREE(ptr) RL_FREE(ptr)
         #include "external/rlsw.h"          // OpenGL 1.1 software implementation
@@ -1857,7 +1858,7 @@ void rlDisableShader(void)
 // Enable rendering to texture (fbo)
 void rlEnableFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 #endif
 }
@@ -1866,7 +1867,7 @@ void rlEnableFramebuffer(unsigned int id)
 unsigned int rlGetActiveFramebuffer(void)
 {
     GLint fboId = 0;
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboId);
 #endif
     return fboId;
@@ -1875,7 +1876,7 @@ unsigned int rlGetActiveFramebuffer(void)
 // Disable rendering to texture
 void rlDisableFramebuffer(void)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #endif
 }
@@ -1891,7 +1892,7 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 // Bind framebuffer object (fbo)
 void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glBindFramebuffer(target, framebuffer);
 #endif
 }
@@ -3471,6 +3472,13 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
 
         TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Depth renderbuffer loaded successfully (%i bits)", id, (RLGL.ExtSupported.maxDepthBits >= 24)? RLGL.ExtSupported.maxDepthBits : 16);
     }
+#elif defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+    // NOTE: Renderbuffers are the same type of object as textures in rlsw
+    // WARNING: Ensure that the depth format is the one specified at rlsw compilation
+    glGenRenderbuffers(1, &id);
+    glBindRenderbuffer(GL_RENDERBUFFER, id);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 #endif
 
     return id;
@@ -3771,7 +3779,7 @@ void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pi
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
     unsigned int glInternalFormat, glFormat, glType;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType); // Get OpenGL texture format
-    swCopyFramebuffer(x, y, width, height, glFormat, glType, pixels);
+    swReadPixels(x, y, width, height, glFormat, glType, pixels);
 #endif
 }
 
@@ -3779,7 +3787,7 @@ void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pi
 void rlResizeFramebuffer(int width, int height)
 {
 #if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    swResizeFramebuffer(width, height);
+    swResize(width, height);
 #endif
 }
 
@@ -3829,7 +3837,7 @@ unsigned int rlLoadFramebuffer(void)
     unsigned int fboId = 0;
     if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return fboId; }
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glGenFramebuffers(1, &fboId);         // Create the framebuffer object
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind any framebuffer
 #endif
@@ -3841,7 +3849,7 @@ unsigned int rlLoadFramebuffer(void)
 // NOTE: Attach type: 0-Color, 1-Depth renderbuffer, 2-Depth texture
 void rlFramebufferAttach(unsigned int id, unsigned int texId, int attachType, int texType, int mipLevel)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     switch (attachType)
@@ -3881,7 +3889,7 @@ bool rlFramebufferComplete(unsigned int id)
 {
     bool result = false;
 
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -3912,7 +3920,7 @@ bool rlFramebufferComplete(unsigned int id)
 // NOTE: All attached textures/cubemaps/renderbuffers are also deleted
 void rlUnloadFramebuffer(unsigned int id)
 {
-#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2))
+#if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_11_SOFTWARE))
     // Query depth attachment to automatically delete texture/renderbuffer
     int depthType = 0;
     glBindFramebuffer(GL_FRAMEBUFFER, id);   // Bind framebuffer to query depth texture type
