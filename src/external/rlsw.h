@@ -87,7 +87,7 @@
 #ifndef RLSW_H
 #define RLSW_H
 
-#define RLGL_VERSION  "1.5"
+#define RLSW_VERSION  "1.5"
 
 #include <stdbool.h>
 #include <stdint.h>
