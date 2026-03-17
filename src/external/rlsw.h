@@ -2658,7 +2658,10 @@ static inline void sw_default_framebuffer_free(sw_default_framebuffer_t* fb)
 
 static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
 {
-    uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE];
+    // NOTE: MSVC doesn't support VLA, so we allocate the largest possible size
+    //uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE];
+
+    uint8_t pixel[16];
     SW_FRAMEBUFFER_COLOR_SET(pixel, color, 0);
 
     uint8_t *dst = (uint8_t *)colorBuffer->pixels;
@@ -2695,7 +2698,10 @@ static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const fl
 
 static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float depth)
 {
-    uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE];
+    // NOTE: MSVC doesn't support VLA, so we allocate the largest possible size
+    //uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE];
+
+    uint8_t pixel[4];
     SW_FRAMEBUFFER_DEPTH_SET(pixel, depth, 0);
 
     uint8_t *dst = (uint8_t *)depthBuffer->pixels;
