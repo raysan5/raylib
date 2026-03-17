@@ -1570,7 +1570,8 @@ audio/audio_mixed_processor: audio/audio_mixed_processor.c
     --preload-file audio/resources/coin.wav@resources/coin.wav
 
 audio/audio_module_playing: audio/audio_module_playing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
 
 audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
