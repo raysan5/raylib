@@ -246,7 +246,7 @@ endif
 # NOTE: By default use OpenGL 3.3 on desktop platforms
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -257,7 +257,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -265,7 +265,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -273,7 +273,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE # Uncomment to use software rendering
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
@@ -709,7 +709,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     LDLIBS = -lgdi32 -lwinmm -lshcore
-    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
         LDLIBS += -lopengl32
     endif
 endif
