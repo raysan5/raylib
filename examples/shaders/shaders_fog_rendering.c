@@ -72,8 +72,9 @@ int main(void)
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
+    Vector4 ambient = (Vector4){ 0.2f, 0.2f, 0.2f, 1.0f };
     int ambientLoc = GetShaderLocation(shader, "ambient");
-    SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
+    SetShaderValue(shader, ambientLoc, &ambient, SHADER_UNIFORM_VEC4);
 
     Vector4 fogColor = ColorNormalize(GRAY);
     int fogColorLoc = GetShaderLocation(shader, "fogColor");
