@@ -5319,12 +5319,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         int blockEnd = x + SW_AFFINE_BLOCK;
         if (blockEnd > xEnd) blockEnd = xEnd;
         float blockLenF = (float)(blockEnd - x);
-        float blockLenRcp = 1.0f / blockLenF;
+        float blockLenRcp = 1.0f/blockLenF;
 
         // Only 2 '1/w' here; none inside the pixel loop
-        float wRcpA = 1.0f / w;
+        float wRcpA = 1.0f/w;
         float wB = w + dWdx*blockLenF;
-        float wRcpB = 1.0f / wB;
+        float wRcpB = 1.0f/wB;
 
         // Perspective-correct color at both block endpoints, then affine gradient
         float srcColor[4] = {
