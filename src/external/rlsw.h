@@ -931,9 +931,8 @@ typedef float sw_matrix_t[4*4];
 
 typedef struct {
     float position[4];          // Position coordinates
-    float texcoord[2];          // Texture coordinates
     float color[4];             // Color value (RGBA)
-
+    float texcoord[2];          // Texture coordinates
     float homogeneous[4];       // Homogeneous coordinates
     float screen[2];            // Screen coordinates
 } sw_vertex_t;
@@ -1001,8 +1000,8 @@ typedef struct {
     } array;
 
     struct {
-        float texcoord[2];
         float color[4];
+        float texcoord[2];
     } current;
 
     sw_vertex_t vertexBuffer[SW_MAX_CLIPPED_POLYGON_VERTICES];  // Buffer used for storing primitive vertices, used for processing and rendering
@@ -1209,15 +1208,15 @@ static inline void sw_lerp_vertex_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_ve
     out->position[2] = a->position[2]*tInv + b->position[2]*t;
     out->position[3] = a->position[3]*tInv + b->position[3]*t;
 
-    // Texture coordinate interpolation (2 components)
-    out->texcoord[0] = a->texcoord[0]*tInv + b->texcoord[0]*t;
-    out->texcoord[1] = a->texcoord[1]*tInv + b->texcoord[1]*t;
-
     // Color interpolation (4 components)
     out->color[0] = a->color[0]*tInv + b->color[0]*t;
     out->color[1] = a->color[1]*tInv + b->color[1]*t;
     out->color[2] = a->color[2]*tInv + b->color[2]*t;
     out->color[3] = a->color[3]*tInv + b->color[3]*t;
+
+    // Texture coordinate interpolation (2 components)
+    out->texcoord[0] = a->texcoord[0]*tInv + b->texcoord[0]*t;
+    out->texcoord[1] = a->texcoord[1]*tInv + b->texcoord[1]*t;
 
     // Homogeneous coordinate interpolation (4 components)
     out->homogeneous[0] = a->homogeneous[0]*tInv + b->homogeneous[0]*t;
@@ -1234,15 +1233,15 @@ static inline void sw_get_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->position[2] = (b->position[2] - a->position[2])*scale;
     out->position[3] = (b->position[3] - a->position[3])*scale;
 
-    // Calculate gradients for Texture coordinates
-    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
-    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
-
     // Calculate gradients for Color
     out->color[0] = (b->color[0] - a->color[0])*scale;
     out->color[1] = (b->color[1] - a->color[1])*scale;
     out->color[2] = (b->color[2] - a->color[2])*scale;
     out->color[3] = (b->color[3] - a->color[3])*scale;
+
+    // Calculate gradients for Texture coordinates
+    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
+    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
 
     // Calculate gradients for Homogeneous coordinates
     out->homogeneous[0] = (b->homogeneous[0] - a->homogeneous[0])*scale;
@@ -1259,15 +1258,15 @@ static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->position[2] += gradients->position[2];
     out->position[3] += gradients->position[3];
 
-    // Add gradients to Texture coordinates
-    out->texcoord[0] += gradients->texcoord[0];
-    out->texcoord[1] += gradients->texcoord[1];
-
     // Add gradients to Color
     out->color[0] += gradients->color[0];
     out->color[1] += gradients->color[1];
     out->color[2] += gradients->color[2];
     out->color[3] += gradients->color[3];
+
+    // Add gradients to Texture coordinates
+    out->texcoord[0] += gradients->texcoord[0];
+    out->texcoord[1] += gradients->texcoord[1];
 
     // Add gradients to Homogeneous coordinates
     out->homogeneous[0] += gradients->homogeneous[0];
@@ -1284,15 +1283,15 @@ static inline void sw_add_vertex_grad_scaled_PTCH(sw_vertex_t *SW_RESTRICT out, 
     out->position[2] += gradients->position[2]*scale;
     out->position[3] += gradients->position[3]*scale;
 
-    // Add gradients to Texture coordinates
-    out->texcoord[0] += gradients->texcoord[0]*scale;
-    out->texcoord[1] += gradients->texcoord[1]*scale;
-
     // Add gradients to Color
     out->color[0] += gradients->color[0]*scale;
     out->color[1] += gradients->color[1]*scale;
     out->color[2] += gradients->color[2]*scale;
     out->color[3] += gradients->color[3]*scale;
+
+    // Add gradients to Texture coordinates
+    out->texcoord[0] += gradients->texcoord[0]*scale;
+    out->texcoord[1] += gradients->texcoord[1]*scale;
 
     // Add gradients to Homogeneous coordinates
     out->homogeneous[0] += gradients->homogeneous[0]*scale;
@@ -3797,7 +3796,47 @@ static inline void sw_poly_fill_render(uint32_t state)
 
 // Immediate rendering logic
 //-------------------------------------------------------------------------------------------
-static void sw_immediate_push_vertex(const float position[4], const float color[4], const float texcoord[2])
+static void sw_immediate_begin(SWdraw mode)
+{
+    // NOTE: Any checks to ensure command recording can start
+    //       must be performed before calling this function.
+
+    // Recalculate the MVP if this is needed
+    if (RLSW.isDirtyMVP)
+    {
+        sw_matrix_mul_rst(RLSW.matMVP,
+            RLSW.stackModelview[RLSW.stackModelviewCounter - 1],
+            RLSW.stackProjection[RLSW.stackProjectionCounter - 1]);
+
+        RLSW.isDirtyMVP = false;
+    }
+
+    // Initialize required values
+    RLSW.vertexCounter = 0;
+    RLSW.drawMode = mode;
+}
+
+static bool sw_immediate_is_active(void)
+{
+    return (RLSW.drawMode != SW_DRAW_INVALID);
+}
+
+static void sw_immediate_set_color(const float color[4])
+{
+    RLSW.current.color[0] = color[0];
+    RLSW.current.color[1] = color[1];
+    RLSW.current.color[2] = color[2];
+    RLSW.current.color[3] = color[3];
+}
+
+static void sw_immediate_set_texcoord(const float texcoord[2])
+{
+    const float *m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
+    RLSW.current.texcoord[0] = m[0]*texcoord[0] + m[4]*texcoord[1] + m[12];
+    RLSW.current.texcoord[1] = m[1]*texcoord[0] + m[5]*texcoord[1] + m[13];
+}
+
+static void sw_immediate_push_vertex(const float position[4])
 {
     // Check if we are in a valid draw mode
     if (!sw_is_draw_mode_valid(RLSW.drawMode))
@@ -3808,12 +3847,9 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
 
     // Copy the attributes in the current vertex
     sw_vertex_t *vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
-    for (int i = 0; i < 4; i++)
-    {
-        vertex->position[i] = position[i];
-        if (i < 2) vertex->texcoord[i] = texcoord[i];
-        vertex->color[i] = color[i];
-    }
+    for (int i = 0; i < 4; i++) vertex->position[i] = position[i];
+    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.current.color[i];
+    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.current.texcoord[i];
 
     // Calculate homogeneous coordinates
     const float *m = RLSW.matMVP, *v = vertex->position;
@@ -3859,6 +3895,11 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
 
         RLSW.vertexCounter = 0;
     }
+}
+
+static void sw_immediate_end(void)
+{
+    RLSW.drawMode = SW_DRAW_INVALID;
 }
 
 //-------------------------------------------------------------------------------------------
@@ -4538,77 +4579,79 @@ void swBegin(SWdraw mode)
         return;
     }
 
-    // Recalculate the MVP if this is needed
-    if (RLSW.isDirtyMVP)
+    // Ensures that a recording has not already started (spec)
+    if (sw_immediate_is_active())
     {
-        sw_matrix_mul_rst(RLSW.matMVP,
-            RLSW.stackModelview[RLSW.stackModelviewCounter - 1],
-            RLSW.stackProjection[RLSW.stackProjectionCounter - 1]);
-
-        RLSW.isDirtyMVP = false;
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
     }
 
-    // Initialize required values
-    RLSW.vertexCounter = 0;
-    RLSW.drawMode = mode;
+    sw_immediate_begin(mode);
 }
 
 void swEnd(void)
 {
-    RLSW.drawMode = SW_DRAW_INVALID;
+    // Ensures that a recording has already started (spec)
+    if (!sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
+    sw_immediate_end();
 }
 
 void swVertex2i(int x, int y)
 {
     const float v[4] = { (float)x, (float)y, 0.0f, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex2f(float x, float y)
 {
     const float v[4] = { x, y, 0.0f, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex2fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], 0.0f, 1.0f };
-    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4);
 }
 
 void swVertex3i(int x, int y, int z)
 {
     const float v[4] = { (float)x, (float)y, (float)z, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex3f(float x, float y, float z)
 {
     const float v[4] = { x, y, z, 1.0f };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex3fv(const float *v)
 {
     const float v4[4] = { v[0], v[1], v[2], 1.0f };
-    sw_immediate_push_vertex(v4, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v4);
 }
 
 void swVertex4i(int x, int y, int z, int w)
 {
     const float v[4] = { (float)x, (float)y, (float)z, (float)w };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex4f(float x, float y, float z, float w)
 {
     const float v[4] = { x, y, z, w };
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swVertex4fv(const float *v)
 {
-    sw_immediate_push_vertex(v, RLSW.current.color, RLSW.current.texcoord);
+    sw_immediate_push_vertex(v);
 }
 
 void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
@@ -4619,7 +4662,7 @@ void swColor3ub(uint8_t r, uint8_t g, uint8_t b)
     cv[2] = (float)b*SW_INV_255;
     cv[3] = 1.0f;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor3ubv(const uint8_t *v)
@@ -4630,7 +4673,7 @@ void swColor3ubv(const uint8_t *v)
     cv[2] = (float)v[2]*SW_INV_255;
     cv[3] = 1.0f;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor3f(float r, float g, float b)
@@ -4641,7 +4684,7 @@ void swColor3f(float r, float g, float b)
     cv[2] = b;
     cv[3] = 1.0f;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor3fv(const float *v)
@@ -4652,7 +4695,7 @@ void swColor3fv(const float *v)
     cv[2] = v[2];
     cv[3] = 1.0f;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
@@ -4663,7 +4706,7 @@ void swColor4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     cv[2] = (float)b*SW_INV_255;
     cv[3] = (float)a*SW_INV_255;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor4ubv(const uint8_t *v)
@@ -4674,7 +4717,7 @@ void swColor4ubv(const uint8_t *v)
     cv[2] = (float)v[2]*SW_INV_255;
     cv[3] = (float)v[3]*SW_INV_255;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor4f(float r, float g, float b, float a)
@@ -4685,28 +4728,23 @@ void swColor4f(float r, float g, float b, float a)
     cv[2] = b;
     cv[3] = a;
 
-    swColor4fv(cv);
+    sw_immediate_set_color(cv);
 }
 
 void swColor4fv(const float *v)
 {
-    for (int i = 0; i < 4; i++) RLSW.current.color[i] = v[i];
+    sw_immediate_set_color(v);
 }
 
 void swTexCoord2f(float u, float v)
 {
-    const float *m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-
-    RLSW.current.texcoord[0] = m[0]*u + m[4]*v + m[12];
-    RLSW.current.texcoord[1] = m[1]*u + m[5]*v + m[13];
+    const float texcoord[2] = { u, v };
+    sw_immediate_set_texcoord(texcoord);
 }
 
 void swTexCoord2fv(const float *v)
 {
-    const float *m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-
-    RLSW.current.texcoord[0] = m[0]*v[0] + m[4]*v[1] + m[12];
-    RLSW.current.texcoord[1] = m[1]*v[0] + m[5]*v[1] + m[13];
+    sw_immediate_set_texcoord(v);
 }
 
 void swBindArray(SWarray type, void *buffer)
@@ -4728,7 +4766,7 @@ void swDrawArrays(SWdraw mode, int offset, int count)
         return;
     }
 
-    swBegin(mode);
+    sw_immediate_begin(mode);
     {
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
@@ -4783,10 +4821,12 @@ void swDrawArrays(SWdraw mode, int offset, int count)
                 1.0f
             };
 
-            sw_immediate_push_vertex(position, color, texcoord);
+            sw_immediate_set_color(color);
+            sw_immediate_set_texcoord(texcoord);
+            sw_immediate_push_vertex(position);
         }
     }
-    swEnd();
+    sw_immediate_end();
 }
 
 void swDrawElements(SWdraw mode, int count, int type, const void *indices)
@@ -4815,7 +4855,7 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
         default: RLSW.errCode = SW_INVALID_ENUM; return;
     }
 
-    swBegin(mode);
+    sw_immediate_begin(mode);
     {
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
         const float *defaultTexcoord = RLSW.current.texcoord;
@@ -4871,10 +4911,12 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
                 1.0f
             };
 
-            sw_immediate_push_vertex(position, color, texcoord);
+            sw_immediate_set_color(color);
+            sw_immediate_set_texcoord(texcoord);
+            sw_immediate_push_vertex(position);
         }
     }
-    swEnd();
+    sw_immediate_end();
 }
 
 void swGenTextures(int count, sw_handle_t *textures)
