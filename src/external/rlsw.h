@@ -937,8 +937,8 @@ typedef struct {
     int allocSz;                // Allocated size
     SWfilter minFilter;         // Minification filter
     SWfilter magFilter;         // Magnification filter
-    SWwrap sWrap;               // texcoord.x wrap mode
-    SWwrap tWrap;               // texcoord.y wrap mode
+    SWwrap sWrap;               // Wrap mode for texcoord.x
+    SWwrap tWrap;               // Wrap mode for texcoord.y
     float tx;                   // Texel width
     float ty;                   // Texel height
 } sw_texture_t;
@@ -1285,7 +1285,7 @@ static inline uint16_t sw_float_to_half_ui(uint32_t ui)
     // Overflow: infinity; 143 encodes exponent 16
     h = (em >= (143 << 23))? 0x7c00 : h;
 
-    // NaN; note that we convert all types of NaN to qNaN
+    // NaN; note that all types of NaN are converted to qNaN
     h = (em > (255 << 23))? 0x7e00 : h;
 
     return (uint16_t)(s | h);
@@ -1302,8 +1302,8 @@ static inline uint32_t sw_half_to_float_ui(uint16_t h)
     // Denormal: flush to zero
     r = (em < (1 << 10))? 0 : r;
 
-    // Infinity/NaN; note that we preserve NaN payload as a byproduct of unifying inf/nan cases
-    // 112 is an exponent bias fixup; since we already applied it once, applying it twice converts 31 to 255
+    // Infinity/NaN; note that NaN payload is preeserved as a byproduct of unifying inf/nan cases
+    // 112 is an exponent bias fixup; since it was already applied once, applying it twice converts 31 to 255
     r += (em >= (31 << 10))? (112 << 23) : 0;
 
     return s | r;
@@ -2487,8 +2487,9 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
 static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex,
                                      float u, float v, float dUdx, float dUdy, float dVdx, float dVdy)
 {
-    // Previous method: There is no need to compute the square root
-    // because using the squared value, the comparison remains (L2 > 1.0f*1.0f)
+    // NOTE: Commented there is the previous method used 
+    // There was no need to compute the square root because
+    // using the squared value, the comparison remains (L2 > 1.0f*1.0f)
     //float du = sqrtf(dUdx*dUdx + dUdy*dUdy);
     //float dv = sqrtf(dVdx*dVdx + dVdy*dVdy);
     //float L = (du > dv)? du : dv;
@@ -2534,10 +2535,9 @@ static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 
 static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
 {
-    // NOTE: MSVC doesn't support VLA, so we allocate the largest possible size
-    //uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE];
-
-    uint8_t pixel[16];
+    // NOTE: MSVC doesn't support VLA, so the largest possible size is allocated: 16 bytes
+    //uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE] = { 0 };
+    uint8_t pixel[16] = { 0 };
     SW_FRAMEBUFFER_COLOR_SET(pixel, color, 0);
 
     uint8_t *dst = (uint8_t *)colorBuffer->pixels;
@@ -2574,10 +2574,9 @@ static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const fl
 
 static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float depth)
 {
-    // NOTE: MSVC doesn't support VLA, so we allocate the largest possible size
-    //uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE];
-
-    uint8_t pixel[4];
+    // NOTE: MSVC doesn't support VLA, so the largest possible size is allocated: 4 bytes
+    //uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE] = { 0 };
+    uint8_t pixel[4] = { 0 };
     SW_FRAMEBUFFER_DEPTH_SET(pixel, depth, 0);
 
     uint8_t *dst = (uint8_t *)depthBuffer->pixels;
@@ -3740,7 +3739,7 @@ static inline void sw_poly_fill_render(uint32_t state)
 //-------------------------------------------------------------------------------------------
 static void sw_immediate_push_vertex(const float position[4], const float color[4], const float texcoord[2])
 {
-    // Check if we are in a valid draw mode
+    // Check if the draw mode is valid
     if (!sw_is_draw_mode_valid(RLSW.drawMode))
     {
         RLSW.errCode = SW_INVALID_OPERATION;
@@ -4480,7 +4479,7 @@ void swOrtho(double left, double right, double bottom, double top, double znear,
 
 void swBegin(SWdraw mode)
 {
-    // Check if we can render
+    // Check if render is possible
     if (!sw_is_ready_to_render())
     {
         RLSW.errCode = SW_INVALID_OPERATION;
