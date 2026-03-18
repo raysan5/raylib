@@ -4749,6 +4749,12 @@ void swTexCoord2fv(const float *v)
 
 void swBindArray(SWarray type, void *buffer)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     switch (type)
     {
         case SW_VERTEX_ARRAY: RLSW.array.positions = (float *)buffer; break;
@@ -4760,7 +4766,7 @@ void swBindArray(SWarray type, void *buffer)
 
 void swDrawArrays(SWdraw mode, int offset, int count)
 {
-    if ((!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
+    if ((sw_immediate_is_active()) || (!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
@@ -4831,7 +4837,7 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
 void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 {
-    if ((!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
+    if ((sw_immediate_is_active()) || (!sw_is_ready_to_render()) || (RLSW.array.positions == NULL))
     {
         RLSW.errCode = SW_INVALID_OPERATION;
         return;
@@ -4921,6 +4927,12 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 
 void swGenTextures(int count, sw_handle_t *textures)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (!count || !textures) return;
 
     for (int i = 0; i < count; i++)
@@ -4933,6 +4945,12 @@ void swGenTextures(int count, sw_handle_t *textures)
 
 void swDeleteTextures(int count, sw_handle_t *textures)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (!count || !textures) return;
 
     for (int i = 0; i < count; i++)
@@ -4952,14 +4970,35 @@ void swDeleteTextures(int count, sw_handle_t *textures)
 
 void swBindTexture(sw_handle_t id)
 {
-    if (id == SW_HANDLE_NULL) { RLSW.boundTexture = NULL; return; }
-    if (!sw_is_texture_valid(id)) { RLSW.errCode = SW_INVALID_VALUE; return; }
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
+    if (id == SW_HANDLE_NULL)
+    {
+        RLSW.boundTexture = NULL;
+        return;
+    }
+
+    if (!sw_is_texture_valid(id))
+    {
+        RLSW.errCode = SW_INVALID_VALUE;
+        return;
+    }
 
     RLSW.boundTexture = sw_pool_get(&RLSW.texturePool, id);
 }
 
 void swTexStorage2D(int width, int height, SWinternalformat format)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (RLSW.boundTexture == NULL) return;
 
     int pixelFormat = SW_PIXELFORMAT_UNKNOWN;
@@ -4990,6 +5029,12 @@ void swTexStorage2D(int width, int height, SWinternalformat format)
 
 void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (RLSW.boundTexture == NULL) return;
 
     int pixelFormat = sw_pixel_get_format(format, type);
@@ -5000,6 +5045,12 @@ void swTexImage2D(int width, int height, SWformat format, SWtype type, const voi
 
 void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (!sw_is_texture_complete(RLSW.boundTexture) || (!pixels) || (width <= 0) || (height <= 0))
     {
         RLSW.errCode = SW_INVALID_VALUE;
@@ -5065,6 +5116,12 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
 
 void swTexParameteri(int param, int value)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (RLSW.boundTexture == NULL) return;
 
     switch (param)
@@ -5095,6 +5152,12 @@ void swTexParameteri(int param, int value)
 
 void swGenFramebuffers(int count, uint32_t *framebuffers)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (!count || !framebuffers) return;
 
     for (int i = 0; i < count; i++)
@@ -5107,6 +5170,12 @@ void swGenFramebuffers(int count, uint32_t *framebuffers)
 
 void swDeleteFramebuffers(int count, uint32_t *framebuffers)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (!count || !framebuffers) return;
 
     for (int i = 0; i < count; i++)
@@ -5127,6 +5196,12 @@ void swDeleteFramebuffers(int count, uint32_t *framebuffers)
 
 void swBindFramebuffer(uint32_t id)
 {
+    if (sw_immediate_is_active())
+    {
+        RLSW.errCode = SW_INVALID_OPERATION;
+        return;
+    }
+
     if (id == SW_HANDLE_NULL)
     {
         RLSW.boundFramebufferId = SW_HANDLE_NULL;
@@ -5149,7 +5224,7 @@ void swBindFramebuffer(uint32_t id)
 
 void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
 {
-    if (RLSW.boundFramebufferId == SW_HANDLE_NULL)
+    if ((sw_immediate_is_active()) || (RLSW.boundFramebufferId == SW_HANDLE_NULL))
     {
         RLSW.errCode = SW_INVALID_OPERATION; // not really standard but hey
         return;
