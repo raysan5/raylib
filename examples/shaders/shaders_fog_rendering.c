@@ -75,6 +75,10 @@ int main(void)
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.2f, 0.2f, 0.2f, 1.0f }, SHADER_UNIFORM_VEC4);
 
+    Vector4 fogColor = ColorNormalize(GRAY);
+    int fogColorLoc = GetShaderLocation(shader, "fogColor");
+    SetShaderValue(shader, fogColorLoc, &fogColor, SHADER_UNIFORM_VEC4);
+
     float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
     SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
