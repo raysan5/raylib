@@ -153,6 +153,17 @@
     #define SW_MAX_TEXTURES                 128
 #endif
 
+// Enables the use of a lookup table for uint8_t to float conversion
+// Requires an additional 1KB of global memory
+// Disabled when SIMD intrinsics are enabled
+#ifndef SW_USE_COLOR_LUT
+    #if RLSW_USE_SIMD_INTRINSICS
+        #define SW_USE_COLOR_LUT            false
+    #else
+        #define SW_USE_COLOR_LUT            true
+    #endif
+#endif
+
 // Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane
 // Considering the largest polygon involved is a quadrilateral (4 vertices),
 // and that clipping occurs against both the frustum (6 planes) and the scissors (4 planes),
@@ -1060,6 +1071,10 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static sw_context_t RLSW = { 0 };
 
+#if SW_USE_COLOR_LUT
+static float SW_LUT_U8_TO_F32[256] = { 0 };
+#endif
+
 //----------------------------------------------------------------------------------
 // Internal Constants Definition
 //----------------------------------------------------------------------------------
@@ -1676,6 +1691,12 @@ static inline void sw_pixel_color8_to_color(float *SW_RESTRICT dst, const uint8_
     vfloat32m1_t vsrc_f32 = __riscv_vfcvt_f_xu_v_f32m1(vsrc_u32, vl); // Convert to float32
     vfloat32m1_t vnorm = __riscv_vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
     __riscv_vse32_v_f32m1(dst, vnorm, vl); // Store result
+
+#elif SW_USE_COLOR_LUT
+    dst[0] = SW_LUT_U8_TO_F32[src[0]];
+    dst[1] = SW_LUT_U8_TO_F32[src[1]];
+    dst[2] = SW_LUT_U8_TO_F32[src[2]];
+    dst[3] = SW_LUT_U8_TO_F32[src[3]];
 
 #else
     dst[0] = (float)src[0]*SW_INV_255;
@@ -3935,6 +3956,10 @@ bool swInit(int w, int h)
     RLSW.drawMode = SW_DRAW_INVALID;
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
+
+#if SW_USE_COLOR_LUT
+    for (int i = 0; i < 256; i++) SW_LUT_U8_TO_F32[i] = (float)i*SW_INV_255;
+#endif
 
     SW_LOG("INFO: RLSW: Software renderer initialized successfully\n");
 #if defined(SW_HAS_FMA_AVX) && defined(SW_HAS_FMA_AVX2)
