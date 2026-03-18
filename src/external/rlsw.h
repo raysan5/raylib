@@ -1195,7 +1195,7 @@ static inline float sw_luminance(const float *color)
     return color[0]*0.299f + color[1]*0.587f + color[2]*0.114f;
 }
 
-static inline void sw_lerp_vertex_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
+static inline void sw_lerp_vertex_PCTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
 {
     const float tInv = 1.0f - t;
 
@@ -1222,14 +1222,8 @@ static inline void sw_lerp_vertex_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_ve
     out->coord[3] = a->coord[3]*tInv + b->coord[3]*t;
 }
 
-static inline void sw_get_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+static inline void sw_get_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
-    // Calculate gradients for Position
-    out->position[0] = (b->position[0] - a->position[0])*scale;
-    out->position[1] = (b->position[1] - a->position[1])*scale;
-    out->position[2] = (b->position[2] - a->position[2])*scale;
-    out->position[3] = (b->position[3] - a->position[3])*scale;
-
     // Calculate gradients for Color
     out->color[0] = (b->color[0] - a->color[0])*scale;
     out->color[1] = (b->color[1] - a->color[1])*scale;
@@ -1247,14 +1241,8 @@ static inline void sw_get_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->coord[3] = (b->coord[3] - a->coord[3])*scale;
 }
 
-static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+static inline void sw_add_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
 {
-    // Add gradients to Position
-    out->position[0] += gradients->position[0];
-    out->position[1] += gradients->position[1];
-    out->position[2] += gradients->position[2];
-    out->position[3] += gradients->position[3];
-
     // Add gradients to Color
     out->color[0] += gradients->color[0];
     out->color[1] += gradients->color[1];
@@ -1272,14 +1260,8 @@ static inline void sw_add_vertex_grad_PTCH(sw_vertex_t *SW_RESTRICT out, const s
     out->coord[3] += gradients->coord[3];
 }
 
-static inline void sw_add_vertex_grad_scaled_PTCH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+static inline void sw_add_vertex_grad_scaled_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
 {
-    // Add gradients to Position
-    out->position[0] += gradients->position[0]*scale;
-    out->position[1] += gradients->position[1]*scale;
-    out->position[2] += gradients->position[2]*scale;
-    out->position[3] += gradients->position[3]*scale;
-
     // Add gradients to Color
     out->color[0] += gradients->color[0]*scale;
     out->color[1] += gradients->color[1]*scale;
@@ -1289,6 +1271,51 @@ static inline void sw_add_vertex_grad_scaled_PTCH(sw_vertex_t *SW_RESTRICT out, 
     // Add gradients to Texture coordinates
     out->texcoord[0] += gradients->texcoord[0]*scale;
     out->texcoord[1] += gradients->texcoord[1]*scale;
+
+    // Add gradients to Pipeline coordinates
+    out->coord[0] += gradients->coord[0]*scale;
+    out->coord[1] += gradients->coord[1]*scale;
+    out->coord[2] += gradients->coord[2]*scale;
+    out->coord[3] += gradients->coord[3]*scale;
+}
+
+static inline void sw_get_vertex_grad_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+{
+    // Calculate gradients for Color
+    out->color[0] = (b->color[0] - a->color[0])*scale;
+    out->color[1] = (b->color[1] - a->color[1])*scale;
+    out->color[2] = (b->color[2] - a->color[2])*scale;
+    out->color[3] = (b->color[3] - a->color[3])*scale;
+
+    // Calculate gradients for Pipeline coordinates
+    out->coord[0] = (b->coord[0] - a->coord[0])*scale;
+    out->coord[1] = (b->coord[1] - a->coord[1])*scale;
+    out->coord[2] = (b->coord[2] - a->coord[2])*scale;
+    out->coord[3] = (b->coord[3] - a->coord[3])*scale;
+}
+
+static inline void sw_add_vertex_grad_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+{
+    // Add gradients to Color
+    out->color[0] += gradients->color[0];
+    out->color[1] += gradients->color[1];
+    out->color[2] += gradients->color[2];
+    out->color[3] += gradients->color[3];
+
+    // Add gradients to Pipeline coordinates
+    out->coord[0] += gradients->coord[0];
+    out->coord[1] += gradients->coord[1];
+    out->coord[2] += gradients->coord[2];
+    out->coord[3] += gradients->coord[3];
+}
+
+static inline void sw_add_vertex_grad_scaled_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+{
+    // Add gradients to Color
+    out->color[0] += gradients->color[0]*scale;
+    out->color[1] += gradients->color[1]*scale;
+    out->color[2] += gradients->color[2]*scale;
+    out->color[3] += gradients->color[3]*scale;
 
     // Add gradients to Pipeline coordinates
     out->coord[0] += gradients->coord[0]*scale;
@@ -2892,7 +2919,7 @@ static int sw_clip_##name(                                                      
         /* If transition between interior/exterior, calculate intersection point */     \
         if (prevInside != currInside) {                                                 \
             float t = FUNC_COMPUTE_T(prev->coord, curr->coord);                         \
-            sw_lerp_vertex_PTCH(&output[outputCount++], prev, curr, t);                 \
+            sw_lerp_vertex_PCTH(&output[outputCount++], prev, curr, t);                 \
         }                                                                               \
                                                                                         \
         /* If current vertex inside, add it */                                          \
@@ -5248,6 +5275,16 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 #define SW_RASTER_TRIANGLE_SPAN SW_CONCATX(sw_raster_triangle_span_, RLSW_TEMPLATE_RASTER_TRIANGLE)
 #define SW_RASTER_TRIANGLE      SW_CONCATX(sw_raster_triangle_, RLSW_TEMPLATE_RASTER_TRIANGLE)
 
+#ifdef SW_ENABLE_TEXTURE
+    #define SW_GET_GRAD         sw_get_vertex_grad_CTH
+    #define SW_ADD_GRAD         sw_add_vertex_grad_CTH
+    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_CTH
+#else
+    #define SW_GET_GRAD         sw_get_vertex_grad_CH
+    #define SW_ADD_GRAD         sw_add_vertex_grad_CH
+    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_CH
+#endif
+
 static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
 {
     // Gets the start and end coordinates
@@ -5264,9 +5301,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     float dxRcp = 1.0f/(end->coord[0] - start->coord[0]);
 
     // Compute the interpolation steps along the X axis
-#ifdef SW_ENABLE_DEPTH_TEST
-    float dZdx = (end->coord[2] - start->coord[2])*dxRcp;
-#endif
     float dWdx = (end->coord[3] - start->coord[3])*dxRcp;
     float dCdx[4] = {
         (end->color[0] - start->color[0])*dxRcp,
@@ -5274,15 +5308,15 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         (end->color[2] - start->color[2])*dxRcp,
         (end->color[3] - start->color[3])*dxRcp
     };
+#ifdef SW_ENABLE_DEPTH_TEST
+    float dZdx = (end->coord[2] - start->coord[2])*dxRcp;
+#endif
 #ifdef SW_ENABLE_TEXTURE
     float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
     float dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;
 #endif
 
     // Initializing the interpolation starting values
-#ifdef SW_ENABLE_DEPTH_TEST
-    float z = start->coord[2] + dZdx*xSubstep;
-#endif
     float w = start->coord[3] + dWdx*xSubstep;
     float color[4] = {
         start->color[0] + dCdx[0]*xSubstep,
@@ -5290,6 +5324,9 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         start->color[2] + dCdx[2]*xSubstep,
         start->color[3] + dCdx[3]*xSubstep
     };
+#ifdef SW_ENABLE_DEPTH_TEST
+    float z = start->coord[2] + dZdx*xSubstep;
+#endif
 #ifdef SW_ENABLE_TEXTURE
     float u = start->texcoord[0] + dUdx*xSubstep;
     float v = start->texcoord[1] + dVdx*xSubstep;
@@ -5353,31 +5390,24 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
         // Increment the interpolation parameter, UVs, and pointers
     discard:
-        #ifdef SW_ENABLE_DEPTH_TEST
-        {
-            z += dZdx;
-        }
-        #endif
-
         w += dWdx;
-
         color[0] += dCdx[0];
         color[1] += dCdx[1];
         color[2] += dCdx[2];
         color[3] += dCdx[3];
+        cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
+
+        #ifdef SW_ENABLE_DEPTH_TEST
+        {
+            z += dZdx;
+            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+        }
+        #endif
 
         #ifdef SW_ENABLE_TEXTURE
         {
             u += dUdx;
             v += dVdx;
-        }
-        #endif
-
-        cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
-
-        #ifdef SW_ENABLE_DEPTH_TEST
-        {
-            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
         }
         #endif
     }
@@ -5409,9 +5439,9 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
     // Compute gradients for each side of the triangle
     sw_vertex_t dVXdy02, dVXdy01, dVXdy12;
-    sw_get_vertex_grad_PTCH(&dVXdy02, v0, v2, h02Rcp);
-    sw_get_vertex_grad_PTCH(&dVXdy01, v0, v1, h01Rcp);
-    sw_get_vertex_grad_PTCH(&dVXdy12, v1, v2, h12Rcp);
+    SW_GET_GRAD(&dVXdy02, v0, v2, h02Rcp);
+    SW_GET_GRAD(&dVXdy01, v0, v1, h01Rcp);
+    SW_GET_GRAD(&dVXdy12, v1, v2, h12Rcp);
 
     // Y subpixel correction
     float y0Substep = 1.0f - sw_fract(y0);
@@ -5419,8 +5449,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
     // Get a copy of vertices for interpolation and apply substep correction
     sw_vertex_t lVert = *v0, rVert = *v0;
-    sw_add_vertex_grad_scaled_PTCH(&lVert, &dVXdy02, y0Substep);
-    sw_add_vertex_grad_scaled_PTCH(&rVert, &dVXdy01, y0Substep);
+    SW_ADD_GRAD_SCALED(&lVert, &dVXdy02, y0Substep);
+    SW_ADD_GRAD_SCALED(&rVert, &dVXdy01, y0Substep);
 
     // Y bounds (vertical clipping)
     int yTop = (int)y0;
@@ -5428,33 +5458,37 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     int yBot = (int)y2;
 
     // Scanline for the upper part of the triangle
+    bool longSideIsLeft0 = (lVert.coord[0] < rVert.coord[0]);
+    const sw_vertex_t *l0 = longSideIsLeft0 ? &lVert : &rVert;
+    const sw_vertex_t *r0 = longSideIsLeft0 ? &rVert : &lVert;
     for (int y = yTop; y < yMid; y++)
     {
         lVert.coord[1] = rVert.coord[1] = y;
-
-        if (lVert.coord[0] < rVert.coord[0]) SW_RASTER_TRIANGLE_SPAN(&lVert, &rVert, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        else SW_RASTER_TRIANGLE_SPAN(&rVert, &lVert, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-
-        sw_add_vertex_grad_PTCH(&lVert, &dVXdy02);
-        sw_add_vertex_grad_PTCH(&rVert, &dVXdy01);
+        SW_RASTER_TRIANGLE_SPAN(l0, r0, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        SW_ADD_GRAD(&lVert, &dVXdy02);
+        SW_ADD_GRAD(&rVert, &dVXdy01);
     }
 
     // Get a copy of next right for interpolation and apply substep correction
     rVert = *v1;
-    sw_add_vertex_grad_scaled_PTCH(&rVert, &dVXdy12, y1Substep);
+    SW_ADD_GRAD_SCALED(&rVert, &dVXdy12, y1Substep);
 
     // Scanline for the lower part of the triangle
+    bool longSideIsLeft1 = (lVert.coord[0] < rVert.coord[0]);
+    const sw_vertex_t *l1 = longSideIsLeft1 ? &lVert : &rVert;
+    const sw_vertex_t *r1 = longSideIsLeft1 ? &rVert : &lVert;
     for (int y = yMid; y < yBot; y++)
     {
         lVert.coord[1] = rVert.coord[1] = y;
-
-        if (lVert.coord[0] < rVert.coord[0]) SW_RASTER_TRIANGLE_SPAN(&lVert, &rVert, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        else SW_RASTER_TRIANGLE_SPAN(&rVert, &lVert, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-
-        sw_add_vertex_grad_PTCH(&lVert, &dVXdy02);
-        sw_add_vertex_grad_PTCH(&rVert, &dVXdy12);
+        SW_RASTER_TRIANGLE_SPAN(l1, r1, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        SW_ADD_GRAD(&lVert, &dVXdy02);
+        SW_ADD_GRAD(&rVert, &dVXdy12);
     }
 }
+
+#undef SW_GET_GRAD
+#undef SW_ADD_GRAD
+#undef SW_ADD_GRAD_SCALED
 
 #endif // RLSW_TEMPLATE_RASTER_TRIANGLE
 //-------------------------------------------------------------------------------------------
