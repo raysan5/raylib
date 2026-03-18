@@ -164,19 +164,6 @@
     #endif
 #endif
 
-// Under normal circumstances, clipping a polygon can add at most one vertex per clipping plane
-// Considering the largest polygon involved is a quadrilateral (4 vertices),
-// and that clipping occurs against both the frustum (6 planes) and the scissors (4 planes),
-// the maximum number of vertices after clipping is:
-// 4 (original vertices) + 6 (frustum planes) + 4 (scissors planes) = 14
-#ifndef SW_MAX_CLIPPED_POLYGON_VERTICES
-    #define SW_MAX_CLIPPED_POLYGON_VERTICES 14
-#endif
-
-#ifndef SW_CLIP_EPSILON
-    #define SW_CLIP_EPSILON                 1e-4f
-#endif
-
 //----------------------------------------------------------------------------------
 // OpenGL Compatibility Types
 //----------------------------------------------------------------------------------
@@ -870,6 +857,13 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
+// When clipping a convex polygon against a plane, at most one vertex is added.
+// Starting from a quadrilateral (4 vertices), clipped sequentially against
+// the frustum (6 planes) then the scissor rectangle (4 planes):
+// 4 + 6 + 4 = 14 vertices maximum.
+#define SW_MAX_CLIPPED_POLYGON_VERTICES 14
+#define SW_CLIP_EPSILON                 1e-4f
+
 #define SW_HANDLE_NULL          0u
 #define SW_POOL_SLOT_LIVE       0x80u   // bit7 of the generation byte
 #define SW_POOL_SLOT_VER_MASK   0x7Fu   // bits6:0 = anti-ABA counter
@@ -1427,7 +1421,7 @@ static inline uint32_t sw_compress_8to6(uint8_t v) { return v >> 2; }
 //-------------------------------------------------------------------------------------------
 static bool sw_pool_init(sw_pool_t *pool, int capacity, size_t stride)
 {
-    *pool = (sw_pool_t){ 0 };
+    *pool = (sw_pool_t) { 0 };
 
     pool->data = SW_CALLOC(capacity, stride);
     pool->gen = SW_CALLOC(capacity, sizeof(uint8_t));
@@ -4232,13 +4226,11 @@ void swClear(uint32_t bitmask)
 
     if ((bitmask & (SW_COLOR_BUFFER_BIT)) && (RLSW.colorBuffer != NULL) && (RLSW.colorBuffer->pixels != NULL))
     {
-        int size = RLSW.colorBuffer->width*RLSW.colorBuffer->height;
         sw_framebuffer_fill_color(RLSW.colorBuffer, RLSW.clearColor);
     }
 
     if ((bitmask & (SW_DEPTH_BUFFER_BIT)) && (RLSW.depthBuffer != NULL) && (RLSW.depthBuffer->pixels != NULL))
     {
-        int size = RLSW.depthBuffer->width*RLSW.depthBuffer->height;
         sw_framebuffer_fill_depth(RLSW.depthBuffer, RLSW.clearDepth);
     }
 }
@@ -4889,7 +4881,7 @@ void swDeleteTextures(int count, sw_handle_t *textures)
         if (tex == RLSW.depthBuffer) RLSW.depthBuffer = NULL;
 
         sw_texture_free(tex);
-        *tex = (sw_texture_t){ 0 };
+        *tex = (sw_texture_t) { 0 };
 
         sw_pool_free(&RLSW.texturePool, textures[i]);
     }
