@@ -879,9 +879,6 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_FRAMEBUFFER_COLOR_SIZE SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_COLOR_FORMAT]
 #define SW_FRAMEBUFFER_DEPTH_SIZE SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_DEPTH_FORMAT]
 
-#define SW_STATE_CHECK(flags) (SW_STATE_CHECK_EX(RLSW.stateFlags, (flags)))
-#define SW_STATE_CHECK_EX(state, flags) (((state) & (flags)) == (flags))
-
 #define SW_STATE_SCISSOR_TEST   (1 << 0)
 #define SW_STATE_TEXTURE_2D     (1 << 1)
 #define SW_STATE_DEPTH_TEST     (1 << 2)
@@ -994,18 +991,18 @@ typedef struct {
     float scClipMax[2];                     // Scissor rectangle maximum renderable point in clip space
 
     struct {
+        sw_vertex_t buffer[SW_MAX_CLIPPED_POLYGON_VERTICES];    // Buffer used for storing primitive vertices, used for processing and rendering
+        int vertexCount;                                        // Number of vertices in the primtive buffer
+        float color[4];                                         // Current color for the next pushed vertex
+        float texcoord[2];                                      // Current texture coordinates for the next push vertex
+        bool hasColorAlpha;                                     // Flag indicating whether the current primitive contains transparency
+    } primitive;
+
+    struct {
         float *positions;
         float *texcoords;
         uint8_t *colors;
     } array;
-
-    struct {
-        float color[4];
-        float texcoord[2];
-    } current;
-
-    sw_vertex_t vertexBuffer[SW_MAX_CLIPPED_POLYGON_VERTICES];  // Buffer used for storing primitive vertices, used for processing and rendering
-    int vertexCounter;                                          // Number of vertices in 'ctx.vertexBuffer'
 
     SWdraw drawMode;                                            // Current primitive mode (e.g., lines, triangles)
     SWpoly polyMode;                                            // Current polygon filling mode (e.g., lines, triangles)
@@ -1039,7 +1036,8 @@ typedef struct {
     SWface cullFace;                                            // Faces to cull
     SWerrcode errCode;                                          // Last error code
 
-    uint32_t stateFlags;
+    uint32_t userState;                                         // User-defined pipeline state
+    uint32_t rasterState;                                       // Cleaned pipeline state for the rasterizer
 } sw_context_t;
 
 //----------------------------------------------------------------------------------
@@ -2547,7 +2545,7 @@ static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const fl
 
     uint8_t *dst = (uint8_t *)colorBuffer->pixels;
 
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
         int xMin = sw_clamp_int(RLSW.scMin[0], 0, colorBuffer->width - 1);
         int xMax = sw_clamp_int(RLSW.scMax[0], 0, colorBuffer->width - 1);
@@ -2587,7 +2585,7 @@ static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float de
 
     uint8_t *dst = (uint8_t *)depthBuffer->pixels;
 
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
         int xMin = sw_clamp_int(RLSW.scMin[0], 0, depthBuffer->width - 1);
         int xMax = sw_clamp_int(RLSW.scMax[0], 0, depthBuffer->width - 1);
@@ -2982,7 +2980,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     CLIP_AGAINST_PLANE(sw_clip_z_pos);
     CLIP_AGAINST_PLANE(sw_clip_z_neg);
 
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
         CLIP_AGAINST_PLANE(sw_clip_scissor_x_min);
         CLIP_AGAINST_PLANE(sw_clip_scissor_x_max);
@@ -3334,9 +3332,9 @@ static inline bool sw_triangle_face_culling(void)
     // even with negative w values
 
     // Preload homogeneous coordinates into local variables
-    const float *h0 = RLSW.vertexBuffer[0].homogeneous;
-    const float *h1 = RLSW.vertexBuffer[1].homogeneous;
-    const float *h2 = RLSW.vertexBuffer[2].homogeneous;
+    const float *h0 = RLSW.primitive.buffer[0].homogeneous;
+    const float *h1 = RLSW.primitive.buffer[1].homogeneous;
+    const float *h2 = RLSW.primitive.buffer[2].homogeneous;
 
     // Compute a value proportional to the signed area in the projected 2D plane,
     // calculated directly using homogeneous coordinates BEFORE division by w
@@ -3371,8 +3369,8 @@ static inline bool sw_triangle_face_culling(void)
 
 static void sw_triangle_clip_and_project(void)
 {
-    sw_vertex_t *polygon = RLSW.vertexBuffer;
-    int *vertexCounter = &RLSW.vertexCounter;
+    sw_vertex_t *polygon = RLSW.primitive.buffer;
+    int *vertexCounter = &RLSW.primitive.vertexCount;
 
     if (sw_polygon_clip(polygon, vertexCounter))
     {
@@ -3409,22 +3407,22 @@ static void sw_triangle_clip_and_project(void)
 
 static void sw_triangle_render(uint32_t state)
 {
-    if (RLSW.stateFlags & SW_STATE_CULL_FACE)
+    if (RLSW.userState & SW_STATE_CULL_FACE)
     {
         if (!sw_triangle_face_culling()) return;
     }
 
     sw_triangle_clip_and_project();
-    if (RLSW.vertexCounter < 3) return;
+    if (RLSW.primitive.vertexCount < 3) return;
 
     state &= SW_RASTER_TRIANGLE_STATE_MASK;
 
-    for (int i = 0; i < RLSW.vertexCounter - 2; i++)
+    for (int i = 0; i < RLSW.primitive.vertexCount - 2; i++)
     {
         SW_RASTER_TRIANGLE_TABLE[state](
-            &RLSW.vertexBuffer[0],
-            &RLSW.vertexBuffer[i + 1],
-            &RLSW.vertexBuffer[i + 2]
+            &RLSW.primitive.buffer[0],
+            &RLSW.primitive.buffer[i + 1],
+            &RLSW.primitive.buffer[i + 2]
         );
     }
 }
@@ -3444,12 +3442,12 @@ static inline bool sw_quad_face_culling(void)
     // winding test on this first triangle
 
     // Preload homogeneous coordinates into local variables
-    const float *h0 = RLSW.vertexBuffer[0].homogeneous;
-    const float *h1 = RLSW.vertexBuffer[1].homogeneous;
-    const float *h2 = RLSW.vertexBuffer[2].homogeneous;
+    const float *h0 = RLSW.primitive.buffer[0].homogeneous;
+    const float *h1 = RLSW.primitive.buffer[1].homogeneous;
+    const float *h2 = RLSW.primitive.buffer[2].homogeneous;
 
     // NOTE: h3 is not needed for this test
-    // const float *h3 = RLSW.vertexBuffer[3].homogeneous;
+    // const float *h3 = RLSW.primitive.buffer[3].homogeneous;
 
     // Compute a value proportional to the signed area of the triangle P0 P1 P2
     // in the projected 2D plane, calculated directly using homogeneous coordinates
@@ -3486,8 +3484,8 @@ static inline bool sw_quad_face_culling(void)
 
 static void sw_quad_clip_and_project(void)
 {
-    sw_vertex_t *polygon = RLSW.vertexBuffer;
-    int *vertexCounter = &RLSW.vertexCounter;
+    sw_vertex_t *polygon = RLSW.primitive.buffer;
+    int *vertexCounter = &RLSW.primitive.vertexCount;
 
     if (sw_polygon_clip(polygon, vertexCounter))
     {
@@ -3529,17 +3527,17 @@ static bool sw_quad_is_axis_aligned(void)
     // so it's required for all vertices to have homogeneous w = 1.0
     for (int i = 0; i < 4; i++)
     {
-        if (RLSW.vertexBuffer[i].homogeneous[3] != 1.0f) return false;
+        if (RLSW.primitive.buffer[i].homogeneous[3] != 1.0f) return false;
     }
 
     // Epsilon tolerance in screen space (pixels)
     const float epsilon = 0.5f;
 
     // Fetch screen-space positions for the four quad vertices
-    const float *p0 = RLSW.vertexBuffer[0].screen;
-    const float *p1 = RLSW.vertexBuffer[1].screen;
-    const float *p2 = RLSW.vertexBuffer[2].screen;
-    const float *p3 = RLSW.vertexBuffer[3].screen;
+    const float *p0 = RLSW.primitive.buffer[0].screen;
+    const float *p1 = RLSW.primitive.buffer[1].screen;
+    const float *p2 = RLSW.primitive.buffer[2].screen;
+    const float *p3 = RLSW.primitive.buffer[3].screen;
 
     // Compute edge vectors between consecutive vertices
     // These define the four sides of the quad in screen space
@@ -3560,33 +3558,33 @@ static bool sw_quad_is_axis_aligned(void)
 
 static void sw_quad_render(uint32_t state)
 {
-    if (RLSW.stateFlags & SW_STATE_CULL_FACE)
+    if (RLSW.userState & SW_STATE_CULL_FACE)
     {
         if (!sw_quad_face_culling()) return;
     }
 
     sw_quad_clip_and_project();
-    if (RLSW.vertexCounter < 3) return;
+    if (RLSW.primitive.vertexCount < 3) return;
 
     state &= SW_RASTER_QUAD_STATE_MASK;
 
-    if ((RLSW.vertexCounter == 4) && sw_quad_is_axis_aligned())
+    if ((RLSW.primitive.vertexCount == 4) && sw_quad_is_axis_aligned())
     {
         SW_RASTER_QUAD_TABLE[state](
-            &RLSW.vertexBuffer[0],
-            &RLSW.vertexBuffer[1],
-            &RLSW.vertexBuffer[2],
-            &RLSW.vertexBuffer[3]
+            &RLSW.primitive.buffer[0],
+            &RLSW.primitive.buffer[1],
+            &RLSW.primitive.buffer[2],
+            &RLSW.primitive.buffer[3]
         );
     }
     else
     {
-        for (int i = 0; i < RLSW.vertexCounter - 2; i++)
+        for (int i = 0; i < RLSW.primitive.vertexCount - 2; i++)
         {
             SW_RASTER_TRIANGLE_TABLE[state](
-                &RLSW.vertexBuffer[0],
-                &RLSW.vertexBuffer[i + 1],
-                &RLSW.vertexBuffer[i + 2]
+                &RLSW.primitive.buffer[0],
+                &RLSW.primitive.buffer[i + 1],
+                &RLSW.primitive.buffer[i + 2]
             );
         }
     }
@@ -3641,7 +3639,7 @@ static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
     if (!sw_line_clip_coord(v0->homogeneous[3] + v0->homogeneous[2], -dH[3] - dH[2], &t0, &t1)) return false;
 
     // Clipping Scissor
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
         if (!sw_line_clip_coord(v0->homogeneous[0] - RLSW.scClipMin[0]*v0->homogeneous[3], RLSW.scClipMin[0]*dH[3] - dH[0], &t0, &t1)) return false;
         if (!sw_line_clip_coord(RLSW.scClipMax[0]*v0->homogeneous[3] - v0->homogeneous[0], dH[0] - RLSW.scClipMax[0]*dH[3], &t0, &t1)) return false;
@@ -3737,7 +3735,7 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
     int min[2] = { 0, 0 };
     int max[2] = { RLSW.colorBuffer->width, RLSW.colorBuffer->height };
 
-    if (RLSW.stateFlags & SW_STATE_SCISSOR_TEST)
+    if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
         min[0] = sw_clamp_int(RLSW.scMin[0], 0, RLSW.colorBuffer->width);
         min[1] = sw_clamp_int(RLSW.scMin[1], 0, RLSW.colorBuffer->height);
@@ -3763,13 +3761,13 @@ static void sw_point_render(uint32_t state, sw_vertex_t *v)
 //-------------------------------------------------------------------------------------------
 static inline void sw_poly_point_render(uint32_t state)
 {
-    for (int i = 0; i < RLSW.vertexCounter; i++) sw_point_render(state, &RLSW.vertexBuffer[i]);
+    for (int i = 0; i < RLSW.primitive.vertexCount; i++) sw_point_render(state, &RLSW.primitive.buffer[i]);
 }
 
 static inline void sw_poly_line_render(uint32_t state)
 {
-    const sw_vertex_t *vertices = RLSW.vertexBuffer;
-    int cm1 = RLSW.vertexCounter - 1;
+    const sw_vertex_t *vertices = RLSW.primitive.buffer;
+    int cm1 = RLSW.primitive.vertexCount - 1;
 
     for (int i = 0; i < cm1; i++)
     {
@@ -3785,8 +3783,8 @@ static inline void sw_poly_fill_render(uint32_t state)
 {
     switch (RLSW.drawMode)
     {
-        case SW_POINTS: sw_point_render(state, &RLSW.vertexBuffer[0]); break;
-        case SW_LINES: sw_line_render(state, RLSW.vertexBuffer); break;
+        case SW_POINTS: sw_point_render(state, &RLSW.primitive.buffer[0]); break;
+        case SW_LINES: sw_line_render(state, RLSW.primitive.buffer); break;
         case SW_TRIANGLES: sw_triangle_render(state); break;
         case SW_QUADS: sw_quad_render(state); break;
         default: break;
@@ -3811,8 +3809,15 @@ static void sw_immediate_begin(SWdraw mode)
         RLSW.isDirtyMVP = false;
     }
 
+    // Disable pipeline states that are incompatible with the global state
+    uint32_t state = RLSW.userState;
+    if (!sw_is_texture_complete(RLSW.depthBuffer)) state &= ~SW_STATE_DEPTH_TEST;
+    if (!sw_is_texture_complete(RLSW.boundTexture)) state &= ~SW_STATE_TEXTURE_2D;
+
     // Initialize required values
-    RLSW.vertexCounter = 0;
+    RLSW.primitive.hasColorAlpha = false;
+    RLSW.primitive.vertexCount = 0;
+    RLSW.rasterState = state;
     RLSW.drawMode = mode;
 }
 
@@ -3823,17 +3828,19 @@ static bool sw_immediate_is_active(void)
 
 static void sw_immediate_set_color(const float color[4])
 {
-    RLSW.current.color[0] = color[0];
-    RLSW.current.color[1] = color[1];
-    RLSW.current.color[2] = color[2];
-    RLSW.current.color[3] = color[3];
+    RLSW.primitive.color[0] = color[0];
+    RLSW.primitive.color[1] = color[1];
+    RLSW.primitive.color[2] = color[2];
+    RLSW.primitive.color[3] = color[3];
+
+    RLSW.primitive.hasColorAlpha |= (color[3] < 1.0f);
 }
 
 static void sw_immediate_set_texcoord(const float texcoord[2])
 {
     const float *m = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-    RLSW.current.texcoord[0] = m[0]*texcoord[0] + m[4]*texcoord[1] + m[12];
-    RLSW.current.texcoord[1] = m[1]*texcoord[0] + m[5]*texcoord[1] + m[13];
+    RLSW.primitive.texcoord[0] = m[0]*texcoord[0] + m[4]*texcoord[1] + m[12];
+    RLSW.primitive.texcoord[1] = m[1]*texcoord[0] + m[5]*texcoord[1] + m[13];
 }
 
 static void sw_immediate_push_vertex(const float position[4])
@@ -3846,10 +3853,10 @@ static void sw_immediate_push_vertex(const float position[4])
     }
 
     // Copy the attributes in the current vertex
-    sw_vertex_t *vertex = &RLSW.vertexBuffer[RLSW.vertexCounter++];
+    sw_vertex_t *vertex = &RLSW.primitive.buffer[RLSW.primitive.vertexCount++];
     for (int i = 0; i < 4; i++) vertex->position[i] = position[i];
-    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.current.color[i];
-    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.current.texcoord[i];
+    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.primitive.color[i];
+    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.primitive.texcoord[i];
 
     // Calculate homogeneous coordinates
     const float *m = RLSW.matMVP, *v = vertex->position;
@@ -3859,29 +3866,17 @@ static void sw_immediate_push_vertex(const float position[4])
     vertex->homogeneous[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3];
 
     // Immediate rendering of the primitive if the required number is reached
-    if (RLSW.vertexCounter == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
+    if (RLSW.primitive.vertexCount == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
     {
-        uint32_t state = RLSW.stateFlags;
-
-        // Disable pipeline states that are incompatible with the global state
-        if (!sw_is_texture_complete(RLSW.depthBuffer)) state &= ~SW_STATE_DEPTH_TEST;
-        if (!sw_is_texture_complete(RLSW.boundTexture)) state &= ~SW_STATE_TEXTURE_2D;
+        uint32_t state = RLSW.rasterState;
 
         // Reduces blend mode costs when it's possible
         if (state & SW_STATE_BLEND)
         {
             if (RLSW.blendFlags & SW_BLEND_FLAG_NOOP) state &= ~SW_STATE_BLEND;
-            else if (RLSW.blendFlags & SW_BLEND_FLAG_NEEDS_ALPHA)
+            else if ((RLSW.blendFlags & SW_BLEND_FLAG_NEEDS_ALPHA) && (!RLSW.primitive.hasColorAlpha))
             {
-                if ((state & SW_STATE_TEXTURE_2D) && (RLSW.boundTexture->alpha == SW_PIXEL_ALPHA_NONE))
-                {
-                    bool opaqueAlpha = true;
-                    for (int i = 0; i < SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode]; i++)
-                    {
-                        if (RLSW.vertexBuffer[i].color[3] < 1.0f) { opaqueAlpha = false; break; }
-                    }
-                    if (opaqueAlpha) state &= ~SW_STATE_BLEND;
-                }
+                if (!(state & SW_STATE_TEXTURE_2D) || (RLSW.boundTexture->alpha == SW_PIXEL_ALPHA_NONE)) state &= ~SW_STATE_BLEND;
             }
         }
 
@@ -3893,7 +3888,8 @@ static void sw_immediate_push_vertex(const float position[4])
             default: break;
         }
 
-        RLSW.vertexCounter = 0;
+        RLSW.primitive.hasColorAlpha = false;
+        RLSW.primitive.vertexCount = 0;
     }
 }
 
@@ -3901,7 +3897,6 @@ static void sw_immediate_end(void)
 {
     RLSW.drawMode = SW_DRAW_INVALID;
 }
-
 //-------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------
@@ -3952,13 +3947,13 @@ bool swInit(int w, int h)
     RLSW.stackTextureCounter = 1;
     RLSW.isDirtyMVP = false;
 
-    RLSW.current.texcoord[0] = 0.0f;
-    RLSW.current.texcoord[1] = 0.0f;
+    RLSW.primitive.texcoord[0] = 0.0f;
+    RLSW.primitive.texcoord[1] = 0.0f;
 
-    RLSW.current.color[0] = 1.0f;
-    RLSW.current.color[1] = 1.0f;
-    RLSW.current.color[2] = 1.0f;
-    RLSW.current.color[3] = 1.0f;
+    RLSW.primitive.color[0] = 1.0f;
+    RLSW.primitive.color[1] = 1.0f;
+    RLSW.primitive.color[2] = 1.0f;
+    RLSW.primitive.color[3] = 1.0f;
 
     RLSW.srcFactor = SW_SRC_ALPHA;
     RLSW.dstFactor = SW_ONE_MINUS_SRC_ALPHA;
@@ -4072,11 +4067,11 @@ void swEnable(SWstate state)
 {
     switch (state)
     {
-        case SW_SCISSOR_TEST: RLSW.stateFlags |= SW_STATE_SCISSOR_TEST; break;
-        case SW_TEXTURE_2D: RLSW.stateFlags |= SW_STATE_TEXTURE_2D; break;
-        case SW_DEPTH_TEST: RLSW.stateFlags |= SW_STATE_DEPTH_TEST; break;
-        case SW_CULL_FACE: RLSW.stateFlags |= SW_STATE_CULL_FACE; break;
-        case SW_BLEND: RLSW.stateFlags |= SW_STATE_BLEND; break;
+        case SW_SCISSOR_TEST: RLSW.userState |= SW_STATE_SCISSOR_TEST; break;
+        case SW_TEXTURE_2D: RLSW.userState |= SW_STATE_TEXTURE_2D; break;
+        case SW_DEPTH_TEST: RLSW.userState |= SW_STATE_DEPTH_TEST; break;
+        case SW_CULL_FACE: RLSW.userState |= SW_STATE_CULL_FACE; break;
+        case SW_BLEND: RLSW.userState |= SW_STATE_BLEND; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
@@ -4085,11 +4080,11 @@ void swDisable(SWstate state)
 {
     switch (state)
     {
-        case SW_SCISSOR_TEST: RLSW.stateFlags &= ~SW_STATE_SCISSOR_TEST; break;
-        case SW_TEXTURE_2D: RLSW.stateFlags &= ~SW_STATE_TEXTURE_2D; break;
-        case SW_DEPTH_TEST: RLSW.stateFlags &= ~SW_STATE_DEPTH_TEST; break;
-        case SW_CULL_FACE: RLSW.stateFlags &= ~SW_STATE_CULL_FACE; break;
-        case SW_BLEND: RLSW.stateFlags &= ~SW_STATE_BLEND; break;
+        case SW_SCISSOR_TEST: RLSW.userState &= ~SW_STATE_SCISSOR_TEST; break;
+        case SW_TEXTURE_2D: RLSW.userState &= ~SW_STATE_TEXTURE_2D; break;
+        case SW_DEPTH_TEST: RLSW.userState &= ~SW_STATE_DEPTH_TEST; break;
+        case SW_CULL_FACE: RLSW.userState &= ~SW_STATE_CULL_FACE; break;
+        case SW_BLEND: RLSW.userState &= ~SW_STATE_BLEND; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 }
@@ -4123,15 +4118,15 @@ void swGetFloatv(SWget name, float *v)
         } break;
         case SW_CURRENT_COLOR:
         {
-            v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[0];
-            v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[1];
-            v[2] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[2];
-            v[3] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].color[3];
+            v[0] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].color[0];
+            v[1] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].color[1];
+            v[2] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].color[2];
+            v[3] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].color[3];
         } break;
         case SW_CURRENT_TEXTURE_COORDS:
         {
-            v[0] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[0];
-            v[1] = RLSW.vertexBuffer[RLSW.vertexCounter - 1].texcoord[1];
+            v[0] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].texcoord[0];
+            v[1] = RLSW.primitive.buffer[RLSW.primitive.vertexCount - 1].texcoord[1];
         } break;
         case SW_POINT_SIZE:
         {
@@ -4775,8 +4770,8 @@ void swDrawArrays(SWdraw mode, int offset, int count)
     sw_immediate_begin(mode);
     {
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-        const float *defaultTexcoord = RLSW.current.texcoord;
-        const float *defaultColor = RLSW.current.color;
+        const float *defaultTexcoord = RLSW.primitive.texcoord;
+        const float *defaultColor = RLSW.primitive.color;
 
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
@@ -4864,8 +4859,8 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
     sw_immediate_begin(mode);
     {
         const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-        const float *defaultTexcoord = RLSW.current.texcoord;
-        const float *defaultColor = RLSW.current.color;
+        const float *defaultTexcoord = RLSW.primitive.texcoord;
+        const float *defaultColor = RLSW.primitive.color;
 
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
