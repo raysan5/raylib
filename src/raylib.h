@@ -40,7 +40,7 @@
 *       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
 *       [rtextures] stb_image_resize2 (Sean Barret) for image resizing algorithms
 *       [rtextures] stb_perlin (Sean Barret) for Perlin Noise image generation
-*       [rtextures] rl_gputex (Ramon Santamaria) for GPU-compressed texture formats
+*       [rtextures] rltexgpu (Ramon Santamaria) for GPU-compressed texture formats
 *       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
 *       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
 *       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation

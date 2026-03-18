@@ -100,19 +100,19 @@
 #endif
 
 #if SUPPORT_FILEFORMAT_DDS
-    #define RL_GPUTEX_SUPPORT_DDS
+    #define RLTEXGPU_SUPPORT_DDS
 #endif
 #if SUPPORT_FILEFORMAT_PKM
-    #define RL_GPUTEX_SUPPORT_PKM
+    #define RLTEXGPU_SUPPORT_PKM
 #endif
 #if SUPPORT_FILEFORMAT_KTX
-    #define RL_GPUTEX_SUPPORT_KTX
+    #define RLTEXGPU_SUPPORT_KTX
 #endif
 #if SUPPORT_FILEFORMAT_PVR
-    #define RL_GPUTEX_SUPPORT_PVR
+    #define RLTEXGPU_SUPPORT_PVR
 #endif
 #if SUPPORT_FILEFORMAT_ASTC
-    #define RL_GPUTEX_SUPPORT_ASTC
+    #define RLTEXGPU_SUPPORT_ASTC
 #endif
 
 // Image fileformats not supported by default
@@ -161,13 +161,13 @@
         #pragma GCC diagnostic ignored "-Wunused-function"
     #endif
 
-    #define RL_GPUTEX_MALLOC RL_MALLOC
-    #define RL_GPUTEX_FREE RL_FREE
-    #define RL_GPUTEX_LOG(...) TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
-    #define RL_GPUTEX_SHOW_LOG_INFO
-    #define RL_GPUTEX_IMPLEMENTATION
-    #include "external/rl_gputex.h"         // Required for: rl_load_xxx_from_memory()
-                                            // NOTE: Used to read compressed textures data (multiple formats support)
+    #define RLTEXGPU_MALLOC RL_MALLOC
+    #define RLTEXGPU_FREE RL_FREE
+    #define RLTEXGPU_LOG(...) TRACELOG(LOG_WARNING, "IMAGE: " __VA_ARGS__)
+    #define RLTEXGPU_SHOW_LOG_INFO
+    #define RLTEXGPU_IMPLEMENTATION
+    #include "external/rltexgpu.h"         // Required for: rl_load_xxx_from_memory()
+                                           // NOTE: Used to read compressed textures data (multiple formats support)
     #if defined(__GNUC__) // GCC and Clang
         #pragma GCC diagnostic pop
     #endif

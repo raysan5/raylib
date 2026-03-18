@@ -747,12 +747,13 @@ Detailed changes:
 [rexm] REVIEWED: `Makefile.Web` before trying to rebuild new example for web by @raysan5
 [rexm] REVIEWED: Using `Makefile.Web` for specific web versions generation by @raysan5
 
+[external] RENAMED: `rl_gputex.h` to `rltexgpu.h`, compressed textures loading
+[external] REVIEWED: `rltexgpu.h`, make it usable standalone by @raysan5
+[external] REVIEWED: `rltexgpu.h, fix the swizzling in `rl_load_dds_from_memory()` (#5422) by @msmith-codes
+[external]`REVIEWED: `rltexgpu.h, decouple logging and memory allocation from raylib by @sleeptightAnsiC
 [external] REVIEWED: `jar_mod.h`, buffer overflow on memcpy by @LoneAuios
 [external] REVIEWED: `sdefl` and `sinfl` issues (#5367) by @raysan5
 [external] REVIEWED: `sinfl_bsr()`, improvements by @RicoP
-[external] REVIEWED: `rl_gputex.h`, make it usable standalone by @raysan5
-[external] REVIEWED: `rl_gputex.h,, fix the swizzling in `rl_load_dds_from_memory()` (#5422) by @msmith-codes
-[external]`REVIEWED: `rl_gputex.h,, decouple logging and memory allocation from raylib by @sleeptightAnsiC
 [external] REVIEWED: `stb_truetype`, fix composite glyph scaling logic (#4811) by @ashishbhattarai
 [external] UPDATED: dr_libs (#5020) by @Emil2010
 [external] UPDATED: miniaudio to v0.11.22 (#4983) by @M374LX
