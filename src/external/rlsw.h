@@ -5259,15 +5259,10 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 
 static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
 {
-    // Gets the start and end coordinates
+    // Gets the start/end coordinates and skip empty lines 
     int xStart = (int)start->coord[0];
     int xEnd = (int)end->coord[0];
-
-    // Avoid empty lines
     if (xStart == xEnd) return;
-
-    // Compute the subpixel distance to traverse before the first pixel
-    float xSubstep = 1.0f - sw_fract(start->coord[0]);
 
     // Compute the inverse horizontal distance along the X axis
     float dxRcp = 1.0f/(end->coord[0] - start->coord[0]);
@@ -5287,6 +5282,9 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
     float dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;
 #endif
+
+    // Compute the subpixel distance to traverse before the first pixel
+    float xSubstep = 1.0f - sw_fract(start->coord[0]);
 
     // Initializing the interpolation starting values
     float w = start->coord[3] + dWdx*xSubstep;
@@ -5312,77 +5310,126 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
 #endif
 
-    // Scanline rasterization
-    for (int x = xStart; x < xEnd; x++)
+#define SW_AFFINE_BLOCK 16
+
+    int x = xStart;
+    while (x < xEnd)
     {
-        float wRcp = 1.0f/w;
+        // Clamp last block to remaining pixels
+        int blockEnd = x + SW_AFFINE_BLOCK;
+        if (blockEnd > xEnd) blockEnd = xEnd;
+        float blockLenF = (float)(blockEnd - x);
+        float blockLenRcp = 1.0f / blockLenF;
+
+        // Only 2 '1/w' here; none inside the pixel loop
+        float wRcpA = 1.0f / w;
+        float wB = w + dWdx*blockLenF;
+        float wRcpB = 1.0f / wB;
+
+        // Perspective-correct color at both block endpoints, then affine gradient
         float srcColor[4] = {
-            color[0]*wRcp,
-            color[1]*wRcp,
-            color[2]*wRcp,
-            color[3]*wRcp
+            color[0]*wRcpA,
+            color[1]*wRcpA,
+            color[2]*wRcpA,
+            color[3]*wRcpA
+        };
+        float dSrcColordx[4] = {
+            ((color[0] + dCdx[0]*blockLenF)*wRcpB - srcColor[0])*blockLenRcp,
+            ((color[1] + dCdx[1]*blockLenF)*wRcpB - srcColor[1])*blockLenRcp,
+            ((color[2] + dCdx[2]*blockLenF)*wRcpB - srcColor[2])*blockLenRcp,
+            ((color[3] + dCdx[3]*blockLenF)*wRcpB - srcColor[3])*blockLenRcp
         };
 
-        #ifdef SW_ENABLE_DEPTH_TEST
+    #ifdef SW_ENABLE_TEXTURE
+        // Perspective-correct UVs at both endpoints, then affine gradient
+        float uAffine  = u*wRcpA;
+        float vAffine  = v*wRcpA;
+        float dUaffine = ((u + dUdx*blockLenF)*wRcpB - uAffine)*blockLenRcp;
+        float dVaffine = ((v + dVdx*blockLenF)*wRcpB - vAffine)*blockLenRcp;
+    #endif
+
+        // Inner span pixel loop
+        for (; x < blockEnd; x++)
         {
-            /* TODO: Implement different depth funcs? */
-            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
-            if (z > depth) goto discard;
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+                if (z > depth) goto discard;
+                SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+            }
+            #endif
 
-            /* TODO: Implement depth mask */
-            SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
+            #ifdef SW_ENABLE_TEXTURE
+            {
+                float texColor[4];
+                sw_texture_sample(texColor, RLSW.boundTexture, uAffine, vAffine, dUdx, dUdy, dVdx, dVdy);
+                float finalColor[4] = {
+                    srcColor[0]*texColor[0],
+                    srcColor[1]*texColor[1],
+                    srcColor[2]*texColor[2],
+                    srcColor[3]*texColor[3]
+                };
+                #ifdef SW_ENABLE_BLEND
+                {
+                    float dstColor[4];
+                    SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+                    RLSW.blendFunc(dstColor, finalColor);
+                    SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+                }
+                #else
+                    SW_FRAMEBUFFER_COLOR_SET(cPtr, finalColor, 0);
+                #endif
+            }
+            #else
+            {
+                #ifdef SW_ENABLE_BLEND
+                {
+                    float dstColor[4];
+                    SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+                    RLSW.blendFunc(dstColor, srcColor);
+                    SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+                }
+                #else
+                    SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
+                #endif
+            }
+            #endif
+
+        discard:
+            srcColor[0] += dSrcColordx[0];
+            srcColor[1] += dSrcColordx[1];
+            srcColor[2] += dSrcColordx[2];
+            srcColor[3] += dSrcColordx[3];
+            cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
+
+            #ifdef SW_ENABLE_DEPTH_TEST
+            {
+                z += dZdx;
+                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+            }
+            #endif
+
+            #ifdef SW_ENABLE_TEXTURE
+            {
+                uAffine += dUaffine;
+                vAffine += dVaffine;
+            }
+            #endif
         }
-        #endif
 
+        // Advance perspective-space accumulators by the full block width
+        w = wB;
+        color[0] += dCdx[0]*blockLenF;
+        color[1] += dCdx[1]*blockLenF;
+        color[2] += dCdx[2]*blockLenF;
+        color[3] += dCdx[3]*blockLenF;
         #ifdef SW_ENABLE_TEXTURE
-        {
-            float texColor[4];
-            float s = u*wRcp;
-            float t = v*wRcp;
-            sw_texture_sample(texColor, RLSW.boundTexture, s, t, dUdx, dUdy, dVdx, dVdy);
-            srcColor[0] *= texColor[0];
-            srcColor[1] *= texColor[1];
-            srcColor[2] *= texColor[2];
-            srcColor[3] *= texColor[3];
-        }
-        #endif
-
-        #ifdef SW_ENABLE_BLEND
-        {
-            float dstColor[4];
-            SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-            RLSW.blendFunc(dstColor, srcColor);
-            SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
-        }
-        #else
-        {
-            SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
-        }
-        #endif
-
-        // Increment the interpolation parameter, UVs, and pointers
-    discard:
-        w += dWdx;
-        color[0] += dCdx[0];
-        color[1] += dCdx[1];
-        color[2] += dCdx[2];
-        color[3] += dCdx[3];
-        cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
-
-        #ifdef SW_ENABLE_DEPTH_TEST
-        {
-            z += dZdx;
-            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
-        }
-        #endif
-
-        #ifdef SW_ENABLE_TEXTURE
-        {
-            u += dUdx;
-            v += dVdx;
-        }
+        u += dUdx*blockLenF;
+        v += dVdx*blockLenF;
         #endif
     }
+
+#undef SW_AFFINE_BLOCK
 }
 
 static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2)
