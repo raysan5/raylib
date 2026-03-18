@@ -4769,61 +4769,29 @@ void swDrawArrays(SWdraw mode, int offset, int count)
 
     sw_immediate_begin(mode);
     {
-        const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-        const float *defaultTexcoord = RLSW.primitive.texcoord;
-        const float *defaultColor = RLSW.primitive.color;
-
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
 
         int end = offset + count;
-
         for (int i = offset; i < end; i++)
         {
-            float u, v;
-            if (texcoords)
-            {
-                int idx = 2*i;
-                u = texcoords[idx];
-                v = texcoords[idx + 1];
-            }
-            else
-            {
-                u = defaultTexcoord[0];
-                v = defaultTexcoord[1];
-            }
-
-            float texcoord[2];
-            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
-            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
-
-            float color[4] = {
-                defaultColor[0],
-                defaultColor[1],
-                defaultColor[2],
-                defaultColor[3]
-            };
+            if (texcoords) sw_immediate_set_texcoord(&texcoords[2*i]);
 
             if (colors)
             {
-                int idx = 4*i;
-                color[0] *= (float)colors[idx]*SW_INV_255;
-                color[1] *= (float)colors[idx + 1]*SW_INV_255;
-                color[2] *= (float)colors[idx + 2]*SW_INV_255;
-                color[3] *= (float)colors[idx + 3]*SW_INV_255;
+                const uint8_t *c = &colors[4*i];
+                float color[4] = {
+                    (float)c[0]*SW_INV_255,
+                    (float)c[1]*SW_INV_255,
+                    (float)c[2]*SW_INV_255,
+                    (float)c[3]*SW_INV_255,
+                };
+                sw_immediate_set_color(color);
             }
 
-            int idx = 3*i;
-            float position[4] = {
-                positions[idx],
-                positions[idx + 1],
-                positions[idx + 2],
-                1.0f
-            };
-
-            sw_immediate_set_color(color);
-            sw_immediate_set_texcoord(texcoord);
+            const float *p = &positions[3*i];
+            float position[4] = { p[0], p[1], p[2], 1.0f };
             sw_immediate_push_vertex(position);
         }
     }
@@ -4844,76 +4812,42 @@ void swDrawElements(SWdraw mode, int count, int type, const void *indices)
         return;
     }
 
-    const uint8_t *indicesUb = NULL;
-    const uint16_t *indicesUs = NULL;
-    const uint32_t *indicesUi = NULL;
-
-    switch (type)
+    if ((type != SW_UNSIGNED_BYTE) && (type != SW_UNSIGNED_SHORT) && (type != SW_UNSIGNED_INT))
     {
-        case SW_UNSIGNED_BYTE: indicesUb = (const uint8_t *)indices; break;
-        case SW_UNSIGNED_SHORT: indicesUs = (const uint16_t *)indices; break;
-        case SW_UNSIGNED_INT: indicesUi = (const uint32_t *)indices; break;
-        default: RLSW.errCode = SW_INVALID_ENUM; return;
+        RLSW.errCode = SW_INVALID_ENUM;
+        return;
     }
 
     sw_immediate_begin(mode);
     {
-        const float *texMatrix = RLSW.stackTexture[RLSW.stackTextureCounter - 1];
-        const float *defaultTexcoord = RLSW.primitive.texcoord;
-        const float *defaultColor = RLSW.primitive.color;
-
         const float *positions = RLSW.array.positions;
         const float *texcoords = RLSW.array.texcoords;
         const uint8_t *colors = RLSW.array.colors;
 
+        const uint8_t *indicesUb = (type == SW_UNSIGNED_BYTE)? indices : NULL;
+        const uint16_t *indicesUs = (type == SW_UNSIGNED_SHORT)? indices : NULL;
+        const uint32_t *indicesUi = (type == SW_UNSIGNED_INT)? indices : NULL;
+
         for (int i = 0; i < count; i++)
         {
-            int index = indicesUb? indicesUb[i] :
-                       (indicesUs? indicesUs[i] : indicesUi[i]);
+            uint32_t index = indicesUb? (uint32_t)indicesUb[i] : (indicesUs? (uint32_t)indicesUs[i] : (uint32_t)indicesUi[i]);
 
-            float u, v;
-            if (texcoords)
-            {
-                int idx = 2*index;
-                u = texcoords[idx];
-                v = texcoords[idx + 1];
-            }
-            else
-            {
-                u = defaultTexcoord[0];
-                v = defaultTexcoord[1];
-            }
-
-            float texcoord[2];
-            texcoord[0] = texMatrix[0]*u + texMatrix[4]*v + texMatrix[12];
-            texcoord[1] = texMatrix[1]*u + texMatrix[5]*v + texMatrix[13];
-
-            float color[4] = {
-                defaultColor[0],
-                defaultColor[1],
-                defaultColor[2],
-                defaultColor[3]
-            };
+            if (texcoords) sw_immediate_set_texcoord(&texcoords[2*index]);
 
             if (colors)
             {
-                int idx = 4*index;
-                color[0] *= (float)colors[idx]*SW_INV_255;
-                color[1] *= (float)colors[idx + 1]*SW_INV_255;
-                color[2] *= (float)colors[idx + 2]*SW_INV_255;
-                color[3] *= (float)colors[idx + 3]*SW_INV_255;
+                const uint8_t *c = &colors[4*index];
+                float color[4] = {
+                    (float)c[0]*SW_INV_255,
+                    (float)c[1]*SW_INV_255,
+                    (float)c[2]*SW_INV_255,
+                    (float)c[3]*SW_INV_255,
+                };
+                sw_immediate_set_color(color);
             }
 
-            int idx = 3*index;
-            float position[4] = {
-                positions[idx],
-                positions[idx + 1],
-                positions[idx + 2],
-                1.0f
-            };
-
-            sw_immediate_set_color(color);
-            sw_immediate_set_texcoord(texcoord);
+            const float *p = &positions[3*index];
+            float position[4] = { p[0], p[1], p[2], 1.0f };
             sw_immediate_push_vertex(position);
         }
     }
