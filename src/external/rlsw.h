@@ -888,6 +888,9 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_STATE_CULL_FACE      (1 << 3)
 #define SW_STATE_BLEND          (1 << 4)
 
+#define SW_BLEND_FLAG_NOOP          (1 << 0)
+#define SW_BLEND_FLAG_NEEDS_ALPHA   (1 << 1)
+
 //----------------------------------------------------------------------------------
 // Module Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -918,6 +921,12 @@ typedef enum {
     SW_PIXELFORMAT_COUNT
 } sw_pixelformat_t;
 
+typedef enum {
+    SW_PIXEL_ALPHA_NONE = 0,    // No transparency
+    SW_PIXEL_ALPHA_BIN,         // Binary transparency
+    SW_PIXEL_ALPHA_YES,         // Contains transparency
+} sw_pixel_alpha_t;
+
 typedef float sw_matrix_t[4*4];
 
 typedef struct {
@@ -932,6 +941,7 @@ typedef struct {
 typedef struct {
     void *pixels;               // Texture pixels
     sw_pixelformat_t format;    // Texture format
+    sw_pixel_alpha_t alpha;     // Texture alpha mode
     int width, height;          // Dimensions of the texture
     int wMinus1, hMinus1;       // Dimensions minus one
     int allocSz;                // Allocated size
@@ -1024,6 +1034,7 @@ typedef struct {
 
     SWfactor srcFactor;                                         // Source blending factor
     SWfactor dstFactor;                                         // Destination bleending factor
+    uint32_t blendFlags;                                        // Flags about the current blend mode
     sw_blend_f blendFunc;                                       // Source blend function
 
     SWface cullFace;                                            // Faces to cull
@@ -1040,6 +1051,28 @@ static sw_context_t RLSW = { 0 };
 //----------------------------------------------------------------------------------
 // Internal Constants Definition
 //----------------------------------------------------------------------------------
+// Pixel formats that has an alpha channel
+static const sw_pixel_alpha_t SW_PIXELFORMAT_ALPHA[SW_PIXELFORMAT_COUNT] =
+{
+    [SW_PIXELFORMAT_COLOR_GRAYSCALE]    = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_GRAYALPHA]    = SW_PIXEL_ALPHA_YES,
+    [SW_PIXELFORMAT_COLOR_R3G3B2]       = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R5G6B5]       = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R8G8B8]       = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R5G5B5A1]     = SW_PIXEL_ALPHA_BIN,
+    [SW_PIXELFORMAT_COLOR_R4G4B4A4]     = SW_PIXEL_ALPHA_YES,
+    [SW_PIXELFORMAT_COLOR_R8G8B8A8]     = SW_PIXEL_ALPHA_YES,
+    [SW_PIXELFORMAT_COLOR_R32]          = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R32G32B32]    = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R32G32B32A32] = SW_PIXEL_ALPHA_YES,
+    [SW_PIXELFORMAT_COLOR_R16]          = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R16G16B16]    = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_COLOR_R16G16B16A16] = SW_PIXEL_ALPHA_YES,
+    [SW_PIXELFORMAT_DEPTH_D8]           = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_DEPTH_D16]          = SW_PIXEL_ALPHA_NONE,
+    [SW_PIXELFORMAT_DEPTH_D32]          = SW_PIXEL_ALPHA_NONE,
+};
+
 // Pixel formats sizes in bytes
 static const int SW_PIXELFORMAT_SIZE[SW_PIXELFORMAT_COUNT] =
 {
@@ -2347,10 +2380,30 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
     uint8_t *dst = texture->pixels;
     const uint8_t *src = data;
 
-    if (data) for (int i = 0; i < newSize; i++) dst[i] = src[i];
-    else for (int i = 0; i < newSize; i++) dst[i] = 0;
+    sw_pixel_alpha_t pixelAlpha = SW_PIXELFORMAT_ALPHA[format];
+    bool alphaFound = !data; // No data: assume transparency
+
+    if (data)
+    {
+        for (int i = 0; i < newSize; i++) dst[i] = src[i];
+
+        if (pixelAlpha != SW_PIXEL_ALPHA_NONE)
+        {
+            for (int i = 0; i < newSize; i += bpp)
+            {
+                uint8_t color[4] = { 0 };
+                sw_pixel_get_color8(color, &src[i], 0, format);
+                if (color[3] < 255) { alphaFound = true; break; }
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < newSize; i++) dst[i] = 0;
+    }
 
     texture->format = format;
+    texture->alpha = alphaFound? pixelAlpha : SW_PIXEL_ALPHA_NONE;
     texture->width = w;
     texture->height = h;
     texture->wMinus1 = w - 1;
@@ -2786,6 +2839,33 @@ static inline int sw_blend_factor_index(SWfactor f)
         default:                     return -1;
     }
 }
+
+static bool sw_blend_factor_needs_alpha(SWfactor f)
+{
+    switch (f) {
+        case SW_SRC_ALPHA:
+        case SW_ONE_MINUS_SRC_ALPHA:
+        case SW_DST_ALPHA:
+        case SW_ONE_MINUS_DST_ALPHA:
+        case SW_SRC_ALPHA_SATURATE: return true;
+        default: break;
+    }
+    return false;
+}
+
+static uint32_t sw_blend_compute_flags(SWfactor src, SWfactor dst)
+{
+    uint32_t flags = 0;
+
+    // Blend is a no-op: result = src*1 + dst*0 = src
+    if (src == SW_ONE && dst == SW_ZERO) flags |= SW_BLEND_FLAG_NOOP;
+
+    // Factors that depend on the alpha channel
+    if (sw_blend_factor_needs_alpha(src) || sw_blend_factor_needs_alpha(dst)) flags |= SW_BLEND_FLAG_NEEDS_ALPHA;
+
+    return flags;
+}
+
 //-------------------------------------------------------------------------------------------
 
 // Projection helper functions
@@ -3745,11 +3825,29 @@ static void sw_immediate_push_vertex(const float position[4], const float color[
     // Immediate rendering of the primitive if the required number is reached
     if (RLSW.vertexCounter == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
     {
-        // Restricts the pipeline state to the minimum required
         uint32_t state = RLSW.stateFlags;
+
+        // Disable pipeline states that are incompatible with the global state
         if (!sw_is_texture_complete(RLSW.depthBuffer)) state &= ~SW_STATE_DEPTH_TEST;
         if (!sw_is_texture_complete(RLSW.boundTexture)) state &= ~SW_STATE_TEXTURE_2D;
-        if ((RLSW.srcFactor == SW_ONE) && (RLSW.dstFactor == SW_ZERO)) state &= ~SW_STATE_BLEND;
+
+        // Reduces blend mode costs when it's possible
+        if (state & SW_STATE_BLEND)
+        {
+            if (RLSW.blendFlags & SW_BLEND_FLAG_NOOP) state &= ~SW_STATE_BLEND;
+            else if (RLSW.blendFlags & SW_BLEND_FLAG_NEEDS_ALPHA)
+            {
+                if ((state & SW_STATE_TEXTURE_2D) && (RLSW.boundTexture->alpha == SW_PIXEL_ALPHA_NONE))
+                {
+                    bool opaqueAlpha = true;
+                    for (int i = 0; i < SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode]; i++)
+                    {
+                        if (RLSW.vertexBuffer[i].color[3] < 1.0f) { opaqueAlpha = false; break; }
+                    }
+                    if (opaqueAlpha) state &= ~SW_STATE_BLEND;
+                }
+            }
+        }
 
         switch (RLSW.polyMode)
         {
@@ -4121,6 +4219,7 @@ void swBlendFunc(SWfactor sfactor, SWfactor dfactor)
 
     RLSW.srcFactor = sfactor;
     RLSW.dstFactor = dfactor;
+    RLSW.blendFlags = sw_blend_compute_flags(sfactor, dfactor);
     RLSW.blendFunc = SW_BLEND_TABLE[sIndex][dIndex];
 }
 
@@ -4902,6 +5001,8 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
         return;
     }
 
+    bool alphaFound = false;
+
     for (int j = 0; j < height; ++j)
     {
         for (int i = 0; i < width; ++i)
@@ -4911,9 +5012,13 @@ void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum for
             const int dstPixelOffset = (((y + j)*RLSW.boundTexture->width) + (x + i))*dstPixelSize;
 
             sw_pixel_get_color(color, srcBytes, srcPixelOffset, pFormat);
+            alphaFound |= (color[3] < 1.0f);
+
             sw_pixel_set_color(dstBytes, color, dstPixelOffset, RLSW.boundTexture->format);
         }
     }
+
+    RLSW.boundTexture->alpha = alphaFound? SW_PIXELFORMAT_ALPHA[pFormat] : SW_PIXEL_ALPHA_NONE;
 }
 
 void swTexParameteri(int param, int value)
