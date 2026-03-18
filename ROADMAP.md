@@ -20,7 +20,7 @@ _Current version of raylib is complete and functional but there is always room f
  - [ ] `rcore_desktop_x11`: Create additional platform backend: Linux/X11
  - [ ] `rcore_desktop_wayland`: Create additional platform backend: Linux/Wayland
  - [ ] `rcore`: Investigate alternative embedded platforms and realtime OSs
- - [ ] `rlsw`: Software renderer optimizations, platform-specific, improve SIMD support
+ - [ ] `rlsw`: Software renderer optimizations: mipmaps, platform-specific SIMD
  - [ ] `rtextures`: Consider moving N-patch system to separate example
  - [ ] `rtextures`: Review blending modes system, provide more options or better samples
  - [ ] `raudio`: Support microphone input, basic API to read microphone
