@@ -5477,13 +5477,13 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     int yBot = (int)y2;
 
     // Scanline for the upper part of the triangle
-    bool longSideIsLeft0 = (lVert.coord[0] < rVert.coord[0]);
-    const sw_vertex_t *l0 = longSideIsLeft0 ? &lVert : &rVert;
-    const sw_vertex_t *r0 = longSideIsLeft0 ? &rVert : &lVert;
     for (int y = yTop; y < yMid; y++)
     {
         lVert.coord[1] = rVert.coord[1] = y;
-        SW_RASTER_TRIANGLE_SPAN(l0, r0, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        bool longSideIsLeft = (lVert.coord[0] < rVert.coord[0]);
+        const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
+        const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
+        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
         SW_ADD_GRAD(&lVert, &dVXdy02);
         SW_ADD_GRAD(&rVert, &dVXdy01);
     }
@@ -5493,13 +5493,13 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     SW_ADD_GRAD_SCALED(&rVert, &dVXdy12, y1Substep);
 
     // Scanline for the lower part of the triangle
-    bool longSideIsLeft1 = (lVert.coord[0] < rVert.coord[0]);
-    const sw_vertex_t *l1 = longSideIsLeft1 ? &lVert : &rVert;
-    const sw_vertex_t *r1 = longSideIsLeft1 ? &rVert : &lVert;
     for (int y = yMid; y < yBot; y++)
     {
         lVert.coord[1] = rVert.coord[1] = y;
-        SW_RASTER_TRIANGLE_SPAN(l1, r1, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
+        bool longSideIsLeft = (lVert.coord[0] < rVert.coord[0]);
+        const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
+        const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
+        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
         SW_ADD_GRAD(&lVert, &dVXdy02);
         SW_ADD_GRAD(&rVert, &dVXdy12);
     }
