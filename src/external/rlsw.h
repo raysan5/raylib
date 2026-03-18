@@ -4050,9 +4050,9 @@ const char *swGetString(SWget name)
 
     switch (name)
     {
-        case SW_VENDOR: result = "RLSW Header"; break;
-        case SW_RENDERER: result = "RLSW Software Renderer"; break;
-        case SW_VERSION: result = "RLSW 1.0"; break;
+        case SW_VENDOR: result = "RLSW"; break;
+        case SW_RENDERER: result = "RLSW OpenGL Software Renderer"; break;
+        case SW_VERSION: result = RLSW_VERSION; break;
         case SW_EXTENSIONS: result = "None"; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }

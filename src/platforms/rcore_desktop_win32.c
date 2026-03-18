@@ -1652,9 +1652,9 @@ int InitPlatform(void)
     if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
     {
         TRACELOG(LOG_INFO, "GL: OpenGL device information:");
-        TRACELOG(LOG_INFO, "    > Vendor:   %s", "raylib");
-        TRACELOG(LOG_INFO, "    > Renderer: %s", "rlsw - OpenGL Software Renderer");
-        TRACELOG(LOG_INFO, "    > Version:  %s", "1.0");
+        TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
+        TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
+        TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
     }
 
@@ -1870,7 +1870,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+            // WARNING: This call fails for Software-Renderer backend
+            //HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
         } break;
         //case WM_MOVE
         case WM_WINDOWPOSCHANGED:

@@ -2166,7 +2166,7 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
         return mapScancodeToKey[sdlScancode];
     }
 
-    return KEY_NULL; // No equivalent key in Raylib
+    return KEY_NULL; // No equivalent key in raylib
 }
 
 // Get next codepoint in a byte sequence and bytes processed
