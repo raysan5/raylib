@@ -585,6 +585,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\external\cgltf.h" />
+    <ClInclude Include="..\..\..\src\external\rlsw.h" />
+    <ClInclude Include="..\..\..\src\external\rltexgpu.h" />
+    <ClInclude Include="..\..\..\src\external\rprand.h" />
     <ClInclude Include="..\..\..\src\rcamera.h" />
     <ClInclude Include="..\..\..\src\config.h" />
     <ClInclude Include="..\..\..\src\external\glad.h" />

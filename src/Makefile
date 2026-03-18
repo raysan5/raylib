@@ -959,6 +959,7 @@ ifeq ($(ROOT),root)
         endif
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
+		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rcamera.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files removed!"
     else

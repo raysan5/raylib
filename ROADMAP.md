@@ -13,23 +13,34 @@ Here is a wishlist with features and ideas to improve the library. Note that fea
 
 _Current version of raylib is complete and functional but there is always room for improvements._
 
-**raylib 5.x**
- - [ ] `rcore`: Support additional platforms: iOS, consoles?
- - [x] `rcore_web`: Avoid GLFW dependency, functionality can be directly implemented using emscripten SDK
- - [x] `rlgl`: Review GLSL shaders naming conventions for consistency
- - [ ] `textures`: Improve compressed textures support, loading and saving
+**raylib 7.0**
+ - [ ] `rcore_desktop_win32`: Improve new Windows platform backend - inputs, highdpi
+ - [ ] `rcore_desktop_emscripten`: Improve new Web platform backend - inputs, highdpi
+ - [ ] `rcore_desktop_cocoa`: Create additional platform backend: macOS
+ - [ ] `rcore_desktop_x11`: Create additional platform backend: Linux/X11
+ - [ ] `rcore_desktop_wayland`: Create additional platform backend: Linux/Wayland
+ - [ ] `rcore`: Investigate alternative embedded platforms and realtime OSs
+ - [ ] `rlsw`: Software renderer optimizations: mipmaps, platform-specific SIMD
+ - [ ] `rtextures`: Consider moving N-patch system to separate example
+ - [ ] `rtextures`: Review blending modes system, provide more options or better samples
+ - [ ] `raudio`: Support microphone input, basic API to read microphone
+ - [ ] `rltexgpu`: Improve compressed textures support, loading and saving, improve KTX 2.0
+ - [ ] `rlobj`: Create OBJ loader, supporting material file separately (low priority)
+
+**raylib 6.0**
+ - [x] `rlsw`: New Software Renderer backend, pseudo-OpenGL 1.1 implementation
+ - [x] `rcore_emscripten`: New emscripten-only backend, avoiding GLFW dependency
+ - [x] `rlgl`: Review GLSL shaders naming conventions for consistency, redesigned shader API
  - [x] `rmodels`: Improve 3d objects loading, specially animations (obj, gltf)
  - [x] `examples`: Review all examples, add more and better code explanations
- - [x] Software renderer backend? Maybe using `Image` provided API
 
-**raylib 4.x**
+**raylib 5.0**
  - [x] Split core module into separate platforms?
  - [x] Redesign gestures system, improve touch inputs management
  - [x] Redesign camera module (more flexible) ([#1143](https://github.com/raysan5/raylib/issues/1143), https://github.com/raysan5/raylib/discussions/2507)
  - [x] Better documentation and improved examples, reviewed webpage with examples complexity level
  - [x] Focus on HTML5 ([raylib 5k gamejam](https://itch.io/jam/raylib-5k-gamejam)) and embedded platforms (RPI and similar SOCs)
  - [x] Additional support libraries: [raygui](https://github.com/raysan5/raygui), [rres](https://github.com/raysan5/rres)
-
 
 **raylib 4.0**
  - [x] Improved consistency and coherency in raylib API
