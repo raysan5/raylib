@@ -3800,6 +3800,7 @@ static void sw_immediate_begin(SWdraw mode)
     uint32_t state = RLSW.userState;
     if (!sw_is_texture_complete(RLSW.depthBuffer)) state &= ~SW_STATE_DEPTH_TEST;
     if (!sw_is_texture_complete(RLSW.boundTexture)) state &= ~SW_STATE_TEXTURE_2D;
+    else if (sw_pixel_is_depth_format(RLSW.boundTexture->format)) state &= ~SW_STATE_TEXTURE_2D;
 
     // Initialize required values
     RLSW.primitive.hasColorAlpha = false;
