@@ -671,6 +671,7 @@ SWAPI void swClose(void);
 SWAPI bool swResize(int w, int h);
 SWAPI void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
+SWAPI void *swGetColorBuffer(int *width, int *height); // Restored for ESP-IDF compatibility
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -689,7 +690,6 @@ SWAPI void swClear(uint32_t bitmask);
 SWAPI void swBlendFunc(SWfactor sfactor, SWfactor dfactor);
 SWAPI void swPolygonMode(SWpoly mode);
 SWAPI void swCullFace(SWface face);
-SWAPI void *swGetColorBuffer(int *width, int *height); // Restored for ESP-IDF compatibility
 
 SWAPI void swPointSize(float size);
 SWAPI void swLineWidth(float width);
@@ -3952,6 +3952,14 @@ void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, in
     }
 }
 
+// Get framefuffer pixel data pointer and size
+void *swGetColorBuffer(int *width, int *height)
+{
+    if (width != NULL) *width = RLSW.framebuffer.color->width;
+    if (height != NULL) *height = RLSW.framebuffer.color->height;
+    return RLSW.framebuffer.color->pixels;
+}
+
 void swEnable(SWstate state)
 {
     switch (state)
@@ -4199,15 +4207,6 @@ void swCullFace(SWface face)
     }
 
     RLSW.cullFace = face;
-}
-
-// Get direct pointer to the default framebuffer's pixel data
-// Restored for ESP-IDF compatibility - removed in Raylib 6.0 PR #5655
-void *swGetColorBuffer(int *width, int *height)
-{
-    if (width) *width = RLSW.colorBuffer->width;
-    if (height) *height = RLSW.colorBuffer->height;
-    return RLSW.colorBuffer->pixels;
 }
 
 void swPointSize(float size)
