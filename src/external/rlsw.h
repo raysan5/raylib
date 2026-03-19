@@ -4059,9 +4059,9 @@ void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, in
 // Get framefuffer pixel data pointer and size
 void *swGetColorBuffer(int *width, int *height)
 {
-    if (width != NULL) *width = RLSW.framebuffer.color->width;
-    if (height != NULL) *height = RLSW.framebuffer.color->height;
-    return RLSW.framebuffer.color->pixels;
+    if (width != NULL) *width = RLSW.framebuffer.color.width;
+    if (height != NULL) *height = RLSW.framebuffer.color.height;
+    return RLSW.framebuffer.color.pixels;
 }
 
 void swEnable(SWstate state)
