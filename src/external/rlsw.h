@@ -4371,7 +4371,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackProjection[--RLSW.stackProjectionCounter];
+            RLSW.currentMatrix = &RLSW.stackProjection[(--RLSW.stackProjectionCounter) - 1];
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         } break;
         case SW_MODELVIEW:
@@ -4382,7 +4382,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackModelview[--RLSW.stackModelviewCounter];
+            RLSW.currentMatrix = &RLSW.stackModelview[(--RLSW.stackModelviewCounter) - 1];
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         } break;
         case SW_TEXTURE:
@@ -4393,7 +4393,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackTexture[--RLSW.stackTextureCounter];
+            RLSW.currentMatrix = &RLSW.stackTexture[(--RLSW.stackTextureCounter) - 1];
         } break;
         default: break;
     }
