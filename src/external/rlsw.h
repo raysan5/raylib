@@ -1300,7 +1300,7 @@ static inline void sw_add_vertex_grad_scaled_PCT(sw_vertex_t *SW_RESTRICT out, c
 
 static inline void sw_get_vertex_grad_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
-    // Add gradients to Position
+    // Calculate gradients for Position
     out->position[0] = (b->position[0] - a->position[0])*scale;
     out->position[1] = (b->position[1] - a->position[1])*scale;
     out->position[2] = (b->position[2] - a->position[2])*scale;
