@@ -953,10 +953,9 @@ typedef void (*sw_raster_point_f)(const sw_vertex_t*);
 typedef float sw_matrix_t[4*4];
 
 typedef struct sw_vertex {
-    float position[4];          // Position coordinates
+    float position[4];          // Clip space (x,y,z,w) -> NDC (after /w) -> screen space (x,y,z,1/w)
     float color[4];             // Color value (RGBA)
     float texcoord[2];          // Texture coordinates
-    float coord[4];             // Clip space (x,y,z,w) -> NDC (after /w) -> screen space (x,y,z,1/w)
 } sw_vertex_t;
 
 typedef struct {
@@ -1221,7 +1220,7 @@ static inline float sw_luminance(const float *color)
     return color[0]*0.299f + color[1]*0.587f + color[2]*0.114f;
 }
 
-static inline void sw_lerp_vertex_PCTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
+static inline void sw_lerp_vertex_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
 {
     const float tInv = 1.0f - t;
 
@@ -1240,16 +1239,16 @@ static inline void sw_lerp_vertex_PCTH(sw_vertex_t *SW_RESTRICT out, const sw_ve
     // Texture coordinate interpolation (2 components)
     out->texcoord[0] = a->texcoord[0]*tInv + b->texcoord[0]*t;
     out->texcoord[1] = a->texcoord[1]*tInv + b->texcoord[1]*t;
-
-    // Pipeline coordinate interpolation (4 components)
-    out->coord[0] = a->coord[0]*tInv + b->coord[0]*t;
-    out->coord[1] = a->coord[1]*tInv + b->coord[1]*t;
-    out->coord[2] = a->coord[2]*tInv + b->coord[2]*t;
-    out->coord[3] = a->coord[3]*tInv + b->coord[3]*t;
 }
 
-static inline void sw_get_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+static inline void sw_get_vertex_grad_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
+    // Calculate gradients for Position
+    out->position[0] = (b->position[0] - a->position[0])*scale;
+    out->position[1] = (b->position[1] - a->position[1])*scale;
+    out->position[2] = (b->position[2] - a->position[2])*scale;
+    out->position[3] = (b->position[3] - a->position[3])*scale;
+
     // Calculate gradients for Color
     out->color[0] = (b->color[0] - a->color[0])*scale;
     out->color[1] = (b->color[1] - a->color[1])*scale;
@@ -1259,16 +1258,16 @@ static inline void sw_get_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw
     // Calculate gradients for Texture coordinates
     out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
     out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
-
-    // Calculate gradients for Pipeline coordinates
-    out->coord[0] = (b->coord[0] - a->coord[0])*scale;
-    out->coord[1] = (b->coord[1] - a->coord[1])*scale;
-    out->coord[2] = (b->coord[2] - a->coord[2])*scale;
-    out->coord[3] = (b->coord[3] - a->coord[3])*scale;
 }
 
-static inline void sw_add_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+static inline void sw_add_vertex_grad_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
 {
+    // Add gradients to Position
+    out->position[0] += gradients->position[0];
+    out->position[1] += gradients->position[1];
+    out->position[2] += gradients->position[2];
+    out->position[3] += gradients->position[3];
+
     // Add gradients to Color
     out->color[0] += gradients->color[0];
     out->color[1] += gradients->color[1];
@@ -1278,16 +1277,16 @@ static inline void sw_add_vertex_grad_CTH(sw_vertex_t *SW_RESTRICT out, const sw
     // Add gradients to Texture coordinates
     out->texcoord[0] += gradients->texcoord[0];
     out->texcoord[1] += gradients->texcoord[1];
-
-    // Add gradients to Pipeline coordinates
-    out->coord[0] += gradients->coord[0];
-    out->coord[1] += gradients->coord[1];
-    out->coord[2] += gradients->coord[2];
-    out->coord[3] += gradients->coord[3];
 }
 
-static inline void sw_add_vertex_grad_scaled_CTH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+static inline void sw_add_vertex_grad_scaled_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
 {
+    // Add gradients to Position
+    out->position[0] += gradients->position[0]*scale;
+    out->position[1] += gradients->position[1]*scale;
+    out->position[2] += gradients->position[2]*scale;
+    out->position[3] += gradients->position[3]*scale;
+
     // Add gradients to Color
     out->color[0] += gradients->color[0]*scale;
     out->color[1] += gradients->color[1]*scale;
@@ -1297,57 +1296,51 @@ static inline void sw_add_vertex_grad_scaled_CTH(sw_vertex_t *SW_RESTRICT out, c
     // Add gradients to Texture coordinates
     out->texcoord[0] += gradients->texcoord[0]*scale;
     out->texcoord[1] += gradients->texcoord[1]*scale;
-
-    // Add gradients to Pipeline coordinates
-    out->coord[0] += gradients->coord[0]*scale;
-    out->coord[1] += gradients->coord[1]*scale;
-    out->coord[2] += gradients->coord[2]*scale;
-    out->coord[3] += gradients->coord[3]*scale;
 }
 
-static inline void sw_get_vertex_grad_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+static inline void sw_get_vertex_grad_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
+    // Calculate gradients for Position
+    out->position[0] = (b->position[0] - a->position[0])*scale;
+    out->position[1] = (b->position[1] - a->position[1])*scale;
+    out->position[2] = (b->position[2] - a->position[2])*scale;
+    out->position[3] = (b->position[3] - a->position[3])*scale;
+
     // Calculate gradients for Color
     out->color[0] = (b->color[0] - a->color[0])*scale;
     out->color[1] = (b->color[1] - a->color[1])*scale;
     out->color[2] = (b->color[2] - a->color[2])*scale;
     out->color[3] = (b->color[3] - a->color[3])*scale;
-
-    // Calculate gradients for Pipeline coordinates
-    out->coord[0] = (b->coord[0] - a->coord[0])*scale;
-    out->coord[1] = (b->coord[1] - a->coord[1])*scale;
-    out->coord[2] = (b->coord[2] - a->coord[2])*scale;
-    out->coord[3] = (b->coord[3] - a->coord[3])*scale;
 }
 
-static inline void sw_add_vertex_grad_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+static inline void sw_add_vertex_grad_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
 {
+    // Add gradients to Position
+    out->position[0] += gradients->position[0];
+    out->position[1] += gradients->position[1];
+    out->position[2] += gradients->position[2];
+    out->position[3] += gradients->position[3];
+
     // Add gradients to Color
     out->color[0] += gradients->color[0];
     out->color[1] += gradients->color[1];
     out->color[2] += gradients->color[2];
     out->color[3] += gradients->color[3];
-
-    // Add gradients to Pipeline coordinates
-    out->coord[0] += gradients->coord[0];
-    out->coord[1] += gradients->coord[1];
-    out->coord[2] += gradients->coord[2];
-    out->coord[3] += gradients->coord[3];
 }
 
-static inline void sw_add_vertex_grad_scaled_CH(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+static inline void sw_add_vertex_grad_scaled_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
 {
+    // Add gradients to Position
+    out->position[0] += gradients->position[0]*scale;
+    out->position[1] += gradients->position[1]*scale;
+    out->position[2] += gradients->position[2]*scale;
+    out->position[3] += gradients->position[3]*scale;
+
     // Add gradients to Color
     out->color[0] += gradients->color[0]*scale;
     out->color[1] += gradients->color[1]*scale;
     out->color[2] += gradients->color[2]*scale;
     out->color[3] += gradients->color[3]*scale;
-
-    // Add gradients to Pipeline coordinates
-    out->coord[0] += gradients->coord[0]*scale;
-    out->coord[1] += gradients->coord[1]*scale;
-    out->coord[2] += gradients->coord[2]*scale;
-    out->coord[3] += gradients->coord[3]*scale;
 }
 
 // Half conversion functions
@@ -2871,17 +2864,17 @@ static int sw_clip_##name(                                                      
     int n)                                                                              \
 {                                                                                       \
     const sw_vertex_t *prev = &input[n - 1];                                            \
-    int prevInside = FUNC_IS_INSIDE(prev->coord);                                       \
+    int prevInside = FUNC_IS_INSIDE(prev->position);                                    \
     int outputCount = 0;                                                                \
                                                                                         \
     for (int i = 0; i < n; i++) {                                                       \
         const sw_vertex_t *curr = &input[i];                                            \
-        int currInside = FUNC_IS_INSIDE(curr->coord);                                   \
+        int currInside = FUNC_IS_INSIDE(curr->position);                                \
                                                                                         \
         /* If transition between interior/exterior, calculate intersection point */     \
         if (prevInside != currInside) {                                                 \
-            float t = FUNC_COMPUTE_T(prev->coord, curr->coord);                         \
-            sw_lerp_vertex_PCTH(&output[outputCount++], prev, curr, t);                 \
+            float t = FUNC_COMPUTE_T(prev->position, curr->position);                   \
+            sw_lerp_vertex_PCT(&output[outputCount++], prev, curr, t);                  \
         }                                                                               \
                                                                                         \
         /* If current vertex inside, add it */                                          \
@@ -3320,9 +3313,9 @@ static inline bool sw_triangle_face_culling(void)
     // even with negative w values
 
     // Preload clip coordinates into local variables
-    const float *h0 = RLSW.primitive.buffer[0].coord;
-    const float *h1 = RLSW.primitive.buffer[1].coord;
-    const float *h2 = RLSW.primitive.buffer[2].coord;
+    const float *p0 = RLSW.primitive.buffer[0].position;
+    const float *p1 = RLSW.primitive.buffer[1].position;
+    const float *p2 = RLSW.primitive.buffer[2].position;
 
     // Compute a value proportional to the signed area in the projected 2D plane,
     // calculated directly using clip coordinates BEFORE division by w
@@ -3331,28 +3324,28 @@ static inline bool sw_triangle_face_culling(void)
     // space and its relationship to the projected 2D winding order, even with
     // negative w values
     // The determinant formula used here is:
-    // h0.x*(h1.y*h2.w - h2.y*h1.w) +
-    // h1.x*(h2.y*h0.w - h0.y*h2.w) +
-    // h2.x*(h0.y*h1.w - h1.y*h0.w)
+    // p0.x*(p1.y*p2.w - p2.y*p1.w) +
+    // p1.x*(p2.y*p0.w - p0.y*p2.w) +
+    // p2.x*(p0.y*p1.w - p1.y*p0.w)
 
-    const float hSgnArea =
-        h0[0]*(h1[1]*h2[3] - h2[1]*h1[3]) +
-        h1[0]*(h2[1]*h0[3] - h0[1]*h2[3]) +
-        h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
+    const float sgnArea =
+        p0[0]*(p1[1]*p2[3] - p2[1]*p1[3]) +
+        p1[0]*(p2[1]*p0[3] - p0[1]*p2[3]) +
+        p2[0]*(p0[1]*p1[3] - p1[1]*p0[3]);
 
     // Discard the triangle if its winding order (determined by the sign
     // of the homogeneous area/determinant) matches the culled direction
-    // A positive hSgnArea typically corresponds to a counter-clockwise
+    // A positive sgnArea typically corresponds to a counter-clockwise
     // winding in the projected space when all w > 0
     // This test is robust for points with w > 0 or w < 0, correctly
     // capturing the change in orientation when crossing the w=0 plane
 
     // The culling logic remains the same based on the signed area/determinant
-    // A value of 0 for hSgnArea means the points are collinear in (x, y, w)
+    // A value of 0 for sgnArea means the points are collinear in (x, y, w)
     // space, which corresponds to a degenerate triangle projection
     // Such triangles are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
     // and should be handled by the clipper if necessary
-    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0) : (hSgnArea > 0); // Cull if winding is "clockwise" : "counter-clockwise"
+    return (RLSW.cullFace == SW_FRONT)? (sgnArea < 0) : (sgnArea > 0); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static void sw_triangle_clip_and_project(void)
@@ -3369,13 +3362,13 @@ static void sw_triangle_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float wRcp = 1.0f/v->coord[3];
-            v->coord[3] = wRcp;
+            const float wRcp = 1.0f/v->position[3];
 
             // Division of XYZ coordinates by weight
-            v->coord[0] *= wRcp;
-            v->coord[1] *= wRcp;
-            v->coord[2] *= wRcp;
+            v->position[0] *= wRcp;
+            v->position[1] *= wRcp;
+            v->position[2] *= wRcp;
+            v->position[3] = wRcp;
 
             // Division of texture coordinates (perspective-correct)
             v->texcoord[0] *= wRcp;
@@ -3388,7 +3381,7 @@ static void sw_triangle_clip_and_project(void)
             v->color[3] *= wRcp;
 
             // Transformation to screen space
-            sw_project_ndc_to_screen(v->coord);
+            sw_project_ndc_to_screen(v->position);
         }
     }
 }
@@ -3430,12 +3423,12 @@ static inline bool sw_quad_face_culling(void)
     // winding test on this first triangle
 
     // Preload clip coordinates into local variables
-    const float *h0 = RLSW.primitive.buffer[0].coord;
-    const float *h1 = RLSW.primitive.buffer[1].coord;
-    const float *h2 = RLSW.primitive.buffer[2].coord;
+    const float *p0 = RLSW.primitive.buffer[0].position;
+    const float *p1 = RLSW.primitive.buffer[1].position;
+    const float *p2 = RLSW.primitive.buffer[2].position;
 
     // NOTE: h3 is not needed for this test
-    // const float *h3 = RLSW.primitive.buffer[3].coord;
+    // const float *h3 = RLSW.primitive.buffer[3].position;
 
     // Compute a value proportional to the signed area of the triangle P0 P1 P2
     // in the projected 2D plane, calculated directly using clip coordinates
@@ -3445,29 +3438,29 @@ static inline bool sw_quad_face_culling(void)
     // in clip space and its relationship to the projected 2D winding order,
     // even with negative w values
     // The determinant formula used here is:
-    // h0.x*(h1.y*h2.w - h2.y*h1.w) +
-    // h1.x*(h2.y*h0.w - h0.y*h2.w) +
-    // h2.x*(h0.y*h1.w - h1.y*h0.w)
+    // p0.x*(p1.y*p2.w - p2.y*p1.w) +
+    // p1.x*(p2.y*p0.w - p0.y*p2.w) +
+    // p2.x*(p0.y*p1.w - p1.y*p0.w)
 
-    const float hSgnArea =
-        h0[0]*(h1[1]*h2[3] - h2[1]*h1[3]) +
-        h1[0]*(h2[1]*h0[3] - h0[1]*h2[3]) +
-        h2[0]*(h0[1]*h1[3] - h1[1]*h0[3]);
+    const float sgnArea =
+        p0[0]*(p1[1]*p2[3] - p2[1]*p1[3]) +
+        p1[0]*(p2[1]*p0[3] - p0[1]*p2[3]) +
+        p2[0]*(p0[1]*p1[3] - p1[1]*p0[3]);
 
     // Perform face culling based on the winding order determined by the sign
     // of the homogeneous area/determinant of triangle P0 P1 P2
     // This test is robust for points with w > 0 or w < 0 within the triangle,
     // correctly capturing the change in orientation when crossing the w=0 plane
 
-    // A positive hSgnArea typically corresponds to a counter-clockwise
+    // A positive sgnArea typically corresponds to a counter-clockwise
     // winding in the projected space when all w > 0
-    // A value of 0 for hSgnArea means P0, P1, P2 are collinear in (x, y, w)
+    // A value of 0 for sgnArea means P0, P1, P2 are collinear in (x, y, w)
     // space, which corresponds to a degenerate triangle projection
     // Such quads might also be degenerate or non-planar. They are typically
     // not culled by this test (0 < 0 is false, 0 > 0 is false)
     // and should be handled by the clipper if necessary
 
-    return (RLSW.cullFace == SW_FRONT)? (hSgnArea < 0.0f) : (hSgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
+    return (RLSW.cullFace == SW_FRONT)? (sgnArea < 0.0f) : (sgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
 }
 
 static void sw_quad_clip_and_project(void)
@@ -3484,13 +3477,13 @@ static void sw_quad_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float wRcp = 1.0f/v->coord[3];
-            v->coord[3] = wRcp;
+            const float wRcp = 1.0f/v->position[3];
 
             // Division of XYZ coordinates by weight
-            v->coord[0] *= wRcp;
-            v->coord[1] *= wRcp;
-            v->coord[2] *= wRcp;
+            v->position[0] *= wRcp;
+            v->position[1] *= wRcp;
+            v->position[2] *= wRcp;
+            v->position[3] = wRcp;
 
             // Division of texture coordinates (perspective-correct)
             v->texcoord[0] *= wRcp;
@@ -3503,7 +3496,7 @@ static void sw_quad_clip_and_project(void)
             v->color[3] *= wRcp;
 
             // Transformation to screen space
-            sw_project_ndc_to_screen(v->coord);
+            sw_project_ndc_to_screen(v->position);
         }
     }
 }
@@ -3515,17 +3508,17 @@ static bool sw_quad_is_axis_aligned(void)
     // so it's required for all vertices to have homogeneous w = 1.0
     for (int i = 0; i < 4; i++)
     {
-        if (RLSW.primitive.buffer[i].coord[3] != 1.0f) return false;
+        if (RLSW.primitive.buffer[i].position[3] != 1.0f) return false;
     }
 
     // Epsilon tolerance in screen space (pixels)
     const float epsilon = 0.5f;
 
     // Fetch screen-space positions for the four quad vertices
-    const float *p0 = RLSW.primitive.buffer[0].coord;
-    const float *p1 = RLSW.primitive.buffer[1].coord;
-    const float *p2 = RLSW.primitive.buffer[2].coord;
-    const float *p3 = RLSW.primitive.buffer[3].coord;
+    const float *p0 = RLSW.primitive.buffer[0].position;
+    const float *p1 = RLSW.primitive.buffer[1].position;
+    const float *p2 = RLSW.primitive.buffer[2].position;
+    const float *p3 = RLSW.primitive.buffer[3].position;
 
     // Compute edge vectors between consecutive vertices
     // These define the four sides of the quad in screen space
@@ -3614,25 +3607,25 @@ static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
 
     for (int i = 0; i < 4; i++)
     {
-        dH[i] = v1->coord[i] - v0->coord[i];
+        dH[i] = v1->position[i] - v0->position[i];
         dC[i] = v1->color[i] - v0->color[i];
     }
 
     // Clipping Liang-Barsky
-    if (!sw_line_clip_coord(v0->coord[3] - v0->coord[0], -dH[3] + dH[0], &t0, &t1)) return false;
-    if (!sw_line_clip_coord(v0->coord[3] + v0->coord[0], -dH[3] - dH[0], &t0, &t1)) return false;
-    if (!sw_line_clip_coord(v0->coord[3] - v0->coord[1], -dH[3] + dH[1], &t0, &t1)) return false;
-    if (!sw_line_clip_coord(v0->coord[3] + v0->coord[1], -dH[3] - dH[1], &t0, &t1)) return false;
-    if (!sw_line_clip_coord(v0->coord[3] - v0->coord[2], -dH[3] + dH[2], &t0, &t1)) return false;
-    if (!sw_line_clip_coord(v0->coord[3] + v0->coord[2], -dH[3] - dH[2], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] - v0->position[0], -dH[3] + dH[0], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] + v0->position[0], -dH[3] - dH[0], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] - v0->position[1], -dH[3] + dH[1], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] + v0->position[1], -dH[3] - dH[1], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] - v0->position[2], -dH[3] + dH[2], &t0, &t1)) return false;
+    if (!sw_line_clip_coord(v0->position[3] + v0->position[2], -dH[3] - dH[2], &t0, &t1)) return false;
 
     // Clipping Scissor
     if (RLSW.userState & SW_STATE_SCISSOR_TEST)
     {
-        if (!sw_line_clip_coord(v0->coord[0] - RLSW.scClipMin[0]*v0->coord[3], RLSW.scClipMin[0]*dH[3] - dH[0], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(RLSW.scClipMax[0]*v0->coord[3] - v0->coord[0], dH[0] - RLSW.scClipMax[0]*dH[3], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(v0->coord[1] - RLSW.scClipMin[1]*v0->coord[3], RLSW.scClipMin[1]*dH[3] - dH[1], &t0, &t1)) return false;
-        if (!sw_line_clip_coord(RLSW.scClipMax[1]*v0->coord[3] - v0->coord[1], dH[1] - RLSW.scClipMax[1]*dH[3], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(v0->position[0] - RLSW.scClipMin[0]*v0->position[3], RLSW.scClipMin[0]*dH[3] - dH[0], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scClipMax[0]*v0->position[3] - v0->position[0], dH[0] - RLSW.scClipMax[0]*dH[3], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(v0->position[1] - RLSW.scClipMin[1]*v0->position[3], RLSW.scClipMin[1]*dH[3] - dH[1], &t0, &t1)) return false;
+        if (!sw_line_clip_coord(RLSW.scClipMax[1]*v0->position[3] - v0->position[1], dH[1] - RLSW.scClipMax[1]*dH[3], &t0, &t1)) return false;
     }
 
     // Interpolation of new coordinates
@@ -3640,7 +3633,7 @@ static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
     {
         for (int i = 0; i < 4; i++)
         {
-            v1->coord[i] = v0->coord[i] + t1*dH[i];
+            v1->position[i] = v0->position[i] + t1*dH[i];
             v1->color[i] = v0->color[i] + t1*dC[i];
         }
     }
@@ -3649,7 +3642,7 @@ static bool sw_line_clip(sw_vertex_t *v0, sw_vertex_t *v1)
     {
         for (int i = 0; i < 4; i++)
         {
-            v0->coord[i] += t0*dH[i];
+            v0->position[i] += t0*dH[i];
             v0->color[i] += t0*dC[i];
         }
     }
@@ -3662,24 +3655,24 @@ static bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
     if (!sw_line_clip(v0, v1)) return false;
 
     // Convert clip coordinates to NDC
-    v0->coord[3] = 1.0f/v0->coord[3];
-    v1->coord[3] = 1.0f/v1->coord[3];
+    v0->position[3] = 1.0f/v0->position[3];
+    v1->position[3] = 1.0f/v1->position[3];
     for (int i = 0; i < 3; i++)
     {
-        v0->coord[i] *= v0->coord[3];
-        v1->coord[i] *= v1->coord[3];
+        v0->position[i] *= v0->position[3];
+        v1->position[i] *= v1->position[3];
     }
 
     // Convert NDC coordinates to screen space
-    sw_project_ndc_to_screen(v0->coord);
-    sw_project_ndc_to_screen(v1->coord);
+    sw_project_ndc_to_screen(v0->position);
+    sw_project_ndc_to_screen(v1->position);
 
     // NDC +1.0 projects to exactly (width + 0.5f), which truncates out of bounds
     // The clamp is at most 0.5px on a boundary endpoint, it's visually imperceptible
-    v0->coord[0] = sw_clamp(v0->coord[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
-    v0->coord[1] = sw_clamp(v0->coord[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
-    v1->coord[0] = sw_clamp(v1->coord[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
-    v1->coord[1] = sw_clamp(v1->coord[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
+    v0->position[0] = sw_clamp(v0->position[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+    v0->position[1] = sw_clamp(v0->position[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
+    v1->position[0] = sw_clamp(v1->position[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+    v1->position[1] = sw_clamp(v1->position[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
 
     return true;
 }
@@ -3705,20 +3698,20 @@ static void sw_line_render(uint32_t state, sw_vertex_t *vertices)
 //-------------------------------------------------------------------------------------------
 static bool sw_point_clip_and_project(sw_vertex_t *v)
 {
-    if (v->coord[3] != 1.0f)
+    if (v->position[3] != 1.0f)
     {
         for (int_fast8_t i = 0; i < 3; i++)
         {
-            if ((v->coord[i] < -v->coord[3]) || (v->coord[i] > v->coord[3])) return false;
+            if ((v->position[i] < -v->position[3]) || (v->position[i] > v->position[3])) return false;
         }
 
-        v->coord[3] = 1.0f/v->coord[3];
-        v->coord[0] *= v->coord[3];
-        v->coord[1] *= v->coord[3];
-        v->coord[2] *= v->coord[3];
+        v->position[3] = 1.0f/v->position[3];
+        v->position[0] *= v->position[3];
+        v->position[1] *= v->position[3];
+        v->position[2] *= v->position[3];
     }
 
-    sw_project_ndc_to_screen(v->coord);
+    sw_project_ndc_to_screen(v->position);
 
     int min[2] = { 0, 0 };
     int max[2] = { RLSW.colorBuffer->width, RLSW.colorBuffer->height };
@@ -3731,8 +3724,8 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
         max[1] = sw_clamp_int(RLSW.scMax[1], 0, RLSW.colorBuffer->height);
     }
 
-    bool insideX = (v->coord[0] - RLSW.pointRadius < max[0]) && (v->coord[0] + RLSW.pointRadius > min[0]);
-    bool insideY = (v->coord[1] - RLSW.pointRadius < max[1]) && (v->coord[1] + RLSW.pointRadius > min[1]);
+    bool insideX = (v->position[0] - RLSW.pointRadius < max[0]) && (v->position[0] + RLSW.pointRadius > min[0]);
+    bool insideY = (v->position[1] - RLSW.pointRadius < max[1]) && (v->position[1] + RLSW.pointRadius > min[1]);
 
     return (insideX && insideY);
 }
@@ -3841,18 +3834,19 @@ static void sw_immediate_push_vertex(const float position[4])
         return;
     }
 
-    // Copy the attributes in the current vertex
+    // Gets the current vertex
     sw_vertex_t *vertex = &RLSW.primitive.buffer[RLSW.primitive.vertexCount++];
-    for (int i = 0; i < 4; i++) vertex->position[i] = position[i];
-    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.primitive.color[i];
-    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.primitive.texcoord[i];
 
     // Calculate clip coordinates
-    const float *m = RLSW.matMVP, *v = vertex->position;
-    vertex->coord[0] = m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3];
-    vertex->coord[1] = m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3];
-    vertex->coord[2] = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3];
-    vertex->coord[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3];
+    const float *m = RLSW.matMVP;
+    vertex->position[0] = m[0]*position[0] + m[4]*position[1] + m[8]*position[2] + m[12]*position[3];
+    vertex->position[1] = m[1]*position[0] + m[5]*position[1] + m[9]*position[2] + m[13]*position[3];
+    vertex->position[2] = m[2]*position[0] + m[6]*position[1] + m[10]*position[2] + m[14]*position[3];
+    vertex->position[3] = m[3]*position[0] + m[7]*position[1] + m[11]*position[2] + m[15]*position[3];
+
+    // Copy the attributes in the current vertex
+    for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.primitive.color[i];
+    for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.primitive.texcoord[i];
 
     // Immediate rendering of the primitive if the required number is reached
     if (RLSW.primitive.vertexCount == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
@@ -4377,7 +4371,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackProjection[--RLSW.stackProjectionCounter];
+            RLSW.currentMatrix = &RLSW.stackProjection[(--RLSW.stackProjectionCounter) - 1];
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         } break;
         case SW_MODELVIEW:
@@ -4388,7 +4382,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackModelview[--RLSW.stackModelviewCounter];
+            RLSW.currentMatrix = &RLSW.stackModelview[(--RLSW.stackModelviewCounter) - 1];
             RLSW.isDirtyMVP = true; //< The MVP is considered to have been changed
         } break;
         case SW_TEXTURE:
@@ -4399,7 +4393,7 @@ void swPopMatrix(void)
                 return;
             }
 
-            RLSW.currentMatrix = &RLSW.stackTexture[--RLSW.stackTextureCounter];
+            RLSW.currentMatrix = &RLSW.stackTexture[(--RLSW.stackTextureCounter) - 1];
         } break;
         default: break;
     }
@@ -5257,27 +5251,27 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 #define SW_RASTER_TRIANGLE      SW_CONCATX(sw_raster_triangle_, RLSW_TEMPLATE_RASTER_TRIANGLE)
 
 #ifdef SW_ENABLE_TEXTURE
-    #define SW_GET_GRAD         sw_get_vertex_grad_CTH
-    #define SW_ADD_GRAD         sw_add_vertex_grad_CTH
-    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_CTH
+    #define SW_GET_GRAD         sw_get_vertex_grad_PCT
+    #define SW_ADD_GRAD         sw_add_vertex_grad_PCT
+    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_PCT
 #else
-    #define SW_GET_GRAD         sw_get_vertex_grad_CH
-    #define SW_ADD_GRAD         sw_add_vertex_grad_CH
-    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_CH
+    #define SW_GET_GRAD         sw_get_vertex_grad_PC
+    #define SW_ADD_GRAD         sw_add_vertex_grad_PC
+    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_PC
 #endif
 
 static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
 {
     // Gets the start/end coordinates and skip empty lines 
-    int xStart = (int)start->coord[0];
-    int xEnd = (int)end->coord[0];
+    int xStart = (int)start->position[0];
+    int xEnd = (int)end->position[0];
     if (xStart == xEnd) return;
 
     // Compute the inverse horizontal distance along the X axis
-    float dxRcp = 1.0f/(end->coord[0] - start->coord[0]);
+    float dxRcp = 1.0f/(end->position[0] - start->position[0]);
 
     // Compute the interpolation steps along the X axis
-    float dWdx = (end->coord[3] - start->coord[3])*dxRcp;
+    float dWdx = (end->position[3] - start->position[3])*dxRcp;
     float dCdx[4] = {
         (end->color[0] - start->color[0])*dxRcp,
         (end->color[1] - start->color[1])*dxRcp,
@@ -5285,7 +5279,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         (end->color[3] - start->color[3])*dxRcp
     };
 #ifdef SW_ENABLE_DEPTH_TEST
-    float dZdx = (end->coord[2] - start->coord[2])*dxRcp;
+    float dZdx = (end->position[2] - start->position[2])*dxRcp;
 #endif
 #ifdef SW_ENABLE_TEXTURE
     float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
@@ -5293,10 +5287,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #endif
 
     // Compute the subpixel distance to traverse before the first pixel
-    float xSubstep = 1.0f - sw_fract(start->coord[0]);
+    float xSubstep = 1.0f - sw_fract(start->position[0]);
 
     // Initializing the interpolation starting values
-    float w = start->coord[3] + dWdx*xSubstep;
+    float w = start->position[3] + dWdx*xSubstep;
     float color[4] = {
         start->color[0] + dCdx[0]*xSubstep,
         start->color[1] + dCdx[1]*xSubstep,
@@ -5304,7 +5298,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         start->color[3] + dCdx[3]*xSubstep
     };
 #ifdef SW_ENABLE_DEPTH_TEST
-    float z = start->coord[2] + dZdx*xSubstep;
+    float z = start->position[2] + dZdx*xSubstep;
 #endif
 #ifdef SW_ENABLE_TEXTURE
     float u = start->texcoord[0] + dUdx*xSubstep;
@@ -5312,7 +5306,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
-    int y = (int)start->coord[1];
+    int y = (int)start->position[1];
     int baseOffset = y*RLSW.colorBuffer->width + xStart;
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
 #ifdef SW_ENABLE_DEPTH_TEST
@@ -5444,14 +5438,14 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, const sw_vertex_t *v2)
 {
     // Swap vertices by increasing Y
-    if (v0->coord[1] > v1->coord[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
-    if (v1->coord[1] > v2->coord[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; }
-    if (v0->coord[1] > v1->coord[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
+    if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
+    if (v1->position[1] > v2->position[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; }
+    if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
 
     // Extracting coordinates from the sorted vertices
-    float x0 = v0->coord[0], y0 = v0->coord[1];
-    float x1 = v1->coord[0], y1 = v1->coord[1];
-    float x2 = v2->coord[0], y2 = v2->coord[1];
+    float x0 = v0->position[0], y0 = v0->position[1];
+    float x1 = v1->position[0], y1 = v1->position[1];
+    float x2 = v2->position[0], y2 = v2->position[1];
 
     // Compute height differences
     float h02 = y2 - y0;
@@ -5488,8 +5482,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     // Scanline for the upper part of the triangle
     for (int y = yTop; y < yMid; y++)
     {
-        lVert.coord[1] = rVert.coord[1] = y;
-        bool longSideIsLeft = (lVert.coord[0] < rVert.coord[0]);
+        lVert.position[1] = rVert.position[1] = y;
+        bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
         SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
@@ -5504,8 +5498,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     // Scanline for the lower part of the triangle
     for (int y = yMid; y < yBot; y++)
     {
-        lVert.coord[1] = rVert.coord[1] = y;
-        bool longSideIsLeft = (lVert.coord[0] < rVert.coord[0]);
+        lVert.position[1] = rVert.position[1] = y;
+        bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
         SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
@@ -5545,18 +5539,18 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     const sw_vertex_t *tl = verts[0], *tr = verts[0], *br = verts[0], *bl = verts[0];
     for (int i = 1; i < 4; i++)
     {
-        float sum  = verts[i]->coord[0] + verts[i]->coord[1];
-        float diff = verts[i]->coord[0] - verts[i]->coord[1];
-        if (sum  < tl->coord[0] + tl->coord[1]) tl = verts[i];
-        if (diff > tr->coord[0] - tr->coord[1]) tr = verts[i];
-        if (sum  > br->coord[0] + br->coord[1]) br = verts[i];
-        if (diff < bl->coord[0] - bl->coord[1]) bl = verts[i];
+        float sum  = verts[i]->position[0] + verts[i]->position[1];
+        float diff = verts[i]->position[0] - verts[i]->position[1];
+        if (sum  < tl->position[0] + tl->position[1]) tl = verts[i];
+        if (diff > tr->position[0] - tr->position[1]) tr = verts[i];
+        if (sum  > br->position[0] + br->position[1]) br = verts[i];
+        if (diff < bl->position[0] - bl->position[1]) bl = verts[i];
     }
 
-    int xMin = (int)tl->coord[0];
-    int yMin = (int)tl->coord[1];
-    int xMax = (int)br->coord[0];
-    int yMax = (int)br->coord[1];
+    int xMin = (int)tl->position[0];
+    int yMin = (int)tl->position[1];
+    int xMax = (int)br->position[0];
+    int yMax = (int)br->position[1];
 
     float w = (float)(xMax - xMin);
     float h = (float)(yMax - yMin);
@@ -5566,8 +5560,8 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float hRcp = 1.0f/h;
 
     // Subpixel corrections
-    float xSubstep = 1.0f - sw_fract(tl->coord[0]);
-    float ySubstep = 1.0f - sw_fract(tl->coord[1]);
+    float xSubstep = 1.0f - sw_fract(tl->position[0]);
+    float ySubstep = 1.0f - sw_fract(tl->position[1]);
 
     // Gradients along X (tl->tr) and Y (tl->bl)
     float dCdx[4] = {
@@ -5584,9 +5578,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     };
 
 #ifdef SW_ENABLE_DEPTH_TEST
-    float dZdx = (tr->coord[2] - tl->coord[2])*wRcp;
-    float dZdy = (bl->coord[2] - tl->coord[2])*hRcp;
-    float zRow = tl->coord[2] + dZdx*xSubstep + dZdy*ySubstep;
+    float dZdx = (tr->position[2] - tl->position[2])*wRcp;
+    float dZdy = (bl->position[2] - tl->position[2])*hRcp;
+    float zRow = tl->position[2] + dZdx*xSubstep + dZdy*ySubstep;
 #endif
 
 #ifdef SW_ENABLE_TEXTURE
@@ -5722,10 +5716,10 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 {
     // Convert from pixel-center convention (n+0.5) to pixel-origin convention (n)
-    float x0 = v0->coord[0] - 0.5f;
-    float y0 = v0->coord[1] - 0.5f;
-    float x1 = v1->coord[0] - 0.5f;
-    float y1 = v1->coord[1] - 0.5f;
+    float x0 = v0->position[0] - 0.5f;
+    float y0 = v0->position[1] - 0.5f;
+    float x1 = v1->position[0] - 0.5f;
+    float y1 = v1->position[1] - 0.5f;
 
     float dx = x1 - x0;
     float dy = y1 - y0;
@@ -5750,7 +5744,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     float yInc = dy/steps;
     float stepRcp = 1.0f/steps;
 #ifdef SW_ENABLE_DEPTH_TEST
-    float zInc = (v1->coord[2] - v0->coord[2])*stepRcp;
+    float zInc = (v1->position[2] - v0->position[2])*stepRcp;
 #endif
     float rInc = (v1->color[0] - v0->color[0])*stepRcp;
     float gInc = (v1->color[1] - v0->color[1])*stepRcp;
@@ -5761,7 +5755,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     float x = x0 + xInc*substep;
     float y = y0 + yInc*substep;
 #ifdef SW_ENABLE_DEPTH_TEST
-    float z = v0->coord[2] + zInc*substep;
+    float z = v0->position[2] + zInc*substep;
 #endif
     float r = v0->color[0] + rInc*substep;
     float g = v0->color[1] + gInc*substep;
@@ -5833,10 +5827,10 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
 {
     sw_vertex_t tv0, tv1;
 
-    int x0 = (int)v0->coord[0];
-    int y0 = (int)v0->coord[1];
-    int x1 = (int)v1->coord[0];
-    int y1 = (int)v1->coord[1];
+    int x0 = (int)v0->position[0];
+    int y0 = (int)v0->position[1];
+    int x1 = (int)v1->position[0];
+    int y1 = (int)v1->position[1];
 
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -5850,12 +5844,12 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
         for (int i = 1; i <= wy; i++)
         {
             tv0 = *v0, tv1 = *v1;
-            tv0.coord[1] -= i;
-            tv1.coord[1] -= i;
+            tv0.position[1] -= i;
+            tv1.position[1] -= i;
             SW_RASTER_LINE(&tv0, &tv1);
             tv0 = *v0, tv1 = *v1;
-            tv0.coord[1] += i;
-            tv1.coord[1] += i;
+            tv0.position[1] += i;
+            tv1.position[1] += i;
             SW_RASTER_LINE(&tv0, &tv1);
         }
     }
@@ -5866,12 +5860,12 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
         for (int i = 1; i <= wx; i++)
         {
             tv0 = *v0, tv1 = *v1;
-            tv0.coord[0] -= i;
-            tv1.coord[0] -= i;
+            tv0.position[0] -= i;
+            tv1.position[0] -= i;
             SW_RASTER_LINE(&tv0, &tv1);
             tv0 = *v0, tv1 = *v1;
-            tv0.coord[0] += i;
-            tv1.coord[0] += i;
+            tv0.position[0] += i;
+            tv1.position[0] += i;
             SW_RASTER_LINE(&tv0, &tv1);
         }
     }
@@ -5927,9 +5921,9 @@ static void SW_RASTER_POINT_PIXEL(int x, int y, float z, const float color[4])
 
 static void SW_RASTER_POINT(const sw_vertex_t *v)
 {
-    int cx = v->coord[0];
-    int cy = v->coord[1];
-    float cz = v->coord[2];
+    int cx = v->position[0];
+    int cy = v->position[1];
+    float cz = v->position[2];
     int radius = RLSW.pointRadius;
     const float *color = v->color;
 
