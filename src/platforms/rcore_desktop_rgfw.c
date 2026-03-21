@@ -1458,6 +1458,14 @@ void PollInputEvents(void)
                     CORE.Input.Mouse.currentPosition.y = (float)rgfw_event.mouse.y;
                 }
 
+#if defined(__EMSCRIPTEN__)
+                double canvasWidth = 0.0;
+                double canvasHeight = 0.0;
+                emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
+                CORE.Input.Mouse.currentPosition.x *= ((float)GetScreenWidth() / (float)canvasWidth);
+                CORE.Input.Mouse.currentPosition.y *= ((float)GetScreenHeight() / (float)canvasHeight);
+#endif
+
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
             } break;
