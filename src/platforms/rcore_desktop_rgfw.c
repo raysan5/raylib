@@ -1461,7 +1461,7 @@ void PollInputEvents(void)
 #if defined(__EMSCRIPTEN__)
                 double canvasWidth = 0.0;
                 double canvasHeight = 0.0;
-                emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
+                emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
                 CORE.Input.Mouse.currentPosition.x *= ((float)GetScreenWidth() / (float)canvasWidth);
                 CORE.Input.Mouse.currentPosition.y *= ((float)GetScreenHeight() / (float)canvasHeight);
 #endif
