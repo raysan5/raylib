@@ -1447,24 +1447,38 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
+                float event_x = 0.0f, event_y = 0.0f;
                 if (RGFW_window_isCaptured(platform.window))
                 {
-                    CORE.Input.Mouse.currentPosition.x += (float)rgfw_event.mouse.vecX;
-                    CORE.Input.Mouse.currentPosition.y += (float)rgfw_event.mouse.vecY;
+                    event_x = (float)rgfw_event.mouse.vecX;
+                    event_y = (float)rgfw_event.mouse.vecY;
                 }
                 else
                 {
-                    CORE.Input.Mouse.currentPosition.x = (float)rgfw_event.mouse.x;
-                    CORE.Input.Mouse.currentPosition.y = (float)rgfw_event.mouse.y;
+                    event_x = (float)rgfw_event.mouse.x;
+                    event_y = (float)rgfw_event.mouse.y;
                 }
 
 #if defined(__EMSCRIPTEN__)
-                double canvasWidth = 0.0;
-                double canvasHeight = 0.0;
-                emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-                CORE.Input.Mouse.currentPosition.x *= ((float)GetScreenWidth() / (float)canvasWidth);
-                CORE.Input.Mouse.currentPosition.y *= ((float)GetScreenHeight() / (float)canvasHeight);
+                {
+                    double canvasWidth = 0.0;
+                    double canvasHeight = 0.0;
+                    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+                    event_x *= ((float)GetScreenWidth() / (float)canvasWidth);
+                    event_y *= ((float)GetScreenHeight() / (float)canvasHeight);
+                }
 #endif
+
+                if (RGFW_window_isCaptured(platform.window))
+                {
+                    CORE.Input.Mouse.currentPosition.x += event_x;
+                    CORE.Input.Mouse.currentPosition.y += event_y;
+                }
+                else
+                {
+                    CORE.Input.Mouse.currentPosition.x = event_x;
+                    CORE.Input.Mouse.currentPosition.y = event_y;
+                }
 
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
