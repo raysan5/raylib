@@ -65,7 +65,7 @@
 #include <xf86drm.h>        // Direct Rendering Manager user-level library interface
 #include <xf86drmMode.h>    // Direct Rendering Manager mode setting (KMS) interface
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     #include <gbm.h>            // Generic Buffer Management (native platform for EGL on DRM)
     #include "EGL/egl.h"        // Native platform windowing system interface
     #include "EGL/eglext.h"     // EGL extensions
@@ -111,7 +111,7 @@ typedef struct {
     int modeIndex;                      // Index of the used mode of connector->modes
     uint32_t prevFB;                    // Previous DRM framebufer (during frame swapping)
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     struct gbm_device *gbmDevice;       // GBM device
     struct gbm_surface *gbmSurface;     // GBM surface
     struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
@@ -796,7 +796,7 @@ void SwapScreenBuffer()
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Hardware rendering buffer swap with EGL
     eglSwapBuffers(platform.device, platform.surface);
 
@@ -1140,7 +1140,7 @@ int InitPlatform(void)
     platform.crtc = NULL;
     platform.prevFB = 0;
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     platform.gbmDevice = NULL;
     platform.gbmSurface = NULL;
     platform.prevBO = NULL;
@@ -1224,7 +1224,7 @@ int InitPlatform(void)
         // WARNING: Accept CONNECTED, UNKNOWN and even those without encoder_id connectors for software mode
         if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->count_modes > 0))
         {
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
             // For hardware rendering, an encoder_id is needed
             if (con->encoder_id)
             {
@@ -1256,7 +1256,7 @@ int InitPlatform(void)
         return -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     drmModeEncoder *enc = drmModeGetEncoder(platform.fd, platform.connector->encoder_id);
     if (!enc)
     {
@@ -1367,7 +1367,7 @@ int InitPlatform(void)
     drmModeFreeResources(res);
     res = NULL;
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Hardware rendering initialization with EGL
     platform.gbmDevice = gbm_create_device(platform.fd);
     if (!platform.gbmDevice)
@@ -1657,7 +1657,7 @@ void ClosePlatform(void)
         platform.prevFB = 0;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     if (platform.prevBO)
     {
         gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
@@ -1697,7 +1697,7 @@ void ClosePlatform(void)
         platform.fd = -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Close surface, context and display
     if (platform.device != EGL_NO_DISPLAY)
     {

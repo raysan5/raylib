@@ -1504,11 +1504,11 @@ int main(int argc, char *argv[])
             //ChangeDirectory(exBasePath);
             //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
             //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
-            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.9.2-nuget_64bit");
-            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\20.18.0_64bit\\bin");
+            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.13.3_64bit");
+            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\22.16.0_64bit\\bin");
             //_putenv("PATH=%PATH%;$(MAKE_PATH);$(EMSDK_PATH);$(NODE_PATH);$(PYTHON_PATH)");
 
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.9.2-nuget_64bit;C:\\raylib\\emsdk\\node\\20.18.0_64bit\\bin");
+            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.13.3_64bit;C:\\raylib\\emsdk\\node\\22.16.0_64bit\\bin");
 #endif
 
             for (int i = 0; i < exBuildListCount; i++)

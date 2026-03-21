@@ -168,8 +168,8 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
 		EMSDK_PATH         ?= C:/raylib/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
-		NODE_PATH           = $(EMSDK_PATH)/node/20.18.0_64bit/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.13.3_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/22.16.0_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
     endif
 endif
@@ -596,6 +596,7 @@ TEXTURES = \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
+    textures/textures_clipboard_image \
     textures/textures_fog_of_war \
     textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
@@ -608,6 +609,7 @@ TEXTURES = \
     textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_logo_raylib \
+    textures/textures_magnifying_glass \
     textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
@@ -677,6 +679,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_cel_shading \
     shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
@@ -718,6 +721,7 @@ AUDIO = \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
+    audio/audio_stream_callback \
     audio/audio_stream_effects
 
 # Default target entry
@@ -1023,6 +1027,9 @@ textures/textures_bunnymark: textures/textures_bunnymark.c
 textures/textures_cellular_automata: textures/textures_cellular_automata.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+textures/textures_clipboard_image: textures/textures_clipboard_image.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 textures/textures_fog_of_war: textures/textures_fog_of_war.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1070,6 +1077,11 @@ textures/textures_image_text: textures/textures_image_text.c
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
+
+textures/textures_magnifying_glass: textures/textures_magnifying_glass.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file textures/resources/raybunny.png@resources/raybunny.png \
+    --preload-file textures/resources/parrots.png@resources/parrots.png
 
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
@@ -1365,6 +1377,14 @@ shaders/shaders_basic_pbr: shaders/shaders_basic_pbr.c
     --preload-file shaders/resources/road_mra.png@resources/road_mra.png \
     --preload-file shaders/resources/road_n.png@resources/road_n.png
 
+shaders/shaders_cel_shading: shaders/shaders_cel_shading.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/models/old_car_new.glb@resources/models/old_car_new.glb \
+    --preload-file shaders/resources/shaders/glsl100/cel.vs@resources/shaders/glsl100/cel.vs \
+    --preload-file shaders/resources/shaders/glsl100/cel.fs@resources/shaders/glsl100/cel.fs \
+    --preload-file shaders/resources/shaders/glsl100/outline_hull.vs@resources/shaders/glsl100/outline_hull.vs \
+    --preload-file shaders/resources/shaders/glsl100/outline_hull.fs@resources/shaders/glsl100/outline_hull.fs
+
 shaders/shaders_color_correction: shaders/shaders_color_correction.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/parrots.png@resources/parrots.png \
@@ -1550,7 +1570,8 @@ audio/audio_mixed_processor: audio/audio_mixed_processor.c
     --preload-file audio/resources/coin.wav@resources/coin.wav
 
 audio/audio_module_playing: audio/audio_module_playing.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file audio/resources/mini1111.xm@resources/mini1111.xm
 
 audio/audio_music_stream: audio/audio_music_stream.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1576,6 +1597,9 @@ audio/audio_spectrum_visualizer: audio/audio_spectrum_visualizer.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/shaders/glsl100/fft.fs@resources/shaders/glsl100/fft.fs \
     --preload-file audio/resources/country.mp3@resources/country.mp3
+
+audio/audio_stream_callback: audio/audio_stream_callback.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 audio/audio_stream_effects: audio/audio_stream_effects.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

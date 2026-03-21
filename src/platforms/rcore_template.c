@@ -341,7 +341,6 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = 0.0;
-
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
     unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;

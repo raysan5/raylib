@@ -9,7 +9,7 @@
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3)
 *
-*   Example originally created with raylib 5.6, last time updated with raylib 5.6
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by Jordi Santonja (@JordSant)
 *   Based on previous work by Josh Colclough (@joshcol9232)

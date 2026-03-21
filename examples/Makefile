@@ -95,7 +95,7 @@ USE_EXTERNAL_GLFW     ?= FALSE
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
-# Enable support for X11 by default on Linux when using GLFW
+# Enable support for X11 by default on Linux when using RGFW
 # NOTE: Wayland is disabled by default, only enable if you are sure
 RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 RGFW_LINUX_ENABLE_X11      ?= TRUE
@@ -169,8 +169,8 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
 		EMSDK_PATH         ?= C:/raylib/emsdk
 		EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
 		CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
-		PYTHON_PATH         = $(EMSDK_PATH)/python/3.9.2-nuget_64bit
-		NODE_PATH           = $(EMSDK_PATH)/node/20.18.0_64bit/bin
+		PYTHON_PATH         = $(EMSDK_PATH)/python/3.13.3_64bit
+		NODE_PATH           = $(EMSDK_PATH)/node/22.16.0_64bit/bin
 		export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
     endif
 endif
@@ -622,6 +622,7 @@ TEXTURES = \
     textures/textures_blend_modes \
     textures/textures_bunnymark \
     textures/textures_cellular_automata \
+    textures/textures_clipboard_image \
     textures/textures_fog_of_war \
     textures/textures_framebuffer_rendering \
     textures/textures_gif_player \
@@ -634,6 +635,7 @@ TEXTURES = \
     textures/textures_image_rotate \
     textures/textures_image_text \
     textures/textures_logo_raylib \
+    textures/textures_magnifying_glass \
     textures/textures_mouse_painting \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
@@ -703,6 +705,7 @@ SHADERS = \
     shaders/shaders_ascii_rendering \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
+    shaders/shaders_cel_shading \
     shaders/shaders_color_correction \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
@@ -744,6 +747,7 @@ AUDIO = \
     audio/audio_sound_multi \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
+    audio/audio_stream_callback \
     audio/audio_stream_effects
 #EXAMPLES_LIST_END
 

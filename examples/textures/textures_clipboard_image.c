@@ -34,7 +34,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - clipboard_image");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - clipboard image");
 
     TextureCollection collection[MAX_TEXTURE_COLLECTION] = { 0 };
     int currentCollectionIndex = 0;

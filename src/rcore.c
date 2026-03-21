@@ -682,6 +682,16 @@ void InitWindow(int width, int height, const char *title)
         TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize platform");
         return;
     }
+
+    // Initialize render dimensions for embedded platforms
+    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation 
+    // On embedded platforms with no window manager, InitPlatform() doesn't set these values, so they should be initialized
+    // here from screen dimensions (which are set from the InitWindow parameters)
+    if ((CORE.Window.render.width == 0) || (CORE.Window.render.height == 0))
+    {
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+    }
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)

@@ -71,7 +71,7 @@
 
 #include <malloc.h>          // Required for alloca()
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     #include <GL/gl.h>
 #endif
 
@@ -1218,7 +1218,7 @@ void SwapScreenBuffer(void)
 {
     if (!platform.hdc) abort();
 
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Update framebuffer
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
 
@@ -1238,9 +1238,12 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
+    double time = 0.0;
     LARGE_INTEGER now = { 0 };
     QueryPerformanceCounter(&now);
-    return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+    time = (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)
@@ -1600,7 +1603,7 @@ int InitPlatform(void)
     // NOTE: Windows GDI object that represents a drawing surface
     platform.hdc = GetDC(platform.hwnd);
 
-    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
     {
         // Initialize software framebuffer
         BITMAPINFO bmi = { 0 };
@@ -1646,12 +1649,12 @@ int InitPlatform(void)
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
     {
         TRACELOG(LOG_INFO, "GL: OpenGL device information:");
-        TRACELOG(LOG_INFO, "    > Vendor:   %s", "raylib");
-        TRACELOG(LOG_INFO, "    > Renderer: %s", "rlsw - OpenGL 1.1 Software Renderer");
-        TRACELOG(LOG_INFO, "    > Version:  %s", "1.0");
+        TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
+        TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
+        TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
     }
 
@@ -1716,7 +1719,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DESTROY:
         {
             // Clean up for window destruction
-            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
             {
                 if (platform.hdcmem)
                 {
@@ -1867,7 +1870,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+            // WARNING: This call fails for Software-Renderer backend
+            //HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
         } break;
         //case WM_MOVE
         case WM_WINDOWPOSCHANGED:
@@ -1932,7 +1936,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_PAINT:
         {
-            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
             {
                 PAINTSTRUCT ps = { 0 };
                 HDC hdc = BeginPaint(hwnd, &ps);

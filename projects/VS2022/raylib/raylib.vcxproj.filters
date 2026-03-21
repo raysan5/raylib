@@ -102,7 +102,13 @@
     <ClInclude Include="..\..\..\src\external\stb_vorbis.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\utils.h">
+    <ClInclude Include="..\..\..\src\external\rlsw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\external\rltexgpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\external\rprand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

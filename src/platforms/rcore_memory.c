@@ -486,9 +486,9 @@ void PollInputEvents(void)
 int InitPlatform(void)
 {
     // Memory framebuffer can only work with software renderer
-    if (rlGetVersion() != RL_OPENGL_11_SOFTWARE)
+    if (rlGetVersion() != RL_OPENGL_SOFTWARE)
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Memory platform requires software renderer (GRAPHICS_API_OPENGL_11_SOFTWARE)");
+        TRACELOG(LOG_WARNING, "DISPLAY: Memory platform requires software renderer (GRAPHICS_API_OPENGL_SOFTWARE)");
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
         return -1;
     }

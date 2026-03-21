@@ -6,133 +6,53 @@
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
-*   Example created by Dan Hoang (@dan-hoang) and reviewed by
+*   Example created by Dan Hoang (@dan-hoang) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   NOTE: Example sends a wave to the audio device,
+*     user gets the choice of four waves: sine, square, triangle, and sawtooth
+*     A stream is set up to play to the audio device; stream is hooked to a callback that
+*     generates a wave, that is determined by user choice
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2026
+*   Copyright (c) 2026 Dan Hoang (@dan-hoang)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include <stdlib.h>
 #include <math.h>
 
 #define BUFFER_SIZE 4096
 #define SAMPLE_RATE 44100
 
-// This example sends a wave to the audio device
-// The user gets the choice of four waves: sine, square, triangle, and sawtooth
-// A stream is set up to play to the audio device
-// The stream is hooked to a callback that generates a wave
-// The callback used is determined by user choice
-typedef enum
-{
+// Wave type
+typedef enum {
     SINE,
     SQUARE,
     TRIANGLE,
     SAWTOOTH
 } WaveType;
 
-int waveFrequency = 440;
-int newWaveFrequency = 440;
-int waveIndex = 0;
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
+static void SineCallback(void *framesOut, unsigned int frameCount);
+static void SquareCallback(void *framesOut, unsigned int frameCount);
+static void TriangleCallback(void *framesOut, unsigned int frameCount);
+static void SawtoothCallback(void *framesOut, unsigned int frameCount);
 
-// Buffer for keeping the last second of uploaded audio, part of which will be drawn on the screen
-float buffer[SAMPLE_RATE] = {};
+static int waveFrequency = 440;
+static int newWaveFrequency = 440;
+static int waveIndex = 0;
 
-void SineCallback(void *framesOut, unsigned int frameCount)
-{
-    int wavelength = SAMPLE_RATE/waveFrequency;
-
-    // Synthesize the sine wave
-    for (int i = 0; i < frameCount; i++)
-    {
-        ((float *)framesOut)[i] = sin(2*PI*waveIndex/wavelength);
-
-        waveIndex++;
-
-        if (waveIndex >= wavelength)
-        {
-            waveFrequency = newWaveFrequency;
-            waveIndex = 0;
-        }
-    }
-
-    // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
-}
-
-void SquareCallback(void *framesOut, unsigned int frameCount)
-{
-    int wavelength = SAMPLE_RATE/waveFrequency;
-
-    // Synthesize the square wave
-    for (int i = 0; i < frameCount; i++)
-    {
-        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? 1 : -1;
-        waveIndex++;
-
-        if (waveIndex >= wavelength)
-        {
-            waveFrequency = newWaveFrequency;
-            waveIndex = 0;
-        }
-    }
-
-    // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
-}
-
-void TriangleCallback(void *framesOut, unsigned int frameCount)
-{
-    int wavelength = SAMPLE_RATE/waveFrequency;
-
-    // Synthesize the triangle wave
-    for (int i = 0; i < frameCount; i++)
-    {
-        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? (-1 + 2.0f*waveIndex/(wavelength/2)) : (1 - 2.0f*(waveIndex - wavelength/2)/(wavelength/2));
-        waveIndex++;
-
-        if (waveIndex >= wavelength)
-        {
-            waveFrequency = newWaveFrequency;
-            waveIndex = 0;
-        }
-    }
-
-    // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
-}
-
-void SawtoothCallback(void *framesOut, unsigned int frameCount)
-{
-    int wavelength = SAMPLE_RATE/waveFrequency;
-
-    // Synthesize the sawtooth wave
-    for (int i = 0; i < frameCount; i++)
-    {
-        ((float *)framesOut)[i] = -1 + 2.0f*waveIndex/wavelength;
-        waveIndex++;
-
-        if (waveIndex >= wavelength)
-        {
-            waveFrequency = newWaveFrequency;
-            waveIndex = 0;
-        }
-    }
-
-    // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
-}
-
-AudioCallback waveCallbacks[] = { SineCallback, SquareCallback, TriangleCallback, SawtoothCallback };
-char *waveTypesAsString[] = { "sine", "square", "triangle", "sawtooth" };
+// Buffer to keep the last second of uploaded audio,
+// part of which will be drawn on the screen
+static float buffer[SAMPLE_RATE] = { 0 };
+static AudioCallback waveCallbacks[] = { SineCallback, SquareCallback, TriangleCallback, SawtoothCallback };
+static char *waveTypesAsString[] = { "sine", "square", "triangle", "sawtooth" };
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -167,7 +87,6 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-
         if (IsKeyDown(KEY_UP))
         {
             newWaveFrequency += 10;
@@ -199,7 +118,6 @@ int main(void)
 
             SetAudioStreamCallback(stream, waveCallbacks[waveType]);
         }
-
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -226,11 +144,103 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadAudioStream(stream);   // Close raw audio stream and delete buffers from RAM
+    UnloadAudioStream(stream);  // Close raw audio stream and delete buffers from RAM
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
+static void SineCallback(void *framesOut, unsigned int frameCount)
+{
+    int wavelength = SAMPLE_RATE/waveFrequency;
+
+    // Synthesize the sine wave
+    for (int i = 0; i < frameCount; i++)
+    {
+        ((float *)framesOut)[i] = sin(2*PI*waveIndex/wavelength);
+
+        waveIndex++;
+
+        if (waveIndex >= wavelength)
+        {
+            waveFrequency = newWaveFrequency;
+            waveIndex = 0;
+        }
+    }
+
+    // Save the synthesized samples for later drawing
+    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+}
+
+static void SquareCallback(void *framesOut, unsigned int frameCount)
+{
+    int wavelength = SAMPLE_RATE/waveFrequency;
+
+    // Synthesize the square wave
+    for (int i = 0; i < frameCount; i++)
+    {
+        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? 1 : -1;
+        waveIndex++;
+
+        if (waveIndex >= wavelength)
+        {
+            waveFrequency = newWaveFrequency;
+            waveIndex = 0;
+        }
+    }
+
+    // Save the synthesized samples for later drawing
+    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+}
+
+static void TriangleCallback(void *framesOut, unsigned int frameCount)
+{
+    int wavelength = SAMPLE_RATE/waveFrequency;
+
+    // Synthesize the triangle wave
+    for (int i = 0; i < frameCount; i++)
+    {
+        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? (-1 + 2.0f*waveIndex/(wavelength/2)) : (1 - 2.0f*(waveIndex - wavelength/2)/(wavelength/2));
+        waveIndex++;
+
+        if (waveIndex >= wavelength)
+        {
+            waveFrequency = newWaveFrequency;
+            waveIndex = 0;
+        }
+    }
+
+    // Save the synthesized samples for later drawing
+    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+}
+
+static void SawtoothCallback(void *framesOut, unsigned int frameCount)
+{
+    int wavelength = SAMPLE_RATE/waveFrequency;
+
+    // Synthesize the sawtooth wave
+    for (int i = 0; i < frameCount; i++)
+    {
+        ((float *)framesOut)[i] = -1 + 2.0f*waveIndex/wavelength;
+        waveIndex++;
+
+        if (waveIndex >= wavelength)
+        {
+            waveFrequency = newWaveFrequency;
+            waveIndex = 0;
+        }
+    }
+
+    // Save the synthesized samples for later drawing
+    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }

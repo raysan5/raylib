@@ -122,7 +122,7 @@ USE_EXTERNAL_GLFW     ?= FALSE
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
-# Enable support for X11 by default on Linux when using GLFW
+# Enable support for X11 by default on Linux when using RGFW
 # NOTE: Wayland is disabled by default, only enable if you are sure
 RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 RGFW_LINUX_ENABLE_X11      ?= TRUE
@@ -198,8 +198,8 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
         EMSDK_PATH         ?= C:/raylib/emsdk
         EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
         CLANG_PATH         := $(EMSDK_PATH)/upstream/bin
-        PYTHON_PATH        := $(EMSDK_PATH)/python/3.9.2-nuget_64bit
-        NODE_PATH          := $(EMSDK_PATH)/node/20.18.0_64bit/bin
+        PYTHON_PATH        := $(EMSDK_PATH)/python/3.13.3_64bit
+        NODE_PATH          := $(EMSDK_PATH)/node/22.16.0_64bit/bin
         export PATH        := $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:/raylib/MinGW/bin;$(PATH)
     endif
 endif
@@ -246,7 +246,7 @@ endif
 # NOTE: By default use OpenGL 3.3 on desktop platforms
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -257,7 +257,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -265,7 +265,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -273,7 +273,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE # Uncomment to use software rendering
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
@@ -709,7 +709,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     LDLIBS = -lgdi32 -lwinmm -lshcore
-    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
         LDLIBS += -lopengl32
     endif
 endif
@@ -959,6 +959,7 @@ ifeq ($(ROOT),root)
         endif
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
+		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rcamera.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files removed!"
     else

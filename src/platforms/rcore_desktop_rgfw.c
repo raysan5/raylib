@@ -174,7 +174,6 @@ extern "C" {
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
-    double startTime;
     RGFW_window *window;                // Native display device (physical screen connection)
     RGFW_monitor *monitor;
     mg_gamepads minigamepad;
@@ -1096,7 +1095,7 @@ void HideCursor(void)
 // Enables cursor (unlock cursor)
 void EnableCursor(void)
 {
-    RGFW_window_captureMouse(platform.window, false);
+    RGFW_window_captureRawMouse(platform.window, false);
 
     // Set cursor position in the middle
     SetMousePosition(CORE.Window.screen.width/2, CORE.Window.screen.height/2);
@@ -1108,7 +1107,7 @@ void EnableCursor(void)
 // Disables cursor (lock cursor)
 void DisableCursor(void)
 {
-    RGFW_window_captureMouse(platform.window, true);
+    RGFW_window_captureRawMouse(platform.window, true);
     HideCursor();
 
     CORE.Input.Mouse.cursorLocked = true;
@@ -1127,7 +1126,9 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    return get_time_seconds() - platform.startTime;
+    double time = get_time_seconds() - CORE.Time.base;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)
@@ -1331,7 +1332,7 @@ void PollInputEvents(void)
                     CORE.Window.currentFbo.width = CORE.Window.render.width;
                     CORE.Window.currentFbo.height = CORE.Window.render.height;
                 #elif defined(PLATFORM_WEB_RGFW)
-                    return;
+                    // do nothing but prevent other behavior
                 #else
                     SetupViewport(platform.window->w, platform.window->h);
 
@@ -1628,7 +1629,7 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    platform.startTime = get_time_seconds();
+    CORE.Time.base = get_time_seconds();
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
