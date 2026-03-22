@@ -461,6 +461,8 @@ typedef enum {
     RL_PIXELFORMAT_UNCOMPRESSED_R16,               // 16 bpp (1 channel - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16,         // 16*3 bpp (3 channels - half float)
     RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16,      // 16*4 bpp (4 channels - half float)
+    RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8UI,        // 8*4 bpp (4 channels - unsigned integer)
+    RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I,         // 8*4 bpp (4 channels - integer)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGB,            // 4 bpp (no alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA,           // 4 bpp (1 bit alpha)
     RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA,           // 8 bpp
@@ -3522,7 +3524,9 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
                     if ((format == RL_PIXELFORMAT_UNCOMPRESSED_R32) ||
                         (format == RL_PIXELFORMAT_UNCOMPRESSED_R32G32B32A32) ||
                         (format == RL_PIXELFORMAT_UNCOMPRESSED_R16) ||
-                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16)) TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16) ||
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8UI) ||
+                        (format == RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I) ) TRACELOG(RL_LOG_WARNING, "TEXTURES: Cubemap requested format not supported");
                     else glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, mipmapLevel, glInternalFormat, mipSize, mipSize, 0, glFormat, glType, NULL);
                 }
                 else TRACELOG(RL_LOG_WARNING, "TEXTURES: Empty cubemap creation does not support compressed format");
@@ -3653,6 +3657,8 @@ void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned 
         case RL_PIXELFORMAT_UNCOMPRESSED_R16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_R16F; *glFormat = GL_RED; *glType = GL_HALF_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGB16F; *glFormat = GL_RGB; *glType = GL_HALF_FLOAT; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: if (RLGL.ExtSupported.texFloat16) *glInternalFormat = GL_RGBA16F; *glFormat = GL_RGBA; *glType = GL_HALF_FLOAT; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8UI: *glInternalFormat = GL_RGBA8UI; *glFormat = GL_RGBA_INTEGER; *glType = GL_UNSIGNED_BYTE; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I: *glInternalFormat = GL_RGBA8I; *glFormat = GL_RGBA_INTEGER; *glType = GL_BYTE; break;
     #endif
     #if !defined(GRAPHICS_API_OPENGL_11)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB: if (RLGL.ExtSupported.texCompDXT) *glInternalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT; break;
@@ -4962,6 +4968,8 @@ const char *rlGetPixelFormatName(unsigned int format)
         case RL_PIXELFORMAT_UNCOMPRESSED_R16: return "R16"; break;                     // 16 bpp (1 channel - half float)
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: return "R16G16B16"; break;         // 16*3 bpp (3 channels - half float)
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: return "R16G16B16A16"; break;   // 16*4 bpp (4 channels - half float)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8UI: return "R8G8B8A8UI"; break;       // 8*4 bpp (4 channels - unsigned integer)
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I: return "R8G8B8A8I"; break;         // 8*4 bpp (4 channels - integer)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB: return "DXT1_RGB"; break;             // 4 bpp (no alpha)
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA: return "DXT1_RGBA"; break;           // 4 bpp (1 bit alpha)
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA: return "DXT3_RGBA"; break;           // 8 bpp
@@ -5231,6 +5239,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
         case RL_PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
         case RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8UI: bpp = 32; break;
+        case RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I: bpp = 32; break;
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGB:
         case RL_PIXELFORMAT_COMPRESSED_DXT1_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_ETC1_RGB:
@@ -5262,7 +5272,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
 
     // Compute dataSize for uncompressed texture data (no blocks)
     if ((format >= RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
-        (format <= RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
+        (format <= RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8I))
     {
         double bytesPerPixel = (double)bpp/8.0;
         dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
