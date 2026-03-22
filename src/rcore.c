@@ -2274,14 +2274,16 @@ int FileCopy(const char *srcPath, const char *dstPath)
 // NOTE: If dst directories do not exists they are created
 int FileMove(const char *srcPath, const char *dstPath)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(srcPath))
     {
-        FileCopy(srcPath, dstPath);
-        FileRemove(srcPath);
+		if (FileCopy(srcPath, dstPath) == 0)
+            result = FileRemove(srcPath);
+        else
+            TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
     }
-    else result = -1;
+	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
     return result;
 }
