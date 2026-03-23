@@ -17,8 +17,6 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>         // Required for: malloc() and free()
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -39,26 +37,31 @@ int main(void)
     UnloadImage(fudesumiRaw);                                // Unload CPU (RAM) image data
 
     // Generate a checked texture by code
-    int width = 960;
-    int height = 480;
+    int imWidth = 960;
+    int imHeight = 480;
 
     // Dynamic memory allocation to store pixels data (Color type)
-    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+    // WARNING: Using raylib provided MemAlloc() that uses default raylib
+    // internal memory allocator, so this data can be freed using UnloadImage()
+    // that also uses raylib internal memory de-allocator
+    Color *pixels = (Color *)MemAlloc(imWidth*imHeight*sizeof(Color));
 
-    for (int y = 0; y < height; y++)
+    for (int y = 0; y < imHeight; y++)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < imWidth; x++)
         {
-            if (((x/32+y/32)/1)%2 == 0) pixels[y*width + x] = ORANGE;
-            else pixels[y*width + x] = GOLD;
+            if (((x/32+y/32)/1)%2 == 0) pixels[y*imWidth + x] = ORANGE;
+            else pixels[y*imWidth + x] = GOLD;
         }
     }
 
     // Load pixels data into an image structure and create texture
+    // NOTE: We can assign pixels directly to data because Color is R8G8B8A8
+    // data structure defining that pixelformat, format must be set properly
     Image checkedIm = {
-        .data = pixels,             // We can assign pixels directly to data
-        .width = width,
-        .height = height,
+        .data = pixels,
+        .width = imWidth,
+        .height = imHeight,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
