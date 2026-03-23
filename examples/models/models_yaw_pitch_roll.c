@@ -41,6 +41,9 @@ int main(void)
 
     Model model = LoadModel("resources/models/obj/plane.obj");                  // Load model
     Texture2D texture = LoadTexture("resources/models/obj/plane_diffuse.png");  // Load model texture
+    
+    SetTextureWrap(texture, TEXTURE_WRAP_REPEAT);       // Force Repeat to avoid issue on Web version
+
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;            // Set map diffuse texture
 
     float pitch = 0.0f;
