@@ -1669,7 +1669,7 @@ int main(int argc, char *argv[])
                 FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
 
                 // STEP 3: Run example with required arguments
-                // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
+                // NOTE: Not easy to retrieve process return value from system(), it's platform dependent
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
 
     #if defined(_WIN32)

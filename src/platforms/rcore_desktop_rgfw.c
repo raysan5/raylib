@@ -1447,28 +1447,26 @@ void PollInputEvents(void)
             } break;
             case RGFW_mousePosChanged:
             {
-                float event_x = 0.0f, event_y = 0.0f;
+                float mouseX = 0.0f;
+                float mouseY = 0.0f;
                 if (RGFW_window_isCaptured(platform.window))
                 {
-                    event_x = (float)rgfw_event.mouse.vecX;
-                    event_y = (float)rgfw_event.mouse.vecY;
+                    mouseX = (float)rgfw_event.mouse.vecX;
+                    mouseY = (float)rgfw_event.mouse.vecY;
                 }
                 else
                 {
-                    event_x = (float)rgfw_event.mouse.x;
-                    event_y = (float)rgfw_event.mouse.y;
+                    mouseX = (float)rgfw_event.mouse.x;
+                    mouseY = (float)rgfw_event.mouse.y;
                 }
 
 #if defined(__EMSCRIPTEN__)
-                {
-                    double canvasWidth = 0.0;
-                    double canvasHeight = 0.0;
-                    emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-                    event_x *= ((float)GetScreenWidth() / (float)canvasWidth);
-                    event_y *= ((float)GetScreenHeight() / (float)canvasHeight);
-                }
+                double canvasWidth = 0.0;
+                double canvasHeight = 0.0;
+                emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+                mouseX *= ((float)GetScreenWidth()/(float)canvasWidth);
+                mouseY *= ((float)GetScreenHeight()/(float)canvasHeight);
 #endif
-
                 if (RGFW_window_isCaptured(platform.window))
                 {
                     CORE.Input.Mouse.currentPosition.x += event_x;
