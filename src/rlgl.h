@@ -880,7 +880,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on Desktop platforms,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
-    // TODO: OpenGL ES 2.0 support shouldn't be platform-dependant, neither require GLAD
+    // TODO: OpenGL ES 2.0 support shouldn't be platform-dependent, neither require GLAD
     #if defined(PLATFORM_DESKTOP_GLFW) || defined(PLATFORM_DESKTOP_SDL)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
@@ -893,7 +893,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 
     // It seems OpenGL ES 2.0 instancing entry points are not defined on Raspberry Pi
     // provided headers (despite being defined in official Khronos GLES2 headers)
-    // TODO: Avoid raylib platform-dependant code on rlgl, it should be a completely portable library
+    // TODO: Avoid raylib platform-dependent code on rlgl, it should be a completely portable library
     #if defined(PLATFORM_DRM)
     typedef void (GL_APIENTRYP PFNGLDRAWARRAYSINSTANCEDEXTPROC) (GLenum mode, GLint start, GLsizei count, GLsizei primcount);
     typedef void (GL_APIENTRYP PFNGLDRAWELEMENTSINSTANCEDEXTPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
@@ -1392,7 +1392,7 @@ void rlFrustum(double left, double right, double bottom, double top, double znea
 void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar)
 {
     // NOTE: If left-right and top-botton values are equal it could create a division by zero,
-    // response to it is platform/compiler dependant
+    // response to it is platform/compiler dependent
     Matrix matOrtho = { 0 };
 
     float rl = (float)(right - left);
@@ -1509,7 +1509,7 @@ void rlBegin(int mode)
 // Finish vertex providing
 void rlEnd(void)
 {
-    // NOTE: Depth increment is dependant on rlOrtho(): z-near and z-far values,
+    // NOTE: Depth increment is dependent on rlOrtho(): z-near and z-far values,
     // as well as depth buffer bit-depth (16bit or 24bit or 32bit)
     // Correct increment formula would be: depthInc = (zfar - znear)/pow(2, bits)
     RLGL.currentBatch->currentDepth += (1.0f/20000.0f);
@@ -1902,7 +1902,7 @@ void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 void rlActiveDrawBuffers(int count)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3))
-    // NOTE: Maximum number of draw buffers supported is implementation dependant,
+    // NOTE: Maximum number of draw buffers supported is implementation dependent,
     // it can be queried with glGet*() but it must be at least 8
     //GLint maxDrawBuffers = 0;
     //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuffers);
