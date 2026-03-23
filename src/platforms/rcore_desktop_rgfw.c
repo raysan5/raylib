@@ -1469,13 +1469,13 @@ void PollInputEvents(void)
 #endif
                 if (RGFW_window_isCaptured(platform.window))
                 {
-                    CORE.Input.Mouse.currentPosition.x += event_x;
-                    CORE.Input.Mouse.currentPosition.y += event_y;
+                    CORE.Input.Mouse.currentPosition.x += mouseX;
+                    CORE.Input.Mouse.currentPosition.y += mouseY;
                 }
                 else
                 {
-                    CORE.Input.Mouse.currentPosition.x = event_x;
-                    CORE.Input.Mouse.currentPosition.y = event_y;
+                    CORE.Input.Mouse.currentPosition.x = mouseX;
+                    CORE.Input.Mouse.currentPosition.y = mouseY;
                 }
 
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
