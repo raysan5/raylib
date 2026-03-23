@@ -45,7 +45,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - ball physics");
 
-    Ball balls[MAX_BALLS] = {{
+    Ball *balls = (Ball*)malloc(sizeof(Ball)*MAX_BALLS);
+    balls[0] = (Ball){
         .pos = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
         .vel = { 200, 200 },
         .ppos = { 0 },
@@ -54,7 +55,7 @@ int main(void)
         .elasticity = 0.9f,
         .color = BLUE,
         .grabbed = false
-    }};
+    };
     
     int ballCount = 1;
     Ball *grabbedBall = NULL;   // A pointer to the current ball that is grabbed
@@ -214,6 +215,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    free(balls);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
