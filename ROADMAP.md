@@ -23,6 +23,7 @@ _Current version of raylib is complete and functional but there is always room f
  - [ ] `rlsw`: Software renderer optimizations: mipmaps, platform-specific SIMD
  - [ ] `rtextures`: Consider moving N-patch system to separate example
  - [ ] `rtextures`: Review blending modes system, provide more options or better samples
+ - [ ] `rtext`: Investigate the recently opened [`Slug`](https://sluglibrary.com/) font rendering algorithm
  - [ ] `raudio`: Support microphone input, basic API to read microphone
  - [ ] `rltexgpu`: Improve compressed textures support, loading and saving, improve KTX 2.0
  - [ ] `rlobj`: Create OBJ loader, supporting material file separately (low priority)
