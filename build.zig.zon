@@ -7,8 +7,8 @@
 
     .dependencies = .{
         .xcode_frameworks = .{
-            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
-            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
+            .url = "https://pkg.machengine.org/xcode-frameworks/9a45f3ac977fd25dff77e58c6de1870b6808c4a7.tar.gz",
+            .hash = "122098b9174895f9708bc824b0f9e550c401892c40a900006459acf2cbf78acd99bb",
             .lazy = true,
         },
         .emsdk = .{
