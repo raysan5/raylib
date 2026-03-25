@@ -2175,7 +2175,10 @@ int *LoadCodepoints(const char *text, int *count)
         codepoints = temp;
     }
 
-    *count = codepointCount;
+    if (count != NULL)
+    {
+        *count = codepointCount;
+    }
     return codepoints;
 }
 
