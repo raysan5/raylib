@@ -1281,7 +1281,6 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
-    if (mesh->vaoId == 0) return;
 
     rlEnableVertexArray(mesh->vaoId);
 
