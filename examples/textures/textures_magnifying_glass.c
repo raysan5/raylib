@@ -3,7 +3,7 @@
 *   raylib textures example - magnifying glass
 *
 *   Example complexity rating: [★★★☆] 3/4
-* 
+*
 *   Example originally created with raylib 5.6, last time updated with raylib 5.6
 *
 *   Example contributed by Luke Vaughan (@badram) and reviewed by Ramon Santamaria (@raysan5)
@@ -29,18 +29,18 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - magnifying glass");
-        
+
     Texture2D bunny = LoadTexture("resources/raybunny.png");
     Texture2D parrots = LoadTexture("resources/parrots.png");
-    
+
     // Use image draw to generate a mask texture instead of loading it from a file.
     Image circle = GenImageColor(256, 256, BLANK);
     ImageDrawCircle(&circle, 128, 128, 128, WHITE);
     Texture2D mask = LoadTextureFromImage(circle); // Copy the mask image from RAM to VRAM
     UnloadImage(circle); // Unload the image from RAM
-    
+
     RenderTexture2D magnifiedWorld = LoadRenderTexture(256, 256);
-    
+
     Camera2D camera = { 0 };
     // Set magnifying glass zoom
     camera.zoom = 2;
@@ -71,7 +71,7 @@ int main(void)
             DrawTexture(parrots, 144, 33, WHITE);
             DrawText("Use the magnifying glass to find hidden bunnies!", 154, 6, 20, BLACK);
 
-            // Render to a the magnifying glass 
+            // Render to a the magnifying glass
             BeginTextureMode(magnifiedWorld);
                 ClearBackground(RAYWHITE);
 

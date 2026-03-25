@@ -46,13 +46,13 @@ int main(void)
     float size = (float)GetScreenHeight();
     int strokeCount = 0;
     Vector2 *hilbertPath = LoadHilbertPath(order, size, &strokeCount);
-    
+
     int prevOrder = order;
     int prevSize = (int)size;       // NOTE: Size from slider is float but for comparison we use int
     int counter = 0;
     float thick = 2.0f;
     bool animate = true;
-    
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -68,19 +68,19 @@ int main(void)
         {
             UnloadHilbertPath(hilbertPath);
             hilbertPath = LoadHilbertPath(order, size, &strokeCount);
-            
+
             if (animate) counter = 0;
             else counter = strokeCount;
-            
+
             prevOrder = order;
             prevSize = (int)size;
         }
         //----------------------------------------------------------------------------------
-        
+
         // Draw
         //--------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground(RAYWHITE);
 
             if (counter < strokeCount)
@@ -90,7 +90,7 @@ int main(void)
                 {
                     DrawLineEx(hilbertPath[i], hilbertPath[i - 1], thick, ColorFromHSV(((float)i/strokeCount)*360.0f, 1.0f, 1.0f));
                 }
-                
+
                 counter += 1;
             }
             else
@@ -101,13 +101,13 @@ int main(void)
                     DrawLineEx(hilbertPath[i], hilbertPath[i - 1], thick, ColorFromHSV(((float)i/strokeCount)*360.0f, 1.0f, 1.0f));
                 }
             }
-        
+
             // Draw UI using raygui
             GuiCheckBox((Rectangle){ 450, 50, 20, 20 }, "ANIMATE GENERATION ON CHANGE", &animate);
             GuiSpinner((Rectangle){ 585, 100, 180, 30 }, "HILBERT CURVE ORDER:  ", &order, 2, 8, false);
             GuiSlider((Rectangle){ 524, 150, 240, 24 }, "THICKNESS:  ", NULL, &thick, 1.0f, 10.0f);
             GuiSlider((Rectangle){ 524, 190, 240, 24 }, "TOTAL SIZE: ", NULL, &size, 10.0f, GetScreenHeight()*1.5f);
-        
+
         EndDrawing();
         //--------------------------------------------------------------------------
     }
@@ -116,7 +116,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadHilbertPath(hilbertPath);
-    
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     return 0;
@@ -133,14 +133,14 @@ static Vector2 *LoadHilbertPath(int order, float size, int *strokeCount)
     *strokeCount = N*N;
 
     Vector2 *hilbertPath = (Vector2 *)RL_CALLOC(*strokeCount, sizeof(Vector2));
-    
+
     for (int i = 0; i < *strokeCount; i++)
     {
         hilbertPath[i] = ComputeHilbertStep(order, i);
         hilbertPath[i].x = hilbertPath[i].x*len + len/2.0f;
         hilbertPath[i].y = hilbertPath[i].y*len + len/2.0f;
     }
-    
+
     return hilbertPath;
 }
 
@@ -160,7 +160,7 @@ static Vector2 ComputeHilbertStep(int order, int index)
         [2] = { .x = 1, .y = 1 },
         [3] = { .x = 1, .y = 0 },
     };
-       
+
     int hilbertIndex = index&3;
     Vector2 vect = hilbertPoints[hilbertIndex];
     float temp = 0.0f;
@@ -171,7 +171,7 @@ static Vector2 ComputeHilbertStep(int order, int index)
         index = index >> 2;
         hilbertIndex = index&3;
         len = 1 << j;
-        
+
         switch (hilbertIndex)
         {
             case 0:
@@ -191,6 +191,6 @@ static Vector2 ComputeHilbertStep(int order, int index)
             default: break;
         }
     }
-    
+
     return vect;
 }

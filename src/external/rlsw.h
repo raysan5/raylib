@@ -2281,7 +2281,7 @@ static inline sw_pixel_write_color_f sw_pixel_get_write_color_func(sw_pixelforma
     {
         case SW_PIXELFORMAT_COLOR_GRAYSCALE: return sw_pixel_write_color_GRAYSCALE;
         case SW_PIXELFORMAT_COLOR_GRAYALPHA: return sw_pixel_write_color_GRAYALPHA;
-        case SW_PIXELFORMAT_COLOR_R3G3B2: return sw_pixel_write_color_R3G3B2; 
+        case SW_PIXELFORMAT_COLOR_R3G3B2: return sw_pixel_write_color_R3G3B2;
         case SW_PIXELFORMAT_COLOR_R5G6B5: return sw_pixel_write_color_R5G6B5;
         case SW_PIXELFORMAT_COLOR_R8G8B8: return sw_pixel_write_color_R8G8B8;
         case SW_PIXELFORMAT_COLOR_R5G5B5A1: return sw_pixel_write_color_R5G5B5A1;
@@ -2472,7 +2472,7 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
 static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex,
                                      float u, float v, float dUdx, float dUdy, float dVdx, float dVdy)
 {
-    // NOTE: Commented there is the previous method used 
+    // NOTE: Commented there is the previous method used
     // There was no need to compute the square root because
     // using the squared value, the comparison remains (L2 > 1.0f*1.0f)
     //float du = sqrtf(dUdx*dUdx + dUdy*dUdy);
@@ -2673,7 +2673,7 @@ static inline void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buf
     }
 }
 
-static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer, 
+static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer,
     int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, sw_pixelformat_t format)
 {
     const uint8_t *srcBase = buffer->pixels;
@@ -3007,25 +3007,25 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #define RLSW_TEMPLATE_RASTER_TRIANGLE BASE
     #include __FILE__ // IWYU pragma: keep
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX
     #define SW_ENABLE_TEXTURE
     #include __FILE__
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH
     #define SW_ENABLE_DEPTH_TEST
     #include __FILE__
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE BLEND
     #define SW_ENABLE_BLEND
     #include __FILE__
     #undef SW_ENABLE_BLEND
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_DEPTH_TEST
@@ -3033,7 +3033,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_DEPTH_TEST
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_BLEND
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_BLEND
@@ -3041,7 +3041,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH_BLEND
     #define SW_ENABLE_DEPTH_TEST
     #define SW_ENABLE_BLEND
@@ -3049,7 +3049,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH_BLEND
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_DEPTH_TEST
@@ -3059,7 +3059,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_DEPTH_TEST
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
- 
+
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_triangle_##NAME,
     static const sw_raster_triangle_f SW_RASTER_TRIANGLE_TABLE[] = {
@@ -3106,25 +3106,25 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #define RLSW_TEMPLATE_RASTER_QUAD BASE
     #include __FILE__ // IWYU pragma: keep
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD TEX
     #define SW_ENABLE_TEXTURE
     #include __FILE__
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD DEPTH
     #define SW_ENABLE_DEPTH_TEST
     #include __FILE__
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD BLEND
     #define SW_ENABLE_BLEND
     #include __FILE__
     #undef SW_ENABLE_BLEND
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_DEPTH_TEST
@@ -3132,7 +3132,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_DEPTH_TEST
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_BLEND
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_BLEND
@@ -3140,7 +3140,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD DEPTH_BLEND
     #define SW_ENABLE_DEPTH_TEST
     #define SW_ENABLE_BLEND
@@ -3148,7 +3148,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH_BLEND
     #define SW_ENABLE_TEXTURE
     #define SW_ENABLE_DEPTH_TEST
@@ -3158,7 +3158,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_DEPTH_TEST
     #undef SW_ENABLE_TEXTURE
     #undef RLSW_TEMPLATE_RASTER_QUAD
- 
+
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_quad_##NAME,
     static const sw_raster_quad_f SW_RASTER_QUAD_TABLE[] = {
@@ -3202,19 +3202,19 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #define RLSW_TEMPLATE_RASTER_LINE BASE
     #include __FILE__ // IWYU pragma: keep
     #undef RLSW_TEMPLATE_RASTER_LINE
- 
+
     #define RLSW_TEMPLATE_RASTER_LINE DEPTH
     #define SW_ENABLE_DEPTH_TEST
     #include __FILE__
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_LINE
- 
+
     #define RLSW_TEMPLATE_RASTER_LINE BLEND
     #define SW_ENABLE_BLEND
     #include __FILE__
     #undef SW_ENABLE_BLEND
     #undef RLSW_TEMPLATE_RASTER_LINE
- 
+
     #define RLSW_TEMPLATE_RASTER_LINE DEPTH_BLEND
     #define SW_ENABLE_DEPTH_TEST
     #define SW_ENABLE_BLEND
@@ -3222,7 +3222,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_LINE
- 
+
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY0(NAME, FLAGS) [FLAGS] = sw_raster_line_##NAME,
     #define SW_TABLE_ENTRY1(NAME, FLAGS) [FLAGS] = sw_raster_line_thick_##NAME,
@@ -3266,19 +3266,19 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #define RLSW_TEMPLATE_RASTER_POINT BASE
     #include __FILE__ // IWYU pragma: keep
     #undef RLSW_TEMPLATE_RASTER_POINT
- 
+
     #define RLSW_TEMPLATE_RASTER_POINT DEPTH
     #define SW_ENABLE_DEPTH_TEST
     #include __FILE__
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_POINT
- 
+
     #define RLSW_TEMPLATE_RASTER_POINT BLEND
     #define SW_ENABLE_BLEND
     #include __FILE__
     #undef SW_ENABLE_BLEND
     #undef RLSW_TEMPLATE_RASTER_POINT
- 
+
     #define RLSW_TEMPLATE_RASTER_POINT DEPTH_BLEND
     #define SW_ENABLE_DEPTH_TEST
     #define SW_ENABLE_BLEND
@@ -3286,7 +3286,7 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     #undef SW_ENABLE_BLEND
     #undef SW_ENABLE_DEPTH_TEST
     #undef RLSW_TEMPLATE_RASTER_POINT
- 
+
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
     #define SW_TABLE_ENTRY(NAME, FLAGS) [FLAGS] = sw_raster_point_##NAME,
     static const sw_raster_point_f SW_RASTER_POINT_TABLE[] = {
@@ -5171,7 +5171,7 @@ void swFramebufferTexture2D(SWattachment attach, uint32_t texture)
             RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, texture);
         } break;
         case SW_DEPTH_ATTACHMENT:
-        {        
+        {
             fb->depthAttachment = texture;
             RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, texture);
         } break;
@@ -5262,7 +5262,7 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 
 static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
 {
-    // Gets the start/end coordinates and skip empty lines 
+    // Gets the start/end coordinates and skip empty lines
     int xStart = (int)start->position[0];
     int xEnd = (int)end->position[0];
     if (xStart == xEnd) return;

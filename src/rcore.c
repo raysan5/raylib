@@ -684,7 +684,7 @@ void InitWindow(int width, int height, const char *title)
     }
 
     // Initialize render dimensions for embedded platforms
-    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation 
+    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation
     // On embedded platforms with no window manager, InitPlatform() doesn't set these values, so they should be initialized
     // here from screen dimensions (which are set from the InitWindow parameters)
     if ((CORE.Window.render.width == 0) || (CORE.Window.render.height == 0))

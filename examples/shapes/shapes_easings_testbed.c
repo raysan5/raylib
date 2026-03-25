@@ -72,7 +72,7 @@ typedef struct EasingFuncs {
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
 // Function used when "no easing" is selected for any axis
-static float NoEase(float t, float b, float c, float d);  
+static float NoEase(float t, float b, float c, float d);
 
 //------------------------------------------------------------------------------------
 // Global Variables Definition

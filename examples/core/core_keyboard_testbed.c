@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   NOTE: raylib defined keys refer to ENG-US Keyboard layout, 
+*   NOTE: raylib defined keys refer to ENG-US Keyboard layout,
 *   mapping to other layouts is up to the user
 *
 *   Example originally created with raylib 5.6, last time updated with raylib 5.6
@@ -43,20 +43,20 @@ int main(void)
     int line01KeyWidths[15] = { 0 };
     for (int i = 0; i < 15; i++) line01KeyWidths[i] = 45;
     line01KeyWidths[13] = 62;   // PRINTSCREEN
-    int line01Keys[15] = { 
-        KEY_ESCAPE, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, 
-        KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, 
-        KEY_F12, KEY_PRINT_SCREEN, KEY_PAUSE 
+    int line01Keys[15] = {
+        KEY_ESCAPE, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+        KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11,
+        KEY_F12, KEY_PRINT_SCREEN, KEY_PAUSE
     };
-    
+
     // Keyboard line 02
     int line02KeyWidths[15] = { 0 };
     for (int i = 0; i < 15; i++) line02KeyWidths[i] = 45;
     line02KeyWidths[0] = 25;    // GRAVE
     line02KeyWidths[13] = 82;   // BACKSPACE
-    int line02Keys[15] = { 
-        KEY_GRAVE, KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR, 
-        KEY_FIVE, KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE, 
+    int line02Keys[15] = {
+        KEY_GRAVE, KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR,
+        KEY_FIVE, KEY_SIX, KEY_SEVEN, KEY_EIGHT, KEY_NINE,
         KEY_ZERO, KEY_MINUS, KEY_EQUAL, KEY_BACKSPACE, KEY_DELETE };
 
     // Keyboard line 03
@@ -103,7 +103,7 @@ int main(void)
         KEY_SPACE, KEY_RIGHT_ALT, 162, KEY_NULL,
         KEY_RIGHT_CONTROL, KEY_LEFT, KEY_DOWN, KEY_RIGHT
     };
-    
+
     Vector2 keyboardOffset = { 26, 80 };
 
     SetTargetFPS(60);
@@ -128,23 +128,23 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawText("KEYBOARD LAYOUT: ENG-US", 26, 38, 20, LIGHTGRAY);
-            
+
             // Keyboard line 01 - 15 keys
             // ESC, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, IMP, CLOSE
-            for (int i = 0, recOffsetX = 0; i < 15; i++) 
+            for (int i = 0, recOffsetX = 0; i < 15; i++)
             {
                 GuiKeyboardKey((Rectangle){ keyboardOffset.x + recOffsetX, keyboardOffset.y, (float)line01KeyWidths[i], 30.0f }, line01Keys[i]);
                 recOffsetX += line01KeyWidths[i] + KEY_REC_SPACING;
             }
- 
+
             // Keyboard line 02 - 15 keys
             // `, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, -, =, BACKSPACE, DEL
-            for (int i = 0, recOffsetX = 0; i < 15; i++) 
+            for (int i = 0, recOffsetX = 0; i < 15; i++)
             {
                 GuiKeyboardKey((Rectangle){ keyboardOffset.x + recOffsetX, keyboardOffset.y + 30 + KEY_REC_SPACING, (float)line02KeyWidths[i], 38.0f }, line02Keys[i]);
                 recOffsetX += line02KeyWidths[i] + KEY_REC_SPACING;
             }
-            
+
             // Keyboard line 03 - 15 keys
             // TAB, Q, W, E, R, T, Y, U, I, O, P, [, ], \, INS
             for (int i = 0, recOffsetX = 0; i < 15; i++)
@@ -324,8 +324,8 @@ static void GuiKeyboardKey(Rectangle bounds, int key)
             DrawText(GetKeyText(key), (int)(bounds.x + 4), (int)(bounds.y + 4), 10, DARKGRAY);
         }
     }
-    
-    if (CheckCollisionPointRec(GetMousePosition(), bounds)) 
+
+    if (CheckCollisionPointRec(GetMousePosition(), bounds))
     {
         DrawRectangleRec(bounds, Fade(RED, 0.2f));
         DrawRectangleLinesEx(bounds, 3.0f, RED);

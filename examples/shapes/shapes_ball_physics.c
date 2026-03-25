@@ -31,7 +31,7 @@ typedef struct Ball {
     Vector2 speed;
     Vector2 prevPosition;
     float radius;
-    float friction;   
+    float friction;
     float elasticity;
     Color color;
     bool grabbed;
@@ -62,7 +62,7 @@ int main(void)
         .color = BLUE,
         .grabbed = false
     };
-    
+
     int ballCount = 1;
     Ball *grabbedBall = NULL;       // A pointer to the current ball that is grabbed
     Vector2 pressOffset = { 0 };    // Mouse press offset relative to the ball that grabbedd
@@ -157,10 +157,10 @@ int main(void)
                 {
                     ball->position.x = screenWidth - ball->radius; // Ball repositioning
                     ball->speed.x = -ball->speed.x*ball->elasticity;  // Elasticity makes the ball lose 10% of its velocity on hit
-                } 
+                }
                 // Does the ball hit the screen left boundary?
                 else if ((ball->position.x - ball->radius) <= 0)
-                { 
+                {
                     ball->position.x = ball->radius;
                     ball->speed.x = -ball->speed.x*ball->elasticity;
                 }
@@ -170,9 +170,9 @@ int main(void)
                 {
                     ball->position.y = screenHeight - ball->radius;
                     ball->speed.y = -ball->speed.y*ball->elasticity;
-                } 
+                }
                 else if ((ball->position.y - ball->radius) <= 0)
-                { 
+                {
                     ball->position.y = ball->radius;
                     ball->speed.y = -ball->speed.y*ball->elasticity;
                 }

@@ -60,7 +60,7 @@ int main(void)
             }
         }
     }
-    
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -109,7 +109,7 @@ int main(void)
                     }
                 }
             }
-            
+
             // Remove the closest voxel if one was hit
             if (voxelFound)
             {
@@ -145,9 +145,9 @@ int main(void)
                         }
                     }
                 }
-                
+
             EndMode3D();
-            
+
             // Draw reference point for raycasting to delete blocks
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 4, RED);
 
@@ -161,7 +161,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(cubeModel);
-    
+
     CloseWindow();
     //--------------------------------------------------------------------------------------
 

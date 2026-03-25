@@ -2265,7 +2265,6 @@ int GetCodepoint(const char *text, int *codepointSize)
     0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 */
 
-
     int codepoint = 0x3f;   // Codepoint (defaults to '?')
     *codepointSize = 1;
     if (text == NULL) return codepoint;
