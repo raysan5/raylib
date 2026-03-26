@@ -1000,7 +1000,7 @@ Callback 006: AudioCallback() (2 input parameters)
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
 
-Functions found: 599
+Functions found: 597
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
