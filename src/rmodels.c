@@ -4112,7 +4112,8 @@ bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, floa
     */
 
     // Check for distances squared to avoid sqrtf()
-    if (Vector3DotProduct(Vector3Subtract(center2, center1), Vector3Subtract(center2, center1)) <= (radius1 + radius2)*(radius1 + radius2)) collision = true;
+    float radSum = radius1 + radius2;
+    if (Vector3DistanceSqr(center1, center2) <= radSum*radSum) collision = true;
 
     return collision;
 }
