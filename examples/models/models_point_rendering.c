@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "rlgl.h"
 
 #include <stdlib.h>             // Required for: rand()
 #include <math.h>               // Required for: cosf(), sinf()
@@ -26,8 +27,9 @@
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
-// Generate mesh using points
-static Mesh GenMeshPoints(int numPoints);
+static Mesh GenMeshPoints(int numPoints); // Generate mesh using points
+void DrawModelPoints(Model model, Vector3 position, float scale, Color tint); // Draw a model as points
+void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model as points with extended parameters
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -183,4 +185,31 @@ static Mesh GenMeshPoints(int numPoints)
     UploadMesh(&mesh, false);
 
     return mesh;
+}
+
+
+// Draw a model points
+// WARNING: OpenGL ES 2.0 does not support point mode drawing
+void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModel(model, position, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisablePointMode();
+}
+
+// Draw a model points
+// WARNING: OpenGL ES 2.0 does not support point mode drawing
+void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
+{
+    rlEnablePointMode();
+    rlDisableBackfaceCulling();
+
+    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
+
+    rlEnableBackfaceCulling();
+    rlDisablePointMode();
 }

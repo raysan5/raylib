@@ -3961,32 +3961,6 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     rlDisableWireMode();
 }
 
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModel(model, position, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
-}
-
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
-}
-
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {

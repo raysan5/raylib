@@ -2755,20 +2755,6 @@
             <Param type="Vector3" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawModelPoints" retType="void" paramCount="4" desc="Draw a model as points">
-            <Param type="Model" name="model" desc="" />
-            <Param type="Vector3" name="position" desc="" />
-            <Param type="float" name="scale" desc="" />
-            <Param type="Color" name="tint" desc="" />
-        </Function>
-        <Function name="DrawModelPointsEx" retType="void" paramCount="6" desc="Draw a model as points with extended parameters">
-            <Param type="Model" name="model" desc="" />
-            <Param type="Vector3" name="position" desc="" />
-            <Param type="Vector3" name="rotationAxis" desc="" />
-            <Param type="float" name="rotationAngle" desc="" />
-            <Param type="Vector3" name="scale" desc="" />
-            <Param type="Color" name="tint" desc="" />
-        </Function>
         <Function name="DrawBoundingBox" retType="void" paramCount="2" desc="Draw bounding box (wires)">
             <Param type="BoundingBox" name="box" desc="" />
             <Param type="Color" name="color" desc="" />
