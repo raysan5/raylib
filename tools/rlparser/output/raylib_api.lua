@@ -5596,7 +5596,7 @@ return {
     },
     {
       name = "ExportImageToMemory",
-      description = "Export image to memory buffer",
+      description = "Export image to memory buffer, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "Image", name = "image"},
@@ -7045,7 +7045,17 @@ return {
     },
     {
       name = "TextReplace",
-      description = "Replace text string (WARNING: memory must be freed!)",
+      description = "Replace text string with new string",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "search"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "TextReplaceAlloc",
+      description = "Replace text string with new string, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
@@ -7055,7 +7065,18 @@ return {
     },
     {
       name = "TextReplaceBetween",
-      description = "Replace text between two specific strings (WARNING: memory must be freed!)",
+      description = "Replace text between two specific strings",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "begin"},
+        {type = "const char *", name = "end"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "TextReplaceBetweenAlloc",
+      description = "Replace text between two specific strings, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
@@ -7066,7 +7087,17 @@ return {
     },
     {
       name = "TextInsert",
-      description = "Insert text in a position (WARNING: memory must be freed!)",
+      description = "Insert text in a defined byte position",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "insert"},
+        {type = "int", name = "position"}
+      }
+    },
+    {
+      name = "TextInsertAlloc",
+      description = "Insert text in a defined byte position, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},

@@ -682,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="597">
+    <Functions count="600">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1809,7 +1809,7 @@
             <Param type="Image" name="image" desc="" />
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="ExportImageToMemory" retType="unsigned char *" paramCount="3" desc="Export image to memory buffer">
+        <Function name="ExportImageToMemory" retType="unsigned char *" paramCount="3" desc="Export image to memory buffer, memory must be MemFree()">
             <Param type="Image" name="image" desc="" />
             <Param type="const char *" name="fileType" desc="" />
             <Param type="int *" name="fileSize" desc="" />
@@ -2525,18 +2525,34 @@
             <Param type="const char *" name="begin" desc="" />
             <Param type="const char *" name="end" desc="" />
         </Function>
-        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (WARNING: memory must be freed!)">
+        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string with new string">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="search" desc="" />
             <Param type="const char *" name="replacement" desc="" />
         </Function>
-        <Function name="TextReplaceBetween" retType="char *" paramCount="4" desc="Replace text between two specific strings (WARNING: memory must be freed!)">
+        <Function name="TextReplaceAlloc" retType="char *" paramCount="3" desc="Replace text string with new string, memory must be MemFree()">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="search" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="TextReplaceBetween" retType="char *" paramCount="4" desc="Replace text between two specific strings">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="begin" desc="" />
             <Param type="const char *" name="end" desc="" />
             <Param type="const char *" name="replacement" desc="" />
         </Function>
-        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a position (WARNING: memory must be freed!)">
+        <Function name="TextReplaceBetweenAlloc" retType="char *" paramCount="4" desc="Replace text between two specific strings, memory must be MemFree()">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="begin" desc="" />
+            <Param type="const char *" name="end" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a defined byte position">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="insert" desc="" />
+            <Param type="int" name="position" desc="" />
+        </Function>
+        <Function name="TextInsertAlloc" retType="char *" paramCount="3" desc="Insert text in a defined byte position, memory must be MemFree()">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="insert" desc="" />
             <Param type="int" name="position" desc="" />
