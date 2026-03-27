@@ -819,23 +819,15 @@ int GetScreenHeight(void)
 // Get current render width which is equal to screen width*dpi scale
 int GetRenderWidth(void)
 {
-    int width = 0;
-
     if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
-    else width = CORE.Window.render.width;
-
-    return width;
+    else return CORE.Window.render.width;
 }
 
 // Get current screen height which is equal to screen height*dpi scale
 int GetRenderHeight(void)
 {
-    int height = 0;
-
     if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
-    else height = CORE.Window.render.height;
-
-    return height;
+    else return CORE.Window.render.height;
 }
 
 // Enable waiting for events on EndDrawing(), no automatic event polling
@@ -1219,7 +1211,7 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
 // Unload VR stereo config properties
 void UnloadVrStereoConfig(VrStereoConfig config)
 {
-    TRACELOG(LOG_INFO, "UnloadVrStereoConfig not implemented in rcore.c");
+    TRACELOG(LOG_WARNING, "UnloadVrStereoConfig not implemented in rcore.c");
 }
 
 //----------------------------------------------------------------------------------
@@ -2281,7 +2273,7 @@ int FileMove(const char *srcPath, const char *dstPath)
 		if (FileCopy(srcPath, dstPath) == 0) result = FileRemove(srcPath);
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
     }
-	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
+    else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
     return result;
 }
