@@ -2044,7 +2044,7 @@ float rlGetLineWidth(void)
 // Set the point drawing size
 void rlSetPointSize(float size)
 {
-#if defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     glPointSize(size);
 #endif
 }
@@ -2053,7 +2053,7 @@ void rlSetPointSize(float size)
 float rlGetPointSize(void)
 {
     float size = 1;
-#if defined(GRAPHICS_API_OPENGL_11)
+#if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENGL_33)
     glGetFloatv(GL_POINT_SIZE, &size);
 #endif
     return size;
