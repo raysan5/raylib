@@ -2298,7 +2298,7 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
-        fileTextUpdated = TextReplace(fileText, search, replacement);
+        fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
         result = SaveFileText(fileName, fileTextUpdated);
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
