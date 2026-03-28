@@ -118,6 +118,7 @@ GTAGS
 # Zig programming language
 .zig-cache/
 zig-cache/
+zig-pkg/
 zig-out/
 build/
 build-*/

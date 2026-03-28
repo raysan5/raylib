@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// Minimum supported version of Zig
-const min_ver = "0.16.0-dev.2349+204fa8959";
+const min_ver = "0.16.0-dev.3013+abd131e33";
 
 const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
 const emccOutputFile = "index.html";
@@ -264,7 +264,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                 setDesktopPlatform(raylib, .android);
             } else {
-                try c_source_files.append(b.allocator, "src/rglfw.c");
+                switch (options.platform) {
+                    .glfw => try c_source_files.append(b.allocator, "src/rglfw.c"),
+                    .rgfw, .sdl, .drm, .android => {},
+                }
 
                 if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                     raylib.root_module.addCMacro("_GLFW_X11", "");
@@ -434,6 +437,7 @@ pub const OpenglVersion = enum {
 };
 
 pub const LinuxDisplayBackend = enum {
+    None,
     X11,
     Wayland,
     Both,
