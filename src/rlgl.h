@@ -1613,7 +1613,9 @@ void rlNormal3f(float x, float y, float z)
         normaly = RLGL.State.transform.m1*x + RLGL.State.transform.m5*y + RLGL.State.transform.m9*z;
         normalz = RLGL.State.transform.m2*x + RLGL.State.transform.m6*y + RLGL.State.transform.m10*z;
     }
-    float length = sqrtf(normalx*normalx + normaly*normaly + normalz*normalz);
+
+/* Normalize the vector if required. Default behavior assumes the normal vector is in the correct space for what the shader expects.
+   float length = sqrtf(normalx * normalx + normaly * normaly + normalz * normalz);
     if (length != 0.0f)
     {
         float ilength = 1.0f/length;
@@ -1621,6 +1623,7 @@ void rlNormal3f(float x, float y, float z)
         normaly *= ilength;
         normalz *= ilength;
     }
+*/
     RLGL.State.normalx = normalx;
     RLGL.State.normaly = normaly;
     RLGL.State.normalz = normalz;
