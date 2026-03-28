@@ -103,36 +103,6 @@
       "description": ""
     },
     {
-      "name": "RL_VECTOR2_TYPE",
-      "type": "GUARD",
-      "value": "",
-      "description": ""
-    },
-    {
-      "name": "RL_VECTOR3_TYPE",
-      "type": "GUARD",
-      "value": "",
-      "description": ""
-    },
-    {
-      "name": "RL_VECTOR4_TYPE",
-      "type": "GUARD",
-      "value": "",
-      "description": ""
-    },
-    {
-      "name": "RL_QUATERNION_TYPE",
-      "type": "GUARD",
-      "value": "",
-      "description": ""
-    },
-    {
-      "name": "RL_MATRIX_TYPE",
-      "type": "GUARD",
-      "value": "",
-      "description": ""
-    },
-    {
       "name": "LIGHTGRAY",
       "type": "COLOR",
       "value": "CLITERAL(Color){ 200, 200, 200, 255 }",
@@ -295,6 +265,36 @@
       "description": ""
     },
     {
+      "name": "RL_VECTOR2_TYPE",
+      "type": "GUARD",
+      "value": "",
+      "description": ""
+    },
+    {
+      "name": "RL_VECTOR3_TYPE",
+      "type": "GUARD",
+      "value": "",
+      "description": ""
+    },
+    {
+      "name": "RL_VECTOR4_TYPE",
+      "type": "GUARD",
+      "value": "",
+      "description": ""
+    },
+    {
+      "name": "RL_QUATERNION_TYPE",
+      "type": "GUARD",
+      "value": "",
+      "description": ""
+    },
+    {
+      "name": "RL_MATRIX_TYPE",
+      "type": "GUARD",
+      "value": "",
+      "description": ""
+    },
+    {
       "name": "MOUSE_LEFT_BUTTON",
       "type": "UNKNOWN",
       "value": "MOUSE_BUTTON_LEFT",
@@ -346,70 +346,70 @@
   "structs": [
     {
       "name": "Vector2",
-      "description": "Vector2, 2 components",
+      "description": "Vector2 type",
       "fields": [
         {
           "type": "float",
           "name": "x",
-          "description": "Vector x component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "y",
-          "description": "Vector y component"
+          "description": ""
         }
       ]
     },
     {
       "name": "Vector3",
-      "description": "Vector3, 3 components",
+      "description": "Vector3 type",
       "fields": [
         {
           "type": "float",
           "name": "x",
-          "description": "Vector x component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "y",
-          "description": "Vector y component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "z",
-          "description": "Vector z component"
+          "description": ""
         }
       ]
     },
     {
       "name": "Vector4",
-      "description": "Vector4, 4 components",
+      "description": "Vector4 type",
       "fields": [
         {
           "type": "float",
           "name": "x",
-          "description": "Vector x component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "y",
-          "description": "Vector y component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "z",
-          "description": "Vector z component"
+          "description": ""
         },
         {
           "type": "float",
           "name": "w",
-          "description": "Vector w component"
+          "description": ""
         }
       ]
     },
     {
       "name": "Matrix",
-      "description": "Matrix, 4x4 components, column major, OpenGL style, right-handed",
+      "description": "Matrix type (OpenGL style 4x4 - right handed, column major)",
       "fields": [
         {
           "type": "float",
@@ -1394,7 +1394,7 @@
     {
       "type": "Vector4",
       "name": "Quaternion",
-      "description": "Quaternion, 4 components (Vector4 alias)"
+      "description": "Quaternion type"
     },
     {
       "type": "Texture",

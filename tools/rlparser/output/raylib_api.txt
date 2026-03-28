@@ -86,163 +86,163 @@ Define 017: RL_RECTANGLE_TYPE
   Type: GUARD
   Value: 
   Description: 
-Define 018: RL_VECTOR2_TYPE
-  Name: RL_VECTOR2_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 019: RL_VECTOR3_TYPE
-  Name: RL_VECTOR3_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 020: RL_VECTOR4_TYPE
-  Name: RL_VECTOR4_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 021: RL_QUATERNION_TYPE
-  Name: RL_QUATERNION_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 022: RL_MATRIX_TYPE
-  Name: RL_MATRIX_TYPE
-  Type: GUARD
-  Value: 
-  Description: 
-Define 023: LIGHTGRAY
+Define 018: LIGHTGRAY
   Name: LIGHTGRAY
   Type: COLOR
   Value: CLITERAL(Color){ 200, 200, 200, 255 }
   Description: Light Gray
-Define 024: GRAY
+Define 019: GRAY
   Name: GRAY
   Type: COLOR
   Value: CLITERAL(Color){ 130, 130, 130, 255 }
   Description: Gray
-Define 025: DARKGRAY
+Define 020: DARKGRAY
   Name: DARKGRAY
   Type: COLOR
   Value: CLITERAL(Color){ 80, 80, 80, 255 }
   Description: Dark Gray
-Define 026: YELLOW
+Define 021: YELLOW
   Name: YELLOW
   Type: COLOR
   Value: CLITERAL(Color){ 253, 249, 0, 255 }
   Description: Yellow
-Define 027: GOLD
+Define 022: GOLD
   Name: GOLD
   Type: COLOR
   Value: CLITERAL(Color){ 255, 203, 0, 255 }
   Description: Gold
-Define 028: ORANGE
+Define 023: ORANGE
   Name: ORANGE
   Type: COLOR
   Value: CLITERAL(Color){ 255, 161, 0, 255 }
   Description: Orange
-Define 029: PINK
+Define 024: PINK
   Name: PINK
   Type: COLOR
   Value: CLITERAL(Color){ 255, 109, 194, 255 }
   Description: Pink
-Define 030: RED
+Define 025: RED
   Name: RED
   Type: COLOR
   Value: CLITERAL(Color){ 230, 41, 55, 255 }
   Description: Red
-Define 031: MAROON
+Define 026: MAROON
   Name: MAROON
   Type: COLOR
   Value: CLITERAL(Color){ 190, 33, 55, 255 }
   Description: Maroon
-Define 032: GREEN
+Define 027: GREEN
   Name: GREEN
   Type: COLOR
   Value: CLITERAL(Color){ 0, 228, 48, 255 }
   Description: Green
-Define 033: LIME
+Define 028: LIME
   Name: LIME
   Type: COLOR
   Value: CLITERAL(Color){ 0, 158, 47, 255 }
   Description: Lime
-Define 034: DARKGREEN
+Define 029: DARKGREEN
   Name: DARKGREEN
   Type: COLOR
   Value: CLITERAL(Color){ 0, 117, 44, 255 }
   Description: Dark Green
-Define 035: SKYBLUE
+Define 030: SKYBLUE
   Name: SKYBLUE
   Type: COLOR
   Value: CLITERAL(Color){ 102, 191, 255, 255 }
   Description: Sky Blue
-Define 036: BLUE
+Define 031: BLUE
   Name: BLUE
   Type: COLOR
   Value: CLITERAL(Color){ 0, 121, 241, 255 }
   Description: Blue
-Define 037: DARKBLUE
+Define 032: DARKBLUE
   Name: DARKBLUE
   Type: COLOR
   Value: CLITERAL(Color){ 0, 82, 172, 255 }
   Description: Dark Blue
-Define 038: PURPLE
+Define 033: PURPLE
   Name: PURPLE
   Type: COLOR
   Value: CLITERAL(Color){ 200, 122, 255, 255 }
   Description: Purple
-Define 039: VIOLET
+Define 034: VIOLET
   Name: VIOLET
   Type: COLOR
   Value: CLITERAL(Color){ 135, 60, 190, 255 }
   Description: Violet
-Define 040: DARKPURPLE
+Define 035: DARKPURPLE
   Name: DARKPURPLE
   Type: COLOR
   Value: CLITERAL(Color){ 112, 31, 126, 255 }
   Description: Dark Purple
-Define 041: BEIGE
+Define 036: BEIGE
   Name: BEIGE
   Type: COLOR
   Value: CLITERAL(Color){ 211, 176, 131, 255 }
   Description: Beige
-Define 042: BROWN
+Define 037: BROWN
   Name: BROWN
   Type: COLOR
   Value: CLITERAL(Color){ 127, 106, 79, 255 }
   Description: Brown
-Define 043: DARKBROWN
+Define 038: DARKBROWN
   Name: DARKBROWN
   Type: COLOR
   Value: CLITERAL(Color){ 76, 63, 47, 255 }
   Description: Dark Brown
-Define 044: WHITE
+Define 039: WHITE
   Name: WHITE
   Type: COLOR
   Value: CLITERAL(Color){ 255, 255, 255, 255 }
   Description: White
-Define 045: BLACK
+Define 040: BLACK
   Name: BLACK
   Type: COLOR
   Value: CLITERAL(Color){ 0, 0, 0, 255 }
   Description: Black
-Define 046: BLANK
+Define 041: BLANK
   Name: BLANK
   Type: COLOR
   Value: CLITERAL(Color){ 0, 0, 0, 0 }
   Description: Blank (Transparent)
-Define 047: MAGENTA
+Define 042: MAGENTA
   Name: MAGENTA
   Type: COLOR
   Value: CLITERAL(Color){ 255, 0, 255, 255 }
   Description: Magenta
-Define 048: RAYWHITE
+Define 043: RAYWHITE
   Name: RAYWHITE
   Type: COLOR
   Value: CLITERAL(Color){ 245, 245, 245, 255 }
   Description: My own White (raylib logo)
-Define 049: RL_BOOL_TYPE
+Define 044: RL_BOOL_TYPE
   Name: RL_BOOL_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 045: RL_VECTOR2_TYPE
+  Name: RL_VECTOR2_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 046: RL_VECTOR3_TYPE
+  Name: RL_VECTOR3_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 047: RL_VECTOR4_TYPE
+  Name: RL_VECTOR4_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 048: RL_QUATERNION_TYPE
+  Name: RL_QUATERNION_TYPE
+  Type: GUARD
+  Value: 
+  Description: 
+Define 049: RL_MATRIX_TYPE
+  Name: RL_MATRIX_TYPE
   Type: GUARD
   Value: 
   Description: 
@@ -291,25 +291,25 @@ Structures found: 35
 
 Struct 01: Vector2 (2 fields)
   Name: Vector2
-  Description: Vector2, 2 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
+  Description: Vector2 type
+  Field[1]: float x 
+  Field[2]: float y 
 Struct 02: Vector3 (3 fields)
   Name: Vector3
-  Description: Vector3, 3 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
-  Field[3]: float z // Vector z component
+  Description: Vector3 type
+  Field[1]: float x 
+  Field[2]: float y 
+  Field[3]: float z 
 Struct 03: Vector4 (4 fields)
   Name: Vector4
-  Description: Vector4, 4 components
-  Field[1]: float x // Vector x component
-  Field[2]: float y // Vector y component
-  Field[3]: float z // Vector z component
-  Field[4]: float w // Vector w component
+  Description: Vector4 type
+  Field[1]: float x 
+  Field[2]: float y 
+  Field[3]: float z 
+  Field[4]: float w 
 Struct 04: Matrix (16 fields)
   Name: Matrix
-  Description: Matrix, 4x4 components, column major, OpenGL style, right-handed
+  Description: Matrix type (OpenGL style 4x4 - right handed, column major)
   Field[1]: float m0 // Matrix first row (4 components)
   Field[2]: float m4 // Matrix first row (4 components)
   Field[3]: float m8 // Matrix first row (4 components)
@@ -567,7 +567,7 @@ Aliases found: 6
 Alias 001: Quaternion
   Type: Vector4
   Name: Quaternion
-  Description: Quaternion, 4 components (Vector4 alias)
+  Description: Quaternion type
 Alias 002: Texture2D
   Type: Texture
   Name: Texture2D

@@ -18,11 +18,6 @@
         <Define name="CLITERAL(type)" type="MACRO" value="type" desc="" />
         <Define name="RL_COLOR_TYPE" type="GUARD" value="" desc="" />
         <Define name="RL_RECTANGLE_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR2_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR3_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_QUATERNION_TYPE" type="GUARD" value="" desc="" />
-        <Define name="RL_MATRIX_TYPE" type="GUARD" value="" desc="" />
         <Define name="LIGHTGRAY" type="COLOR" value="CLITERAL(Color){ 200, 200, 200, 255 }" desc="Light Gray" />
         <Define name="GRAY" type="COLOR" value="CLITERAL(Color){ 130, 130, 130, 255 }" desc="Gray" />
         <Define name="DARKGRAY" type="COLOR" value="CLITERAL(Color){ 80, 80, 80, 255 }" desc="Dark Gray" />
@@ -50,6 +45,11 @@
         <Define name="MAGENTA" type="COLOR" value="CLITERAL(Color){ 255, 0, 255, 255 }" desc="Magenta" />
         <Define name="RAYWHITE" type="COLOR" value="CLITERAL(Color){ 245, 245, 245, 255 }" desc="My own White (raylib logo)" />
         <Define name="RL_BOOL_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR2_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR3_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_VECTOR4_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_QUATERNION_TYPE" type="GUARD" value="" desc="" />
+        <Define name="RL_MATRIX_TYPE" type="GUARD" value="" desc="" />
         <Define name="MOUSE_LEFT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_LEFT" desc="" />
         <Define name="MOUSE_RIGHT_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_RIGHT" desc="" />
         <Define name="MOUSE_MIDDLE_BUTTON" type="UNKNOWN" value="MOUSE_BUTTON_MIDDLE" desc="" />
@@ -60,22 +60,22 @@
         <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="35">
-        <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
+        <Struct name="Vector2" fieldCount="2" desc="Vector2 type">
+            <Field type="float" name="x" desc="" />
+            <Field type="float" name="y" desc="" />
         </Struct>
-        <Struct name="Vector3" fieldCount="3" desc="Vector3, 3 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
-            <Field type="float" name="z" desc="Vector z component" />
+        <Struct name="Vector3" fieldCount="3" desc="Vector3 type">
+            <Field type="float" name="x" desc="" />
+            <Field type="float" name="y" desc="" />
+            <Field type="float" name="z" desc="" />
         </Struct>
-        <Struct name="Vector4" fieldCount="4" desc="Vector4, 4 components">
-            <Field type="float" name="x" desc="Vector x component" />
-            <Field type="float" name="y" desc="Vector y component" />
-            <Field type="float" name="z" desc="Vector z component" />
-            <Field type="float" name="w" desc="Vector w component" />
+        <Struct name="Vector4" fieldCount="4" desc="Vector4 type">
+            <Field type="float" name="x" desc="" />
+            <Field type="float" name="y" desc="" />
+            <Field type="float" name="z" desc="" />
+            <Field type="float" name="w" desc="" />
         </Struct>
-        <Struct name="Matrix" fieldCount="16" desc="Matrix, 4x4 components, column major, OpenGL style, right-handed">
+        <Struct name="Matrix" fieldCount="16" desc="Matrix type (OpenGL style 4x4 - right handed, column major)">
             <Field type="float" name="m0" desc="Matrix first row (4 components)" />
             <Field type="float" name="m4" desc="Matrix first row (4 components)" />
             <Field type="float" name="m8" desc="Matrix first row (4 components)" />
@@ -299,7 +299,7 @@
         </Struct>
     </Structs>
     <Aliases count="6">
-        <Alias type="Quaternion" name="Vector4" desc="Quaternion, 4 components (Vector4 alias)" />
+        <Alias type="Quaternion" name="Vector4" desc="Quaternion type" />
         <Alias type="Texture2D" name="Texture" desc="Texture2D, same as Texture" />
         <Alias type="TextureCubemap" name="Texture" desc="TextureCubemap, same as Texture" />
         <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
