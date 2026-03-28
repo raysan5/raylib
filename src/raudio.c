@@ -963,20 +963,18 @@ Sound LoadSoundFromWave(Wave wave)
         if (frameCount == 0) TRACELOG(LOG_WARNING, "SOUND: Failed to get frame count for format conversion");
 
         AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, frameCount, AUDIO_BUFFER_USAGE_STATIC);
-        if (audioBuffer == NULL)
+        if (audioBuffer != NULL)
         {
-            TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
-            return sound; // early return to avoid dereferencing the audioBuffer null pointer
+            frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, frameCount, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, wave.data, frameCountIn, formatIn, wave.channels, wave.sampleRate);
+            if (frameCount == 0) TRACELOG(LOG_WARNING, "SOUND: Failed format conversion");
+
+            sound.frameCount = frameCount;
+            sound.stream.sampleRate = AUDIO.System.device.sampleRate;
+            sound.stream.sampleSize = 32;
+            sound.stream.channels = AUDIO_DEVICE_CHANNELS;
+            sound.stream.buffer = audioBuffer;
         }
-
-        frameCount = (ma_uint32)ma_convert_frames(audioBuffer->data, frameCount, AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, wave.data, frameCountIn, formatIn, wave.channels, wave.sampleRate);
-        if (frameCount == 0) TRACELOG(LOG_WARNING, "SOUND: Failed format conversion");
-
-        sound.frameCount = frameCount;
-        sound.stream.sampleRate = AUDIO.System.device.sampleRate;
-        sound.stream.sampleSize = 32;
-        sound.stream.channels = AUDIO_DEVICE_CHANNELS;
-        sound.stream.buffer = audioBuffer;
+        else TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
     }
 
     return sound;
@@ -992,25 +990,23 @@ Sound LoadSoundAlias(Sound source)
     {
         AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
 
-        if (audioBuffer == NULL)
+        if (audioBuffer != NULL)
         {
-            TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
-            return sound; // Early return to avoid dereferencing the audioBuffer null pointer
+            audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
+            audioBuffer->data = source.stream.buffer->data;
+
+            // Initalize the buffer as if it was new
+            audioBuffer->volume = 1.0f;
+            audioBuffer->pitch = 1.0f;
+            audioBuffer->pan = 0.0f; // Center
+
+            sound.frameCount = source.frameCount;
+            sound.stream.sampleRate = AUDIO.System.device.sampleRate;
+            sound.stream.sampleSize = 32;
+            sound.stream.channels = AUDIO_DEVICE_CHANNELS;
+            sound.stream.buffer = audioBuffer;
         }
-
-        audioBuffer->sizeInFrames = source.stream.buffer->sizeInFrames;
-        audioBuffer->data = source.stream.buffer->data;
-
-        // Initalize the buffer as if it was new
-        audioBuffer->volume = 1.0f;
-        audioBuffer->pitch = 1.0f;
-        audioBuffer->pan = 0.0f; // Center
-
-        sound.frameCount = source.frameCount;
-        sound.stream.sampleRate = AUDIO.System.device.sampleRate;
-        sound.stream.sampleSize = 32;
-        sound.stream.channels = AUDIO_DEVICE_CHANNELS;
-        sound.stream.buffer = audioBuffer;
+        else TRACELOG(LOG_WARNING, "SOUND: Failed to create buffer");
     }
 
     return sound;
@@ -1071,7 +1067,7 @@ void UpdateSound(Sound sound, const void *data, int frameCount)
 // Export wave data to file
 bool ExportWave(Wave wave, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
     if (false) { }
 #if SUPPORT_FILEFORMAT_WAV
@@ -1088,11 +1084,11 @@ bool ExportWave(Wave wave, const char *fileName)
 
         void *fileData = NULL;
         size_t fileDataSize = 0;
-        success = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-        if (success) success = (int)drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
+        result = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
+        if (result) result = (int)drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
         drwav_result result = drwav_uninit(&wav);
 
-        if (result == DRWAV_SUCCESS) success = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
+        if (result == DRWAV_SUCCESS) result = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
 
         drwav_free(fileData, NULL);
     }
@@ -1108,7 +1104,7 @@ bool ExportWave(Wave wave, const char *fileName)
             qoa.samples = wave.frameCount;
 
             int bytesWritten = qoa_write(fileName, (const short *)wave.data, &qoa);
-            if (bytesWritten > 0) success = true;
+            if (bytesWritten > 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "AUDIO: Wave data must be 16 bit per sample for QOA format export");
     }
@@ -1117,19 +1113,19 @@ bool ExportWave(Wave wave, const char *fileName)
     {
         // Export raw sample data (without header)
         // NOTE: It's up to the user to track wave parameters
-        success = SaveFileData(fileName, wave.data, wave.frameCount*wave.channels*wave.sampleSize/8);
+        result = SaveFileData(fileName, wave.data, wave.frameCount*wave.channels*wave.sampleSize/8);
     }
 
-    if (success) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave data exported successfully", fileName);
+    if (result) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave data exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export wave data", fileName);
 
-    return success;
+    return result;
 }
 
 // Export wave sample data to code (.h)
 bool ExportWaveAsCode(Wave wave, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -1183,14 +1179,14 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
     }
 
     // NOTE: Text data length exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave as code exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Wave as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export wave as code", fileName);
 
-    return success;
+    return result;
 }
 
 // Play a sound
@@ -2187,12 +2183,15 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
 // Check if any audio stream buffers requires refill
 bool IsAudioStreamProcessed(AudioStream stream)
 {
-    if (stream.buffer == NULL) return false;
-
     bool result = false;
-    ma_mutex_lock(&AUDIO.System.lock);
-    result = stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1];
-    ma_mutex_unlock(&AUDIO.System.lock);
+    
+    if (stream.buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        result = stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1];
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
+    
     return result;
 }
 
@@ -2885,6 +2884,8 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
 // Save data to file from buffer
 static bool SaveFileData(const char *fileName, void *data, int dataSize)
 {
+    bool result = true;
+    
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wb");
@@ -2902,21 +2903,23 @@ static bool SaveFileData(const char *fileName, void *data, int dataSize)
         else
         {
             TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
-            return false;
+            result = false;
         }
     }
     else
     {
         TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
-        return false;
+        result = false;
     }
 
-    return true;
+    return result;
 }
 
 // Save text data to file (write), string must be '\0' terminated
 static bool SaveFileText(const char *fileName, char *text)
 {
+    bool result = true;
+    
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wt");
@@ -2934,16 +2937,16 @@ static bool SaveFileText(const char *fileName, char *text)
         else
         {
             TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
-            return false;
+            result = false;
         }
     }
     else
     {
         TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
-        return false;
+        result = false;
     }
 
-    return true;
+    return result;
 }
 #endif
 

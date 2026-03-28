@@ -447,7 +447,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     int j = 0;
 
     while (((lineSpacing + j) < image.height) &&
-          !COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
+        !COLOR_EQUAL(pixels[(lineSpacing + j)*image.width + charSpacing], key)) j++;
 
     charHeight = j;
 
@@ -1017,7 +1017,7 @@ void UnloadFont(Font font)
 // Export font as code file, returns true on success
 bool ExportFontAsCode(Font font, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -1159,14 +1159,14 @@ bool ExportFontAsCode(Font font, const char *fileName)
     UnloadImage(image);
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Font as code exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Font as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export font as code", fileName);
 
-    return success;
+    return result;
 }
 
 // Draw current FPS
@@ -1395,8 +1395,7 @@ Vector2 MeasureTextCodepoints(Font font, const int *codepoints, int length, floa
 {
     Vector2 textSize = { 0 };
 
-    // Security check
-    if ((font.texture.id == 0) || (codepoints == NULL) || (length == 0)) return textSize;
+    if ((font.texture.id == 0) || (codepoints == NULL) || (length == 0)) return textSize; // Security check
 
     float textWidth = 0.0f;
     // Used to count longer text line width
@@ -1699,17 +1698,18 @@ const char *TextSubtext(const char *text, int position, int length)
     {
         int textLength = TextLength(text);
 
-        if (position >= textLength) return buffer; // First char is already '\0' by memset
+        if (position < textLength)
+        {
+            int maxLength = textLength - position;
+            if (length > maxLength) length = maxLength;
+            if (length >= MAX_TEXT_BUFFER_LENGTH) length = MAX_TEXT_BUFFER_LENGTH - 1;
 
-        int maxLength = textLength - position;
-        if (length > maxLength) length = maxLength;
-        if (length >= MAX_TEXT_BUFFER_LENGTH) length = MAX_TEXT_BUFFER_LENGTH - 1;
+            // NOTE: Alternative: memcpy(buffer, text + position, length)
 
-        // NOTE: Alternative: memcpy(buffer, text + position, length)
+            for (int c = 0; c < length; c++) buffer[c] = text[position + c];
 
-        for (int c = 0; c < length; c++) buffer[c] = text[position + c];
-
-        buffer[length] = '\0';
+            buffer[length] = '\0';
+        }
     }
 
     return buffer;
@@ -1763,8 +1763,8 @@ char *GetTextBetween(const char *text, const char *begin, const char *end)
 // NOTE: Limited text replace functionality, using static string
 char *TextReplace(const char *text, const char *search, const char *replacement)
 {
-    static char result[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(result, 0, MAX_TEXT_BUFFER_LENGTH);
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if ((text != NULL) && (search != NULL) && (search[0] != '\0'))
     {
@@ -1790,7 +1790,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         {
             // TODO: Allow copying data replaced up to maximum buffer size and stop
 
-            tempPtr = result; // Point to result start
+            tempPtr = buffer; // Point to result start
 
             // First time through the loop, all the variable are set correctly from here on,
             //  - 'temp' points to the end of the result string
@@ -1821,7 +1821,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         else TRACELOG(LOG_WARNING, "Text with replacement is longer than internal buffer, use TextReplaceAlloc()");
     }
 
-    return result;
+    return buffer;
 }
 
 // Replace text string
@@ -1894,8 +1894,8 @@ char *TextReplaceAlloc(const char *text, const char *search, const char *replace
 // NOTE: If (replacement == NULL) removes "begin"[ ]"end" text
 char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement)
 {
-    static char result[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(result, 0, MAX_TEXT_BUFFER_LENGTH);
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if ((text != NULL) && (begin != NULL) && (end != NULL))
     {
@@ -1912,16 +1912,16 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
 
                 int textLen = TextLength(text);
                 int replaceLen = (replacement == NULL)? 0 : TextLength(replacement);
-                int toreplaceLen = endIndex - beginIndex - beginLen;
+                //int toreplaceLen = endIndex - beginIndex - beginLen;
 
-                strncpy(result, text, beginIndex + beginLen); // Copy first text part
-                if (replacement != NULL) strncpy(result + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
-                strncpy(result + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+                strncpy(buffer, text, beginIndex + beginLen); // Copy first text part
+                if (replacement != NULL) strncpy(buffer + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
+                strncpy(buffer + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
             }
         }
     }
 
-    return result;
+    return buffer;
 }
 
 // Replace text between two specific strings
@@ -1964,8 +1964,8 @@ char *TextReplaceBetweenAlloc(const char *text, const char *begin, const char *e
 // WARNING: Allocated memory must be manually freed
 char *TextInsert(const char *text, const char *insert, int position)
 {
-    static char result[MAX_TEXT_BUFFER_LENGTH] = { 0 };
-    memset(result, 0, MAX_TEXT_BUFFER_LENGTH);
+    static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
+    memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
     if ((text != NULL) && (insert != NULL))
     {
@@ -1976,16 +1976,16 @@ char *TextInsert(const char *text, const char *insert, int position)
         {
             // TODO: Allow copying data inserted up to maximum buffer size and stop
 
-            for (int i = 0; i < position; i++) result[i] = text[i];
-            for (int i = position; i < insertLen + position; i++) result[i] = insert[i - position];
-            for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
+            for (int i = 0; i < position; i++) buffer[i] = text[i];
+            for (int i = position; i < insertLen + position; i++) buffer[i] = insert[i - position];
+            for (int i = (insertLen + position); i < (textLen + insertLen); i++) buffer[i] = text[i];
 
-            result[textLen + insertLen] = '\0'; // Add EOL
+            buffer[textLen + insertLen] = '\0'; // Add EOL
         }
         else TRACELOG(LOG_WARNING, "Text with inserted string is longer than internal buffer, use TextInserExt()");
     }
 
-    return result;
+    return buffer;
 }
 
 // Insert text in a specific position, moves all text forward
