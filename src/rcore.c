@@ -821,7 +821,7 @@ int GetRenderWidth(void)
 {
     int width = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+    if (CORE.Window.usingFbo) width = CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
     return width;
@@ -832,7 +832,7 @@ int GetRenderHeight(void)
 {
     int height = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+    if (CORE.Window.usingFbo) height = CORE.Window.currentFbo.height;
     else height = CORE.Window.render.height;
 
     return height;
