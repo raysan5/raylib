@@ -2309,6 +2309,16 @@ bool CheckCollisionPointPoly(Vector2 point, const Vector2 *points, int pointCoun
     return collision;
 }
 
+// Check if point is inside a ellipses
+bool CheckCollisionPointEllipse(Vector2 point, Vector2 center, float radiusX, float radiusY)
+{
+    // Scales(normalized values) of vectors
+    float scaleX = (point.x - center.x) / radiusX;
+    float scaleY = (point.y - center.y) / radiusY;
+
+    return (scaleX*scaleY + scaleX*scaleY) <= 1.0f;
+}
+
 // Check collision between two rectangles
 bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2)
 {
@@ -2437,6 +2447,76 @@ bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 
     float distanceSQ = ((dx2*dx2) + (dy2*dy2));
 
     return (distanceSQ <= radius*radius);
+}
+
+// Check collision between two ellipses
+// NOTE: Based on boundary point sampling, checking if points on each ellipse's
+// perimeter fall inside the other ellipse. Slice count adapts to ellipse size.
+bool CheckCollisionEllipses(Vector2 center1, Vector2 radius1, Vector2 center2, Vector2 radius2)
+{
+    float max_dist_1 = fmaxf(radius1.x, radius1.y);
+    float max_dist_2 = fmaxf(radius2.x, radius2.y);
+
+    // get distance of centers - optimizing by not calling sqrtf() possibly every frame
+    float dist_square = (
+        (center1.x - center2.x) * (center1.x - center2.x)
+        +
+        (center1.y - center2.y) * (center1.y - center2.y)
+    );
+
+    // early returns
+    if (dist_square > (max_dist_1 + max_dist_2)*(max_dist_1 + max_dist_2)) {
+        return false;
+    }
+    if (CheckCollisionPointEllipse(center2, center1, radius1.x, radius1.y)) {
+        return true;
+    }
+
+    // the biggest axis radius between these 4 axis radius
+    float r = fmaxf(
+        fmaxf(radius1.x, radius1.y), fmaxf(radius2.x, radius2.y)
+    );
+
+    float error_rate = 0.5f;
+
+    float safe = (1.0f - error_rate/r);
+    // prevent invalid acos domain
+    if      (safe < -1.0f)  safe = -1.0f;
+    else if (safe >  1.0f)  safe =  1.0f;
+
+    float step = acosf(safe) * 2.0f;
+
+    int slices = (int)(2.0f * PI / step);
+    // clamp minimum slice count
+    slices = (slices > 8)? slices : 8;
+
+    // check for ellipse1 point over ellipse2
+    for (int i = 0; i < slices; i++) {
+        float angle = (2.0f * PI * i) / slices;
+        Vector2 point = {
+            center1.x + (radius1.x * cosf(angle)),
+            center1.y + (radius1.y * sinf(angle))
+        };
+
+        if (CheckCollisionPointEllipse(point, center2, radius2.x, radius2.y)) {
+            return true;
+        }
+    }
+
+    // check for ellipse2 point over ellipse1
+    for (int i = 0; i < slices; i++) {
+        float angle = (2.0f * PI * i) / slices;
+        Vector2 point = {
+            center2.x + (radius2.x * cosf(angle)),
+            center2.y + (radius2.y * sinf(angle))
+        };
+
+        if (CheckCollisionPointEllipse(point, center1, radius1.x, radius1.y)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // Get collision rectangle for two rectangles collision
