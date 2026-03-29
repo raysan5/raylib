@@ -759,6 +759,7 @@ Detailed changes:
 [rexm] REVIEWED: `Makefile.Web` before trying to rebuild new example for web by @raysan5
 [rexm] REVIEWED: Using `Makefile.Web` for specific web versions generation by @raysan5
 
+[external] ADDED: `cgltf_write` 1.15, to support glTF models export in the future, by @raysan5
 [external] RENAMED: `rl_gputex.h` to `rltexgpu.h`, compressed textures loading
 [external] REVIEWED: `rltexgpu.h`, make it usable standalone by @raysan5
 [external] REVIEWED: `rltexgpu.h, fix the swizzling in `rl_load_dds_from_memory()` (#5422) by @msmith-codes
@@ -767,16 +768,23 @@ Detailed changes:
 [external] REVIEWED: `sdefl` and `sinfl` issues (#5367) by @raysan5
 [external] REVIEWED: `sinfl_bsr()`, improvements by @RicoP
 [external] REVIEWED: `stb_truetype`, fix composite glyph scaling logic (#4811) by @ashishbhattarai
+[external] UPDATED: `raygui` to 5.0-dev for examples by @raysan5
 [external] UPDATED: dr_libs (#5020) by @Emil2010
-[external] UPDATED: miniaudio to v0.11.22 (#4983) by @M374LX
-[external] UPDATED: miniaudio to v0.11.23 (#5234) by @pyrokn8
-[external] UPDATED: miniaudio to v0.11.24 (#5506) by @vdemcak
-[external] UPDATED: raygui to 5.0-dev for examples by @raysan5
-[external] UPDATED: RGFW to 1.5 (#4688) by @ColleagueRiley
-[external] UPDATED: RGFW to 1.6 (#4795) by @colleagueRiley
-[external] UPDATED: RGFW to 1.7 (#4965) by @M374LX
-[external] UPDATED: RGFW to 1.7.5-dev (#4976) by @M374LX
-[external] UPDATED: RGFW to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `miniaudio` to v0.11.22 (#4983) by @M374LX
+[external] UPDATED: `miniaudio` to v0.11.23 (#5234) by @pyrokn8
+[external] UPDATED: `miniaudio` to v0.11.24 (#5506) by @vdemcak
+[external] UPDATED: `RGFW` to 1.5 (#4688) by @ColleagueRiley
+[external] UPDATED: `RGFW` to 1.6 (#4795) by @colleagueRiley
+[external] UPDATED: `RGFW` to 1.7 (#4965) by @M374LX
+[external] UPDATED: `RGFW` to 1.7.5-dev (#4976) by @M374LX
+[external] UPDATED: `RGFW` to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `cgltf` 1.14 to 1.15 by @raysan5
+[external] UPDATED: `dr_flac` v0.13.0 to v0.13.3 by @raysan5
+[external] UPDATED: `dr_mp3` v0.7.0 to v0.7.4 by @raysan5
+[external] UPDATED: `m3d` to latest master by @raysan5
+[external] UPDATED: `qoi` to latest master by @raysan5
+[external] UPDATED: `qoa` to latest master by @raysan5
+[external] UPDATED: `stb_image_resize2` v2.12 to v2.18 by @raysan5
 
 [misc] ADDED: SECURITY.md for security reporting policies by @raysan5
 [misc] ADDED: `examples/examples_list`, to be used by `rexm` or other tools by @raysan5
