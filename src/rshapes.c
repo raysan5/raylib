@@ -2440,7 +2440,7 @@ bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 
         float dx2 = (p1.x - (dotProduct*(dx))) - center.x;
         float dy2 = (p1.y - (dotProduct*(dy))) - center.y;
         float distanceSQ = ((dx2*dx2) + (dy2*dy2));
-        
+
         if (distanceSQ <= radius*radius) collision = true;
     }
 

@@ -1785,7 +1785,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         // Count the number of replacements needed
         insertPoint = (char *)text;
         for (count = 0; (tempPtr = strstr(insertPoint, search)); count++) insertPoint = tempPtr + searchLen;
-        
+
         if ((textLen + count*(replaceLen - searchLen)) < (MAX_TEXT_BUFFER_LENGTH - 1))
         {
             // TODO: Allow copying data replaced up to maximum buffer size and stop
@@ -1971,7 +1971,7 @@ char *TextInsert(const char *text, const char *insert, int position)
     {
         int textLen = TextLength(text);
         int insertLen = TextLength(insert);
-        
+
         if ((textLen + insertLen) < (MAX_TEXT_BUFFER_LENGTH - 1))
         {
             // TODO: Allow copying data inserted up to maximum buffer size and stop

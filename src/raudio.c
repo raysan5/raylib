@@ -2184,14 +2184,14 @@ void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
 bool IsAudioStreamProcessed(AudioStream stream)
 {
     bool result = false;
-    
+
     if (stream.buffer != NULL)
     {
         ma_mutex_lock(&AUDIO.System.lock);
         result = stream.buffer->isSubBufferProcessed[0] || stream.buffer->isSubBufferProcessed[1];
         ma_mutex_unlock(&AUDIO.System.lock);
     }
-    
+
     return result;
 }
 
@@ -2885,7 +2885,7 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
 static bool SaveFileData(const char *fileName, void *data, int dataSize)
 {
     bool result = true;
-    
+
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wb");
@@ -2919,7 +2919,7 @@ static bool SaveFileData(const char *fileName, void *data, int dataSize)
 static bool SaveFileText(const char *fileName, char *text)
 {
     bool result = true;
-    
+
     if (fileName != NULL)
     {
         FILE *file = fopen(fileName, "wt");
