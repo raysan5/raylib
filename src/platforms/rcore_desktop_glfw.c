@@ -739,6 +739,22 @@ void SetWindowSize(int width, int height)
     CORE.Window.screen.height = height;
 
     glfwSetWindowSize(platform.handle, width, height);
+
+    // Update render size and viewport to match new screen size immediately,
+    // rather than waiting for the async FramebufferSizeCallback.
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        CORE.Window.render.width = (int)(width*scaleDpi.x);
+        CORE.Window.render.height = (int)(height*scaleDpi.y);
+    }
+    else
+    {
+        CORE.Window.render.width = width;
+        CORE.Window.render.height = height;
+    }
+    CORE.Window.currentFbo = CORE.Window.render;
+    SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
