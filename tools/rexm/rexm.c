@@ -2037,8 +2037,10 @@ static int UpdateRequiredFiles(void)
                     // In this case, we focus on web building for: glsl100
                     if (TextFindIndex(resPaths[r], "glsl%i") > -1)
                     {
+                        char *resPathUpdated = TextReplaceAlloc(resPaths[r], "glsl%i", "glsl100");
                         memset(resPaths[r], 0, 256);
-                        strcpy(resPaths[r], TextReplace(resPaths[r], "glsl%i", "glsl100"));
+                        strcpy(resPaths[r], resPathUpdated);
+                        RL_FREE(resPathUpdated);
                     }
 
                     if (r < (resPathCount - 1))
@@ -2140,7 +2142,7 @@ static int UpdateRequiredFiles(void)
         {
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: shaders [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                "Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.c) module.\n\n");
+                "Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.h) module.\n\n");
         }
         else if (i == 6)    // "audio"
         {
@@ -2903,14 +2905,14 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         UnloadFileText(exText);
 
         // Update example.html required text
-        exHtmlTextUpdated[0] = TextReplace(exHtmlText, "raylib web game", exTitle);
-        exHtmlTextUpdated[1] = TextReplace(exHtmlTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
-        exHtmlTextUpdated[2] = TextReplace(exHtmlTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+        exHtmlTextUpdated[0] = TextReplaceAlloc(exHtmlText, "raylib web game", exTitle);
+        exHtmlTextUpdated[1] = TextReplaceAlloc(exHtmlTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        exHtmlTextUpdated[2] = TextReplaceAlloc(exHtmlTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
             TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
-        exHtmlTextUpdated[3] = TextReplace(exHtmlTextUpdated[2], "https://www.raylib.com/games.html",
+        exHtmlTextUpdated[3] = TextReplaceAlloc(exHtmlTextUpdated[2], "https://www.raylib.com/games.html",
             TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
-        exHtmlTextUpdated[4] = TextReplace(exHtmlTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
-        exHtmlTextUpdated[5] = TextReplace(exHtmlTextUpdated[4], "https://github.com/raysan5/raylib",
+        exHtmlTextUpdated[4] = TextReplaceAlloc(exHtmlTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        exHtmlTextUpdated[5] = TextReplaceAlloc(exHtmlTextUpdated[4], "https://github.com/raysan5/raylib",
             TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
         SaveFileText(exHtmlPathCopy, exHtmlTextUpdated[5]);
