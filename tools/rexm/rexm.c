@@ -68,6 +68,7 @@
 #define REXM_MAX_BUFFER_SIZE            (2*1024*1024)      // 2MB
 
 #define REXM_MAX_RESOURCE_PATHS         256
+#define REXM_MAX_RESOURCE_PATH_LENGTH   256
 
 // Create local commit with changes on example renaming
 //#define RENAME_AUTO_COMMIT_CREATION
@@ -2493,25 +2494,21 @@ static void SortExampleByName(rlExampleInfo *items, int count)
     qsort(items, count, sizeof(rlExampleInfo), rlExampleInfoCompare);
 }
 
-// Scan resource paths in example file
-// WARNING: Supported resource file extensions is hardcoded by used file types
-// but new examples could require other file extensions to be added,
-// maybe it should look for '.xxx")' patterns instead
-// TODO: WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png, ...
-static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount)
+// Scan asset paths from a source code file (raylib)
+// WARNING: Supported asset file extensions are hardcoded by used file types
+// but new examples could require other file extensions to be added
+static char **LoadExampleResourcePaths(const char *srcFilePath, int *resPathCount)
 {
-    #define REXM_MAX_RESOURCE_PATH_LEN    256
-
     char **paths = (char **)RL_CALLOC(REXM_MAX_RESOURCE_PATHS, sizeof(char **));
-    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) paths[i] = (char *)RL_CALLOC(REXM_MAX_RESOURCE_PATH_LEN, sizeof(char));
+    for (int i = 0; i < REXM_MAX_RESOURCE_PATHS; i++) paths[i] = (char *)RL_CALLOC(REXM_MAX_RESOURCE_PATH_LENGTH, sizeof(char));
 
     int resCounter = 0;
-    char *code = LoadFileText(filePath);
+    char *code = LoadFileText(srcFilePath);
 
     if (code != NULL)
     {
         // Resources extensions to check
-        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
+        const char *exts[] = { ".png", ".bmp", ".jpg", ".qoi", ".gif", ".raw", ".hdr", ".ttf", ".fnt", ".wav", ".ogg", ".mp3", ".flac", ".mod", ".xm", ".qoa", ".obj", ".iqm", ".glb", ".m3d", ".vox", ".vs", ".fs", ".txt" };
         const int extCount = sizeof(exts)/sizeof(char *);
 
         char *ptr = code;
@@ -2537,9 +2534,9 @@ static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount)
                 !((functionIndex05 != -1) && (functionIndex05 < 40)))    // Not found SaveFileText() before ""
             {
                 int len = (int)(end - start);
-                if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LEN))
+                if ((len > 0) && (len < REXM_MAX_RESOURCE_PATH_LENGTH))
                 {
-                    char buffer[REXM_MAX_RESOURCE_PATH_LEN] = { 0 };
+                    char buffer[REXM_MAX_RESOURCE_PATH_LENGTH] = { 0 };
                     strncpy(buffer, start, len);
                     buffer[len] = '\0';
 
@@ -2574,6 +2571,29 @@ static char **LoadExampleResourcePaths(const char *filePath, int *resPathCount)
 
         UnloadFileText(code);
     }
+
+    /*
+    // Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png
+    // So doing a recursive pass to scan possible files with second resources
+    int currentAssetCounter = resCounter;
+    for (int i = 0; i < currentAssetCounter; i++)
+    {
+        if (IsFileExtension(paths[i], ".fnt;.gltf"))
+        {
+            int assetCount2 = 0;
+            // ERROR: srcFilePath changes on rcursive call and TextFormat() static arrays are oveerride
+            char **assetPaths2 = LoadExampleResourcePaths(TextFormat("%s/%s", GetDirectoryPath(srcFilePath), paths[i]), &assetCount2);
+
+            for (int j = 0; j < assetCount2; j++)
+            {
+                strcpy(paths[resCounter], TextFormat("%s/%s", GetDirectoryPath(paths[i]) + 2, assetPaths2[j]));
+                resCounter++;
+            }
+
+            UnloadExampleResourcePaths(assetPaths2);
+        }
+    }
+    */
 
     *resPathCount = resCounter;
     return paths;
