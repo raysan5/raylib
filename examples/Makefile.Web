@@ -1153,7 +1153,10 @@ text/text_font_filters: text/text_font_filters.c
     --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
 
 text/text_font_loading: text/text_font_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
+    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
+    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
 
 text/text_font_sdf: text/text_font_sdf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
