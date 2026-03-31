@@ -108,7 +108,7 @@ int main(void)
     decalMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
 
     bool showModel = true;
-    Model decalModels[MAX_DECALS] = { 0 };
+    static Model decalModels[MAX_DECALS] = { 0 };
     int decalCount = 0;
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
