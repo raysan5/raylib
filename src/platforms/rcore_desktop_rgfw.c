@@ -823,8 +823,7 @@ void SetWindowSize(int width, int height)
 
     if (!CORE.Window.usingFbo)
     {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
+        SetupViewport(CORE.Window.screen.width, CORE.Window.screen.height);
     }
 
     RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
