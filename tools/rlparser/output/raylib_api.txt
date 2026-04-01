@@ -1784,12 +1784,12 @@ Function 145: IsFileNameValid() (1 input parameters)
 Function 146: LoadDirectoryFiles() (1 input parameters)
   Name: LoadDirectoryFiles
   Return type: FilePathList
-  Description: Load directory filepaths
+  Description: Load directory filepaths, files and directories, no subdirs scan
   Param[1]: dirPath (type: const char *)
 Function 147: LoadDirectoryFilesEx() (3 input parameters)
   Name: LoadDirectoryFilesEx
   Return type: FilePathList
-  Description: Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
+  Description: Load directory filepaths with extension filtering and subdir scan; some filters available: "*.*", "FILES*", "DIRS*"
   Param[1]: basePath (type: const char *)
   Param[2]: filter (type: const char *)
   Param[3]: scanSubdirs (type: bool)
