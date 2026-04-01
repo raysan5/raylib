@@ -267,15 +267,18 @@
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+// File and directory scan filters
+// NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+// WARNING: Custom file filters can be specified but following raylib IsFileExtension() convention: ".png;.wav;.glb"
 #ifndef FILE_FILTER_TAG_ALL
-    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on scan
+#endif
 #ifndef FILE_FILTER_TAG_FILE_ONLY
-    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on scan (no directories)
+#endif
 #ifndef FILE_FILTER_TAG_DIR_ONLY
-    #define FILE_FILTER_TAG_DIR_ONLY   "DIR*"       // Filter to include directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_DIR_ONLY   "DIRS*"      // Filter to include only directories on scan
+#endif
 
 // Flags bitwise operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -2720,17 +2723,18 @@ const char *GetApplicationDirectory(void)
 
 // Load directory filepaths
 // NOTE: Base path is prepended to the scanned filepaths
-// WARNING: Directory is scanned twice, first time to get files count
-// No recursive scanning is done!
+// WARNING: Directory is scanned twice, first time to get paths count
+// Scanneed files and directories, no recursive/subdirs scanning
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     return LoadDirectoryFilesEx(dirPath, FILE_FILTER_TAG_ALL, false);
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
-// Use 'DIR*' to include directories on directory scan
-// Use '*.*' to include all file types and directories on directory scan
-// WARNING: Directory is scanned twice, first time to get files count
+// Use "*.*" to include all files and directories on scan
+// Use "FILES*" to include only files on scan
+// Use "DIRS*" to include only directories on scan
+// WARNING: Directory is scanned twice, first time to get paths count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
     FilePathList files = { 0 };
