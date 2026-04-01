@@ -2573,7 +2573,7 @@ static char **LoadExampleResourcePaths(const char *srcFilePath, int *resPathCoun
     }
 
     /*
-    // Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png
+    // WARNING: Some resources could require linked resources: .fnt --> .png, .mtl --> .png, .gltf --> .png
     // So doing a recursive pass to scan possible files with second resources
     int currentAssetCounter = resCounter;
     for (int i = 0; i < currentAssetCounter; i++)
@@ -2581,7 +2581,7 @@ static char **LoadExampleResourcePaths(const char *srcFilePath, int *resPathCoun
         if (IsFileExtension(paths[i], ".fnt;.gltf"))
         {
             int assetCount2 = 0;
-            // ERROR: srcFilePath changes on rcursive call and TextFormat() static arrays are oveerride
+            // ERROR: srcFilePath changes on rcursive call and TextFormat() static arrays are override
             char **assetPaths2 = LoadExampleResourcePaths(TextFormat("%s/%s", GetDirectoryPath(srcFilePath), paths[i]), &assetCount2);
 
             for (int j = 0; j < assetCount2; j++)
