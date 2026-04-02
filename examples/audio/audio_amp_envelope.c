@@ -194,7 +194,7 @@ static void UpdateEnvelope(Envelope *env)
             break;
 
         case RELEASE:
-            env->currentValue -= (1.0f / env->releaseTime) * sampleTime;
+            env->currentValue -= (env->sustainLevel / env->releaseTime) * sampleTime;
             if (env->currentValue <= 0.001f) // Use a small threshold to avoid infinite tail
             {
                 env->currentValue = 0.0f;
