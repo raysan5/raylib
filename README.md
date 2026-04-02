@@ -1,3 +1,8 @@
+raylib's for ClassicLauncher fork
+--------
+This repository is intended for the [Classic Launcher](https://github.com/marconaveni/ClassicLauncher) and there is no guarantee that it will work with other applications, so I recommend that you obtain it from the [main repository](https://github.com/raysan5/raylib).
+
+
 <img align="left" style="width:260px" src="https://github.com/raysan5/raylib/blob/master/logo/raylib_logo_animation.gif" width="288px">
 
 **raylib is a simple and easy-to-use library to enjoy videogames programming.**
