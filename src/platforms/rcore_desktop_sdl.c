@@ -91,6 +91,10 @@
 
 #define SCANCODE_MAPPED_NUM     232
 
+#if defined(USING_VERSION_SDL3)
+    #define MAX_MONITORS 8
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -100,6 +104,9 @@ typedef struct {
 
     SDL_GameController *gamepad[MAX_GAMEPADS];
     SDL_JoystickID gamepadId[MAX_GAMEPADS]; // Joystick instance ids, they do not start from 0
+#if defined(USING_VERSION_SDL3)
+    SDL_DisplayID displayId[MAX_MONITORS];
+#endif
     SDL_Cursor *cursor;
 } PlatformData;
 
@@ -825,11 +832,13 @@ void SetWindowMonitor(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >=0 ) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         // NOTE 1: SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
         // see commit https://github.com/libsdl-org/SDL/commit/3f5ef7dd422057edbcf3e736107e34be4b75d9ba
         // NOTE 2: A workaround for SDL2 is leaving fullscreen, moving the window, then entering full screen again
@@ -943,6 +952,18 @@ int GetCurrentMonitor(void)
     // Be aware that this returns an ID in SDL3 and a Index in SDL2
     currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
 
+#if defined(USING_VERSION_SDL3)
+    int monitorCount = GetMonitorCount();
+    for (int i = 0; (i < monitorCount) && (i < MAX_MONITORS); i++) 
+    {
+        if (platform.displayId[i] == currentMonitor)
+        {
+            currentMonitor = i;
+            break;
+        }
+    }
+#endif
+
     return currentMonitor;
 }
 
@@ -951,11 +972,13 @@ Vector2 GetMonitorPosition(int monitor)
 {
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >=0 ) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         SDL_Rect displayBounds;
 
     #if defined(USING_VERSION_SDL3)
@@ -979,11 +1002,13 @@ int GetMonitorWidth(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >=0 ) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         width = mode.w;
@@ -1000,11 +1025,13 @@ int GetMonitorHeight(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >= 0) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         height = mode.h;
@@ -1021,11 +1048,13 @@ int GetMonitorPhysicalWidth(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >= 0) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         float ddpi = 0.0f;
         SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
         SDL_DisplayMode mode;
@@ -1045,11 +1074,13 @@ int GetMonitorPhysicalHeight(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >= 0) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         float ddpi = 0.0f;
         SDL_GetDisplayDPI(monitor, &ddpi, NULL, NULL);
         SDL_DisplayMode mode;
@@ -1069,11 +1100,13 @@ int GetMonitorRefreshRate(int monitor)
 
     const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >= 0) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         SDL_DisplayMode mode;
         SDL_GetCurrentDisplayMode(monitor, &mode);
         refresh = mode.refresh_rate;
@@ -1089,11 +1122,13 @@ const char *GetMonitorName(int monitor)
     const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
-    if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
+    if ((monitor >= 0) && (monitor < monitorCount) && (monitor < MAX_MONITORS))
+    {
+        monitor = platform.displayId[monitor];
 #else
     if ((monitor >= 0) && (monitor < monitorCount))
-#endif
     {
+#endif
         return SDL_GetDisplayName(monitor);
     }
     else TRACELOG(LOG_WARNING, "SDL: Failed to find selected monitor");
@@ -2086,6 +2121,28 @@ int InitPlatform(void)
     }
 
     //----------------------------------------------------------------------------
+
+#if defined(USING_VERSION_SDL3)
+    // Init monitors
+    for (int i = 0; i < MAX_MONITORS; i++) 
+    {
+        platform.displayId[i] = -1;
+    }
+
+    int numMonitors = 0;
+    SDL_DisplayID *displays = SDL_GetDisplays(&numMonitors);
+    if (numMonitors < 1) 
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to find monitors");
+        SDL_free(displays);
+        return -1;
+    }
+
+    for (int i = 0; (i < numMonitors) && (i < MAX_MONITORS); i++) 
+    {
+        platform.displayId[i] = displays[i];
+    }
+#endif
 
     // Initialize input events system
     //----------------------------------------------------------------------------
