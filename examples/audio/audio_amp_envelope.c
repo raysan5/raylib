@@ -93,7 +93,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsKeyPressed(KEY_SPACE)) env.state = ATTACK; 
+        if (IsKeyPressed(KEY_SPACE)) env.state = ATTACK;
 
         if (IsKeyReleased(KEY_SPACE) && (env.state != IDLE)) env.state = RELEASE;
 
@@ -106,14 +106,14 @@ int main(void)
                     UpdateEnvelope(&env);
                     FillAudioBuffer(i, buffer, env.currentValue, &audioTime);
                 }
-            } 
+            }
             else
             {
                 // Clear buffer if silent to avoid looping noise
                 for (int i = 0; i < BUFFER_SIZE; i++) buffer[i] = 0;
                 audioTime = 0.0f;
             }
-            
+
             UpdateAudioStream(stream, buffer, BUFFER_SIZE);
         }
 
@@ -166,7 +166,7 @@ static void FillAudioBuffer(int i, float *buffer, float envelopeValue, float *au
 static void UpdateEnvelope(Envelope *env)
 {
     // Calculate the time delta for ONE sample (1/44100)
-    float sampleTime = 1.0f/SAMPLE_RATE; 
+    float sampleTime = 1.0f/SAMPLE_RATE;
 
     switch(env->state)
     {
@@ -178,7 +178,7 @@ static void UpdateEnvelope(Envelope *env)
                 env->currentValue = 1.0f;
                 env->state = DECAY;
             }
-            
+
         } break;
         case DECAY:
         {
@@ -188,12 +188,12 @@ static void UpdateEnvelope(Envelope *env)
                 env->currentValue = env->sustainLevel;
                 env->state = SUSTAIN;
             }
-            
+
         } break;
         case SUSTAIN:
         {
             env->currentValue = env->sustainLevel;
-            
+
         } break;
         case RELEASE:
         {
@@ -203,8 +203,8 @@ static void UpdateEnvelope(Envelope *env)
                 env->currentValue = 0.0f;
                 env->state = IDLE;
             }
-            
-        } break;  
+
+        } break;
         default: break;
     }
 }
@@ -219,7 +219,7 @@ static void DrawADSRGraph(Envelope *env, Rectangle bounds)
 
     // Total time to visualize (sum of A, D, R + a padding for Sustain)
     float totalTime = env->attackTime + env->decayTime + sustainWidth + env->releaseTime;
-    
+
     float scaleX = bounds.width/totalTime;
     float scaleY = bounds.height;
 
