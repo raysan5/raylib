@@ -2357,7 +2357,8 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
 
     sw_pixel_read_color8_f readColor8 = NULL;
     sw_pixel_read_color_f readColor = NULL;
-    if (!isDepth) {
+    if (!isDepth)
+    {
         readColor8 = sw_pixel_get_read_color8_func(format);
         readColor = sw_pixel_get_read_color_func(format);
     }
@@ -2803,7 +2804,8 @@ static const sw_blend_f SW_BLEND_TABLE[SW_BLEND_FACTOR_COUNT][SW_BLEND_FACTOR_CO
 // Maps a GL blend factor enum to its compact table index
 static inline int sw_blend_factor_index(SWfactor f)
 {
-    switch (f) {
+    switch (f)
+    {
         case SW_ZERO:                return 0;
         case SW_ONE:                 return 1;
         case SW_SRC_COLOR:           return 2;
@@ -2821,7 +2823,8 @@ static inline int sw_blend_factor_index(SWfactor f)
 
 static bool sw_blend_factor_needs_alpha(SWfactor f)
 {
-    switch (f) {
+    switch (f)
+    {
         case SW_SRC_ALPHA:
         case SW_ONE_MINUS_SRC_ALPHA:
         case SW_DST_ALPHA:
@@ -2829,6 +2832,7 @@ static bool sw_blend_factor_needs_alpha(SWfactor f)
         case SW_SRC_ALPHA_SATURATE: return true;
         default: break;
     }
+
     return false;
 }
 
