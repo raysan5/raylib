@@ -1539,11 +1539,11 @@ RLAPI const char *TextSubtext(const char *text, int position, int length);      
 RLAPI const char *TextRemoveSpaces(const char *text);                                       // Remove text spaces, concat words
 RLAPI char *GetTextBetween(const char *text, const char *begin, const char *end);           // Get text between two strings
 RLAPI char *TextReplace(const char *text, const char *search, const char *replacement);     // Replace text string with new string
-RLAPI char *TextReplaceAlloc(const char *text, const char *search, const char *replacement);   // Replace text string with new string, memory must be MemFree()
+RLAPI char *TextReplaceAlloc(const char *text, const char *search, const char *replacement); // Replace text string with new string, memory must be MemFree()
 RLAPI char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings
 RLAPI char *TextReplaceBetweenAlloc(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings, memory must be MemFree()
 RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a defined byte position
-RLAPI char *TextInsertAlloc(const char *text, const char *insert, int position);               // Insert text in a defined byte position, memory must be MemFree()
+RLAPI char *TextInsertAlloc(const char *text, const char *insert, int position);            // Insert text in a defined byte position, memory must be MemFree()
 RLAPI char *TextJoin(char **textList, int count, const char *delimiter);                    // Join text strings with delimiter
 RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor
