@@ -20,10 +20,10 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-#include <math.h>
+#include <math.h>           // Required for: sinf()
 
-#define BUFFER_SIZE 4096
-#define SAMPLE_RATE 44100
+#define BUFFER_SIZE      4096
+#define SAMPLE_RATE     44100
 
 // Wave state
 typedef enum {
@@ -47,9 +47,9 @@ typedef struct {
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
-static void FillAudioBuffer(int i, float* buffer, float envelopeValue, float* audioTime);
-static void UpdateEnvelope(Envelope* env);
-static void DrawADSRGraph(const Envelope *env, Rectangle bounds);
+static void FillAudioBuffer(int i, float *buffer, float envelopeValue, float *audioTime);
+static void UpdateEnvelope(Envelope *env);
+static void DrawADSRGraph(Envelope *env, Rectangle bounds);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -93,24 +93,22 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
+        if (IsKeyPressed(KEY_SPACE)) env.state = ATTACK; 
 
-        if (IsKeyPressed(KEY_SPACE)) {
-            env.state = ATTACK; 
-        }
+        if (IsKeyReleased(KEY_SPACE) && (env.state != IDLE)) env.state = RELEASE;
 
-        if (IsKeyReleased(KEY_SPACE)) {
-            if (env.state != IDLE) env.state = RELEASE;
-        }
-
-        if (IsAudioStreamProcessed(stream)) {
-
-            if (env.state != IDLE || env.currentValue > 0.0f) {
+        if (IsAudioStreamProcessed(stream))
+        {
+            if ((env.state != IDLE) || (env.currentValue > 0.0f))
+            {
                 for (int i = 0; i < BUFFER_SIZE; i++)
                 {
                     UpdateEnvelope(&env);
                     FillAudioBuffer(i, buffer, env.currentValue, &audioTime);
                 }
-            } else {
+            } 
+            else
+            {
                 // Clear buffer if silent to avoid looping noise
                 for (int i = 0; i < BUFFER_SIZE; i++) buffer[i] = 0;
                 audioTime = 0.0f;
@@ -139,9 +137,11 @@ int main(void)
             DrawText(TextFormat("Current Gain: %2.2f", env.currentValue), 535, 345 - (env.currentValue * 100), 10, MAROON);
 
             DrawText("Press SPACE to PLAY the sound!", 200, 400, 20, LIGHTGRAY);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
+
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadAudioStream(stream);
@@ -156,57 +156,60 @@ int main(void)
 //------------------------------------------------------------------------------------
 // Module Functions Definition
 //------------------------------------------------------------------------------------
-static void FillAudioBuffer(int i, float* buffer, float envelopeValue, float* audioTime)
+static void FillAudioBuffer(int i, float *buffer, float envelopeValue, float *audioTime)
 {
-    
     int frequency = 440;
-    buffer[i] = envelopeValue * sinf(2.0f * PI * frequency * (*audioTime));
-    *audioTime += 1.0f / SAMPLE_RATE;
+    buffer[i] = envelopeValue*sinf(2.0f*PI*frequency*(*audioTime));
+    *audioTime += (1.0f/SAMPLE_RATE);
 }
 
 static void UpdateEnvelope(Envelope *env)
 {
     // Calculate the time delta for ONE sample (1/44100)
-    float sampleTime = 1.0f / SAMPLE_RATE; 
+    float sampleTime = 1.0f/SAMPLE_RATE; 
 
     switch(env->state)
     {
         case ATTACK:
-            env->currentValue += (1.0f / env->attackTime) * sampleTime;
+        {
+            env->currentValue += (1.0f/env->attackTime)*sampleTime;
             if (env->currentValue >= 1.0f)
             {
                 env->currentValue = 1.0f;
                 env->state = DECAY;
             }
-            break;
-
+            
+        } break;
         case DECAY:
-            env->currentValue -= ((1.0f - env->sustainLevel) / env->decayTime) * sampleTime;
+        {
+            env->currentValue -= ((1.0f - env->sustainLevel)/env->decayTime)*sampleTime;
             if (env->currentValue <= env->sustainLevel)
             {
                 env->currentValue = env->sustainLevel;
                 env->state = SUSTAIN;
             }
-            break;
-
+            
+        } break;
         case SUSTAIN:
+        {
             env->currentValue = env->sustainLevel;
-            break;
-
+            
+        } break;
         case RELEASE:
-            env->currentValue -= (env->sustainLevel / env->releaseTime) * sampleTime;
+        {
+            env->currentValue -= (env->sustainLevel/env->releaseTime)*sampleTime;
             if (env->currentValue <= 0.001f) // Use a small threshold to avoid infinite tail
             {
                 env->currentValue = 0.0f;
                 env->state = IDLE;
             }
-            break;
             
+        } break;  
         default: break;
     }
 }
 
-static void DrawADSRGraph(const Envelope *env, Rectangle bounds)
+static void DrawADSRGraph(Envelope *env, Rectangle bounds)
 {
     DrawRectangleRec(bounds, Fade(LIGHTGRAY, 0.3f));
     DrawRectangleLinesEx(bounds, 1, GRAY);
@@ -217,14 +220,14 @@ static void DrawADSRGraph(const Envelope *env, Rectangle bounds)
     // Total time to visualize (sum of A, D, R + a padding for Sustain)
     float totalTime = env->attackTime + env->decayTime + sustainWidth + env->releaseTime;
     
-    float scaleX = bounds.width / totalTime;
+    float scaleX = bounds.width/totalTime;
     float scaleY = bounds.height;
 
-    Vector2 start   = { bounds.x, bounds.y + bounds.height };
-    Vector2 peak    = { start.x + (env->attackTime * scaleX), bounds.y };
-    Vector2 sustain = { peak.x + (env->decayTime * scaleX), bounds.y + (1.0f - env->sustainLevel) * scaleY };
-    Vector2 rel     = { sustain.x + (sustainWidth * scaleX), sustain.y };
-    Vector2 end     = { rel.x + (env->releaseTime * scaleX), bounds.y + bounds.height };
+    Vector2 start = { bounds.x, bounds.y + bounds.height };
+    Vector2 peak = { start.x + (env->attackTime*scaleX), bounds.y };
+    Vector2 sustain = { peak.x + (env->decayTime*scaleX), bounds.y + (1.0f - env->sustainLevel)*scaleY };
+    Vector2 rel = { sustain.x + (sustainWidth*scaleX), sustain.y };
+    Vector2 end = { rel.x + (env->releaseTime*scaleX), bounds.y + bounds.height };
 
     DrawLineV(start, peak, SKYBLUE);
     DrawLineV(peak, sustain, BLUE);
