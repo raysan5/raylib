@@ -4,7 +4,7 @@ changelog
 Current Release:    raylib 5.5 (18 November 2024)
 
 -------------------------------------------------------------------------
-Release:     raylib 6.0 (?? March 2026)
+Release:     raylib 6.0 (23 April 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - New Software Renderer backend [rlsw]
@@ -285,6 +285,7 @@ Detailed changes:
 [rtext] REVIEWED: `TextToFloat()`, remove removed inaccurate comment (#4596) by @hexmaster111
 [rtext] REDESIGNED: `LoadFontData()`, added input parameter by @raysan5 -WARNING-
 [rmodels] ADDED: Support CPU animation in OpenGL 1.1 (#4925) by @JeffM2501
+[rmodels] REMOVED: `DrawModelPoints()` and `DrawModelPointsEx()`, moved to an example (#5697) by @maiconpintoabreu -WARNING-
 [rmodels] RENAMED: Skinning shader variables (new default naming) by @raysan5
 [rmodels] REVIEWED: glTF animation framerate calculation (#4472, #5445) by @TheLazyIndianTechie
 [rmodels] REVIEWED: Assign meshes without bone weights to the bone they are attached to so they animate by @Jeffm2501
@@ -311,6 +312,7 @@ Detailed changes:
 [rmodels] REVIEWED: `LoadModelAnimationsGLTF()`, properly load 1 frame animations (#5561) by @arlez80
 [rmodels] REVIEWED: `LoadModelAnimationsGLTF()`, anim correctly inherits world transform (#5206) by @ArmanOmmid
 [rmodels] REVIEWED: `UploadMesh()`, improve default normal and tangent values (#4763) by @Bigfoot71
+[rmodels] REVIEWED: `UplaodMesh()`, fix for devices without VAO support (#5692) by @psxdev
 [rmodels] REVIEWED: `GenMeshTangents()`, improvements (#4937) by @Bigfoot71
 [rmodels] REVIEWED: `UpdateModelAnimation()` optimization (#5244) by @Arrangemonk
 [rmodels] REVIEWED: `UpdateModelAnimationBones()`, break on first mesh found and formating by @raysan5
@@ -322,6 +324,7 @@ Detailed changes:
 [rmodels] REVIEWED: `DrawMeshInstanced()`, breaking if instanceTransform was unused (#5469) by @al13n321
 [rmodels] REVIEWED: `DrawSphereEx()`, normals support (#4926) by @karl-zylinski
 [rmodels] REVIEWED: `ExportMesh()`, improve OBJ vertex data precision and lower memory usage (#4496) by @mikeemm
+[rmodels] REVIEWED: `CheckCollisionSpheres()`, simplified using `Vector3DistanceSqr()` (#5695) by @Bigfoot71
 [raudio] REVIEWED: Fix a glitch at the end of a sound (#5578) by @mackron
 [raudio] REVIEWED: Improvements to device configuration (#5577) by @mackron
 [raudio] REVIEWED: Initialize sound alias properties as if it was a new sound (#5123) by @JeffM2501
