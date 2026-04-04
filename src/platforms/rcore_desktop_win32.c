@@ -2091,6 +2091,10 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
 
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
+
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    swResize(clientSize.cx, clientSize.cy);
+    #endif
 }
 
 // Update window style
