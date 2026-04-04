@@ -837,14 +837,8 @@ void SwapScreenBuffer(void)
     uint32_t height = mode->vdisplay;
 
     // Dumb buffers use a fixed format based on bpp
-#if SW_COLOR_BUFFER_BITS == 24
     const uint32_t bpp = 32;    // 32 bits per pixel (XRGB8888 format)
     const uint32_t depth = 24;  // Color depth, here only 24 bits, alpha is not used
-#else
-    // REVIEW: Not sure how it will be interpreted (RGB or RGBA?)
-    const uint32_t bpp = SW_COLOR_BUFFER_BITS;
-    const uint32_t depth = SW_COLOR_BUFFER_BITS;
-#endif
 
     // Create a dumb buffer for software rendering
     struct drm_mode_create_dumb creq = { 0 };
@@ -899,7 +893,7 @@ void SwapScreenBuffer(void)
 
     // Copy the software rendered buffer to the dumb buffer with scaling if needed
     // NOTE: RLSW will make a simple copy if the dimensions match
-    swBlitFramebuffer(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
+    swBlitPixels(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
 
     // Unmap the buffer
     munmap(dumbBuffer, creq.size);
