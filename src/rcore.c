@@ -267,15 +267,18 @@
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+// File and directory scan filters
+// NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+// WARNING: Custom file filters can be specified but following raylib IsFileExtension() convention: ".png;.wav;.glb"
 #ifndef FILE_FILTER_TAG_ALL
-    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on scan
+#endif
 #ifndef FILE_FILTER_TAG_FILE_ONLY
-    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on scan (no directories)
+#endif
 #ifndef FILE_FILTER_TAG_DIR_ONLY
-    #define FILE_FILTER_TAG_DIR_ONLY   "DIR*"       // Filter to include directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_DIR_ONLY   "DIRS*"      // Filter to include only directories on scan
+#endif
 
 // Flags bitwise operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -821,7 +824,7 @@ int GetRenderWidth(void)
 {
     int width = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+    if (CORE.Window.usingFbo) width = CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
     return width;
@@ -832,7 +835,7 @@ int GetRenderHeight(void)
 {
     int height = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+    if (CORE.Window.usingFbo) height = CORE.Window.currentFbo.height;
     else height = CORE.Window.render.height;
 
     return height;
@@ -1227,7 +1230,7 @@ void UnloadVrStereoConfig(VrStereoConfig config)
 //----------------------------------------------------------------------------------
 
 // Load shader from files and bind default locations
-// NOTE: If shader string is NULL, using default vertex/fragment shaders
+// NOTE: If shader filename is NULL, using default vertex/fragment shaders
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
@@ -1621,18 +1624,20 @@ int GetFPS(void)
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
 
-    if (fpsFrame == 0) return 0;
-
-    if ((GetTime() - last) > FPS_STEP)
+    if (fpsFrame != 0)
     {
-        last = (float)GetTime();
-        index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
-        average -= history[index];
-        history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
-        average += history[index];
-    }
+        if ((GetTime() - last) > FPS_STEP)
+        {
+            last = (float)GetTime();
+            index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
+            average -= history[index];
+            history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
+            average += history[index];
+        }
 
-    fps = (int)roundf(1.0f/average);
+        fps = (int)roundf(1.0f/average);
+    }
+    else fps = 0;
 #endif
 
     return fps;
@@ -2025,7 +2030,7 @@ void UnloadFileData(unsigned char *data)
 // Save data to file from buffer
 bool SaveFileData(const char *fileName, void *data, int dataSize)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
@@ -2043,20 +2048,20 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
             else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // Export data to code (.h), returns true on success
 bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -2096,14 +2101,14 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[dataSize - 1]);
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
 
-    return success;
+    return result;
 }
 
 // Load text data from file, returns a '\0' terminated string
@@ -2166,7 +2171,7 @@ void UnloadFileText(char *text)
 // Save text data to file (write), string must be '\0' terminated
 bool SaveFileText(const char *fileName, const char *text)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
@@ -2181,14 +2186,14 @@ bool SaveFileText(const char *fileName, const char *text)
             if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // File access custom callbacks
@@ -2298,7 +2303,7 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
-        fileTextUpdated = TextReplace(fileText, search, replacement);
+        fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
         result = SaveFileText(fileName, fileTextUpdated);
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
@@ -2718,17 +2723,18 @@ const char *GetApplicationDirectory(void)
 
 // Load directory filepaths
 // NOTE: Base path is prepended to the scanned filepaths
-// WARNING: Directory is scanned twice, first time to get files count
-// No recursive scanning is done!
+// WARNING: Directory is scanned twice, first time to get paths count
+// Scanneed files and directories, no recursive/subdirs scanning
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     return LoadDirectoryFilesEx(dirPath, FILE_FILTER_TAG_ALL, false);
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
-// Use 'DIR*' to include directories on directory scan
-// Use '*.*' to include all file types and directories on directory scan
-// WARNING: Directory is scanned twice, first time to get files count
+// Use "*.*" to include all files and directories on scan
+// Use "FILES*" to include only files on scan
+// Use "DIRS*" to include only directories on scan
+// WARNING: Directory is scanned twice, first time to get paths count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
     FilePathList files = { 0 };
@@ -3628,7 +3634,7 @@ void UnloadAutomationEventList(AutomationEventList list)
 // Export automation events list as text file
 bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #if SUPPORT_AUTOMATION_EVENTS
     // Export events as binary file
@@ -3646,7 +3652,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
         memcpy(binBuffer + offset, list.events, sizeof(AutomationEvent)*list.count);
         offset += sizeof(AutomationEvent)*list.count;
 
-        success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
+        result = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
         RL_FREE(binBuffer);
     }
     */
@@ -3677,12 +3683,12 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     }
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 #endif
 
-    return success;
+    return result;
 }
 
 // Setup automation event list to record to

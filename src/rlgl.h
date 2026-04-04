@@ -1613,6 +1613,11 @@ void rlNormal3f(float x, float y, float z)
         normaly = RLGL.State.transform.m1*x + RLGL.State.transform.m5*y + RLGL.State.transform.m9*z;
         normalz = RLGL.State.transform.m2*x + RLGL.State.transform.m6*y + RLGL.State.transform.m10*z;
     }
+
+    // NOTE: Default behavior assumes the normal vector is in the correct space for what the shader expects,
+    // it could be not normalized to 0.0f..1.0f, magnitud can be useed for some effects
+    /*
+    // WARNING: Vector normalization if required
     float length = sqrtf(normalx*normalx + normaly*normaly + normalz*normalz);
     if (length != 0.0f)
     {
@@ -1621,6 +1626,7 @@ void rlNormal3f(float x, float y, float z)
         normaly *= ilength;
         normalz *= ilength;
     }
+    */
     RLGL.State.normalx = normalx;
     RLGL.State.normaly = normaly;
     RLGL.State.normalz = normalz;
@@ -4647,14 +4653,14 @@ void rlUpdateShaderBuffer(unsigned int id, const void *data, unsigned int dataSi
 // Get SSBO buffer size
 unsigned int rlGetShaderBufferSize(unsigned int id)
 {
+    unsigned int result = 0;
 #if defined(GRAPHICS_API_OPENGL_43)
     GLint64 size = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glGetBufferParameteri64v(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, &size);
-    return (size > 0)? (unsigned int)size : 0;
-#else
-    return 0;
+    if (size > 0) result = (unsigned int)size;
 #endif
+    return result;
 }
 
 // Read SSBO buffer data (GPU->CPU)

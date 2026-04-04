@@ -21,7 +21,7 @@ void main()
     // Convert the (normalized) texel color RED component (GB would work, too)
     // to the palette index by scaling up from [0..1] to [0..255]
     int index = int(texelColor.r*255.0);
-    
+
     ivec3 color = ivec3(0);
 
     // NOTE: On GLSL 100 we are not allowed to index a uniform array by a variable value,
@@ -34,7 +34,7 @@ void main()
     else if (index == 5) color = palette[5];
     else if (index == 6) color = palette[6];
     else if (index == 7) color = palette[7];
-    
+
     //gl_FragColor = texture2D(palette, texelColor.xy); // Alternative to ivec3
 
     // Calculate final fragment color. Note that the palette color components

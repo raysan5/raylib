@@ -6,6 +6,7 @@ Here is a wishlist with features and ideas to improve the library. Note that fea
  - [GitHub PRs](https://github.com/raysan5/raylib/pulls) open with improvements to be reviewed.
  - [raylib source code](https://github.com/raysan5/raylib/tree/master/src) has multiple *TODO* comments around code with pending things to review or improve.
  - raylib wishlists discussions are open to everyone to ask for improvements, feel free to check and comment:
+    - [raylib 7.0 wishlist](https://github.com/raysan5/raylib/discussions/5710)
     - [raylib 6.0 wishlist](https://github.com/raysan5/raylib/discussions/4660)
     - [raylib 5.0 wishlist](https://github.com/raysan5/raylib/discussions/2952)
     - [raylib wishlist 2022](https://github.com/raysan5/raylib/discussions/2272)
@@ -21,7 +22,7 @@ _Current version of raylib is complete and functional but there is always room f
  - [ ] `rcore_desktop_wayland`: Create additional platform backend: Linux/Wayland
  - [ ] `rcore`: Investigate alternative embedded platforms and realtime OSs
  - [ ] `rlsw`: Software renderer optimizations: mipmaps, platform-specific SIMD
- - [ ] `rtextures`: Consider moving N-patch system to separate example
+ - [ ] `rtextures`: Consider removing N-patch system, provide as separate example
  - [ ] `rtextures`: Review blending modes system, provide more options or better samples
  - [ ] `rtext`: Investigate the recently opened [`Slug`](https://sluglibrary.com/) font rendering algorithm
  - [ ] `raudio`: Support microphone input, basic API to read microphone

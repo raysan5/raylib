@@ -58,7 +58,7 @@ void main()
     float bias = max(0.0008*(1.0 - dot(normal, l)), 0.00008);
     int shadowCounter = 0;
     const int numSamples = 9;
-    
+
     // PCF (percentage-closer filtering) algorithm:
     // Instead of testing if just one point is closer to the current point,
     // we test the surrounding points as well
@@ -72,7 +72,7 @@ void main()
             if (curDepth - bias > sampleDepth) shadowCounter++;
         }
     }
-    
+
     finalColor = mix(finalColor, vec4(0, 0, 0, 1), float(shadowCounter)/float(numSamples));
 
     // Add ambient lighting whether in shadow or not

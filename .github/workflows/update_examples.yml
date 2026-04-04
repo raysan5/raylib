@@ -12,11 +12,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-  
+
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v14
       with:

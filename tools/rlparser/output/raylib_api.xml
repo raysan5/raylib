@@ -682,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="599">
+    <Functions count="600">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1122,10 +1122,10 @@
         <Function name="IsFileNameValid" retType="bool" paramCount="1" desc="Check if fileName is valid for the platform/OS">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="LoadDirectoryFiles" retType="FilePathList" paramCount="1" desc="Load directory filepaths">
+        <Function name="LoadDirectoryFiles" retType="FilePathList" paramCount="1" desc="Load directory filepaths, files and directories, no subdirs scan">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result">
+        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and subdir scan; some filters available: "*.*", "FILES*", "DIRS*"">
             <Param type="const char *" name="basePath" desc="" />
             <Param type="const char *" name="filter" desc="" />
             <Param type="bool" name="scanSubdirs" desc="" />
@@ -1809,7 +1809,7 @@
             <Param type="Image" name="image" desc="" />
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="ExportImageToMemory" retType="unsigned char *" paramCount="3" desc="Export image to memory buffer">
+        <Function name="ExportImageToMemory" retType="unsigned char *" paramCount="3" desc="Export image to memory buffer, memory must be MemFree()">
             <Param type="Image" name="image" desc="" />
             <Param type="const char *" name="fileType" desc="" />
             <Param type="int *" name="fileSize" desc="" />
@@ -2525,18 +2525,34 @@
             <Param type="const char *" name="begin" desc="" />
             <Param type="const char *" name="end" desc="" />
         </Function>
-        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string (WARNING: memory must be freed!)">
+        <Function name="TextReplace" retType="char *" paramCount="3" desc="Replace text string with new string">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="search" desc="" />
             <Param type="const char *" name="replacement" desc="" />
         </Function>
-        <Function name="TextReplaceBetween" retType="char *" paramCount="4" desc="Replace text between two specific strings (WARNING: memory must be freed!)">
+        <Function name="TextReplaceAlloc" retType="char *" paramCount="3" desc="Replace text string with new string, memory must be MemFree()">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="search" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="TextReplaceBetween" retType="char *" paramCount="4" desc="Replace text between two specific strings">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="begin" desc="" />
             <Param type="const char *" name="end" desc="" />
             <Param type="const char *" name="replacement" desc="" />
         </Function>
-        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a position (WARNING: memory must be freed!)">
+        <Function name="TextReplaceBetweenAlloc" retType="char *" paramCount="4" desc="Replace text between two specific strings, memory must be MemFree()">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="begin" desc="" />
+            <Param type="const char *" name="end" desc="" />
+            <Param type="const char *" name="replacement" desc="" />
+        </Function>
+        <Function name="TextInsert" retType="char *" paramCount="3" desc="Insert text in a defined byte position">
+            <Param type="const char *" name="text" desc="" />
+            <Param type="const char *" name="insert" desc="" />
+            <Param type="int" name="position" desc="" />
+        </Function>
+        <Function name="TextInsertAlloc" retType="char *" paramCount="3" desc="Insert text in a defined byte position, memory must be MemFree()">
             <Param type="const char *" name="text" desc="" />
             <Param type="const char *" name="insert" desc="" />
             <Param type="int" name="position" desc="" />
@@ -2748,20 +2764,6 @@
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="DrawModelWiresEx" retType="void" paramCount="6" desc="Draw a model wires (with texture if set) with extended parameters">
-            <Param type="Model" name="model" desc="" />
-            <Param type="Vector3" name="position" desc="" />
-            <Param type="Vector3" name="rotationAxis" desc="" />
-            <Param type="float" name="rotationAngle" desc="" />
-            <Param type="Vector3" name="scale" desc="" />
-            <Param type="Color" name="tint" desc="" />
-        </Function>
-        <Function name="DrawModelPoints" retType="void" paramCount="4" desc="Draw a model as points">
-            <Param type="Model" name="model" desc="" />
-            <Param type="Vector3" name="position" desc="" />
-            <Param type="float" name="scale" desc="" />
-            <Param type="Color" name="tint" desc="" />
-        </Function>
-        <Function name="DrawModelPointsEx" retType="void" paramCount="6" desc="Draw a model as points with extended parameters">
             <Param type="Model" name="model" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="rotationAxis" desc="" />

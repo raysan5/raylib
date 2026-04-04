@@ -821,6 +821,11 @@ void SetWindowSize(int width, int height)
         CORE.Window.screen.height = height;
     }
 
+    if (!CORE.Window.usingFbo)
+    {
+        SetupViewport(CORE.Window.screen.width, CORE.Window.screen.height);
+    }
+
     RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
 }
 

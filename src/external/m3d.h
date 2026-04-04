@@ -236,7 +236,8 @@ typedef struct {
 #ifdef M3D_ASCII
 #define M3D_PROPERTYDEF(f,i,n) { (f), (i), (char*)(n) }
     char *key;
-#else
+#endif
+#ifndef M3D_ASCII
 #define M3D_PROPERTYDEF(f,i,n) { (f), (i) }
 #endif
 } m3dpd_t;
@@ -414,7 +415,8 @@ typedef struct {
 #ifdef M3D_ASCII
 #define M3D_CMDDEF(t,n,p,a,b,c,d,e,f,g,h) { (char*)(n), (p), { (a), (b), (c), (d), (e), (f), (g), (h) } }
     char *key;
-#else
+#endif
+#ifndef M3D_ASCII
 #define M3D_CMDDEF(t,n,p,a,b,c,d,e,f,g,h) { (p), { (a), (b), (c), (d), (e), (f), (g), (h) } }
 #endif
     uint8_t p;
@@ -674,6 +676,10 @@ static m3dcd_t m3d_commandtypes[] = {
 #include <stdlib.h>
 #include <string.h>
 
+/* we'll need this with M3D_NOTEXTURE */
+char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header);
+
+#ifndef M3D_NOTEXTURE
 #if !defined(M3D_NOIMPORTER) && !defined(STBI_INCLUDE_STB_IMAGE_H)
 /* PNG decompressor from
 
@@ -1868,6 +1874,11 @@ static void *_m3dstbi__png_load(_m3dstbi__context *s, int *x, int *y, int *comp,
 #if !defined(M3D_NOIMPORTER) && defined(STBI_INCLUDE_STB_IMAGE_H) && !defined(STB_IMAGE_IMPLEMENTATION)
 #error "stb_image.h included without STB_IMAGE_IMPLEMENTATION. Sorry, we need some stuff defined inside the ifguard for proper integration"
 #endif
+#else
+#if !defined(STBI_INCLUDE_STB_IMAGE_H) || defined(STBI_NO_ZLIB)
+#error "stb_image.h not included or STBI_NO_ZLIB defined. Sorry, we need its zlib implementation for proper integration"
+#endif
+#endif /* M3D_NOTEXTURE */
 
 #if defined(M3D_EXPORTER) && !defined(INCLUDE_STB_IMAGE_WRITE_H)
 /* zlib_compressor from
@@ -2168,9 +2179,11 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
     unsigned int i, len = 0;
     unsigned char *buff = NULL;
     char *fn2;
+#ifndef M3D_NOTEXTURE
     unsigned int w, h;
     stbi__context s;
     stbi__result_info ri;
+#endif
 
     /* failsafe */
     if(!fn || !*fn) return M3D_UNDEF;
@@ -2209,13 +2222,17 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
     if(!model->texture) {
         if(buff && freecb) (*freecb)(buff);
         model->errcode = M3D_ERR_ALLOC;
+        model->numtexture = 0;
         return M3D_UNDEF;
     }
+    memset(&model->texture[i], 0, sizeof(m3dtx_t));
     model->texture[i].name = fn;
-    model->texture[i].w = model->texture[i].h = 0; model->texture[i].d = NULL;
     if(buff) {
         if(buff[0] == 0x89 && buff[1] == 'P' && buff[2] == 'N' && buff[3] == 'G') {
-            s.read_from_callbacks = 0;
+#ifndef M3D_NOTEXTURE
+            /* return pixel buffer of the decoded texture */
+            memset(&s, 0, sizeof(s));
+            memset(&ri, 0, sizeof(ri));
             s.img_buffer = s.img_buffer_original = (unsigned char *) buff;
             s.img_buffer_end = s.img_buffer_original_end = (unsigned char *) buff+len;
             /* don't use model->texture[i].w directly, it's a uint16_t */
@@ -2225,6 +2242,16 @@ M3D_INDEX _m3d_gettx(m3d_t *model, m3dread_t readfilecb, m3dfree_t freecb, char 
             model->texture[i].w = w;
             model->texture[i].h = h;
             model->texture[i].f = (uint8_t)len;
+#else
+            /* return only the raw undecoded texture */
+            if((model->texture[i].d = (uint8_t*)M3D_MALLOC(len))) {
+                memcpy(model->texture[i].d, buff, len);
+                model->texture[i].w = len & 0xffff;
+                model->texture[i].h = (len >> 16) & 0xffff;
+                model->texture[i].f = 0;
+            } else
+                model->errcode = M3D_ERR_ALLOC;
+#endif
         } else {
 #ifdef M3D_TX_INTERP
             if((model->errcode = M3D_TX_INTERP(fn, buff, len, &model->texture[i])) != M3D_SUCCESS) {
@@ -4280,7 +4307,7 @@ m3db_t *m3d_pose(m3d_t *model, M3D_INDEX actionid, uint32_t msec)
     if(l != msec) {
         model->vertex = (m3dv_t*)M3D_REALLOC(model->vertex, (model->numvertex + 2 * model->numbone) * sizeof(m3dv_t));
         if(!model->vertex) {
-            free(ret);
+            M3D_FREE(ret);
             model->errcode = M3D_ERR_ALLOC;
             return NULL;
         }
@@ -4492,7 +4519,7 @@ void m3d_free(m3d_t *model)
     if(model->label) M3D_FREE(model->label);
     if(model->inlined) M3D_FREE(model->inlined);
     if(model->extra) M3D_FREE(model->extra);
-    free(model);
+    M3D_FREE(model);
 }
 #endif
 
@@ -4568,15 +4595,15 @@ static uint32_t _m3d_stridx(m3dstr_t *str, uint32_t numstr, char *s)
         safe = _m3d_safestr(s, 0);
         if(!safe) return 0;
         if(!*safe) {
-            free(safe);
+            M3D_FREE(safe);
             return 0;
         }
         for(i = 0; i < numstr; i++)
             if(!strcmp(str[i].str, s)) {
-                free(safe);
+                M3D_FREE(safe);
                 return str[i].offs;
             }
-        free(safe);
+        M3D_FREE(safe);
     }
     return 0;
 }
@@ -4889,7 +4916,7 @@ unsigned char *m3d_save(m3d_t *model, int quality, int flags, unsigned int *size
                     if(cmd->type == m3dc_mesh) {
                         if(numgrp + 2 < maxgrp) {
                             maxgrp += 1024;
-                            grpidx = (uint32_t*)realloc(grpidx, maxgrp * sizeof(uint32_t));
+                            grpidx = (uint32_t*)M3D_REALLOC(grpidx, maxgrp * sizeof(uint32_t));
                             if(!grpidx) goto memerr;
                             if(!numgrp) {
                                 grpidx[0] = 0;
@@ -5194,7 +5221,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
         if(sa) M3D_FREE(sa);
         if(sd) M3D_FREE(sd);
         if(out) M3D_FREE(out);
-        if(opa) free(opa);
+        if(opa) M3D_FREE(opa);
         if(h) M3D_FREE(h);
         M3D_LOG("Out of memory");
         model->errcode = M3D_ERR_ALLOC;
@@ -6285,7 +6312,7 @@ memerr: if(vrtxidx) M3D_FREE(vrtxidx);
     if(skin) M3D_FREE(skin);
     if(str) M3D_FREE(str);
     if(vrtx) M3D_FREE(vrtx);
-    if(opa) free(opa);
+    if(opa) M3D_FREE(opa);
     if(h) M3D_FREE(h);
     return out;
 }
@@ -6310,7 +6337,7 @@ namespace M3D {
 
         public:
             Model() {
-                this->model = (m3d_t*)malloc(sizeof(m3d_t)); memset(this->model, 0, sizeof(m3d_t));
+                this->model = (m3d_t*)M3D_MALLOC(sizeof(m3d_t)); memset(this->model, 0, sizeof(m3d_t));
             }
             Model(_unused const std::string &data, _unused m3dread_t ReadFileCB,
                 _unused m3dfree_t FreeCB, _unused M3D::Model mtllib) {

@@ -10,6 +10,7 @@
 *       #define SUPPORT_FILEFORMAT_MTL
 *       #define SUPPORT_FILEFORMAT_IQM
 *       #define SUPPORT_FILEFORMAT_GLTF
+*       #define SUPPORT_FILEFORMAT_GLTF_WRITE
 *       #define SUPPORT_FILEFORMAT_VOX
 *       #define SUPPORT_FILEFORMAT_M3D
 *           Selected desired fileformats to be supported for model data loading
@@ -70,6 +71,11 @@
 
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
+#endif
+#if SUPPORT_FILEFORMAT_GLTF_WRITE
+    // NOTE: No need for custom allocators, memory buffer provided
+    #define CGLTF_WRITE_IMPLEMENTATION
+    #include "external/cgltf_write.h"   // glTF file format writing
 #endif
 
 #if SUPPORT_FILEFORMAT_VOX
@@ -1281,7 +1287,6 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
-    if (mesh->vaoId == 0) return;
 
     rlEnableVertexArray(mesh->vaoId);
 
@@ -1950,7 +1955,7 @@ void UnloadMesh(Mesh mesh)
 // Export mesh data to file
 bool ExportMesh(Mesh mesh, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
     if (IsFileExtension(fileName, ".obj"))
     {
@@ -2014,22 +2019,35 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         }
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
-        success = SaveFileText(fileName, txtData);
+        result = SaveFileText(fileName, txtData);
 
         RL_FREE(txtData);
+    }
+    else if (IsFileExtension(fileName, ".gltf")) // Or .glb
+    {
+        // TODO: Implement gltf/glb support
+        /*
+        cgltf_size expected = cgltf_write(options, NULL, 0, data);
+        char *buffer = (char *)RL_CALLOC(expected, 0);
+        cgltf_size actual = cgltf_write(options, buffer, expected, data);
+
+        // NOTE: cgltf_write() includes a NULL terminator that should be ommited in case of a .glb
+        if (options->type == cgltf_file_type_glb) cgltf_write_glb(file, buffer, actual - 1, data->bin, data->bin_size);
+        else SaveFileText(fileName, buffer); // Write a plain JSON file
+        */
     }
     else if (IsFileExtension(fileName, ".raw"))
     {
         // TODO: Support additional file formats to export mesh vertex data
     }
 
-    return success;
+    return result;
 }
 
 // Export mesh as code file (.h) defining multiple arrays of vertex attributes
 bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -2113,14 +2131,14 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     //-----------------------------------------------------------------------------------------
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    //if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image as code exported successfully", fileName);
+    //if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image as code exported successfully", fileName);
     //else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image as code", fileName);
 
-    return success;
+    return result;
 }
 
 #if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
@@ -3961,32 +3979,6 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     rlDisableWireMode();
 }
 
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModel(model, position, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
-}
-
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
-}
-
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {
@@ -5292,7 +5284,7 @@ static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memo
 }
 
 // Release file data callback for cgltf
-static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data)
+static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data, cgltf_size size)
 {
     UnloadFileData((unsigned char *)data);
 }

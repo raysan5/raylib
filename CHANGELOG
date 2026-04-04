@@ -21,11 +21,17 @@ KEY CHANGES:
 
 Detailed changes:
 
+[rcore] ADDED: `FileRename()`, by @raysan5
+[rcore] ADDED: `FileRemove()`, by @raysan5
+[rcore] ADDED: `FileCopy()`, by @raysan5
+[rcore] ADDED: `FileMove()`, by @raysan5
+[rcore] ADDED: `FileTextReplace()`, by @raysan5
+[rcore] ADDED: `FileTextFindIndex()`, by @raysan5
+[rcore] ADDED: `ComputeSHA256()` (#5264) by @iamahuman1395
+[rcore] ADDED: `GetKeyName()` (#4544) by @lecongsebastien
 [rcore] ADDED: Logging and file-system functionality from `utils` (#4551) by @raysan5 -WARNING-
 [rcore] ADDED: Flags set/clear macros: FLAG_SET, FLAG_CLEAR, FLAG_IS_SET (#5169) by @raysan5
 [rcore] ADDED: Warnings in case of no platform backend defined by @raysan5
-[rcore] ADDED: `ComputeSHA256()` (#5264) by @iamahuman1395
-[rcore] ADDED: `GetKeyName()` (#4544) by @lecongsebastien
 [rcore] REMOVED: GIF recording option, added example by @raysan5 -WARNING-
 [rcore] REMOVED: `CORE.Window.fullscreen` variable, using available flag instead by @raysan5
 [rcore] REMOVED: `SetupFramebuffer()`, most platforms do not need it any more by @raysan5
@@ -111,7 +117,7 @@ Detailed changes:
 [rcore][RGFW] ADDED: New backend option: `PLATFORM_WEB_RGFW` and update RGFW (#4480) by @colleagueRiley
 [rcore][RGFW] REVIEWED: Added missing Right Control key by @M374LX
 [rcore][RGFW] REVIEWED: Changed `RGFW_window_eventWait` timeout to -1 by @doggymangc
-[rcore][RGFW] REVIEWED: Duplicate entries reemoved from `keyMappingRGFW` (#5242) by @iamahuman1395
+[rcore][RGFW] REVIEWED: Duplicate entries removed from `keyMappingRGFW` (#5242) by @iamahuman1395
 [rcore][RGFW] REVIEWED: Fix Escape always closing the window by @M374LX
 [rcore][RGFW] REVIEWED: Forward declare the windows stuff, prevents failures in GCC (#5269) by @Jeffm2501
 [rcore][RGFW] REVIEWED: Requires RGBA8 images as window icons (#5431) by @crisserpl2
@@ -198,7 +204,7 @@ Detailed changes:
 [rlgl] REVIEWED: `rlActiveDrawBuffers`, fix for OpenGL ES 3.0 (#4605) by @Bigfoot71
 [rlgl] REVIEWED: `rlGetPixelDataSize()`, correct compressed data size calculation per blocks #5416 by @raysan5
 [rlgl] REVIEWED: `instranceTransform` shader location index #4538 (#4579) by @meadiode
-[rlgl] REVIEWED: `SetShaderValueTexture()`, updatee comments (#4703) by @pejorativefox
+[rlgl] REVIEWED: `SetShaderValueTexture()`, update comments (#4703) by @pejorativefox
 [rlgl] REDESIGNED: Avoid program crash if GPU data is tried to be loaded before `InitWindow()` #4751 by @raysan5 -WARNING-
 [rlgl] REDESIGNED: Shader loading API function names for more consistency #5631 by @raysan5 -WARNING-
 [rlsw] ADDED: `swGetColorBuffer()` for convenience by @raysan5
@@ -239,6 +245,13 @@ Detailed changes:
 [rtextures] REVIEWED: `ImageDrawLineEx(), to be able to draw even numbered thicknesses (#5042) by @Sir-Irk
 [rtextures] REVIEWED: `ImageBlurGaussian()`, fix integer overflow in cast (#5037) by @garrisonhh
 [rtext] ADDED: `LoadTextLines()`/`UnloadTextLines()` by @raysan5
+[rtext] ADDED: `TextInsertAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `TextReplace()`, using static buffer by @raysan5
+[rtext] ADDED: `TextReplaceAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `TextReplaceBetween()`, using static buffer by @raysan5
+[rtext] ADDED: `TextReplaceBetweenAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `GetTextBetween()`, using static buffer by @raysan5
+[rtext] ADDED: `TextRemoveSpaces()`, using static buffer by @raysan5
 [rtext] ADDED: `MeasureTextCodepoints()` for direct measurement of codepoints (#5623) by @creeperblin
 [rtext] RENAMED: Variable names for consistency, `textLength` (length in bytes) vs `textSize` (measure in pixels) by @raysan5
 [rtext] REVIEWED: Support default font loading with no GPU enabled, to be used with Image API
@@ -263,11 +276,10 @@ Detailed changes:
 [rtext] REVIEWED: `GetCodepointCount()`, misuse of cast (#4741) by @sleeptightAnsiC
 [rtext] REVIEWED: `GenImageFontAtlas()`, memory corruption and invalid size calculation (#5602) by @konakona418
 [rtext] REVIEWED: `TextInsert()`, fix bug on insertion (#5644) by @CrackedPixel
+[rtext] REVIEWED: `TextInsert()`, use static buffer, easier to use by @raysan5 -WARNING-
 [rtext] REVIEWED: `TextJoin()`, convert `const char **` to `char**` by @raysan5
-[rtext] REVIEWED: `TextReplace()` and `TextLength()`, avoid using `strcpy()` by @raysan5
-[rtext] REVIEWED: `TextReplace()` by @raysan5
 [rtext] REVIEWED: `TextReplace()`, improvements (#5511) by @belan2470
-[rtext] REVIEWED: `TextReplaceBetween()` by @raysan5
+[rtext] REVIEWED: `TextReplace()` and `TextLength()`, avoid using `strcpy()` by @raysan5
 [rtext] REVIEWED: `TextSubtext(), fixes (#4759) by @veins1
 [rtext] REVIEWED: `TextToPascal()`, fix issue by @raysan5
 [rtext] REVIEWED: `TextToFloat()`, remove removed inaccurate comment (#4596) by @hexmaster111
@@ -735,7 +747,7 @@ Detailed changes:
 [rexm] REVIEWED: `ScanExampleResources()` avoid resources to be saved by the program by @raysan5
 [rexm] REVIEWED: `UpdateSourceMetadata()` and `TextReplaceBetween()` by @raysan5
 [rexm] REVIEWED: `examples.js` example addition working by @raysan5
-[rexm] REVIEWED: `add` command logic for existing examplee addition by @raysan5
+[rexm] REVIEWED: `add` command logic for existing example addition by @raysan5
 [rexm] REVIEWED: Replace example name on project file by @raysan5
 [rexm] REVIEWED: Report issues if logs can not be loaded by @raysan5
 [rexm] REVIEWED: VS project adding to solution by @raysan5
@@ -747,6 +759,7 @@ Detailed changes:
 [rexm] REVIEWED: `Makefile.Web` before trying to rebuild new example for web by @raysan5
 [rexm] REVIEWED: Using `Makefile.Web` for specific web versions generation by @raysan5
 
+[external] ADDED: `cgltf_write` 1.15, to support glTF models export in the future, by @raysan5
 [external] RENAMED: `rl_gputex.h` to `rltexgpu.h`, compressed textures loading
 [external] REVIEWED: `rltexgpu.h`, make it usable standalone by @raysan5
 [external] REVIEWED: `rltexgpu.h, fix the swizzling in `rl_load_dds_from_memory()` (#5422) by @msmith-codes
@@ -755,16 +768,23 @@ Detailed changes:
 [external] REVIEWED: `sdefl` and `sinfl` issues (#5367) by @raysan5
 [external] REVIEWED: `sinfl_bsr()`, improvements by @RicoP
 [external] REVIEWED: `stb_truetype`, fix composite glyph scaling logic (#4811) by @ashishbhattarai
+[external] UPDATED: `raygui` to 5.0-dev for examples by @raysan5
 [external] UPDATED: dr_libs (#5020) by @Emil2010
-[external] UPDATED: miniaudio to v0.11.22 (#4983) by @M374LX
-[external] UPDATED: miniaudio to v0.11.23 (#5234) by @pyrokn8
-[external] UPDATED: miniaudio to v0.11.24 (#5506) by @vdemcak
-[external] UPDATED: raygui to 5.0-dev for examples by @raysan5
-[external] UPDATED: RGFW to 1.5 (#4688) by @ColleagueRiley
-[external] UPDATED: RGFW to 1.6 (#4795) by @colleagueRiley
-[external] UPDATED: RGFW to 1.7 (#4965) by @M374LX
-[external] UPDATED: RGFW to 1.7.5-dev (#4976) by @M374LX
-[external] UPDATED: RGFW to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `miniaudio` to v0.11.22 (#4983) by @M374LX
+[external] UPDATED: `miniaudio` to v0.11.23 (#5234) by @pyrokn8
+[external] UPDATED: `miniaudio` to v0.11.24 (#5506) by @vdemcak
+[external] UPDATED: `RGFW` to 1.5 (#4688) by @ColleagueRiley
+[external] UPDATED: `RGFW` to 1.6 (#4795) by @colleagueRiley
+[external] UPDATED: `RGFW` to 1.7 (#4965) by @M374LX
+[external] UPDATED: `RGFW` to 1.7.5-dev (#4976) by @M374LX
+[external] UPDATED: `RGFW` to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `cgltf` 1.14 to 1.15 by @raysan5
+[external] UPDATED: `dr_flac` v0.13.0 to v0.13.3 by @raysan5
+[external] UPDATED: `dr_mp3` v0.7.0 to v0.7.4 by @raysan5
+[external] UPDATED: `m3d` to latest master by @raysan5
+[external] UPDATED: `qoi` to latest master by @raysan5
+[external] UPDATED: `qoa` to latest master by @raysan5
+[external] UPDATED: `stb_image_resize2` v2.12 to v2.18 by @raysan5
 
 [misc] ADDED: SECURITY.md for security reporting policies by @raysan5
 [misc] ADDED: `examples/examples_list`, to be used by `rexm` or other tools by @raysan5
