@@ -1063,14 +1063,14 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
+    //TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
     return 0;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
+    //TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
     return 0;
 }
 
@@ -1105,7 +1105,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
+    //TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
     return (Vector2){ 0, 0 };
 }
 
@@ -1760,12 +1760,30 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
         } break;
-        case WM_SIZING:
+        case WM_SIZING: // Sent to a window that the user is resizing
         {
-            if (!(CORE.Window.flags & FLAG_WINDOW_RESIZABLE))
-                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Trying to resize a non-resizable window");
+            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
+            {
+                //HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+            }
 
             result = TRUE;
+        } break;
+        case WM_SIZE:
+        {
+            // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
+            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
+            // this message can be obtained without getting WM_WINDOWPOSCHANGED
+            
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later 
+            // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
+            if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+#else
+            // NOTE: This message is only triggered on window creation
+            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+#endif
+            result = 0; // If an application processes WM_SIZE message, it should return zero
         } break;
         case WM_GETMINMAXINFO:
         {
@@ -1865,19 +1883,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: break;
             }
         } break;
-        case WM_SIZE:
-        {
-            // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
-            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
-            // this message can be obtained without getting WM_WINDOWPOSCHANGED
-            // WARNING: This call fails for Software-Renderer backend
-            //HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-        } break;
-        //case WM_MOVE
+        //case WM_MOVE: break;
         case WM_WINDOWPOSCHANGED:
         {
             WINDOWPOS *pos = (WINDOWPOS*)lparam;
             if (!(pos->flags & SWP_NOSIZE)) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+
+            DefWindowProc(hwnd, msg, wparam, lparam);
         } break;
         case WM_GETDPISCALEDSIZE:
         {
@@ -2092,9 +2104,9 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
 
-    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     swResize(clientSize.cx, clientSize.cy);
-    #endif
+#endif
 }
 
 // Update window style
