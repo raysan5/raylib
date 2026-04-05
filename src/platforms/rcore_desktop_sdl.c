@@ -1216,7 +1216,7 @@ Image GetClipboardImage(void)
     return image;
 }
 
-// Show mouse cursor
+// Show mouse cursor (default)
 void ShowCursor(void)
 {
 #if defined(USING_VERSION_SDL3)
@@ -1238,7 +1238,7 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enables cursor (unlock cursor) (default)
 void EnableCursor(void)
 {
     SDL_SetRelativeMouseMode(SDL_FALSE);

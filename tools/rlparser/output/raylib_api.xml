@@ -807,15 +807,15 @@
         </Function>
         <Function name="EnableEventWaiting" retType="void" paramCount="0" desc="Enable waiting for events on EndDrawing(), no automatic event polling">
         </Function>
-        <Function name="DisableEventWaiting" retType="void" paramCount="0" desc="Disable waiting for events on EndDrawing(), automatic events polling">
+        <Function name="DisableEventWaiting" retType="void" paramCount="0" desc="Disable waiting for events on EndDrawing(), automatic events polling (default)">
         </Function>
-        <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor">
+        <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor (default)">
         </Function>
         <Function name="HideCursor" retType="void" paramCount="0" desc="Hides cursor">
         </Function>
         <Function name="IsCursorHidden" retType="bool" paramCount="0" desc="Check if cursor is not visible">
         </Function>
-        <Function name="EnableCursor" retType="void" paramCount="0" desc="Enables cursor (unlock cursor)">
+        <Function name="EnableCursor" retType="void" paramCount="0" desc="Enables cursor (unlock cursor) (default)">
         </Function>
         <Function name="DisableCursor" retType="void" paramCount="0" desc="Disables cursor (lock cursor)">
         </Function>

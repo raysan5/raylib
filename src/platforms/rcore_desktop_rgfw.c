@@ -1083,7 +1083,7 @@ Image GetClipboardImage(void)
     return image;
 }
 
-// Show mouse cursor
+// Show mouse cursor (default)
 void ShowCursor(void)
 {
     RGFW_window_showMouse(platform.window, true);
@@ -1097,7 +1097,7 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enables cursor (unlock cursor) (default)
 void EnableCursor(void)
 {
     RGFW_window_captureRawMouse(platform.window, false);

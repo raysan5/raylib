@@ -197,12 +197,12 @@
             <Overload retVal="void" descr="Enable waiting for events on EndDrawing(), no automatic event polling"></Overload>
         </KeyWord>
         <KeyWord name="DisableEventWaiting" func="yes">
-            <Overload retVal="void" descr="Disable waiting for events on EndDrawing(), automatic events polling"></Overload>
+            <Overload retVal="void" descr="Disable waiting for events on EndDrawing(), automatic events polling (default)"></Overload>
         </KeyWord>
 
         <!-- Cursor-related functions -->
         <KeyWord name="ShowCursor" func="yes">
-            <Overload retVal="void" descr="Shows cursor"></Overload>
+            <Overload retVal="void" descr="Shows cursor (default)"></Overload>
         </KeyWord>
         <KeyWord name="HideCursor" func="yes">
             <Overload retVal="void" descr="Hides cursor"></Overload>
@@ -211,7 +211,7 @@
             <Overload retVal="bool" descr="Check if cursor is not visible"></Overload>
         </KeyWord>
         <KeyWord name="EnableCursor" func="yes">
-            <Overload retVal="void" descr="Enables cursor (unlock cursor)"></Overload>
+            <Overload retVal="void" descr="Enables cursor (unlock cursor) (default)"></Overload>
         </KeyWord>
         <KeyWord name="DisableCursor" func="yes">
             <Overload retVal="void" descr="Disables cursor (lock cursor)"></Overload>

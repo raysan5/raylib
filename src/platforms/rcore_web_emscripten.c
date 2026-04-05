@@ -880,7 +880,7 @@ Image GetClipboardImage(void)
     return image;
 }
 
-// Show mouse cursor
+// Show mouse cursor (default)
 void ShowCursor(void)
 {
     if (CORE.Input.Mouse.cursorHidden)
@@ -902,7 +902,7 @@ void HideCursor(void)
     }
 }
 
-// Enables cursor (unlock cursor)
+// Enables cursor (unlock cursor) (default)
 void EnableCursor(void)
 {
     emscripten_exit_pointerlock();

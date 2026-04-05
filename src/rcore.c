@@ -847,7 +847,7 @@ void EnableEventWaiting(void)
     CORE.Window.eventWaiting = true;
 }
 
-// Disable waiting for events on EndDrawing(), automatic events polling
+// Disable waiting for events on EndDrawing(), automatic events polling (default)
 void DisableEventWaiting(void)
 {
     CORE.Window.eventWaiting = false;

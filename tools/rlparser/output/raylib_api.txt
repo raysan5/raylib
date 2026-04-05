@@ -1252,12 +1252,12 @@ Function 048: EnableEventWaiting() (0 input parameters)
 Function 049: DisableEventWaiting() (0 input parameters)
   Name: DisableEventWaiting
   Return type: void
-  Description: Disable waiting for events on EndDrawing(), automatic events polling
+  Description: Disable waiting for events on EndDrawing(), automatic events polling (default)
   No input parameters
 Function 050: ShowCursor() (0 input parameters)
   Name: ShowCursor
   Return type: void
-  Description: Shows cursor
+  Description: Shows cursor (default)
   No input parameters
 Function 051: HideCursor() (0 input parameters)
   Name: HideCursor
@@ -1272,7 +1272,7 @@ Function 052: IsCursorHidden() (0 input parameters)
 Function 053: EnableCursor() (0 input parameters)
   Name: EnableCursor
   Return type: void
-  Description: Enables cursor (unlock cursor)
+  Description: Enables cursor (unlock cursor) (default)
   No input parameters
 Function 054: DisableCursor() (0 input parameters)
   Name: DisableCursor

@@ -3445,12 +3445,12 @@ return {
     },
     {
       name = "DisableEventWaiting",
-      description = "Disable waiting for events on EndDrawing(), automatic events polling",
+      description = "Disable waiting for events on EndDrawing(), automatic events polling (default)",
       returnType = "void"
     },
     {
       name = "ShowCursor",
-      description = "Shows cursor",
+      description = "Shows cursor (default)",
       returnType = "void"
     },
     {
@@ -3465,7 +3465,7 @@ return {
     },
     {
       name = "EnableCursor",
-      description = "Enables cursor (unlock cursor)",
+      description = "Enables cursor (unlock cursor) (default)",
       returnType = "void"
     },
     {

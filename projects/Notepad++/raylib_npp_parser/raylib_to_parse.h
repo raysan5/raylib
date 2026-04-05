@@ -51,13 +51,13 @@ RLAPI void SetClipboardText(const char *text);                    // Set clipboa
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
 RLAPI Image GetClipboardImage(void);                              // Get clipboard image
 RLAPI void EnableEventWaiting(void);                              // Enable waiting for events on EndDrawing(), no automatic event polling
-RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling
+RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling (default)
 
 // Cursor-related functions
-RLAPI void ShowCursor(void);                                      // Shows cursor
+RLAPI void ShowCursor(void);                                      // Shows cursor (default)
 RLAPI void HideCursor(void);                                      // Hides cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
-RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
+RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor) (default)
 RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
 RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the screen
 

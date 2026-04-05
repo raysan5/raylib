@@ -1121,7 +1121,7 @@ Image GetClipboardImage(void)
     return image;
 }
 
-// Show mouse cursor
+// Show mouse cursor (default)
 void ShowCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -1137,7 +1137,7 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enables cursor (unlock cursor) (default)
 void EnableCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
