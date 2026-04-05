@@ -96,21 +96,30 @@ elseif (${PLATFORM} STREQUAL "Android")
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
     set(PLATFORM_CPP "PLATFORM_DRM")
-    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
     add_definitions(-D_DEFAULT_SOURCE)
-    add_definitions(-DEGL_NO_X11)
     add_definitions(-DPLATFORM_DRM)
 
-    find_library(GLESV2 GLESv2)
-    find_library(EGL EGL)
     find_library(DRM drm)
-    find_library(GBM gbm)
 
     if (NOT CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSROOT)
         include_directories(/usr/include/libdrm)
     endif ()
-    set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread dl)
+
+    if ("${OPENGL_VERSION}" STREQUAL "Software")
+        # software rendering does not require EGL/GBM.
+        set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+        set(LIBS_PRIVATE ${DRM} atomic pthread dl)
+    else ()
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+        add_definitions(-DEGL_NO_X11)
+
+        find_library(GLESV2 GLESv2)
+        find_library(EGL EGL)
+        find_library(GBM gbm)
+
+        set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread dl)
+    endif ()
     set(LIBS_PUBLIC m)
 
 elseif ("${PLATFORM}" STREQUAL "SDL")
