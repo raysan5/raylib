@@ -723,7 +723,7 @@ void SetWindowIcon(Image image)
         TRACELOG(LOG_WARNING, "RGFW: Window icon image must be in R8G8B8A8 pixel format");
         return;
     }
-    RGFW_window_setIcon(platform.window, (u8 *)image.data, image.width, image.height, 4);
+    RGFW_window_setIcon(platform.window, (u8 *)image.data, image.width, image.height, RGFW_formatRGBA8);
 }
 
 // Set icon for window
@@ -749,8 +749,8 @@ void SetWindowIcons(Image *images, int count)
             if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
 
-        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, smallIcon->width, smallIcon->height, 4, RGFW_iconWindow);
-        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, bigIcon->width, bigIcon->height, 4, RGFW_iconTaskbar);
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, smallIcon->width, smallIcon->height, RGFW_formatRGBA8, RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, bigIcon->width, bigIcon->height, RGFW_formatRGBA8, RGFW_iconTaskbar);
     }
 }
 
