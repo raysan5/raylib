@@ -202,8 +202,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
                 }
 
-                raylib.root_module.linkSystemLibrary("EGL", .{});
-                raylib.root_module.linkSystemLibrary("gbm", .{});
+                if (options.opengl_version != .gl_soft) {
+                    raylib.root_module.linkSystemLibrary("EGL", .{});
+                    raylib.root_module.linkSystemLibrary("gbm", .{});
+                }
                 raylib.root_module.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
 
                 raylib.root_module.addCMacro("PLATFORM_DRM", "");
@@ -416,6 +418,7 @@ pub const Options = struct {
 
 pub const OpenglVersion = enum {
     auto,
+    gl_soft,
     gl_1_1,
     gl_2_1,
     gl_3_3,
@@ -426,6 +429,7 @@ pub const OpenglVersion = enum {
     pub fn toCMacroStr(self: @This()) []const u8 {
         switch (self) {
             .auto => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
+            .gl_soft => return "GRAPHICS_API_OPENGL_SOFTWARE",
             .gl_1_1 => return "GRAPHICS_API_OPENGL_11",
             .gl_2_1 => return "GRAPHICS_API_OPENGL_21",
             .gl_3_3 => return "GRAPHICS_API_OPENGL_33",
