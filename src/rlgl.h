@@ -5045,6 +5045,7 @@ static void rlLoadShaderDefault(void)
     "    fragTexCoord = vertexTexCoord; \n"
     "    fragColor = vertexColor;       \n"
     "    gl_Position = mvp*vec4(vertexPosition, 1.0); \n"
+    "    gl_PointSize = 1.0;            \n"     // Some systems set PointSize as 0.0 by default
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
