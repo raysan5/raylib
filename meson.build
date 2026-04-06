@@ -8,7 +8,6 @@ project('raylib', 'c',
 version_array = meson.project_version().split('.')
 version_major = version_array[0]
 version_minor = version_array[1]
-version_patch = version_array[2]
 api_version = '@0@.@1@'.format(version_major, version_minor)
 
 raylib_sources = [
@@ -32,7 +31,7 @@ graphics = get_option('graphics')
 build_shared_libs = get_option('default_library') == 'shared'
 
 compiler_flags = []
-link_flags = []
+link_args = []
 dependencies = []
 include_dirs = ['src']
 defines = []
@@ -41,8 +40,8 @@ if platform == 'desktop'
   defines += 'PLATFORM_DESKTOP'
   
   if host_machine.system() == 'windows'
-    dependencies += cc.find_library('winmm', required: true)
-    dependencies += cc.find_library('opengl32', required: true)
+    dependencies += dependency('winmm', required: true)
+    dependencies += dependency('opengl', required: false)
   elif host_machine.system() == 'darwin'
     compiler_flags += '-DGL_SILENCE_DEPRECATION'
     dependencies += dependency('appleframeworks', modules: ['OpenGL', 'Cocoa', 'IOKit', 'CoreVideo', 'CoreAudio'])
@@ -99,6 +98,8 @@ if platform == 'desktop'
         'src/external/glfw/src/posix_poll.c',
         'src/external/glfw/src/posix_thread.c',
         'src/external/glfw/src/posix_time.c',
+        'src/external/glfw/src/linux_joystick.c',
+        'src/external/glfw/src/osmesa_context.c',
       ]
 
       if get_option('glfw_backend') == 'x11'
@@ -150,14 +151,14 @@ elif platform == 'android'
   dependencies += dependency('egl', required: true)
   dependencies += dependency('glesv2', required: true)
   dependencies += dependency('openal', required: false)
-  dependencies += cc.find_library('atomic', required: false)
+  dependencies += dependency('threads', required: true)
 
 elif platform == 'drm'
   defines += 'PLATFORM_DRM'
   defines += '_DEFAULT_SOURCE'
   
-  dependencies += cc.find_library('drm', required: true)
-  dependencies += cc.find_library('gbm', required: false)
+  dependencies += dependency('drm', required: true)
+  dependencies += dependency('gbm', required: false)
   dependencies += dependency('egl', required: false)
   dependencies += dependency('glesv2', required: false)
   dependencies += dependency('threads', required: true)
@@ -188,8 +189,8 @@ elif platform == 'rgfw'
   if host_machine.system() == 'darwin'
     dependencies += dependency('appleframeworks', modules: ['OpenGL', 'Cocoa'])
   elif host_machine.system() == 'windows'
-    dependencies += cc.find_library('gdi32', required: true)
-    dependencies += dependency('opengl', required: true)
+    dependencies += dependency('gdi32', required: false)
+    dependencies += dependency('opengl', required: false)
   elif host_machine.system() == 'linux'
     dependencies += dependency('x11', required: true)
     dependencies += dependency('opengl', required: true)
@@ -320,9 +321,7 @@ if build_shared_libs
   compiler_flags += '-fvisibility=hidden'
 endif
 
-if get_option('use_audio')
-  dependencies += dependency('m', required: false)
-endif
+link_args += '-lm'
 
 if not get_option('use_external_glfw') and platform == 'desktop'
   glfw_args = []
@@ -349,14 +348,6 @@ if not get_option('use_external_glfw') and platform == 'desktop'
   include_dirs += 'src/external/glfw/include'
 endif
 
-raylib_kwargs = {
-  'sources': raylib_sources,
-  'dependencies': dependencies,
-  'include_directories': include_dirs,
-  'c_args': compiler_flags,
-  'defines': defines,
-}
-
 defines_args = []
 foreach d : defines
   defines_args += '-D' + d
@@ -367,6 +358,7 @@ if build_shared_libs
   raylib_lib = shared_library('raylib',
     sources: raylib_sources,
     dependencies: dependencies,
+    link_args: link_args,
     include_directories: include_dirs,
     c_args: all_c_args,
     version: meson.project_version(),
@@ -376,6 +368,7 @@ else
   raylib_lib = static_library('raylib',
     sources: raylib_sources,
     dependencies: dependencies,
+    link_args: link_args,
     include_directories: include_dirs,
     c_args: all_c_args,
   )
@@ -385,6 +378,7 @@ raylib_dep = declare_dependency(
   include_directories: include_dirs,
   sources: raylib_public_headers,
   dependencies: dependencies,
+  link_args: link_args,
   link_with: raylib_lib,
 )
 
@@ -396,5 +390,5 @@ pkgconfig.generate(raylib_lib,
   description: 'Simple and easy-to-use library to enjoy videogames programming',
   version: meson.project_version(),
   filebase: 'raylib',
-  libraries: dependencies,
+  libraries: dependencies + [raylib_lib],
 )

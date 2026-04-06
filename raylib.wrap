@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/pliniopvv/raylib-wrap.git
+revision = master
+
+[provide]
+raylib = raylib_dep
