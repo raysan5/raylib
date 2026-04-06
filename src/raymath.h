@@ -2225,9 +2225,9 @@ RMAPI Quaternion QuaternionMultiply(Quaternion q1, Quaternion q2)
     float qax = q1.x, qay = q1.y, qaz = q1.z, qaw = q1.w;
     float qbx = q2.x, qby = q2.y, qbz = q2.z, qbw = q2.w;
 
-    result.x = qax*qbw + qaw*qbx + qay*qbz - qaz*qby;
-    result.y = qay*qbw + qaw*qby + qaz*qbx - qax*qbz;
-    result.z = qaz*qbw + qaw*qbz + qax*qby - qay*qbx;
+    result.x = qax*qbw + qaw*qbx + qaz*qby - qay*qbz;
+    result.y = qay*qbw + qaw*qby + qax*qbz - qaz*qbx;
+    result.z = qaz*qbw + qaw*qbz + qay*qbx - qax*qby;
     result.w = qaw*qbw - qax*qbx - qay*qby - qaz*qbz;
 
     return result;
