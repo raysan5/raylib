@@ -2634,8 +2634,20 @@ Mesh GenMeshPoly(int sides, float radius)
     return mesh;
 }
 
-// Generate plane mesh (with subdivisions)
+// Generate plane mesh (with subdivisions) and upload to GPU
 Mesh GenMeshPlane(float width, float length, int resX, int resZ)
+{
+    Mesh mesh = GenMeshPlaneData(width, length, resX, resZ);
+
+    // Upload vertex data to GPU (static mesh)
+    UploadMesh(&mesh, false);
+
+    return mesh;
+}
+
+// Generate plane mesh data (with subdivisions), no GPU upload
+// Allows CPU-side mesh manipulation (e.g. vertex deformation) before manually calling UploadMesh()
+Mesh GenMeshPlaneData(float width, float length, int resX, int resZ)
 {
     Mesh mesh = { 0 };
 
@@ -2760,9 +2772,6 @@ Mesh GenMeshPlane(float width, float length, int resX, int resZ)
 
     par_shapes_free_mesh(plane);
 #endif
-
-    // Upload vertex data to GPU (static mesh)
-    UploadMesh(&mesh, false);
 
     return mesh;
 }
