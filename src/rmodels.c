@@ -4384,7 +4384,7 @@ static void BuildPoseFromParentJoints(BoneInfo *bones, int boneCount, Transform 
                 TRACELOG(LOG_WARNING, "Skipping bone not topologically sorted: Bone %d has parent %d", i, bones[i].parent);
                 continue;
             }
-            transforms[i].rotation = QuaternionMultiply(transforms[bones[i].parent].rotation, transforms[i].rotation);
+            transforms[i].rotation = QuaternionMultiply(transforms[i].rotation, transforms[bones[i].parent].rotation);
             transforms[i].scale = Vector3Multiply(transforms[i].scale, transforms[bones[i].parent].scale);
             transforms[i].translation = Vector3Multiply(transforms[i].translation, transforms[bones[i].parent].scale);
             transforms[i].translation = Vector3RotateByQuaternion(transforms[i].translation, transforms[bones[i].parent].rotation);
@@ -5245,7 +5245,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
             {
                 if (bones[i].parent >= 0)
                 {
-                    animations[a].keyframePoses[frame][i].rotation = QuaternionMultiply(animations[a].keyframePoses[frame][bones[i].parent].rotation, animations[a].keyframePoses[frame][i].rotation);
+                    animations[a].keyframePoses[frame][i].rotation = QuaternionMultiply(animations[a].keyframePoses[frame][i].rotation, animations[a].keyframePoses[frame][bones[i].parent].rotation);
                     animations[a].keyframePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].keyframePoses[frame][i].translation, animations[a].keyframePoses[frame][bones[i].parent].rotation);
                     animations[a].keyframePoses[frame][i].translation = Vector3Add(animations[a].keyframePoses[frame][i].translation, animations[a].keyframePoses[frame][bones[i].parent].translation);
                     animations[a].keyframePoses[frame][i].scale = Vector3Multiply(animations[a].keyframePoses[frame][i].scale, animations[a].keyframePoses[frame][bones[i].parent].scale);
@@ -6649,7 +6649,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     }
 
                     Transform *root = &animations[a].keyframePoses[j][0];
-                    root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
+                    root->rotation = QuaternionMultiply(root->rotation, worldTransform.rotation);
                     root->scale = Vector3Multiply(root->scale, worldTransform.scale);
                     root->translation = Vector3Multiply(root->translation, worldTransform.scale);
                     root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
@@ -7105,7 +7105,7 @@ static Model LoadM3D(const char *fileName)
                 // Child bones are stored in parent bone relative space, convert that into model space
                 if (model.skeleton.bones[i].parent >= 0)
                 {
-                    model.skeleton.bindPose[i].rotation = QuaternionMultiply(model.skeleton.bindPose[model.skeleton.bones[i].parent].rotation, model.skeleton.bindPose[i].rotation);
+                    model.skeleton.bindPose[i].rotation = QuaternionMultiply(model.skeleton.bindPose[i].rotation, model.skeleton.bindPose[model.skeleton.bones[i].parent].rotation);
                     model.skeleton.bindPose[i].translation = Vector3RotateByQuaternion(model.skeleton.bindPose[i].translation, model.skeleton.bindPose[model.skeleton.bones[i].parent].rotation);
                     model.skeleton.bindPose[i].translation = Vector3Add(model.skeleton.bindPose[i].translation, model.skeleton.bindPose[model.skeleton.bones[i].parent].translation);
                     model.skeleton.bindPose[i].scale = Vector3Multiply(model.skeleton.bindPose[i].scale, model.skeleton.bindPose[model.skeleton.bones[i].parent].scale);
@@ -7236,7 +7236,7 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
                         // Child bones are stored in parent bone relative space, convert that into model space
                         if (bones[j].parent >= 0)
                         {
-                            animations[a].keyframePoses[i][j].rotation = QuaternionMultiply(animations[a].keyframePoses[i][bones[j].parent].rotation, animations[a].keyframePoses[i][j].rotation);
+                            animations[a].keyframePoses[i][j].rotation = QuaternionMultiply(animations[a].keyframePoses[i][j].rotation, animations[a].keyframePoses[i][bones[j].parent].rotation);
                             animations[a].keyframePoses[i][j].translation = Vector3RotateByQuaternion(animations[a].keyframePoses[i][j].translation, animations[a].keyframePoses[i][bones[j].parent].rotation);
                             animations[a].keyframePoses[i][j].translation = Vector3Add(animations[a].keyframePoses[i][j].translation, animations[a].keyframePoses[i][bones[j].parent].translation);
                             animations[a].keyframePoses[i][j].scale = Vector3Multiply(animations[a].keyframePoses[i][j].scale, animations[a].keyframePoses[i][bones[j].parent].scale);
