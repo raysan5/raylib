@@ -45,6 +45,7 @@ int main(void)
 
         spacing += (int)buildings[i].width;
 
+        //(Color){ Red, Blue, Green, Alpha }
         buildColors[i] = (Color){
             (unsigned char)GetRandomValue(200, 240),
             (unsigned char)GetRandomValue(200, 240),
