@@ -149,7 +149,7 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 // JS: Set the canvas id provided by the module configuration
 EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
     var canvasId = "#" + Module.canvas.id;
-    stringToUTF8(canvasId, out, outSize);
+    stringToUTF8(canvasId, Number(out), Number(outSize));
 });
 
 //----------------------------------------------------------------------------------
@@ -316,7 +316,7 @@ void ToggleBorderlessWindowed(void)
         // 2. The style unset handles the possibility of a width="value%" like on the default shell.html file
         EM_ASM
         (
-            const canvasId = UTF8ToString($0);
+            const canvasId = UTF8ToString(Number($0));
             setTimeout(function()
             {
                 Module.requestFullscreen(false, true);
@@ -798,7 +798,7 @@ void SetClipboardText(const char *text)
 {
     // Security check to (partially) avoid malicious code
     if (strchr(text, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided Clipboard could be potentially malicious, avoid [\'] character");
-    else EM_ASM({ navigator.clipboard.writeText(UTF8ToString($0)); }, text);
+    else EM_ASM({ navigator.clipboard.writeText(UTF8ToString(Number($0))); }, text);
 }
 
 // Async EM_JS to be able to await clickboard read asynchronous function
@@ -845,7 +845,7 @@ EM_JS(char *, GetLastPastedText, (void), {
     if (length > 1)
     {
         var ptr = _malloc(length);
-        stringToUTF8(str, ptr, length);
+        stringToUTF8(str, Number(ptr), length);
         return ptr;
     }
     return 0;
@@ -907,7 +907,7 @@ void ShowCursor(void)
 {
     if (CORE.Input.Mouse.cursorHidden)
     {
-        EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+        EM_ASM( { Module.canvas.style.cursor = UTF8ToString(Number($0)); }, cursorLUT[CORE.Input.Mouse.cursor]);
 
         CORE.Input.Mouse.cursorHidden = false;
     }
