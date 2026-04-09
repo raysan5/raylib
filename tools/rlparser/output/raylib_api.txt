@@ -2262,7 +2262,22 @@ Function 230: DrawCircle() (4 input parameters)
   Param[2]: centerY (type: int)
   Param[3]: radius (type: float)
   Param[4]: color (type: Color)
-Function 231: DrawCircleSector() (6 input parameters)
+Function 231: DrawCircleV() (3 input parameters)
+  Name: DrawCircleV
+  Return type: void
+  Description: Draw a color-filled circle (Vector version)
+  Param[1]: center (type: Vector2)
+  Param[2]: radius (type: float)
+  Param[3]: color (type: Color)
+Function 232: DrawCircleGradient() (4 input parameters)
+  Name: DrawCircleGradient
+  Return type: void
+  Description: Draw a gradient-filled circle
+  Param[1]: center (type: Vector2)
+  Param[2]: radius (type: float)
+  Param[3]: inner (type: Color)
+  Param[4]: outer (type: Color)
+Function 233: DrawCircleSector() (6 input parameters)
   Name: DrawCircleSector
   Return type: void
   Description: Draw a piece of a circle
@@ -2272,7 +2287,7 @@ Function 231: DrawCircleSector() (6 input parameters)
   Param[4]: endAngle (type: float)
   Param[5]: segments (type: int)
   Param[6]: color (type: Color)
-Function 232: DrawCircleSectorLines() (6 input parameters)
+Function 234: DrawCircleSectorLines() (6 input parameters)
   Name: DrawCircleSectorLines
   Return type: void
   Description: Draw circle sector outline
@@ -2282,22 +2297,6 @@ Function 232: DrawCircleSectorLines() (6 input parameters)
   Param[4]: endAngle (type: float)
   Param[5]: segments (type: int)
   Param[6]: color (type: Color)
-Function 233: DrawCircleGradient() (5 input parameters)
-  Name: DrawCircleGradient
-  Return type: void
-  Description: Draw a gradient-filled circle
-  Param[1]: centerX (type: int)
-  Param[2]: centerY (type: int)
-  Param[3]: radius (type: float)
-  Param[4]: inner (type: Color)
-  Param[5]: outer (type: Color)
-Function 234: DrawCircleV() (3 input parameters)
-  Name: DrawCircleV
-  Return type: void
-  Description: Draw a color-filled circle (Vector version)
-  Param[1]: center (type: Vector2)
-  Param[2]: radius (type: float)
-  Param[3]: color (type: Color)
 Function 235: DrawCircleLines() (4 input parameters)
   Name: DrawCircleLines
   Return type: void

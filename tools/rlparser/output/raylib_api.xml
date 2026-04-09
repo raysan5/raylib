@@ -1409,6 +1409,17 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCircleV" retType="void" paramCount="3" desc="Draw a color-filled circle (Vector version)">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawCircleGradient" retType="void" paramCount="4" desc="Draw a gradient-filled circle">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
         <Function name="DrawCircleSector" retType="void" paramCount="6" desc="Draw a piece of a circle">
             <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radius" desc="" />
@@ -1423,18 +1434,6 @@
             <Param type="float" name="startAngle" desc="" />
             <Param type="float" name="endAngle" desc="" />
             <Param type="int" name="segments" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawCircleGradient" retType="void" paramCount="5" desc="Draw a gradient-filled circle">
-            <Param type="int" name="centerX" desc="" />
-            <Param type="int" name="centerY" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="Color" name="inner" desc="" />
-            <Param type="Color" name="outer" desc="" />
-        </Function>
-        <Function name="DrawCircleV" retType="void" paramCount="3" desc="Draw a color-filled circle (Vector version)">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCircleLines" retType="void" paramCount="4" desc="Draw circle outline">
