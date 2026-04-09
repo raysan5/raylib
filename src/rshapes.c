@@ -324,6 +324,22 @@ void DrawCircleV(Vector2 center, float radius, Color color)
     DrawCircleSector(center, radius, 0, 360, 36, color);
 }
 
+// Draw a gradient-filled circle
+void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer)
+{
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlColor4ub(inner.r, inner.g, inner.b, inner.a);
+            rlVertex2f(center.x, center.y);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*radius, center.y + sinf(DEG2RAD*(i + 10))*radius);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*radius, center.y + sinf(DEG2RAD*i)*radius);
+        }
+    rlEnd();
+}
+
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
@@ -469,22 +485,6 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
             rlVertex2f(center.x + cosf(DEG2RAD*angle)*radius, center.y + sinf(DEG2RAD*angle)*radius);
-        }
-    rlEnd();
-}
-
-// Draw a gradient-filled circle
-void DrawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer)
-{
-    rlBegin(RL_TRIANGLES);
-        for (int i = 0; i < 360; i += 10)
-        {
-            rlColor4ub(inner.r, inner.g, inner.b, inner.a);
-            rlVertex2f((float)centerX, (float)centerY);
-            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
-            rlVertex2f((float)centerX + cosf(DEG2RAD*(i + 10))*radius, (float)centerY + sinf(DEG2RAD*(i + 10))*radius);
-            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
-            rlVertex2f((float)centerX + cosf(DEG2RAD*i)*radius, (float)centerY + sinf(DEG2RAD*i)*radius);
         }
     rlEnd();
 }

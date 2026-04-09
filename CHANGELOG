@@ -221,6 +221,7 @@ Detailed changes:
 [rlsw] REVIEWED: C++ support (#5291) by @alexgb0
 [rshapes] ADDED: `DrawLineDashed()` (#5222) by @luis605
 [rshapes] ADDED: `DrawEllipseV()` and `DrawEllipseLinesV()` (#4963) by @meowstr
+[rshapes] REDESIGNED: `DrawCircleGradieent()` to use Vector2 as center parameter by @raysan5 -WARNING-
 [rshapes] REVIEWED: `DrawLine()`, fix pixel offset issue on drawing (#4666) by @Bigfoot71
 [rshapes] REVIEWED: `DrawRectangleGradientEx()`, incorrect parameter names (#4980) by @vincent
 [rshapes] REVIEWED: `DrawRectangleLines`, fix pixel offset issue (#4669) by @Bigfoot71
