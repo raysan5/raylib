@@ -284,6 +284,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_MEMORY)
+    # By default use OpenGL Software
+    GRAPHICS ?= GRAPHICS_API_OPENGL_SOFTWARE
+endif
 
 # Define default C compiler and archiver to pack library: CC, AR
 #------------------------------------------------------------------------------------------------
