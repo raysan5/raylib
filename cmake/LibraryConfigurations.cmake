@@ -156,6 +156,7 @@ elseif ("${PLATFORM}" STREQUAL "SDL")
 			add_compile_definitions(USING_SDL2_PACKAGE)
 		endif()
 	endif()	
+
 elseif ("${PLATFORM}" STREQUAL "RGFW")
     set(PLATFORM_CPP "PLATFORM_DESKTOP_RGFW")
 
@@ -181,6 +182,11 @@ elseif ("${PLATFORM}" STREQUAL "WebRGFW")
     set(PLATFORM_CPP "PLATFORM_WEB_RGFW")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
+
+elseif ("${PLATFORM}" STREQUAL "Memory")
+    set(PLATFORM_CPP "PLATFORM_MEMORY")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+    set(OPENGL_VERSION "Software")
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
