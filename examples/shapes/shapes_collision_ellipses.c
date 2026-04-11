@@ -50,8 +50,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1200;
-    const int screenHeight = 840;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - collision ellipses");
     SetTargetFPS(60);
@@ -67,7 +67,6 @@ int main(void)
     // 0 = controlling A, 1 = controlling B
     int controlled = 0;
 
-    Color bgColor = { 16, 12, 21, 255 };
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -94,21 +93,15 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(bgColor);
+            ClearBackground(RAYWHITE);
 
-            DrawEllipse((int)ellipseACenter.x, (int)ellipseACenter.y,
-                        ellipseARx, ellipseARy,
-                        ellipsesCollide ? RED : BLUE);
+            DrawEllipse((int)ellipseACenter.x, (int)ellipseACenter.y, ellipseARx, ellipseARy, ellipsesCollide ? RED : BLUE);
 
-            DrawEllipse((int)ellipseBCenter.x, (int)ellipseBCenter.y,
-                        ellipseBRx, ellipseBRy,
-                        ellipsesCollide ? RED : GREEN);
+            DrawEllipse((int)ellipseBCenter.x, (int)ellipseBCenter.y, ellipseBRx, ellipseBRy, ellipsesCollide ? RED : GREEN);
 
-            DrawEllipseLines((int)ellipseACenter.x, (int)ellipseACenter.y,
-                             ellipseARx, ellipseARy, WHITE);
+            DrawEllipseLines((int)ellipseACenter.x, (int)ellipseACenter.y, ellipseARx, ellipseARy, WHITE);
 
-            DrawEllipseLines((int)ellipseBCenter.x, (int)ellipseBCenter.y,
-                             ellipseBRx, ellipseBRy, WHITE);
+            DrawEllipseLines((int)ellipseBCenter.x, (int)ellipseBCenter.y, ellipseBRx, ellipseBRy, WHITE);
 
             DrawCircleV(ellipseACenter, 4, WHITE);
             DrawCircleV(ellipseBCenter, 4, WHITE);
