@@ -50,7 +50,7 @@ int main(void)
     // Define the text we're going to draw in the rectangle
     int wordIndex = 0;
     int wordCount = 0;
-    char **words = TextSplit("raylib is a simple and easy-to-use library to enjoy videogames programming", ' ', &wordCount);
+    const char **words = TextSplit("raylib is a simple and easy-to-use library to enjoy videogames programming", ' ', &wordCount);
 
     // Initialize the font size we're going to use
     int fontSize = 40;
