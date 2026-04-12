@@ -187,6 +187,10 @@ elseif ("${PLATFORM}" STREQUAL "Memory")
     set(PLATFORM_CPP "PLATFORM_MEMORY")
     set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
     set(OPENGL_VERSION "Software")
+
+    if(WIN32 OR CMAKE_C_COMPILER MATCHES "mingw|mingw32|mingw64")
+        set(LIBS_PRIVATE winmm)
+    endif()
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
