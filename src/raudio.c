@@ -1763,6 +1763,8 @@ bool IsMusicValid(Music music)
 // Unload music stream
 void UnloadMusicStream(Music music)
 {
+    if (IsMusicStreamPlaying(music)) StopMusicStream(music);
+
     UnloadAudioStream(music.stream);
 
     if (music.ctxData != NULL)
