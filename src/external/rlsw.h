@@ -2417,7 +2417,7 @@ static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_
 
 static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
 {
-    // TODO: With a bit more cleverness thee number of operations can
+    // TODO: With a bit more cleverness the number of operations can
     // be clearly reduced, but for now it works fine
 
     float xf = (u*tex->width) - 0.5f;
