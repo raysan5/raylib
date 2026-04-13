@@ -15,8 +15,8 @@
 // Check if point is inside ellipse
 static bool CheckCollisionPointEllipse(Vector2 point, Vector2 center, float rx, float ry)
 {
-    float dx = (point.x - center.x) / rx;
-    float dy = (point.y - center.y) / ry;
+    float dx = (point.x - center.x)/rx;
+    float dy = (point.y - center.y)/ry;
     return (dx*dx + dy*dy) <= 1.0f;
 }
 
@@ -37,8 +37,8 @@ static bool CheckCollisionEllipses(Vector2 c1, float rx1, float ry1, Vector2 c2,
 
     // Radial distance from center to ellipse boundary in direction theta
     // r(theta) = (rx * ry) / sqrt((ry*cos)^2 + (rx*sin)^2)
-    float r1 = (rx1 * ry1) / sqrtf((ry1*cosT)*(ry1*cosT) + (rx1*sinT)*(rx1*sinT));
-    float r2 = (rx2 * ry2) / sqrtf((ry2*cosT)*(ry2*cosT) + (rx2*sinT)*(rx2*sinT));
+    float r1 = (rx1*ry1)/sqrtf((ry1*cosT)*(ry1*cosT) + (rx1*sinT)*(rx1*sinT));
+    float r2 = (rx2*ry2)/sqrtf((ry2*cosT)*(ry2*cosT) + (rx2*sinT)*(rx2*sinT));
 
     return dist <= (r1 + r2);
 }
@@ -70,7 +70,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())
+    while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -109,9 +109,7 @@ int main(void)
             if (ellipsesCollide) DrawText("ELLIPSES COLLIDE", screenWidth/2 - 120, 40, 28, RED);
             else DrawText("NO COLLISION", screenWidth/2 - 80, 40, 28, DARKGRAY);
 
-            // Controlled ellipse indicator
-            DrawText(controlled == 0 ? "Controlling: A" : "Controlling: B",
-                     20, screenHeight - 40, 20, YELLOW);
+            DrawText(controlled == 0 ? "Controlling: A" : "Controlling: B", 20, screenHeight - 40, 20, YELLOW);
 
             if (mouseInA && controlled != 0) DrawText("Mouse inside ellipse A", 20, screenHeight - 70, 20, BLUE);
             if (mouseInB && controlled != 1) DrawText("Mouse inside ellipse B", 20, screenHeight - 70, 20, GREEN);
