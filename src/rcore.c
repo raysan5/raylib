@@ -2503,31 +2503,42 @@ const char *GetFileName(const char *filePath)
     return fileName + 1;
 }
 
-// Get filename string without extension (uses static string)
+// Get filename string without extension (uses rotating static strings)
+// WARNING: String returned will expire after this function is called MAX_FILENAME_BUFFERS times
 const char *GetFileNameWithoutExt(const char *filePath)
 {
     #define MAX_FILENAME_LENGTH     256
+#ifndef MAX_FILENAME_BUFFERS
+    #define MAX_FILENAME_BUFFERS    4        // Maximum number of static buffers for filename without extension
+#endif
 
-    static char fileName[MAX_FILENAME_LENGTH] = { 0 };
-    memset(fileName, 0, MAX_FILENAME_LENGTH);
+    // Create an array of buffers so strings don't expire until MAX_FILENAME_BUFFERS invocations
+    static char fileName[MAX_FILENAME_BUFFERS][MAX_FILENAME_LENGTH] = { 0 };
+    static int index = 0;
+
+    char *currentBuffer = fileName[index];
+    memset(currentBuffer, 0, MAX_FILENAME_LENGTH); // Clear buffer before using
 
     if (filePath != NULL)
     {
-        strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
-        int fileNameLenght = (int)strlen(fileName); // Get size in bytes
+        strncpy(currentBuffer, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
+        int fileNameLength = (int)strlen(currentBuffer); // Get size in bytes
 
-        for (int i = fileNameLenght; i > 0; i--) // Reverse search '.'
+        for (int i = fileNameLength; i > 0; i--) // Reverse search '.'
         {
-            if (fileName[i] == '.')
+            if (currentBuffer[i] == '.')
             {
                 // NOTE: Break on first '.' found
-                fileName[i] = '\0';
+                currentBuffer[i] = '\0';
                 break;
             }
         }
+
+        index += 1;     // Move to next buffer for next function call
+        if (index >= MAX_FILENAME_BUFFERS) index = 0;
     }
 
-    return fileName;
+    return currentBuffer;
 }
 
 // Get directory for a given filePath
