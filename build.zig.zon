@@ -1,6 +1,6 @@
 .{
     .name = .raylib,
-    .version = "5.6.0-dev",
+    .version = "6.0.0",
     .minimum_zig_version = "0.16.0",
 
     .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
