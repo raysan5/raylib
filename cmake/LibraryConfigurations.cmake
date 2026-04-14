@@ -14,6 +14,9 @@ if (${PLATFORM} MATCHES "Desktop")
         if (OPENGL_VERSION STREQUAL "ES 2.0")
             set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
+            message(STATUS "ANGLE_EGL_PATH = ${ANGLE_EGL_PATH}")
+            message(STATUS "ANGLE_GLES_PATH = ${ANGLE_GLES_PATH}")
+
             link_libraries(
                 ${ANGLE_EGL_PATH}
                 ${ANGLE_GLES_PATH}

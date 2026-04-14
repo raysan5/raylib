@@ -500,8 +500,57 @@ static void RecordAutomationEvent(void); // Record frame events (to internal eve
 #endif
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
+typedef void* HANDLE;
+typedef void* LPVOID;
+typedef const wchar_t* LPCWSTR;
+typedef int BOOL;
+typedef unsigned long DWORD;
+typedef long LONG;
+typedef long long LONGLONG;
+
+typedef struct _LARGE_INTEGER2 {
+    LONGLONG QuadPart;
+} LARGE_INTEGER2;
+
+/* Constants */
+#define CREATE_WAITABLE_TIMER_MANUAL_RESET 0x00000001
+#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION 0x00000002
+#define TIMER_ALL_ACCESS 0x1F0003
+#define INFINITE 0xFFFFFFFF
+
+/* Functions */
+__declspec(dllimport) HANDLE __stdcall CreateWaitableTimerExW(
+    LPVOID lpTimerAttributes,
+    LPCWSTR lpTimerName,
+    DWORD dwFlags,
+    DWORD dwDesiredAccess
+);
+
+__declspec(dllimport) BOOL __stdcall SetWaitableTimerEx(
+    HANDLE hTimer,
+    const LARGE_INTEGER2* lpDueTime,
+    LONG lPeriod,
+    LPVOID pfnCompletionRoutine,
+    LPVOID lpArgToCompletionRoutine,
+    LPVOID wakeContext,
+    DWORD tolerableDelay
+);
+
+__declspec(dllimport) DWORD __stdcall WaitForSingleObject(
+    HANDLE hHandle,
+    DWORD dwMilliseconds
+);
+
+__declspec(dllimport) BOOL __stdcall CloseHandle(
+    HANDLE hObject
+);
+
 // NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 void __stdcall Sleep(unsigned long msTimeout);              // Required for: WaitTime()
+
+static HANDLE waitableTimer = NULL;
+static bool waitableTimerInitialized = false;
+
 #endif
 
 #if !defined(SUPPORT_MODULE_RTEXT)
@@ -1731,7 +1780,44 @@ void WaitTime(double seconds)
 
     // System halt functions
     #if defined(_WIN32)
-        Sleep((unsigned long)(sleepSeconds*1000.0));
+    {
+        if (!waitableTimerInitialized)
+        {
+            waitableTimerInitialized = true;
+
+            waitableTimer = CreateWaitableTimerExW(NULL, NULL,
+                CREATE_WAITABLE_TIMER_MANUAL_RESET | CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+                TIMER_ALL_ACCESS);
+
+            if (waitableTimer == NULL)
+            {
+                waitableTimer = CreateWaitableTimerExW(NULL, NULL,
+                    CREATE_WAITABLE_TIMER_MANUAL_RESET,
+                    TIMER_ALL_ACCESS);
+            }
+        }
+
+        if (waitableTimer != NULL)
+        {
+            LARGE_INTEGER2 dueTime;
+            dueTime.QuadPart = -(LONGLONG)(sleepSeconds*10000000.0);   // relative time in 100-ns units
+
+            if (SetWaitableTimerEx(waitableTimer, &dueTime, 0, NULL, NULL, NULL, 0))
+            {
+                WaitForSingleObject(waitableTimer, INFINITE);
+            }
+            else
+            { 
+                TRACELOG(LOG_WARNING, "TIMER: SetWaitableTimerEx() failed, falling back to Sleep()");
+                Sleep((unsigned long)(sleepSeconds*1000.0));
+            }
+        }
+        else 
+        {
+            TRACELOG(LOG_WARNING, "TIMER: CreateWaitableTimerExW() failed, falling back to Sleep()");
+            Sleep((unsigned long)(sleepSeconds*1000.0));
+        }
+    }
     #endif
     #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
