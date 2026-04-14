@@ -11,16 +11,24 @@ if (${PLATFORM} MATCHES "Desktop")
     set(PLATFORM_CPP "PLATFORM_DESKTOP")
 
     if (APPLE)
-        # Need to force OpenGL 3.3 on OS X
-        # See: https://github.com/raysan5/raylib/issues/341
-        set(GRAPHICS "GRAPHICS_API_OPENGL_33")
-        find_library(OPENGL_LIBRARY OpenGL)
-        set(LIBS_PRIVATE ${OPENGL_LIBRARY})
-        link_libraries("${LIBS_PRIVATE}")
-        if (NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
-            add_definitions(-DGL_SILENCE_DEPRECATION)
-            MESSAGE(AUTHOR_WARNING "OpenGL is deprecated starting with macOS 10.14 (Mojave)!")
-        endif ()
+        if (OPENGL_VERSION STREQUAL "ES 2.0")
+            set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+
+            link_libraries(
+                ${ANGLE_EGL_PATH}
+                ${ANGLE_GLES_PATH}
+            )
+        else()
+            set(GRAPHICS "GRAPHICS_API_OPENGL_33")
+            find_library(OPENGL_LIBRARY OpenGL)
+            set(LIBS_PRIVATE ${OPENGL_LIBRARY})
+            link_libraries("${LIBS_PRIVATE}")
+
+            if (NOT CMAKE_SYSTEM STRLESS "Darwin-18.0.0")
+                add_definitions(-DGL_SILENCE_DEPRECATION)
+                message(AUTHOR_WARNING "OpenGL is deprecated starting with macOS 10.14 (Mojave)!")
+            endif()
+        endif()
     elseif (WIN32)
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
         find_package(OpenGL QUIET)
