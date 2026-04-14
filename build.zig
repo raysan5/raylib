@@ -1,18 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-/// Minimum supported version of Zig
-const min_ver = "0.16.0-dev.3013+abd131e33";
-
 const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
 const emccOutputFile = "index.html";
-
-comptime {
-    const order = std.SemanticVersion.order;
-    const parse = std.SemanticVersion.parse;
-    if (order(builtin.zig_version, parse(min_ver) catch unreachable) == .lt)
-        @compileError("Raylib requires zig version " ++ min_ver);
-}
 
 pub const emsdk = struct {
     const zemscripten = @import("zemscripten");
@@ -489,7 +479,7 @@ fn addExamples(
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
 
-    var dir = try std.Io.Dir.cwd().openDir(b.graph.io, b.pathFromRoot(module_subpath), .{ .iterate = true });
+    var dir = try b.build_root.handle.openDir(b.graph.io, module_subpath, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
