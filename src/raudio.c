@@ -11,20 +11,20 @@
 *       - Play/Stop/Pause/Resume loaded audio
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RAUDIO 1
+*       #define SUPPORT_MODULE_RAUDIO       1
 *           raudio module is included in the build
 *
 *       #define RAUDIO_STANDALONE
 *           Define to use the module as standalone library (independently of raylib)
 *           Required types and functions are defined in the same module
 *
-*       #define SUPPORT_FILEFORMAT_WAV 1
-*       #define SUPPORT_FILEFORMAT_OGG 1
-*       #define SUPPORT_FILEFORMAT_MP3 1
-*       #define SUPPORT_FILEFORMAT_QOA 1
-*       #define SUPPORT_FILEFORMAT_FLAC 0
-*       #define SUPPORT_FILEFORMAT_XM 1
-*       #define SUPPORT_FILEFORMAT_MOD 1
+*       #define SUPPORT_FILEFORMAT_WAV      1
+*       #define SUPPORT_FILEFORMAT_OGG      1
+*       #define SUPPORT_FILEFORMAT_MP3      1
+*       #define SUPPORT_FILEFORMAT_QOA      1
+*       #define SUPPORT_FILEFORMAT_FLAC     0
+*       #define SUPPORT_FILEFORMAT_XM       1
+*       #define SUPPORT_FILEFORMAT_MOD      1
 *           Selected desired fileformats to be supported for loading. Some of those formats are
 *           supported by default, to remove support, #define as 0 in this module or your build system
 *
