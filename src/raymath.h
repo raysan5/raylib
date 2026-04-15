@@ -2505,19 +2505,14 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
 
-    if (axisLength != 0.0f)
+    if (length != 0.0f)
     {
         angle *= 0.5f;
 
-        float length = 0.0f;
-        float ilength = 0.0f;
-
         // Vector3Normalize(axis)
-        length = axisLength;
-        if (length == 0.0f) length = 1.0f;
-        ilength = 1.0f/length;
+        float ilength = 1.0f/length;
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;
