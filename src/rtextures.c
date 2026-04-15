@@ -3,31 +3,31 @@
 *   rtextures - Basic functions to load and draw textures
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RTEXTURES 1
+*       #define SUPPORT_MODULE_RTEXTURES    1
 *           rtextures module is included in the build
 *
-*       #define SUPPORT_FILEFORMAT_BMP 1
-*       #define SUPPORT_FILEFORMAT_PNG 1
-*       #define SUPPORT_FILEFORMAT_TGA 0
-*       #define SUPPORT_FILEFORMAT_JPG 0
-*       #define SUPPORT_FILEFORMAT_GIF 1
-*       #define SUPPORT_FILEFORMAT_QOI 1
-*       #define SUPPORT_FILEFORMAT_PSD 0
-*       #define SUPPORT_FILEFORMAT_HDR 0
-*       #define SUPPORT_FILEFORMAT_PIC 0
-*       #define SUPPORT_FILEFORMAT_PNM 0
-*       #define SUPPORT_FILEFORMAT_DDS 1
-*       #define SUPPORT_FILEFORMAT_PKM 0
-*       #define SUPPORT_FILEFORMAT_KTX 0
-*       #define SUPPORT_FILEFORMAT_PVR 0
-*       #define SUPPORT_FILEFORMAT_ASTC 0
+*       #define SUPPORT_FILEFORMAT_BMP      1
+*       #define SUPPORT_FILEFORMAT_PNG      1
+*       #define SUPPORT_FILEFORMAT_TGA      0
+*       #define SUPPORT_FILEFORMAT_JPG      0
+*       #define SUPPORT_FILEFORMAT_GIF      1
+*       #define SUPPORT_FILEFORMAT_QOI      1
+*       #define SUPPORT_FILEFORMAT_PSD      0
+*       #define SUPPORT_FILEFORMAT_HDR      0
+*       #define SUPPORT_FILEFORMAT_PIC      0
+*       #define SUPPORT_FILEFORMAT_PNM      0
+*       #define SUPPORT_FILEFORMAT_DDS      1
+*       #define SUPPORT_FILEFORMAT_PKM      0
+*       #define SUPPORT_FILEFORMAT_KTX      0
+*       #define SUPPORT_FILEFORMAT_PVR      0
+*       #define SUPPORT_FILEFORMAT_ASTC     0
 *           Selected desired fileformats to be supported for image data loading. Some of those formats are
 *           supported by default, to remove support, #define as 0 in this module or your build system
 *
-*       #define SUPPORT_IMAGE_EXPORT 1
+*       #define SUPPORT_IMAGE_EXPORT        1
 *           Support image export in multiple file formats
 *
-*       #define SUPPORT_IMAGE_GENERATION 1
+*       #define SUPPORT_IMAGE_GENERATION    1
 *           Support procedural image generation functionality (gradient, spot, perlin-noise, cellular)
 *
 *   DEPENDENCIES:
