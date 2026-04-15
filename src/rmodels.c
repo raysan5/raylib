@@ -3,19 +3,19 @@
 *   rmodels - Basic functions to draw 3d shapes and load and draw 3d models
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RMODELS
+*       #define SUPPORT_MODULE_RMODELS 1
 *           rmodels module is included in the build
 *
-*       #define SUPPORT_FILEFORMAT_OBJ
-*       #define SUPPORT_FILEFORMAT_MTL
-*       #define SUPPORT_FILEFORMAT_IQM
-*       #define SUPPORT_FILEFORMAT_GLTF
-*       #define SUPPORT_FILEFORMAT_GLTF_WRITE
-*       #define SUPPORT_FILEFORMAT_VOX
-*       #define SUPPORT_FILEFORMAT_M3D
+*       #define SUPPORT_FILEFORMAT_OBJ 1
+*       #define SUPPORT_FILEFORMAT_MTL 1
+*       #define SUPPORT_FILEFORMAT_IQM 1
+*       #define SUPPORT_FILEFORMAT_GLTF 1
+*       #define SUPPORT_FILEFORMAT_GLTF_WRITE 0
+*       #define SUPPORT_FILEFORMAT_VOX 1
+*       #define SUPPORT_FILEFORMAT_M3D 1
 *           Selected desired fileformats to be supported for model data loading
 *
-*       #define SUPPORT_MESH_GENERATION
+*       #define SUPPORT_MESH_GENERATION 1
 *           Support procedural mesh generation functions, uses external par_shapes.h library
 *           NOTE: Some generated meshes DO NOT include generated texture coordinates
 *

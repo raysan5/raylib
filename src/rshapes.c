@@ -16,10 +16,10 @@
 *       a single draw call and it also allows users to configure it the same way with their own fonts
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RSHAPES
+*       #define SUPPORT_MODULE_RSHAPES 1
 *           rshapes module is included in the build
 *
-*       #define SUPPORT_QUADS_DRAW_MODE
+*       #define SUPPORT_QUADS_DRAW_MODE 1
 *           Use QUADS instead of TRIANGLES for drawing when possible. Lines-based shapes still use LINES
 *
 *
