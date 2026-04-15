@@ -70,45 +70,34 @@ pub const emsdk = struct {
     }
 };
 
-fn setDesktopPlatform(raylib: *std.Build.Step.Compile, platform: PlatformBackend) void {
-    switch (platform) {
-        .glfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_GLFW", ""),
-        .rgfw => raylib.root_module.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
-        .sdl => raylib.root_module.addCMacro("PLATFORM_DESKTOP_SDL", ""),
-        .android => raylib.root_module.addCMacro("PLATFORM_ANDROID", ""),
-        else => {},
-    }
-}
-
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
+    const raylib_mod = b.createModule(.{
+        .optimize = optimize,
+        .target = target,
+        .link_libc = true,
+    });
+
     const raylib = b.addLibrary(.{
         .name = "raylib",
         .linkage = options.linkage,
-        .root_module = b.createModule(.{
-            .optimize = optimize,
-            .target = target,
-            .link_libc = true,
-        }),
+        .root_module = raylib_mod,
     });
 
-    raylib.root_module.addCMacro("_GNU_SOURCE", "");
-    raylib.root_module.addCMacro("GL_SILENCE_DEPRECATION", "199309L");
+    raylib_mod.addCMacro("_GNU_SOURCE", "");
+    raylib_mod.addCMacro("GL_SILENCE_DEPRECATION", "199309L");
 
-    var raylib_flags_arr: std.ArrayList([]const u8) = .empty;
-    defer raylib_flags_arr.deinit(b.allocator);
+    var arena: std.heap.ArenaAllocator = .init(b.allocator);
+    defer arena.deinit();
 
-    try raylib_flags_arr.append(
-        b.allocator,
-        "-std=gnu99",
-    );
+    var raylib_flags_arr: std.array_list.Managed([]const u8) = .init(arena.allocator());
+    var c_source_files: std.array_list.Managed([]const u8) = .init(arena.allocator());
+
+    try c_source_files.append("src/rcore.c");
+    try raylib_flags_arr.append("-std=c99");
 
     if (options.linkage == .dynamic) {
-        try raylib_flags_arr.append(
-            b.allocator,
-            "-fPIC",
-        );
-
-        raylib.root_module.addCMacro("BUILD_LIBTYPE_SHARED", "");
+        try raylib_flags_arr.append("-fPIC");
+        raylib_mod.addCMacro("BUILD_LIBTYPE_SHARED", "");
     }
 
     if (options.config.len > 0) {
@@ -120,237 +109,299 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
         // Apply config flags supplied by the user
         while (config_iter.next()) |config_flag| {
-            try raylib_flags_arr.append(b.allocator, config_flag);
+            try raylib_flags_arr.append(config_flag);
         }
     }
 
-    // No GLFW required on PLATFORM_DRM
-    if (options.platform != .drm) {
-        raylib.root_module.addIncludePath(b.path("src/external/glfw/include"));
-    }
-
-    var c_source_files: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 2);
-    c_source_files.appendSliceAssumeCapacity(&.{"src/rcore.c"});
-
+    raylib_mod.addCMacro("SUPPORT_MODULE_RSHAPES", &.{@as(u8, @intFromBool(options.rshapes)) + 0x30});
     if (options.rshapes) {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RSHAPES", "1");
-        try c_source_files.append(b.allocator, "src/rshapes.c");
-    } else {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RSHAPES", "0");
+        try c_source_files.append("src/rshapes.c");
     }
-
+    raylib_mod.addCMacro("SUPPORT_MODULE_RTEXTURES", &.{@as(u8, @intFromBool(options.rtextures)) + 0x30});
     if (options.rtextures) {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXTURES", "1");
-        try c_source_files.append(b.allocator, "src/rtextures.c");
-    } else {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXTURES", "0");
+        try c_source_files.append("src/rtextures.c");
     }
-
+    raylib_mod.addCMacro("SUPPORT_MODULE_RTEXT", &.{@as(u8, @intFromBool(options.rtext)) + 0x30});
     if (options.rtext) {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXT", "1");
-        try c_source_files.append(b.allocator, "src/rtext.c");
-    } else {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RTEXT", "0");
+        try c_source_files.append("src/rtext.c");
     }
-
+    raylib_mod.addCMacro("SUPPORT_MODULE_RMODELS", &.{@as(u8, @intFromBool(options.rmodels)) + 0x30});
     if (options.rmodels) {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RMODELS", "1");
-        try c_source_files.append(b.allocator, "src/rmodels.c");
-    } else {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RMODELS", "0");
+        try c_source_files.append("src/rmodels.c");
     }
-
+    raylib_mod.addCMacro("SUPPORT_MODULE_RAUDIO", &.{@as(u8, @intFromBool(options.raudio)) + 0x30});
     if (options.raudio) {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RAUDIO", "1");
-        try c_source_files.append(b.allocator, "src/raudio.c");
-    } else {
-        raylib.root_module.addCMacro("SUPPORT_MODULE_RAUDIO", "0");
+        try c_source_files.append("src/raudio.c");
     }
 
-    if (options.opengl_version != .auto) {
-        raylib.root_module.addCMacro(options.opengl_version.toCMacroStr(), "");
-    }
+    raylib_mod.addIncludePath(b.path("src/platforms"));
+    switch (options.platform) {
+        .glfw => {
+            var opengl_version: OpenglVersion = options.opengl_version;
+            raylib_mod.addIncludePath(b.path("src/external/glfw/include"));
+            try c_source_files.append("src/rglfw.c");
 
-    raylib.root_module.addIncludePath(b.path("src/platforms"));
-    switch (target.result.os.tag) {
-        .windows => {
-            switch (options.platform) {
-                .glfw => try c_source_files.append(b.allocator, "src/rglfw.c"),
-                .rgfw, .sdl, .drm, .android => {},
+            switch (target.result.os.tag) {
+                .windows => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
+
+                    raylib_mod.linkSystemLibrary("winmm", .{});
+                    raylib_mod.linkSystemLibrary("gdi32", .{});
+                    raylib_mod.linkSystemLibrary("opengl32", .{});
+                },
+                .linux => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
+
+                    if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
+                        raylib_mod.addCMacro("_GLFW_X11", "");
+                        raylib_mod.linkSystemLibrary("GLX", .{});
+                        raylib_mod.linkSystemLibrary("X11", .{});
+                        raylib_mod.linkSystemLibrary("Xcursor", .{});
+                        raylib_mod.linkSystemLibrary("Xext", .{});
+                        raylib_mod.linkSystemLibrary("Xfixes", .{});
+                        raylib_mod.linkSystemLibrary("Xi", .{});
+                        raylib_mod.linkSystemLibrary("Xinerama", .{});
+                        raylib_mod.linkSystemLibrary("Xrandr", .{});
+                        raylib_mod.linkSystemLibrary("Xrender", .{});
+                    }
+
+                    if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                        _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+                            std.log.err(
+                                \\ `wayland-scanner` may not be installed on the system.
+                                \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+                            , .{});
+                            @panic("`wayland-scanner` not found");
+                        };
+                        raylib_mod.addCMacro("_GLFW_WAYLAND", "");
+                        raylib_mod.linkSystemLibrary("wayland-client", .{});
+                        raylib_mod.linkSystemLibrary("wayland-cursor", .{});
+                        raylib_mod.linkSystemLibrary("wayland-egl", .{});
+                        raylib_mod.linkSystemLibrary("xkbcommon", .{});
+                        try waylandGenerate(b, raylib, "src/external/glfw/deps/wayland/", false);
+                    }
+                },
+                .freebsd, .openbsd, .netbsd, .dragonfly => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
+
+                    raylib_mod.linkSystemLibrary("GL", .{});
+                    raylib_mod.linkSystemLibrary("rt", .{});
+                    raylib_mod.linkSystemLibrary("dl", .{});
+                    raylib_mod.linkSystemLibrary("m", .{});
+                    raylib_mod.linkSystemLibrary("X11", .{});
+                    raylib_mod.linkSystemLibrary("Xrandr", .{});
+                    raylib_mod.linkSystemLibrary("Xinerama", .{});
+                    raylib_mod.linkSystemLibrary("Xi", .{});
+                    raylib_mod.linkSystemLibrary("Xxf86vm", .{});
+                    raylib_mod.linkSystemLibrary("Xcursor", .{});
+                },
+                .macos => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+
+                    // On macos rglfw.c include Objective-C files.
+                    try raylib_flags_arr.append("-ObjC");
+                    raylib_mod.addCSourceFile(.{
+                        .file = b.path("src/rglfw.c"),
+                        .flags = raylib_flags_arr.items,
+                    });
+                    _ = raylib_flags_arr.pop();
+
+                    // Include xcode_frameworks for cross compilation
+                    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+                        raylib_mod.addSystemFrameworkPath(dep.path("Frameworks"));
+                        raylib_mod.addSystemIncludePath(dep.path("include"));
+                        raylib_mod.addLibraryPath(dep.path("lib"));
+                    }
+
+                    raylib_mod.linkFramework("Foundation", .{});
+                    raylib_mod.linkFramework("CoreServices", .{});
+                    raylib_mod.linkFramework("CoreGraphics", .{});
+                    raylib_mod.linkFramework("AppKit", .{});
+                    raylib_mod.linkFramework("IOKit", .{});
+                },
+                .emscripten => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gles_2;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_WEB", "");
+
+                    const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
+                    raylib.step.dependOn(activate_emsdk_step);
+                    if (options.opengl_version == .auto) {
+                        raylib_mod.addCMacro("GRAPHICS_API_OPENGL_ES3", "");
+                    }
+                },
+                else => {
+                    if (options.opengl_version == .auto) {
+                        raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
+                    }
+                    try c_source_files.append("src/rglfw.c");
+                },
+            }
+            raylib_mod.addCMacro(opengl_version.toCMacroStr(), "");
+        },
+        .rgfw => {
+            var opengl_version: OpenglVersion = options.opengl_version;
+
+            switch (target.result.os.tag) {
+                .linux => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
+
+                    if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
+                        raylib_mod.addCMacro("RGFW_X11", "");
+                        raylib_mod.addCMacro("RGFW_UNIX", "");
+
+                        raylib_mod.linkSystemLibrary("GL", .{});
+                        raylib_mod.linkSystemLibrary("X11", .{});
+                        raylib_mod.linkSystemLibrary("Xrandr", .{});
+                        raylib_mod.linkSystemLibrary("Xi", .{});
+                        raylib_mod.linkSystemLibrary("Xcursor", .{});
+                        raylib_mod.linkSystemLibrary("pthread", .{});
+                        raylib_mod.linkSystemLibrary("dl", .{});
+                        raylib_mod.linkSystemLibrary("rt", .{});
+                    }
+
+                    if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                        if (options.linux_display_backend != .Both) {
+                            raylib_mod.addCMacro("RGFW_NO_X11", "");
+                        }
+
+                        _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+                            std.log.err(
+                                \\ `wayland-scanner` may not be installed on the system.
+                                \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+                            , .{});
+                            @panic("`wayland-scanner` not found");
+                        };
+                        raylib_mod.addCMacro("RGFW_WAYLAND", "");
+                        raylib_mod.addCMacro("EGLAPIENTRY", "");
+                        raylib_mod.linkSystemLibrary("wayland-client", .{});
+                        raylib_mod.linkSystemLibrary("wayland-cursor", .{});
+                        raylib_mod.linkSystemLibrary("wayland-egl", .{});
+                        raylib_mod.linkSystemLibrary("xkbcommon", .{});
+                        try waylandGenerate(b, raylib, "src/external/RGFW/deps/wayland/", true);
+                    }
+                },
+                .emscripten => raylib_mod.addCMacro("PLATFORM_WEB_RGFW", ""),
+                else => raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
             }
 
-            raylib.root_module.linkSystemLibrary("winmm", .{});
-            raylib.root_module.linkSystemLibrary("gdi32", .{});
-            raylib.root_module.linkSystemLibrary("opengl32", .{});
-
-            setDesktopPlatform(raylib, options.platform);
+            raylib_mod.addCMacro(opengl_version.toCMacroStr(), "");
         },
-        .linux => {
-            if (options.platform == .drm) {
-                if (options.opengl_version == .auto) {
-                    raylib.root_module.linkSystemLibrary("GLESv2", .{});
-                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
-                }
-
-                if (options.opengl_version != .gl_soft) {
-                    raylib.root_module.linkSystemLibrary("EGL", .{});
-                    raylib.root_module.linkSystemLibrary("gbm", .{});
-                }
-                raylib.root_module.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
-
-                raylib.root_module.addCMacro("PLATFORM_DRM", "");
-                raylib.root_module.addCMacro("EGL_NO_X11", "");
-                raylib.root_module.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
-            } else if (target.result.abi.isAndroid()) {
-
-                //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
-                const hostTuple = switch (builtin.target.os.tag) {
-                    .linux => "linux-x86_64",
-                    .windows => "windows-x86_64",
-                    .macos => "darwin-x86_64",
-                    else => @panic("unsupported host OS"),
-                };
-
-                const androidTriple = switch (target.result.cpu.arch) {
-                    .x86 => "i686-linux-android",
-                    .x86_64 => "x86_64-linux-android",
-                    .arm => "arm-linux-androideabi",
-                    .aarch64 => "aarch64-linux-android",
-                    .riscv64 => "riscv64-linux-android",
-                    else => error.InvalidAndroidTarget,
-                } catch @panic("invalid android target!");
-                const androidNdkPathString: []const u8 = options.android_ndk;
-                if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
-                const androidApiLevel: []const u8 = options.android_api_version;
-
-                const androidSysroot = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/toolchains/llvm/prebuilt/", hostTuple, "/sysroot" });
-                const androidLibPath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/lib/", androidTriple });
-                const androidApiSpecificPath = try std.fs.path.join(b.allocator, &.{ androidLibPath, androidApiLevel });
-                const androidIncludePath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/include" });
-                const androidArchIncludePath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, androidTriple });
-                const androidAsmPath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, "/asm-generic" });
-                const androidGluePath = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/sources/android/native_app_glue/" });
-
-                raylib.root_module.addLibraryPath(.{ .cwd_relative = androidLibPath });
-                raylib.root_module.addLibraryPath(.{ .cwd_relative = androidApiSpecificPath });
-                raylib.root_module.addSystemIncludePath(.{ .cwd_relative = androidIncludePath });
-                raylib.root_module.addSystemIncludePath(.{ .cwd_relative = androidArchIncludePath });
-                raylib.root_module.addSystemIncludePath(.{ .cwd_relative = androidAsmPath });
-                raylib.root_module.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
-
-                var libcData: std.ArrayList(u8) = .empty;
-                var aw: std.Io.Writer.Allocating = .fromArrayList(b.allocator, &libcData);
-                try (std.zig.LibCInstallation{
-                    .include_dir = androidIncludePath,
-                    .sys_include_dir = androidIncludePath,
-                    .crt_dir = androidApiSpecificPath,
-                }).render(&aw.writer);
-                const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice(b.allocator));
-                raylib.setLibCFile(libcFile);
-
-                if (options.opengl_version == .auto) {
-                    raylib.root_module.linkSystemLibrary("GLESv2", .{});
-                    raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
-                }
-                raylib.root_module.linkSystemLibrary("EGL", .{});
-
-                setDesktopPlatform(raylib, .android);
-            } else {
-                switch (options.platform) {
-                    .glfw => try c_source_files.append(b.allocator, "src/rglfw.c"),
-                    .rgfw, .sdl, .drm, .android => {},
-                }
-
-                if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
-                    raylib.root_module.addCMacro("_GLFW_X11", "");
-                    raylib.root_module.linkSystemLibrary("GLX", .{});
-                    raylib.root_module.linkSystemLibrary("X11", .{});
-                    raylib.root_module.linkSystemLibrary("Xcursor", .{});
-                    raylib.root_module.linkSystemLibrary("Xext", .{});
-                    raylib.root_module.linkSystemLibrary("Xfixes", .{});
-                    raylib.root_module.linkSystemLibrary("Xi", .{});
-                    raylib.root_module.linkSystemLibrary("Xinerama", .{});
-                    raylib.root_module.linkSystemLibrary("Xrandr", .{});
-                    raylib.root_module.linkSystemLibrary("Xrender", .{});
-                }
-
-                if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
-                    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
-                        std.log.err(
-                            \\ `wayland-scanner` may not be installed on the system.
-                            \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
-                        , .{});
-                        @panic("`wayland-scanner` not found");
-                    };
-                    raylib.root_module.addCMacro("_GLFW_WAYLAND", "");
-                    raylib.root_module.linkSystemLibrary("EGL", .{});
-                    raylib.root_module.linkSystemLibrary("wayland-client", .{});
-                    raylib.root_module.linkSystemLibrary("xkbcommon", .{});
-                    waylandGenerate(b, raylib, "wayland.xml", "wayland-client-protocol");
-                    waylandGenerate(b, raylib, "xdg-shell.xml", "xdg-shell-client-protocol");
-                    waylandGenerate(b, raylib, "xdg-decoration-unstable-v1.xml", "xdg-decoration-unstable-v1-client-protocol");
-                    waylandGenerate(b, raylib, "viewporter.xml", "viewporter-client-protocol");
-                    waylandGenerate(b, raylib, "relative-pointer-unstable-v1.xml", "relative-pointer-unstable-v1-client-protocol");
-                    waylandGenerate(b, raylib, "pointer-constraints-unstable-v1.xml", "pointer-constraints-unstable-v1-client-protocol");
-                    waylandGenerate(b, raylib, "fractional-scale-v1.xml", "fractional-scale-v1-client-protocol");
-                    waylandGenerate(b, raylib, "xdg-activation-v1.xml", "xdg-activation-v1-client-protocol");
-                    waylandGenerate(b, raylib, "idle-inhibit-unstable-v1.xml", "idle-inhibit-unstable-v1-client-protocol");
-                }
-                setDesktopPlatform(raylib, options.platform);
-            }
-        },
-        .freebsd, .openbsd, .netbsd, .dragonfly => {
-            try c_source_files.append(b.allocator, "src/rglfw.c");
-            raylib.root_module.linkSystemLibrary("GL", .{});
-            raylib.root_module.linkSystemLibrary("rt", .{});
-            raylib.root_module.linkSystemLibrary("dl", .{});
-            raylib.root_module.linkSystemLibrary("m", .{});
-            raylib.root_module.linkSystemLibrary("X11", .{});
-            raylib.root_module.linkSystemLibrary("Xrandr", .{});
-            raylib.root_module.linkSystemLibrary("Xinerama", .{});
-            raylib.root_module.linkSystemLibrary("Xi", .{});
-            raylib.root_module.linkSystemLibrary("Xxf86vm", .{});
-            raylib.root_module.linkSystemLibrary("Xcursor", .{});
-
-            setDesktopPlatform(raylib, options.platform);
-        },
-        .macos => {
-            // Include xcode_frameworks for cross compilation
-            if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
-                raylib.root_module.addSystemFrameworkPath(dep.path("Frameworks"));
-                raylib.root_module.addSystemIncludePath(dep.path("include"));
-                raylib.root_module.addLibraryPath(dep.path("lib"));
-            }
-
-            // On macos rglfw.c include Objective-C files.
-            try raylib_flags_arr.append(b.allocator, "-ObjC");
-            raylib.root_module.addCSourceFile(.{
-                .file = b.path("src/rglfw.c"),
-                .flags = raylib_flags_arr.items,
-            });
-            _ = raylib_flags_arr.pop();
-            raylib.root_module.linkFramework("Foundation", .{});
-            raylib.root_module.linkFramework("CoreServices", .{});
-            raylib.root_module.linkFramework("CoreGraphics", .{});
-            raylib.root_module.linkFramework("AppKit", .{});
-            raylib.root_module.linkFramework("IOKit", .{});
-
-            setDesktopPlatform(raylib, options.platform);
-        },
-        .emscripten => {
-            const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
-            raylib.step.dependOn(activate_emsdk_step);
-            raylib.root_module.addCMacro("PLATFORM_WEB", "");
+        .sdl => {
             if (options.opengl_version == .auto) {
-                raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES3", "");
+                raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
             }
+            raylib_mod.addCMacro("PLATFORM_DESKTOP_SDL", "");
         },
-        else => {
-            @panic("Unsupported OS");
+        .memory => {
+            if (options.opengl_version == .auto) {
+                raylib_mod.addCMacro(OpenglVersion.gl_soft.toCMacroStr(), "");
+            }
+            raylib_mod.addCMacro("PLATFORM_MEMORY", "");
         },
+        .win32 => {
+            if (options.opengl_version == .auto) {
+                raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
+            }
+            raylib_mod.addCMacro("PLATFORM_DESKTOP_WIN32", "");
+        },
+        .drm => {
+            switch (options.opengl_version) {
+                .auto => {
+                    raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
+                    raylib_mod.linkSystemLibrary("GLESv2", .{});
+                    raylib_mod.linkSystemLibrary("EGL", .{});
+                    raylib_mod.linkSystemLibrary("gbm", .{});
+                },
+                .gl_soft => {},
+                else => {
+                    raylib_mod.linkSystemLibrary("EGL", .{});
+                    raylib_mod.linkSystemLibrary("gbm", .{});
+                },
+            }
+
+            raylib_mod.addCMacro("PLATFORM_DRM", "");
+            raylib_mod.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
+            raylib_mod.addCMacro("EGL_NO_X11", "");
+            raylib_mod.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
+        },
+        .android => {
+            if (options.opengl_version == .auto) {
+                raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
+            }
+
+            //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
+            const hostTuple = switch (builtin.target.os.tag) {
+                .linux => "linux-x86_64",
+                .windows => "windows-x86_64",
+                .macos => "darwin-x86_64",
+                else => @panic("unsupported host OS"),
+            };
+
+            const androidTriple = switch (target.result.cpu.arch) {
+                .x86 => "i686-linux-android",
+                .x86_64 => "x86_64-linux-android",
+                .arm => "arm-linux-androideabi",
+                .aarch64 => "aarch64-linux-android",
+                .riscv64 => "riscv64-linux-android",
+                else => error.InvalidAndroidTarget,
+            } catch @panic("invalid android target!");
+            const androidNdkPathString: []const u8 = options.android_ndk;
+            if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
+            const androidApiLevel: []const u8 = options.android_api_version;
+
+            const androidSysroot = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/toolchains/llvm/prebuilt/", hostTuple, "/sysroot" });
+            const androidLibPath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/lib/", androidTriple });
+            const androidApiSpecificPath = try std.fs.path.join(b.allocator, &.{ androidLibPath, androidApiLevel });
+            const androidIncludePath = try std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/include" });
+            const androidArchIncludePath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, androidTriple });
+            const androidAsmPath = try std.fs.path.join(b.allocator, &.{ androidIncludePath, "/asm-generic" });
+            const androidGluePath = try std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/sources/android/native_app_glue/" });
+
+            raylib_mod.addLibraryPath(.{ .cwd_relative = androidLibPath });
+            raylib_mod.addLibraryPath(.{ .cwd_relative = androidApiSpecificPath });
+            raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidIncludePath });
+            raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidArchIncludePath });
+            raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidAsmPath });
+            raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
+
+            var libcData: std.ArrayList(u8) = .empty;
+            var aw: std.Io.Writer.Allocating = .fromArrayList(b.allocator, &libcData);
+            try (std.zig.LibCInstallation{
+                .include_dir = androidIncludePath,
+                .sys_include_dir = androidIncludePath,
+                .crt_dir = androidApiSpecificPath,
+            }).render(&aw.writer);
+            const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice(arena.allocator()));
+            raylib.setLibCFile(libcFile);
+
+            if (options.opengl_version == .auto) {
+                raylib_mod.linkSystemLibrary("GLESv2", .{});
+                raylib_mod.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+            }
+            raylib_mod.linkSystemLibrary("EGL", .{});
+
+            raylib_mod.addCMacro("PLATFORM_ANDROID", "");
+        },
+        //.web_emscripten => raylib_mod.addCMacro("PLATFORM_WEB_EMSCRIPTEN", ""),
     }
 
-    raylib.root_module.addCSourceFiles(.{
+    raylib_mod.addCSourceFiles(.{
         .files = c_source_files.items,
         .flags = raylib_flags_arr.items,
     });
@@ -441,6 +492,8 @@ pub const PlatformBackend = enum {
     glfw,
     rgfw,
     sdl,
+    memory,
+    win32,
     drm,
     android,
 };
@@ -458,15 +511,15 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(lib);
 
-    const examples = b.step("examples", "Build/Install all examples");
-    examples.dependOn(try addExamples("audio", b, target, optimize, lib));
-    examples.dependOn(try addExamples("core", b, target, optimize, lib));
-    examples.dependOn(try addExamples("models", b, target, optimize, lib));
-    examples.dependOn(try addExamples("others", b, target, optimize, lib));
-    examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
-    examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
-    examples.dependOn(try addExamples("text", b, target, optimize, lib));
-    examples.dependOn(try addExamples("textures", b, target, optimize, lib));
+    //const examples = b.step("examples", "Build/Install all examples");
+    //examples.dependOn(try addExamples("audio", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("core", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("models", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("others", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("text", b, target, optimize, lib));
+    //examples.dependOn(try addExamples("textures", b, target, optimize, lib));
 }
 
 fn addExamples(
@@ -613,24 +666,42 @@ fn addExamples(
 fn waylandGenerate(
     b: *std.Build,
     raylib: *std.Build.Step.Compile,
-    comptime protocol: []const u8,
-    comptime basename: []const u8,
-) void {
-    const waylandDir = "src/external/glfw/deps/wayland";
-    const protocolDir = b.pathJoin(&.{ waylandDir, protocol });
-    const clientHeader = basename ++ ".h";
-    const privateCode = basename ++ "-code.h";
+    comptime waylandDir: []const u8,
+    comptime source: bool,
+) !void {
+    const dir = try b.build_root.handle.openDir(b.graph.io, waylandDir, .{ .iterate = true });
+    defer dir.close(b.graph.io);
 
-    const client_step = b.addSystemCommand(&.{ "wayland-scanner", "client-header" });
-    client_step.addFileArg(b.path(protocolDir));
-    raylib.root_module.addIncludePath(client_step.addOutputFileArg(clientHeader).dirname());
+    var iter = dir.iterate();
+    while (try iter.next(b.graph.io)) |entry| {
+        if (entry.kind != .file) continue;
+        const protocolDir = b.pathJoin(&.{ waylandDir, entry.name });
 
-    const private_step = b.addSystemCommand(&.{ "wayland-scanner", "private-code" });
-    private_step.addFileArg(b.path(protocolDir));
-    raylib.root_module.addIncludePath(private_step.addOutputFileArg(privateCode).dirname());
+        const filename = std.fs.path.stem(entry.name);
 
-    raylib.step.dependOn(&client_step.step);
-    raylib.step.dependOn(&private_step.step);
+        const clientHeader = b.fmt("{s}-client-protocol.h", .{filename});
+        const client_step = b.addSystemCommand(&.{ "wayland-scanner", "client-header" });
+        client_step.addFileArg(b.path(protocolDir));
+        raylib.root_module.addIncludePath(client_step.addOutputFileArg(clientHeader).dirname());
+        raylib.step.dependOn(&client_step.step);
+
+        if (comptime source) {
+            const privateCode = b.fmt("{s}-client-protocol-code.c", .{filename});
+            const private_step = b.addSystemCommand(&.{ "wayland-scanner", "private-code" });
+            private_step.addFileArg(b.path(protocolDir));
+            raylib.root_module.addCSourceFile(.{
+                .file = private_step.addOutputFileArg(privateCode),
+                .flags = &.{ "-std=c99", "-O2" },
+            });
+            raylib.step.dependOn(&private_step.step);
+        } else {
+            const privateCodeHeader = b.fmt("{s}-client-protocol-code.h", .{filename});
+            const private_head_step = b.addSystemCommand(&.{ "wayland-scanner", "private-code" });
+            private_head_step.addFileArg(b.path(protocolDir));
+            raylib.root_module.addIncludePath(private_head_step.addOutputFileArg(privateCodeHeader).dirname());
+            raylib.step.dependOn(&private_head_step.step);
+        }
+    }
 }
 
 fn hasCSource(module: *std.Build.Module, name: []const u8) bool {
