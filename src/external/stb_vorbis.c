@@ -957,13 +957,21 @@ static void *setup_malloc(vorb *f, int sz)
       f->setup_offset += sz;
       return p;
    }
+   #ifdef STB_VORBIS_MALLOC
+   return sz ? STB_VORBIS_MALLOC(sz) : NULL;
+   #else  
    return sz ? malloc(sz) : NULL;
+   #endif
 }
 
 static void setup_free(vorb *f, void *p)
 {
    if (f->alloc.alloc_buffer) return; // do nothing; setup mem is a stack
+   #ifdef STB_VORBIS_FREE 
+   STB_VORBIS_FREE(p);
+   #else
    free(p);
+   #endif
 }
 
 static void *setup_temp_malloc(vorb *f, int sz)

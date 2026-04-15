@@ -210,11 +210,9 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #if SUPPORT_FILEFORMAT_OGG
-    #define malloc RL_MALLOC
-    #define free RL_FREE
+    #define STB_VORBIS_MALLOC RL_MALLOC
+    #define STB_VORBIS_FREE RL_FREE
     #include "external/stb_vorbis.c"    // OGG loading functions
-    #undef malloc
-    #undef free
 #endif
 
 #if SUPPORT_FILEFORMAT_MP3
