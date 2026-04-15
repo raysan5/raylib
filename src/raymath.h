@@ -1264,19 +1264,21 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector4 math
 //----------------------------------------------------------------------------------
-
+// Get  vector zero
 RMAPI Vector4 Vector4Zero(void)
 {
     Vector4 result = { 0.0f, 0.0f, 0.0f, 0.0f };
     return result;
 }
 
+// Get vector one
 RMAPI Vector4 Vector4One(void)
 {
     Vector4 result = { 1.0f, 1.0f, 1.0f, 1.0f };
     return result;
 }
 
+// Add two vectors
 RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1288,6 +1290,7 @@ RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Add value to vector components
 RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1299,6 +1302,7 @@ RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
     return result;
 }
 
+// Substract vectors
 RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1310,6 +1314,7 @@ RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Substract value from vector components
 RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1321,18 +1326,21 @@ RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
     return result;
 }
 
+// Vector length
 RMAPI float Vector4Length(Vector4 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w));
     return result;
 }
 
+// Vector square length
 RMAPI float Vector4LengthSqr(Vector4 v)
 {
     float result = (v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w);
     return result;
 }
 
+// Vectors dot product
 RMAPI float Vector4DotProduct(Vector4 v1, Vector4 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
@@ -1358,6 +1366,7 @@ RMAPI float Vector4DistanceSqr(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Scale vector components by value (multiply)
 RMAPI Vector4 Vector4Scale(Vector4 v, float scale)
 {
     Vector4 result = { v.x*scale, v.y*scale, v.z*scale, v.w*scale };
@@ -1753,13 +1762,14 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     return result;
 }
 
+// Multiply matrix components by value
 RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
 {
     Matrix result = {
-        left.m0 * value, left.m4 * value, left.m8  * value, left.m12 * value,
-        left.m1 * value, left.m5 * value, left.m9  * value, left.m13 * value,
-        left.m2 * value, left.m6 * value, left.m10 * value, left.m14 * value,
-        left.m3 * value, left.m7 * value, left.m11 * value, left.m15 * value
+        left.m0*value, left.m4*value, left.m8*value, left.m12*value,
+        left.m1*value, left.m5*value, left.m9*value, left.m13*value,
+        left.m2*value, left.m6*value, left.m10*value, left.m14*value,
+        left.m3*value, left.m7*value, left.m11*value, left.m15*value
     };
 
     return result;
