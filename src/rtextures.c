@@ -366,7 +366,7 @@ Image LoadImageAnim(const char *fileName, int *frames)
     return image;
 }
 
-// Load animated image data
+// Load animated image data from memory
 //  - Image.data buffer includes all frames: [image#0][image#1][image#2][...]
 //  - Number of frames is returned through 'frames' parameter
 //  - All frames are returned in RGBA format
@@ -1575,7 +1575,7 @@ Image ImageFromChannel(Image image, int selectedChannel)
     // Check for RGBA formats
     if (selectedChannel > 3)
     {
-        TRACELOG(LOG_WARNING, "ImageFromChannel supports channels 0 to 3 (rgba). Setting channel to alpha.");
+        TRACELOG(LOG_WARNING, "ImageFromChannel supports channels 0 to 3 (RGBA). Setting channel to alpha.");
         selectedChannel = 3;
     }
 

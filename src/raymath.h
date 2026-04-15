@@ -15,7 +15,7 @@
 *     - Functions use always a "result" variable for return (except C++ operators)
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
-*     - No compound literals used to make sure libray is compatible with C++
+*     - No compound literals used to make sure the library is compatible with C++
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
@@ -183,7 +183,7 @@ typedef struct float16 {
 #if RAYMATH_USE_SIMD_INTRINSICS
     // SIMD is used on the most costly raymath function MatrixMultiply()
     // NOTE: Only SSE intrinsics support implemented
-    // TODO: Consider support for other SIMD instrinsics:
+    // TODO: Consider support for other SIMD intrinsics:
     //  - SSEx, AVX, AVX2, FMA, NEON, RVV
     /*
     #if defined(__SSE4_2__)
@@ -1151,7 +1151,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unprojecte matrix
+    // Multiply quat point by unprojected matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,

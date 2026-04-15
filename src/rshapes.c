@@ -8,11 +8,11 @@
 *       are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
 *
 *       Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a
-*       user-provided texture with SetShapesTexture(), the pourpouse of this implementation
+*       user-provided texture with SetShapesTexture(), the purpose of this implementation
 *       is allowing to reduce draw calls when combined with a texture-atlas
 *
 *       By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one
-*       white character of default font [rtext], this way, raylib text and shapes can be draw with
+*       white character of default font [rtext], this way, raylib text and shapes can be drawn with
 *       a single draw call and it also allows users to configure it the same way with their own fonts
 *
 *   CONFIGURATION:
