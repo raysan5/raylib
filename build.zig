@@ -93,7 +93,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     var c_source_files: std.array_list.Managed([]const u8) = .init(arena.allocator());
 
     try c_source_files.append("src/rcore.c");
-    try raylib_flags_arr.append("-std=c99");
+
+    if (target.result.os.tag == .emscripten) {
+        try raylib_flags_arr.append("-std=gnu99");
+    } else {
+        try raylib_flags_arr.append("-std=c99");
+    }
 
     if (options.linkage == .dynamic) {
         try raylib_flags_arr.append("-fPIC");
@@ -235,19 +240,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         opengl_version = OpenglVersion.gles_2;
                     }
                     raylib_mod.addCMacro("PLATFORM_WEB", "");
-
                     const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
-                    if (options.opengl_version == .auto) {
-                        raylib_mod.addCMacro("GRAPHICS_API_OPENGL_ES3", "");
-                    }
                 },
-                else => {
-                    if (options.opengl_version == .auto) {
-                        raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
-                    }
-                    try c_source_files.append("src/rglfw.c");
-                },
+                else => @panic("Target is not supported with this platform"),
             }
             raylib_mod.addCMacro(opengl_version.toCMacroStr(), "");
         },
@@ -255,6 +251,16 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             var opengl_version: OpenglVersion = options.opengl_version;
 
             switch (target.result.os.tag) {
+                .windows => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
+
+                    raylib_mod.linkSystemLibrary("winmm", .{});
+                    raylib_mod.linkSystemLibrary("gdi32", .{});
+                    raylib_mod.linkSystemLibrary("opengl32", .{});
+                },
                 .linux => {
                     if (opengl_version == .auto) {
                         opengl_version = OpenglVersion.gl_3_3;
@@ -296,8 +302,34 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         try waylandGenerate(b, raylib, "src/external/RGFW/deps/wayland/", true);
                     }
                 },
-                .emscripten => raylib_mod.addCMacro("PLATFORM_WEB_RGFW", ""),
-                else => raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", ""),
+                .macos => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gl_3_3;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
+
+                    // Include xcode_frameworks for cross compilation
+                    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+                        raylib_mod.addSystemFrameworkPath(dep.path("Frameworks"));
+                        raylib_mod.addSystemIncludePath(dep.path("include"));
+                        raylib_mod.addLibraryPath(dep.path("lib"));
+                    }
+
+                    raylib_mod.linkFramework("Foundation", .{});
+                    raylib_mod.linkFramework("CoreServices", .{});
+                    raylib_mod.linkFramework("CoreGraphics", .{});
+                    raylib_mod.linkFramework("AppKit", .{});
+                    raylib_mod.linkFramework("IOKit", .{});
+                },
+                .emscripten => {
+                    if (opengl_version == .auto) {
+                        opengl_version = OpenglVersion.gles_2;
+                    }
+                    raylib_mod.addCMacro("PLATFORM_WEB_RGFW", "");
+                    const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
+                    raylib.step.dependOn(activate_emsdk_step);
+                },
+                else => @panic("Target is not supported with this platform"),
             }
 
             raylib_mod.addCMacro(opengl_version.toCMacroStr(), "");
