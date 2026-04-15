@@ -3,22 +3,22 @@
 *   rtext - Basic functions to load fonts and draw text
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RTEXT
+*       #define SUPPORT_MODULE_RTEXT 1
 *           rtext module is included in the build
 *
-*       #define SUPPORT_FILEFORMAT_FNT
-*       #define SUPPORT_FILEFORMAT_TTF
-*       #define SUPPORT_FILEFORMAT_BDF
+*       #define SUPPORT_FILEFORMAT_FNT 1
+*       #define SUPPORT_FILEFORMAT_TTF 1
+*       #define SUPPORT_FILEFORMAT_BDF 0
 *           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, comment unrequired #define in this module
+*           supported by default, to remove support, #define as 0 in this module or your build system
 *
-*       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
+*       #define MAX_TEXT_BUFFER_LENGTH 1024
 *           TextSplit() function static buffer max size
 *
-*       #define MAX_TEXTSPLIT_COUNT
+*       #define MAX_TEXTSPLIT_COUNT 128
 *           TextSplit() function static substrings pointers array (pointing to static buffer)
 *
-*       #define FONT_ATLAS_CORNER_REC_SIZE
+*       #define FONT_ATLAS_CORNER_REC_SIZE 3
 *           On font atlas image generation [GenImageFontAtlas()], add a NxN pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
 *           drawing text and shapes with a single draw call [SetShapesTexture()]
