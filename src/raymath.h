@@ -1695,7 +1695,7 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
 
     // Transpose so c0..c3 become *rows* of the right matrix in semantic order
-     _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
+    _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
 
     float tmp[4] = { 0 };
     __m128 row;
