@@ -7,8 +7,8 @@ const emccOutputFile = "index.html";
 pub const emsdk = struct {
     const zemscripten = @import("zemscripten");
 
-    pub fn shell(b: *std.Build) std.Build.LazyPath {
-        return b.dependency("raylib", .{}).path("src/shell.html");
+    pub fn shell(raylib: *std.Build.Dependency) std.Build.LazyPath {
+        return raylib.path("src/shell.html");
     }
 
     pub const FlagsOptions = struct {
@@ -30,7 +30,10 @@ pub const emsdk = struct {
 
     pub const SettingsOptions = struct {
         optimize: std.builtin.OptimizeMode,
-        es3: bool = true,
+        es3: bool = false,
+        glfw3: bool = true,
+        memory_growth: bool = false,
+        total_memory: u32 = 134217728,
         emsdk_allocator: zemscripten.EmsdkAllocator = .emmalloc,
     };
 
@@ -40,10 +43,23 @@ pub const emsdk = struct {
             .emsdk_allocator = options.emsdk_allocator,
         });
 
-        if (options.es3)
+        if (options.es3) {
             emcc_settings.put("FULL_ES3", "1") catch unreachable;
-        emcc_settings.put("USE_GLFW", "3") catch unreachable;
+            emcc_settings.put("MIN_WEBGL_VERSION", "2") catch unreachable;
+            emcc_settings.put("MAX_WEBGL_VERSION", "2") catch unreachable;
+        }
+        if (options.glfw3)
+            emcc_settings.put("USE_GLFW", "3") catch unreachable;
+
+        const total_memory = std.fmt.allocPrint(allocator, "{d}", .{options.total_memory}) catch unreachable;
+
         emcc_settings.put("EXPORTED_RUNTIME_METHODS", "['requestFullscreen']") catch unreachable;
+        emcc_settings.put("TOTAL_MEMORY", total_memory) catch unreachable;
+        emcc_settings.put("FORCE_FILESYSTEM", "1") catch unreachable;
+        emcc_settings.put("EXPORTED_RUNTIME_METHODS", "ccall") catch unreachable;
+
+        if (options.memory_growth)
+            emcc_settings.put("ALLOW_MEMORY_GROWTH", "1") catch unreachable;
 
         return emcc_settings;
     }
@@ -144,25 +160,22 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .glfw => {
             var opengl_version: OpenglVersion = options.opengl_version;
             raylib_mod.addIncludePath(b.path("src/external/glfw/include"));
-            try c_source_files.append("src/rglfw.c");
+
+            if (target.result.os.tag != .emscripten) {
+                if (opengl_version == .auto) {
+                    opengl_version = OpenglVersion.gl_3_3;
+                }
+                raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
+                try c_source_files.append("src/rglfw.c");
+            }
 
             switch (target.result.os.tag) {
                 .windows => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
-
                     raylib_mod.linkSystemLibrary("winmm", .{});
                     raylib_mod.linkSystemLibrary("gdi32", .{});
                     raylib_mod.linkSystemLibrary("opengl32", .{});
                 },
                 .linux => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
-
                     if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                         raylib_mod.addCMacro("_GLFW_X11", "");
                         raylib_mod.linkSystemLibrary("GLX", .{});
@@ -193,11 +206,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     }
                 },
                 .freebsd, .openbsd, .netbsd, .dragonfly => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_GLFW", "");
-
                     raylib_mod.linkSystemLibrary("GL", .{});
                     raylib_mod.linkSystemLibrary("rt", .{});
                     raylib_mod.linkSystemLibrary("dl", .{});
@@ -210,11 +218,8 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib_mod.linkSystemLibrary("Xcursor", .{});
                 },
                 .macos => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-
                     // On macos rglfw.c include Objective-C files.
+                    _ = c_source_files.pop();
                     try raylib_flags_arr.append("-ObjC");
                     raylib_mod.addCSourceFile(.{
                         .file = b.path("src/rglfw.c"),
@@ -240,6 +245,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                         opengl_version = OpenglVersion.gles_2;
                     }
                     raylib_mod.addCMacro("PLATFORM_WEB", "");
+
                     const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
@@ -250,23 +256,20 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .rgfw => {
             var opengl_version: OpenglVersion = options.opengl_version;
 
+            if (target.result.os.tag != .emscripten) {
+                if (opengl_version == .auto) {
+                    opengl_version = OpenglVersion.gl_3_3;
+                }
+                raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
+            }
+
             switch (target.result.os.tag) {
                 .windows => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
-
                     raylib_mod.linkSystemLibrary("winmm", .{});
                     raylib_mod.linkSystemLibrary("gdi32", .{});
                     raylib_mod.linkSystemLibrary("opengl32", .{});
                 },
                 .linux => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
-
                     if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                         raylib_mod.addCMacro("RGFW_X11", "");
                         raylib_mod.addCMacro("RGFW_UNIX", "");
@@ -303,11 +306,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     }
                 },
                 .macos => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gl_3_3;
-                    }
-                    raylib_mod.addCMacro("PLATFORM_DESKTOP_RGFW", "");
-
                     // Include xcode_frameworks for cross compilation
                     if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
                         raylib_mod.addSystemFrameworkPath(dep.path("Frameworks"));
@@ -334,10 +332,20 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
             raylib_mod.addCMacro(opengl_version.toCMacroStr(), "");
         },
-        .sdl => {
+        .sdl, .sdl2, .sdl3 => {
             if (options.opengl_version == .auto) {
                 raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
+            } else {
+                raylib_mod.addCMacro(options.opengl_version.toCMacroStr(), "");
             }
+
+            if (options.platform == .sdl2) {
+                raylib_mod.addCMacro("USING_SDL2_PACKAGE", "");
+            }
+            if (options.platform == .sdl3) {
+                raylib_mod.addCMacro("USING_SDL3_PACKAGE", "");
+            }
+
             raylib_mod.addCMacro("PLATFORM_DESKTOP_SDL", "");
         },
         .memory => {
@@ -347,32 +355,58 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib_mod.addCMacro("PLATFORM_MEMORY", "");
         },
         .win32 => {
+            if (target.result.os.tag != .windows) {
+                @panic("Target is not supported with this platform");
+            }
+
             if (options.opengl_version == .auto) {
                 raylib_mod.addCMacro(OpenglVersion.gl_3_3.toCMacroStr(), "");
+            } else {
+                raylib_mod.addCMacro(options.opengl_version.toCMacroStr(), "");
             }
             raylib_mod.addCMacro("PLATFORM_DESKTOP_WIN32", "");
+
+            if (options.opengl_version != .gl_soft) {
+                raylib_mod.linkSystemLibrary("opengl32", .{});
+            }
+
+            raylib_mod.linkSystemLibrary("winmm", .{});
+            raylib_mod.linkSystemLibrary("gdi32", .{});
+            raylib_mod.linkSystemLibrary("opengl32", .{});
         },
         .drm => {
-            switch (options.opengl_version) {
-                .auto => {
-                    raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
-                    raylib_mod.linkSystemLibrary("GLESv2", .{});
-                    raylib_mod.linkSystemLibrary("EGL", .{});
-                    raylib_mod.linkSystemLibrary("gbm", .{});
-                },
-                .gl_soft => {},
-                else => {
-                    raylib_mod.linkSystemLibrary("EGL", .{});
-                    raylib_mod.linkSystemLibrary("gbm", .{});
-                },
+            if (target.result.os.tag != .linux) {
+                @panic("Target is not supported with this platform");
             }
 
             raylib_mod.addCMacro("PLATFORM_DRM", "");
-            raylib_mod.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
             raylib_mod.addCMacro("EGL_NO_X11", "");
             raylib_mod.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
+
+            try raylib_flags_arr.append("-Werror=implicit-function-declaration");
+
+            raylib_mod.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
+            raylib_mod.linkSystemLibrary("drm", .{});
+            raylib_mod.linkSystemLibrary("gbm", .{});
+            raylib_mod.linkSystemLibrary("pthread", .{});
+            raylib_mod.linkSystemLibrary("rt", .{});
+            raylib_mod.linkSystemLibrary("dl", .{});
+
+            switch (options.opengl_version) {
+                .auto, .gles_2 => {
+                    raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
+                    raylib_mod.linkSystemLibrary("GLESv2", .{});
+                    raylib_mod.linkSystemLibrary("EGL", .{});
+                },
+                .gl_soft => {},
+                else => @panic("opengl version not supported"),
+            }
         },
         .android => {
+            if (!target.result.abi.isAndroid()) {
+                @panic("Target is not supported with this platform");
+            }
+
             if (options.opengl_version == .auto) {
                 raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
             }
@@ -430,7 +464,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
             raylib_mod.addCMacro("PLATFORM_ANDROID", "");
         },
-        //.web_emscripten => raylib_mod.addCMacro("PLATFORM_WEB_EMSCRIPTEN", ""),
     }
 
     raylib_mod.addCSourceFiles(.{
@@ -524,6 +557,8 @@ pub const PlatformBackend = enum {
     glfw,
     rgfw,
     sdl,
+    sdl2,
+    sdl3,
     memory,
     win32,
     drm,
