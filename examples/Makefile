@@ -510,7 +510,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     # Libraries for Windows desktop compilation
     LDFLAGS += -L..\src
     LDLIBS = -lraylib -lgdi32 -lwinmm -lshcore
-    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
         LDLIBS += -lopengl32
     endif
 endif
