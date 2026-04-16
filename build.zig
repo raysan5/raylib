@@ -7,8 +7,8 @@ const emccOutputFile = "index.html";
 pub const emsdk = struct {
     const zemscripten = @import("zemscripten");
 
-    pub fn shell(raylib: *std.Build.Dependency) std.Build.LazyPath {
-        return raylib.path("src/shell.html");
+    pub fn shell(raylib_dep: *std.Build.Dependency) std.Build.LazyPath {
+        return raylib_dep.path("src/shell.html");
     }
 
     pub const FlagsOptions = struct {
@@ -48,8 +48,9 @@ pub const emsdk = struct {
             emcc_settings.put("MIN_WEBGL_VERSION", "2") catch unreachable;
             emcc_settings.put("MAX_WEBGL_VERSION", "2") catch unreachable;
         }
-        if (options.glfw3)
+        if (options.glfw3) {
             emcc_settings.put("USE_GLFW", "3") catch unreachable;
+        }
 
         const total_memory = std.fmt.allocPrint(allocator, "{d}", .{options.total_memory}) catch unreachable;
 
@@ -481,17 +482,33 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-pub fn addRaygui(b: *std.Build, raylib: *std.Build.Step.Compile, raygui_dep: *std.Build.Dependency, options: Options) void {
-    const raylib_dep = b.dependencyFromBuildZig(@This(), options);
-    var gen_step = b.addWriteFiles();
-    raylib.step.dependOn(&gen_step.step);
+fn addRaygui(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, raylib: *std.Build.Step.Compile) void {
+    if (b.lazyDependency("raygui", .{
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    })) |raygui_dep| {
+        var gen_step = b.addWriteFiles();
+        raylib.step.dependOn(&gen_step.step);
 
-    const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-    raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
-    raylib.root_module.addIncludePath(raygui_dep.path("src"));
-    raylib.root_module.addIncludePath(raylib_dep.path("src"));
+        const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+        raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
+        raylib.root_module.addIncludePath(raygui_dep.path("src"));
+        raylib.root_module.addIncludePath(b.path("src"));
 
-    raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+        raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+
+        const c = b.addTranslateC(.{
+            .root_source_file = raygui_dep.path("src/raygui.h"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        });
+        c.addIncludePath(b.path("src"));
+        const c_mod = c.createModule();
+        c_mod.linkLibrary(raylib);
+        b.modules.put(b.graph.arena, "raygui", c_mod) catch @panic("OOM");
+    }
 }
 
 pub const Options = struct {
@@ -500,6 +517,7 @@ pub const Options = struct {
     rshapes: bool = true,
     rtext: bool = true,
     rtextures: bool = true,
+    raygui: bool = false,
     platform: PlatformBackend = .glfw,
     linkage: std.builtin.LinkMode = .static,
     linux_display_backend: LinuxDisplayBackend = .X11,
@@ -519,6 +537,7 @@ pub const Options = struct {
             .rtext = b.option(bool, "rtext", "Compile with text support") orelse defaults.rtext,
             .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
             .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
+            .raygui = b.option(bool, "raygui", "Include raygui") orelse defaults.raygui,
             .linkage = b.option(std.builtin.LinkMode, "linkage", "Compile as shared or static library") orelse defaults.linkage,
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
@@ -593,8 +612,9 @@ fn translateCMod(
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const options: Options = .getOptions(b);
 
-    const lib = try compileRaylib(b, target, optimize, Options.getOptions(b));
+    const lib = try compileRaylib(b, target, optimize, options);
 
     lib.installHeader(b.path("src/raylib.h"), "raylib.h");
     lib.installHeader(b.path("src/rcamera.h"), "rcamera.h");
@@ -607,6 +627,10 @@ pub fn build(b: *std.Build) !void {
     translateCMod("rcamera", b, target, optimize, lib);
     translateCMod("raymath", b, target, optimize, lib);
     translateCMod("rlgl", b, target, optimize, lib);
+
+    if (options.raygui) {
+        addRaygui(b, target, optimize, lib);
+    }
 
     const examples = b.step("examples", "build/install all examples");
     examples.dependOn(try addExamples("core", b, target, optimize, lib));
