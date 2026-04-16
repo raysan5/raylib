@@ -26,15 +26,13 @@ REM Checks if cl is available and skips to the argument loop if it is
 REM (Prevents calling vcvarsall every time you run this script)
 WHERE cl >nul 2>nul
 IF %ERRORLEVEL% == 0 goto READ_ARGS
+
 REM Activate the msvc build environment if cl isn't available yet
-IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat" (
-  set VC_INIT="C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat"
+for /f "tokens=*" %%i in (
+  '"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath 2^>nul'
+) do set VS_PATH=%%i
+IF defined VS_PATH (
+  set VC_INIT="%VS_PATH%\VC\Auxiliary\Build\vcvarsall.bat"
 ) ELSE (
   REM Initialize your vc environment here if the defaults don't work
   REM  set VC_INIT="C:\your\path\here\vcvarsall.bat"
