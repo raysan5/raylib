@@ -241,9 +241,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib_mod.linkFramework("IOKit", .{});
                 },
                 .emscripten => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gles_2;
+                    switch (opengl_version) {
+                        .auto => opengl_version = OpenglVersion.gles_2,
+                        .gles_2, .gles_3, .gl_soft => {},
+                        else => @panic("opengl version not supported"),
                     }
+
                     raylib_mod.addCMacro("PLATFORM_WEB", "");
 
                     const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
@@ -320,9 +323,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib_mod.linkFramework("IOKit", .{});
                 },
                 .emscripten => {
-                    if (opengl_version == .auto) {
-                        opengl_version = OpenglVersion.gles_2;
+                    switch (opengl_version) {
+                        .auto => opengl_version = OpenglVersion.gles_2,
+                        .gles_2, .gles_3, .gl_soft => {},
+                        else => @panic("opengl version not supported"),
                     }
+
                     raylib_mod.addCMacro("PLATFORM_WEB_RGFW", "");
                     const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
@@ -349,9 +355,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib_mod.addCMacro("PLATFORM_DESKTOP_SDL", "");
         },
         .memory => {
-            if (options.opengl_version == .auto) {
-                raylib_mod.addCMacro(OpenglVersion.gl_soft.toCMacroStr(), "");
+            if (options.opengl_version != .auto and options.opengl_version != .gl_soft) {
+                @panic("opengl version not supported");
             }
+            raylib_mod.addCMacro(OpenglVersion.gl_soft.toCMacroStr(), "");
             raylib_mod.addCMacro("PLATFORM_MEMORY", "");
         },
         .win32 => {
