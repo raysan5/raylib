@@ -252,7 +252,7 @@
 #ifndef SUPPORT_FILEFORMAT_PIC
     #define SUPPORT_FILEFORMAT_PIC      0       // Disabled by default
 #endif
-#ifdef SUPPORT_FILEFORMAT_PNM
+#ifndef SUPPORT_FILEFORMAT_PNM
     #define SUPPORT_FILEFORMAT_PNM      0       // Disabled by default
 #endif
 #ifndef SUPPORT_FILEFORMAT_KTX
