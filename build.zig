@@ -572,6 +572,24 @@ pub const PlatformBackend = enum {
     android,
 };
 
+fn translateCMod(
+    comptime header: []const u8,
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    raylib: *std.Build.Step.Compile,
+) void {
+    const c = b.addTranslateC(.{
+        .root_source_file = b.path("src/" ++ header ++ ".h"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    const c_mod = c.createModule();
+    c_mod.linkLibrary(raylib);
+    b.modules.put(b.graph.arena, header, c_mod) catch @panic("OOM");
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -585,15 +603,20 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(lib);
 
-    //const examples = b.step("examples", "Build/Install all examples");
-    //examples.dependOn(try addExamples("audio", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("core", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("models", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("others", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("text", b, target, optimize, lib));
-    //examples.dependOn(try addExamples("textures", b, target, optimize, lib));
+    translateCMod("raylib", b, target, optimize, lib);
+    translateCMod("rcamera", b, target, optimize, lib);
+    translateCMod("raymath", b, target, optimize, lib);
+    translateCMod("rlgl", b, target, optimize, lib);
+
+    const examples = b.step("examples", "build/install all examples");
+    examples.dependOn(try addExamples("core", b, target, optimize, lib));
+    examples.dependOn(try addExamples("audio", b, target, optimize, lib));
+    examples.dependOn(try addExamples("models", b, target, optimize, lib));
+    examples.dependOn(try addExamples("others", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shaders", b, target, optimize, lib));
+    examples.dependOn(try addExamples("shapes", b, target, optimize, lib));
+    examples.dependOn(try addExamples("text", b, target, optimize, lib));
+    examples.dependOn(try addExamples("textures", b, target, optimize, lib));
 }
 
 fn addExamples(
@@ -612,13 +635,16 @@ fn addExamples(
     var iter = dir.iterate();
     while (try iter.next(b.graph.io)) |entry| {
         if (entry.kind != .file) continue;
-        const extension_idx = std.mem.lastIndexOf(u8, entry.name, ".c") orelse continue;
-        const name = entry.name[0..extension_idx];
-        const filename = try std.fmt.allocPrint(b.allocator, "{s}.c", .{name});
-        const path = b.pathJoin(&.{ module_subpath, filename });
+
+        const filetype = std.fs.path.extension(entry.name);
+        if (!std.mem.eql(u8, filetype, ".c")) continue;
+
+        const filename = std.fs.path.stem(entry.name);
+
+        const path = b.pathJoin(&.{ module_subpath, entry.name });
 
         // zig's mingw headers do not include pthread.h
-        if (std.mem.eql(u8, "core_loading_thread", name) and target.result.os.tag == .windows) continue;
+        if (std.mem.eql(u8, "core_loading_thread", filename) and target.result.os.tag == .windows) continue;
 
         const exe_mod = b.createModule(.{
             .target = target,
@@ -627,20 +653,20 @@ fn addExamples(
         exe_mod.addCSourceFile(.{ .file = b.path(path), .flags = &.{} });
         exe_mod.linkLibrary(raylib);
 
-        const run_step = b.step(name, name);
+        const run_step = b.step(filename, filename);
 
         if (target.result.os.tag == .emscripten) {
             const wasm = b.addLibrary(.{
-                .name = name,
+                .name = filename,
                 .linkage = .static,
                 .root_module = exe_mod,
             });
 
-            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+            if (std.mem.eql(u8, filename, "rlgl_standalone")) {
                 exe_mod.addIncludePath(b.path("src"));
                 exe_mod.addIncludePath(b.path("src/external/glfw/include"));
             }
-            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+            if (std.mem.eql(u8, filename, "raylib_opengl_interop")) {
                 exe_mod.addIncludePath(b.path("src/external"));
             }
 
@@ -675,14 +701,14 @@ fn addExamples(
         } else {
             // special examples that test using these external dependencies directly
             // alongside raylib
-            if (std.mem.eql(u8, name, "rlgl_standalone")) {
+            if (std.mem.eql(u8, filename, "rlgl_standalone")) {
                 exe_mod.addIncludePath(b.path("src"));
                 exe_mod.addIncludePath(b.path("src/external/glfw/include"));
                 if (!hasCSource(raylib.root_module, "rglfw.c")) {
                     exe_mod.addCSourceFile(.{ .file = b.path("src/rglfw.c"), .flags = &.{} });
                 }
             }
-            if (std.mem.eql(u8, name, "raylib_opengl_interop")) {
+            if (std.mem.eql(u8, filename, "raylib_opengl_interop")) {
                 exe_mod.addIncludePath(b.path("src/external"));
             }
 
@@ -719,7 +745,7 @@ fn addExamples(
             }
 
             const exe = b.addExecutable(.{
-                .name = name,
+                .name = filename,
                 .root_module = exe_mod,
             });
 
