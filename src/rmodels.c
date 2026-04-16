@@ -1743,7 +1743,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 
     // Allocate GPU buffer and copy Matrix array to it
     instancesVboId = rlLoadVertexBuffer(transforms, instances*sizeof(Matrix), false);
-    
 
     // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCETRANSFORM
     if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] != -1)
