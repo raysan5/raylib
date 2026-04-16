@@ -1691,7 +1691,6 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
 {
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     // Instancing required variables
-    float16 *instanceTransform = NULL;
     unsigned int instancesVboId = 0;
 
     // Bind shader program
@@ -1739,20 +1738,12 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     if (material.shader.locs[SHADER_LOC_MATRIX_VIEW] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_VIEW], matView);
     if (material.shader.locs[SHADER_LOC_MATRIX_PROJECTION] != -1) rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_PROJECTION], matProjection);
 
-    // Create instances buffer
-    instanceTransform = (float16 *)RL_CALLOC(instances, sizeof(float16));
-
-    // Fill buffer with instances transformations as float16 arrays
-    for (int i = 0; i < instances; i++) instanceTransform[i] = MatrixToFloatV(transforms[i]);
-
-    // Enable mesh VAO to attach new buffer
+    // Bind Mesh for drawing
     rlEnableVertexArray(mesh.vaoId);
 
-    // This could alternatively use a static VBO and either glMapBuffer() or glBufferSubData()
-    // It isn't clear which would be reliably faster in all cases and on all platforms,
-    // anecdotally glMapBuffer() seems quite slow (syncs) while glBufferSubData() seems
-    // no faster, since all the transform matrices are transferred anyway
-    instancesVboId = rlLoadVertexBuffer(instanceTransform, instances*sizeof(float16), false);
+    // Allocate GPU buffer and copy Matrix array to it
+    instancesVboId = rlLoadVertexBuffer(transforms, instances*sizeof(Matrix), false);
+    
 
     // Instances transformation matrices are sent to shader attribute location: SHADER_LOC_VERTEX_INSTANCETRANSFORM
     if (material.shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] != -1)
@@ -1920,8 +1911,8 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
     rlDisableShader();
 
     // Remove instance transforms buffer
+    // Consider returning instanceVboId instead, and recycle the handle for repeated draws
     rlUnloadVertexBuffer(instancesVboId);
-    RL_FREE(instanceTransform);
 #endif
 }
 
@@ -5661,12 +5652,24 @@ static Model LoadGLTF(const char *fileName)
             cgltf_float worldTransform[16];
             cgltf_node_transform_world(node, worldTransform);
 
-            Matrix worldMatrix = {
-                worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
-                worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
-                worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
-                worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
-            };
+            Matrix worldMatrix = { 0 };
+
+            worldMatrix.m0 = worldTransform[0];
+            worldMatrix.m1 = worldTransform[1];
+            worldMatrix.m2 = worldTransform[2];
+            worldMatrix.m3 = worldTransform[3];
+            worldMatrix.m4 = worldTransform[4];
+            worldMatrix.m5 = worldTransform[5];
+            worldMatrix.m6 = worldTransform[6];
+            worldMatrix.m7 = worldTransform[7];
+            worldMatrix.m8 = worldTransform[8];
+            worldMatrix.m9 = worldTransform[9];
+            worldMatrix.m10 = worldTransform[10];
+            worldMatrix.m11 = worldTransform[11];
+            worldMatrix.m12 = worldTransform[12];
+            worldMatrix.m13 = worldTransform[13];
+            worldMatrix.m14 = worldTransform[14];
+            worldMatrix.m15 = worldTransform[15];
 
             Matrix worldMatrixNormals = MatrixTranspose(MatrixInvert(worldMatrix));
 
@@ -6147,12 +6150,24 @@ static Model LoadGLTF(const char *fileName)
                 cgltf_node *node = skin.joints[i];
                 cgltf_float worldTransform[16];
                 cgltf_node_transform_world(node, worldTransform);
-                Matrix worldMatrix = {
-                    worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
-                    worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
-                    worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
-                    worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
-                };
+                Matrix worldMatrix = { 0 };
+
+                worldMatrix.m0 = worldTransform[0];
+                worldMatrix.m1 = worldTransform[1];
+                worldMatrix.m2 = worldTransform[2];
+                worldMatrix.m3 = worldTransform[3];
+                worldMatrix.m4 = worldTransform[4];
+                worldMatrix.m5 = worldTransform[5];
+                worldMatrix.m6 = worldTransform[6];
+                worldMatrix.m7 = worldTransform[7];
+                worldMatrix.m8 = worldTransform[8];
+                worldMatrix.m9 = worldTransform[9];
+                worldMatrix.m10 = worldTransform[10];
+                worldMatrix.m11 = worldTransform[11];
+                worldMatrix.m12 = worldTransform[12];
+                worldMatrix.m13 = worldTransform[13];
+                worldMatrix.m14 = worldTransform[14];
+                worldMatrix.m15 = worldTransform[15];
 
                 MatrixDecompose(worldMatrix,
                     &(model.skeleton.bindPose[i].translation),
@@ -6526,12 +6541,25 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
             cgltf_float cgltf_worldTransform[16] = { 0 };
             cgltf_node *node = skin.joints[0];
             cgltf_node_transform_world(node->parent, cgltf_worldTransform);
-            Matrix worldMatrix = {
-                cgltf_worldTransform[0], cgltf_worldTransform[4], cgltf_worldTransform[8], cgltf_worldTransform[12],
-                cgltf_worldTransform[1], cgltf_worldTransform[5], cgltf_worldTransform[9], cgltf_worldTransform[13],
-                cgltf_worldTransform[2], cgltf_worldTransform[6], cgltf_worldTransform[10], cgltf_worldTransform[14],
-                cgltf_worldTransform[3], cgltf_worldTransform[7], cgltf_worldTransform[11], cgltf_worldTransform[15]
-            };
+            Matrix worldMatrix = { 0 };
+
+            worldMatrix.m0 = cgltf_worldTransform[0];
+            worldMatrix.m1 = cgltf_worldTransform[1];
+            worldMatrix.m2 = cgltf_worldTransform[2];
+            worldMatrix.m3 = cgltf_worldTransform[3];
+            worldMatrix.m4 = cgltf_worldTransform[4];
+            worldMatrix.m5 = cgltf_worldTransform[5];
+            worldMatrix.m6 = cgltf_worldTransform[6];
+            worldMatrix.m7 = cgltf_worldTransform[7];
+            worldMatrix.m8 = cgltf_worldTransform[8];
+            worldMatrix.m9 = cgltf_worldTransform[9];
+            worldMatrix.m10 = cgltf_worldTransform[10];
+            worldMatrix.m11 = cgltf_worldTransform[11];
+            worldMatrix.m12 = cgltf_worldTransform[12];
+            worldMatrix.m13 = cgltf_worldTransform[13];
+            worldMatrix.m14 = cgltf_worldTransform[14];
+            worldMatrix.m15 = cgltf_worldTransform[15];
+
             MatrixDecompose(worldMatrix, &worldTransform.translation, &worldTransform.rotation, &worldTransform.scale);
 
             for (unsigned int a = 0; a < data->animations_count; a++)

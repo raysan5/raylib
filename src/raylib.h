@@ -236,10 +236,10 @@ typedef Vector4 Quaternion;
 
 // Matrix, 4x4 components, column major, OpenGL style, right-handed
 typedef struct Matrix {
-    float m0, m4, m8, m12;  // Matrix first row (4 components)
-    float m1, m5, m9, m13;  // Matrix second row (4 components)
-    float m2, m6, m10, m14; // Matrix third row (4 components)
-    float m3, m7, m11, m15; // Matrix fourth row (4 components)
+    float m0, m1, m2, m3;        // Matrix first row (4 components)
+    float m4, m5, m6, m7;        // Matrix second row (4 components)
+    float m8, m9, m10, m11;      // Matrix third row (4 components)
+    float m12, m13, m14, m15;    // Matrix fourth row (4 components)
 } Matrix;
 
 // Color, 4 components, R8G8B8A8 (32bit)

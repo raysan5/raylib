@@ -155,10 +155,10 @@ typedef Vector4 Quaternion;
 #if !defined(RL_MATRIX_TYPE)
 // Matrix type (OpenGL style 4x4 - right handed, column major)
 typedef struct Matrix {
-    float m0, m4, m8, m12;      // Matrix first row (4 components)
-    float m1, m5, m9, m13;      // Matrix second row (4 components)
-    float m2, m6, m10, m14;     // Matrix third row (4 components)
-    float m3, m7, m11, m15;     // Matrix fourth row (4 components)
+    float m0, m1, m2, m3;        // Matrix first row (4 components)
+    float m4, m5, m6, m7;        // Matrix second row (4 components)
+    float m8, m9, m10, m11;      // Matrix third row (4 components)
+    float m12, m13, m14, m15;    // Matrix fourth row (4 components)
 } Matrix;
 #define RL_MATRIX_TYPE
 #endif
@@ -1089,23 +1089,24 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     Vector3 result = { 0 };
 
     // Calculate unprojected matrix (multiply view matrix by projection matrix) and invert it
-    Matrix matViewProj = {      // MatrixMultiply(view, projection);
-        view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
-        view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
-        view.m0*projection.m2 + view.m1*projection.m6 + view.m2*projection.m10 + view.m3*projection.m14,
-        view.m0*projection.m3 + view.m1*projection.m7 + view.m2*projection.m11 + view.m3*projection.m15,
-        view.m4*projection.m0 + view.m5*projection.m4 + view.m6*projection.m8 + view.m7*projection.m12,
-        view.m4*projection.m1 + view.m5*projection.m5 + view.m6*projection.m9 + view.m7*projection.m13,
-        view.m4*projection.m2 + view.m5*projection.m6 + view.m6*projection.m10 + view.m7*projection.m14,
-        view.m4*projection.m3 + view.m5*projection.m7 + view.m6*projection.m11 + view.m7*projection.m15,
-        view.m8*projection.m0 + view.m9*projection.m4 + view.m10*projection.m8 + view.m11*projection.m12,
-        view.m8*projection.m1 + view.m9*projection.m5 + view.m10*projection.m9 + view.m11*projection.m13,
-        view.m8*projection.m2 + view.m9*projection.m6 + view.m10*projection.m10 + view.m11*projection.m14,
-        view.m8*projection.m3 + view.m9*projection.m7 + view.m10*projection.m11 + view.m11*projection.m15,
-        view.m12*projection.m0 + view.m13*projection.m4 + view.m14*projection.m8 + view.m15*projection.m12,
-        view.m12*projection.m1 + view.m13*projection.m5 + view.m14*projection.m9 + view.m15*projection.m13,
-        view.m12*projection.m2 + view.m13*projection.m6 + view.m14*projection.m10 + view.m15*projection.m14,
-        view.m12*projection.m3 + view.m13*projection.m7 + view.m14*projection.m11 + view.m15*projection.m15 };
+    Matrix matViewProj = { 0 };   // MatrixMultiply(view, projection);
+
+    matViewProj.m0 = view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12;
+    matViewProj.m1 = view.m4*projection.m0 + view.m5*projection.m4 + view.m6*projection.m8 + view.m7*projection.m12;
+    matViewProj.m2 = view.m8*projection.m0 + view.m9*projection.m4 + view.m10*projection.m8 + view.m11*projection.m12;
+    matViewProj.m3 = view.m12*projection.m0 + view.m13*projection.m4 + view.m14*projection.m8 + view.m15*projection.m12;
+    matViewProj.m4 = view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13;
+    matViewProj.m5 = view.m4*projection.m1 + view.m5*projection.m5 + view.m6*projection.m9 + view.m7*projection.m13;
+    matViewProj.m6 = view.m8*projection.m1 + view.m9*projection.m5 + view.m10*projection.m9 + view.m11*projection.m13;
+    matViewProj.m7 = view.m12*projection.m1 + view.m13*projection.m5 + view.m14*projection.m9 + view.m15*projection.m13;
+    matViewProj.m8 = view.m0*projection.m2 + view.m1*projection.m6 + view.m2*projection.m10 + view.m3*projection.m14;
+    matViewProj.m9 = view.m4*projection.m2 + view.m5*projection.m6 + view.m6*projection.m10 + view.m7*projection.m14;
+    matViewProj.m10 = view.m8*projection.m2 + view.m9*projection.m6 + view.m10*projection.m10 + view.m11*projection.m14;
+    matViewProj.m11 = view.m12*projection.m2 + view.m13*projection.m6 + view.m14*projection.m10 + view.m15*projection.m14;
+    matViewProj.m12 = view.m0*projection.m3 + view.m1*projection.m7 + view.m2*projection.m11 + view.m3*projection.m15;
+    matViewProj.m13 = view.m4*projection.m3 + view.m5*projection.m7 + view.m6*projection.m11 + view.m7*projection.m15;
+    matViewProj.m14 = view.m8*projection.m3 + view.m9*projection.m7 + view.m10*projection.m11 + view.m11*projection.m15;
+    matViewProj.m15 = view.m12*projection.m3 + view.m13*projection.m7 + view.m14*projection.m11 + view.m15*projection.m15;
 
     // Calculate inverted matrix -> MatrixInvert(matViewProj);
     // Cache the matrix values (speed optimization)
@@ -1130,23 +1131,23 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Calculate the invert determinant (inlined to avoid double-caching)
     float invDet = 1.0f/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
 
-    Matrix matViewProjInv = {
-        (a11*b11 - a12*b10 + a13*b09)*invDet,
-        (-a01*b11 + a02*b10 - a03*b09)*invDet,
-        (a31*b05 - a32*b04 + a33*b03)*invDet,
-        (-a21*b05 + a22*b04 - a23*b03)*invDet,
-        (-a10*b11 + a12*b08 - a13*b07)*invDet,
-        (a00*b11 - a02*b08 + a03*b07)*invDet,
-        (-a30*b05 + a32*b02 - a33*b01)*invDet,
-        (a20*b05 - a22*b02 + a23*b01)*invDet,
-        (a10*b10 - a11*b08 + a13*b06)*invDet,
-        (-a00*b10 + a01*b08 - a03*b06)*invDet,
-        (a30*b04 - a31*b02 + a33*b00)*invDet,
-        (-a20*b04 + a21*b02 - a23*b00)*invDet,
-        (-a10*b09 + a11*b07 - a12*b06)*invDet,
-        (a00*b09 - a01*b07 + a02*b06)*invDet,
-        (-a30*b03 + a31*b01 - a32*b00)*invDet,
-        (a20*b03 - a21*b01 + a22*b00)*invDet };
+    Matrix matViewProjInv = { 0 };
+    matViewProjInv.m0 = (a11*b11 - a12*b10 + a13*b09)*invDet;
+    matViewProjInv.m1 = (-a10*b11 + a12*b08 - a13*b07)*invDet;
+    matViewProjInv.m2 = (a10*b10 - a11*b08 + a13*b06)*invDet;
+    matViewProjInv.m3 = (-a10*b09 + a11*b07 - a12*b06)*invDet;
+    matViewProjInv.m4 = (-a01*b11 + a02*b10 - a03*b09)*invDet;
+    matViewProjInv.m5 = (a00*b11 - a02*b08 + a03*b07)*invDet;
+    matViewProjInv.m6 = (-a00*b10 + a01*b08 - a03*b06)*invDet;
+    matViewProjInv.m7 = (a00*b09 - a01*b07 + a02*b06)*invDet;
+    matViewProjInv.m8 = (a31*b05 - a32*b04 + a33*b03)*invDet;
+    matViewProjInv.m9 = (-a30*b05 + a32*b02 - a33*b01)*invDet;
+    matViewProjInv.m10 = (a30*b04 - a31*b02 + a33*b00)*invDet;
+    matViewProjInv.m11 = (-a30*b03 + a31*b01 - a32*b00)*invDet;
+    matViewProjInv.m12 = (-a21*b05 + a22*b04 - a23*b03)*invDet;
+    matViewProjInv.m13 = (a20*b05 - a22*b02 + a23*b01)*invDet;
+    matViewProjInv.m14 = (-a20*b04 + a21*b02 - a23*b00)*invDet;
+    matViewProjInv.m15 = (a20*b03 - a21*b01 + a22*b00)*invDet;
 
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
@@ -1620,10 +1621,12 @@ RMAPI Matrix MatrixInvert(Matrix mat)
 // Get identity matrix
 RMAPI Matrix MatrixIdentity(void)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
+    Matrix result = { 0 };
+    
+    result.m0 = 1.0f;
+    result.m5 = 1.0f;
+    result.m10 = 1.0f;
+    result.m15 = 1.0f;
 
     return result;
 }
@@ -1692,7 +1695,7 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
 
     // Transpose so c0..c3 become *rows* of the right matrix in semantic order
-    _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
+     _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
 
     float tmp[4] = { 0 };
     __m128 row;
@@ -1765,12 +1768,24 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 // Multiply matrix components by value
 RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
 {
-    Matrix result = {
-        left.m0*value, left.m4*value, left.m8*value, left.m12*value,
-        left.m1*value, left.m5*value, left.m9*value, left.m13*value,
-        left.m2*value, left.m6*value, left.m10*value, left.m14*value,
-        left.m3*value, left.m7*value, left.m11*value, left.m15*value
-    };
+    Matrix result = { 0 };
+
+    result.m0 = left.m0*value;
+    result.m1 = left.m1*value;
+    result.m2 = left.m2*value;
+    result.m3 = left.m3*value;
+    result.m4 = left.m4*value;
+    result.m5 = left.m5*value;
+    result.m6 = left.m6*value;
+    result.m7 = left.m7*value;
+    result.m8 = left.m8*value;
+    result.m9 = left.m9*value;
+    result.m10 = left.m10*value;
+    result.m11 = left.m11*value;
+    result.m12 = left.m12*value;
+    result.m13 = left.m13*value;
+    result.m14 = left.m14*value;
+    result.m15 = left.m15*value;
 
     return result;
 }
@@ -1778,10 +1793,11 @@ RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
 // Get translation matrix
 RMAPI Matrix MatrixTranslate(float x, float y, float z)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, x,
-                      0.0f, 1.0f, 0.0f, y,
-                      0.0f, 0.0f, 1.0f, z,
-                      0.0f, 0.0f, 0.0f, 1.0f };
+    Matrix result = MatrixIdentity();
+
+    result.m12 = x;
+    result.m13 = y;
+    result.m14 = z;
 
     return result;
 }
@@ -1835,10 +1851,7 @@ RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
 // NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateX(float angle)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
+    Matrix result = MatrixIdentity();
 
     float cosres = cosf(angle);
     float sinres = sinf(angle);
@@ -1855,10 +1868,7 @@ RMAPI Matrix MatrixRotateX(float angle)
 // NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateY(float angle)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
+    Matrix result = MatrixIdentity();
 
     float cosres = cosf(angle);
     float sinres = sinf(angle);
@@ -1875,10 +1885,7 @@ RMAPI Matrix MatrixRotateY(float angle)
 // NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateZ(float angle)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
+    Matrix result = MatrixIdentity();
 
     float cosres = cosf(angle);
     float sinres = sinf(angle);
@@ -1896,10 +1903,7 @@ RMAPI Matrix MatrixRotateZ(float angle)
 // NOTE: Angle must be provided in radians
 RMAPI Matrix MatrixRotateXYZ(Vector3 angle)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
+    Matrix result = MatrixIdentity();
 
     float cosz = cosf(-angle.z);
     float sinz = sinf(-angle.z);
@@ -1962,10 +1966,12 @@ RMAPI Matrix MatrixRotateZYX(Vector3 angle)
 // Get scaling matrix
 RMAPI Matrix MatrixScale(float x, float y, float z)
 {
-    Matrix result = { x, 0.0f, 0.0f, 0.0f,
-                      0.0f, y, 0.0f, 0.0f,
-                      0.0f, 0.0f, z, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
+    Matrix result = MatrixIdentity();
+
+    result.m0 = x;
+    result.m5 = y;
+    result.m10 = z;
+    result.m15 = 1.0f;
 
     return result;
 }
@@ -2469,10 +2475,7 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
 // Get a matrix for a given quaternion
 RMAPI Matrix QuaternionToMatrix(Quaternion q)
 {
-    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f }; // MatrixIdentity()
+    Matrix result = MatrixIdentity();
 
     float a2 = q.x*q.x;
     float b2 = q.y*q.y;
@@ -2679,12 +2682,23 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     forward = Vector3RotateByQuaternion(forward, rotation);
 
     // Set result matrix output
-    Matrix result = {
-        right.x, up.x, forward.x, translation.x,
-        right.y, up.y, forward.y, translation.y,
-        right.z, up.z, forward.z, translation.z,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    Matrix result = MatrixIdentity();
+
+    result.m0 = right.x;
+    result.m1 = right.y;
+    result.m2 = right.z;
+
+    result.m4 = up.x;
+    result.m5 = up.y;
+    result.m6 = up.z;
+
+    result.m8 = forward.x;
+    result.m9 = forward.y;
+    result.m10 = forward.z;
+
+    result.m12 = translation.x;
+    result.m13 = translation.y;
+    result.m14 = translation.z;
 
     return result;
 }
@@ -2767,10 +2781,20 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     *scale = Vector3Scale(scl, stabilizer);
 
     // Extract Rotation
-    Matrix rotationMatrix = { matColumns[0].x, matColumns[0].y, matColumns[0].z, 0,
-                             matColumns[1].x, matColumns[1].y, matColumns[1].z, 0,
-                             matColumns[2].x, matColumns[2].y, matColumns[2].z, 0,
-                             0, 0, 0, 1 };
+    Matrix rotationMatrix = MatrixIdentity();
+
+    rotationMatrix.m0 = matColumns[0].x;
+    rotationMatrix.m1 = matColumns[1].x;
+    rotationMatrix.m2 = matColumns[2].x;
+
+    rotationMatrix.m4 = matColumns[0].y;
+    rotationMatrix.m5 = matColumns[1].y;
+    rotationMatrix.m6 = matColumns[2].y;
+
+    rotationMatrix.m8 = matColumns[0].z;
+    rotationMatrix.m9 = matColumns[1].z;
+    rotationMatrix.m10 = matColumns[2].z;
+
     *rotation = QuaternionFromMatrix(rotationMatrix);
 }
 
