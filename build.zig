@@ -419,6 +419,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 @panic("Target is not supported with this platform");
             }
 
+            raylib_mod.addCMacro("PLATFORM_ANDROID", "");
+
+            raylib_mod.linkSystemLibrary("EGL", .{});
             if (options.opengl_version == .auto or options.opengl_version == .gles_2) {
                 raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
                 raylib_mod.linkSystemLibrary("GLESv2", .{});
@@ -459,19 +462,19 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidAsmPath });
             raylib_mod.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
 
-            var libcData: std.ArrayList(u8) = .empty;
-            var aw: std.Io.Writer.Allocating = .fromArrayList(b.allocator, &libcData);
-            try (std.zig.LibCInstallation{
-                .include_dir = androidIncludePath,
-                .sys_include_dir = androidIncludePath,
-                .crt_dir = androidApiSpecificPath,
-            }).render(&aw.writer);
-            const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice(arena.allocator()));
+            const libc_data = try std.fmt.allocPrint(b.allocator,
+                \\include_dir={0s}/sysroot/usr/include
+                \\sys_include_dir={0s}/sysroot/usr/include/aarch64-linux-android
+                \\crt_dir={0s}/sysroot/usr/lib/aarch64-linux-android/24
+                \\static_lib_dir={0s}/sysroot/usr/lib/aarch64-linux-android/24
+                \\msvc_lib_dir=
+                \\kernel32_lib_dir=
+                \\gcc_dir=
+                \\
+            , .{androidNdkPathString});
+            const write_step = b.addWriteFiles();
+            const libcFile = write_step.add("android-libc.txt", libc_data);
             raylib.setLibCFile(libcFile);
-
-            raylib_mod.linkSystemLibrary("EGL", .{});
-
-            raylib_mod.addCMacro("PLATFORM_ANDROID", "");
         },
     }
 
