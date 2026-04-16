@@ -177,6 +177,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib_mod.linkSystemLibrary("opengl32", .{});
                 },
                 .linux => {
+                    if (target.result.abi.isAndroid()) {
+                        @panic("Target is not supported with this platform");
+                    }
+
                     if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                         raylib_mod.addCMacro("_GLFW_X11", "");
                         raylib_mod.linkSystemLibrary("GLX", .{});
@@ -415,8 +419,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                 @panic("Target is not supported with this platform");
             }
 
-            if (options.opengl_version == .auto) {
+            if (options.opengl_version == .auto or options.opengl_version == .gles_2) {
                 raylib_mod.addCMacro(OpenglVersion.gles_2.toCMacroStr(), "");
+                raylib_mod.linkSystemLibrary("GLESv2", .{});
             }
 
             //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
@@ -464,10 +469,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             const libcFile = b.addWriteFiles().add("android-libc.txt", try libcData.toOwnedSlice(arena.allocator()));
             raylib.setLibCFile(libcFile);
 
-            if (options.opengl_version == .auto) {
-                raylib_mod.linkSystemLibrary("GLESv2", .{});
-                raylib_mod.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
-            }
             raylib_mod.linkSystemLibrary("EGL", .{});
 
             raylib_mod.addCMacro("PLATFORM_ANDROID", "");
