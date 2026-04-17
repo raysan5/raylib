@@ -179,10 +179,10 @@ typedef struct {
     mg_gamepads minigamepad;
 
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-        RGFW_surface* framebuffer;
-        u8* framebufferPixels;
-        i32 framebufferWidth;
-        i32 framebufferHeight;
+        RGFW_surface *surface;
+        u8 *surfacePixels;
+        i32 surfaceWidth;
+        i32 surfaceHeight;
     #endif
 } PlatformData;
 
@@ -1131,10 +1131,10 @@ void SwapScreenBuffer(void)
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     {
         // copy rlsw pixel data to the surface framebuffer
-        swReadPixels(0, 0, platform.framebufferWidth, platform.framebufferHeight, SW_RGBA, SW_BYTE, platform.framebufferPixels);
+        swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_BYTE, platform.surfacePixels);
 
         // blit surface to the window
-        RGFW_window_blitSurface(platform.window, platform.framebuffer);
+        RGFW_window_blitSurface(platform.window, platform.surface);
     }
     #else
     {
@@ -1385,28 +1385,28 @@ void PollInputEvents(void)
                 CORE.Window.resizedLastFrame = true;
 
                 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-                    platform.framebufferWidth = CORE.Window.currentFbo.width;
-                    platform.framebufferHeight = CORE.Window.currentFbo.height;
+                    platform.surfaceWidth = CORE.Window.currentFbo.width;
+                    platform.surfaceHeight = CORE.Window.currentFbo.height;
 
                     // in software mode we dont have the viewport so we need to reverse the highdpi changes
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
                         Vector2 scaleDpi = GetWindowScaleDPI();
-                        platform.framebufferWidth *= scaleDpi.x;
-                        platform.framebufferHeight *= scaleDpi.y;
+                        platform.surfaceWidth *= scaleDpi.x;
+                        platform.surfaceHeight *= scaleDpi.y;
                     }
 
-                    if (platform.framebufferPixels != NULL)
+                    if (platform.surfacePixels != NULL)
                     {
-                        RL_FREE(platform.framebufferPixels);
-                        platform.framebufferPixels = RL_MALLOC(platform.framebufferWidth * platform.framebufferHeight * 4);
+                        RL_FREE(platform.surfacePixels);
+                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
                     }
 
-                    if (platform.framebuffer != NULL)
+                    if (platform.surface != NULL)
                     {
-                        RGFW_surface_free(platform.framebuffer);
-                        platform.framebuffer = RGFW_window_createSurface(platform.window, platform.framebufferPixels, platform.framebufferWidth, platform.framebufferHeight, RGFW_formatBGRA8);
-                        swResize(platform.framebufferWidth, platform.framebufferHeight);
+                        RGFW_surface_free(platform.surface);
+                        platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
+                        swResize(platform.surfaceWidth, platform.surfaceHeight);
                     }
                 #endif
             } break;
@@ -1743,10 +1743,10 @@ int InitPlatform(void)
     RGFW_window_makeCurrentWindow_OpenGL(platform.window);
 
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-        platform.framebufferWidth = CORE.Window.currentFbo.width;
-        platform.framebufferHeight = CORE.Window.currentFbo.height;
-        platform.framebufferPixels = RL_MALLOC(platform.framebufferWidth * platform.framebufferHeight * 4);
-        platform.framebuffer = RGFW_window_createSurface(platform.window, platform.framebufferPixels, platform.framebufferWidth, platform.framebufferHeight, RGFW_formatBGRA8);
+        platform.surfaceWidth = CORE.Window.currentFbo.width;
+        platform.surfaceHeight = CORE.Window.currentFbo.height;
+        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+        platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
     #endif
 
     //----------------------------------------------------------------------------
@@ -1879,14 +1879,14 @@ void ClosePlatform(void)
     mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 
-    if (platform.framebufferPixels != NULL)
+    if (platform.surfacePixels != NULL)
     {
-        RL_FREE(platform.framebufferPixels);
+        RL_FREE(platform.surfacePixels);
     }
 
-    if (platform.framebuffer != NULL)
+    if (platform.surface != NULL)
     {
-        RGFW_surface_free(platform.framebuffer);
+        RGFW_surface_free(platform.surface);
     }
 }
 
