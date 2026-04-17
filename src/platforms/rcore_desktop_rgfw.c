@@ -177,6 +177,13 @@ typedef struct {
     RGFW_window *window;                // Native display device (physical screen connection)
     RGFW_monitor *monitor;
     mg_gamepads minigamepad;
+
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        RGFW_surface* framebuffer;
+        u8* framebufferPixels;
+        i32 framebufferWidth;
+        i32 framebufferHeight;
+    #endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -1121,7 +1128,19 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-    RGFW_window_swapBuffers_OpenGL(platform.window);
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    {
+        // copy rlsw pixel data to the surface framebuffer
+        swReadPixels(0, 0, platform.framebufferWidth, platform.framebufferHeight, SW_RGBA, SW_BYTE, platform.framebufferPixels);
+
+        // blit surface to the window
+        RGFW_window_blitSurface(platform.window, platform.framebuffer);
+    }
+    #else
+    {
+        RGFW_window_swapBuffers_OpenGL(platform.window);
+    }
+    #endif
 }
 
 //----------------------------------------------------------------------------------
@@ -1361,7 +1380,35 @@ void PollInputEvents(void)
                     CORE.Window.currentFbo.width = CORE.Window.screen.width;
                     CORE.Window.currentFbo.height = CORE.Window.screen.height;
                 #endif
+
+                // set flag that the window was resized
                 CORE.Window.resizedLastFrame = true;
+
+                #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+                    platform.framebufferWidth = CORE.Window.currentFbo.width;
+                    platform.framebufferHeight = CORE.Window.currentFbo.height;
+
+                    // in software mode we dont have the viewport so we need to reverse the highdpi changes
+                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+                    {
+                        Vector2 scaleDpi = GetWindowScaleDPI();
+                        platform.framebufferWidth *= scaleDpi.x;
+                        platform.framebufferHeight *= scaleDpi.y;
+                    }
+
+                    if (platform.framebufferPixels != NULL)
+                    {
+                        RL_FREE(platform.framebufferPixels);
+                        platform.framebufferPixels = RL_MALLOC(platform.framebufferWidth * platform.framebufferHeight * 4);
+                    }
+
+                    if (platform.framebuffer != NULL)
+                    {
+                        RGFW_surface_free(platform.framebuffer);
+                        platform.framebuffer = RGFW_window_createSurface(platform.window, platform.framebufferPixels, platform.framebufferWidth, platform.framebufferHeight, RGFW_formatBGRA8);
+                        swResize(platform.framebufferWidth, platform.framebufferHeight);
+                    }
+                #endif
             } break;
             case RGFW_windowMaximized:
             {
@@ -1639,6 +1686,12 @@ int InitPlatform(void)
         hints->major = 4;
         hints->minor = 3;
     }
+    else if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        hints->major = 1;
+        hints->minor = 1;
+        hints->renderer = RGFW_glSoftware;
+    }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT)) hints->samples = 4;
 
@@ -1654,7 +1707,8 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    CORE.Time.base = get_time_seconds();
+    // CORE.Time.base = (unsigned long long int)(get_time_seconds());
+    // printf("setting base: %lld\n", CORE.Time.base);
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
@@ -1688,6 +1742,13 @@ int InitPlatform(void)
     // must be set to NULL to not interfere
     RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
     RGFW_window_makeCurrentWindow_OpenGL(platform.window);
+
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        platform.framebufferWidth = CORE.Window.currentFbo.width;
+        platform.framebufferHeight = CORE.Window.currentFbo.height;
+        platform.framebufferPixels = RL_MALLOC(platform.framebufferWidth * platform.framebufferHeight * 4);
+        platform.framebuffer = RGFW_window_createSurface(platform.window, platform.framebufferPixels, platform.framebufferWidth, platform.framebufferHeight, RGFW_formatBGRA8);
+    #endif
 
     //----------------------------------------------------------------------------
 
@@ -1749,20 +1810,63 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
 
 #if defined(RGFW_WAYLAND)
-    if (RGFW_usingWayland()) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
-    else TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        if (RGFW_usingWayland()) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland, Software): Initialized successfully");
+        else TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11, Software (fallback)): Initialized successfully");
+    }
+    else
+    {
+        if (RGFW_usingWayland()) TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Wayland): Initialized successfully");
+        else TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (fallback)): Initialized successfully");
+    }
 #elif defined(RGFW_X11)
     #if defined(__APPLE__)
-        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11 (MacOS)): Initialized successfully");
+        if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+        {
+            TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11, Software, (MacOS)): Initialized successfully");
+        }
+        else
+        {
+            TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11, (MacOS)): Initialized successfully");
+        }
     #else
-        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11): Initialized successfully");
+        if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+        {
+            TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11, Software): Initialized successfully");
+        }
+        else
+        {
+            TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - X11): Initialized successfully");
+        }
     #endif
 #elif defined (RGFW_WINDOWS)
-    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32): Initialized successfully");
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32, Software): Initialized successfully");
+    }
+    else
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - Win32): Initialized successfully");
+    }
 #elif defined(RGFW_WASM)
-    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs): Initialized successfully");
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs, Software): Initialized successfully");
+    }
+    else
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - WASMs): Initialized successfully");
+    }
 #elif defined(RGFW_MACOS)
-    TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS): Initialized successfully");
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS, Software): Initialized successfully");
+    }
+    else
+    {
+        TRACELOG(LOG_INFO, "PLATFORM: DESKTOP (RGFW - MacOS): Initialized successfully");
+    }
 #endif
 
     mg_gamepads_init(&platform.minigamepad);
@@ -1775,6 +1879,8 @@ void ClosePlatform(void)
 {
     mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
+
+    RL_FREE(platform.framebufferPixels);
 }
 
 // Keycode mapping
