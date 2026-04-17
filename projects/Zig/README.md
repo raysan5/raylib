@@ -77,6 +77,8 @@ If we want to use rgfw for the web build we could do:
 zig build -Dplatform=rgfw -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast
 ```
 
+## Compiling the Zig code? Just add `-Dzig` and try out zig ;)
+
 ## More Resources
 
 See [Zig Build System](https://ziglang.org/learn/build-system/)

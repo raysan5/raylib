@@ -5,6 +5,7 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const platform = b.option(rl.PlatformBackend, "platform", "select the platform") orelse rl.PlatformBackend.glfw;
+    const zig = b.option(bool, "zig", "compile zig code") orelse false;
 
     const raylib_dep = b.dependency("raylib", .{
         .target = target,
@@ -19,13 +20,24 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
-    const exe_mod = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-    });
-    exe_mod.addCSourceFile(.{ .file = b.path("src/core_basic_window.c") });
-    exe_mod.linkLibrary(raylib_artifact);
+    var exe_mod: *std.Build.Module = undefined;
+
+    if (zig) {
+        exe_mod = b.createModule(.{
+            .root_source_file = b.path("src/core_basic_window.zig"),
+            .target = target,
+            .optimize = optimize,
+        });
+        exe_mod.addImport("raylib", raylib_dep.module("raylib"));
+    } else {
+        exe_mod = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        });
+        exe_mod.addCSourceFile(.{ .file = b.path("src/core_basic_window.c") });
+        exe_mod.linkLibrary(raylib_artifact);
+    }
 
     const run_step = b.step("run", "Run the app");
 
