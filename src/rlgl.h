@@ -1139,21 +1139,23 @@ typedef struct rlglData {
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
+static bool isGpuReady = false;
 static double rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
 static double rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static rlglData RLGL = { 0 };
-#endif // GRAPHICS_API_OPENGL_33 || GRAPHICS_API_OPENGL_ES2
-static bool isGpuReady = false;
+#endif
 
 #if defined(GRAPHICS_API_OPENGL_ES2) && !defined(GRAPHICS_API_OPENGL_ES3)
+// VAO functions entry points
 // NOTE: VAO functionality is exposed through extensions (OES)
 static PFNGLGENVERTEXARRAYSOESPROC glGenVertexArrays = NULL;
 static PFNGLBINDVERTEXARRAYOESPROC glBindVertexArray = NULL;
 static PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArrays = NULL;
 
-// NOTE: Instancing functionality could also be available through extension
+// Instancing functionality entry points
+// NOTE: Instancing functionality could be available through extensions
 static PFNGLDRAWARRAYSINSTANCEDEXTPROC glDrawArraysInstanced = NULL;
 static PFNGLDRAWELEMENTSINSTANCEDEXTPROC glDrawElementsInstanced = NULL;
 static PFNGLVERTEXATTRIBDIVISOREXTPROC glVertexAttribDivisor = NULL;
