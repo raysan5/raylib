@@ -1880,7 +1880,15 @@ void ClosePlatform(void)
     mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 
-    RL_FREE(platform.framebufferPixels);
+    if (platform.framebufferPixels != NULL)
+    {
+        RL_FREE(platform.framebufferPixels);
+    }
+
+    if (platform.framebuffer != NULL)
+    {
+        RGFW_surface_free(platform.framebuffer);
+    }
 }
 
 // Keycode mapping
