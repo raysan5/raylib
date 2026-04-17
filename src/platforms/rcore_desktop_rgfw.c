@@ -1130,11 +1130,27 @@ void SwapScreenBuffer(void)
 {
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     {
-        // copy rlsw pixel data to the surface framebuffer
-        swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_BYTE, platform.surfacePixels);
+        if (platform.surface)
+        {
+            // copy rlsw pixel data to the surface framebuffer
+            swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_UNSIGNED_BYTE, platform.surfacePixels);
 
-        // blit surface to the window
-        RGFW_window_blitSurface(platform.window, platform.surface);
+            // Mac wants a different pixel order. I cant seem to get this to work any other way
+            #if defined(__APPLE__)
+                unsigned char temp = 0;
+                unsigned char *p = NULL;
+                for (int i = 0; i < (platform.surfaceWidth * platform.surfaceHeight); i += 1)
+                {
+                    p = platform.surfacePixels + (i * 4);
+                    temp = p[0];
+                    p[0] = p[2];
+                    p[2] = temp;
+                }
+            #endif
+
+            // blit surface to the window
+            RGFW_window_blitSurface(platform.window, platform.surface);
+        }
     }
     #else
     {
@@ -1332,6 +1348,9 @@ void PollInputEvents(void)
             // Window events are also polled (Minimized, maximized, close...)
             case RGFW_windowResized:
             {
+                // set flag that the window was resized
+                CORE.Window.resizedLastFrame = true;
+                
                 #if defined(__APPLE__)
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
@@ -1381,10 +1400,17 @@ void PollInputEvents(void)
                     CORE.Window.currentFbo.height = CORE.Window.screen.height;
                 #endif
 
-                // set flag that the window was resized
-                CORE.Window.resizedLastFrame = true;
-
                 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+                    #if defined(__APPLE__)
+                        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+                        CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
+                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+
+                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+                        CORE.Window.currentFbo.width = CORE.Window.render.width;
+                        CORE.Window.currentFbo.height = CORE.Window.render.height;
+                    #endif
                     platform.surfaceWidth = CORE.Window.currentFbo.width;
                     platform.surfaceHeight = CORE.Window.currentFbo.height;
 
@@ -1742,13 +1768,6 @@ int InitPlatform(void)
     RGFW_window_setExitKey(platform.window, RGFW_keyNULL);
     RGFW_window_makeCurrentWindow_OpenGL(platform.window);
 
-    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-        platform.surfaceWidth = CORE.Window.currentFbo.width;
-        platform.surfaceHeight = CORE.Window.currentFbo.height;
-        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
-        platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
-    #endif
-
     //----------------------------------------------------------------------------
 
     // If everything work as expected, continue
@@ -1778,6 +1797,39 @@ int InitPlatform(void)
             CORE.Window.screen.height /= scaleDpi.y;
         #endif
     }
+
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        // apple always scales for retina
+        #if defined(__APPLE__)
+            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
+
+            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.currentFbo.width = CORE.Window.render.width;
+            CORE.Window.currentFbo.height = CORE.Window.render.height;
+        #endif
+
+        platform.surfaceWidth = CORE.Window.currentFbo.width;
+        platform.surfaceHeight = CORE.Window.currentFbo.height;
+
+        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+        if (platform.surfacePixels == NULL)
+        {
+            TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software pixel buffer");
+            return -1;
+        }
+
+        platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
+
+        if (platform.surface == NULL)
+        {
+            RL_FREE(platform.surfacePixels);
+
+            TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software surface");
+            return -1;
+        }
+    #endif
 
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
         FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
