@@ -36,7 +36,7 @@ pub fn build(b: *std.Build) !void {
     if (target.query.os_tag == .emscripten) {
         const emsdk = rl.emsdk;
         const wasm = b.addLibrary(.{
-            .name = "raylib_testing",
+            .name = "core_basic_window_web",
             .root_module = exe_mod,
         });
 
