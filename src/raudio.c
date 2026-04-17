@@ -1702,8 +1702,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 
         // Copy data to allocated memory for default UnloadMusicStream
         unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
-        int it = dataSize/sizeof(unsigned char);
-        for (int i = 0; i < it; i++) newData[i] = data[i];
+        for (int i = 0; i < dataSize; i++) newData[i] = data[i];
 
         // Memory loaded version for jar_mod_load_file()
         if (dataSize && (dataSize < 32*1024*1024))
