@@ -1,9 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
-const emccOutputFile = "index.html";
-
 pub const emsdk = struct {
     const zemscripten = @import("zemscripten");
 
@@ -86,6 +83,68 @@ pub const emsdk = struct {
         return zemscripten.emrunStep(b, html_path, extra_args);
     }
 };
+
+pub fn linkWindows(mod: *std.Build.Module, opengl: bool) void {
+    if (opengl) mod.linkSystemLibrary("opengl32", .{});
+    mod.linkSystemLibrary("winmm", .{});
+    mod.linkSystemLibrary("gdi32", .{});
+    mod.linkSystemLibrary("lshcore", .{});
+}
+
+fn findWaylandScanner(b: *std.Build) void {
+    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+        std.log.err(
+            \\ `wayland-scanner` may not be installed on the system.
+            \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
+        , .{});
+        @panic("`wayland-scanner` not found");
+    };
+}
+
+pub fn linkLinux(mod: *std.Build.Module, comptime display_backend: LinuxDisplayBackend) void {
+    if (display_backend == .None) {
+        mod.linkSystemLibrary("GL", .{});
+    }
+
+    if (display_backend == .X11) {
+        mod.linkSystemLibrary("X11", .{});
+        mod.linkSystemLibrary("Xrandr", .{});
+        mod.linkSystemLibrary("Xinerama", .{});
+        mod.linkSystemLibrary("Xi", .{});
+        mod.linkSystemLibrary("Xcursor", .{});
+    }
+
+    if (display_backend == .Wayland) {
+        mod.linkSystemLibrary("wayland-client", .{});
+        mod.linkSystemLibrary("wayland-cursor", .{});
+        mod.linkSystemLibrary("wayland-egl", .{});
+        mod.linkSystemLibrary("xkbcommon", .{});
+    }
+}
+
+pub fn linkBSD(b: *std.Build, mod: *std.Build.Module) void {
+    mod.linkSystemLibrary("GL", .{});
+
+    mod.addSystemIncludePath(b.path("/usr/local/include/"));
+    mod.addSystemIncludePath(b.path("/usr/pkg/include"));
+    mod.addSystemIncludePath(b.path("/usr/X11R7/include"));
+    mod.addRPath(b.path("/usr/pkg/lib"));
+}
+
+pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) void {
+    // Include xcode_frameworks for cross compilation
+    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+        mod.addSystemFrameworkPath(dep.path("Frameworks"));
+        mod.addSystemIncludePath(dep.path("include"));
+        mod.addLibraryPath(dep.path("lib"));
+    }
+
+    mod.linkFramework("Foundation", .{});
+    mod.linkFramework("CoreServices", .{});
+    mod.linkFramework("CoreGraphics", .{});
+    mod.linkFramework("AppKit", .{});
+    mod.linkFramework("IOKit", .{});
+}
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {
     const raylib_mod = b.createModule(.{
@@ -175,47 +234,28 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             switch (target.result.os.tag) {
-                .windows => {
-                    raylib_mod.linkSystemLibrary("winmm", .{});
-                    raylib_mod.linkSystemLibrary("gdi32", .{});
-                    raylib_mod.linkSystemLibrary("opengl32", .{});
-                },
+                .windows => linkWindows(raylib_mod, true),
                 .linux => {
                     if (target.result.abi.isAndroid()) {
                         @panic("Target is not supported with this platform");
                     }
 
-                    raylib_mod.linkSystemLibrary("GL", .{});
+                    linkLinux(raylib_mod, .None);
 
                     if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                         raylib_mod.addCMacro("_GLFW_X11", "");
-                        raylib_mod.linkSystemLibrary("X11", .{});
+                        linkLinux(raylib_mod, .X11);
                     }
 
                     if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
-                        _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
-                            std.log.err(
-                                \\ `wayland-scanner` may not be installed on the system.
-                                \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
-                            , .{});
-                            @panic("`wayland-scanner` not found");
-                        };
+                        findWaylandScanner(b);
+
                         raylib_mod.addCMacro("_GLFW_WAYLAND", "");
-                        raylib_mod.linkSystemLibrary("wayland-client", .{});
-                        raylib_mod.linkSystemLibrary("wayland-cursor", .{});
-                        raylib_mod.linkSystemLibrary("wayland-egl", .{});
-                        raylib_mod.linkSystemLibrary("xkbcommon", .{});
+                        linkLinux(raylib_mod, .Wayland);
                         try waylandGenerate(b, raylib, "src/external/glfw/deps/wayland/", false);
                     }
                 },
-                .freebsd, .openbsd, .netbsd, .dragonfly => {
-                    raylib_mod.linkSystemLibrary("GL", .{});
-
-                    raylib_mod.addSystemIncludePath(b.path("/usr/local/include/"));
-                    raylib_mod.addSystemIncludePath(b.path("/usr/pkg/include"));
-                    raylib_mod.addSystemIncludePath(b.path("/usr/X11R7/include"));
-                    raylib_mod.addRPath(b.path("/usr/pkg/lib"));
-                },
+                .freebsd, .openbsd, .netbsd, .dragonfly => linkBSD(b, raylib_mod),
                 .macos => {
                     // On macos rglfw.c include Objective-C files.
                     _ = c_source_files.pop();
@@ -226,18 +266,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     });
                     _ = raylib_flags_arr.pop();
 
-                    // Include xcode_frameworks for cross compilation
-                    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
-                        raylib_mod.addSystemFrameworkPath(dep.path("Frameworks"));
-                        raylib_mod.addSystemIncludePath(dep.path("include"));
-                        raylib_mod.addLibraryPath(dep.path("lib"));
-                    }
-
-                    raylib_mod.linkFramework("Foundation", .{});
-                    raylib_mod.linkFramework("CoreServices", .{});
-                    raylib_mod.linkFramework("CoreGraphics", .{});
-                    raylib_mod.linkFramework("AppKit", .{});
-                    raylib_mod.linkFramework("IOKit", .{});
+                    linkMacOS(b, raylib_mod);
                 },
                 .emscripten => {
                     switch (opengl_version) {
@@ -266,72 +295,38 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             switch (target.result.os.tag) {
-                .windows => {
-                    raylib_mod.linkSystemLibrary("winmm", .{});
-                    raylib_mod.linkSystemLibrary("gdi32", .{});
-                    raylib_mod.linkSystemLibrary("opengl32", .{});
-                },
+                .windows => linkWindows(raylib_mod, true),
                 .linux => {
                     if (target.result.abi.isAndroid()) {
                         @panic("Target is not supported with this platform");
                     }
 
-                    raylib_mod.linkSystemLibrary("GL", .{});
+                    linkLinux(raylib_mod, .None);
 
                     if (options.linux_display_backend == .X11 or options.linux_display_backend == .Both) {
                         raylib_mod.addCMacro("RGFW_X11", "");
                         raylib_mod.addCMacro("RGFW_UNIX", "");
 
-                        raylib_mod.linkSystemLibrary("X11", .{});
-                        raylib_mod.linkSystemLibrary("Xrandr", .{});
-                        raylib_mod.linkSystemLibrary("Xinerama", .{});
-                        raylib_mod.linkSystemLibrary("Xi", .{});
-                        raylib_mod.linkSystemLibrary("Xcursor", .{});
+                        linkLinux(raylib_mod, .X11);
                     }
 
                     if (options.linux_display_backend == .Wayland or options.linux_display_backend == .Both) {
+                        findWaylandScanner(b);
+
                         if (options.linux_display_backend != .Both) {
                             raylib_mod.addCMacro("RGFW_NO_X11", "");
                         }
 
-                        _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
-                            std.log.err(
-                                \\ `wayland-scanner` may not be installed on the system.
-                                \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
-                            , .{});
-                            @panic("`wayland-scanner` not found");
-                        };
                         raylib_mod.addCMacro("RGFW_WAYLAND", "");
                         raylib_mod.addCMacro("EGLAPIENTRY", "");
-                        raylib_mod.linkSystemLibrary("wayland-client", .{});
-                        raylib_mod.linkSystemLibrary("wayland-cursor", .{});
-                        raylib_mod.linkSystemLibrary("wayland-egl", .{});
-                        raylib_mod.linkSystemLibrary("xkbcommon", .{});
+
+                        linkLinux(raylib_mod, .Wayland);
+
                         try waylandGenerate(b, raylib, "src/external/RGFW/deps/wayland/", true);
                     }
                 },
-                .freebsd, .openbsd, .netbsd, .dragonfly => {
-                    raylib_mod.linkSystemLibrary("GL", .{});
-
-                    raylib_mod.addSystemIncludePath(b.path("/usr/local/include/"));
-                    raylib_mod.addSystemIncludePath(b.path("/usr/pkg/include"));
-                    raylib_mod.addSystemIncludePath(b.path("/usr/X11R7/include"));
-                    raylib_mod.addRPath(b.path("/usr/pkg/lib"));
-                },
-                .macos => {
-                    // Include xcode_frameworks for cross compilation
-                    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
-                        raylib_mod.addSystemFrameworkPath(dep.path("Frameworks"));
-                        raylib_mod.addSystemIncludePath(dep.path("include"));
-                        raylib_mod.addLibraryPath(dep.path("lib"));
-                    }
-
-                    raylib_mod.linkFramework("Foundation", .{});
-                    raylib_mod.linkFramework("CoreServices", .{});
-                    raylib_mod.linkFramework("CoreGraphics", .{});
-                    raylib_mod.linkFramework("AppKit", .{});
-                    raylib_mod.linkFramework("IOKit", .{});
-                },
+                .freebsd, .openbsd, .netbsd, .dragonfly => linkBSD(b, raylib_mod),
+                .macos => linkMacOS(b, raylib_mod),
                 .emscripten => {
                     switch (opengl_version) {
                         .auto => opengl_version = OpenglVersion.gles_2,
@@ -381,15 +376,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             } else {
                 raylib_mod.addCMacro(options.opengl_version.toCMacroStr(), "");
             }
+
             raylib_mod.addCMacro("PLATFORM_DESKTOP_WIN32", "");
 
-            if (options.opengl_version != .gl_soft) {
-                raylib_mod.linkSystemLibrary("opengl32", .{});
-            }
-
-            raylib_mod.linkSystemLibrary("winmm", .{});
-            raylib_mod.linkSystemLibrary("gdi32", .{});
-            raylib_mod.linkSystemLibrary("opengl32", .{});
+            linkWindows(raylib_mod, options.opengl_version != .gl_soft);
         },
         .drm => {
             if (target.result.os.tag != .linux) {
@@ -802,16 +792,4 @@ fn waylandGenerate(
             raylib.step.dependOn(&private_head_step.step);
         }
     }
-}
-
-fn hasCSource(module: *std.Build.Module, name: []const u8) bool {
-    for (module.link_objects.items) |o| switch (o) {
-        .c_source_file => |c| if (switch (c.file) {
-            .src_path => |s| std.ascii.endsWithIgnoreCase(s.sub_path, name),
-            .generated, .cwd_relative, .dependency => false,
-        }) return true,
-        .c_source_files => |s| for (s.files) |c| if (std.ascii.endsWithIgnoreCase(c, name)) return true,
-        else => {},
-    };
-    return false;
 }
