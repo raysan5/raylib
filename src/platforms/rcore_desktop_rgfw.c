@@ -1879,15 +1879,17 @@ void ClosePlatform(void)
     mg_gamepads_free(&platform.minigamepad);
     RGFW_window_close(platform.window);
 
-    if (platform.surfacePixels != NULL)
-    {
-        RL_FREE(platform.surfacePixels);
-    }
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        if (platform.surfacePixels != NULL)
+        {
+            RL_FREE(platform.surfacePixels);
+        }
 
-    if (platform.surface != NULL)
-    {
-        RGFW_surface_free(platform.surface);
-    }
+        if (platform.surface != NULL)
+        {
+            RGFW_surface_free(platform.surface);
+        }
+    #endif
 }
 
 // Keycode mapping
