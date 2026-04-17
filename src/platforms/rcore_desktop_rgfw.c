@@ -1131,7 +1131,9 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = get_time_seconds() - CORE.Time.base;
+    // CORE.Time.base is nanoseconds as integer
+    double baseTime = (double)CORE.Time.base / 1e9;
+    double time = get_time_seconds() - baseTime;
 
     return time;
 }
@@ -1654,7 +1656,6 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    CORE.Time.base = get_time_seconds();
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
