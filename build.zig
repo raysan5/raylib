@@ -658,17 +658,6 @@ fn addExamples(
     var dir = try b.build_root.handle.openDir(b.graph.io, module_subpath, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
-    if (platform == .sdl) {
-        raylib.root_module.linkSystemLibrary("SDL2", .{});
-        raylib.root_module.linkSystemLibrary("SDL3", .{});
-    }
-    if (platform == .sdl2) {
-        raylib.root_module.linkSystemLibrary("SDL2", .{});
-    }
-    if (platform == .sdl3) {
-        raylib.root_module.linkSystemLibrary("SDL3", .{});
-    }
-
     var iter = dir.iterate();
     while (try iter.next(b.graph.io)) |entry| {
         if (entry.kind != .file) continue;
@@ -686,6 +675,17 @@ fn addExamples(
         });
         exe_mod.addCSourceFile(.{ .file = b.path(path) });
         exe_mod.linkLibrary(raylib);
+
+        if (platform == .sdl) {
+            exe_mod.linkSystemLibrary("SDL2", .{});
+            exe_mod.linkSystemLibrary("SDL3", .{});
+        }
+        if (platform == .sdl2) {
+            exe_mod.linkSystemLibrary("SDL2", .{});
+        }
+        if (platform == .sdl3) {
+            exe_mod.linkSystemLibrary("SDL3", .{});
+        }
 
         if (std.mem.eql(u8, filename, "rlgl_standalone")) {
             if (platform != .glfw) continue;
