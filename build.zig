@@ -84,11 +84,11 @@ pub const emsdk = struct {
     }
 };
 
-pub fn linkWindows(mod: *std.Build.Module, opengl: bool) void {
+pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime lshcore: bool) void {
     if (opengl) mod.linkSystemLibrary("opengl32", .{});
     mod.linkSystemLibrary("winmm", .{});
     mod.linkSystemLibrary("gdi32", .{});
-    mod.linkSystemLibrary("lshcore", .{});
+    if (lshcore) mod.linkSystemLibrary("lshcore", .{});
 }
 
 fn findWaylandScanner(b: *std.Build) void {
@@ -234,7 +234,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             switch (target.result.os.tag) {
-                .windows => linkWindows(raylib_mod, true),
+                .windows => linkWindows(raylib_mod, true, false),
                 .linux => {
                     if (target.result.abi.isAndroid()) {
                         @panic("Target is not supported with this platform");
@@ -295,7 +295,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
 
             switch (target.result.os.tag) {
-                .windows => linkWindows(raylib_mod, true),
+                .windows => linkWindows(raylib_mod, true, false),
                 .linux => {
                     if (target.result.abi.isAndroid()) {
                         @panic("Target is not supported with this platform");
@@ -379,7 +379,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
             raylib_mod.addCMacro("PLATFORM_DESKTOP_WIN32", "");
 
-            linkWindows(raylib_mod, options.opengl_version != .gl_soft);
+            linkWindows(raylib_mod, options.opengl_version != .gl_soft, true);
         },
         .drm => {
             if (target.result.os.tag != .linux) {
