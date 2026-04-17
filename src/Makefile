@@ -275,10 +275,19 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE # Uncomment to use software rendering
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_ES3
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
+    # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES3
+
+    ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
+        $(error WEB_RGFW: Software rendering not supported!)
+    endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
