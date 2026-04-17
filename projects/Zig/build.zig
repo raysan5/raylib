@@ -19,9 +19,6 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
-    const options = b.addOptions();
-    options.addOption(rl.PlatformBackend, "platform", platform);
-
     const exe_mod = b.createModule(.{
         .target = target,
         .optimize = optimize,
@@ -66,6 +63,7 @@ pub fn build(b: *std.Build) !void {
         const exe = b.addExecutable(.{
             .name = "core_basic_window",
             .root_module = exe_mod,
+            .use_lld = target.result.os.tag == .windows,
         });
         b.installArtifact(exe);
 
