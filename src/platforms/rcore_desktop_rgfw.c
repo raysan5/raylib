@@ -1132,7 +1132,7 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     // CORE.Time.base is nanoseconds as integer
-    double baseTime = (double)CORE.Time.base / 1e9;
+    double baseTime = (double)CORE.Time.base*1e-9;
     double time = get_time_seconds() - baseTime;
 
     return time;
@@ -1793,34 +1793,36 @@ double get_time_seconds(void)
 
     #if defined(_WIN32)
         static LARGE_INTEGER freq = { 0 };
-        static int freq_init = 0;
-        LARGE_INTEGER counter;
-        if (!freq_init) {
+        static bool freqInitialized = false;
+        LARGE_INTEGER counter = { 0 };
+        if (!freqInitialized)
+        {
+            // Lazy initialization
             QueryPerformanceFrequency(&freq);
-            freq_init = 1;
+            freqInitialized = true;
         }
         QueryPerformanceCounter(&counter);
-        currentTime = (double)counter.QuadPart / (double)freq.QuadPart;
+        currentTime = (double)counter.QuadPart/(double)freq.QuadPart;
     #elif defined(__EMSCRIPTEN__)
-        currentTime = emscripten_get_now() / 1000.0;
+        currentTime = emscripten_get_now()/1000.0;
     #elif defined(__APPLE__)
-        static mach_timebase_info_data_t tb;
-        static int tb_initialized = 0;
-
-        if (!tb_initialized) {
+        static mach_timebase_info_data_t tb = { 0 };
+        static bool tbInitialized = false;
+        if (!tbInitialized)
+        {
             mach_timebase_info(&tb);
-            tb_initialized = 1;
+            tbInitialized = true;
         }
         uint64_t ticks = mach_absolute_time();
 
-        currentTime = (double)ticks * (double)tb.numer / (double)tb.denom / 1e9;
+        currentTime = (double)ticks*(double)tb.numer/(double)tb.denom/1e9;
     #elif defined(__linux__)
-        struct timespec ts;
+        struct timespec ts = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        currentTime = (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+        currentTime = (double)ts.tv_sec + (double)ts.tv_nsec/1e9;
     #else
-        // fallback to cstd
-        currentTime = (double)clock() / (double)CLOCKS_PER_SEC;
+        // Fallback to cstd
+        currentTime = (double)clock()/(double)CLOCKS_PER_SEC;
     #endif
 
     return currentTime;
