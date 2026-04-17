@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
                 if (catIndex > 3)
                 {
                     char cat[12] = { 0 };
-                    strncpy(cat, argv[2], catIndex);
+                    snprintf(cat, sizeof(cat), "%.*s", catIndex, argv[2]); // Size-bounded copy, always null-terminated
                     bool catFound = false;
                     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                     {
@@ -291,9 +291,22 @@ int main(int argc, char *argv[])
 
                     if (catFound)
                     {
-                        strcpy(exName, argv[2]); // Register filename for new example creation
-                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                        opCode = OP_CREATE;
+                        // Security check: reject path traversal sequences and path separators
+                        if (strchr(argv[2], '/') != NULL || strchr(argv[2], '\\') != NULL || strstr(argv[2], "..") != NULL)
+                        {
+                            LOG("WARNING: Example name contains invalid path characters\n");
+                        }
+                        else if (strlen(argv[2]) >= 256)
+                        {
+                            LOG("WARNING: Example name is too long\n");
+                        }
+                        else
+                        {
+                            snprintf(exName, 256, "%s", argv[2]); // Register filename for new example creation (size-bounded)
+                            int exNameCatIdx = TextFindIndex(exName, "_");
+                            snprintf(exCategory, exNameCatIdx + 1, "%s", exName); // Size-bounded copy, always null-terminated
+                            opCode = OP_CREATE;
+                        }
                     }
                     else LOG("WARNING: Example category is not valid\n");
                 }
@@ -316,7 +329,7 @@ int main(int argc, char *argv[])
                         if (catIndex > 3)
                         {
                             char cat[12] = { 0 };
-                            strncpy(cat, GetFileName(argv[2]), catIndex);
+                            snprintf(cat, sizeof(cat), "%.*s", catIndex, GetFileName(argv[2])); // Size-bounded copy, always null-terminated
                             bool catFound = false;
                             for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                             {
@@ -325,9 +338,10 @@ int main(int argc, char *argv[])
 
                             if (catFound)
                             {
-                                strcpy(inFileName, argv[2]); // Register filename for addition
-                                strcpy(exName, GetFileNameWithoutExt(inFileName)); // Register example name
-                                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                                snprintf(inFileName, sizeof(inFileName), "%s", argv[2]); // Register filename for addition (size-bounded)
+                                snprintf(exName, 256, "%s", GetFileNameWithoutExt(inFileName)); // Register example name (size-bounded)
+                                int exNameCatIdx = TextFindIndex(exName, "_");
+                                snprintf(exCategory, exNameCatIdx + 1, "%s", exName); // Size-bounded copy, always null-terminated
                                 opCode = OP_ADD;
                             }
                             else LOG("WARNING: Example category is not valid\n");
@@ -355,7 +369,7 @@ int main(int argc, char *argv[])
                     if (newCatIndex > 3)
                     {
                         char cat[12] = { 0 };
-                        strncpy(cat, argv[3], newCatIndex);
+                        snprintf(cat, sizeof(cat), "%.*s", newCatIndex, argv[3]); // Size-bounded copy, always null-terminated
                         bool newCatFound = false;
                         for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                         {
@@ -364,10 +378,12 @@ int main(int argc, char *argv[])
 
                         if (newCatFound)
                         {
-                            strcpy(exName, argv[2]);    // Register example name
-                            strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                            strcpy(exRename, argv[3]);
-                            strncpy(exRecategory, exRename, TextFindIndex(exRename, "_"));
+                            snprintf(exName, 256, "%s", argv[2]); // Register example name (size-bounded)
+                            int exNameCatIdx = TextFindIndex(exName, "_");
+                            snprintf(exCategory, exNameCatIdx + 1, "%s", exName); // Size-bounded copy, always null-terminated
+                            snprintf(exRename, 256, "%s", argv[3]); // Register rename target (size-bounded)
+                            int exRenameCatIdx = TextFindIndex(exRename, "_");
+                            snprintf(exRecategory, exRenameCatIdx + 1, "%s", exRename); // Size-bounded copy, always null-terminated
                             opCode = OP_RENAME;
                         }
                         else LOG("WARNING: Example new category is not valid\n");
