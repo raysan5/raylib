@@ -2738,11 +2738,11 @@ mg_bool parseMapping(mg_mapping* mapping, const char* string) {
 
     len = (sizeof(fields) / sizeof(mg_field));
 
-    for (i = 1; i < len - 8; i++) {
+    for (i = 1; i < len - 6; i++) {
         fields[i].element = &mapping->buttons[fields[i].val];
     }
 
-    for (i = len - 8; i < len; i++) {
+    for (i = len - 6; i < len; i++) {
         fields[i].element = &mapping->axes[fields[i].val];
     }
 
