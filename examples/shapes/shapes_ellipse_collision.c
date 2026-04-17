@@ -1,11 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [shapes] example - collision ellipses
+*   raylib [shapes] example - ellipse collision
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
+*   Example originally created with raylib 5.5, last time updated with raylib 5.5
+*
+*   Example contributed by Ziya (@Monjaris)
+*
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 Ziya (@Monjaris)
 *
 ********************************************************************************************/
 
@@ -121,9 +127,7 @@ int main(void)
     }
 
     // De-Initialization
-    //--------------------------------------------------------------------------------------
     CloseWindow();
-    //--------------------------------------------------------------------------------------
 
     return 0;
 }
