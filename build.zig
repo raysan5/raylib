@@ -88,7 +88,7 @@ pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime lshcore: bool)
     if (opengl) mod.linkSystemLibrary("opengl32", .{});
     mod.linkSystemLibrary("winmm", .{});
     mod.linkSystemLibrary("gdi32", .{});
-    if (lshcore) mod.linkSystemLibrary("lshcore", .{});
+    if (lshcore) mod.linkSystemLibrary("shcore", .{});
 }
 
 fn findWaylandScanner(b: *std.Build) void {
@@ -122,13 +122,8 @@ pub fn linkLinux(mod: *std.Build.Module, comptime display_backend: LinuxDisplayB
     }
 }
 
-pub fn linkBSD(b: *std.Build, mod: *std.Build.Module) void {
+pub fn linkBSD(_: *std.Build, mod: *std.Build.Module) void {
     mod.linkSystemLibrary("GL", .{});
-
-    mod.addSystemIncludePath(b.path("/usr/local/include/"));
-    mod.addSystemIncludePath(b.path("/usr/pkg/include"));
-    mod.addSystemIncludePath(b.path("/usr/X11R7/include"));
-    mod.addRPath(b.path("/usr/pkg/lib"));
 }
 
 pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) void {
@@ -391,8 +386,6 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             raylib_mod.addCMacro("DEFAULT_BATCH_BUFFER_ELEMENT", "");
 
             try raylib_flags_arr.append("-Werror=implicit-function-declaration");
-
-            raylib_mod.addSystemIncludePath(b.path("/usr/include/libdrm"));
 
             raylib_mod.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
             raylib_mod.linkSystemLibrary("drm", .{});
@@ -693,6 +686,8 @@ fn addExamples(
             exe_mod.addIncludePath(b.path("src/external/glfw/include"));
         }
         if (std.mem.eql(u8, filename, "raylib_opengl_interop")) {
+            if (platform == .drm) continue;
+            if (target.result.os.tag == .macos) continue;
             exe_mod.addIncludePath(b.path("src/external"));
         }
 
@@ -707,7 +702,7 @@ fn addExamples(
                 .root_module = exe_mod,
             });
 
-            const install_dir: std.Build.InstallDir = .{ .custom = "web" };
+            const install_dir: std.Build.InstallDir = .{ .custom = b.fmt("web/{s}/{s}", .{ module, filename }) };
             const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
             const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
@@ -740,7 +735,7 @@ fn addExamples(
             });
             b.installArtifact(exe);
 
-            const install_cmd = b.addInstallArtifact(exe, .{});
+            const install_cmd = b.addInstallArtifact(exe, .{ .dest_sub_path = b.fmt("{s}/{s}", .{ module, filename }) });
 
             const run_cmd = b.addRunArtifact(exe);
             run_cmd.cwd = b.path(module_subpath);
