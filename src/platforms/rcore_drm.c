@@ -1426,7 +1426,7 @@ int InitPlatform(void)
         if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
     }
 
-    // In case extension not found or display could not be retrieved, try useing legacy version
+    // In case extension not found or display could not be retrieved, try using legacy version
     if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
 #endif
     if (platform.device == EGL_NO_DISPLAY)
