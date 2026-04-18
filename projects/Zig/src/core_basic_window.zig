@@ -10,7 +10,7 @@
 //*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
 //*
 //*   Copyright (c) 2015 Ramon Santamaria (@raysan5)
-//*   Rewrite in Zig by HaxSam
+//*   Rewrite in Zig by HaxSam (@haxsam)
 //*
 //*******************************************************************************************
 

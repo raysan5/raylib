@@ -84,11 +84,11 @@ pub const emsdk = struct {
     }
 };
 
-pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime lshcore: bool) void {
+pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime shcore: bool) void {
     if (opengl) mod.linkSystemLibrary("opengl32", .{});
     mod.linkSystemLibrary("winmm", .{});
     mod.linkSystemLibrary("gdi32", .{});
-    if (lshcore) mod.linkSystemLibrary("shcore", .{});
+    if (shcore) mod.linkSystemLibrary("shcore", .{});
 }
 
 fn findWaylandScanner(b: *std.Build) void {
