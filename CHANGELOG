@@ -115,6 +115,7 @@ Detailed changes:
 [rcore][GLFW] REVIEWED: `GetGamepadButtonPressed()`, return GAMEPAD_BUTTON_*_TRIGGER_2 if pressed (#4742) by @whaleymar
 [rcore][GLFW] REVIEWED: Update `mappings.h` using `GenerateMappings.cmake` by @sleeptightAnsiC
 [rcore][RGFW] ADDED: New backend option: `PLATFORM_WEB_RGFW` and update RGFW (#4480) by @colleagueRiley
+[rcore][RGFW] ADDED: Support for software rendering (#5773) by @CrackedPixel
 [rcore][RGFW] REVIEWED: Added missing Right Control key by @M374LX
 [rcore][RGFW] REVIEWED: Changed `RGFW_window_eventWait` timeout to -1 by @doggymangc
 [rcore][RGFW] REVIEWED: Duplicate entries removed from `keyMappingRGFW` (#5242) by @iamahuman1395
@@ -326,6 +327,7 @@ Detailed changes:
 [rmodels] REVIEWED: `DrawSphereEx()`, normals support (#4926) by @karl-zylinski
 [rmodels] REVIEWED: `ExportMesh()`, improve OBJ vertex data precision and lower memory usage (#4496) by @mikeemm
 [rmodels] REVIEWED: `CheckCollisionSpheres()`, simplified using `Vector3DistanceSqr()` (#5695) by @Bigfoot71
+[rmodels] REVIEWED: `CheckCollisionBoxSphere()`, improved performance and consistency (#5776) by @maiconpintoabreu
 [raudio] REVIEWED: Fix a glitch at the end of a sound (#5578) by @mackron
 [raudio] REVIEWED: Improvements to device configuration (#5577) by @mackron
 [raudio] REVIEWED: Initialize sound alias properties as if it was a new sound (#5123) by @JeffM2501
@@ -410,11 +412,12 @@ Detailed changes:
 [build][CMake] REVIEWED: Set `libm` as public so it can be linked by consumer (#5193) by @brccabral
 [build][Cmake] REVIEWED: Expose PLATFORM_WEB_RGFW (#5579) by @crisserpl2
 [build][Zig] ADDED: Android target to build by @lumenkeyes
+[build][Zig] REDESIGNED: Complete refactor of build.zig to support Zig 0.16.0 (#5764) by @HaxSam
 [build][Zig] REVIEWED: Link EGL for Android by @lumenkeyes
 [build][Zig] REVIEWED: Approach to build for web with zig-build (#5157) by @haxsam
 [build][Zig] REVIEWED: Fix build accessing env vars (#5490) by @iisakki
 [build][Zig] REVIEWED: Fix emscripten building by @johnnymarler
-[build][Zig] REVIWED: Move examples/build.zig into main build.zig by @johnnymarler
+[build][Zig] REVIEWED: Move examples/build.zig into main build.zig by @johnnymarler
 [build][Zig] REVIEWED: Fix raygui inclusion in windows crosscompilation (#4489) by @kimierik
 [build][Zig] REVIEWED: Issue on emscripten run if the user has not installed emsdk by @emilhakimov415
 [build][Zig] REVIEWED: Make X11 the default display backend instead of choosing at runtime (#5168) by @Not-Nik
@@ -462,6 +465,7 @@ Detailed changes:
 [examples] ADDED: `shapes_rlgl_triangle` example (#5353) by @robinsaviary
 [examples] ADDED: `shapes_starfield` (#5255) by @themushroompirates
 [examples] ADDED: `shapes_triangle_strip` (#5240) by @Jopestpe
+[examples] ADDED: `shapes_collision_ellipses` (#5722) by @Monjaris
 [examples] ADDED: `text_inline_styling` by @raysan5
 [examples] ADDED: `text_strings_management` (#5379) by @davidbuzatto
 [examples] ADDED: `text_words_alignment` (#5254) by @themushroompirates
