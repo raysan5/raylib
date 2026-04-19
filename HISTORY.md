@@ -530,8 +530,8 @@ A new `raylib` release is finally ready and, again, this is the **biggest `rayli
 
 Some astonishing numbers for this release:
 
- - **+320** closed issues (for a TOTAL of **+2140**!)
- - **+1950** commits since previous RELEASE (for a TOTAL of **+9700**!)
+ - **+330** closed issues (for a TOTAL of **+2150**!)
+ - **+2000** commits since previous RELEASE (for a TOTAL of **+9760**!)
  - **+20** new functions ADDED to raylib API (for a TOTAL of **600**!)
  - **+50** new examples to learn from (for a TOTAL of **+210**!)
  - **+210** new contributors (for a TOTAL of **+850**!)
