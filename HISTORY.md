@@ -597,8 +597,8 @@ Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/mas
 
 I want to **thank all the contributors (+850!**) that along the years have **greatly improved raylib** and pushed it further and better day after day. And **many thanks to raylib community and all raylib users** for supporting the library along those many years.
 
-Finally, I want to thank [puffer.ai](https://puffer.ai/) and [comma.ai](https://comma.ai/) for **supporting and sponsoring the project** as platinum sponsors, along many others individuals that have been sponsoring raylib along the years. Thanks to all of you for allowing me to keep working on this library!
+Finally, I want to thank [puffer.ai](https://puffer.ai/) and [comma.ai](https://comma.ai/) for **using raylib and supporting the project** as platinum sponsors, along many others individuals that have been sponsoring raylib along the years. Thanks to all of you for allowing me to keep working on this library!
 
-**After +12 years of development, `raylib 6.0` is today one of the bests libraries to enjoy games/tools/graphic programming!**
+**After +12 years of development, `raylib 6.0` is today one of the bests libraries to enjoy games/tools/graphics programming!**
 
 **Enjoy graphics programming with raylib!** :)
