@@ -533,7 +533,7 @@ Some astonishing numbers for this release:
  - **+330** closed issues (for a TOTAL of **+2150**!)
  - **+2000** commits since previous RELEASE (for a TOTAL of **+9760**!)
  - **+20** new functions ADDED to raylib API (for a TOTAL of **600**!)
- - **+50** new examples to learn from (for a TOTAL of **+210**!)
+ - **+70** new examples to learn from (for a TOTAL of **+215**!)
  - **+210** new contributors (for a TOTAL of **+850**!)
 
 Highlights for `raylib 6.0`:
@@ -591,7 +591,7 @@ COMMANDS:
     update                        : Validate and update examples collection, generates report
 ```
 
- - **`NEW` +50 new examples**: Thanks to `rexm` and the simplification on examples management, this new raylib release includes +50 new examples to leearn from, most of them contributed by community.
+ - **`NEW` +70 new examples**: Thanks to `rexm` and the simplification on examples management, this new raylib release includes +70 new examples to learn from, most of them contributed by community. Multiple examples have also been renamed for consistency and all examples header and structure have been reviewed and unified. 
 
 Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) for a detailed list of changes!
 
