@@ -95,7 +95,7 @@ int main(void)
     InitAudioDevice();
     SetAudioStreamBufferSizeDefault(AUDIO_STREAM_RING_BUFFER_SIZE);
 
-    // WARNING: Memory out-of-bounds on PLATFORM_WEB
+    // WARNING: PLATFORM_WEB requires an increased -sSTACK_SIZE
     Wave wav = LoadWave("resources/country.mp3");
     WaveFormat(&wav, SAMPLE_RATE, PER_SAMPLE_BIT_DEPTH, MONO);
 

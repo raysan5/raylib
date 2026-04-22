@@ -1597,7 +1597,7 @@ audio/audio_sound_positioning: audio/audio_sound_positioning.c
     --preload-file audio/resources/coin.wav@resources/coin.wav
 
 audio/audio_spectrum_visualizer: audio/audio_spectrum_visualizer.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+	$(CC) -o $@$(EXT) $< -sSTACK_SIZE=2097152 $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/shaders/glsl100/fft.fs@resources/shaders/glsl100/fft.fs \
     --preload-file audio/resources/country.mp3@resources/country.mp3
 
