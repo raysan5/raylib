@@ -1596,9 +1596,8 @@ audio/audio_sound_positioning: audio/audio_sound_positioning.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/coin.wav@resources/coin.wav
 
-# spectrum example needs a higher stack, 128kb from the default 64kb
 audio/audio_spectrum_visualizer: audio/audio_spectrum_visualizer.c
-	$(CC) -o $@$(EXT) $< -sSTACK_SIZE=131072 $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/shaders/glsl100/fft.fs@resources/shaders/glsl100/fft.fs \
     --preload-file audio/resources/country.mp3@resources/country.mp3
 

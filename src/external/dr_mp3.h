@@ -3910,22 +3910,22 @@ static drmp3_result drmp3_wfopen(FILE** ppFile, const wchar_t* pFilePath, const 
 #else
     /*
     Use fopen() on anything other than Windows. Requires a conversion. This is annoying because
-	fopen() is locale specific. The only real way I can think of to do this is with wcsrtombs(). Note
-	that wcstombs() is apparently not thread-safe because it uses a static global mbstate_t object for
+    fopen() is locale specific. The only real way I can think of to do this is with wcsrtombs(). Note
+    that wcstombs() is apparently not thread-safe because it uses a static global mbstate_t object for
     maintaining state. I've checked this with -std=c89 and it works, but if somebody get's a compiler
-	error I'll look into improving compatibility.
+    error I'll look into improving compatibility.
     */
 
-	/*
-	Some compilers don't support wchar_t or wcsrtombs() which we're using below. In this case we just
-	need to abort with an error. If you encounter a compiler lacking such support, add it to this list
-	and submit a bug report and it'll be added to the library upstream.
-	*/
-	#if defined(__DJGPP__)
-	{
-		/* Nothing to do here. This will fall through to the error check below. */
-	}
-	#else
+    /*
+    Some compilers don't support wchar_t or wcsrtombs() which we're using below. In this case we just
+    need to abort with an error. If you encounter a compiler lacking such support, add it to this list
+    and submit a bug report and it'll be added to the library upstream.
+    */
+    #if defined(__DJGPP__)
+    {
+        /* Nothing to do here. This will fall through to the error check below. */
+    }
+    #else
     {
         mbstate_t mbs;
         size_t lenMB;
@@ -3967,7 +3967,7 @@ static drmp3_result drmp3_wfopen(FILE** ppFile, const wchar_t* pFilePath, const 
 
         drmp3__free_from_callbacks(pFilePathMB, pAllocationCallbacks);
     }
-	#endif
+    #endif
 
     if (*ppFile == NULL) {
         return DRMP3_ERROR;
@@ -4247,7 +4247,7 @@ DRMP3_API drmp3_uint64 drmp3_read_pcm_frames_f32(drmp3* pMP3, drmp3_uint64 frame
 #else
     /* Slow path. Convert from s16 to f32. */
     {
-        drmp3_int16 pTempS16[8192];
+        drmp3_int16 pTempS16[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
         drmp3_uint64 totalPCMFramesRead = 0;
 
         while (totalPCMFramesRead < framesToRead) {
@@ -4284,7 +4284,7 @@ DRMP3_API drmp3_uint64 drmp3_read_pcm_frames_s16(drmp3* pMP3, drmp3_uint64 frame
 #else
     /* Slow path. Convert from f32 to s16. */
     {
-        float pTempF32[4096];
+        float pTempF32[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
         drmp3_uint64 totalPCMFramesRead = 0;
 
         while (totalPCMFramesRead < framesToRead) {
@@ -4772,7 +4772,7 @@ static float* drmp3__full_read_and_close_f32(drmp3* pMP3, drmp3_config* pConfig,
     drmp3_uint64 totalFramesRead = 0;
     drmp3_uint64 framesCapacity = 0;
     float* pFrames = NULL;
-    float temp[4096];
+    float temp[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
 
     DRMP3_ASSERT(pMP3 != NULL);
 
@@ -4841,7 +4841,7 @@ static drmp3_int16* drmp3__full_read_and_close_s16(drmp3* pMP3, drmp3_config* pC
     drmp3_uint64 totalFramesRead = 0;
     drmp3_uint64 framesCapacity = 0;
     drmp3_int16* pFrames = NULL;
-    drmp3_int16 temp[4096];
+    drmp3_int16 temp[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
 
     DRMP3_ASSERT(pMP3 != NULL);
 
@@ -5010,6 +5010,7 @@ DIFFERENCES BETWEEN minimp3 AND dr_mp3
 REVISION HISTORY
 ================
 v0.7.4 - TBD
+  - Reduce size of some stack allocations.
   - Improvements to SIMD detection.
 
 v0.7.3 - 2026-01-17
