@@ -434,6 +434,7 @@ static const char *GetFileName(const char *filePath);               // Get point
 static const char *GetFileNameWithoutExt(const char *filePath);     // Get filename string without extension (uses static string)
 
 static unsigned char *LoadFileData(const char *fileName, int *dataSize);    // Load file data as byte array (read)
+static void UnloadFileData(unsigned char *data);                     // Unload file data allocated by LoadFileData()
 static bool SaveFileData(const char *fileName, void *data, int dataSize);   // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
@@ -2880,6 +2881,12 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
     return data;
+}
+
+// Unload file data allocated by LoadFileData()
+void UnloadFileData(unsigned char *data)
+{
+    RL_FREE(data);
 }
 
 // Save data to file from buffer
