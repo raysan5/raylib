@@ -49,7 +49,7 @@
     #define USING_SDL3_PROJECT
 #endif
 #ifndef SDL_ENABLE_OLD_NAMES
-    #define SDL_ENABLE_OLD_NAMES    // Just in case on SDL3, some in-between compatibily is needed
+    #define SDL_ENABLE_OLD_NAMES    // In case on SDL3, some in-between compatibily is needed
 #endif
 // SDL base library (window/rendered, input, timing... functionality)
 #ifdef USING_SDL3_PROJECT
@@ -60,7 +60,7 @@
     #include "SDL.h"
 #endif
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
   #if defined(GRAPHICS_API_OPENGL_ES2)
       // It seems it does not need to be included to work
       //#include "SDL_opengles2.h"
@@ -250,14 +250,14 @@ static const int CursorsLUT[] = {
     //SDL_SYSTEM_CURSOR_WAITARROW, // No equivalent implemented on MouseCursor enum on raylib.h
 };
 
-// SDL3 Migration Layer made to avoid 'ifdefs' inside functions when we can
+// SDL3 migration layer made to avoid 'ifdefs' inside functions
 #if defined(USING_VERSION_SDL3)
 
-// SDL3 Migration:
+// SDL3 migration:
 // SDL_WINDOW_FULLSCREEN_DESKTOP has been removed,
-// and you can call SDL_GetWindowFullscreenMode()
+// SDL_GetWindowFullscreenMode() can be called
 // to see whether an exclusive fullscreen mode will be used
-// or the borderless fullscreen desktop mode will be used
+// or the borderless fullscreen desktop mode
 #define SDL_WINDOW_FULLSCREEN_DESKTOP SDL_WINDOW_FULLSCREEN
 
 #define SDL_IGNORE  false
@@ -265,10 +265,10 @@ static const int CursorsLUT[] = {
 #define SDL_ENABLE  true
 
 // SDL3 Migration: SDL_INIT_TIMER - no longer needed before calling SDL_AddTimer()
-#define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+#define SDL_INIT_TIMER 0x0 // It's a flag, so no problem in setting it to zero to be used in a bitor (|)
 
 // SDL3 Migration: The SDL_WINDOW_SHOWN flag has been removed. Windows are shown by default and can be created hidden by using the SDL_WINDOW_HIDDEN flag
-#define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero if we use in a bitor (|)
+#define SDL_WINDOW_SHOWN 0x0 // It's a flag, so no problem in setting it to zero to be used in a bitor (|)
 
 // SDL3 Migration: Renamed
 // IMPORTANT: Might need to call SDL_CleanupEvent somewhere see :https://github.com/libsdl-org/SDL/issues/3540#issuecomment-1793449852
@@ -414,16 +414,16 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 
 #else // SDL2 fallback
 
-// Since SDL2 doesn't have this function we leave a stub
+// Since SDL2 doesn't have this function, leaving a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
 void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
     TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text not available in SDL2");
 
-    // We could possibly implement it ourselves in this case for some easier platforms
+    // TODO: Implement getting clipboard data
+
     return NULL;
 }
-
 #endif // USING_VERSION_SDL3
 
 //----------------------------------------------------------------------------------
@@ -574,8 +574,6 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
     {
-        // NOTE: To be able to implement this part it seems that we should
-        // do it ourselves, via 'windows.h', 'X11/Xlib.h' or even 'Cocoa.h'
         TRACELOG(LOG_WARNING, "SetWindowState() - FLAG_WINDOW_UNFOCUSED is not supported on PLATFORM_DESKTOP_SDL");
     }
     if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
@@ -857,8 +855,8 @@ void SetWindowMonitor(int monitor)
                 // ending up positioned partly outside the target display
                 // NOTE 2: The workaround for that is, previously to moving the window,
                 // setting the window size to the target display size, so they match
-                // NOTE 3: It wasn't done here because we can't assume changing the window size automatically
-                // is acceptable behavior by the user
+                // NOTE 3: It wasn't done here because it can not bee assumed that changing
+                // the window size automatically is acceptable behavior by the user
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
                 CORE.Window.position.x = usableBounds.x;
                 CORE.Window.position.y = usableBounds.y;
@@ -1163,7 +1161,22 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if SUPPORT_CLIPBOARD_IMAGE
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
+    return image;
+#endif
+
+// It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
+#if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
+    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
+    return image;
+#endif
+
+// From what I've tested applications on Wayland saves images on clipboard as PNG
+#if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
+    TRACELOG(LOG_WARNING, "WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
+#endif
     // Let's hope compiler put these arrays in static memory
     const char *imageFormats[] = {
         "image/bmp",
@@ -1198,7 +1211,7 @@ Image GetClipboardImage(void)
     }
 
     if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
-#endif
+#endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
 }
@@ -1246,8 +1259,8 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-    // NOTE: We use a preprocessor condition here because rlCopyFramebuffer() is only declared for software rendering
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    // NOTE: Using a preprocessor condition here because rlCopyFramebuffer() is only declared for software rendering
     SDL_Surface *surface = SDL_GetWindowSurface(platform.window);
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, surface->pixels);
     SDL_UpdateWindowSurface(platform.window);
@@ -1263,15 +1276,15 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
-    unsigned int ms = SDL_GetTicks();    // Elapsed time in milliseconds since SDL_Init()
-    double time = (double)ms/1000;
+    double time = ((double)SDL_GetPerformanceCounter()/(double)SDL_GetPerformanceFrequency()) - CORE.Time.base;
+
     return time;
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 // REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1287,7 +1300,25 @@ void OpenURL(const char *url)
 // Set internal gamepad mappings
 int SetGamepadMappings(const char *mappings)
 {
-    return SDL_GameControllerAddMapping(mappings);
+    const int mappingsLength = strlen(mappings);
+    char *buffer = (char *)RL_CALLOC(mappingsLength + 1, sizeof(char));
+    memcpy(buffer, mappings, mappingsLength);
+    char *p = strtok(buffer, "\n");
+    bool succeed = true;
+
+    while (p != NULL)
+    {
+        if (SDL_GameControllerAddMapping(p) == -1)
+        {
+            succeed = false;
+        }
+        p = strtok(NULL, "\n");
+    }
+
+    RL_FREE(buffer);
+
+    // To make return value is consistent with the GLFW version.
+    return (succeed)? 1 : 0;
 }
 
 // Set gamepad vibration
@@ -1332,9 +1363,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1410,8 +1441,8 @@ void PollInputEvents(void)
             {
                 if (CORE.Window.dropFileCount == 0)
                 {
-                    // When a new file is dropped, we reserve a fixed number of slots for all possible dropped files
-                    // at the moment we limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
+                    // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
+                    // at the moment limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
                     // TODO: Pointers should probably be reallocated for any new file added...
                     CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
 
@@ -1419,9 +1450,9 @@ void PollInputEvents(void)
 
                 #if defined(USING_VERSION_SDL3)
                     // const char *data;   // The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events
-                    // Event memory is now managed by SDL, so you should not free the data in SDL_EVENT_DROP_FILE,
-                    // and if you want to hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
-                    // you should make a copy of it. SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
+                    // Event memory is now managed by SDL, so it should not be freed in SDL_EVENT_DROP_FILE,
+                    // in case data needs to be hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
+                    // a copy is required, SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
                     strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
                 #else
                     strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
@@ -1450,10 +1481,10 @@ void PollInputEvents(void)
             // Window events are also polled (minimized, maximized, close...)
 
             #ifndef USING_VERSION_SDL3
-            // SDL3 states:
             // The SDL_WINDOWEVENT_* events have been moved to top level events, and SDL_WINDOWEVENT has been removed
-            // In general, handling this change just means checking for the individual events instead of first checking for SDL_WINDOWEVENT
-            // and then checking for window events. You can compare the event >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST if you need to see whether it's a window event
+            // In general, handling this change means checking for the individual events instead of first checking for SDL_WINDOWEVENT
+            // and then checking for window events; Events >= SDL_EVENT_WINDOW_FIRST and <= SDL_EVENT_WINDOW_LAST can be compared
+            // to see whether it's a window event
             case SDL_WINDOWEVENT:
             {
                 switch (event.window.event)
@@ -1465,7 +1496,8 @@ void PollInputEvents(void)
                         const int width = event.window.data1;
                         const int height = event.window.data2;
                         SetupViewport(width, height);
-                        // if we are doing automatic DPI scaling, then the "screen" size is divided by the window scale
+
+                        // Consider content scaling if required
                         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                         {
                             CORE.Window.screen.width = (int)(width/GetWindowScaleDPI().x);
@@ -1495,6 +1527,10 @@ void PollInputEvents(void)
 
                             if ((width + borderLeft + borderRight != usableBounds.w) && (height + borderTop + borderBottom != usableBounds.h)) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
                         }
+                        #endif
+
+                        #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+                        swResize(width, height);
                         #endif
                     } break;
 
@@ -1590,7 +1626,7 @@ void PollInputEvents(void)
 
             case SDL_TEXTINPUT:
             {
-                // NOTE: event.text.text data comes an UTF-8 text sequence but we register codepoints (int)
+                // NOTE: event.text.text data comes an UTF-8 text sequence but register codepoints (int)
 
                 // Check if there is space available in the queue
                 if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -1853,7 +1889,7 @@ void PollInputEvents(void)
                     {
                         if (platform.gamepadId[i] == event.jaxis.which)
                         {
-                            // SDL axis value range is -32768 to 32767, we normalize it to raylib's -1.0 to 1.0f range
+                            // SDL axis value range is -32768 to 32767, normalizing it to raylib's -1.0 to 1.0f range
                             float value = event.jaxis.value/(float)32767;
                             CORE.Input.Gamepad.axisState[i][axis] = value;
 
@@ -1874,7 +1910,7 @@ void PollInputEvents(void)
             default: break;
         }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
         if (touchAction > -1)
         {
             // Process mouse events as touches to be able to use mouse-gestures
@@ -1949,7 +1985,7 @@ int InitPlatform(void)
 
     // NOTE: Some OpenGL context attributes must be set before window creation
 
-    if (rlGetVersion() != RL_OPENGL_11_SOFTWARE)
+    if (rlGetVersion() != RL_OPENGL_SOFTWARE)
     {
         // Add the flag telling the window to use an OpenGL context
         flags |= SDL_WINDOW_OPENGL;
@@ -1971,7 +2007,7 @@ int InitPlatform(void)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    #if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+    #if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);   // Enable OpenGL Debug Context
     #endif
         }
@@ -1998,17 +2034,26 @@ int InitPlatform(void)
     // Init window
 #if defined(USING_VERSION_SDL3)
     platform.window = SDL_CreateWindow(CORE.Window.title, CORE.Window.screen.width, CORE.Window.screen.height, flags);
+
+
+    // NOTE: SDL3 no longer enables text input by default,
+    // it is needed to be enabled manually to keep GetCharPressed() working
+    // REF: https://github.com/libsdl-org/SDL/commit/72fc6f86e5d605a3787222bc7dc18c5379047f4a
+    const char *enableOSK = SDL_GetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD);
+    if (enableOSK == NULL) SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "0");
+    if (!SDL_StartTextInput(platform.window)) TRACELOG(LOG_WARNING, "SDL: Failed to start text input: %s", SDL_GetError());
+    if (enableOSK == NULL) SDL_SetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD, NULL);
 #else
     platform.window = SDL_CreateWindow(CORE.Window.title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, CORE.Window.screen.width, CORE.Window.screen.height, flags);
 #endif
 
     // Init OpenGL context
-    if (rlGetVersion() != RL_OPENGL_11_SOFTWARE)
+    if (rlGetVersion() != RL_OPENGL_SOFTWARE)
     {
         platform.glContext = SDL_GL_CreateContext(platform.window);
     }
 
-    if ((platform.window != NULL) && ((rlGetVersion() == RL_OPENGL_11_SOFTWARE) || (platform.glContext != NULL)))
+    if ((platform.window != NULL) && ((rlGetVersion() == RL_OPENGL_SOFTWARE) || (platform.glContext != NULL)))
     {
         CORE.Window.ready = true;
 
@@ -2023,7 +2068,8 @@ int InitPlatform(void)
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
 
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
@@ -2083,12 +2129,14 @@ int InitPlatform(void)
 
     // Initialize timing system
     //----------------------------------------------------------------------------
-    // NOTE: No need to call InitTimer(), let SDL manage it internally
-    CORE.Time.previous = GetTime();     // Get time as double
+    // Get base time from window initialization
+    CORE.Time.base = (double)SDL_GetPerformanceCounter()/(double)SDL_GetPerformanceFrequency();
 
-    #if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    #if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1"); // SDL equivalent of timeBeginPeriod() and timeEndPeriod()
     #endif
+
+    // NOTE: No need to call InitTimer(), let SDL manage it internally
     //----------------------------------------------------------------------------
 
     // Initialize storage system
@@ -2123,7 +2171,7 @@ static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
         return mapScancodeToKey[sdlScancode];
     }
 
-    return KEY_NULL; // No equivalent key in Raylib
+    return KEY_NULL; // No equivalent key in raylib
 }
 
 // Get next codepoint in a byte sequence and bytes processed

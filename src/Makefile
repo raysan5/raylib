@@ -20,15 +20,22 @@
 #         - Linux (X11 desktop mode)
 #         - macOS/OSX (x64, arm64 (not tested))
 #         - Others (not tested)
-#     > PLATFORM_WEB_RGFW:
+#     > PLATFORM_DESKTOP_WIN32 (native Win32):
+#         - Windows (Win32, Win64)
+#     > PLATFORM_WEB (GLFW + Emscripten):
 #         - HTML5 (WebAssembly)
-#     > PLATFORM_WEB:
+#     > PLATFORM_WEB_EMSCRIPTEN (Emscripten):
 #         - HTML5 (WebAssembly)
-#     > PLATFORM_DRM:
+#     > PLATFORM_WEB_RGFW (Emscripten):
+#         - HTML5 (WebAssembly)
+#     > PLATFORM_DRM (native DRM):
 #         - Raspberry Pi 0-5 (DRM/KMS)
 #         - Linux DRM subsystem (KMS mode)
-#     > PLATFORM_ANDROID:
+#         - Embedded devices (with GPU)
+#     > PLATFORM_ANDROID (native NDK):
 #         - Android (ARM, ARM64)
+#     > PLATFORM_MEMORY
+#         - Memory framebuffer output, using software renderer, no OS required
 #
 #   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
 #   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
@@ -68,8 +75,8 @@ else
 endif
 
 # Define required raylib variables
-RAYLIB_VERSION        = 5.5.0
-RAYLIB_API_VERSION    = 550
+RAYLIB_VERSION        = 6.0.0
+RAYLIB_API_VERSION    = 600
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -114,6 +121,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: Wayland is disabled by default, only enable if you are sure
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
+
+# Enable support for X11 by default on Linux when using RGFW
+# NOTE: Wayland is disabled by default, only enable if you are sure
+RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
+RGFW_LINUX_ENABLE_X11      ?= TRUE
 
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
@@ -186,8 +198,8 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
         EMSDK_PATH         ?= C:/raylib/emsdk
         EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
         CLANG_PATH         := $(EMSDK_PATH)/upstream/bin
-        PYTHON_PATH        := $(EMSDK_PATH)/python/3.9.2-nuget_64bit
-        NODE_PATH          := $(EMSDK_PATH)/node/20.18.0_64bit/bin
+        PYTHON_PATH        := $(EMSDK_PATH)/python/3.13.3_64bit
+        NODE_PATH          := $(EMSDK_PATH)/node/22.16.0_64bit/bin
         export PATH        := $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:/raylib/MinGW/bin;$(PATH)
     endif
 endif
@@ -234,7 +246,7 @@ endif
 # NOTE: By default use OpenGL 3.3 on desktop platforms
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -245,7 +257,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -253,7 +265,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     GRAPHICS ?= GRAPHICS_API_OPENGL_33
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE    # Uncomment to use software rendering
     #GRAPHICS = GRAPHICS_API_OPENGL_11          # Uncomment to use OpenGL 1.1
     #GRAPHICS = GRAPHICS_API_OPENGL_21          # Uncomment to use OpenGL 2.1
     #GRAPHICS = GRAPHICS_API_OPENGL_43          # Uncomment to use OpenGL 4.3
@@ -261,16 +273,29 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
-    #GRAPHICS = GRAPHICS_API_OPENGL_11_SOFTWARE # Uncomment to use software rendering
+    #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE # Uncomment to use software rendering
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_ES3
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
+    # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES3
+
+    ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
+        $(error WEB_RGFW: Software rendering not supported!)
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_MEMORY)
+    # By default use OpenGL Software
+    GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE
 endif
 
 # Define default C compiler and archiver to pack library: CC, AR
@@ -289,6 +314,17 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         CC = clang
     endif
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS),OSX)
+        # OSX default compiler
+        CC = clang
+        GLFW_OSX = -x objective-c
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+        # FreeBSD, OpenBSD, NetBSD, DragonFly default compiler
+        CC = clang
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     ifeq ($(USE_RPI_CROSSCOMPILER),TRUE)
         # Define RPI cross-compiler
@@ -297,7 +333,12 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
         AR = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-ar
     endif
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    # HTML5 emscripten compiler
+    CC = emcc
+    AR = emar
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
     # HTML5 emscripten compiler
     CC = emcc
     AR = emar
@@ -341,7 +382,6 @@ ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
 endif
 
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
 else
     CFLAGS += -std=c99
@@ -360,11 +400,14 @@ ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
-    ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-        CFLAGS += -Os
-    endif
     ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         CFLAGS += -O1
+    endif
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+        CFLAGS += -Os
+    endif
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
+        CFLAGS += -Os
     endif
     ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
         CFLAGS += -O2
@@ -379,23 +422,12 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     CFLAGS += -Werror=implicit-function-declaration
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    # -Os                        # size optimization
-    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
-    # -sUSE_GLFW=3               # Use glfw3 library (context/input management)
-    # -sALLOW_MEMORY_GROWTH=1    # to allow memory resizing -> WARNING: Audio buffers could FAIL!
-    # -sTOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB) (67108864 = 64MB)
-    # -sUSE_PTHREADS=1           # multithreading support
-    # -sWASM=0                   # disable Web Assembly, emitted by default
-    # -sASYNCIFY                 # lets synchronous C/C++ code interact with asynchronous JS
-    # -sFORCE_FILESYSTEM=1       # force filesystem to load/save files data
-    # -sASSERTIONS=1             # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
-    # -sMINIFY_HTML=0            # minify generated html from shell.html
-    # --profiling                # include information for code profiling
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    # --preload-file resources   # specify a resources folder for data compilation
-    # --source-map-base          # allow debugging in browser with source map
-    # --shell-file shell.html    # define a custom shell .html and output extension
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        CFLAGS += --profiling
+    endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
         CFLAGS += --profiling
     endif
@@ -450,7 +482,6 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         endif
         ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
             CFLAGS += -D_GLFW_WAYLAND
-            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
 
             WL_PROTOCOLS_DIR := external/glfw/deps/wayland
 
@@ -469,6 +500,33 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/fractional-scale-v1.xml, fractional-scale-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-activation-v1.xml, xdg-activation-v1-client-protocol)
             $(call wl_generate, $(WL_PROTOCOLS_DIR)/idle-inhibit-unstable-v1.xml, idle-inhibit-unstable-v1-client-protocol)
+        endif
+    endif
+endif
+# Use Wayland display on Linux desktop
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+    ifeq ($(PLATFORM_OS), LINUX)
+        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
+            CFLAGS += -DRGFW_X11 -DRGFW_UNIX
+        endif
+        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+            CFLAGS += -DRGFW_WAYLAND -DEGLAPIENTRY=
+
+            WL_PROTOCOLS_DIR := external/RGFW/deps/wayland
+
+            wl_generate = \
+                $(eval protocol=$(1)) \
+                $(eval basename=$(2)) \
+                $(shell wayland-scanner client-header $(protocol) $(RAYLIB_SRC_PATH)/$(basename).h) \
+                $(shell wayland-scanner private-code $(protocol) $(RAYLIB_SRC_PATH)/$(basename)-code.c)
+
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-constraints-unstable-v1.xml, pointer-constraints-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/pointer-warp-v1.xml, pointer-warp-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/relative-pointer-unstable-v1.xml, relative-pointer-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-decoration-unstable-v1.xml, xdg-decoration-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-output-unstable-v1.xml, xdg-output-unstable-v1-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-shell.xml, xdg-shell-client-protocol)
+            $(call wl_generate, $(WL_PROTOCOLS_DIR)/xdg-toplevel-icon-v1.xml, xdg-toplevel-icon-v1-client-protocol)
         endif
     endif
 endif
@@ -565,6 +623,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     LDFLAGS += -Lsrc
     # Avoid unresolved symbol pointing to external main()
     LDFLAGS += -Wl,-undefined,dynamic_lookup
+    # Wrap fopen at link time so all code (including third-party libs) goes
+    # through __wrap_fopen, which handles Android APK asset loading
+    LDFLAGS += -Wl,--wrap=fopen
 endif
 
 # Define libraries required on linking: LDLIBS
@@ -582,6 +643,10 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         LDLIBS = -lGL -lc -lm -lpthread -ldl -lrt
         ifeq ($(GLFW_LINUX_ENABLE_X11),TRUE)
             LDLIBS += -lX11
+        endif
+
+        ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
+            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
         endif
         # TODO: On ARM 32bit arch, miniaudio requires atomics library
         #LDLIBS += -latomic
@@ -618,7 +683,15 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),LINUX)
         # Libraries for Debian GNU/Linux desktop compipling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS = -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lm -lpthread -ldl -lrt
+        LDLIBS = -lm
+
+        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
+            LDLIBS += -lGL -lX11 -lXrandr -lXinerama -lXi -lXcursor -lpthread -ldl -lrt
+        endif
+
+        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+            LDFLAGS += $(shell pkg-config wayland-client wayland-cursor wayland-egl xkbcommon --libs)
+        endif
 
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
@@ -645,7 +718,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     LDLIBS = -lgdi32 -lwinmm -lshcore
-    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
         LDLIBS += -lopengl32
     endif
 endif
@@ -664,6 +737,21 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(USE_EXTERNAL_GLFW),FALSE)
         OBJS += rglfw.o
     endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+	ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+	    PROTOCOL_CODE_FILES = \
+	    	pointer-constraints-unstable-v1-client-protocol-code \
+	        pointer-warp-v1-client-protocol-code \
+	        relative-pointer-unstable-v1-client-protocol-code \
+	        xdg-decoration-unstable-v1-client-protocol-code \
+	        xdg-output-unstable-v1-client-protocol-code \
+	        xdg-shell-client-protocol-code \
+	        xdg-toplevel-icon-v1-client-protocol-code
+
+	    PROTO_OBJS = $(addsuffix .o, $(PROTOCOL_CODE_FILES))
+	    OBJS += $(PROTO_OBJS)
+	endif
 endif
 ifeq ($(RAYLIB_MODULE_MODELS),TRUE)
     OBJS += rmodels.o
@@ -689,7 +777,6 @@ all: raylib
 raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Compile raylib libray for web
-    #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
 		@echo "WARNING: $(TARGET_PLATFORM) does not support SHARED libraries. Generating STATIC library."
     endif
@@ -801,6 +888,17 @@ endif
 android_native_app_glue.o : $(NATIVE_APP_GLUE)/android_native_app_glue.c
 	$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
 
+# Compile Wayland files
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
+	ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+		%-client-protocol-code.o: %-client-protocol-code.c
+			$(CC) -c $< $(CFLAGS) $(INCLUDE_PATHS)
+
+		%-client-protocol-code.h: external/RGFW/deps/wayland/%.xml
+			wayland-scanner private-code $< $@
+	endif
+endif
+
 # Install generated and needed files to desired directories.
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
 # libraries and header files. These directories (often /usr/local/lib and
@@ -841,6 +939,7 @@ ifeq ($(ROOT),root)
         # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
+		cp --update rcamera.h $(RAYLIB_H_INSTALL_PATH)/rcamera.h
 		cp --update rlgl.h $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files installed/updated!"
     else
@@ -868,6 +967,7 @@ ifeq ($(ROOT),root)
         endif
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/raymath.h
+		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rcamera.h
 		rm --force --interactive --verbose $(RAYLIB_H_INSTALL_PATH)/rlgl.h
 		@echo "raylib development files removed!"
     else
@@ -884,7 +984,7 @@ clean:	clean_shell_$(PLATFORM_SHELL)
 	@echo "removed all generated files!"
 
 clean_shell_sh:
-	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h
+	rm -fv *.o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).web.a $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so* raygui.c $(RAYLIB_RELEASE_PATH)/*-protocol.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.h $(RAYLIB_RELEASE_PATH)/*-protocol-code.c
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
 	rm -fv $(NATIVE_APP_GLUE)/android_native_app_glue.o
 endif

@@ -58,14 +58,14 @@
 #include <linux/joystick.h> // Linux: Joystick support library
 
 // WARNING: Both 'linux/input.h' and 'raylib.h' define KEY_F12
-// To avoid conflict with the capturing code in rcore.c we undefine the macro KEY_F12,
+// To avoid conflict with the capturing code in rcore.c, undefine the macro KEY_F12,
 // so the enum KEY_F12 from raylib is used
 #undef KEY_F12
 
 #include <xf86drm.h>        // Direct Rendering Manager user-level library interface
 #include <xf86drmMode.h>    // Direct Rendering Manager mode setting (KMS) interface
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     #include <gbm.h>            // Generic Buffer Management (native platform for EGL on DRM)
     #include "EGL/egl.h"        // Native platform windowing system interface
     #include "EGL/eglext.h"     // EGL extensions
@@ -80,7 +80,7 @@
     #include <errno.h>      // Required for: EBUSY, EAGAIN
 
     #define MAX_DRM_CACHED_BUFFERS  3
-#endif // SUPPORT_DRM_CACHE
+#endif
 
 #ifndef EGL_OPENGL_ES3_BIT
     #define EGL_OPENGL_ES3_BIT  0x40
@@ -97,7 +97,7 @@
 
 #define DEFAULT_EVDEV_PATH "/dev/input/"    // Path to the linux input events
 
-// Actually biggest key is KEY_CNT but we only really map the keys up to KEY_ALS_TOGGLE
+// Actually biggest key is KEY_CNT but only mapping keys up to KEY_ALS_TOGGLE
 #define KEYMAP_SIZE KEY_ALS_TOGGLE
 
 //----------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ typedef struct {
     int modeIndex;                      // Index of the used mode of connector->modes
     uint32_t prevFB;                    // Previous DRM framebufer (during frame swapping)
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     struct gbm_device *gbmDevice;       // GBM device
     struct gbm_surface *gbmSurface;     // GBM surface
     struct gbm_bo *prevBO;              // Previous GBM buffer object (during frame swapping)
@@ -160,7 +160,7 @@ static FramebufferCache fbCache[MAX_DRM_CACHED_BUFFERS] = { 0 };
 static volatile int fbCacheCount = 0;
 static volatile bool pendingFlip = false;
 static bool crtcSet = false;
-#endif // SUPPORT_DRM_CACHE
+#endif
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -183,14 +183,14 @@ static const int evkeyToUnicodeLUT[] = {
     0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 0, 113, 119, 101, 114,
     116, 121, 117, 105, 111, 112, 0, 0, 13, 0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59,
     39, 96, 0, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 0, 0, 32
-    // LUT currently incomplete, just mapped the most essential keys
+    // LUT currently incomplete, only mapped the most essential keys
 };
 
 // This is the map used to map any keycode returned from linux to a raylib code from 'raylib.h'
 // NOTE: Use short here to save a little memory
 static const short linuxToRaylibMap[KEYMAP_SIZE] = {
-    // We don't map those with designated initialization, because we would getting
-    // into loads of naming conflicts
+    // Don't map with designated initialization,
+    // it will geenrate many naming conflicts
     0,   256, 49,  50,  51,  52,  53,  54,
     55,  56,  57,  48,  45,  61,  259, 258,
     81,  87,  69,  82,  84,  89,  85,  73,
@@ -253,7 +253,7 @@ static const short linuxToRaylibMap[KEYMAP_SIZE] = {
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
 static void InitKeyboard(void);                 // Initialize raw keyboard system
 static void RestoreKeyboard(void);              // Restore keyboard system
 static void ProcessKeyboard(void);              // Process keyboard events
@@ -764,9 +764,9 @@ void SwapScreenBuffer()
     // Attempt page flip
     // NOTE: rmModePageFlip() schedules a buffer-flip for the next vblank and then notifies us about it
     // It takes a CRTC-id, fb-id and an arbitrary data-pointer and then schedules the page-flip
-    // This is fully asynchronous and when the page-flip happens, the DRM-fd will become readable and we can call drmHandleEvent()
-    // This will read all vblank/page-flip events and call our modeset_page_flip_event() callback with the data-pointer that we passed to drmModePageFlip()
-    // We simply call modeset_draw_dev() then so the next frame is rendered... returns immediately
+    // This is fully asynchronous and when the page-flip happens, the DRM-fd will become readable and drmHandleEvent() can be called
+    // This will read all vblank/page-flip events and call our modeset_page_flip_event() callback with the data-pointer passed to drmModePageFlip()
+    // Simply call modeset_draw_dev() then so the next frame is rendered... returns immediately
     if (drmModePageFlip(platform.fd, platform.crtc->crtc_id, fbId, DRM_MODE_PAGE_FLIP_EVENT, platform.prevBO))
     {
         if (errno == EBUSY) errCnt[3]++; // Display busy - skip flip
@@ -796,7 +796,7 @@ void SwapScreenBuffer()
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Hardware rendering buffer swap with EGL
     eglSwapBuffers(platform.device, platform.surface);
 
@@ -837,14 +837,8 @@ void SwapScreenBuffer(void)
     uint32_t height = mode->vdisplay;
 
     // Dumb buffers use a fixed format based on bpp
-#if SW_COLOR_BUFFER_BITS == 24
     const uint32_t bpp = 32;    // 32 bits per pixel (XRGB8888 format)
     const uint32_t depth = 24;  // Color depth, here only 24 bits, alpha is not used
-#else
-    // REVIEW: Not sure how it will be interpreted (RGB or RGBA?)
-    const uint32_t bpp = SW_COLOR_BUFFER_BITS;
-    const uint32_t depth = SW_COLOR_BUFFER_BITS;
-#endif
 
     // Create a dumb buffer for software rendering
     struct drm_mode_create_dumb creq = { 0 };
@@ -899,7 +893,7 @@ void SwapScreenBuffer(void)
 
     // Copy the software rendered buffer to the dumb buffer with scaling if needed
     // NOTE: RLSW will make a simple copy if the dimensions match
-    swBlitFramebuffer(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
+    swBlitPixels(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
 
     // Unmap the buffer
     munmap(dumbBuffer, creq.size);
@@ -1017,10 +1011,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
-// REF: https://github.com/raysan5/raylib/issues/686
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     TRACELOG(LOG_WARNING, "OpenURL() not implemented on target platform");
@@ -1066,9 +1059,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1089,8 +1082,8 @@ void PollInputEvents(void)
 
     PollKeyboardEvents();
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-    // NOTE: Keyboard reading could be done using input_event(s) or just read from stdin, both methods are used here
+#if SUPPORT_SSH_KEYBOARD_RPI
+    // NOTE: Keyboard reading could be done using input_event(s) or read from stdin, both methods are used here
     // stdin reading is still used for legacy purposes, it allows keyboard input trough SSH console
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 #endif
@@ -1141,7 +1134,7 @@ int InitPlatform(void)
     platform.crtc = NULL;
     platform.prevFB = 0;
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     platform.gbmDevice = NULL;
     platform.gbmSurface = NULL;
     platform.prevBO = NULL;
@@ -1225,8 +1218,8 @@ int InitPlatform(void)
         // WARNING: Accept CONNECTED, UNKNOWN and even those without encoder_id connectors for software mode
         if (((con->connection == DRM_MODE_CONNECTED) || (con->connection == DRM_MODE_UNKNOWNCONNECTION)) && (con->count_modes > 0))
         {
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
-            // For hardware rendering, we need an encoder_id
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
+            // For hardware rendering, an encoder_id is needed
             if (con->encoder_id)
             {
                 TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected with encoder", i);
@@ -1235,7 +1228,7 @@ int InitPlatform(void)
             }
             else TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i connected but no encoder", i);
 #else
-            // For software rendering, we can accept even without encoder_id
+            // For software rendering, accept even without encoder_id
             TRACELOG(LOG_TRACE, "DISPLAY: DRM connector %i suitable for software rendering", i);
             platform.connector = con;
             break;
@@ -1257,7 +1250,7 @@ int InitPlatform(void)
         return -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     drmModeEncoder *enc = drmModeGetEncoder(platform.fd, platform.connector->encoder_id);
     if (!enc)
     {
@@ -1368,7 +1361,7 @@ int InitPlatform(void)
     drmModeFreeResources(res);
     res = NULL;
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Hardware rendering initialization with EGL
     platform.gbmDevice = gbm_create_device(platform.fd);
     if (!platform.gbmDevice)
@@ -1429,11 +1422,11 @@ int InitPlatform(void)
     if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
     {
         PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-        
+
         if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
     }
 
-    // In case extension not found or display could not be retrieved, try useing legacy version
+    // In case extension not found or display could not be retrieved, try using legacy version
     if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
 #endif
     if (platform.device == EGL_NO_DISPLAY)
@@ -1535,7 +1528,7 @@ int InitPlatform(void)
         return -1;
     }
 
-    // At this point we need to manage render size vs screen size
+    // At this point, manage render size vs screen size
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1556,12 +1549,6 @@ int InitPlatform(void)
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
     else
     {
@@ -1573,7 +1560,7 @@ int InitPlatform(void)
     // NOTE: GL procedures address loader is required to load extensions
     rlLoadExtensions(eglGetProcAddress);
 #else
-    // At this point we need to manage render size vs screen size
+    // At this point, manage render size vs screen size
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1587,17 +1574,18 @@ int InitPlatform(void)
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
+#endif
 
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully (Software Rendering)");
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+        FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-#endif
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
-    // If graphic device is no properly initialized, we end program
+    // If graphic device is no properly initialized, end program
     if (!CORE.Window.ready)
     {
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphic device");
@@ -1614,7 +1602,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     // Initialize timing system
     //----------------------------------------------------------------------------
-    // NOTE: timming system must be initialized before the input events system
+    // NOTE: timing system must be initialized before the input events system
     InitTimer();
     //----------------------------------------------------------------------------
 
@@ -1622,7 +1610,7 @@ int InitPlatform(void)
     //----------------------------------------------------------------------------
     InitEvdevInput();   // Evdev inputs initialization
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
     InitKeyboard();     // Keyboard init (stdin)
 #endif
     //----------------------------------------------------------------------------
@@ -1658,7 +1646,7 @@ void ClosePlatform(void)
         platform.prevFB = 0;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     if (platform.prevBO)
     {
         gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
@@ -1698,7 +1686,7 @@ void ClosePlatform(void)
         platform.fd = -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Close surface, context and display
     if (platform.device != EGL_NO_DISPLAY)
     {
@@ -1742,11 +1730,11 @@ void ClosePlatform(void)
     }
 }
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
+#if SUPPORT_SSH_KEYBOARD_RPI
 // Initialize Keyboard system (using standard input)
 static void InitKeyboard(void)
 {
-    // NOTE: We read directly from Standard Input (stdin) - STDIN_FILENO file descriptor,
+    // NOTE: Read directly from Standard Input (stdin) - STDIN_FILENO file descriptor,
     // Reading directly from stdin will give chars already key-mapped by kernel to ASCII or UNICODE
 
     // Save terminal keyboard settings
@@ -1901,7 +1889,7 @@ static void ProcessKeyboard(void)
         }
     }
 }
-#endif  // SUPPORT_SSH_KEYBOARD_RPI
+#endif // SUPPORT_SSH_KEYBOARD_RPI
 
 // Initialize user input from evdev(/dev/input/event<N>)
 // this means mouse, keyboard or gamepad devices
@@ -1979,8 +1967,8 @@ static void ConfigureEvdevDevice(char *device)
         return;
     }
 
-    // At this point we have a connection to the device, but we don't yet know what the device is
-    // It could be many things, even as simple as a power button...
+    // At this point, a connection to the device has been stablished, but still left to know what the device is,
+    // it could be many things, even as simple as a power button...
     //-------------------------------------------------------------------------------------------------------
 
     // Identify the device
@@ -1991,8 +1979,8 @@ static void ConfigureEvdevDevice(char *device)
     } absinfo[ABS_CNT] = { 0 };
 
     // These flags aren't really a one of
-    // Some devices could have properties we assosciate with keyboards as well as properties
-    // we assosciate with mice
+    // Some devices could have properties associated with keyboards
+    // as well as properties associated with mice
     bool isKeyboard = false;
     bool isMouse = false;
     bool isTouch = false;
@@ -2028,11 +2016,10 @@ static void ConfigureEvdevDevice(char *device)
             TEST_BIT(keyBits, BTN_TOOL_FINGER) ||
             TEST_BIT(keyBits, BTN_TOUCH))) isTouch = true;
 
-        // Absolute mice should really only exist with VMWare, but it shouldn't
-        // matter if we support them
+        // Absolute mice should really only exist with VMWare
         else if (hasAbsXY && TEST_BIT(keyBits, BTN_MOUSE)) isMouse = true;
 
-        // If any of the common joystick axes are present, we assume it's a gamepad
+        // If any of the common joystick axes are present, assume it's a gamepad
         else
         {
             for (int axis = (hasAbsXY? ABS_Z : ABS_X); axis < ABS_PRESSURE; axis++)
@@ -2057,7 +2044,7 @@ static void ConfigureEvdevDevice(char *device)
     {
         ioctl(fd, EVIOCGBIT(EV_REL, sizeof(relBits)), relBits);
 
-        // If it has any of the gamepad or touch features we tested so far, it's not a mouse
+        // If it has any of the gamepad or touch features tested so far, it's not a mouse
         if (!isTouch &&
             !isGamepad &&
             TEST_BIT(relBits, REL_X) &&
@@ -2068,12 +2055,12 @@ static void ConfigureEvdevDevice(char *device)
     if (TEST_BIT(evBits, EV_KEY))
     {
         // The first 32 keys as defined in input-event-codes.h are pretty much
-        // exclusive to keyboards, so we can test them using a mask
+        // exclusive to keyboards, so they can be tested using a mask
         // Leave out the first bit to not test KEY_RESERVED
         const unsigned long mask = 0xFFFFFFFE;
         if ((keyBits[0] & mask) == mask) isKeyboard = true;
 
-        // If we find any of the common gamepad buttons we assume it's a gamepad
+        // If any of the common gamepad buttons is found, assume it's a gamepad
         else
         {
             for (int button = BTN_JOYSTICK; button < BTN_DIGI; ++button)
@@ -2149,14 +2136,11 @@ static void ConfigureEvdevDevice(char *device)
 
         if (absAxisCount > 0)
         {
-            // TODO / NOTE
-            // So gamepad axes (as in the actual linux joydev.c) are just simply enumerated
+            // TODO: Review GamepadAxis enum matching
+            // So gamepad axes (as in the actual linux joydev.c) are simply enumerated
             // and (at least for some input drivers like xpat) it's convention to use
-            // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the
-            // shoulder buttons
-            // If these are now enumerated you get LJOY_X, LJOY_Y, LEFT_SHOULDERB, RJOY_X, ...
-            // That means they don't match the GamepadAxis enum
-            // This could be fixed
+            // ABS_X, ABX_Y for one joystick ABS_RX, ABS_RY for the other and the Z axes for the shoulder buttons
+            // If these are now enumerated, it results to LJOY_X, LJOY_Y, LEFT_SHOULDERB, RJOY_X, ...
             int axisIndex = 0;
             for (int axis = ABS_X; axis < ABS_PRESSURE; axis++)
             {
@@ -2200,8 +2184,8 @@ static void PollKeyboardEvents(void)
         // Check if the event is a key event
         if (event.type != EV_KEY) continue;
 
-#if defined(SUPPORT_SSH_KEYBOARD_RPI)
-        // If the event was a key, we know a working keyboard is connected, so disable the SSH keyboard
+#if SUPPORT_SSH_KEYBOARD_RPI
+        // If the event was a key, assume a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
         // Keyboard keys appear for codes 1 to 255, ignore everthing else
@@ -2210,7 +2194,7 @@ static void PollKeyboardEvents(void)
             // Lookup the scancode in the keymap to get a keycode
             keycode = linuxToRaylibMap[event.code];
 
-            // Make sure we got a valid keycode
+            // Make sure a valid keycode is obtained
             if ((keycode > 0) && (keycode < MAX_KEYBOARD_KEYS))
             {
                 // WARNING: https://www.kernel.org/doc/Documentation/input/input.txt
@@ -2384,8 +2368,8 @@ static void PollMouseEvents(void)
                 {
                     platform.touchPosition[platform.touchSlot].x = (event.value - platform.absRange.x)*CORE.Window.screen.width/platform.absRange.width;
 
-                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
-                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    // If this slot is active, it's a move; If not, update the buffer for when it becomes active
+                    // Only set to MOVE if a DOWN or UP event has not been detected this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2396,8 +2380,8 @@ static void PollMouseEvents(void)
                 {
                     platform.touchPosition[platform.touchSlot].y = (event.value - platform.absRange.y)*CORE.Window.screen.height/platform.absRange.height;
 
-                    // If this slot is active, it's a move. If not, we are just updating the buffer for when it becomes active.
-                    // Only set to MOVE if we haven't already detected a DOWN or UP event this frame
+                    // If this slot is active, it's a move; If not, update the buffer for when it becomes active
+                    // Only set to MOVE if a DOWN or UP event have not been detected this frame
                     if (platform.touchActive[platform.touchSlot] && touchAction == -1) touchAction = 2;    // TOUCH_ACTION_MOVE
                 }
             }
@@ -2422,7 +2406,7 @@ static void PollMouseEvents(void)
                         platform.touchPosition[platform.touchSlot].y = -1;
                         platform.touchId[platform.touchSlot] = -1;
 
-                        // Force UP action if we haven't already set a DOWN action
+                        // Force UP action if DOWN action has not already been set
                         // (DOWN takes priority over UP if both happen in one frame, though rare)
                         if (touchAction != 1) touchAction = 0; // TOUCH_ACTION_UP
                     }
@@ -2556,7 +2540,7 @@ static void PollMouseEvents(void)
             CORE.Input.Touch.pointId[i] = -1;
         }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
         if (touchAction > -1)
         {
             GestureEvent gestureEvent = { 0 };
@@ -2669,7 +2653,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
 static void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
+    // Calculate CORE.Window.render.width and CORE.Window.render.height, using the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
@@ -2697,8 +2681,8 @@ static void SetupFramebuffer(int width, int height)
         float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
         CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
+        // NOTE: Rendering to full display resolution,
+        // calculate above parameters for downscale matrix and offsets
         CORE.Window.render.width = CORE.Window.display.width;
         CORE.Window.render.height = CORE.Window.display.height;
 

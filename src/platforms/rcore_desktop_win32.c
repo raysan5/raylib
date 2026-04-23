@@ -71,7 +71,7 @@
 
 #include <malloc.h>          // Required for alloca()
 
-#if !defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     #include <GL/gl.h>
 #endif
 
@@ -995,7 +995,7 @@ void SetWindowMaxSize(int width, int height)
 
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
-    
+
     SetWindowSize(platform.appScreenWidth, platform.appScreenHeight);
 }
 
@@ -1063,14 +1063,14 @@ Vector2 GetMonitorPosition(int monitor)
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
+    //TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
     return 0;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
+    //TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
     return 0;
 }
 
@@ -1105,7 +1105,7 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
+    //TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
     return (Vector2){ 0, 0 };
 }
 
@@ -1218,7 +1218,7 @@ void SwapScreenBuffer(void)
 {
     if (!platform.hdc) abort();
 
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Update framebuffer
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
 
@@ -1238,15 +1238,18 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds
 double GetTime(void)
 {
+    double time = 0.0;
     LARGE_INTEGER now = { 0 };
     QueryPerformanceCounter(&now);
-    return (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+    time = (double)(now.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
+
+    return time;
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 // REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
@@ -1600,7 +1603,7 @@ int InitPlatform(void)
     // NOTE: Windows GDI object that represents a drawing surface
     platform.hdc = GetDC(platform.hwnd);
 
-    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
     {
         // Initialize software framebuffer
         BITMAPINFO bmi = { 0 };
@@ -1640,22 +1643,23 @@ int InitPlatform(void)
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+        FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
 
-    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
     {
         TRACELOG(LOG_INFO, "GL: OpenGL device information:");
-        TRACELOG(LOG_INFO, "    > Vendor:   %s", "raylib");
-        TRACELOG(LOG_INFO, "    > Renderer: %s", "rlsw - OpenGL 1.1 Software Renderer");
-        TRACELOG(LOG_INFO, "    > Version:  %s", "1.0");
+        TRACELOG(LOG_INFO, "    > Vendor:   %s", glGetString(GL_VENDOR));
+        TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
+        TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
     }
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     LARGE_INTEGER time = { 0 };
     QueryPerformanceCounter(&time);
@@ -1716,7 +1720,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DESTROY:
         {
             // Clean up for window destruction
-            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
             {
                 if (platform.hdcmem)
                 {
@@ -1757,12 +1761,30 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
         } break;
-        case WM_SIZING:
+        case WM_SIZING: // Sent to a window that the user is resizing
         {
-            if (!(CORE.Window.flags & FLAG_WINDOW_RESIZABLE))
-                TRACELOG(LOG_WARNING, "WIN32: WINDOW: Trying to resize a non-resizable window");
+            if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
+            {
+                //HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+            }
 
             result = TRUE;
+        } break;
+        case WM_SIZE:
+        {
+            // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
+            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
+            // this message can be obtained without getting WM_WINDOWPOSCHANGED
+            
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later 
+            // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
+            if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+#else
+            // NOTE: This message is only triggered on window creation
+            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+#endif
+            result = 0; // If an application processes WM_SIZE message, it should return zero
         } break;
         case WM_GETMINMAXINFO:
         {
@@ -1771,7 +1793,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             SIZE maxWindowSize = CalcWindowSize(96, maxClientSize, style);
             SIZE minClientSize = { CORE.Window.screenMin.width, CORE.Window.screenMin.height };
             SIZE minWindowSize = CalcWindowSize(96, minClientSize, style);
-            
+
             LPMINMAXINFO lpmmi = (LPMINMAXINFO) lparam;
             lpmmi->ptMaxSize.x = maxWindowSize.cx;
             lpmmi->ptMaxSize.y = maxWindowSize.cy;
@@ -1862,25 +1884,20 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: break;
             }
         } break;
-        case WM_SIZE:
-        {
-            // WARNING: Don't trust the docs, they say you won't get this message if you don't call DefWindowProc
-            // in response to WM_WINDOWPOSCHANGED but looks like when a window is created you'll get this
-            // message without getting WM_WINDOWPOSCHANGED
-            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-        } break;
-        //case WM_MOVE
+        //case WM_MOVE: break;
         case WM_WINDOWPOSCHANGED:
         {
             WINDOWPOS *pos = (WINDOWPOS*)lparam;
             if (!(pos->flags & SWP_NOSIZE)) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+
+            DefWindowProc(hwnd, msg, wparam, lparam);
         } break;
         case WM_GETDPISCALEDSIZE:
         {
             SIZE *inoutSize = (SIZE *)lparam;
             UINT newDpi = (UINT)wparam; // TODO: WARNING: Converting from WPARAM = UINT_PTR
 
-            // For the following flag changes, a window resize event should be posted, 
+            // For the following flag changes, a window resize event should be posted,
             // TODO: Should it be done after dpi changes?
             if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
             if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
@@ -1932,7 +1949,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         } break;
         case WM_PAINT:
         {
-            if (rlGetVersion() == RL_OPENGL_11_SOFTWARE) // Using software renderer
+            if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
             {
                 PAINTSTRUCT ps = { 0 };
                 HDC hdc = BeginPaint(hwnd, &ps);
@@ -2087,6 +2104,10 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
 
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
+
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    swResize(clientSize.cx, clientSize.cy);
+#endif
 }
 
 // Update window style
@@ -2187,10 +2208,10 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 // window. This function will continue to perform these update operations so long as
 // the state continues to change
 //
-// This design takes care of many odd corner cases. For example, if you want to restore
-// a window that was previously maximized AND minimized and you want to remove both these
-// flags, you actually need to call ShowWindow with SW_RESTORE twice. Another example is
-// if you have a maximized window, if the undecorated flag is modified then the window style
+// This design takes care of many odd corner cases. For example, in case of restoring
+// a window that was previously maximized AND minimized and those two flags need to be removed,
+// ShowWindow with SW_RESTORE twice need to bee actually calleed. Another example is
+// wheen having a maximized window, if the undecorated flag is modified then the window style
 // needs to be updated, but updating the style would mean the window size would change
 // causing the window to lose its Maximized state which would mean the window size
 // needs to be updated, followed by the update of window style, a second time, to restore that maximized
@@ -2198,7 +2219,7 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 // retry loop that continues until either the desired state is reached or the state stops changing
 static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
 {
-    // Flags that just apply immediately without needing any operations
+    // Flags that apply immediately without needing any operations
     CORE.Window.flags |= (desiredFlags & FLAG_MASK_NO_UPDATE);
 
     int vsync = (desiredFlags & FLAG_VSYNC_HINT)? 1 : 0;

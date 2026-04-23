@@ -1,9 +1,9 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - compute shader
+*   raylib [shaders] example - rlgl compute
 *
-*   NOTE: This example requires raylib OpenGL 4.3 versions for compute shaders support,
-*         shaders used in this example are #version 430 (OpenGL 4.3)
+*   WARNING: This example requires raylib compiled with OpenGL 4.3 version for
+*         compute shaders support, shaders used in this example are #version 430
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -19,9 +19,10 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "rlgl.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // Required for: NULL
 
 // IMPORTANT: This must match gol*.glsl GOL_WIDTH constant
 // This must be a multiple of 16 (check golLogic compute dispatch)
@@ -57,15 +58,15 @@ int main(void)
     const int screenWidth = GOL_WIDTH;
     const int screenHeight = GOL_WIDTH;
 
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - compute shader");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - rlgl compute");
 
     const Vector2 resolution = { (float)screenWidth, (float)screenHeight };
     unsigned int brushSize = 8;
 
     // Game of Life logic compute shader
     char *golLogicCode = LoadFileText("resources/shaders/glsl430/gol.glsl");
-    unsigned int golLogicShader = rlCompileShader(golLogicCode, RL_COMPUTE_SHADER);
-    unsigned int golLogicProgram = rlLoadComputeShaderProgram(golLogicShader);
+    unsigned int golLogicShader = rlLoadShader(golLogicCode, RL_COMPUTE_SHADER);
+    unsigned int golLogicProgram = rlLoadShaderProgramCompute(golLogicShader);
     UnloadFileText(golLogicCode);
 
     // Game of Life logic render shader
@@ -74,8 +75,8 @@ int main(void)
 
     // Game of Life transfert shader (CPU<->GPU download and upload)
     char *golTransfertCode = LoadFileText("resources/shaders/glsl430/gol_transfert.glsl");
-    unsigned int golTransfertShader = rlCompileShader(golTransfertCode, RL_COMPUTE_SHADER);
-    unsigned int golTransfertProgram = rlLoadComputeShaderProgram(golTransfertShader);
+    unsigned int golTransfertShader = rlLoadShader(golTransfertCode, RL_COMPUTE_SHADER);
+    unsigned int golTransfertProgram = rlLoadShaderProgramCompute(golTransfertShader);
     UnloadFileText(golTransfertCode);
 
     // Load shader storage buffer object (SSBO), id returned
@@ -168,7 +169,9 @@ int main(void)
     rlUnloadShaderBuffer(ssboB);
     rlUnloadShaderBuffer(ssboTransfert);
 
-    // Unload compute shader programs
+    // Unload compute shader
+    rlUnloadShader(golLogicShader);
+    rlUnloadShader(golTransfertShader);
     rlUnloadShaderProgram(golTransfertProgram);
     rlUnloadShaderProgram(golLogicProgram);
 

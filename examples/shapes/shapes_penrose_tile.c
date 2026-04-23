@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 5.5, last time updated with raylib 6.0
 *   Based on: https://processing.org/examples/penrosetile.html
 *
 *   Example contributed by David Buzatto (@davidbuzatto) and reviewed by Ramon Santamaria (@raysan5)
@@ -30,7 +30,7 @@
 //----------------------------------------------------------------------------------
 typedef struct TurtleState {
     Vector2 origin;
-    double angle;
+    float angle;
 } TurtleState;
 
 typedef struct PenroseLSystem {
@@ -106,7 +106,7 @@ int main(void)
                 if (generations > 0) rebuild = true;
             }
         }
-        
+
         if (rebuild)
         {
             RL_FREE(ls.production); // Free previous production for re-creation
@@ -118,15 +118,15 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             ClearBackground( RAYWHITE );
-            
+
             if (generations > 0) DrawPenroseLSystem(&ls);
-            
+
             DrawText("penrose l-system", 10, 10, 20, DARKGRAY);
             DrawText("press up or down to change generations", 10, 30, 20, DARKGRAY);
             DrawText(TextFormat("generations: %d", generations), 10, 50, 20, DARKGRAY);
-            
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -171,11 +171,11 @@ static PenroseLSystem CreatePenroseLSystem(float drawLength)
         .drawLength = drawLength,
         .theta = 36.0f // Degrees
     };
-    
+
     ls.production = (char *)RL_MALLOC(sizeof(char)*STR_MAX_SIZE);
     ls.production[0] = '\0';
     strncpy(ls.production, "[X]++[X]++[X]++[X]++[X]", STR_MAX_SIZE);
-    
+
     return ls;
 }
 
@@ -211,7 +211,7 @@ static void BuildProductionStep(PenroseLSystem *ls)
 
     ls->drawLength *= 0.5f;
     strncpy(ls->production, newProduction, STR_MAX_SIZE);
-    
+
     RL_FREE(newProduction);
 }
 
@@ -228,9 +228,9 @@ static void DrawPenroseLSystem(PenroseLSystem *ls)
     int repeats = 1;
     int productionLength = (int)strnlen(ls->production, STR_MAX_SIZE);
     ls->steps += 12;
-    
+
     if (ls->steps > productionLength) ls->steps = productionLength;
-    
+
     for (int i = 0; i < ls->steps; i++)
     {
         char step = ls->production[i];
@@ -244,24 +244,24 @@ static void DrawPenroseLSystem(PenroseLSystem *ls)
                 turtle.origin.y += ls->drawLength*sinf(radAngle);
                 Vector2 startPosScreen = { startPosWorld.x + screenCenter.x, startPosWorld.y + screenCenter.y };
                 Vector2 endPosScreen = { turtle.origin.x + screenCenter.x, turtle.origin.y + screenCenter.y };
-                
+
                 DrawLineEx(startPosScreen, endPosScreen, 2, Fade(BLACK, 0.2f));
             }
-            
+
             repeats = 1;
-        } 
+        }
         else if (step == '+')
         {
             for (int j = 0; j < repeats; j++) turtle.angle += ls->theta;
 
             repeats = 1;
-        } 
+        }
         else if (step == '-')
         {
             for (int j = 0; j < repeats; j++) turtle.angle += -ls->theta;
 
             repeats = 1;
-        } 
+        }
         else if (step == '[') PushTurtleState(turtle);
         else if (step == ']') turtle = PopTurtleState();
         else if ((step >= 48) && (step <= 57)) repeats = (int) step - 48;

@@ -69,7 +69,7 @@ int main(void)
             DrawText("USING DEFAULT SHADER", 20, 40, 10, RED);
 
             DrawCircle(80, 120, 35, DARKBLUE);
-            DrawCircleGradient(80, 220, 60, GREEN, SKYBLUE);
+            DrawCircleGradient((Vector2){ 80.0f, 220.0f }, 60, GREEN, SKYBLUE);
             DrawCircleLines(80, 340, 80, DARKBLUE);
 
 

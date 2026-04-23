@@ -779,36 +779,103 @@ void SetClipboardText(const char *text)
     else EM_ASM({ navigator.clipboard.writeText(UTF8ToString($0)); }, text);
 }
 
+// Async EM_JS to be able to await clickboard read asynchronous function
+EM_ASYNC_JS(void, RequestClipboardData, (void), {
+    if (navigator.clipboard && window.isSecureContext)
+    {
+        let items = await navigator.clipboard.read();
+        for (const item of items)
+        {
+            // Check if this item contains plain text or image
+            if (item.types.includes("text/plain"))
+            {
+                const blob = await item.getType("text/plain");
+                const text = await blob.text();
+                window._lastClipboardString = text;
+            }
+            else if (item.types.find(t => t.startsWith("image/")))
+            {
+                const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
+                const bitmap = await createImageBitmap(blob);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+                // Store image and data for the Fetch function
+                window._lastImgWidth = canvas.width;
+                window._lastImgHeight = canvas.height;
+                window._lastImgData = imgData;
+            }
+        }
+    }
+    else console.warn("Clipboard read() requires HTTPS/Localhost");
+});
+
+// Returns the string created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(char *, GetLastPastedText, (void), {
+    var str = window._lastClipboardString || "";
+    var length = lengthBytesUTF8(str) + 1;
+    if (length > 1)
+    {
+        var ptr = _malloc(length);
+        stringToUTF8(str, ptr, length);
+        return ptr;
+    }
+    return 0;
+});
+
+// Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
+    if (window._lastImgData)
+    {
+        const data = window._lastImgData;
+        if (data.length > 0)
+        {
+            const ptr = _malloc(data.length);
+            HEAPU8.set(data, ptr);
+
+            // Set the width and height via the pointers passed from C
+            // HEAP32 handles the 4-byte integers
+            if (width)  setValue(width, window._lastImgWidth,  'i32');
+            if (height) setValue(height, window._lastImgHeight, 'i32');
+
+            // Clear the JS buffer so there is no need to fetch the same image twice
+            window._lastImgData = null;
+
+            return ptr;
+        }
+    }
+
+    return 0;
+});
+
 // Get clipboard text content
 // NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-/*
-    // Accessing clipboard data from browser is tricky due to security reasons
-    // The method to use is navigator.clipboard.readText() but this is an asynchronous method
-    // that will return at some moment after the function is called with the required data
-    emscripten_run_script_string("navigator.clipboard.readText() \
-        .then(text => { document.getElementById('clipboard').innerText = text; console.log('Pasted content: ', text); }) \
-        .catch(err => { console.error('Failed to read clipboard contents: ', err); });"
-    );
-
-    // The main issue is getting that data, one approach could be using ASYNCIFY and wait
-    // for the data but it requires adding Asyncify emscripten library on compilation
-
-    // Another approach could be just copy the data in a HTML text field and try to retrieve it
-    // later on if available... and clean it for future accesses
-*/
-    return NULL;
+    RequestClipboardData();
+    return GetLastPastedText();
 }
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-
-    // NOTE: In theory, the new navigator.clipboard.read() can be used to return arbitrary data from clipboard (2024)
-    // REF: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/read
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    int w = 0, h = 0;
+    RequestClipboardData();
+    unsigned char* data = GetLastPastedImage(&w, &h);
+    if (data != NULL) {
+        image.data = data;
+        image.width = w;
+        image.height = h;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    }
 
     return image;
 }
@@ -860,7 +927,7 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
-#if defined(GRAPHICS_API_OPENGL_11_SOFTWARE)
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     // Update framebuffer
     rlCopyFramebuffer(0, 0, CORE.Window.render.width, CORE.Window.render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
 
@@ -895,22 +962,15 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = 0.0;
-    /*
-    struct timespec ts = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
-    */
-    time = emscripten_get_now()*1000.0;
+    double time = emscripten_get_now()*1000.0;
 
     return time;
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform
@@ -983,9 +1043,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1128,7 +1188,7 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT)) attribs.antialias = EM_TRUE;
 
     // Check selection OpenGL version
-    if (rlGetVersion() == RL_OPENGL_11_SOFTWARE)
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
     {
         // Avoid creating a WebGL canvas, create 2d canvas for software rendering
         emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
@@ -1185,7 +1245,8 @@ int InitPlatform(void)
         CORE.Window.currentFbo.width = fbWidth;
         CORE.Window.currentFbo.height = fbHeight;
 
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
@@ -1321,8 +1382,8 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 
     switch (eventType)
     {
-        case EMSCRIPTEN_EVENT_BLUR: FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break; // The canvas lost focus
-        case EMSCRIPTEN_EVENT_FOCUS: FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
+        case EMSCRIPTEN_EVENT_BLUR: FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
+        case EMSCRIPTEN_EVENT_FOCUS: FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
         default: consumed = 0; break;
     }
 
@@ -1457,7 +1518,7 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
         default: break;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -1529,7 +1590,7 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -1639,7 +1700,7 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     GestureEvent gestureEvent = { 0 };
     gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 

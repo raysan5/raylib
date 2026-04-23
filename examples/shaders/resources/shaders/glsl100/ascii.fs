@@ -58,12 +58,12 @@ void main()
     float gray = GreyScale(cellColor);
 
 	float n =  4096.0;
-    
+
     // Character set from https://www.shadertoy.com/view/lssGDj
     // Create new bitmaps https://thrill-project.com/archiv/coding/bitmap/
     if (gray > 0.2) n = 65600.0;    // :
 	if (gray > 0.3) n = 18725316.0; // v
-	if (gray > 0.4) n = 15255086.0; // o 
+	if (gray > 0.4) n = 15255086.0; // o
 	if (gray > 0.5) n = 13121101.0; // &
 	if (gray > 0.6) n = 15252014.0; // 8
 	if (gray > 0.7) n = 13195790.0; // @

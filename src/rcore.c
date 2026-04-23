@@ -35,35 +35,31 @@
 *           - Memory framebuffer output, using software renderer, no OS required
 *
 *   CONFIGURATION:
-*       #define SUPPORT_DEFAULT_FONT (default)
-*           Default font is loaded on window initialization to be available for the user to render simple text
-*           NOTE: If enabled, uses external module functions to load default raylib font (module: text)
-*
-*       #define SUPPORT_CAMERA_SYSTEM
+*       #define SUPPORT_CAMERA_SYSTEM       1
 *           Camera module is included (rcamera.h) and multiple predefined cameras are available:
 *               free, 1st/3rd person, orbital, custom
 *
-*       #define SUPPORT_GESTURES_SYSTEM
+*       #define SUPPORT_GESTURES_SYSTEM     1
 *           Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
-*       #define SUPPORT_MOUSE_GESTURES
+*       #define SUPPORT_MOUSE_GESTURES      1
 *           Mouse gestures are directly mapped like touches and processed by gestures system
 *
-*       #define SUPPORT_BUSY_WAIT_LOOP
+*       #define SUPPORT_BUSY_WAIT_LOOP      1
 *           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
-*       #define SUPPORT_PARTIALBUSY_WAIT_LOOP
+*       #define SUPPORT_PARTIALBUSY_WAIT_LOOP 0
 *           Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
 *
-*       #define SUPPORT_SCREEN_CAPTURE
+*       #define SUPPORT_SCREEN_CAPTURE      1
 *           Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
-*       #define SUPPORT_COMPRESSION_API
+*       #define SUPPORT_COMPRESSION_API     1
 *           Support CompressData() and DecompressData() functions, those functions use zlib implementation
 *           provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *           for linkage
 *
-*       #define SUPPORT_AUTOMATION_EVENTS
+*       #define SUPPORT_AUTOMATION_EVENTS   1
 *           Support automatic events recording and playing, useful for automated testing systems or AI based game playing
 *
 *   DEPENDENCIES:
@@ -126,17 +122,17 @@
 #define RAYMATH_IMPLEMENTATION
 #include "raymath.h"                // Vector2, Vector3, Quaternion and Matrix functionality
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     #define RGESTURES_IMPLEMENTATION
     #include "rgestures.h"          // Gestures detection functionality
 #endif
 
-#if defined(SUPPORT_CAMERA_SYSTEM)
+#if SUPPORT_CAMERA_SYSTEM
     #define RCAMERA_IMPLEMENTATION
     #include "rcamera.h"            // Camera system functionality
 #endif
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     #define SINFL_IMPLEMENTATION
     #define SINFL_NO_SIMD
     #include "external/sinfl.h"     // Deflate (RFC 1951) decompressor
@@ -145,7 +141,7 @@
     #include "external/sdefl.h"     // Deflate (RFC 1951) compressor
 #endif
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     #define RPRAND_IMPLEMENTATION
     #include "external/rprand.h"
 #endif
@@ -181,7 +177,7 @@
 #elif defined(__APPLE__)
     #include <sys/syslimits.h>
     #include <mach-o/dyld.h>
-#endif // OSs
+#endif
 
 #define _CRT_INTERNAL_NONSTDC_NAMES  1
 #include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
@@ -271,15 +267,18 @@
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+// File and directory scan filters
+// NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+// WARNING: Custom file filters can be specified but following raylib IsFileExtension() convention: ".png;.wav;.glb"
 #ifndef FILE_FILTER_TAG_ALL
-    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on scan
+#endif
 #ifndef FILE_FILTER_TAG_FILE_ONLY
-    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on scan (no directories)
+#endif
 #ifndef FILE_FILTER_TAG_DIR_ONLY
-    #define FILE_FILTER_TAG_DIR_ONLY   "DIR*"       // Filter to include directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_DIR_ONLY   "DIRS*"      // Filter to include only directories on scan
+#endif
 
 // Flags bitwise operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -308,7 +307,7 @@ typedef struct CoreData {
         Size screen;                        // Screen current width and height
         Point position;                     // Window current position
         Size previousScreen;                // Screen previous width and height (required on fullscreen/borderless-windowed toggle)
-        Point previousPosition;             // Window previous position (required on fullscreeen/borderless-windowed toggle)
+        Point previousPosition;             // Window previous position (required on fullscreen/borderless-windowed toggle)
         Size render;                        // Screen framebuffer width and height
         Point renderOffset;                 // Screen framebuffer render offset (Not required anymore?)
         Size currentFbo;                    // Current framebuffer render width and height (depends on active render texture)
@@ -330,7 +329,7 @@ typedef struct CoreData {
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
-            // NOTE: Since key press logic involves comparing previous vs currrent key state,
+            // NOTE: Since key press logic involves comparing previous vs current key state,
             // key repeats needs to be handled specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame
 
@@ -380,14 +379,14 @@ typedef struct CoreData {
         } Gamepad;
     } Input;
     struct {
-        double current;                     // Current time measure
-        double previous;                    // Previous time measure
-        double update;                      // Time measure for frame update
-        double draw;                        // Time measure for frame draw
-        double frame;                       // Time measure for one frame
-        double target;                      // Desired time for one frame, if 0 not applied
-        unsigned long long int base;        // Base time measure for hi-res timer (PLATFORM_ANDROID, PLATFORM_DRM)
-        unsigned int frameCounter;          // Frame counter
+        double current;                     // Current time measure (seconds)
+        double previous;                    // Previous time measure (seconds)
+        double update;                      // Time measure for frame update (seconds)
+        double draw;                        // Time measure for frame draw (seconds)
+        double frame;                       // Time measure for one frame (seconds)
+        double target;                      // Desired time for one frame, if 0 not applied (seconds)
+        unsigned long long int base;        // Base time measure for hi-res timer (ticks or nanoseconds)
+        unsigned int frameCounter;          // Frame counter (frames)
 
     } Time;
 } CoreData;
@@ -407,11 +406,11 @@ static SaveFileDataCallback saveFileData = NULL;    // SaveFileText callback fun
 static LoadFileTextCallback loadFileText = NULL;    // LoadFileText callback function pointer
 static SaveFileTextCallback saveFileText = NULL;    // SaveFileText callback function pointer
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#if SUPPORT_SCREEN_CAPTURE
 static int screenshotCounter = 0;                   // Screenshots counter
 #endif
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 // Automation events type
 typedef enum AutomationEventType {
     EVENT_NONE = 0,
@@ -503,8 +502,7 @@ static bool automationEventRecording = false;               // Recording automat
 // Module Functions Declaration
 // NOTE: Those functions are common for all platforms!
 //----------------------------------------------------------------------------------
-
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT
 extern void LoadFontDefault(void);      // [Module: text] Loads default font on InitWindow()
 extern void UnloadFontDefault(void);    // [Module: text] Unloads default font from GPU memory
 #endif
@@ -517,39 +515,23 @@ static void SetupViewport(int width, int height);           // Set viewport for 
 
 static void ScanDirectoryFiles(const char *basePath, FilePathList *list, const char *filter, unsigned int expectedFileCount, bool scanSubdirs); // Scan all files and directories in a base path
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 static void RecordAutomationEvent(void); // Record frame events (to internal events array)
 #endif
 
 #if defined(_WIN32) && !defined(PLATFORM_DESKTOP_RGFW)
-// NOTE: We declare Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
+// NOTE: Declaring Sleep() function symbol to avoid including windows.h (kernel32.lib linkage required)
 __declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout); // Required for: WaitTime()
 #endif
 
-#if !defined(SUPPORT_MODULE_RTEXT)
+#if !SUPPORT_MODULE_RTEXT
 const char *TextFormat(const char *text, ...); // Formatting of text with variables to 'embed'
-#endif // !SUPPORT_MODULE_RTEXT
+#endif
 
 #if defined(PLATFORM_DESKTOP)
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-// Using '#pragma message' because '#warning' is not adopted by MSVC
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
-    #if !defined(SUPPORT_MODULE_RTEXTURES)
-        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly")
-    #endif
-
-    // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
-    #if !defined(SUPPORT_FILEFORMAT_BMP) && defined(_WIN32)
-        #pragma message ("WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows")
-    #endif
-
-    // From what I've tested applications on Wayland saves images on clipboard as PNG
-    #if (!defined(SUPPORT_FILEFORMAT_PNG) || !defined(SUPPORT_FILEFORMAT_JPG)) && !defined(_WIN32)
-        #pragma message ("WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG")
-    #endif
-#endif // SUPPORT_CLIPBOARD_IMAGE
 
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
@@ -653,27 +635,27 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Supported raylib modules:");
     TRACELOG(LOG_INFO, "    > rcore:..... loaded (mandatory)");
     TRACELOG(LOG_INFO, "    > rlgl:...... loaded (mandatory)");
-#if defined(SUPPORT_MODULE_RSHAPES)
+#if SUPPORT_MODULE_RSHAPES
     TRACELOG(LOG_INFO, "    > rshapes:... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rshapes:... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_MODULE_RTEXTURES
     TRACELOG(LOG_INFO, "    > rtextures:. loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rtextures:. not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
     TRACELOG(LOG_INFO, "    > rtext:..... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rtext:..... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RMODELS)
+#if SUPPORT_MODULE_RMODELS
     TRACELOG(LOG_INFO, "    > rmodels:... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > rmodels:... not loaded (optional)");
 #endif
-#if defined(SUPPORT_MODULE_RAUDIO)
+#if SUPPORT_MODULE_RAUDIO
     TRACELOG(LOG_INFO, "    > raudio:.... loaded (optional)");
 #else
     TRACELOG(LOG_INFO, "    > raudio:.... not loaded (optional)");
@@ -682,8 +664,6 @@ void InitWindow(int width, int height, const char *title)
     // Initialize window data
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
-    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-    CORE.Window.currentFbo.height = CORE.Window.screen.height;
 
     CORE.Window.eventWaiting = false;
     CORE.Window.screenScale = MatrixIdentity(); // No draw scaling required by default
@@ -705,38 +685,46 @@ void InitWindow(int width, int height, const char *title)
         TRACELOG(LOG_WARNING, "SYSTEM: Failed to initialize platform");
         return;
     }
+
+    // Initialize render dimensions for embedded platforms
+    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation
+    // On embedded platforms with no window manager, InitPlatform() doesn't set these values, so they should be initialized
+    // here from screen dimensions (which are set from the InitWindow parameters)
+    if ((CORE.Window.render.width == 0) || (CORE.Window.render.height == 0))
+    {
+        CORE.Window.render.width = CORE.Window.screen.width;
+        CORE.Window.render.height = CORE.Window.screen.height;
+    }
     //--------------------------------------------------------------
 
     // Initialize rlgl default data (buffers and shaders)
     // NOTE: Current fbo size stored as globals in rlgl for convenience
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    rlglInit(CORE.Window.render.width, CORE.Window.render.height);
 
     // Setup default viewport
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
-#if defined(SUPPORT_MODULE_RTEXT)
-    #if defined(SUPPORT_DEFAULT_FONT)
-        // Load default font
-        // WARNING: External function: Module required: rtext
-        LoadFontDefault();
-        #if defined(SUPPORT_MODULE_RSHAPES)
-        // Set font white rectangle for shapes drawing, so shapes and text can be batched together
-        // WARNING: rshapes module is required, if not available, default internal white rectangle is used
-        Rectangle rec = GetFontDefault().recs[95];
-        if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
-        {
-            // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
-        }
-        else
-        {
-            // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
-        }
-        #endif
+#if SUPPORT_MODULE_RTEXT
+    // Load default font
+    // WARNING: External function: Module required: rtext
+    LoadFontDefault();
+    #if SUPPORT_MODULE_RSHAPES
+    // Set font white rectangle for shapes drawing, so shapes and text can be batched together
+    // WARNING: rshapes module is required, if not available, default internal white rectangle is used
+    Rectangle rec = GetFontDefault().recs[95];
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
+    {
+        // NOTE: Try to maximize rec padding to avoid pixel bleeding on MSAA filtering
+        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
+    }
+    else
+    {
+        // NOTE: Set up a 1px padding on char rectangle to avoid pixel bleeding
+        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
+    }
     #endif
 #else
-    #if defined(SUPPORT_MODULE_RSHAPES)
+    #if SUPPORT_MODULE_RSHAPES
     // Set default texture and rectangle to be used for shapes drawing
     // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -756,7 +744,7 @@ void InitWindow(int width, int height, const char *title)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
-#if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+#if SUPPORT_MODULE_RTEXT
     UnloadFontDefault();        // WARNING: Module required: rtext
 #endif
 
@@ -836,7 +824,7 @@ int GetRenderWidth(void)
 {
     int width = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+    if (CORE.Window.usingFbo) width = CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
     return width;
@@ -847,7 +835,7 @@ int GetRenderHeight(void)
 {
     int height = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+    if (CORE.Window.usingFbo) height = CORE.Window.currentFbo.height;
     else height = CORE.Window.render.height;
 
     return height;
@@ -910,11 +898,11 @@ void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     if (automationEventRecording) RecordAutomationEvent();    // Event recording
 #endif
 
-#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+#if !SUPPORT_CUSTOM_FRAME_CONTROL
     SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
     // Frame time control system
@@ -939,13 +927,13 @@ void EndDrawing(void)
     PollInputEvents();      // Poll user events (before next frame update)
 #endif
 
-#if defined(SUPPORT_SCREEN_CAPTURE)
+#if SUPPORT_SCREEN_CAPTURE
     if (IsKeyPressed(KEY_F12))
     {
         TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
         screenshotCounter++;
     }
-#endif  // SUPPORT_SCREEN_CAPTURE
+#endif
 
     CORE.Time.frameCounter++;
 }
@@ -1067,7 +1055,7 @@ void EndTextureMode(void)
     // Set viewport to default framebuffer size
     SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
 
-    // Go back to the modelview state from BeginDrawing since we are back to the default FBO
+    // Go back to the modelview state from BeginDrawing, back to the main framebuffer
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
@@ -1104,7 +1092,7 @@ void EndBlendMode(void)
 }
 
 // Begin scissor mode (define screen area for following drawing)
-// NOTE: Scissor rec refers to bottom-left corner, we change it to upper-left
+// NOTE: Scissor rec refers to bottom-left corner, changing it to upper-left
 void BeginScissorMode(int x, int y, int width, int height)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -1207,9 +1195,9 @@ VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device)
         config.projection[1] = MatrixMultiply(proj, MatrixTranslate(-projOffset, 0.0f, 0.0f));
 
         // Compute camera transformation matrices
-        // NOTE: Camera movement might seem more natural if we model the head
-        // Our axis of rotation is the base of our head, so we might want to add
-        // some y (base of head to eye level) and -z (center of head to eye protrusion) to the camera positions
+        // NOTE: Camera movement might seem more natural if modelling the head
+        // Axis of rotation is the base of the head, so adding some y (base of head to eye level
+        // and -z (center of head to eye protrusion) to the camera positions
         config.viewOffset[0] = MatrixTranslate(device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
         config.viewOffset[1] = MatrixTranslate(-device.interpupillaryDistance*0.5f, 0.075f, 0.045f);
 
@@ -1242,7 +1230,7 @@ void UnloadVrStereoConfig(VrStereoConfig config)
 //----------------------------------------------------------------------------------
 
 // Load shader from files and bind default locations
-// NOTE: If shader string is NULL, using default vertex/fragment shaders
+// NOTE: If shader filename is NULL, using default vertex/fragment shaders
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
@@ -1268,19 +1256,19 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
 {
     Shader shader = { 0 };
 
-    shader.id = rlLoadShaderCode(vsCode, fsCode);
+    shader.id = rlLoadShaderProgram(vsCode, fsCode);
 
     if (shader.id == 0)
     {
-        // Shader could not be loaded but we still load the location points to avoid potential crashes
-        // NOTE: All locations set to -1 (no location)
+        // Shader could not be loaded but still loading the location points to avoid potential crashes
+        // NOTE: All locations set to -1 (no location found)
         shader.locs = (int *)RL_CALLOC(RL_MAX_SHADER_LOCATIONS, sizeof(int));
         for (int i = 0; i < RL_MAX_SHADER_LOCATIONS; i++) shader.locs[i] = -1;
     }
     else if (shader.id == rlGetShaderIdDefault()) shader.locs = rlGetShaderLocsDefault();
     else if (shader.id > 0)
     {
-        // After custom shader loading, we TRY to set default location names
+        // After custom shader loading, trying to set default location names
         // Default shader attribute locations have been binded before linking:
         //  - vertex position location    = 0
         //  - vertex texcoord location    = 1
@@ -1288,7 +1276,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         //  - vertex color location       = 3
         //  - vertex tangent location     = 4
         //  - vertex texcoord2 location   = 5
-        //  - vertex boneIds location     = 6
+        //  - vertex boneIndices location = 6
         //  - vertex boneWeights location = 7
 
         // NOTE: If any location is not found, loc point becomes -1
@@ -1305,9 +1293,9 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_VERTEX_NORMAL] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL);
         shader.locs[SHADER_LOC_VERTEX_TANGENT] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_TANGENT);
         shader.locs[SHADER_LOC_VERTEX_COLOR] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR);
-        shader.locs[SHADER_LOC_VERTEX_BONEIDS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEIDS);
+        shader.locs[SHADER_LOC_VERTEX_BONEIDS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEINDICES);
         shader.locs[SHADER_LOC_VERTEX_BONEWEIGHTS] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS);
-        shader.locs[SHADER_LOC_VERTEX_INSTANCE_TX] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCE_TX);
+        shader.locs[SHADER_LOC_VERTEX_INSTANCETRANSFORM] = rlGetLocationAttrib(shader.id, RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORM);
 
         // Get handles to GLSL uniform locations (vertex shader)
         shader.locs[SHADER_LOC_MATRIX_MVP] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MVP);
@@ -1315,7 +1303,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
         shader.locs[SHADER_LOC_MATRIX_PROJECTION] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION);
         shader.locs[SHADER_LOC_MATRIX_MODEL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_MODEL);
         shader.locs[SHADER_LOC_MATRIX_NORMAL] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL);
-        shader.locs[SHADER_LOC_BONE_MATRICES] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_BONE_MATRICES);
+        shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_BONEMATRICES);
 
         // Get handles to GLSL uniform locations (fragment shader)
         shader.locs[SHADER_LOC_COLOR_DIFFUSE] = rlGetLocationUniform(shader.id, RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR);
@@ -1473,7 +1461,7 @@ Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height
     Vector3 farPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 1.0f }, matProj, matView);
 
     // Unproject the mouse cursor in the near plane
-    // We need this as the source position because orthographic projects,
+    // It is needed as the source position because orthographic projects,
     // compared to perspective doesn't have a convergence point,
     // meaning that the "eye" of the camera is more like a plane than a point
     Vector3 cameraPlanePointerPos = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, -1.0f }, matProj, matView);
@@ -1509,7 +1497,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     //      not for the camera getting bigger, hence the invert. Same deal with rotation
     //   3. Move it by (-offset);
     //      Offset defines target transform relative to screen, but since effectively "moving" screen (camera)
-    //      we need to do it into opposite direction (inverse transform)
+    //      it needs to be moved into opposite direction (inverse transform)
 
     // Having camera transform in world-space, inverse of it gives the modelview transform
     // Since (A*B*C)' = C'*B'*A', the modelview is
@@ -1595,7 +1583,7 @@ Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: Timming
+// Module Functions Definition: Timing
 //----------------------------------------------------------------------------------
 
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
@@ -1611,12 +1599,12 @@ void SetTargetFPS(int fps)
 }
 
 // Get current FPS
-// NOTE: We calculate an average framerate
+// NOTE: Calculating an average framerate
 int GetFPS(void)
 {
     int fps = 0;
 
-#if !defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+#if !SUPPORT_CUSTOM_FRAME_CONTROL
     #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
     #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 milliseconds
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
@@ -1626,7 +1614,7 @@ int GetFPS(void)
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
 
-    // if we reset the window, reset the FPS info
+    // If reseting the window, reset the FPS info
     if (CORE.Time.frameCounter == 0)
     {
         average = 0;
@@ -1636,18 +1624,20 @@ int GetFPS(void)
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
 
-    if (fpsFrame == 0) return 0;
-
-    if ((GetTime() - last) > FPS_STEP)
+    if (fpsFrame != 0)
     {
-        last = (float)GetTime();
-        index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
-        average -= history[index];
-        history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
-        average += history[index];
-    }
+        if ((GetTime() - last) > FPS_STEP)
+        {
+            last = (float)GetTime();
+            index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
+            average -= history[index];
+            history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
+            average += history[index];
+        }
 
-    fps = (int)roundf(1.0f/average);
+        fps = (int)roundf(1.0f/average);
+    }
+    else fps = 0;
 #endif
 
     return fps;
@@ -1669,22 +1659,22 @@ float GetFrameTime(void)
 
 // Wait for some time (stop program execution)
 // NOTE: Sleep() granularity could be around 10 ms, it means, Sleep() could
-// take longer than expected... for that reason we use the busy wait loop
+// take longer than expected... for that reason a busy wait loop is used
 // REF: http://stackoverflow.com/questions/43057578/c-programming-win32-games-sleep-taking-longer-than-expected
 // REF: http://www.geisswerks.com/ryan/FAQS/timing.html --> All about timing on Win32!
 void WaitTime(double seconds)
 {
     if (seconds < 0) return;    // Security check
 
-#if defined(SUPPORT_BUSY_WAIT_LOOP) || defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+#if SUPPORT_BUSY_WAIT_LOOP || SUPPORT_PARTIALBUSY_WAIT_LOOP
     double destinationTime = GetTime() + seconds;
 #endif
 
-#if defined(SUPPORT_BUSY_WAIT_LOOP)
+#if SUPPORT_BUSY_WAIT_LOOP
     while (GetTime() < destinationTime) { }
 #else
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
-        double sleepSeconds = seconds - seconds*0.05;  // NOTE: We reserve a percentage of the time for busy waiting
+    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
+        double sleepSeconds = seconds - seconds*0.05;  // NOTE: Reserve a percentage of the time for busy waiting
     #else
         double sleepSeconds = seconds;
     #endif
@@ -1707,7 +1697,7 @@ void WaitTime(double seconds)
         usleep(sleepSeconds*1000000.0);
     #endif
 
-    #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
+    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
         while (GetTime() < destinationTime) { }
     #endif
 #endif
@@ -1723,7 +1713,7 @@ void WaitTime(double seconds)
 // Set the seed for the random number generator
 void SetRandomSeed(unsigned int seed)
 {
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     rprand_set_seed(seed);
 #else
     srand(seed);
@@ -1742,7 +1732,7 @@ int GetRandomValue(int min, int max)
         min = tmp;
     }
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     value = rprand_get_value(min, max);
 #else
     // WARNING: Ranges higher than RAND_MAX will return invalid results
@@ -1781,6 +1771,7 @@ int GetRandomValue(int min, int max)
         value = min + (int)(r%m);
     }
 #endif
+
     return value;
 }
 
@@ -1789,7 +1780,7 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
 {
     int *values = NULL;
 
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     values = rprand_load_sequence(count, min, max);
 #else
     if (count > ((unsigned int)abs(max - min) + 1)) return values;  // Security check
@@ -1820,13 +1811,14 @@ int *LoadRandomSequence(unsigned int count, int min, int max)
         }
     }
 #endif
+
     return values;
 }
 
 // Unload random values sequence
 void UnloadRandomSequence(int *sequence)
 {
-#if defined(SUPPORT_RPRAND_GENERATOR)
+#if SUPPORT_RPRAND_GENERATOR
     rprand_unload_sequence(sequence);
 #else
     RL_FREE(sequence);
@@ -1837,11 +1829,11 @@ void UnloadRandomSequence(int *sequence)
 // NOTE: Provided fileName should not contain paths, saving to working directory
 void TakeScreenshot(const char *fileName)
 {
-#if defined(SUPPORT_MODULE_RTEXTURES)
+#if SUPPORT_MODULE_RTEXTURES
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    // Apply a scale if we are doing HIGHDPI auto-scaling
+    // Apply content scaling if required
     Vector2 scale = { 1.0f, 1.0f };
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
 
@@ -1864,7 +1856,7 @@ void TakeScreenshot(const char *fileName)
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
 // because it sets up some flags for the window creation process
-// To configure window states after creation, just use SetWindowState()
+// To configure window states after creation, use SetWindowState()
 void SetConfigFlags(unsigned int flags)
 {
     if (CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetConfigFlags called after window initialization, Use \"SetWindowState\" to set flags instead");
@@ -1885,7 +1877,7 @@ void SetTraceLogLevel(int logType) { logTypeLevel = logType; }
 // Show trace log messages (LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_DEBUG)
 void TraceLog(int logType, const char *text, ...)
 {
-#if defined(SUPPORT_TRACELOG)
+#if SUPPORT_TRACELOG
     // Message has level below current threshold, don't emit
     if ((logType < logTypeLevel) || (text == NULL)) return;
 
@@ -1934,8 +1926,7 @@ void TraceLog(int logType, const char *text, ...)
     va_end(args);
 
     if (logType == LOG_FATAL) exit(EXIT_FAILURE);  // If fatal logging, exit program
-
-#endif  // SUPPORT_TRACELOG
+#endif
 }
 
 // Set custom trace log
@@ -1979,12 +1970,8 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
     if (fileName != NULL)
     {
-        if (loadFileData)
-        {
-            data = loadFileData(fileName, dataSize);
-            return data;
-        }
-#if defined(SUPPORT_STANDARD_FILEIO)
+        if (loadFileData) return loadFileData(fileName, dataSize);
+
         FILE *file = fopen(fileName, "rb");
 
         if (file != NULL)
@@ -2001,11 +1988,11 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
                 if (data != NULL)
                 {
-                    // NOTE: fread() returns number of read elements instead of bytes, so we read [1 byte, size elements]
+                    // NOTE: fread() returns number of read elements instead of bytes, so reading [1 byte, size elements]
                     size_t count = fread(data, sizeof(unsigned char), size, file);
 
                     // WARNING: fread() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
-                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) we have a limitation
+                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) there is a limitation
                     if (count > 2147483647)
                     {
                         TRACELOG(LOG_WARNING, "FILEIO: [%s] File is bigger than 2147483647 bytes, avoid using LoadFileData()", fileName);
@@ -2028,9 +2015,6 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
             fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
-#else
-    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
-#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -2046,15 +2030,12 @@ void UnloadFileData(unsigned char *data)
 // Save data to file from buffer
 bool SaveFileData(const char *fileName, void *data, int dataSize)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
-        if (saveFileData)
-        {
-            return saveFileData(fileName, data, dataSize);
-        }
-#if defined(SUPPORT_STANDARD_FILEIO)
+        if (saveFileData) return saveFileData(fileName, data, dataSize);
+
         FILE *file = fopen(fileName, "wb");
 
         if (file != NULL)
@@ -2067,23 +2048,20 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
             else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
-#else
-    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
-#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // Export data to code (.h), returns true on success
 bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -2123,14 +2101,14 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[dataSize - 1]);
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
 
-    return success;
+    return result;
 }
 
 // Load text data from file, returns a '\0' terminated string
@@ -2141,12 +2119,8 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        if (loadFileText)
-        {
-            text = loadFileText(fileName);
-            return text;
-        }
-#if defined(SUPPORT_STANDARD_FILEIO)
+        if (loadFileText) return loadFileText(fileName);
+
         FILE *file = fopen(fileName, "rt");
 
         if (file != NULL)
@@ -2182,9 +2156,6 @@ char *LoadFileText(const char *fileName)
             fclose(file);
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
-#else
-    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
-#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
@@ -2200,15 +2171,12 @@ void UnloadFileText(char *text)
 // Save text data to file (write), string must be '\0' terminated
 bool SaveFileText(const char *fileName, const char *text)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
-        if (saveFileText)
-        {
-            return saveFileText(fileName, text);
-        }
-#if defined(SUPPORT_STANDARD_FILEIO)
+        if (saveFileText) return saveFileText(fileName, text);
+
         FILE *file = fopen(fileName, "wt");
 
         if (file != NULL)
@@ -2218,17 +2186,14 @@ bool SaveFileText(const char *fileName, const char *text)
             if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
-#else
-    TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
-#endif
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // File access custom callbacks
@@ -2314,14 +2279,14 @@ int FileCopy(const char *srcPath, const char *dstPath)
 // NOTE: If dst directories do not exists they are created
 int FileMove(const char *srcPath, const char *dstPath)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(srcPath))
     {
-        FileCopy(srcPath, dstPath);
-        FileRemove(srcPath);
+		if (FileCopy(srcPath, dstPath) == 0) result = FileRemove(srcPath);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
     }
-    else result = -1;
+	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
     return result;
 }
@@ -2334,11 +2299,11 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     char *fileText = NULL;
     char *fileTextUpdated = { 0 };
 
-#if defined(SUPPORT_MODULE_RTEXT)
+#if SUPPORT_MODULE_RTEXT
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
-        fileTextUpdated = TextReplace(fileText, search, replacement);
+        fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
         result = SaveFileText(fileName, fileTextUpdated);
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
@@ -2506,7 +2471,7 @@ long GetFileModTime(const char *fileName)
 }
 
 // Get pointer to extension for a filename string (includes the dot: .png)
-// WARNING: We just get the ptr but not the extension as a separate string
+// WARNING: Getting the pointer to the input string extension position (not a string copy)
 const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
@@ -2549,13 +2514,13 @@ const char *GetFileNameWithoutExt(const char *filePath)
     if (filePath != NULL)
     {
         strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
-        int fileNameLenght = (int)strlen(fileName); // Get size in bytes
+        int fileNameLength = (int)strlen(fileName); // Get size in bytes
 
-        for (int i = fileNameLenght; i > 0; i--) // Reverse search '.'
+        for (int i = fileNameLength; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
             {
-                // NOTE: We break on first '.' found
+                // NOTE: Break on first '.' found
                 fileName[i] = '\0';
                 break;
             }
@@ -2581,11 +2546,11 @@ const char *GetDirectoryPath(const char *filePath)
     static char dirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(dirPath, 0, MAX_FILEPATH_LENGTH);
 
-    // In case provided path does not contain a root drive letter (C:\, D:\) nor leading path separator (\, /),
-    // we add the current directory path to dirPath
+    // In case provided path does not contain a root drive letter (C:\, D:\)
+    // nor leading path separator (\, /), add the current directory path to dirPath
     if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))
     {
-        // For security, we set starting path to current directory,
+        // For security, set starting path to current directory,
         // obtained path will be concatenated to this
         dirPath[0] = '.';
         dirPath[1] = '/';
@@ -2758,23 +2723,26 @@ const char *GetApplicationDirectory(void)
 
 // Load directory filepaths
 // NOTE: Base path is prepended to the scanned filepaths
-// WARNING: Directory is scanned twice, first time to get files count
-// No recursive scanning is done!
+// WARNING: Directory is scanned twice, first time to get paths count
+// Scanneed files and directories, no recursive/subdirs scanning
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     return LoadDirectoryFilesEx(dirPath, FILE_FILTER_TAG_ALL, false);
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
-// Use 'DIR*' to include directories on directory scan
-// Use '*.*' to include all file types and directories on directory scan
-// WARNING: Directory is scanned twice, first time to get files count
+// Use "*.*" to include all files and directories on scan
+// Use "FILES*" to include only files on scan
+// Use "DIRS*" to include only directories on scan
+// WARNING: Directory is scanned twice, first time to get paths count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
     FilePathList files = { 0 };
 
     if (DirectoryExists(basePath)) // It's a directory
     {
+        if ((filter != NULL) && (filter[0] == '\0')) filter = NULL;
+
         // SCAN 1: Count files
         unsigned int fileCounter = GetDirectoryFileCountEx(basePath, filter, scanSubdirs);
 
@@ -2982,7 +2950,7 @@ unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, b
     {
         while ((entity = readdir(dir)) != NULL)
         {
-            // NOTE: We skip '.' (current dir) and '..' (parent dir) filepaths
+            // NOTE: Skipping '.' (current dir) and '..' (parent dir) filepaths
             if ((strcmp(entity->d_name, ".") != 0) && (strcmp(entity->d_name, "..") != 0))
             {
                 // Construct new path from our base path
@@ -3025,7 +2993,7 @@ unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDa
 
     unsigned char *compData = NULL;
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     // Compress data and generate a valid DEFLATE stream
     struct sdefl *sdefl = (struct sdefl *)RL_CALLOC(1, sizeof(struct sdefl));   // WARNING: Possible stack overflow, struct sdefl is almost 1MB
     int bounds = sdefl_bound(dataSize);
@@ -3045,14 +3013,14 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 {
     unsigned char *data = NULL;
 
-#if defined(SUPPORT_COMPRESSION_API)
+#if SUPPORT_COMPRESSION_API
     // Decompress data from a valid DEFLATE stream
     unsigned char *data0 = (unsigned char *)RL_CALLOC(MAX_DECOMPRESSION_SIZE*1024*1024, 1);
     int size = sinflate(data0, MAX_DECOMPRESSION_SIZE*1024*1024, compData, compDataSize);
 
     // WARNING: RL_REALLOC can make (and leave) data copies in memory,
     // that can be a security concern in case of compression of sensitive data
-    // So, we use a second buffer to copy data manually, wiping original buffer memory
+    // So, using a second buffer to copy data manually, wiping original buffer memory
     data = (unsigned char *)RL_CALLOC(size, 1);
     memcpy(data, data0, size);
     memset(data0, 0, MAX_DECOMPRESSION_SIZE*1024*1024); // Wipe memory, is memset() safe?
@@ -3071,7 +3039,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
     // Base64 conversion table from RFC 4648 [0..63]
-    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sixtets" (6bit characters)
+    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sextets" (6bit characters)
     static const char base64EncodeTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     // Compute expected size and padding
@@ -3158,7 +3126,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     int outputCount = 0;
     for (int i = 0; i < dataSize;)
     {
-        // Every 4 sixtets must generate 3 octets
+        // Every 4 sextets must generate 3 octets
         if ((i + 2) >= dataSize)
         {
             TRACELOG(LOG_WARNING, "BASE64: Decoding error: Input data size is not valid");
@@ -3578,11 +3546,11 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 {
     AutomationEventList list = { 0 };
 
+#if SUPPORT_AUTOMATION_EVENTS
     // Allocate and empty automation event list, ready to record new events
     list.events = (AutomationEvent *)RL_CALLOC(MAX_AUTOMATION_EVENTS, sizeof(AutomationEvent));
     list.capacity = MAX_AUTOMATION_EVENTS;
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
     if (fileName == NULL) TRACELOG(LOG_INFO, "AUTOMATION: New empty events list loaded successfully");
     else
     {
@@ -3658,7 +3626,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 // Unload automation events list from file
 void UnloadAutomationEventList(AutomationEventList list)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     RL_FREE(list.events);
 #endif
 }
@@ -3666,9 +3634,9 @@ void UnloadAutomationEventList(AutomationEventList list)
 // Export automation events list as text file
 bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     // Export events as binary file
     // NOTE: Code not used, only for reference if required in the future
     /*
@@ -3684,7 +3652,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
         memcpy(binBuffer + offset, list.events, sizeof(AutomationEvent)*list.count);
         offset += sizeof(AutomationEvent)*list.count;
 
-        success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
+        result = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
         RL_FREE(binBuffer);
     }
     */
@@ -3715,18 +3683,18 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     }
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 #endif
 
-    return success;
+    return result;
 }
 
 // Setup automation event list to record to
 void SetAutomationEventList(AutomationEventList *list)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     currentEventList = list;
 #endif
 }
@@ -3740,7 +3708,7 @@ void SetAutomationEventBaseFrame(int frame)
 // Start recording automation events (AutomationEventList must be set)
 void StartAutomationEventRecording(void)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     automationEventRecording = true;
 #endif
 }
@@ -3748,7 +3716,7 @@ void StartAutomationEventRecording(void)
 // Stop recording automation events
 void StopAutomationEventRecording(void)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     automationEventRecording = false;
 #endif
 }
@@ -3756,7 +3724,7 @@ void StopAutomationEventRecording(void)
 // Play a recorded automation event
 void PlayAutomationEvent(AutomationEvent event)
 {
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
     // WARNING: When should event be played? After/before/replace PollInputEvents()? -> Up to the user!
 
     if (!automationEventRecording)
@@ -3805,7 +3773,7 @@ void PlayAutomationEvent(AutomationEvent event)
             {
                 CORE.Input.Gamepad.axisState[event.params[0]][event.params[1]] = ((float)event.params[2]/32768.0f);
             } break;
-    #if defined(SUPPORT_GESTURES_SYSTEM)
+    #if SUPPORT_GESTURES_SYSTEM
             case INPUT_GESTURE: GESTURES.current = event.params[0]; break;     // param[0]: gesture (enum Gesture) -> rgestures.h: GESTURES.current
     #endif
             // Window event
@@ -3813,9 +3781,8 @@ void PlayAutomationEvent(AutomationEvent event)
             case WINDOW_MAXIMIZE: MaximizeWindow(); break;
             case WINDOW_MINIMIZE: MinimizeWindow(); break;
             case WINDOW_RESIZE: SetWindowSize(event.params[0], event.params[1]); break;
-
             // Custom event
-    #if defined(SUPPORT_SCREEN_CAPTURE)
+    #if SUPPORT_SCREEN_CAPTURE
             case ACTION_TAKE_SCREENSHOT:
             {
                 TakeScreenshot(TextFormat("screenshot%03i.png", screenshotCounter));
@@ -4158,8 +4125,8 @@ Vector2 GetMouseDelta(void)
 {
     Vector2 delta = { 0 };
 
-    delta.x = CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x;
-    delta.y = CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y;
+    delta.x = (CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x)*CORE.Input.Mouse.scale.x;
+    delta.y = (CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y)*CORE.Input.Mouse.scale.y;
 
     return delta;
 }
@@ -4259,7 +4226,7 @@ void InitTimer(void)
     // However, it can also reduce overall system performance, because the thread scheduler switches tasks more often
     // High resolutions can also prevent the CPU power management system from entering power-saving modes
     // Setting a higher resolution does not improve the accuracy of the high-resolution performance counter
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP) && !defined(PLATFORM_DESKTOP_SDL)
+#if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP && !defined(PLATFORM_DESKTOP_SDL)
     timeBeginPeriod(1); // Setup high-resolution timer to 1ms (granularity of 1-2 ms)
 #endif
 
@@ -4352,7 +4319,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
     else TRACELOG(LOG_WARNING, "FILEIO: Directory cannot be opened (%s)", basePath);  // Maybe it's a file...
 }
 
-#if defined(SUPPORT_AUTOMATION_EVENTS)
+#if SUPPORT_AUTOMATION_EVENTS
 // Automation event recording
 // Checking events in current frame and save them into currentEventList
 // NOTE: Recording is by default done at EndDrawing(), before PollInputEvents()
@@ -4593,7 +4560,7 @@ static void RecordAutomationEvent(void)
     }
     //-------------------------------------------------------------------------------------
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // Gestures input currentEventList->events recording
     //-------------------------------------------------------------------------------------
     if (GESTURES.current != GESTURE_NONE)
@@ -4615,7 +4582,7 @@ static void RecordAutomationEvent(void)
 }
 #endif
 
-#if !defined(SUPPORT_MODULE_RTEXT)
+#if !SUPPORT_MODULE_RTEXT
 // Formatting of text with variables to 'embed'
 // WARNING: String returned will expire after this function is called MAX_TEXTFORMAT_BUFFERS times
 const char *TextFormat(const char *text, ...)
@@ -4627,7 +4594,7 @@ const char *TextFormat(const char *text, ...)
     #define MAX_TEXT_BUFFER_LENGTH   1024        // Maximum size of static text buffer
 #endif
 
-    // We create an array of buffers so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
+    // Define an array of buffers, so strings don't expire until MAX_TEXTFORMAT_BUFFERS invocations
     static char buffers[MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH] = { 0 };
     static int index = 0;
 
@@ -4655,5 +4622,4 @@ const char *TextFormat(const char *text, ...)
 
     return currentBuffer;
 }
-
-#endif // !SUPPORT_MODULE_RTEXT
+#endif

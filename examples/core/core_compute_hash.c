@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -60,7 +60,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (btnComputeHashes)
         {
-            int textInputLen = strlen(textInput);
+            int textInputLen = (int)strlen(textInput);
 
             // Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
             base64Text = EncodeDataBase64((unsigned char *)textInput, textInputLen, &base64TextSize);

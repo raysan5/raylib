@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by JP Mortiboys (@themushroompirates) and reviewed by Ramon Santamaria (@raysan5)
 *   Based on previous work by @mrdoob
@@ -108,7 +108,7 @@ int main(void)
     decalMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
 
     bool showModel = true;
-    Model decalModels[MAX_DECALS] = { 0 };
+    static Model decalModels[MAX_DECALS] = { 0 };
     int decalCount = 0;
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second

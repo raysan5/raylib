@@ -51,8 +51,8 @@ int main(void)
     // NOTE: We can have up to 256 values for tile ids and for tile fog state,
     // probably we don't need that many values for fog state, it can be optimized
     // to use only 2 bits per fog state (reducing size by 4) but logic will be a bit more complex
-    map.tileIds = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
-    map.tileFog = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
+    map.tileIds = (unsigned char *)RL_CALLOC(map.tilesX*map.tilesY, sizeof(unsigned char));
+    map.tileFog = (unsigned char *)RL_CALLOC(map.tilesX*map.tilesY, sizeof(unsigned char));
 
     // Load map tiles (generating 2 random tile ids for testing)
     // NOTE: Map tile ids should be probably loaded from an external map file
@@ -68,6 +68,7 @@ int main(void)
     // at a smaller size (one pixel per tile) and scale it on drawing with bilinear filtering
     RenderTexture2D fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
     SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(fogOfWar.texture, TEXTURE_WRAP_CLAMP);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -148,8 +149,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(map.tileIds);      // Free allocated map tile ids
-    free(map.tileFog);      // Free allocated map tile fog state
+    RL_FREE(map.tileIds);   // Free allocated map tile ids
+    RL_FREE(map.tileFog);   // Free allocated map tile fog state
 
     UnloadRenderTexture(fogOfWar);  // Unload render texture
 

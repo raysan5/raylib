@@ -275,11 +275,35 @@ static int android_write(void *cookie, const char *buf, int size);
 static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
 static int android_close(void *cookie);
 
-FILE *android_fopen(const char *fileName, const char *mode); // Replacement for fopen() -> Read-only!
+// WARNING: fopen() calls are intercepted via linker flag -Wl,--wrap=fopen: the linker renames
+// the original fopen -> __real_fopen and redirects all call sites to __wrap_fopen
+// The flag MUST be applied at every final link step that needs wrapping;
+// it has no effect when only building a static archive (.a)
+//
+// STATIC library (.a) — wrapping deferred to consumer's final link step:
+//   both raylib and consumer fopen calls are wrapped together in one link
+//       CMake: handled automatically — the PUBLIC flag propagates as INTERFACE_LINK_OPTIONS
+//              to the consumer's final link via target_link_libraries
+//        Make: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//   build.zig: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//      custom: pass -Wl,--wrap=fopen to the linker command producing the final artifact
+//
+// SHARED library (.so) — wrapping is self-contained:
+//   only fopen calls linked into the .so are wrapped; the consumer's own fopen calls
+//   are NOT wrapped unless the consumer also links with -Wl,--wrap=fopen independently
+//       CMake: handled automatically — CMakeLists.txt sets target_link_options(raylib PUBLIC
+//              -Wl,--wrap=fopen) which applies the flag to the .so link;
+//              only raylib internals are wrapped, app code requires a separate flag
+//        Make: handled automatically — src/Makefile sets LDFLAGS += -Wl,--wrap=fopen;
+//              only raylib internals are wrapped, app code requires a separate flag
+//   build.zig: NOT supported — std.Build has no dedicated linker wrap helper, the flag
+//              is not correctly applied at the .so link step
+//      custom: apply -Wl,--wrap=fopen to the linker command producing the .so
+FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)
+FILE *__wrap_fopen(const char *fileName, const char *mode); // Replacement for fopen()
+
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
-
-#define fopen(name, mode) android_fopen(name, mode)
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -290,8 +314,8 @@ FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writ
 // Module Functions Definition: Application
 //----------------------------------------------------------------------------------
 
-// To allow easier porting to android, we allow the user to define a
-// main function which we call from android_main, defined by ourselves
+// To allow easier porting to android, allow the user to define a
+// custom main function which is called from android_main
 extern int main(int argc, char *argv[]);
 
 // Android main function
@@ -313,7 +337,7 @@ void android_main(struct android_app *app)
     // Waiting for application events before complete finishing
     while (!app->destroyRequested)
     {
-        // Poll all events until we reach return value TIMEOUT, meaning no events left to process
+        // Poll all events until return value TIMEOUT is reached, meaning no events left to process
         while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, (void **)&platform.source)) > ALOOPER_POLL_TIMEOUT)
         {
             if (platform.source != NULL) platform.source->process(app, platform.source);
@@ -640,9 +664,9 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given
+// NOTE: This function is only safe to use if the provided URL is safe
 // A user could craft a malicious string performing another action
-// Only call this function yourself not with user input or make sure to check the string yourself
+// Avoid calling this function with user input non-validated strings
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
@@ -713,9 +737,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -757,7 +781,7 @@ void PollInputEvents(void)
     int pollResult = 0;
     int pollEvents = 0;
 
-    // Poll Events (registered events) until we reach TIMEOUT which indicates there are no events left to poll
+    // Poll Events (registered events) until TIMEOUT is reached which indicates there are no events left to poll
     // NOTE: Activity is paused if not enabled (platform.appEnabled) and always run flag is not set (FLAG_WINDOW_ALWAYS_RUN)
     while ((pollResult = ALooper_pollOnce((platform.appEnabled || FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN))? 0 : -1, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
     {
@@ -843,7 +867,7 @@ int InitPlatform(void)
     // Wait for window to be initialized (display and context)
     while (!CORE.Window.ready)
     {
-        // Process events until we reach TIMEOUT, which indicates no more events queued
+        // Process events until TIMEOUT is reached, which indicates no more events queued
         while ((pollResult = ALooper_pollOnce(0, NULL, &pollEvents, ((void **)&platform.source)) > ALOOPER_POLL_TIMEOUT))
         {
             // Process this event
@@ -964,10 +988,10 @@ static int InitGraphicsDevice(void)
     EGLint displayFormat = 0;
 
     // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
-    // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
+    // As soon as an EGLConfig is picked, it's safe to reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
     eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
 
-    // At this point we need to manage render size vs screen size
+    // At this point render size vs screen size needs to be managed
     // NOTE: This function use and modify global module variables:
     //  -> CORE.Window.screen.width/CORE.Window.screen.height
     //  -> CORE.Window.render.width/CORE.Window.render.height
@@ -1055,7 +1079,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     InitGraphicsDevice();
 
                     // Initialize OpenGL context (states and resources)
-                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
                     // Setup default viewport
@@ -1065,27 +1089,27 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize hi-res timer
                     InitTimer();
 
-                #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+                #if SUPPORT_MODULE_RTEXT
                     // Load default font
                     // WARNING: External function: Module required: rtext
                     LoadFontDefault();
-                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    #if SUPPORT_MODULE_RSHAPES
                     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
                     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
                     Rectangle rec = GetFontDefault().recs[95];
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
                     {
-                        // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+                        // NOTE: Trying to maxime rec padding to avoid pixel bleeding on MSAA filtering
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
                     }
                     else
                     {
-                        // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
+                        // NOTE: Setting up a 1px padding on char rectangle to avoid pixel bleeding
                         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
                     }
                     #endif
                 #else
-                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    #if SUPPORT_MODULE_RSHAPES
                     // Set default texture and rectangle to be used for shapes drawing
                     // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
                     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -1299,7 +1323,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
         {
-            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
+            // Eat BACK_BUTTON and AKEYCODE_MENU, do nothing... and don't let to be handled by OS!
             return 1;
         }
         else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
@@ -1347,7 +1371,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     GestureEvent gestureEvent = { 0 };
 
     gestureEvent.pointCount = 0;
@@ -1450,7 +1474,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
 static void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
+    // Calculate CORE.Window.render.width and CORE.Window.render.height, having the display size (input params) and the desired screen size (global var)
     if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
@@ -1478,8 +1502,8 @@ static void SetupFramebuffer(int width, int height)
         float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
         CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
-        // NOTE: We render to full display resolution!
-        // We just need to calculate above parameters for downscale matrix and offsets
+        // NOTE: Rendering to full display resolution
+        // Above parameters need to be calculate for downscale matrix and offsets
         CORE.Window.render.width = CORE.Window.display.width;
         CORE.Window.render.height = CORE.Window.display.height;
 
@@ -1524,25 +1548,20 @@ static void SetupFramebuffer(int width, int height)
     }
 }
 
-// Replacement for fopen()
+// Replacement for fopen(), used as linker wrap entry point (-Wl,--wrap=fopen)
 // REF: https://developer.android.com/ndk/reference/group/asset
-FILE *android_fopen(const char *fileName, const char *mode)
+__attribute__((visibility("default"))) FILE *__wrap_fopen(const char *fileName, const char *mode)
 {
     FILE *file = NULL;
-    
+
+    // NOTE: AAsset provides access to read-only asset, write operations use regular fopen
     if (mode[0] == 'w')
     {
-        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
-        // assets directory through AAssetManager but we want to also be able to
-        // write data when required using the standard stdio FILE access functions
-        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
-        #undef fopen
-        file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-        #define fopen(name, mode) android_fopen(name, mode)
+        file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+        if (file == NULL) file = __real_fopen(fileName, mode);
     }
     else
     {
-        // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(platform.app->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
 
         if (asset != NULL)
@@ -1552,14 +1571,12 @@ FILE *android_fopen(const char *fileName, const char *mode)
         }
         else
         {
-            #undef fopen
-            // Just do a regular open if file is not found in the assets
-            file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-            if (file == NULL) file = fopen(fileName, mode);
-            #define fopen(name, mode) android_fopen(name, mode)
+            // Do a regular open if file is not found in the assets
+            file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+            if (file == NULL) file = __real_fopen(fileName, mode);
         }
     }
-    
+
     return file;
 }
 

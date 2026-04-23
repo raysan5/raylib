@@ -13,9 +13,9 @@
 | models/vox/chr_knight.vox |  ❔         | ❔     | - |
 | models/vox/chr_sword.vox  |  ❔         | ❔     | - |
 | models/vox/monu9.vox   |  ❔            | ❔     | - |
-| billboard.png          | [@emegeme](https://github.com/emegeme)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
+| billboard.png          | [@raysan5](https://github.com/raysan5)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
 | cubicmap.png           | [@raysan5](https://github.com/raysan5)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
-| cubicmap_atlas.png     | [@emegeme](https://github.com/emegeme)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
+| cubicmap_atlas.png     | [@raysan5](https://github.com/raysan5)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
 | heightmap.png          | [@raysan5](https://github.com/raysan5)    | [CC0](https://creativecommons.org/publicdomain/zero/1.0/)     | - |
 | dresden_square_1k.hdr  | [HDRIHaven](https://hdrihaven.com/hdri/?h=dresden_square) | [CC0](https://hdrihaven.com/p/license.php) | - |
 | dresden_square_2k.hdr  | [HDRIHaven](https://hdrihaven.com/hdri/?h=dresden_square) | [CC0](https://hdrihaven.com/p/license.php) | - |

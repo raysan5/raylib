@@ -210,7 +210,7 @@ int main(void)
             rlClearColor(0, 0, 0, 0);
             rlClearScreenBuffers();  // Clear color and depth buffer
             rlDisableColorBlend();
-            
+
             BeginMode3D(camera);
                 // NOTE: We have to use rlEnableShader here. `BeginShaderMode` or thus `rlSetShader`
                 // will not work, as they won't immediately load the shader program
@@ -226,7 +226,7 @@ int main(void)
                     }
                 rlDisableShader();
             EndMode3D();
-            
+
             rlEnableColorBlend();
 
             // Go back to the default framebufferId (0) and draw our deferred shading

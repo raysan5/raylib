@@ -7,7 +7,7 @@
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
 *         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
-*   Example originally created with raylib 5.6, last time updated with raylib 5.6
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by Jordi Santonja (@JordSant) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -59,7 +59,7 @@ int main(void)
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    
+
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - game of life");
 
     const int menuWidth = 100;
@@ -81,7 +81,7 @@ int main(void)
         { "Puffer train", { 0.1f, 0.5f } }, { "Glider Gun", { 0.2f, 0.2f } }, { "Breeder", { 0.1f, 0.5f } },
         { "Random", { 0.5f, 0.5f } }
     };
-    
+
     const int numberOfPresets = sizeof(presetPatterns)/sizeof(presetPatterns[0]);
 
     int zoom = 1;
@@ -90,7 +90,7 @@ int main(void)
     int framesPerStep = 1;
     int frame = 0;
 
-    int preset = -1;            // No button pressed for preset 
+    int preset = -1;            // No button pressed for preset
     int mode = MODE_RUN;        // Starting mode: running
     bool buttonZoomIn = false;  // Button states: false not pressed
     bool buttonZomOut = false;
@@ -185,7 +185,7 @@ int main(void)
                 EndTextureMode();
                 imageToDraw = (Image*)RL_MALLOC(sizeof(Image));
                 *imageToDraw = LoadImageFromTexture(worldOnScreen.texture);
-                
+
                 UnloadRenderTexture(worldOnScreen);
             }
 
@@ -199,9 +199,9 @@ int main(void)
                 if (mouseY >= sizeInWorldY) mouseY = sizeInWorldY - 1;
                 if (firstColor == -1) firstColor = (GetImageColor(*imageToDraw, mouseX, mouseY).r < 5)? 0 : 1;
                 const int prevColor = (GetImageColor(*imageToDraw, mouseX, mouseY).r < 5)? 0 : 1;
-                
+
                 ImageDrawPixel(imageToDraw, mouseX, mouseY, (firstColor) ? BLACK : RAYWHITE);
-                
+
                 if (prevColor != firstColor) UpdateTextureRec(currentWorld->texture, (Rectangle){ floorf(offsetX), floorf(offsetY), (float)(sizeInWorldX), (float)(sizeInWorldY) }, imageToDraw->data);
             }
             else firstColor = -1;
@@ -228,7 +228,7 @@ int main(void)
                 BeginTextureMode(*currentWorld);
                     ClearBackground(RAYWHITE);
                 EndTextureMode();
-                
+
                 UpdateTextureRec(currentWorld->texture, (Rectangle){ worldWidth*presetPatterns[preset].position.x - pattern.width/2.0f,
                                                                      worldHeight*presetPatterns[preset].position.y - pattern.height/2.0f,
                                                                      (float)(pattern.width), (float)(pattern.height) }, pattern.data);
@@ -256,7 +256,7 @@ int main(void)
             }
 
             UnloadImage(pattern);
-            
+
             mode = MODE_PAUSE;
             offsetX = worldWidth*presetPatterns[preset].position.x - (float)windowWidth/zoom/2.0f;
             offsetY = worldHeight*presetPatterns[preset].position.y - (float)windowHeight/zoom/2.0f;
@@ -293,7 +293,7 @@ int main(void)
         // Draw to screen
         //----------------------------------------------------------------------------------
         BeginDrawing();
-        
+
             DrawTexturePro(currentWorld->texture, textureSourceToScreen, textureOnScreen, (Vector2){ 0, 0 }, 0.0f, WHITE);
 
             DrawLine(windowWidth, 0, windowWidth, screenHeight, (Color){ 218, 218, 218, 255 });

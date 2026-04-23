@@ -341,7 +341,7 @@ static void DrawLightMask(int slot)
         rlSetBlendMode(BLEND_CUSTOM);
 
         // If we are valid, then draw the light radius to the alpha mask
-        if (lights[slot].valid) DrawCircleGradient((int)lights[slot].position.x, (int)lights[slot].position.y, lights[slot].outerRadius, ColorAlpha(WHITE, 0), WHITE);
+        if (lights[slot].valid) DrawCircleGradient(lights[slot].position, lights[slot].outerRadius, ColorAlpha(WHITE, 0), WHITE);
 
         rlDrawRenderBatchActive();
 

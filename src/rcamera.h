@@ -54,9 +54,9 @@
         #if defined(__TINYC__)
             #define __declspec(x) __attribute__((x))
         #endif
-        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllexport)     // Building the library as a Win32 shared library (.dll)
     #elif defined(USE_LIBTYPE_SHARED)
-        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+        #define RLAPI __declspec(dllimport)     // Using the library as a Win32 shared library (.dll)
     #endif
 #endif
 
@@ -103,7 +103,7 @@
         Vector3 position;       // Camera position
         Vector3 target;         // Camera target it looks-at
         Vector3 up;             // Camera up vector (rotation over its axis)
-        float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+        float fovy;             // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
         int projection;         // Camera projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
@@ -191,7 +191,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
                             // IsKeyDown()
                             // IsKeyPressed()
                             // GetFrameTime()
-                            
+
 #include <math.h>           // Required for: fabsf()
 
 //----------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 //----------------------------------------------------------------------------------
 #define CAMERA_MOVE_SPEED                           5.4f       // Units per second
 #define CAMERA_ROTATION_SPEED                       0.03f
-#define CAMERA_PAN_SPEED                            0.2f
+#define CAMERA_PAN_SPEED                            2.0f
 
 // Camera mouse movement sensitivity
 #define CAMERA_MOUSE_MOVE_SENSITIVITY               0.003f
@@ -352,7 +352,7 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
 // Rotates the camera around its right vector, pitch is "looking up and down"
 //  - lockView prevents camera overrotation (aka "somersaults")
 //  - rotateAroundTarget defines if rotation is around target or around its position
-//  - rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
+//  - rotateUp rotates the up direction as well (typically only useful in CAMERA_FREE)
 // NOTE: [angle] must be provided in radians
 void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {
@@ -364,8 +364,8 @@ void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTa
 
     if (lockView)
     {
-        // In these camera modes we clamp the Pitch angle
-        // to allow only viewing straight up or down.
+        // In these camera modes, clamp the Pitch angle
+        // to allow only viewing straight up or down
 
         // Clamp view up
         float maxAngleUp = Vector3Angle(up, targetPosition);
@@ -460,7 +460,6 @@ void UpdateCamera(Camera *camera, int mode)
     if (mode == CAMERA_CUSTOM) {}
     else if (mode == CAMERA_ORBITAL)
     {
-        // Orbital can just orbit
         Matrix rotation = MatrixRotate(GetCameraUp(camera), cameraOrbitalSpeed);
         Vector3 view = Vector3Subtract(camera->position, camera->target);
         view = Vector3Transform(view, rotation);

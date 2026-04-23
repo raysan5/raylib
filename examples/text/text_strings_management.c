@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
-*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by David Buzatto (@davidbuzatto) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -33,7 +33,7 @@ typedef struct TextParticle {
     Vector2 ppos;      // Previous position
     float padding;
     float borderWidth;
-    float friction;   
+    float friction;
     float elasticity;
     Color color;
     bool grabbed;
@@ -118,7 +118,7 @@ int main(void)
                     if (IsKeyDown(KEY_LEFT_SHIFT))
                     {
                         ShatterTextParticle(tp, i, textParticles, &particleCount);
-                    } 
+                    }
                     else
                     {
                         SliceTextParticle(tp, i, TextLength(tp->text)/2, textParticles, &particleCount);
@@ -158,33 +158,33 @@ int main(void)
             TextParticle *tp = &textParticles[i];
 
             // The text particle is not grabbed
-            if (!tp->grabbed) 
+            if (!tp->grabbed)
             {
                 // text particle repositioning using the velocity
                 tp->rect.x += tp->vel.x * delta;
                 tp->rect.y += tp->vel.y * delta;
 
                 // Does the text particle hit the screen right boundary?
-                if ((tp->rect.x + tp->rect.width) >= screenWidth) 
+                if ((tp->rect.x + tp->rect.width) >= screenWidth)
                 {
                     tp->rect.x = screenWidth - tp->rect.width; // Text particle repositioning
                     tp->vel.x = -tp->vel.x*tp->elasticity;  // Elasticity makes the text particle lose 10% of its velocity on hit
-                } 
+                }
                 // Does the text particle hit the screen left boundary?
                 else if (tp->rect.x <= 0)
-                { 
+                {
                     tp->rect.x = 0.0f;
                     tp->vel.x = -tp->vel.x*tp->elasticity;
                 }
 
                 // The same for y axis
-                if ((tp->rect.y + tp->rect.height) >= screenHeight) 
+                if ((tp->rect.y + tp->rect.height) >= screenHeight)
                 {
                     tp->rect.y = screenHeight - tp->rect.height;
                     tp->vel.y = -tp->vel.y*tp->elasticity;
-                } 
-                else if (tp->rect.y <= 0) 
-                { 
+                }
+                else if (tp->rect.y <= 0)
+                {
                     tp->rect.y = 0.0f;
                     tp->vel.y = -tp->vel.y*tp->elasticity;
                 }
@@ -264,9 +264,9 @@ int main(void)
 void PrepareFirstTextParticle(const char* text, TextParticle *tps, int *particleCount)
 {
     tps[0] = CreateTextParticle(
-        text, 
-        GetScreenWidth()/2.0f, 
-        GetScreenHeight()/2.0f, 
+        text,
+        GetScreenWidth()/2.0f,
+        GetScreenHeight()/2.0f,
         RAYWHITE
     );
     *particleCount = 1;
@@ -317,7 +317,7 @@ void SliceTextParticleByChar(TextParticle *tp, char charToSlice, TextParticle *t
 {
     int tokenCount = 0;
     char **tokens = TextSplit(tp->text, charToSlice, &tokenCount);
-    
+
     if (tokenCount > 1)
     {
         int textLength = TextLength(tp->text);

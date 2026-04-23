@@ -9,10 +9,10 @@
      - struct AliasInfo
      - struct EnumInfo
      - struct FunctionInfo
-     
+
     WARNING: This parser is specifically designed to work with raylib.h, and has some contraints
     in that regards. Still, it can also work with other header files that follow same file structure
-    conventions as raylib.h: rlgl.h, raymath.h, raygui.h, reasings.h 
+    conventions as raylib.h: rlgl.h, raymath.h, raygui.h, reasings.h
 
     CONSTRAINTS:
     This parser is specifically designed to work with raylib.h, so, it has some constraints:

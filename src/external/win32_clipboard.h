@@ -13,8 +13,8 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
 #include <stdlib.h>
 #include <assert.h>
 
-// NOTE: These search for architecture is taken from "Windows.h", and it's necessary if we really don't wanna import windows.h
-// and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined.
+// NOTE: These search for architecture is taken from "windows.h", and it's necessary to avoid including windows.h
+// and still make it compile on msvc, because import indirectly importing "winnt.h" (e.g. <minwindef.h>) can cause problems is these are not defined
 #if !defined(_X86_) && !defined(_68K_) && !defined(_MPPC_) && !defined(_IA64_) && !defined(_AMD64_) && !defined(_ARM_) && !defined(_ARM64_) && !defined(_ARM64EC_) && defined(_M_IX86)
     #define _X86_
     #if !defined(_CHPE_X86_ARM64_) && defined(_M_HYBRID)
@@ -178,8 +178,10 @@ typedef struct tagRGBQUAD {
 #define BI_CMYK      0x000B
 #define BI_CMYKRLE8  0x000C
 #define BI_CMYKRLE4  0x000D
+#endif
 
-// Bitmap not compressed and that the color table consists of four DWORD color masks, 
+#ifndef BI_ALPHABITFIELDS
+// Bitmap not compressed and that the color table consists of four DWORD color masks,
 // that specify the red, green, blue, and alpha components of each pixel
 #define BI_ALPHABITFIELDS 0x0006
 #endif
@@ -214,7 +216,7 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih); // Get pixel data offset fr
 unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long long int *dataSize)
 {
     unsigned char *bmpData = NULL;
-    
+
     if (OpenClipboardRetrying(NULL))
     {
         HGLOBAL clipHandle = (HGLOBAL)GetClipboardData(CF_DIB);
@@ -229,7 +231,7 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
                 if (clipDataSize >= sizeof(BITMAPINFOHEADER))
                 {
                     int pixelOffset = GetPixelDataOffset(*bmpInfoHeader);
-                    
+
                     // Create the bytes for a correct BMP file and copy the data to a pointer
                     //------------------------------------------------------------------------
                     BITMAPFILEHEADER bmpFileHeader = { 0 };
@@ -243,10 +245,10 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
                     bmpData = (unsigned char *)RL_MALLOC(sizeof(bmpFileHeader) + clipDataSize);
                     memcpy(bmpData, &bmpFileHeader, sizeof(bmpFileHeader)); // Add BMP file header data
                     memcpy(bmpData + sizeof(bmpFileHeader), bmpInfoHeader, clipDataSize); // Add BMP info header data
-                    
+
                     GlobalUnlock(clipHandle);
                     CloseClipboard();
-                    
+
                     TRACELOG(LOG_INFO, "Clipboad image acquired successfully");
                     //------------------------------------------------------------------------
                 }
@@ -257,14 +259,14 @@ unsigned char *Win32GetClipboardImageData(int *width, int *height, unsigned long
                     CloseClipboard();
                 }
             }
-            else 
+            else
             {
                 TRACELOG(LOG_WARNING, "Clipboard data failed to be locked");
                 GlobalUnlock(clipHandle);
                 CloseClipboard();
             }
         }
-        else 
+        else
         {
             TRACELOG(LOG_WARNING, "Clipboard data is not an image");
             CloseClipboard();
@@ -284,7 +286,7 @@ static BOOL OpenClipboardRetrying(HWND hWnd)
 {
     static const int maxTries = 20;
     static const int sleepTimeMS = 60;
-    
+
     for (int i = 0; i < maxTries; i++)
     {
         // Might be being hold by another process
@@ -293,7 +295,7 @@ static BOOL OpenClipboardRetrying(HWND hWnd)
 
         Sleep(sleepTimeMS);
     }
-    
+
     return false;
 }
 
@@ -306,19 +308,18 @@ static int GetPixelDataOffset(BITMAPINFOHEADER bih)
     const unsigned int rgbaSize = sizeof(RGBQUAD);
 
     // NOTE: biSize specifies the number of bytes required by the structure
-    // We expect to always be 40 because it should be packed
+    // It's expected to be always 40 because it should be packed
     if ((bih.biSize == 40) && (sizeof(BITMAPINFOHEADER) == 40))
     {
         // NOTE: biBitCount specifies the number of bits per pixel
         // Might exist some bit masks *after* the header and *before* the pixel offset
-        // we're looking, but only if we have more than
-        // 8 bits per pixel, so we need to ajust for that
+        // we're looking, but only if more than 8 bits per pixel, so it needs to be ajusted for that
         if (bih.biBitCount > 8)
         {
-            // If (bih.biCompression == BI_RGB) we should NOT offset more
+            // If (bih.biCompression == BI_RGB) no need to be offset more
 
             if (bih.biCompression == BI_BITFIELDS) offset += 3*rgbaSize;
-            else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4*rgbaSize; // Not widely supported, but valid
+            else if (bih.biCompression == BI_ALPHABITFIELDS) offset += 4 * rgbaSize; // Not widely supported, but valid
         }
     }
 

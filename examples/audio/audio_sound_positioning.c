@@ -68,7 +68,7 @@ int main(void)
             .z = 5.0f*sinf(th)
         };
 
-        SetSoundPosition(camera, sound, spherePos, 20.0f);
+        SetSoundPosition(camera, sound, spherePos, 1.0f);
 
         if (!IsSoundPlaying(sound)) PlaySound(sound);
         //----------------------------------------------------------------------------------

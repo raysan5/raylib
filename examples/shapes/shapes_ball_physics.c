@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
 *   Example contributed by David Buzatto (@davidbuzatto) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -17,17 +17,21 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
-#include <math.h>
+#include <stdlib.h>         // Required for: malloc(), free()
+#include <math.h>           // Required for: hypot()
 
-#define MAX_BALLS 5000 // Maximum quantity of balls
+#define MAX_BALLS     5000  // Maximum quantity of balls
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Ball data type
 typedef struct Ball {
-    Vector2 pos;       // Position
-    Vector2 vel;       // Velocity
-    Vector2 ppos;      // Previous position
+    Vector2 position;
+    Vector2 speed;
+    Vector2 prevPosition;
     float radius;
-    float friction;   
+    float friction;
     float elasticity;
     Color color;
     bool grabbed;
@@ -45,24 +49,27 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - ball physics");
 
-    Ball balls[MAX_BALLS] = {{
-        .pos = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
-        .vel = { 200, 200 },
-        .ppos = { 0 },
+    Ball *balls = (Ball*)RL_MALLOC(sizeof(Ball)*MAX_BALLS);
+
+    // Init first ball in the array
+    balls[0] = (Ball){
+        .position = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f },
+        .speed = { 200, 200 },
+        .prevPosition = { 0 },
         .radius = 40,
         .friction = 0.99f,
         .elasticity = 0.9f,
         .color = BLUE,
         .grabbed = false
-    }};
-    
+    };
+
     int ballCount = 1;
-    Ball *grabbedBall = NULL;   // A pointer to the current ball that is grabbed
-    Vector2 pressOffset = { 0 };  // Mouse press offset relative to the ball that grabbedd
+    Ball *grabbedBall = NULL;       // A pointer to the current ball that is grabbed
+    Vector2 pressOffset = { 0 };    // Mouse press offset relative to the ball that grabbedd
 
-    float gravity = 100;        // World gravity
+    float gravity = 100;            // World gravity
 
-    SetTargetFPS(60);           // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
@@ -79,8 +86,8 @@ int main(void)
             for (int i = ballCount - 1; i >= 0; i--)
             {
                 Ball *ball = &balls[i];
-                pressOffset.x = mousePos.x - ball->pos.x;
-                pressOffset.y = mousePos.y - ball->pos.y;
+                pressOffset.x = mousePos.x - ball->position.x;
+                pressOffset.y = mousePos.y - ball->position.y;
 
                 // If the distance between the ball position and the mouse press position
                 // is less than or equal to the ball radius, the event occurred inside the ball
@@ -109,9 +116,9 @@ int main(void)
             if (ballCount < MAX_BALLS)
             {
                 balls[ballCount++] = (Ball){
-                    .pos = mousePos,
-                    .vel = { (float)GetRandomValue(-300, 300), (float)GetRandomValue(-300, 300) },
-                    .ppos = { 0 },
+                    .position = mousePos,
+                    .speed = { (float)GetRandomValue(-300, 300), (float)GetRandomValue(-300, 300) },
+                    .prevPosition = { 0 },
                     .radius = 20.0f + (float)GetRandomValue(0, 30),
                     .friction = 0.99f,
                     .elasticity = 0.9f,
@@ -126,7 +133,7 @@ int main(void)
         {
             for (int i = 0; i < ballCount; i++)
             {
-                if (!balls[i].grabbed) balls[i].vel = (Vector2){ (float)GetRandomValue(-2000, 2000), (float)GetRandomValue(-2000, 2000) };
+                if (!balls[i].grabbed) balls[i].speed = (Vector2){ (float)GetRandomValue(-2000, 2000), (float)GetRandomValue(-2000, 2000) };
             }
         }
 
@@ -142,49 +149,49 @@ int main(void)
             if (!ball->grabbed)
             {
                 // Ball repositioning using the velocity
-                ball->pos.x += ball->vel.x * delta;
-                ball->pos.y += ball->vel.y * delta;
+                ball->position.x += ball->speed.x * delta;
+                ball->position.y += ball->speed.y * delta;
 
                 // Does the ball hit the screen right boundary?
-                if ((ball->pos.x + ball->radius) >= screenWidth)
+                if ((ball->position.x + ball->radius) >= screenWidth)
                 {
-                    ball->pos.x = screenWidth - ball->radius; // Ball repositioning
-                    ball->vel.x = -ball->vel.x*ball->elasticity;  // Elasticity makes the ball lose 10% of its velocity on hit
-                } 
+                    ball->position.x = screenWidth - ball->radius; // Ball repositioning
+                    ball->speed.x = -ball->speed.x*ball->elasticity;  // Elasticity makes the ball lose 10% of its velocity on hit
+                }
                 // Does the ball hit the screen left boundary?
-                else if ((ball->pos.x - ball->radius) <= 0)
-                { 
-                    ball->pos.x = ball->radius;
-                    ball->vel.x = -ball->vel.x*ball->elasticity;
+                else if ((ball->position.x - ball->radius) <= 0)
+                {
+                    ball->position.x = ball->radius;
+                    ball->speed.x = -ball->speed.x*ball->elasticity;
                 }
 
                 // The same for y axis
-                if ((ball->pos.y + ball->radius) >= screenHeight)
+                if ((ball->position.y + ball->radius) >= screenHeight)
                 {
-                    ball->pos.y = screenHeight - ball->radius;
-                    ball->vel.y = -ball->vel.y*ball->elasticity;
-                } 
-                else if ((ball->pos.y - ball->radius) <= 0)
-                { 
-                    ball->pos.y = ball->radius;
-                    ball->vel.y = -ball->vel.y*ball->elasticity;
+                    ball->position.y = screenHeight - ball->radius;
+                    ball->speed.y = -ball->speed.y*ball->elasticity;
+                }
+                else if ((ball->position.y - ball->radius) <= 0)
+                {
+                    ball->position.y = ball->radius;
+                    ball->speed.y = -ball->speed.y*ball->elasticity;
                 }
 
                 // Friction makes the ball lose 1% of its velocity each frame
-                ball->vel.x = ball->vel.x*ball->friction;
+                ball->speed.x = ball->speed.x*ball->friction;
                 // Gravity affects only the y axis
-                ball->vel.y = ball->vel.y*ball->friction + gravity;
+                ball->speed.y = ball->speed.y*ball->friction + gravity;
             }
             else
             {
                 // Ball repositioning using the mouse position
-                ball->pos.x = mousePos.x - pressOffset.x;
-                ball->pos.y = mousePos.y - pressOffset.y;
+                ball->position.x = mousePos.x - pressOffset.x;
+                ball->position.y = mousePos.y - pressOffset.y;
 
                 // While the ball is grabbed, recalculates its velocity
-                ball->vel.x = (ball->pos.x - ball->ppos.x)/delta;
-                ball->vel.y = (ball->pos.y - ball->ppos.y)/delta;
-                ball->ppos = ball->pos;
+                ball->speed.x = (ball->position.x - ball->prevPosition.x)/delta;
+                ball->speed.y = (ball->position.y - ball->prevPosition.y)/delta;
+                ball->prevPosition = ball->position;
             }
         }
         //----------------------------------------------------------------------------------
@@ -197,8 +204,8 @@ int main(void)
 
             for (int i = 0; i < ballCount; i++)
             {
-                DrawCircleV(balls[i].pos, balls[i].radius, balls[i].color);
-                DrawCircleLinesV(balls[i].pos, balls[i].radius, BLACK);
+                DrawCircleV(balls[i].position, balls[i].radius, balls[i].color);
+                DrawCircleLinesV(balls[i].position, balls[i].radius, BLACK);
             }
 
             DrawText("grab a ball by pressing with the mouse and throw it by releasing", 10, 10, 10, DARKGRAY);
@@ -214,6 +221,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    RL_FREE(balls);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

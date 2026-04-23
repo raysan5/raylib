@@ -24,7 +24,8 @@
 // NOTE: Gamepad name ID depends on drivers and OS
 #define XBOX_ALIAS_1 "xbox"
 #define XBOX_ALIAS_2 "x-box"
-#define PS_ALIAS     "playstation"
+#define PS_ALIAS_1   "playstation"
+#define PS_ALIAS_2   "sony"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -148,7 +149,8 @@ int main(void)
                     //DrawText(TextFormat("Xbox axis LT: %02.02f", GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_LEFT_TRIGGER)), 10, 40, 10, BLACK);
                     //DrawText(TextFormat("Xbox axis RT: %02.02f", GetGamepadAxisMovement(gamepad, GAMEPAD_AXIS_RIGHT_TRIGGER)), 10, 60, 10, BLACK);
                 }
-                else if (TextFindIndex(TextToLower(GetGamepadName(gamepad)), PS_ALIAS) > -1)
+                else if ((TextFindIndex(TextToLower(GetGamepadName(gamepad)), PS_ALIAS_1) > -1) ||
+                         (TextFindIndex(TextToLower(GetGamepadName(gamepad)), PS_ALIAS_2) > -1))
                 {
                     DrawTexture(texPs3Pad, 0, 0, DARKGRAY);
 

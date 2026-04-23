@@ -15,7 +15,7 @@
 *     - Functions use always a "result" variable for return (except C++ operators)
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
-*     - No compound literals used to make sure libray is compatible with C++
+*     - No compound literals used to make sure the library is compatible with C++
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
@@ -30,7 +30,7 @@
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *
-*       #define RAYMATH_USE_SIMD_INTRINSICS
+*       #define RAYMATH_USE_SIMD_INTRINSICS   1
 *           Try to enable SIMD intrinsics for MatrixMultiply()
 *           Note that users enabling it must be aware of the target platform where application will
 *           run to support the selected SIMD intrinsic, for now, only SSE is supported
@@ -180,10 +180,10 @@ typedef struct float16 {
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
 
-#if defined(RAYMATH_USE_SIMD_INTRINSICS)
+#if RAYMATH_USE_SIMD_INTRINSICS
     // SIMD is used on the most costly raymath function MatrixMultiply()
     // NOTE: Only SSE intrinsics support implemented
-    // TODO: Consider support for other SIMD instrinsics:
+    // TODO: Consider support for other SIMD intrinsics:
     //  - SSEx, AVX, AVX2, FMA, NEON, RVV
     /*
     #if defined(__SSE4_2__)
@@ -567,15 +567,9 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -1157,7 +1151,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unprojecte matrix
+    // Multiply quat point by unprojected matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
@@ -1215,15 +1209,9 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -1276,19 +1264,21 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector4 math
 //----------------------------------------------------------------------------------
-
+// Get  vector zero
 RMAPI Vector4 Vector4Zero(void)
 {
     Vector4 result = { 0.0f, 0.0f, 0.0f, 0.0f };
     return result;
 }
 
+// Get vector one
 RMAPI Vector4 Vector4One(void)
 {
     Vector4 result = { 1.0f, 1.0f, 1.0f, 1.0f };
     return result;
 }
 
+// Add two vectors
 RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1300,6 +1290,7 @@ RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Add value to vector components
 RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1311,6 +1302,7 @@ RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
     return result;
 }
 
+// Substract vectors
 RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1322,6 +1314,7 @@ RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Substract value from vector components
 RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1333,18 +1326,21 @@ RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
     return result;
 }
 
+// Vector length
 RMAPI float Vector4Length(Vector4 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w));
     return result;
 }
 
+// Vector square length
 RMAPI float Vector4LengthSqr(Vector4 v)
 {
     float result = (v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w);
     return result;
 }
 
+// Vectors dot product
 RMAPI float Vector4DotProduct(Vector4 v1, Vector4 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
@@ -1370,6 +1366,7 @@ RMAPI float Vector4DistanceSqr(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Scale vector components by value (multiply)
 RMAPI Vector4 Vector4Scale(Vector4 v, float scale)
 {
     Vector4 result = { v.x*scale, v.y*scale, v.z*scale, v.w*scale };
@@ -1523,7 +1520,7 @@ RMAPI float MatrixDeterminant(Matrix mat)
              a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
 */
     // Using Laplace expansion (https://en.wikipedia.org/wiki/Laplace_expansion),
-    // previous operation can be simplified to 40 multiplications, decreasing matrix 
+    // previous operation can be simplified to 40 multiplications, decreasing matrix
     // size from 4x4 to 2x2 using minors
 
     // Cache the matrix values (speed optimization)
@@ -1686,20 +1683,20 @@ RMAPI Matrix MatrixSubtract(Matrix left, Matrix right)
 RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
-    
+
 #if defined(RAYMATH_SSE_ENABLED)
     // Load left side and right side
     __m128 c0 = _mm_set_ps(right.m12, right.m8,  right.m4,  right.m0);
     __m128 c1 = _mm_set_ps(right.m13, right.m9,  right.m5,  right.m1);
     __m128 c2 = _mm_set_ps(right.m14, right.m10, right.m6,  right.m2);
     __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
-    
+
     // Transpose so c0..c3 become *rows* of the right matrix in semantic order
     _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
 
     float tmp[4] = { 0 };
     __m128 row;
-    
+
     // Row 0 of result: [m0, m1, m2, m3]
     row  = _mm_mul_ps(_mm_set1_ps(left.m0),  c0);
     row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m1),  c1));
@@ -1761,6 +1758,19 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
     result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
 #endif
+
+    return result;
+}
+
+// Multiply matrix components by value
+RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
+{
+    Matrix result = {
+        left.m0*value, left.m4*value, left.m8*value, left.m12*value,
+        left.m1*value, left.m5*value, left.m9*value, left.m13*value,
+        left.m2*value, left.m6*value, left.m10*value, left.m14*value,
+        left.m3*value, left.m7*value, left.m11*value, left.m15*value
+    };
 
     return result;
 }
@@ -2495,19 +2505,14 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
 
-    if (axisLength != 0.0f)
+    if (length != 0.0f)
     {
         angle *= 0.5f;
 
-        float length = 0.0f;
-        float ilength = 0.0f;
-
         // Vector3Normalize(axis)
-        length = axisLength;
-        if (length == 0.0f) length = 1.0f;
-        ilength = 1.0f/length;
+        float ilength = 1.0f/length;
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;
@@ -2562,8 +2567,8 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     }
     else
     {
-        // This occurs when the angle is zero.
-        // Not a problem: just set an arbitrary normalized axis.
+        // This occurs when the angle is zero
+        // Not a problem, set an arbitrary normalized axis
         resAxis.x = 1.0f;
     }
 
@@ -2667,7 +2672,7 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     right = Vector3RotateByQuaternion(right, rotation);
     up = Vector3RotateByQuaternion(up, rotation);
     forward = Vector3RotateByQuaternion(forward, rotation);
-    
+
     // Set result matrix output
     Matrix result = {
         right.x, up.x, forward.x, translation.x,
@@ -2690,10 +2695,10 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     translation->y = mat.m13;
     translation->z = mat.m14;
 
-    // Matrix Columns - Rotation will be extracted into here.
-    Vector3 matColumns[3] = { { mat.m0, mat.m4, mat.m8 },
+    // Matrix Columns - Rotation will be extracted into here
+    Vector3 matColumns[3] = {{ mat.m0, mat.m4, mat.m8 },
                              { mat.m1, mat.m5, mat.m9 },
-                             { mat.m2, mat.m6, mat.m10 } };
+                             { mat.m2, mat.m6, mat.m10 }};
 
     // Shear Parameters XY, XZ, and YZ (extract and ignored)
     float shear[3] = { 0 };
@@ -2708,7 +2713,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].x));
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].y));
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].z));
-    };
+    }
     matColumns[0] = Vector3Scale(matColumns[0], 1.0f / stabilizer);
     matColumns[1] = Vector3Scale(matColumns[1], 1.0f / stabilizer);
     matColumns[2] = Vector3Scale(matColumns[2], 1.0f / stabilizer);
@@ -2744,7 +2749,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
         shear[2] /= scl.z; // Correct YZ shear
     }
 
-    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1.
+    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1
     if (Vector3DotProduct(matColumns[0], Vector3CrossProduct(matColumns[1], matColumns[2])) < 0)
     {
         scl = Vector3Negate(scl);
@@ -3079,6 +3084,11 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
 }
 
 // Matrix operators
+static constexpr Matrix MatrixUnit = { 1, 0, 0, 0,
+                                       0, 1, 0, 0,
+                                       0, 0, 1, 0,
+                                       0, 0, 0, 1 };
+
 inline Matrix operator + (const Matrix& lhs, const Matrix& rhs)
 {
     return MatrixAdd(lhs, rhs);
@@ -3111,7 +3121,19 @@ inline const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
     lhs = MatrixMultiply(lhs, rhs);
     return lhs;
 }
-//-------------------------------------------------------------------------------
-#endif  // C++ operators
 
-#endif  // RAYMATH_H
+inline Matrix operator * (const Matrix& lhs, const float value)
+{
+    return MatrixMultiplyValue(lhs, value);
+}
+
+inline const Matrix& operator *= (Matrix& lhs, const float value)
+{
+    lhs = MatrixMultiplyValue(lhs, value);
+    return lhs;
+}
+
+//-------------------------------------------------------------------------------
+#endif // C++ operators
+
+#endif // RAYMATH_H

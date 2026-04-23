@@ -65,7 +65,7 @@
     #define GLFW_NATIVE_INCLUDE_NONE // To avoid some symbols re-definition in windows.h
     #include "GLFW/glfw3native.h"
 
-    #if defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+    #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
         // NOTE: Those functions require linking with winmm library
         //#pragma warning(disable: 4273)
         __declspec(dllimport) unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
@@ -219,8 +219,9 @@ void ToggleFullscreen(void)
         // and considered by GetWindowScaleDPI()
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
         // Make sure to restore render size considering HighDPI scaling
+        // NOTE: On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling, skip manual resize
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
             Vector2 scaleDpi = GetWindowScaleDPI();
@@ -298,8 +299,9 @@ void ToggleBorderlessWindowed(void)
                 glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
                 FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
 
-            #if !defined(__APPLE__)
+            #if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
                 // Make sure to restore size considering HighDPI scaling
+                // NOTE: On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling, skip manual resize
                 if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                 {
                     Vector2 scaleDpi = GetWindowScaleDPI();
@@ -835,7 +837,7 @@ int GetCurrentMonitor(void)
         {
             // In case the window is between two monitors, below logic is used
             // to try to detect the "current monitor" for that window, note that
-            // this is probably an overengineered solution for a very side case
+            // this is probably an overengineered solution for a side case
             // trying to match SDL behaviour
 
             int closestDist = 0x7FFFFFFF;
@@ -1041,12 +1043,17 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(platform.handle);
 }
 
+#if SUPPORT_CLIPBOARD_IMAGE && defined(__linux__) && defined(_GLFW_X11)
+    #include <X11/Xlib.h>
+    #include <X11/Xatom.h>
+#endif
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if defined(SUPPORT_CLIPBOARD_IMAGE)
+#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
     unsigned long long int dataSize = 0;
     void *bmpData = NULL;
@@ -1057,9 +1064,58 @@ Image GetClipboardImage(void)
 
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
+
+#elif defined(__linux__) && defined(_GLFW_X11)
+
+    // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
+    Display *dpy = XOpenDisplay(NULL);
+    if (!dpy) return image;
+
+    Window root = DefaultRootWindow(dpy);
+    Window win = XCreateSimpleWindow(
+        dpy,      // The connection to the X Server
+        root,     // The 'Parent' window (usually the desktop/root)
+        0, 0,     // X and Y position on the screen
+        1, 1,     // Width and Height (1x1 pixel)
+        0,        // Border width
+        0,        // Border color
+        0         // Background color
+    );
+
+    Atom clipboard = XInternAtom(dpy, "CLIPBOARD", False);
+    Atom targetType = XInternAtom(dpy, "image/png", False); // Ask for PNG
+    Atom property = XInternAtom(dpy, "RAYLIB_CLIPBOARD_MANAGER", False);
+
+    // Request the data: "Convert whatever is in CLIPBOARD to image/png and put it in RAYLIB_CLIPBOARD_MANAGER"
+    XConvertSelection(dpy, clipboard, targetType, property, win, CurrentTime);
+
+    // Wait for the SelectionNotify event
+    XEvent ev = { 0 };
+    XNextEvent(dpy, &ev);
+
+    Atom actualType = { 0 };
+    int actualFormat = 0;
+    unsigned long nitems = 0;
+    unsigned long bytesAfter = 0;
+    unsigned char *data = NULL;
+
+    // Read the data from our ghost window's property
+    XGetWindowProperty(dpy, win, property, 0, ~0L, False, AnyPropertyType,
+        &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+
+    if (data != NULL)
+    {
+        image = LoadImageFromMemory(".png", data, (int)nitems);
+        XFree(data);
+    }
+
+    XDestroyWindow(dpy, win);
+    XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif
+#endif // defined(_WIN32)
+#else
+    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
@@ -1123,6 +1179,7 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = glfwGetTime();   // Elapsed time since glfwInit()
+
     return time;
 }
 
@@ -1200,9 +1257,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1465,6 +1522,11 @@ int InitPlatform(void)
 #if defined(__APPLE__)
         glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
 #endif
+#if defined(_GLFW_WAYLAND) && !defined(_GLFW_X11)
+        // GLFW 3.4+ defaults GLFW_SCALE_FRAMEBUFFER to TRUE,
+        // causing framebuffer/window size mismatch on Wayland with display scaling
+        glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_FALSE);
+#endif
     }
 
     // Mouse passthrough
@@ -1507,7 +1569,7 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
-#if defined(RLGL_ENABLE_OPENGL_DEBUG_CONTEXT)
+#if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
 #endif
     }
@@ -1527,7 +1589,7 @@ int InitPlatform(void)
     }
 
     // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions
-    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been just drawn
+    // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been drawn
     // The initialization will still happen and possible delays still occur, but before the window is shown, which is a nicer experience
     // REF: https://github.com/raysan5/raylib/issues/1554
     glfwSetJoystickCallback(NULL);
@@ -1649,35 +1711,54 @@ int InitPlatform(void)
             TRACELOG(LOG_INFO, "DISPLAY: Trying to enable VSYNC");
         }
 
-        int fbWidth = CORE.Window.screen.width;
-        int fbHeight = CORE.Window.screen.height;
-
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
-            // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
-            // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
-
-            // Get current framebuffer size, on high-dpi it could be bigger than screen size
-            glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+            // Set screen size to logical pixel size, considering content scaling
+            Vector2 scaleDpi = GetWindowScaleDPI();
+            CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
+            CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
+            //TRACELOG(LOG_INFO, "DPI SCALING: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
-            CORE.Window.screenScale = MatrixScale((float)fbWidth/CORE.Window.screen.width, (float)fbHeight/CORE.Window.screen.height, 1.0f);
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+
+            // NOTE: On APPLE platforms system manage window and input scaling
+            // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+
 #if !defined(__APPLE__)
-            // Mouse input scaling for the new screen size
-            SetMouseScale((float)CORE.Window.screen.width/fbWidth, (float)CORE.Window.screen.height/fbHeight);
+            if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+            {
+                // On Wayland, GLFW_SCALE_FRAMEBUFFER handles scaling; read actual framebuffer size
+                // instead of resizing the window (which would double-scale)
+                int fbWidth = 0;
+                int fbHeight = 0;
+                glfwGetFramebufferSize(platform.handle, &fbWidth, &fbHeight);
+
+                CORE.Window.render.width = fbWidth;
+                CORE.Window.render.height = fbHeight;
+            }
+            else
+            {
+                // Mouse input scaling for the new screen size
+                SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
+
+                // Force window size (and framebuffer) refresh
+                glfwSetWindowSize(platform.handle, CORE.Window.render.width, CORE.Window.render.height);
+            }
 #endif
         }
+        else CORE.Window.render = CORE.Window.screen;
 
-        CORE.Window.render.width = fbWidth;
-        CORE.Window.render.height = fbHeight;
-        CORE.Window.currentFbo.width = fbWidth;
-        CORE.Window.currentFbo.height = fbHeight;
+        // Current active framebuffer size is main framebuffer size
+        CORE.Window.currentFbo = CORE.Window.render;
 
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
         TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
+        //TRACELOG(LOG_INFO, "    > Content Scaling: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
 
         // Try to center window on screen but avoiding window-bar outside of screen
         int monitorCount = 0;
@@ -1691,13 +1772,17 @@ int InitPlatform(void)
         int monitorHeight = 0;
         glfwGetMonitorWorkarea(monitor, &monitorX, &monitorY, &monitorWidth, &monitorHeight);
 
-        // TODO: Here CORE.Window.render.width/height should be used instead of
-        // CORE.Window.screen.width/height to center the window correctly when the high dpi flag is enabled
-        CORE.Window.position.x = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
-        //if (CORE.Window.position.x < monitorX) CORE.Window.position.x = monitorX;
-        //if (CORE.Window.position.y < monitorY) CORE.Window.position.y = monitorY;
+        // NOTE: It seems on macOS monitor size is not correct
+        //TRACELOG(LOG_WARNING, "Monitor info: [%i, %i, %i, %i]", monitorX, monitorY, monitorWidth, monitorHeight);
 
+        // Center window into current monitor
+    #if defined(__APPLE__)
+        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+    #else
+        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.render.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.render.height)/2;
+    #endif
         SetWindowPosition(CORE.Window.position.x, CORE.Window.position.y);
 
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
@@ -1752,7 +1837,7 @@ int InitPlatform(void)
     }
     //----------------------------------------------------------------------------
 
-    // Initialize timming system
+    // Initialize timing system
     //----------------------------------------------------------------------------
     InitTimer();
     //----------------------------------------------------------------------------
@@ -1789,7 +1874,7 @@ void ClosePlatform(void)
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
 
-#if defined(_WIN32) && defined(SUPPORT_WINMM_HIGHRES_TIMER) && !defined(SUPPORT_BUSY_WAIT_LOOP)
+#if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1);           // Restore time period
 #endif
 }
@@ -1828,8 +1913,9 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
     SetupViewport(width, height);
 
     // Set render size
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
+    CORE.Window.render.width = width;
+    CORE.Window.render.height = height;
+    CORE.Window.currentFbo = CORE.Window.render;
     CORE.Window.resizedLastFrame = true;
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
@@ -1842,6 +1928,26 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
         CORE.Window.screen.height = height;
         CORE.Window.screenScale = MatrixScale(1.0f, 1.0f, 1.0f);
         SetMouseScale(1.0f, 1.0f);
+
+        // On Wayland with GLFW_SCALE_FRAMEBUFFER, the framebuffer is still scaled in fullscreen, use logical window size as screen and apply screenScale
+#if defined(_GLFW_WAYLAND) && !defined(_GLFW_X11)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        {
+            int winWidth = 0;
+            int winHeight = 0;
+            glfwGetWindowSize(platform.handle, &winWidth, &winHeight);
+
+            if ((winWidth != width) || (winHeight != height))
+            {
+                CORE.Window.screen.width = winWidth;
+                CORE.Window.screen.height = winHeight;
+                float scaleX = (float)width/winWidth;
+                float scaleY = (float)height/winHeight;
+
+                CORE.Window.screenScale = MatrixScale(scaleX, scaleY, 1.0f);
+            }
+        }
+#endif
     }
     else // Window mode (including borderless window)
     {
@@ -1853,8 +1959,8 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
             CORE.Window.screen.width = (int)((float)width/scaleDpi.x);
             CORE.Window.screen.height = (int)((float)height/scaleDpi.y);
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
-#if !defined(__APPLE__)
-            // Mouse input scaling for the new screen size
+#if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
+            // On macOS and Linux-Wayland, mouse coords are already in logical space
             SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
 #endif
         }
@@ -1875,21 +1981,18 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 {
     //TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
 
-    float fbWidth = (float)CORE.Window.screen.width*scalex;
-    float fbHeight = (float)CORE.Window.screen.height*scaley;
+    CORE.Window.render.width = (int)((float)CORE.Window.screen.width*scalex);
+    CORE.Window.render.height = (int)((float)CORE.Window.screen.height*scaley);
+    CORE.Window.currentFbo = CORE.Window.render;
 
     // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
     // Framebuffer scaling is activated with: glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
     CORE.Window.screenScale = MatrixScale(scalex, scaley, 1.0f);
 
-#if !defined(__APPLE__)
-    // Mouse input scaling for the new screen size
+#if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
+    // On macOS and Linux-Wayland, mouse coords are already in logical space
     SetMouseScale(1.0f/scalex, 1.0f/scaley);
 #endif
-
-    CORE.Window.render.width = (int)fbWidth;
-    CORE.Window.render.height = (int)fbHeight;
-    CORE.Window.currentFbo = CORE.Window.render;
 }
 
 // GLFW3: Window position callback, runs when window position changes
@@ -2001,7 +2104,7 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     CORE.Input.Mouse.currentButtonState[button] = action;
     CORE.Input.Touch.currentTouchState[button] = action;
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -2036,7 +2139,7 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
     CORE.Input.Mouse.currentPosition.y = (float)y;
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
     // Process mouse events as touches to be able to use mouse-gestures
     GestureEvent gestureEvent = { 0 };
 
@@ -2076,16 +2179,19 @@ static void CursorEnterCallback(GLFWwindow *window, int enter)
 // GLFW3: Joystick connected/disconnected callback
 static void JoystickCallback(int jid, int event)
 {
-    if (event == GLFW_CONNECTED)
+    if (jid < MAX_GAMEPADS)
     {
-        // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
-        // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
-        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
-        strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
-    }
-    else if (event == GLFW_DISCONNECTED)
-    {
-        memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+        if (event == GLFW_CONNECTED)
+        {
+            // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
+            // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
+            memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+            strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
+        }
+        else if (event == GLFW_DISCONNECTED)
+        {
+            memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
+        }
     }
 }
 

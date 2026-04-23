@@ -33,7 +33,7 @@ float sdHorseshoe(in vec3 p, in vec2 c, in float r, in float le, vec2 w)
     p.xy = mat2(-c.x, c.y, c.y, c.x)*p.xy;
     p.xy = vec2(((p.y > 0.0) || (p.x > 0.0))? p.x : l*sign(-c.x), (p.x>0.0)? p.y : l);
     p.xy = vec2(p.x, abs(p.y - r)) - vec2(le, 0.0);
-    
+
     vec2 q = vec2(length(max(p.xy, 0.0)) + min(0.0, max(p.x, p.y)), p.z);
     vec2 d = abs(q) - w;
     return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
@@ -54,7 +54,7 @@ float sdSixWayCutHollowSphere(vec3 p, float r, float h, float t)
 
     vec2 q = vec2(length(ap.yz), ap.x);
     float w = sqrt(r*r-h*h);
-    
+
     return ((h*q.x < w*q.y)? length(q - vec2(w, h)) : abs(length(q) - r)) - t;
 }
 
@@ -79,7 +79,7 @@ vec2 map(in vec3 pos)
 {
     vec2 res = vec2(sdHorseshoe(pos - vec3(-1.0, 0.08, 1.0), vec2(cos(1.3), sin(1.3)), 0.2, 0.3, vec2(0.03,0.5)), 11.5);
     res = opU(res, vec2(sdSixWayCutHollowSphere(pos-vec3(0.0, 1.0, 0.0), 4.0, 3.5, 0.5), 4.5));
-    
+
     return res;
 }
 
@@ -105,8 +105,8 @@ vec2 raycast(in vec3 ro, in vec3 rd)
         if (t > tmax) break;
         vec2 h = map(ro + rd*t);
         if (abs(h.x )< (0.0001*t))
-        { 
-            res = vec2(t, h.y); 
+        {
+            res = vec2(t, h.y);
             break;
         }
         t += h.x;
@@ -131,9 +131,9 @@ float calcSoftshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
         t += clamp(h, 0.01, 0.2);
         if ((res < 0.004) || (t > tmax)) break;
     }
-    
+
     res = clamp(res, 0.0, 1.0);
-    
+
     return res*res*(3.0-2.0*res);
 }
 
@@ -141,9 +141,9 @@ float calcSoftshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
 vec3 calcNormal(in vec3 pos)
 {
     vec2 e = vec2(1.0, -1.0)*0.5773*0.0005;
-    return normalize(e.xyy*map(pos + e.xyy).x + 
-                     e.yyx*map(pos + e.yyx).x + 
-                     e.yxy*map(pos + e.yxy).x + 
+    return normalize(e.xyy*map(pos + e.xyy).x +
+                     e.yyx*map(pos + e.yyx).x +
+                     e.yxy*map(pos + e.yxy).x +
                      e.xxx*map(pos + e.xxx).x);
 }
 
@@ -160,7 +160,7 @@ float calcAO(in vec3 pos, in vec3 nor)
         sca *= 0.95;
         if (occ>0.35) break;
     }
-    
+
     return clamp(1.0 - 3.0*occ, 0.0, 1.0)*(0.5+0.5*nor.y);
 }
 
@@ -172,15 +172,15 @@ float checkersGradBox(in vec2 p)
     // analytical integral (box filter)
     vec2 i = 2.0*(abs(fract((p - 0.5*w)*0.5)-0.5) - abs(fract((p + 0.5*w)*0.5) - 0.5))/w;
     // xor pattern
-    return (0.5 - 0.5*i.x*i.y);                  
+    return (0.5 - 0.5*i.x*i.y);
 }
 
 // https://www.shadertoy.com/view/tdS3DG
 vec4 render(in vec3 ro, in vec3 rd)
-{ 
+{
     // background
     vec3 col = vec3(0.7, 0.7, 0.9) - max(rd.y,0.0)*0.3;
-    
+
     // raycast scene
     vec2 res = raycast(ro,rd);
     float t = res.x;
@@ -190,11 +190,11 @@ vec4 render(in vec3 ro, in vec3 rd)
         vec3 pos = ro + t*rd;
         vec3 nor = (m<1.5) ? vec3(0.0,1.0,0.0) : calcNormal(pos);
         vec3 ref = reflect(rd, nor);
-        
-        // material        
+
+        // material
         col = 0.2 + 0.2*sin(m*2.0 + vec3(0.0,1.0,2.0));
         float ks = 1.0;
-        
+
         if (m < 1.5)
         {
             float f = checkersGradBox(3.0*pos.xz);
@@ -204,7 +204,7 @@ vec4 render(in vec3 ro, in vec3 rd)
 
         // lighting
         float occ = calcAO(pos, nor);
-        
+
         vec3 lin = vec3(0.0);
 
         // sun
@@ -245,7 +245,7 @@ vec4 render(in vec3 ro, in vec3 rd)
                   dif *= occ;
             lin += col*0.25*dif*vec3(1.00,1.00,1.00);
         }
-        
+
         col = lin;
 
         col = mix(col, vec3(0.7,0.7,0.9), 1.0-exp(-0.0001*t*t*t));
@@ -285,7 +285,7 @@ void main()
         color = res.xyz;
         depth = CalcDepth(rd,res.w);
     }
-    
+
     finalColor = vec4(color , 1.0);
     gl_FragDepth = depth;
 }

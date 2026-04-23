@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
+*   Example originally created with raylib 5.5, last time updated with raylib 6.0
 *
 *   Example contributed by JP Mortiboys (@themushroompirates) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -47,8 +47,8 @@ int main(void)
     // Setup the stars with a random position
     for (int i = 0; i < STAR_COUNT; i++)
     {
-        stars[i].x = GetRandomValue(-screenWidth*0.5f, screenWidth*0.5f);
-        stars[i].y = GetRandomValue(-screenHeight*0.5f, screenHeight*0.5f);
+        stars[i].x = (float)GetRandomValue(-screenWidth / 2, (int)screenWidth / 2);
+        stars[i].y = (float)GetRandomValue(-screenHeight / 2, (int)screenHeight / 2);
         stars[i].z = 1.0f;
     }
 
@@ -85,8 +85,8 @@ int main(void)
             if ((stars[i].z < 0.0f) || (starsScreenPos[i].x < 0) || (starsScreenPos[i].y < 0.0f) ||
                 (starsScreenPos[i].x > screenWidth) || (starsScreenPos[i].y > screenHeight))
             {
-                stars[i].x = GetRandomValue(-screenWidth*0.5f, screenWidth*0.5f);
-                stars[i].y = GetRandomValue(-screenHeight*0.5f, screenHeight*0.5f);
+                stars[i].x = (float)GetRandomValue(-screenWidth / 2, screenWidth / 2);
+                stars[i].y = (float)GetRandomValue(-screenHeight / 2, screenHeight / 2);
                 stars[i].z = 1.0f;
             }
         }
