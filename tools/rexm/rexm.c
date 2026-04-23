@@ -1268,8 +1268,7 @@ int main(int argc, char *argv[])
 
                         // NOTE: Some examples should be excluded from VS2022 solution because
                         // they have specific platform/linkage requirements:
-                        if ((strcmp(exInfo->name, "web_basic_window") == 0) ||
-                            (strcmp(exInfo->name, "raylib_opengl_interop") == 0)) continue;
+                        if (strcmp(exInfo->name, "raylib_opengl_interop") == 0) continue;
 
                         // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
                         // Review: Add: raylib/projects/VS2022/raylib.sln

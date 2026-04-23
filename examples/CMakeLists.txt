@@ -98,7 +98,6 @@ if (${PLATFORM} MATCHES "Android")
 
 elseif (${PLATFORM} MATCHES "Web")
     set(example_sources) # clear example_sources
-    list(APPEND example_sources others/web_basic_window.c)
     list(APPEND example_sources core/core_input_gestures_testbed.c)
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
