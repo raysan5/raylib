@@ -106,7 +106,7 @@
 
 #include "config.h"                 // Defines module configuration flags
 
-#include <stdlib.h>                 // Required for: srand(), rand(), atexit(), exit()
+#include <stdlib.h>                 // Required for: srand(), rand(), exit()
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset(), strcat()
 #include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
@@ -1757,9 +1757,9 @@ int GetRandomValue(int min, int max)
     else
     {
         // Rejection sampling to get a uniform integer in [min, max]
-        unsigned long c = (unsigned long)RAND_MAX + 1UL;  // number of possible rand() results
-        unsigned long m = (unsigned long)range;           // size of the target interval
-        unsigned long t = c - (c%m);                    // largest multiple of m <= c
+        unsigned long c = (unsigned long)RAND_MAX + 1UL; // Number of possible results
+        unsigned long m = (unsigned long)range;          // Size of the target interval
+        unsigned long t = c - (c%m);                     // Largest multiple of m <= c
         unsigned long r = 0;
 
         for (;;)
