@@ -2884,7 +2884,7 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
 }
 
 // Unload file data allocated by LoadFileData()
-void UnloadFileData(unsigned char *data)
+static void UnloadFileData(unsigned char *data)
 {
     RL_FREE(data);
 }
