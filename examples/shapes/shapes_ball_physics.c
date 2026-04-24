@@ -16,6 +16,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 
 #include <stdlib.h>         // Required for: malloc(), free()
@@ -131,12 +132,14 @@ int main(void)
             }
         }
 
-        Vector2 windowPositionDiff = Vector2Subtract(windowPosition, GetWindowPosition());
-        if (Vector2Length(windowPositionDiff) > 5.0f) {
-            for (int i = 0; i < ballCount; i++) {
-                if (!balls[i].grabbed) {
-                    balls[i].speed = Vector2Add(balls[i].speed, Vector2Scale(windowPositionDiff, 10.0f));
-                }
+        // Get window position change for shaking
+        Vector2 windowPositionDelta = Vector2Subtract(windowPosition, GetWindowPosition());
+        
+        if (Vector2Length(windowPositionDelta) > 5.0f)
+        {
+            for (int i = 0; i < ballCount; i++)
+            {
+                if (!balls[i].grabbed) balls[i].speed = Vector2Add(balls[i].speed, Vector2Scale(windowPositionDelta, 10.0f));
             }
         }
 
@@ -236,6 +239,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     RL_FREE(balls);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
