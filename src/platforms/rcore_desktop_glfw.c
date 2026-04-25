@@ -1192,9 +1192,9 @@ void OpenURL(const char *url)
 {
     // Security check to avoid malicious code injection
     if (strchr(url, '\'') != NULL || strchr(url, '"') != NULL ||
-        strchr(url, '&') != NULL || strchr(url, '|') != NULL ||
-        strchr(url, ';') != NULL || strchr(url, '`') != NULL ||
-        strchr(url, '$') != NULL || strchr(url, '\\') != NULL)
+        strchr(url, '|') != NULL || strchr(url, ';') != NULL ||
+        strchr(url, '`') != NULL || strchr(url, '$') != NULL ||
+        strchr(url, '\\') != NULL)
     {
         TRACELOG(LOG_WARNING, "SYSTEM: Provided URL contains potentially dangerous characters");
     }
