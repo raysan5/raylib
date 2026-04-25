@@ -1612,7 +1612,12 @@ int TextToInteger(const char *text)
             text++;
         }
 
-        for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10 + (int)(text[i] - '0');
+        for (int i = 0; ((text[i] >= '0') && (text[i] <= '9')); i++)
+        {
+            int digit = (int)(text[i] - '0');
+            if (value > (INT_MAX - digit)/10) { value = INT_MAX; break; }  // Overflow guard
+            value = value*10 + digit;
+        }
     }
 
     return value*sign;
@@ -1724,7 +1729,7 @@ const char *TextRemoveSpaces(const char *text)
     if (text != NULL)
     {
         // Avoid copying the ' ' characters
-        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++)
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
             if (text[i] != ' ') { buffer[j] = text[i]; j++; }
         }

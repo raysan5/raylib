@@ -1190,8 +1190,14 @@ double GetTime(void)
 // REF: https://github.com/raysan5/raylib/issues/686
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    // Security check to avoid malicious code injection
+    if (strchr(url, '\'') != NULL || strchr(url, '"') != NULL ||
+        strchr(url, '&') != NULL || strchr(url, '|') != NULL ||
+        strchr(url, ';') != NULL || strchr(url, '`') != NULL ||
+        strchr(url, '$') != NULL || strchr(url, '\\') != NULL)
+    {
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL contains potentially dangerous characters");
+    }
     else
     {
         char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
