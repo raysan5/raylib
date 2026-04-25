@@ -2387,8 +2387,11 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
 
         if ((0.0f <= t) && (t <= 1.0f) && (0.0f <= u) && (u <= 1.0f))
         {
-            collisionPoint->x = startPos1.x + t*rx;
-            collisionPoint->y = startPos1.y + t*ry;
+            if (collisionPoint)
+            {
+                collisionPoint->x = startPos1.x + t*rx;
+                collisionPoint->y = startPos1.y + t*ry;
+            }
 
             collision = true;
         }
