@@ -84,6 +84,11 @@
     #endif
 #endif
 
+// Default define for RAYMATH_USE_SIMD_INTRINSICS
+#ifndef RAYMATH_USE_SIMD_INTRINSICS
+    #define RAYMATH_USE_SIMD_INTRINSICS 0
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -527,7 +532,7 @@ RMAPI Vector2 Vector2MoveTowards(Vector2 v, Vector2 target, float maxDistance)
     float dy = target.y - v.y;
     float value = (dx*dx) + (dy*dy);
 
-    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
+    if ((FloatEquals(value, 0.0f)) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
 
     float dist = sqrtf(value);
 
@@ -806,7 +811,7 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
     Vector3 result = v;
 
     float length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length != 0.0f)
+    if (!FloatEquals(length, 0.0f))
     {
         float ilength = 1.0f/length;
 
@@ -863,7 +868,7 @@ RMAPI void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
     // Vector3Normalize(*v1);
     Vector3 v = *v1;
     length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     ilength = 1.0f/length;
     v1->x *= ilength;
     v1->y *= ilength;
@@ -875,7 +880,7 @@ RMAPI void Vector3OrthoNormalize(Vector3 *v1, Vector3 *v2)
     // Vector3Normalize(vn1);
     v = vn1;
     length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     ilength = 1.0f/length;
     vn1.x *= ilength;
     vn1.y *= ilength;
@@ -925,7 +930,7 @@ RMAPI Vector3 Vector3RotateByAxisAngle(Vector3 v, Vector3 axis, float angle)
 
     // Vector3Normalize(axis);
     float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     float ilength = 1.0f/length;
     axis.x *= ilength;
     axis.y *= ilength;
@@ -977,7 +982,7 @@ RMAPI Vector3 Vector3MoveTowards(Vector3 v, Vector3 target, float maxDistance)
     float dz = target.z - v.z;
     float value = (dx*dx) + (dy*dy) + (dz*dz);
 
-    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
+    if ((FloatEquals(value, 0)) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
 
     float dist = sqrtf(value);
 
@@ -1462,7 +1467,7 @@ RMAPI Vector4 Vector4MoveTowards(Vector4 v, Vector4 target, float maxDistance)
     float dw = target.w - v.w;
     float value = (dx*dx) + (dy*dy) + (dz*dz) + (dw*dw);
 
-    if ((value == 0) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
+    if ((FloatEquals(value, 0)) || ((maxDistance >= 0) && (value <= maxDistance*maxDistance))) return target;
 
     float dist = sqrtf(value);
 
@@ -1796,7 +1801,7 @@ RMAPI Matrix MatrixRotate(Vector3 axis, float angle)
 
     float lengthSquared = x*x + y*y + z*z;
 
-    if ((lengthSquared != 1.0f) && (lengthSquared != 0.0f))
+    if (!FloatEquals(lengthSquared, 1.0f) && !FloatEquals(lengthSquared, 0.0f))
     {
         float ilength = 1.0f/sqrtf(lengthSquared);
         x *= ilength;
@@ -2072,7 +2077,7 @@ RMAPI Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     // Vector3Normalize(vz)
     Vector3 v = vz;
     length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     ilength = 1.0f/length;
     vz.x *= ilength;
     vz.y *= ilength;
@@ -2084,7 +2089,7 @@ RMAPI Matrix MatrixLookAt(Vector3 eye, Vector3 target, Vector3 up)
     // Vector3Normalize(x)
     v = vx;
     length = sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     ilength = 1.0f/length;
     vx.x *= ilength;
     vx.y *= ilength;
@@ -2196,7 +2201,7 @@ RMAPI Quaternion QuaternionNormalize(Quaternion q)
     Quaternion result = { 0 };
 
     float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     float ilength = 1.0f/length;
 
     result.x = q.x*ilength;
@@ -2214,7 +2219,7 @@ RMAPI Quaternion QuaternionInvert(Quaternion q)
 
     float lengthSq = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
 
-    if (lengthSq != 0.0f)
+    if (!FloatEquals(lengthSq, 0.0f))
     {
         float invLength = 1.0f/lengthSq;
 
@@ -2291,7 +2296,7 @@ RMAPI Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
     // QuaternionNormalize(q);
     Quaternion q = result;
     float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     float ilength = 1.0f/length;
 
     result.x = q.x*ilength;
@@ -2391,7 +2396,7 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
     Quaternion q = result;
     float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    if (length == 0.0f) length = 1.0f;
+    if (FloatEquals(length, 0.0f)) length = 1.0f;
     float ilength = 1.0f/length;
 
     result.x = q.x*ilength;
@@ -2461,6 +2466,8 @@ RMAPI Quaternion QuaternionFromMatrix(Matrix mat)
             result.x = (mat.m8 + mat.m2)*mult;
             result.y = (mat.m6 + mat.m9)*mult;
             break;
+        default:
+            break;
     }
 
     return result;
@@ -2507,7 +2514,7 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 
     float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
 
-    if (length != 0.0f)
+    if (!FloatEquals(length, 0.0f))
     {
         angle *= 0.5f;
 
@@ -2528,7 +2535,7 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
         // QuaternionNormalize(q);
         Quaternion q = result;
         length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-        if (length == 0.0f) length = 1.0f;
+        if (FloatEquals(length, 0.0f)) length = 1.0f;
         ilength = 1.0f/length;
         result.x = q.x*ilength;
         result.y = q.y*ilength;
@@ -2546,7 +2553,7 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     {
         // QuaternionNormalize(q);
         float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-        if (length == 0.0f) length = 1.0f;
+        if (FloatEquals(length, 0.0f)) length = 1.0f;
         float ilength = 1.0f/length;
 
         q.x = q.x*ilength;
