@@ -41,7 +41,7 @@ revision history:
 	1.01  (2021-09-07)	Support custom memory allocators
 						Removed Raylib dependencies
 						Changed Vox_LoadFileName to Vox_LoadFromMemory
-    1.02  (2021-09-10)  @raysan5: Reviewed some formating
+    1.02  (2021-09-10)  @raysan5: Reviewed some formatting
     1.03  (2021-10-02)  @catmanl: Reduce warnings on gcc
     1.04  (2021-10-17)  @warzes: Fixing the error of loading VOX models
 
@@ -249,13 +249,13 @@ static void freeArrayColor(ArrayColor* a)
 // Vox Loader
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-#define CHUNKSIZE                   16      // chunk size (CHUNKSIZE*CHUNKSIZE*CHUNKSIZE) in voxels 
+#define CHUNKSIZE                   16      // chunk size (CHUNKSIZE*CHUNKSIZE*CHUNKSIZE) in voxels
 #define CHUNKSIZE_OPSHIFT            4      // 1<<4=16 -> Warning depend of CHUNKSIZE
 #define CHUNK_FLATTENOFFSET_OPSHIFT  8      // Warning depend of CHUNKSIZE
 
 //
 // used right handed system and CCW face
-// 
+//
 // indexes for voxelcoords, per face orientation
 //
 
@@ -271,7 +271,7 @@ static void freeArrayColor(ArrayColor* a)
 //#        |/           |/
 //#        4------------5
 
-// 
+//
 // CCW
 const int fv[6][4] = {
 	{0, 2, 6, 4 }, //-X
@@ -462,12 +462,12 @@ static unsigned char Vox_CalcFacesVisible(VoxArray3D* pvoxArray, int cx, int cy,
 static VoxVector3 Vox_GetVertexPosition(int _wcx, int _wcy, int _wcz, int _nNumVertex)
 {
 	float scale = 0.25;
-    
+
 	VoxVector3 vtx = SolidVertex[_nNumVertex];
 	vtx.x = (vtx.x + _wcx) * scale;
 	vtx.y = (vtx.y + _wcy) * scale;
 	vtx.z = (vtx.z + _wcz) * scale;
-    
+
 	return vtx;
 }
 
@@ -607,7 +607,7 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 		if (strcmp(szChunkName, "SIZE") == 0)
 		{
-			//(4 bytes x 3 : x, y, z ) 
+			//(4 bytes x 3 : x, y, z )
 			sizeX = *((unsigned int*)fileDataPtr);
 			fileDataPtr += sizeof(unsigned int);
 

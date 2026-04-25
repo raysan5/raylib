@@ -156,7 +156,7 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
-    // Check to see if the font for an image has alreeady been allocated,
+    // Check to see if the font for an image has already been allocated,
     // and if no need to upload, then return
     if (defaultFont.glyphs != NULL) return;
 

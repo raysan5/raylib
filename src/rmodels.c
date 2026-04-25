@@ -85,7 +85,7 @@
     #define VOX_FREE RL_FREE
 
     #define VOX_LOADER_IMPLEMENTATION
-    #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
+    #include "external/vox_loader.h"    // VOX file format loading (MagicaVoxel)
 #endif
 
 #if SUPPORT_FILEFORMAT_M3D
@@ -3935,7 +3935,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         Color colDiffuse = mat.maps[MATERIAL_MAP_DIFFUSE].color;
 
         // Applying color tint directly to material diffuse map,
-        // because is comes as an input paramter to the function
+        // because it comes as an input parameter to the function
         Color colTinted = { 0 };
         colTinted.r = (unsigned char)(((int)colDiffuse.r*(int)tint.r)/255);
         colTinted.g = (unsigned char)(((int)colDiffuse.g*(int)tint.g)/255);
