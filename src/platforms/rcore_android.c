@@ -51,6 +51,8 @@
 
 #include <errno.h>                      // Required for: error types
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL() and GetCurrentMonitor()]
+#include <string.h>
+#include <ctype.h>                      // Required for: isspace()
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
 
@@ -670,9 +672,20 @@ double GetTime(void)
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    if ((strchr(url, '\'') != NULL) || (strchr(url, '\"') != NULL)) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
     else
     {
+        // Restriction: Only allow http:// and https:// protocols
+        const char *p = url;
+        while (*p && isspace((unsigned char)*p)) p++;
+        char protocol[9] = { 0 };
+        for (int i = 0; (i < 8) && p[i]; i++) protocol[i] = (char)tolower((unsigned char)p[i]);
+        if ((strncmp(protocol, "http://", 7) != 0) && (strncmp(protocol, "https://", 8) != 0))
+        {
+            TRACELOG(LOG_WARNING, "SYSTEM: Provided URL protocol is not allowed; only http:// and https:// are permitted");
+            return;
+        }
+
         JNIEnv *env = NULL;
         JavaVM *vm = platform.app->activity->vm;
         (*vm)->AttachCurrentThread(vm, &env, NULL);

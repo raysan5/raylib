@@ -169,6 +169,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <ctype.h>   // Required for: isspace()
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -1179,9 +1180,20 @@ double GetTime(void)
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code on target platform
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    if ((strchr(url, '\'') != NULL) || (strchr(url, '\"') != NULL)) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
     else
     {
+        // Restriction: Only allow http:// and https:// protocols
+        const char *p = url;
+        while (*p && isspace((unsigned char)*p)) p++;
+        char protocol[9] = { 0 };
+        for (int i = 0; (i < 8) && p[i]; i++) protocol[i] = (char)tolower((unsigned char)p[i]);
+        if ((strncmp(protocol, "http://", 7) != 0) && (strncmp(protocol, "https://", 8) != 0))
+        {
+            TRACELOG(LOG_WARNING, "SYSTEM: Provided URL protocol is not allowed; only http:// and https:// are permitted");
+            return;
+        }
+
         char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
 #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
