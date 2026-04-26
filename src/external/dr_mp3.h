@@ -3188,6 +3188,10 @@ static drmp3_bool32 drmp3_init_internal(drmp3* pMP3, drmp3_read_proc onRead, drm
                 pTagDataBeg = pFirstFrameData + DRMP3_HDR_SIZE + (bs.pos/8);
                 pTagData    = pTagDataBeg;
 
+                if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 8) {
+                    goto done_xing_info;    /* Frame too small for a Xing/Info tag. */
+                }
+
                 /* Check for both "Xing" and "Info" identifiers. */
                 isXing = (pTagData[0] == 'X' && pTagData[1] == 'i' && pTagData[2] == 'n' && pTagData[3] == 'g');
                 isInfo = (pTagData[0] == 'I' && pTagData[1] == 'n' && pTagData[2] == 'f' && pTagData[3] == 'o');
@@ -3199,42 +3203,60 @@ static drmp3_bool32 drmp3_init_internal(drmp3* pMP3, drmp3_read_proc onRead, drm
                     pTagData += 8;  /* Skip past the ID and flags. */
 
                     if (flags & 0x01) { /* FRAMES flag. */
+                        if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 4) {
+                            goto done_xing_info;    /* Invalid Xing/Info tag. */
+                        }
+
                         detectedMP3FrameCount = (drmp3_uint32)pTagData[0] << 24 | (drmp3_uint32)pTagData[1] << 16 | (drmp3_uint32)pTagData[2] << 8 | (drmp3_uint32)pTagData[3];
                         pTagData += 4;
                     }
 
                     if (flags & 0x02) { /* BYTES flag. */
+                        if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 4) {
+                            goto done_xing_info;    /* Invalid Xing/Info tag. */
+                        }
+
                         bytes  = (drmp3_uint32)pTagData[0] << 24 | (drmp3_uint32)pTagData[1] << 16 | (drmp3_uint32)pTagData[2] << 8 | (drmp3_uint32)pTagData[3];
                         (void)bytes;    /* <-- Just to silence a warning about `bytes` being assigned but unused. Want to leave this here in case I want to make use of it later. */
                         pTagData += 4;
                     }
 
                     if (flags & 0x04) { /* TOC flag. */
+                        if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 100) {
+                            goto done_xing_info;    /* Invalid Xing/Info tag. */
+                        }
+
                         /* TODO: Extract and bind seek points. */
                         pTagData += 100;
                     }
 
                     if (flags & 0x08) { /* SCALE flag. */
+                        if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 4) {
+                            goto done_xing_info;    /* Invalid Xing/Info tag. */
+                        }
+                        
                         pTagData += 4;
                     }
 
                     /* At this point we're done with the Xing/Info header. Now we can look at the LAME data. */
                     if (pTagData[0]) {
+                        int delayInPCMFrames;
+                        int paddingInPCMFrames;
+
+                        if (firstFrameInfo.frame_bytes - (size_t)(pTagData - pFirstFrameData) < 36) {
+                            goto done_xing_info;    /* Invalid Xing/Info tag. */
+                        }
+
                         pTagData += 21;
 
-                        if (pTagData - pFirstFrameData + 14 < firstFrameInfo.frame_bytes) {
-                            int delayInPCMFrames;
-                            int paddingInPCMFrames;
-
-                            delayInPCMFrames   = (( (drmp3_uint32)pTagData[0]        << 4) | ((drmp3_uint32)pTagData[1] >> 4)) + (528 + 1);
-                            paddingInPCMFrames = ((((drmp3_uint32)pTagData[1] & 0xF) << 8) | ((drmp3_uint32)pTagData[2]     )) - (528 + 1);
-                            if (paddingInPCMFrames < 0) {
-                                paddingInPCMFrames = 0; /* Padding cannot be negative. Probably a malformed file. Ignore. */
-                            }
-                            
-                            pMP3->delayInPCMFrames   = (drmp3_uint32)delayInPCMFrames;
-                            pMP3->paddingInPCMFrames = (drmp3_uint32)paddingInPCMFrames;
+                        delayInPCMFrames   = (( (drmp3_uint32)pTagData[0]        << 4) | ((drmp3_uint32)pTagData[1] >> 4)) + (528 + 1);
+                        paddingInPCMFrames = ((((drmp3_uint32)pTagData[1] & 0xF) << 8) | ((drmp3_uint32)pTagData[2]     )) - (528 + 1);
+                        if (paddingInPCMFrames < 0) {
+                            paddingInPCMFrames = 0; /* Padding cannot be negative. Probably a malformed file. Ignore. */
                         }
+                        
+                        pMP3->delayInPCMFrames   = (drmp3_uint32)delayInPCMFrames;
+                        pMP3->paddingInPCMFrames = (drmp3_uint32)paddingInPCMFrames;
                     }
 
                     /*
@@ -3273,6 +3295,8 @@ static drmp3_bool32 drmp3_init_internal(drmp3* pMP3, drmp3_read_proc onRead, drm
                     */
                     drmp3dec_init(&pMP3->decoder);
                 }
+
+                done_xing_info:;
             } else {
                 /* Failed to read the side info. */
             }
@@ -3285,7 +3309,7 @@ static drmp3_bool32 drmp3_init_internal(drmp3* pMP3, drmp3_read_proc onRead, drm
     }
 
     if (detectedMP3FrameCount != 0xFFFFFFFF) {
-        pMP3->totalPCMFrameCount = detectedMP3FrameCount * firstFramePCMFrameCount;
+        pMP3->totalPCMFrameCount = (drmp3_uint64)detectedMP3FrameCount * firstFramePCMFrameCount;
     }
 
     pMP3->channels   = pMP3->mp3FrameChannels;
@@ -4247,7 +4271,7 @@ DRMP3_API drmp3_uint64 drmp3_read_pcm_frames_f32(drmp3* pMP3, drmp3_uint64 frame
 #else
     /* Slow path. Convert from s16 to f32. */
     {
-        drmp3_int16 pTempS16[8192];
+        drmp3_int16 pTempS16[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
         drmp3_uint64 totalPCMFramesRead = 0;
 
         while (totalPCMFramesRead < framesToRead) {
@@ -4284,7 +4308,7 @@ DRMP3_API drmp3_uint64 drmp3_read_pcm_frames_s16(drmp3* pMP3, drmp3_uint64 frame
 #else
     /* Slow path. Convert from f32 to s16. */
     {
-        float pTempF32[4096];
+        float pTempF32[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
         drmp3_uint64 totalPCMFramesRead = 0;
 
         while (totalPCMFramesRead < framesToRead) {
@@ -4772,7 +4796,7 @@ static float* drmp3__full_read_and_close_f32(drmp3* pMP3, drmp3_config* pConfig,
     drmp3_uint64 totalFramesRead = 0;
     drmp3_uint64 framesCapacity = 0;
     float* pFrames = NULL;
-    float temp[4096];
+    float temp[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
 
     DRMP3_ASSERT(pMP3 != NULL);
 
@@ -4841,7 +4865,7 @@ static drmp3_int16* drmp3__full_read_and_close_s16(drmp3* pMP3, drmp3_config* pC
     drmp3_uint64 totalFramesRead = 0;
     drmp3_uint64 framesCapacity = 0;
     drmp3_int16* pFrames = NULL;
-    drmp3_int16 temp[4096];
+    drmp3_int16 temp[1152*2];   /* MP3 frames have a maximum per-channel sample count of 1152. Times 2 to account for stereo. */
 
     DRMP3_ASSERT(pMP3 != NULL);
 
@@ -5010,6 +5034,9 @@ DIFFERENCES BETWEEN minimp3 AND dr_mp3
 REVISION HISTORY
 ================
 v0.7.4 - TBD
+  - Fix an overflow error with "Xing" and "Info" tag parsing.
+  - Add some validation checks for "Xing" and "Info" tag parsing.
+  - Reduce size of some stack allocations.
   - Improvements to SIMD detection.
 
 v0.7.3 - 2026-01-17
