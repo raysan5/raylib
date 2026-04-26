@@ -129,8 +129,10 @@ int main(void)
                 DrawTexturePro(target.texture, sourceRec, destRec, origin, 0.0f, WHITE);
             }
 
-            DrawText(TextFormat("Smooth: %s", (smoothOn ? "ON" : "OFF")), 10, 10, 20, RED);
-            DrawText(TextFormat("Overscan: %s", (overscan ? "ON" : "OFF")), 10, 30, 20, RED);
+            DrawText(TextFormat("Screen resolution: %ix%i", screenWidth, screenHeight), 10, 10, 20, DARKBLUE);
+            DrawText(TextFormat("World resolution: %ix%i", virtualScreenWidth, virtualScreenHeight), 10, 40, 20, DARKGREEN);
+            DrawText(TextFormat("Smooth: %s", (smoothOn ? "ON" : "OFF")), 10, screenHeight - 60, 20, RED);
+            DrawText(TextFormat("Overscan: %s", (overscan ? "ON" : "OFF")), 10, screenHeight - 30, 20, RED);
             DrawFPS(GetScreenWidth() - 95, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
