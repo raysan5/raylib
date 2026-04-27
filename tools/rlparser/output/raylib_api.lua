@@ -6226,7 +6226,7 @@ return {
       }
     },
     {
-      name = "ImageDrawTriangleEx",
+      name = "ImageDrawTriangleGradient",
       description = "Draw triangle with interpolated colors within an image",
       returnType = "void",
       params = {

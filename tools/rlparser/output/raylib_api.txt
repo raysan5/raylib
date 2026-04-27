@@ -3239,8 +3239,8 @@ Function 360: ImageDrawTriangle() (5 input parameters)
   Param[3]: v2 (type: Vector2)
   Param[4]: v3 (type: Vector2)
   Param[5]: color (type: Color)
-Function 361: ImageDrawTriangleEx() (7 input parameters)
-  Name: ImageDrawTriangleEx
+Function 361: ImageDrawTriangleGradient() (7 input parameters)
+  Name: ImageDrawTriangleGradient
   Return type: void
   Description: Draw triangle with interpolated colors within an image
   Param[1]: dst (type: Image *)

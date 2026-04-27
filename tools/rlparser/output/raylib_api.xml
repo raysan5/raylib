@@ -2125,7 +2125,7 @@
             <Param type="Vector2" name="v3" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawTriangleEx" retType="void" paramCount="7" desc="Draw triangle with interpolated colors within an image">
+        <Function name="ImageDrawTriangleGradient" retType="void" paramCount="7" desc="Draw triangle with interpolated colors within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Vector2" name="v1" desc="" />
             <Param type="Vector2" name="v2" desc="" />
