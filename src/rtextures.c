@@ -2795,7 +2795,7 @@ void ImageColorGrayscale(Image *image)
 
 // Modify image color: contrast
 // NOTE: Contrast values between -100 and 100
-void ImageColorContrast(Image *image, float contrast)
+void ImageColorContrast(Image *image, int contrast)
 {
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
@@ -2803,8 +2803,8 @@ void ImageColorContrast(Image *image, float contrast)
     if (contrast < -100) contrast = -100;
     if (contrast > 100) contrast = 100;
 
-    contrast = (100.0f + contrast)/100.0f;
-    contrast *= contrast;
+    float factor = (float)(100.0f + contrast)/100.0f;
+    factor *= factor;
 
     Color *pixels = LoadImageColors(*image);
 
@@ -2812,7 +2812,7 @@ void ImageColorContrast(Image *image, float contrast)
     {
         float pR = (float)pixels[i].r/255.0f;
         pR -= 0.5f;
-        pR *= contrast;
+        pR *= factor;
         pR += 0.5f;
         pR *= 255;
         if (pR < 0) pR = 0;
@@ -2820,7 +2820,7 @@ void ImageColorContrast(Image *image, float contrast)
 
         float pG = (float)pixels[i].g/255.0f;
         pG -= 0.5f;
-        pG *= contrast;
+        pG *= factor;
         pG += 0.5f;
         pG *= 255;
         if (pG < 0) pG = 0;
@@ -2828,7 +2828,7 @@ void ImageColorContrast(Image *image, float contrast)
 
         float pB = (float)pixels[i].b/255.0f;
         pB -= 0.5f;
-        pB *= contrast;
+        pB *= factor;
         pB += 0.5f;
         pB *= 255;
         if (pB < 0) pB = 0;
