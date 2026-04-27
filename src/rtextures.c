@@ -3806,7 +3806,7 @@ void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color col
 }
 
 // Draw triangle with interpolated colors within an image
-void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3)
+void ImageDrawTriangleGradient(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3)
 {
     // Calculate the 2D bounding box of the triangle
     // Determine the minimum and maximum x and y coordinates of the triangle vertices
