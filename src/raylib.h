@@ -963,10 +963,10 @@ typedef enum {
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
-typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
-typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
-typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
-typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
+typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args); // Logging: Redirect trace log messages
+typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize); // FileIO: Load binary data
+typedef bool (*SaveFileDataCallback)(const char *fileName, const void *data, int dataSize); // FileIO: Save binary data
+typedef char *(*LoadFileTextCallback)(const char *fileName);                  // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); // FileIO: Save text data
 
 //------------------------------------------------------------------------------------
