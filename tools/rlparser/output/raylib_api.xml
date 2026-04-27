@@ -682,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="601">
+    <Functions count="602">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1705,7 +1705,7 @@
             <Param type="Vector2" name="p4" desc="" />
             <Param type="float" name="t" desc="" />
         </Function>
-        <Function name="GetSplinePointBezierQuad" retType="Vector2" paramCount="4" desc="Get (evaluate) spline point: Quadratic Bezier">
+        <Function name="GetSplinePointBezierQuadratic" retType="Vector2" paramCount="4" desc="Get (evaluate) spline point: Quadratic Bezier">
             <Param type="Vector2" name="p1" desc="" />
             <Param type="Vector2" name="c2" desc="" />
             <Param type="Vector2" name="p3" desc="" />
@@ -1997,7 +1997,7 @@
         </Function>
         <Function name="ImageColorContrast" retType="void" paramCount="2" desc="Modify image color: contrast (-100 to 100)">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float" name="contrast" desc="" />
+            <Param type="int" name="contrast" desc="" />
         </Function>
         <Function name="ImageColorBrightness" retType="void" paramCount="2" desc="Modify image color: brightness (-255 to 255)">
             <Param type="Image *" name="image" desc="" />
@@ -2112,7 +2112,15 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangleLines" retType="void" paramCount="4" desc="Draw rectangle lines within an image">
+        <Function name="ImageDrawRectangleLines" retType="void" paramCount="6" desc="Draw rectangle lines within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleLinesEx" retType="void" paramCount="4" desc="Draw rectangle lines within an image with extended parameters">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="int" name="thick" desc="" />
@@ -3019,16 +3027,16 @@
         <Function name="LoadSoundFromWave" retType="Sound" paramCount="1" desc="Load sound from wave data">
             <Param type="Wave" name="wave" desc="" />
         </Function>
-        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
-            <Param type="Sound" name="sound" desc="" />
-            <Param type="const void *" name="data" desc="" />
-            <Param type="int" name="sampleCount" desc="" />
-        </Function>
         <Function name="LoadSoundAlias" retType="Sound" paramCount="1" desc="Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data">
             <Param type="Sound" name="source" desc="" />
         </Function>
         <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Check if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
+        </Function>
+        <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
+            <Param type="Sound" name="sound" desc="" />
+            <Param type="const void *" name="data" desc="" />
+            <Param type="int" name="frameCount" desc="" />
         </Function>
         <Function name="UnloadWave" retType="void" paramCount="1" desc="Unload wave data">
             <Param type="Wave" name="wave" desc="" />

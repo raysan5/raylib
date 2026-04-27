@@ -5383,7 +5383,7 @@ return {
       }
     },
     {
-      name = "GetSplinePointBezierQuad",
+      name = "GetSplinePointBezierQuadratic",
       description = "Get (evaluate) spline point: Quadratic Bezier",
       returnType = "Vector2",
       params = {
@@ -5981,7 +5981,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float", name = "contrast"}
+        {type = "int", name = "contrast"}
       }
     },
     {
@@ -6205,6 +6205,19 @@ return {
     {
       name = "ImageDrawRectangleLines",
       description = "Draw rectangle lines within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleLinesEx",
+      description = "Draw rectangle lines within an image with extended parameters",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
@@ -8033,16 +8046,6 @@ return {
       }
     },
     {
-      name = "UpdateSound",
-      description = "Update sound buffer with new data (default data format: 32 bit float, stereo)",
-      returnType = "void",
-      params = {
-        {type = "Sound", name = "sound"},
-        {type = "const void *", name = "data"},
-        {type = "int", name = "sampleCount"}
-      }
-    },
-    {
       name = "LoadSoundAlias",
       description = "Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data",
       returnType = "Sound",
@@ -8056,6 +8059,16 @@ return {
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
+      }
+    },
+    {
+      name = "UpdateSound",
+      description = "Update sound buffer with new data (default data format: 32 bit float, stereo)",
+      returnType = "void",
+      params = {
+        {type = "Sound", name = "sound"},
+        {type = "const void *", name = "data"},
+        {type = "int", name = "frameCount"}
       }
     },
     {
