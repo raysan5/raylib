@@ -2004,7 +2004,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
                     {
                         *dataSize = (int)count;
 
-                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, dataSize, count);
+                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, *dataSize, size);
                         else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
                     }
                 }
@@ -2365,8 +2365,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     {
         int fileExtLength = (int)strlen(fileExt);
         char fileExtLower[16] = { 0 };
-        char *fileExtLowerPtr = fileExtLower;
-        for (int i = 0; (i < fileExtLength) && (i < 16); i++)
+        for (int i = 0; (i < fileExtLength) && (i < 15); i++)
         {
             // Copy and convert to lower-case
             if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
@@ -2377,7 +2376,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         int extLength = (int)strlen(ext);
         char *extList = (char *)RL_CALLOC(extLength + 1, 1);
         char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
-        strncpy(extList, ext, extLength);
+        memcpy(extList, ext, extLength);
         extListPtrs[0] = extList;
 
         for (int i = 0; i < extLength; i++)
@@ -2386,11 +2385,15 @@ bool IsFileExtension(const char *fileName, const char *ext)
             if ((extList[i] >= 'A') && (extList[i] <= 'Z')) extList[i] += 32;
 
             // Get pointer to next extension and add null-terminator
-            if ((extList[i] == ';') && (extCount < (MAX_FILE_EXTENSIONS - 1)))
+            if (extList[i] == ';')
             {
                 extList[i] = '\0';
-                extListPtrs[extCount] = extList + i + 1;
-                extCount++;
+
+                if (extCount < MAX_FILE_EXTENSIONS)
+                {
+                    extListPtrs[extCount] = extList + i + 1;
+                    extCount++;
+                }
             }
         }
 
@@ -2398,7 +2401,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         {
             // Consider the case where extension provided
             // does not start with the '.'
-            fileExtLowerPtr = fileExtLower;
+            char *fileExtLowerPtr = fileExtLower;
             if (extListPtrs[i][0] != '.') fileExtLowerPtr++;
 
             if (strcmp(fileExtLowerPtr, extListPtrs[i]) == 0)
@@ -2611,7 +2614,7 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH);
 
     return path;
 }
@@ -2958,9 +2961,9 @@ unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, b
             {
                 // Construct new path from our base path
                 #if defined(_WIN32)
-                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, entity->d_name);
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s\\%s", basePath, entity->d_name);
                 #else
-                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, entity->d_name);
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s/%s", basePath, entity->d_name);
                 #endif
                 // Don't add to count if path too long
                 if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
@@ -4286,9 +4289,9 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
             {
                 // Construct new path from our base path
             #if defined(_WIN32)
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s\\%s", basePath, dp->d_name);
             #else
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s/%s", basePath, dp->d_name);
             #endif
 
                 if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
@@ -4300,7 +4303,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                     if ((filter == NULL) || (strstr(filter, FILE_FILTER_TAG_ALL) != NULL) ||
                         (strstr(filter, FILE_FILTER_TAG_FILE_ONLY) != NULL) || IsFileExtension(path, filter))
                     {
-                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
+                        memcpy(files->paths[files->count], path, pathLength);
                         files->count++;
                     }
                 }
@@ -4308,7 +4311,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                 {
                     if ((filter != NULL) && ((strstr(filter, FILE_FILTER_TAG_DIR_ONLY) != NULL) || (strstr(filter, FILE_FILTER_TAG_ALL) != NULL)))
                     {
-                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
+                        memcpy(files->paths[files->count], path, pathLength);
                         files->count++;
                     }
 
