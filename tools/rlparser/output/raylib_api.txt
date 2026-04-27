@@ -980,7 +980,7 @@ Callback 003: SaveFileDataCallback() (3 input parameters)
   Return type: bool
   Description: FileIO: Save binary data
   Param[1]: fileName (type: const char *)
-  Param[2]: data (type: void *)
+  Param[2]: data (type: const void *)
   Param[3]: dataSize (type: int)
 Callback 004: LoadFileTextCallback() (1 input parameters)
   Name: LoadFileTextCallback

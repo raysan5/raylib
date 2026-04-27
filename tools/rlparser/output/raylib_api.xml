@@ -667,7 +667,7 @@
         </Callback>
         <Callback name="SaveFileDataCallback" retType="bool" paramCount="3" desc="FileIO: Save binary data">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="void *" name="data" desc="" />
+            <Param type="const void *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Callback>
         <Callback name="LoadFileTextCallback" retType="char *" paramCount="1" desc="FileIO: Load text data">

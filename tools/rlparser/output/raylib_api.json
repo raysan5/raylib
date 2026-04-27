@@ -3120,7 +3120,7 @@
           "name": "fileName"
         },
         {
-          "type": "void *",
+          "type": "const void *",
           "name": "data"
         },
         {

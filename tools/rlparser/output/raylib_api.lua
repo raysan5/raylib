@@ -3101,7 +3101,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
