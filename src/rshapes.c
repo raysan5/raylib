@@ -2225,7 +2225,7 @@ Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
 }
 
 // Get spline point for a given t [0.0f .. 1.0f], Quadratic Bezier
-Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
+Vector2 GetSplinePointBezierQuadratic(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
 {
     Vector2 point = { 0 };
 
