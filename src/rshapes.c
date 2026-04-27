@@ -1531,7 +1531,7 @@ void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color)
     }
 }
 
-// Draw a regular polygon of n sides (Vector version)
+// Draw a polygon of n sides
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;

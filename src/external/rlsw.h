@@ -153,7 +153,7 @@
     #define SW_MAX_TEXTURES                 128
 #endif
 
-// Enables the use of a lookup table for uint8_t to float conversion
+// Enable the use of a lookup table for uint8_t to float conversion
 // Requires an additional 1KB of global memory
 // Disabled when SIMD intrinsics are enabled
 #ifndef SW_USE_COLOR_LUT

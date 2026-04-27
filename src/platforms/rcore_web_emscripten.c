@@ -891,7 +891,7 @@ void ShowCursor(void)
     }
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     if (!CORE.Input.Mouse.cursorHidden)
@@ -902,7 +902,7 @@ void HideCursor(void)
     }
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     emscripten_exit_pointerlock();
@@ -913,7 +913,7 @@ void EnableCursor(void)
     // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     emscripten_request_pointerlock(platform.canvasId, 1);

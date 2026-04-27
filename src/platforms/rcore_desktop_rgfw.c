@@ -1097,14 +1097,14 @@ void ShowCursor(void)
     CORE.Input.Mouse.cursorHidden = false;
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     RGFW_window_showMouse(platform.window, false);
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     RGFW_window_captureRawMouse(platform.window, false);
@@ -1116,7 +1116,7 @@ void EnableCursor(void)
     CORE.Input.Mouse.cursorLocked = true;
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     RGFW_window_captureRawMouse(platform.window, true);

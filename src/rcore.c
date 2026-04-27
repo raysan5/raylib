@@ -869,14 +869,14 @@ bool IsCursorOnScreen(void)
 // Module Functions Definition: Screen Drawing
 //----------------------------------------------------------------------------------
 
-// Set background color (framebuffer clear color)
+// Clear background (framebuffer) to color
 void ClearBackground(Color color)
 {
     rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
     rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
-// Setup canvas (framebuffer) to start drawing
+// Begin canvas (framebuffer) drawing
 void BeginDrawing(void)
 {
     // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
@@ -893,7 +893,7 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// End canvas drawing and swap buffers (double buffering)
+// End canvas (framebuffer) drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -949,7 +949,7 @@ void BeginMode2D(Camera2D camera)
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
 
-// Ends 2D mode with custom camera
+// End 2D mode with custom camera
 void EndMode2D(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -998,7 +998,7 @@ void BeginMode3D(Camera camera)
     rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
 }
 
-// Ends 3D mode and returns to default 2D orthographic mode
+// End 3D mode and returns to default 2D orthographic mode
 void EndMode3D(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -1045,7 +1045,7 @@ void BeginTextureMode(RenderTexture2D target)
     CORE.Window.usingFbo = true;
 }
 
-// Ends drawing to render texture
+// End drawing to render texture
 void EndTextureMode(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -1514,7 +1514,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     return matTransform;
 }
 
-// Get the screen space position from a 3d world space position
+// Get screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     Vector2 screenPosition = GetWorldToScreenEx(position, camera, GetScreenWidth(), GetScreenHeight());
@@ -1522,7 +1522,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Get size position for a 3d world space position (useful for texture drawing)
+// Get sized screen space position for a 3d world space position (useful for texture drawing)
 Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height)
 {
     // Calculate projection matrix (from perspective instead of frustum
@@ -1564,7 +1564,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     return screenPosition;
 }
 
-// Get the screen space position for a 2d camera world space position
+// Get screen space position for a 2d camera world space position
 Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
 {
     Matrix matCamera = GetCameraMatrix2D(camera);
@@ -1573,7 +1573,7 @@ Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
     return (Vector2){ transform.x, transform.y };
 }
 
-// Get the world space position for a 2d camera screen space position
+// Get world space position for a 2d camera screen space position
 Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 {
     Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
@@ -1853,7 +1853,7 @@ void TakeScreenshot(const char *fileName)
 #endif
 }
 
-// Setup window configuration flags (view FLAGS)
+// Set up window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
 // because it sets up some flags for the window creation process
 // To configure window states after creation, use SetWindowState()

@@ -378,7 +378,7 @@ struct rAudioProcessor {
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
 
-#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
+#define AudioBuffer rAudioBuffer    // WARNING: Renamed to avoid symbol collision with CoreAudio (macOS) AudioBuffer type
 
 // Audio data context
 typedef struct AudioData {
@@ -913,7 +913,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     return wave;
 }
 
-// Checks if wave data is valid (data loaded and parameters)
+// Check if wave data is valid (data loaded and parameters)
 bool IsWaveValid(Wave wave)
 {
     bool result = false;
@@ -981,7 +981,7 @@ Sound LoadSoundFromWave(Wave wave)
     return sound;
 }
 
-// Clone sound from existing sound data, clone does not own wave data
+// Load sound alias, clone sound from existing sound data, clone does not own wave data
 // NOTE: Wave data must be unallocated manually and will be shared across all clones
 Sound LoadSoundAlias(Sound source)
 {
@@ -1013,7 +1013,7 @@ Sound LoadSoundAlias(Sound source)
     return sound;
 }
 
-// Checks if a sound is valid (data loaded and buffers initialized)
+// Check if a sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
 {
     bool result = false;
@@ -1750,7 +1750,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
-// Checks if a music stream is valid (context and buffers initialized)
+// Check if a music stream is valid (context and buffers initialized)
 bool IsMusicValid(Music music)
 {
     return ((music.ctxData != NULL) &&          // Validate context loaded
@@ -2067,7 +2067,7 @@ void SetMusicPitch(Music music, float pitch)
     SetAudioBufferPitch(music.stream.buffer, pitch);
 }
 
-// Set pan for a music
+// Set pan for music
 void SetMusicPan(Music music, float pan)
 {
     SetAudioBufferPan(music.stream.buffer, pan);
@@ -2155,7 +2155,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     return stream;
 }
 
-// Checks if an audio stream is valid (buffers initialized)
+// Check if an audio stream is valid (buffers initialized)
 bool IsAudioStreamValid(AudioStream stream)
 {
     return ((stream.buffer != NULL) &&    // Validate stream buffer

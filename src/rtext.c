@@ -156,7 +156,7 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
-    // Check to see if the font for an image has alreeady been allocated,
+    // Check to see if the font for an image has already been allocated,
     // and if no need to upload, then return
     if (defaultFont.glyphs != NULL) return;
 
@@ -1279,7 +1279,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
-// Draw multiple character (codepoints)
+// Draw multiple characters (codepoints)
 void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint)
 {
     float textOffsetY = 0;          // Offset between lines (on linebreak '\n')
@@ -1674,7 +1674,7 @@ int TextCopy(char *dst, const char *src)
     return bytes;
 }
 
-// Check if two text string are equal
+// Check if two text strings are equal
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
