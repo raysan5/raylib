@@ -10626,7 +10626,7 @@
         },
         {
           "type": "int",
-          "name": "sides"
+          "name": "slices"
         },
         {
           "type": "Color",
@@ -10653,11 +10653,11 @@
         },
         {
           "type": "int",
-          "name": "slices"
+          "name": "rings"
         },
         {
           "type": "int",
-          "name": "rings"
+          "name": "slices"
         },
         {
           "type": "Color",
@@ -10684,11 +10684,11 @@
         },
         {
           "type": "int",
-          "name": "slices"
+          "name": "rings"
         },
         {
           "type": "int",
-          "name": "rings"
+          "name": "slices"
         },
         {
           "type": "Color",

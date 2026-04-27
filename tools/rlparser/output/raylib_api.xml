@@ -2703,23 +2703,23 @@
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="startRadius" desc="" />
             <Param type="float" name="endRadius" desc="" />
-            <Param type="int" name="sides" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCapsule" retType="void" paramCount="6" desc="Draw a capsule with the center of its sphere caps at startPos and endPos">
             <Param type="Vector3" name="startPos" desc="" />
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="int" name="slices" desc="" />
             <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCapsuleWires" retType="void" paramCount="6" desc="Draw capsule wireframe with the center of its sphere caps at startPos and endPos">
             <Param type="Vector3" name="startPos" desc="" />
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="int" name="slices" desc="" />
             <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawPlane" retType="void" paramCount="3" desc="Draw a plane XZ">

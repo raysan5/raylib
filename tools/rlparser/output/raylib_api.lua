@@ -7390,7 +7390,7 @@ return {
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "startRadius"},
         {type = "float", name = "endRadius"},
-        {type = "int", name = "sides"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
@@ -7402,8 +7402,8 @@ return {
         {type = "Vector3", name = "startPos"},
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "radius"},
-        {type = "int", name = "slices"},
         {type = "int", name = "rings"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
@@ -7415,8 +7415,8 @@ return {
         {type = "Vector3", name = "startPos"},
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "radius"},
-        {type = "int", name = "slices"},
         {type = "int", name = "rings"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
