@@ -1021,7 +1021,7 @@
         </Function>
         <Function name="SaveFileData" retType="bool" paramCount="3" desc="Save data to file from byte array (write), returns true on success">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="void *" name="data" desc="" />
+            <Param type="const void *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ExportDataAsCode" retType="bool" paramCount="3" desc="Export data to code (.h), returns true on success">
@@ -1168,19 +1168,19 @@
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="ComputeCRC32" retType="unsigned int" paramCount="2" desc="Compute CRC32 hash code">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeMD5" retType="unsigned int *" paramCount="2" desc="Compute MD5 hash code, returns static int[4] (16 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeSHA1" retType="unsigned int *" paramCount="2" desc="Compute SHA1 hash code, returns static int[5] (20 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeSHA256" retType="unsigned int *" paramCount="2" desc="Compute SHA256 hash code, returns static int[8] (32 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="LoadAutomationEventList" retType="AutomationEventList" paramCount="1" desc="Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS">
