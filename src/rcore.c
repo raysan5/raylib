@@ -2283,7 +2283,10 @@ int FileMove(const char *srcPath, const char *dstPath)
 
     if (FileExists(srcPath))
     {
-		if (FileCopy(srcPath, dstPath)) result = FileRemove(srcPath);
+        FileCopy(srcPath, dstPath);
+
+        // Make sure file has been correctly copied before removing
+        if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) result = FileRemove(srcPath);
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
     }
 	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
