@@ -3450,12 +3450,12 @@ return {
     },
     {
       name = "ShowCursor",
-      description = "Shows cursor",
+      description = "Show cursor",
       returnType = "void"
     },
     {
       name = "HideCursor",
-      description = "Hides cursor",
+      description = "Hide cursor",
       returnType = "void"
     },
     {
@@ -3465,12 +3465,12 @@ return {
     },
     {
       name = "EnableCursor",
-      description = "Enables cursor (unlock cursor)",
+      description = "Enable cursor (unlock cursor)",
       returnType = "void"
     },
     {
       name = "DisableCursor",
-      description = "Disables cursor (lock cursor)",
+      description = "Disable cursor (lock cursor)",
       returnType = "void"
     },
     {
@@ -3480,7 +3480,7 @@ return {
     },
     {
       name = "ClearBackground",
-      description = "Set background color (framebuffer clear color)",
+      description = "Clear background (framebuffer) to color",
       returnType = "void",
       params = {
         {type = "Color", name = "color"}
@@ -3488,12 +3488,12 @@ return {
     },
     {
       name = "BeginDrawing",
-      description = "Setup canvas (framebuffer) to start drawing",
+      description = "Begin canvas (framebuffer) drawing",
       returnType = "void"
     },
     {
       name = "EndDrawing",
-      description = "End canvas drawing and swap buffers (double buffering)",
+      description = "End canvas (framebuffer) drawing and swap buffers (double buffering)",
       returnType = "void"
     },
     {
@@ -3506,7 +3506,7 @@ return {
     },
     {
       name = "EndMode2D",
-      description = "Ends 2D mode with custom camera",
+      description = "End 2D mode with custom camera",
       returnType = "void"
     },
     {
@@ -3519,7 +3519,7 @@ return {
     },
     {
       name = "EndMode3D",
-      description = "Ends 3D mode and returns to default 2D orthographic mode",
+      description = "End 3D mode and returns to default 2D orthographic mode",
       returnType = "void"
     },
     {
@@ -3532,7 +3532,7 @@ return {
     },
     {
       name = "EndTextureMode",
-      description = "Ends drawing to render texture",
+      description = "End drawing to render texture",
       returnType = "void"
     },
     {
@@ -3723,7 +3723,7 @@ return {
     },
     {
       name = "GetWorldToScreen",
-      description = "Get the screen space position for a 3d world space position",
+      description = "Get screen space position for a 3d world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector3", name = "position"},
@@ -3732,7 +3732,7 @@ return {
     },
     {
       name = "GetWorldToScreenEx",
-      description = "Get size position for a 3d world space position",
+      description = "Get sized screen space position for a 3d world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector3", name = "position"},
@@ -3743,7 +3743,7 @@ return {
     },
     {
       name = "GetWorldToScreen2D",
-      description = "Get the screen space position for a 2d camera world space position",
+      description = "Get screen space position for a 2d camera world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
@@ -3752,7 +3752,7 @@ return {
     },
     {
       name = "GetScreenToWorld2D",
-      description = "Get the world space position for a 2d camera screen space position",
+      description = "Get world space position for a 2d camera screen space position",
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
@@ -3861,7 +3861,7 @@ return {
     },
     {
       name = "SetConfigFlags",
-      description = "Setup init configuration flags (view FLAGS)",
+      description = "Set up init configuration flags (view FLAGS)",
       returnType = "void",
       params = {
         {type = "unsigned int", name = "flags"}
@@ -4690,7 +4690,7 @@ return {
     },
     {
       name = "IsGestureDetected",
-      description = "Check if a gesture have been detected",
+      description = "Check if a gesture has been detected",
       returnType = "bool",
       params = {
         {type = "unsigned int", name = "gesture"}
@@ -5129,7 +5129,7 @@ return {
     },
     {
       name = "DrawRectangleRoundedLinesEx",
-      description = "Draw rectangle with rounded edges outline",
+      description = "Draw rectangle lines with rounded edges outline",
       returnType = "void",
       params = {
         {type = "Rectangle", name = "rec"},
@@ -5148,6 +5148,19 @@ return {
         {type = "Vector2", name = "v2"},
         {type = "Vector2", name = "v3"},
         {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawTriangleGradient",
+      description = "Draw triangle with interpolated colors (vertex in counter-clockwise order!)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "c1"},
+        {type = "Color", name = "c2"},
+        {type = "Color", name = "c3"}
       }
     },
     {
@@ -5183,7 +5196,7 @@ return {
     },
     {
       name = "DrawPoly",
-      description = "Draw a regular polygon (Vector version)",
+      description = "Draw a polygon of n sides",
       returnType = "void",
       params = {
         {type = "Vector2", name = "center"},
@@ -5424,7 +5437,7 @@ return {
     },
     {
       name = "CheckCollisionCircleLine",
-      description = "Check if circle collides with a line created betweeen two points [p1] and [p2]",
+      description = "Check if circle collides with a line created between two points [p1] and [p2]",
       returnType = "bool",
       params = {
         {type = "Vector2", name = "center"},
@@ -5565,7 +5578,7 @@ return {
     },
     {
       name = "LoadImageFromScreen",
-      description = "Load image from screen buffer and (screenshot)",
+      description = "Load image from screen buffer (screenshot)",
       returnType = "Image"
     },
     {
@@ -6469,7 +6482,7 @@ return {
     },
     {
       name = "DrawTextureNPatch",
-      description = "Draws a texture (or part of it) that stretches or shrinks nicely",
+      description = "Draw a texture (or part of it) that stretches or shrinks nicely",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -6804,7 +6817,7 @@ return {
     },
     {
       name = "DrawTextCodepoints",
-      description = "Draw multiple character (codepoint)",
+      description = "Draw multiple characters (codepoint)",
       returnType = "void",
       params = {
         {type = "Font", name = "font"},
@@ -6990,7 +7003,7 @@ return {
     },
     {
       name = "TextIsEqual",
-      description = "Check if two text string are equal",
+      description = "Check if two text strings are equal",
       returnType = "bool",
       params = {
         {type = "const char *", name = "text1"},
@@ -7997,7 +8010,7 @@ return {
     },
     {
       name = "IsWaveValid",
-      description = "Checks if wave data is valid (data loaded and parameters)",
+      description = "Check if wave data is valid (data loaded and parameters)",
       returnType = "bool",
       params = {
         {type = "Wave", name = "wave"}
@@ -8020,22 +8033,6 @@ return {
       }
     },
     {
-      name = "LoadSoundAlias",
-      description = "Create a new sound that shares the same sample data as the source sound, does not own the sound data",
-      returnType = "Sound",
-      params = {
-        {type = "Sound", name = "source"}
-      }
-    },
-    {
-      name = "IsSoundValid",
-      description = "Checks if a sound is valid (data loaded and buffers initialized)",
-      returnType = "bool",
-      params = {
-        {type = "Sound", name = "sound"}
-      }
-    },
-    {
       name = "UpdateSound",
       description = "Update sound buffer with new data (default data format: 32 bit float, stereo)",
       returnType = "void",
@@ -8043,6 +8040,22 @@ return {
         {type = "Sound", name = "sound"},
         {type = "const void *", name = "data"},
         {type = "int", name = "sampleCount"}
+      }
+    },
+    {
+      name = "LoadSoundAlias",
+      description = "Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data",
+      returnType = "Sound",
+      params = {
+        {type = "Sound", name = "source"}
+      }
+    },
+    {
+      name = "IsSoundValid",
+      description = "Check if a sound is valid (data loaded and buffers initialized)",
+      returnType = "bool",
+      params = {
+        {type = "Sound", name = "sound"}
       }
     },
     {
@@ -8063,7 +8076,7 @@ return {
     },
     {
       name = "UnloadSoundAlias",
-      description = "Unload a sound alias (does not deallocate sample data)",
+      description = "Unload sound alias (does not deallocate sample data)",
       returnType = "void",
       params = {
         {type = "Sound", name = "alias"}
@@ -8219,7 +8232,7 @@ return {
     },
     {
       name = "IsMusicValid",
-      description = "Checks if a music stream is valid (context and buffers initialized)",
+      description = "Check if a music stream is valid (context and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}
@@ -8251,7 +8264,7 @@ return {
     },
     {
       name = "UpdateMusicStream",
-      description = "Updates buffers for music streaming",
+      description = "Update buffers for music streaming",
       returnType = "void",
       params = {
         {type = "Music", name = "music"}
@@ -8301,7 +8314,7 @@ return {
     },
     {
       name = "SetMusicPitch",
-      description = "Set pitch for a music (1.0 is base level)",
+      description = "Set pitch for music (1.0 is base level)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},
@@ -8310,7 +8323,7 @@ return {
     },
     {
       name = "SetMusicPan",
-      description = "Set pan for a music (-1.0 left, 0.0 center, 1.0 right)",
+      description = "Set pan for music (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},
@@ -8345,7 +8358,7 @@ return {
     },
     {
       name = "IsAudioStreamValid",
-      description = "Checks if an audio stream is valid (buffers initialized)",
+      description = "Check if an audio stream is valid (buffers initialized)",
       returnType = "bool",
       params = {
         {type = "AudioStream", name = "stream"}
@@ -8437,7 +8450,7 @@ return {
     },
     {
       name = "SetAudioStreamPan",
-      description = "Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)",
+      description = "Set pan for audio stream (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},
