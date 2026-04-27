@@ -1789,7 +1789,7 @@ Function 146: LoadDirectoryFiles() (1 input parameters)
 Function 147: LoadDirectoryFilesEx() (3 input parameters)
   Name: LoadDirectoryFilesEx
   Return type: FilePathList
-  Description: Load directory filepaths with extension filtering and subdir scan; some filters available: "*.*", "FILES*", "DIRS*"
+  Description: Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`
   Param[1]: basePath (type: const char *)
   Param[2]: filter (type: const char *)
   Param[3]: scanSubdirs (type: bool)

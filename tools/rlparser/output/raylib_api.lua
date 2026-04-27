@@ -4207,7 +4207,7 @@ return {
     },
     {
       name = "LoadDirectoryFilesEx",
-      description = "Load directory filepaths with extension filtering and subdir scan; some filters available: "*.*", "FILES*", "DIRS*"",
+      description = "Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "basePath"},
