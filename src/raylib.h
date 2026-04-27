@@ -1126,7 +1126,7 @@ RLAPI void MemFree(void *ptr);                                  // Internal memo
 // File system management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, int *dataSize); // Load file data as byte array (read)
 RLAPI void UnloadFileData(unsigned char *data);                     // Unload file data allocated by LoadFileData()
-RLAPI bool SaveFileData(const char *fileName, void *data, int dataSize); // Save data to file from byte array (write), returns true on success
+RLAPI bool SaveFileData(const char *fileName, const void *data, int dataSize); // Save data to file from byte array (write), returns true on success
 RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName); // Export data to code (.h), returns true on success
 RLAPI char *LoadFileText(const char *fileName);                     // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                              // Unload file text data allocated by LoadFileText()
@@ -1175,10 +1175,10 @@ RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *
 RLAPI unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize);  // Decompress data (DEFLATE algorithm), memory must be MemFree()
 RLAPI char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize);               // Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
 RLAPI unsigned char *DecodeDataBase64(const char *text, int *outputSize);                             // Decode Base64 string (expected NULL terminated), memory must be MemFree()
-RLAPI unsigned int ComputeCRC32(unsigned char *data, int dataSize); // Compute CRC32 hash code
-RLAPI unsigned int *ComputeMD5(unsigned char *data, int dataSize);  // Compute MD5 hash code, returns static int[4] (16 bytes)
-RLAPI unsigned int *ComputeSHA1(unsigned char *data, int dataSize); // Compute SHA1 hash code, returns static int[5] (20 bytes)
-RLAPI unsigned int *ComputeSHA256(unsigned char *data, int dataSize); // Compute SHA256 hash code, returns static int[8] (32 bytes)
+RLAPI unsigned int ComputeCRC32(const unsigned char *data, int dataSize); // Compute CRC32 hash code
+RLAPI unsigned int *ComputeMD5(const unsigned char *data, int dataSize);  // Compute MD5 hash code, returns static int[4] (16 bytes)
+RLAPI unsigned int *ComputeSHA1(const unsigned char *data, int dataSize); // Compute SHA1 hash code, returns static int[5] (20 bytes)
+RLAPI unsigned int *ComputeSHA256(const unsigned char *data, int dataSize); // Compute SHA256 hash code, returns static int[8] (32 bytes)
 
 // Automation events functionality
 RLAPI AutomationEventList LoadAutomationEventList(const char *fileName); // Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS

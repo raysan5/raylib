@@ -2028,7 +2028,7 @@ void UnloadFileData(unsigned char *data)
 }
 
 // Save data to file from buffer
-bool SaveFileData(const char *fileName, void *data, int dataSize)
+bool SaveFileData(const char *fileName, const void *data, int dataSize)
 {
     bool result = false;
 
@@ -3163,7 +3163,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
 }
 
 // Compute CRC32 hash code
-unsigned int ComputeCRC32(unsigned char *data, int dataSize)
+unsigned int ComputeCRC32(const unsigned char *data, int dataSize)
 {
     static unsigned int crcTable[256] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
@@ -3209,7 +3209,7 @@ unsigned int ComputeCRC32(unsigned char *data, int dataSize)
 
 // Compute MD5 hash code
 // NOTE: Returns a static int[4] array (16 bytes)
-unsigned int *ComputeMD5(unsigned char *data, int dataSize)
+unsigned int *ComputeMD5(const unsigned char *data, int dataSize)
 {
     #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -3327,7 +3327,7 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
 
 // Compute SHA-1 hash code
 // NOTE: Returns a static int[5] array (20 bytes)
-unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
+unsigned int *ComputeSHA1(const unsigned char *data, int dataSize)
 {
     #define SHA1_ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -3437,7 +3437,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 
 // Compute SHA-256 hash code
 // NOTE: Returns a static int[8] array (32 bytes)
-unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
+unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
 {
     #define SHA256_ROTATE_RIGHT(x, c) ((x >> c) | (x << ((sizeof(unsigned int)*8) - c)))
     #define SHA256_A0(x) (SHA256_ROTATE_RIGHT(x, 7) ^ SHA256_ROTATE_RIGHT(x, 18) ^ (x >> 3))
