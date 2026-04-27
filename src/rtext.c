@@ -1724,7 +1724,7 @@ const char *TextRemoveSpaces(const char *text)
     if (text != NULL)
     {
         // Avoid copying the ' ' characters
-        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++)
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
             if (text[i] != ' ') { buffer[j] = text[i]; j++; }
         }
