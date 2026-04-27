@@ -4316,7 +4316,7 @@
           "name": "fileName"
         },
         {
-          "type": "void *",
+          "type": "const void *",
           "name": "data"
         },
         {
@@ -4853,7 +4853,7 @@
       "returnType": "unsigned int",
       "params": [
         {
-          "type": "unsigned char *",
+          "type": "const unsigned char *",
           "name": "data"
         },
         {
@@ -4868,7 +4868,7 @@
       "returnType": "unsigned int *",
       "params": [
         {
-          "type": "unsigned char *",
+          "type": "const unsigned char *",
           "name": "data"
         },
         {
@@ -4883,7 +4883,7 @@
       "returnType": "unsigned int *",
       "params": [
         {
-          "type": "unsigned char *",
+          "type": "const unsigned char *",
           "name": "data"
         },
         {
@@ -4898,7 +4898,7 @@
       "returnType": "unsigned int *",
       "params": [
         {
-          "type": "unsigned char *",
+          "type": "const unsigned char *",
           "name": "data"
         },
         {

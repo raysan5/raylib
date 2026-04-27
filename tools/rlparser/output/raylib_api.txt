@@ -1619,7 +1619,7 @@ Function 115: SaveFileData() (3 input parameters)
   Return type: bool
   Description: Save data to file from byte array (write), returns true on success
   Param[1]: fileName (type: const char *)
-  Param[2]: data (type: void *)
+  Param[2]: data (type: const void *)
   Param[3]: dataSize (type: int)
 Function 116: ExportDataAsCode() (3 input parameters)
   Name: ExportDataAsCode
@@ -1856,25 +1856,25 @@ Function 158: ComputeCRC32() (2 input parameters)
   Name: ComputeCRC32
   Return type: unsigned int
   Description: Compute CRC32 hash code
-  Param[1]: data (type: unsigned char *)
+  Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
 Function 159: ComputeMD5() (2 input parameters)
   Name: ComputeMD5
   Return type: unsigned int *
   Description: Compute MD5 hash code, returns static int[4] (16 bytes)
-  Param[1]: data (type: unsigned char *)
+  Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
 Function 160: ComputeSHA1() (2 input parameters)
   Name: ComputeSHA1
   Return type: unsigned int *
   Description: Compute SHA1 hash code, returns static int[5] (20 bytes)
-  Param[1]: data (type: unsigned char *)
+  Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
 Function 161: ComputeSHA256() (2 input parameters)
   Name: ComputeSHA256
   Return type: unsigned int *
   Description: Compute SHA256 hash code, returns static int[8] (32 bytes)
-  Param[1]: data (type: unsigned char *)
+  Param[1]: data (type: const unsigned char *)
   Param[2]: dataSize (type: int)
 Function 162: LoadAutomationEventList() (1 input parameters)
   Name: LoadAutomationEventList

@@ -3949,7 +3949,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4303,7 +4303,7 @@ return {
       description = "Compute CRC32 hash code",
       returnType = "unsigned int",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4312,7 +4312,7 @@ return {
       description = "Compute MD5 hash code, returns static int[4] (16 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4321,7 +4321,7 @@ return {
       description = "Compute SHA1 hash code, returns static int[5] (20 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4330,7 +4330,7 @@ return {
       description = "Compute SHA256 hash code, returns static int[8] (32 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
