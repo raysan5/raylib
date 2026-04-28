@@ -59,7 +59,7 @@
 
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <stdio.h>          // Required for: vsprintf()
-#include <string.h>         // Required for: strcmp(), strstr(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
+#include <string.h>         // Required for: strstr(), strncpy() [Used in TextReplace()], sscanf() [Used in LoadBMFont()]
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
 
@@ -1675,14 +1675,19 @@ int TextCopy(char *dst, const char *src)
 }
 
 // Check if two text strings are equal
-// REQUIRES: strcmp()
+// NOTE: Alternative implementation to strcmp(s1, s2) from C standard library
 bool TextIsEqual(const char *text1, const char *text2)
 {
     bool result = false;
 
     if ((text1 != NULL) && (text2 != NULL))
     {
-        if (strcmp(text1, text2) == 0) result = true;
+        while ((*text1 != '\0') && (*text1 == *text2))
+        {
+            text1++;
+            text2++;
+        }
+        if (*text1 == *text2) result = true;
     }
 
     return result;
