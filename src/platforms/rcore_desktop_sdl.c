@@ -1144,7 +1144,7 @@ const char *GetClipboardText(void)
 
     char *clipboard = SDL_GetClipboardText();
 
-    int clipboardSize = snprintf(buffer, sizeof(buffer), "%s", clipboard);
+    int clipboardSize = snprintf(buffer, MAX_CLIPBOARD_BUFFER_LENGTH, "%s", clipboard);
     if (clipboardSize >= MAX_CLIPBOARD_BUFFER_LENGTH)
     {
         char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
