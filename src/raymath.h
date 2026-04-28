@@ -84,6 +84,11 @@
     #endif
 #endif
 
+// Default define for RAYMATH_USE_SIMD_INTRINSICS
+#ifndef RAYMATH_USE_SIMD_INTRINSICS
+    #define RAYMATH_USE_SIMD_INTRINSICS 0
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
