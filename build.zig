@@ -706,10 +706,16 @@ fn addExamples(
             const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
             const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
+            const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const emsdk.zemscripten.EmccFilePath);
+            const EmccExamplesPreloadKV = struct { []const u8, []const emsdk.zemscripten.EmccFilePath };
+            const emcc_examples_preloads: []const EmccExamplesPreloadKV = @import("examples/example_resources.zon");
+            const emcc_examples_preloads_map = EmccExamplesPreloadMap.initComptime(emcc_examples_preloads);
+
             const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
                 .optimize = optimize,
                 .flags = emcc_flags,
                 .settings = emcc_settings,
+                .preload_paths = emcc_examples_preloads_map.get(filename) orelse &.{},
                 .shell_file_path = b.path("src/shell.html"),
                 .install_dir = install_dir,
             });
@@ -788,3 +794,4 @@ fn waylandGenerate(
         }
     }
 }
+
