@@ -4244,16 +4244,6 @@ int GetTouchPointCount(void)
 // Module Functions Definition: Process Execution
 //----------------------------------------------------------------------------------
 
-#if defined(_WIN32)
-
-static void* GetProcessHandleByID(int pid)
-{
-    // PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE | PROCESS_SUSPEND_RESUME
-    return OpenProcess(0x0400 | 0x0001 | 0x0800, 0, (unsigned long)pid);
-}
-
-#endif
-
 // Initialize a new process, returns a Process struct
 RLAPI Process InitProcess(const char *command, char *const args[])
 {
@@ -4460,7 +4450,8 @@ RLAPI void CloseProcess(Process *process)
         return;
     }
 #if defined(_WIN32)
-    void* hProcess = GetProcessHandleByID(process->pid);
+    // PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE | PROCESS_SUSPEND_RESUME
+    void* hProcess = OpenProcess(0x0400 | 0x0001 | 0x0800, 0, (unsigned long)process->pid);
     if (hProcess == NULL)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
