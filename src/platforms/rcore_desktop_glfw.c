@@ -111,6 +111,12 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+#if defined(__linux__) && defined(_GLFW_X11)
+    // Local storage for the window handle returned by glfwGetX11Window
+    // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
+    // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
+    XID windowHandleX11;
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -755,12 +761,6 @@ void SetWindowFocused(void)
     glfwFocusWindow(platform.handle);
 }
 
-#if defined(__linux__) && defined(_GLFW_X11)
-// Local storage for the window handle returned by glfwGetX11Window
-// This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
-// Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
-static XID X11WindowHandle;
-#endif
 // Get native window handle
 void *GetWindowHandle(void)
 {
@@ -778,17 +778,16 @@ void *GetWindowHandle(void)
             }
             else
             {
-                X11WindowHandle = glfwGetX11Window(platform.handle);
-                return &X11WindowHandle;
+                platform.windowHandleX11 = glfwGetX11Window(platform.handle);
+                return &platform.windowHandleX11;
             }
         #else
             return glfwGetWaylandWindow(platform.handle);
         #endif
     #elif defined(_GLFW_X11)
         // Store the window handle localy and return a pointer to the variable instead
-        // Reasoning detailed in the declaration of X11WindowHandle
-        X11WindowHandle = glfwGetX11Window(platform.handle);
-        return &X11WindowHandle;
+        platform.windowHandleX11 = glfwGetX11Window(platform.handle);
+        return &platform.windowHandleX11;
     #endif
 #endif
 #if defined(__APPLE__)
