@@ -210,7 +210,30 @@
     #define ACCESS(fn) access(fn, F_OK)
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+// Platform specific defines for process execution API
+#if defined(_WIN32)
+    struct _STARTUPINFOA;
+    struct _PROCESS_INFORMATION;
+
+    __declspec(dllimport) void* __stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
+    __declspec(dllimport) int __stdcall CloseHandle(void *hObject);
+    __declspec(dllimport) int __stdcall GetExitCodeProcess(void *hProcess, unsigned long *lpExitCode);
+    __declspec(dllimport) int __stdcall TerminateProcess(void *hProcess, unsigned int uExitCode);
+    __declspec(dllimport) unsigned long __stdcall WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds);
+    __declspec(dllimport) unsigned long __stdcall SuspendThread(void *hThread);
+    __declspec(dllimport) unsigned long __stdcall ResumeThread(void *hThread);
+    __declspec(dllimport) int __stdcall CreateProcessA(
+        const char *lpApplicationName,
+        char *lpCommandLine,
+        void *lpProcessAttributes,
+        void *lpThreadAttributes,
+        int bInheritHandles,
+        unsigned long dwCreationFlags,
+        void *lpEnvironment,
+        const char *lpCurrentDirectory,
+        struct _STARTUPINFOA *lpStartupInfo,
+        struct _PROCESS_INFORMATION *lpProcessInformation);
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     #include <sys/wait.h>           // Required for: waitpid() [Used in CheckProcess()]
     #include <signal.h>             // Required for: kill() [Used in PauseProcess(), ResumeProcess(), CloseProcess()]
     #include <sys/types.h>          // Required for: pid_t [Used as function local variable type and for Process PID type]
@@ -4221,6 +4244,16 @@ int GetTouchPointCount(void)
 // Module Functions Definition: Process Execution
 //----------------------------------------------------------------------------------
 
+#if defined(_WIN32)
+
+static void* GetProcessHandleByID(int pid)
+{
+    // PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE | PROCESS_SUSPEND_RESUME
+    return OpenProcess(0x0400 | 0x0001 | 0x0800, 0, (unsigned long)pid);
+}
+
+#endif
+
 // Initialize a new process, returns a Process struct
 RLAPI Process InitProcess(const char *command, char *const args[])
 {
@@ -4228,7 +4261,75 @@ RLAPI Process InitProcess(const char *command, char *const args[])
 
     Process process = { 0 };
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(_WIN32)
+    struct _STARTUPINFOA {
+        unsigned long cb;
+        char *lpReserved;
+        char *lpDesktop;
+        char *lpTitle;
+        unsigned long dwX;
+        unsigned long dwY;
+        unsigned long dwXSize;
+        unsigned long dwYSize;
+        unsigned long dwXCountChars;
+        unsigned long dwYCountChars;
+        unsigned long dwFillAttribute;
+        unsigned long dwFlags;
+        unsigned short wShowWindow;
+        unsigned short cbReserved2;
+        unsigned char *lpReserved2;
+        void *hStdInput;
+        void *hStdOutput;
+        void *hStdError;
+    };
+
+    struct _PROCESS_INFORMATION {
+        void *hProcess;
+        void *hThread;
+        unsigned long dwProcessId;
+        unsigned long dwThreadId;
+    };
+
+    // Windows requires a single command line string
+    char cmdLine[MAX_PATH * 4] = { 0 };
+    int position = 0;
+
+    TextAppend(cmdLine, command, &position);
+
+    if (args != NULL)
+    {
+        for (int i = 1; args[i] != NULL; i++) 
+        {
+            // TODO: Maybe use dynamic allocation for command line instead of aborting?
+            if (position + TextLength(args[i]) + 1 >= sizeof(cmdLine))
+            {
+                TRACELOG(LOG_WARNING, "PROCESS: Command line too long, process will not be created");
+                return process;
+            }
+
+            TextAppend(cmdLine, " ", &position);
+            TextAppend(cmdLine, args[i], &position);
+        }
+    }
+
+    struct _STARTUPINFOA si = { 0 };
+    si.cb = sizeof(struct _STARTUPINFOA);
+    struct _PROCESS_INFORMATION pi = { 0 };
+
+    // Application name is specified as the first command line argument, so pass NULL to CreateProcessA here
+    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 0, 0, NULL, NULL, (void*)&si, (void*)&pi))
+    {
+        process.pid = (int)pi.dwProcessId;
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create process");
+    }
+
+    return process;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     pid_t pid = fork();
 
     if (pid < 0)
@@ -4262,7 +4363,26 @@ RLAPI bool CheckProcess(Process *process)
         return false;
     }
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(_WIN32)
+    // PROCESS_QUERY_INFORMATION
+    void* hProcess = OpenProcess(0x0400, 0, (unsigned long)process->pid);
+    if (hProcess == NULL) return false;
+
+    unsigned long exitCode = 0;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        CloseHandle(hProcess);
+        // STILL_ACTIVE (259) means the process is still running
+        if (exitCode == 259) return true;
+        
+        process->exitCode = (int)exitCode;
+        process->pid = 0;
+        return false;
+    }
+
+    CloseHandle(hProcess);
+    return false;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     int status = 0;
     pid_t result = waitpid(process->pid, &status, WNOHANG);
 
@@ -4305,7 +4425,9 @@ RLAPI bool CheckProcess(Process *process)
 // Pause process execution
 RLAPI void PauseProcess(Process *process)
 {
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(_WIN32)
+    TRACELOG(LOG_WARNING, "PROCESS: Pausing process is not supported on Windows");
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     if (kill(process->pid, SIGSTOP) != 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to pause process");
@@ -4318,7 +4440,9 @@ RLAPI void PauseProcess(Process *process)
 // Resume paused process execution
 RLAPI void ResumeProcess(Process *process)
 {
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(_WIN32)
+    TRACELOG(LOG_WARNING, "PROCESS: Resuming process is not supported on Windows");
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     if (kill(process->pid, SIGCONT) != 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to resume process");
@@ -4335,8 +4459,20 @@ RLAPI void CloseProcess(Process *process)
     {
         return;
     }
+#if defined(_WIN32)
+    void* hProcess = GetProcessHandleByID(process->pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    TerminateProcess(hProcess, 0);
+    CloseHandle(hProcess);
+
+    process->exitCode = -1;
+    process->pid = 0;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     if (!CheckProcess(process))
     {
         return;
