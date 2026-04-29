@@ -203,11 +203,13 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Boolean type
+#if !defined(__cplusplus)
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
+#elif !defined(bool)
     typedef enum bool { false = 0, true = !false } bool;
     #define RL_BOOL_TYPE
+#endif
 #endif
 
 // Vector2, 2 components
