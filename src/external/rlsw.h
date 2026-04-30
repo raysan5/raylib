@@ -164,6 +164,19 @@
     #endif
 #endif
 
+// Fast power-of-two texture wrap (SW_REPEAT mode only)
+// When defined, textures whose width/height are powers of two use a bitmask
+// wrap (`x & (size-1)`) instead of `floorf`-based fractional wrap or the
+// signed `%` chain in the linear sampler. Saves a software divide on Xtensa
+// and a few instructions everywhere. NPOT textures keep using the original
+// path via a runtime `(size & (size-1)) == 0` check, so SW_REPEAT remains
+// correct for them. The only observable behavior change is for POT textures
+// sampled with negative UV coordinates: bitmask wrap (two's complement) can
+// differ from `sw_fract` by one texel. Off by default to keep bit-for-bit
+// behavior; opt in if you control your asset UVs.
+//
+// #define SW_TEXTURE_REPEAT_POT_FAST
+
 //----------------------------------------------------------------------------------
 // OpenGL Compatibility Types
 //----------------------------------------------------------------------------------
@@ -2456,11 +2469,31 @@ static inline void sw_texture_free(sw_texture_t *texture)
 
 static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
 {
-    u = (tex->sWrap == SW_REPEAT)? sw_fract(u) : sw_saturate(u);
-    v = (tex->tWrap == SW_REPEAT)? sw_fract(v) : sw_saturate(v);
+    int x, y;
 
-    int x = u*tex->width;
-    int y = v*tex->height;
+#ifdef SW_TEXTURE_REPEAT_POT_FAST
+    if ((tex->sWrap == SW_REPEAT) && ((tex->width & tex->wMinus1) == 0))
+    {
+        x = (int)(u*tex->width) & tex->wMinus1;
+    }
+    else
+#endif
+    {
+        u = (tex->sWrap == SW_REPEAT)? sw_fract(u) : sw_saturate(u);
+        x = (int)(u*tex->width);
+    }
+
+#ifdef SW_TEXTURE_REPEAT_POT_FAST
+    if ((tex->tWrap == SW_REPEAT) && ((tex->height & tex->hMinus1) == 0))
+    {
+        y = (int)(v*tex->height) & tex->hMinus1;
+    }
+    else
+#endif
+    {
+        v = (tex->tWrap == SW_REPEAT)? sw_fract(v) : sw_saturate(v);
+        y = (int)(v*tex->height);
+    }
 
     tex->readColor(color, tex->pixels, y*tex->width + x);
 }
@@ -2482,13 +2515,19 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
     int x1 = x0 + 1;
     int y1 = y0 + 1;
 
-    // NOTE: If the textures are POT, avoid the division for SW_REPEAT
-
     if (tex->sWrap == SW_CLAMP)
     {
         x0 = (x0 > tex->wMinus1)? tex->wMinus1 : x0;
         x1 = (x1 > tex->wMinus1)? tex->wMinus1 : x1;
     }
+#ifdef SW_TEXTURE_REPEAT_POT_FAST
+    else if ((tex->width & tex->wMinus1) == 0)
+    {
+        // POT fast path: bitmask wrap covers negative ints via two's complement
+        x0 = x0 & tex->wMinus1;
+        x1 = x1 & tex->wMinus1;
+    }
+#endif
     else
     {
         x0 = (x0%tex->width + tex->width)%tex->width;
@@ -2500,6 +2539,13 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
         y0 = (y0 > tex->hMinus1)? tex->hMinus1 : y0;
         y1 = (y1 > tex->hMinus1)? tex->hMinus1 : y1;
     }
+#ifdef SW_TEXTURE_REPEAT_POT_FAST
+    else if ((tex->height & tex->hMinus1) == 0)
+    {
+        y0 = y0 & tex->hMinus1;
+        y1 = y1 & tex->hMinus1;
+    }
+#endif
     else
     {
         y0 = (y0%tex->height + tex->height)%tex->height;
