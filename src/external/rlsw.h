@@ -1210,6 +1210,33 @@ static inline float sw_fract(float x)
     return (x - floorf(x));
 }
 
+// Fast reciprocal: 1-ULP accurate in ~7 instructions on Xtensa using the
+// hardware `recip0.s` seed + two Newton-Raphson refinement steps. All work
+// stays in FPU registers — no `__divsf3` software call. Hot-path divisions
+// in the rasterizer (span/triangle setup, perspective divide, etc.) call
+// this. On non-Xtensa targets it transparently expands to `1.0f / x`, so
+// generated code is identical to before.
+#if defined(__XTENSA__)
+__attribute__((always_inline))
+static inline float sw_rcp(float x)
+{
+    float result, temp;
+    __asm__(
+        "recip0.s %0, %2\n"
+        "const.s  %1, 1\n"
+        "msub.s   %1, %2, %0\n"
+        "madd.s   %0, %0, %1\n"
+        "const.s  %1, 1\n"
+        "msub.s   %1, %2, %0\n"
+        "maddn.s  %0, %0, %1\n"
+        : "=&f"(result), "=&f"(temp) : "f"(x)
+    );
+    return result;
+}
+#else
+static inline float sw_rcp(float x) { return 1.0f/x; }
+#endif
+
 static inline uint8_t sw_luminance8(const uint8_t *color)
 {
     return (uint8_t)((color[0]*77 + color[1]*150 + color[2]*29) >> 8);
@@ -3366,7 +3393,7 @@ static void sw_triangle_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float wRcp = 1.0f/v->position[3];
+            const float wRcp = sw_rcp(v->position[3]);
 
             // Division of XYZ coordinates by weight
             v->position[0] *= wRcp;
@@ -3481,7 +3508,7 @@ static void sw_quad_clip_and_project(void)
 
             // Calculation of the reciprocal of W for normalization
             // as well as perspective-correct attributes
-            const float wRcp = 1.0f/v->position[3];
+            const float wRcp = sw_rcp(v->position[3]);
 
             // Division of XYZ coordinates by weight
             v->position[0] *= wRcp;
@@ -3659,8 +3686,8 @@ static bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
     if (!sw_line_clip(v0, v1)) return false;
 
     // Convert clip coordinates to NDC
-    v0->position[3] = 1.0f/v0->position[3];
-    v1->position[3] = 1.0f/v1->position[3];
+    v0->position[3] = sw_rcp(v0->position[3]);
+    v1->position[3] = sw_rcp(v1->position[3]);
     for (int i = 0; i < 3; i++)
     {
         v0->position[i] *= v0->position[3];
@@ -3709,7 +3736,7 @@ static bool sw_point_clip_and_project(sw_vertex_t *v)
             if ((v->position[i] < -v->position[3]) || (v->position[i] > v->position[3])) return false;
         }
 
-        v->position[3] = 1.0f/v->position[3];
+        v->position[3] = sw_rcp(v->position[3]);
         v->position[0] *= v->position[3];
         v->position[1] *= v->position[3];
         v->position[2] *= v->position[3];
@@ -5272,7 +5299,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     if (xStart == xEnd) return;
 
     // Compute the inverse horizontal distance along the X axis
-    float dxRcp = 1.0f/(end->position[0] - start->position[0]);
+    float dxRcp = sw_rcp(end->position[0] - start->position[0]);
 
     // Compute the interpolation steps along the X axis
     float dWdx = (end->position[3] - start->position[3])*dxRcp;
@@ -5326,12 +5353,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         int blockEnd = x + SW_AFFINE_BLOCK;
         if (blockEnd > xEnd) blockEnd = xEnd;
         float blockLenF = (float)(blockEnd - x);
-        float blockLenRcp = 1.0f/blockLenF;
+        float blockLenRcp = sw_rcp(blockLenF);
 
         // Only 2 '1/w' here; none inside the pixel loop
-        float wRcpA = 1.0f/w;
+        float wRcpA = sw_rcp(w);
         float wB = w + dWdx*blockLenF;
-        float wRcpB = 1.0f/wB;
+        float wRcpB = sw_rcp(wB);
 
         // Perspective-correct color at both block endpoints, then affine gradient
         float srcColor[4] = {
@@ -5459,9 +5486,9 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     if (h02 < 1e-6f) return;
 
     // Inverse edge dy for per-edge dV/dy (scanline interpolation)
-    float h02Rcp = 1.0f/h02;
-    float h01Rcp = (h01 > 1e-6f)? 1.0f/h01 : 0.0f;
-    float h12Rcp = (h12 > 1e-6f)? 1.0f/h12 : 0.0f;
+    float h02Rcp = sw_rcp(h02);
+    float h01Rcp = (h01 > 1e-6f)? sw_rcp(h01) : 0.0f;
+    float h12Rcp = (h12 > 1e-6f)? sw_rcp(h12) : 0.0f;
 
     // Compute gradients for each side of the triangle
     sw_vertex_t dVXdy02, dVXdy01, dVXdy12;
@@ -5560,8 +5587,8 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float h = (float)(yMax - yMin);
     if ((w <= 0) || (h <= 0)) return;
 
-    float wRcp = 1.0f/w;
-    float hRcp = 1.0f/h;
+    float wRcp = sw_rcp(w);
+    float hRcp = sw_rcp(h);
 
     // Subpixel corrections
     float xSubstep = 1.0f - sw_fract(tl->position[0]);
@@ -5746,7 +5773,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     // Compute per pixel increments
     float xInc = dx/steps;
     float yInc = dy/steps;
-    float stepRcp = 1.0f/steps;
+    float stepRcp = sw_rcp(steps);
 #ifdef SW_ENABLE_DEPTH_TEST
     float zInc = (v1->position[2] - v0->position[2])*stepRcp;
 #endif
