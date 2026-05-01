@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
                 if (catIndex > 3)
                 {
                     char cat[12] = { 0 };
-                    strncpy(cat, argv[2], catIndex);
+                    snprintf(cat, sizeof(cat), "%.*s", catIndex, argv[2]);
                     bool catFound = false;
                     for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                     {
@@ -291,8 +291,8 @@ int main(int argc, char *argv[])
 
                     if (catFound)
                     {
-                        strcpy(exName, argv[2]); // Register filename for new example creation
-                        strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                        snprintf(exName, sizeof(exName), "%s", argv[2]); // Register filename for new example creation
+                        snprintf(exCategory, sizeof(exCategory), "%.*s", TextFindIndex(exName, "_"), exName);
                         opCode = OP_CREATE;
                     }
                     else LOG("WARNING: Example category is not valid\n");
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
                         if (catIndex > 3)
                         {
                             char cat[12] = { 0 };
-                            strncpy(cat, GetFileName(argv[2]), catIndex);
+                            snprintf(cat, sizeof(cat), "%.*s", catIndex, GetFileName(argv[2]));
                             bool catFound = false;
                             for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                             {
@@ -325,9 +325,9 @@ int main(int argc, char *argv[])
 
                             if (catFound)
                             {
-                                strcpy(inFileName, argv[2]); // Register filename for addition
-                                strcpy(exName, GetFileNameWithoutExt(inFileName)); // Register example name
-                                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                                snprintf(inFileName, sizeof(inFileName), "%s", argv[2]); // Register filename for addition
+                                snprintf(exName, sizeof(exName), "%s", GetFileNameWithoutExt(inFileName)); // Register example name
+                                snprintf(exCategory, sizeof(exCategory), "%.*s", TextFindIndex(exName, "_"), exName);
                                 opCode = OP_ADD;
                             }
                             else LOG("WARNING: Example category is not valid\n");
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
                     if (newCatIndex > 3)
                     {
                         char cat[12] = { 0 };
-                        strncpy(cat, argv[3], newCatIndex);
+                        snprintf(cat, sizeof(cat), "%.*s", newCatIndex, argv[3]);
                         bool newCatFound = false;
                         for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
                         {
@@ -364,10 +364,10 @@ int main(int argc, char *argv[])
 
                         if (newCatFound)
                         {
-                            strcpy(exName, argv[2]);    // Register example name
-                            strncpy(exCategory, exName, TextFindIndex(exName, "_"));
-                            strcpy(exRename, argv[3]);
-                            strncpy(exRecategory, exRename, TextFindIndex(exRename, "_"));
+                            snprintf(exName, sizeof(exName), "%s", argv[2]);    // Register example name
+                            snprintf(exCategory, sizeof(exCategory), "%.*s", TextFindIndex(exName, "_"), exName);
+                            snprintf(exRename, sizeof(exRename), "%s", argv[3]);
+                            snprintf(exRecategory, sizeof(exRecategory), "%.*s", TextFindIndex(exRename, "_"), exRename);
                             opCode = OP_RENAME;
                         }
                         else LOG("WARNING: Example new category is not valid\n");
@@ -389,8 +389,8 @@ int main(int argc, char *argv[])
                 char *exColInfo = LoadFileText(exCollectionFilePath);
                 if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
                 {
-                    strcpy(exName, argv[2]); // Register filename for removal
-                    strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+                    snprintf(exName, sizeof(exName), "%s", argv[2]); // Register filename for removal
+                    snprintf(exCategory, sizeof(exCategory), "%.*s", TextFindIndex(exName, "_"), exName);
                     opCode = OP_REMOVE;
                 }
                 else LOG("WARNING: REMOVE: Example not available in the collection\n");
