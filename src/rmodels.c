@@ -1098,6 +1098,45 @@ void DrawGrid(int slices, float spacing)
     rlEnd();
 }
 
+// Draw a grid with extended parameters
+void DrawGridEx(int slices, float spacing, Vector3 color, Vector3 position, Vector3 normal, Vector3 tangent)
+{
+    int halfSlices = slices / 2;
+
+    // Build basis vectors
+    Vector3 n = Vector3Normalize(normal);
+    Vector3 t = Vector3Normalize(tangent);
+    Vector3 b = Vector3Normalize(Vector3CrossProduct(n, t));
+    t = Vector3CrossProduct(n, b); // Ensure normal and tangent vectors are orthogonal
+
+    rlBegin(RL_LINES);
+        rlColor3f(color.x, color.y, color.z);
+
+        for (int i = -halfSlices; i <= halfSlices; i++)
+        {
+            float f = (float)i * spacing;
+
+            Vector3 t1 = Vector3Add(position,
+                        Vector3Add(Vector3Scale(t, -halfSlices * spacing),
+                                   Vector3Scale(b, f)));
+            Vector3 t2 = Vector3Add(position,
+                        Vector3Add(Vector3Scale(t, halfSlices * spacing),
+                                   Vector3Scale(b, f)));
+            Vector3 b1 = Vector3Add(position,
+                         Vector3Add(Vector3Scale(b, -halfSlices * spacing),
+                                    Vector3Scale(t, f)));
+            Vector3 b2 = Vector3Add(position,
+                         Vector3Add(Vector3Scale(b, halfSlices * spacing),
+                                    Vector3Scale(t, f)));
+
+            rlVertex3f(t1.x, t1.y, t1.z);
+            rlVertex3f(t2.x, t2.y, t2.z);
+            rlVertex3f(b1.x, b1.y, b1.z);
+            rlVertex3f(b2.x, b2.y, b2.z);
+        }
+    rlEnd();
+}
+
 // Load model from files (mesh and material)
 Model LoadModel(const char *fileName)
 {
