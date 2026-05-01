@@ -1273,27 +1273,28 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         int32_t keycode = AKeyEvent_getKeyCode(event);
         //int32_t AKeyEvent_getMetaState(event);
 
-        // Handle gamepad button presses and releases
-        // NOTE: Skip gamepad handling if this is a keyboard event, as some devices
-        // report both AINPUT_SOURCE_KEYBOARD and AINPUT_SOURCE_GAMEPAD flags
-        if ((FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) ||
-             FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD)) &&
-            !FLAG_IS_SET(source, AINPUT_SOURCE_KEYBOARD))
+        // Handle gamepad button presses and releases. AOSP stamps the
+        // KEYBOARD source bit on every key event from a gamepad, so
+        // discriminate on the keycode rather than gating on source bits.
+        if (FLAG_IS_SET(source, AINPUT_SOURCE_JOYSTICK) ||
+            FLAG_IS_SET(source, AINPUT_SOURCE_GAMEPAD))
         {
-            // Assuming a single gamepad, "detected" on its input event
-            CORE.Input.Gamepad.ready[0] = true;
-
             GamepadButton button = AndroidTranslateGamepadButton(keycode);
 
-            if (button == GAMEPAD_BUTTON_UNKNOWN) return 1;
-
-            if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+            if (button != GAMEPAD_BUTTON_UNKNOWN)
             {
-                CORE.Input.Gamepad.currentButtonState[0][button] = 1;
-            }
-            else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
+                // Assuming a single gamepad, "detected" on its input event
+                CORE.Input.Gamepad.ready[0] = true;
 
-            return 1; // Handled gamepad button
+                if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_DOWN)
+                {
+                    CORE.Input.Gamepad.currentButtonState[0][button] = 1;
+                }
+                else CORE.Input.Gamepad.currentButtonState[0][button] = 0;  // Key up
+
+                return 1; // Handled gamepad button
+            }
+            // Unknown keycode: fall through to the keyboard handler below.
         }
 
         KeyboardKey key = ((keycode > 0) && (keycode < KEYCODE_MAP_SIZE))? mapKeycode[keycode] : KEY_NULL;
