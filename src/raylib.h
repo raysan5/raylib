@@ -1584,6 +1584,7 @@ RLAPI void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadi
 RLAPI void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color); // Draw a capsule with the center of its sphere caps at startPos and endPos
 RLAPI void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color); // Draw capsule wireframe with the center of its sphere caps at startPos and endPos
 RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
+RLAPI void DrawPlaneEx(Vector3 centerPos, Vector2 size, Color color, Vector3 normal, Vector3 tangent);   // Draw a plane with extended parameters
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
 RLAPI void DrawGridEx(int slices, float spacing, Vector3 color, Vector3 position, Vector3 normal, Vector3 tangent); // Draw a grid with extended parameters

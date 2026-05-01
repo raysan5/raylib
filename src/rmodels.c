@@ -1058,6 +1058,34 @@ void DrawPlane(Vector3 centerPos, Vector2 size, Color color)
     rlPopMatrix();
 }
 
+// Draw a plane with extended parameters
+RLAPI void DrawPlaneEx(Vector3 centerPos, Vector2 size, Color color, Vector3 normal, Vector3 tangent)
+{
+    // Build basis vectors
+    Vector3 n = Vector3Normalize(normal);
+    Vector3 t = Vector3Normalize(tangent);
+    Vector3 b = Vector3Normalize(Vector3CrossProduct(n, t));
+    t = Vector3CrossProduct(n, b); // Ensure normal and tangent vectors are orthogonal
+
+    float hx = size.x * 0.5f;
+    float hy = size.y * 0.5f;
+
+    Vector3 v1 = Vector3Add(centerPos, Vector3Add(Vector3Scale(t, -hx), Vector3Scale(b, -hy)));
+    Vector3 v2 = Vector3Add(centerPos, Vector3Add(Vector3Scale(t, -hx), Vector3Scale(b,  hy)));
+    Vector3 v3 = Vector3Add(centerPos, Vector3Add(Vector3Scale(t,  hx), Vector3Scale(b,  hy)));
+    Vector3 v4 = Vector3Add(centerPos, Vector3Add(Vector3Scale(t,  hx), Vector3Scale(b, -hy)));
+
+    rlBegin(RL_QUADS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlNormal3f(normal.x, normal.y, normal.z);
+
+        rlVertex3f(v1.x, v1.y, v1.z);
+        rlVertex3f(v2.x, v2.y, v2.z);
+        rlVertex3f(v3.x, v3.y, v3.z);
+        rlVertex3f(v4.x, v4.y, v4.z);
+    rlEnd();
+}
+
 // Draw a ray line
 void DrawRay(Ray ray, Color color)
 {
