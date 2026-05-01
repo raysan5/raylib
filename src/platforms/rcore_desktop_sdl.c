@@ -1675,8 +1675,13 @@ void PollInputEvents(void)
             } break;
             case SDL_MOUSEWHEEL:
             {
-                CORE.Input.Mouse.currentWheelMove.x = (float)event.wheel.x;
-                CORE.Input.Mouse.currentWheelMove.y = (float)event.wheel.y;
+#if defined(USING_VERSION_SDL3)
+                CORE.Input.Mouse.currentWheelMove.x = event.wheel.x;
+                CORE.Input.Mouse.currentWheelMove.y = event.wheel.y;
+#else
+                CORE.Input.Mouse.currentWheelMove.x = event.wheel.preciseX;
+                CORE.Input.Mouse.currentWheelMove.y = event.wheel.preciseY;
+#endif
             } break;
             case SDL_MOUSEMOTION:
             {
