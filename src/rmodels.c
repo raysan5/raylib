@@ -1127,7 +1127,7 @@ void DrawGrid(int slices, float spacing)
 }
 
 // Draw a grid with extended parameters
-void DrawGridEx(int slices, float spacing, Vector3 color, Vector3 position, Vector3 normal, Vector3 tangent)
+void DrawGridEx(int slices, float spacing, Color color, Vector3 position, Vector3 normal, Vector3 tangent)
 {
     int halfSlices = slices / 2;
 
@@ -1138,8 +1138,7 @@ void DrawGridEx(int slices, float spacing, Vector3 color, Vector3 position, Vect
     t = Vector3CrossProduct(n, b); // Ensure normal and tangent vectors are orthogonal
 
     rlBegin(RL_LINES);
-        rlColor3f(color.x, color.y, color.z);
-
+        rlColor4ub(color.r, color.g, color.b, color.a);
         for (int i = -halfSlices; i <= halfSlices; i++)
         {
             float f = (float)i * spacing;

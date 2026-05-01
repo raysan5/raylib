@@ -1587,7 +1587,7 @@ RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);             
 RLAPI void DrawPlaneEx(Vector3 centerPos, Vector2 size, Color color, Vector3 normal, Vector3 tangent);   // Draw a plane with extended parameters
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
-RLAPI void DrawGridEx(int slices, float spacing, Vector3 color, Vector3 position, Vector3 normal, Vector3 tangent); // Draw a grid with extended parameters
+RLAPI void DrawGridEx(int slices, float spacing, Color color, Vector3 position, Vector3 normal, Vector3 tangent); // Draw a grid with extended parameters
 
 //------------------------------------------------------------------------------------
 // Model 3d Loading and Drawing Functions (Module: models)
