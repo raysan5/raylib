@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v2.0 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
+*   raymath v2.0 - Math functions to work with Vector2, Vector3, Vector4, Matrix and Quaternions
 *
 *   CONVENTIONS:
 *     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
