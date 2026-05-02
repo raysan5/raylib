@@ -6140,17 +6140,36 @@ static Model LoadGLTF(const char *fileName)
 
             for (int i = 0; i < model.skeleton.boneCount; i++)
             {
-                cgltf_node *node = skin.joints[i];
-                cgltf_float worldTransform[16];
-                cgltf_node_transform_world(node, worldTransform);
-                Matrix worldMatrix = {
-                    worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
-                    worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
-                    worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
-                    worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
-                };
+                Matrix bindMatrix = { 0 };
+                cgltf_float inverseBindTransform[16] = { 0 };
 
-                MatrixDecompose(worldMatrix,
+                if ((skin.inverse_bind_matrices != NULL) &&
+                    (skin.inverse_bind_matrices->count >= skin.joints_count) &&
+                    cgltf_accessor_read_float(skin.inverse_bind_matrices, i, inverseBindTransform, 16))
+                {
+                    Matrix inverseBindMatrix = {
+                        inverseBindTransform[0], inverseBindTransform[4], inverseBindTransform[8], inverseBindTransform[12],
+                        inverseBindTransform[1], inverseBindTransform[5], inverseBindTransform[9], inverseBindTransform[13],
+                        inverseBindTransform[2], inverseBindTransform[6], inverseBindTransform[10], inverseBindTransform[14],
+                        inverseBindTransform[3], inverseBindTransform[7], inverseBindTransform[11], inverseBindTransform[15]
+                    };
+                    bindMatrix = MatrixInvert(inverseBindMatrix);
+                }
+                else
+                {
+                    cgltf_float worldTransform[16] = { 0 };
+                    cgltf_node_transform_world(skin.joints[i], worldTransform);
+
+                    Matrix worldMatrix = {
+                        worldTransform[0], worldTransform[4], worldTransform[8], worldTransform[12],
+                        worldTransform[1], worldTransform[5], worldTransform[9], worldTransform[13],
+                        worldTransform[2], worldTransform[6], worldTransform[10], worldTransform[14],
+                        worldTransform[3], worldTransform[7], worldTransform[11], worldTransform[15]
+                    };
+                    bindMatrix = worldMatrix;
+                }
+
+                MatrixDecompose(bindMatrix,
                     &(model.skeleton.bindPose[i].translation),
                     &(model.skeleton.bindPose[i].rotation),
                     &(model.skeleton.bindPose[i].scale));
