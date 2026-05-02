@@ -1145,7 +1145,26 @@ RLAPI int FileRename(const char *fileName, const char *fileRename); // Rename fi
 RLAPI int FileRemove(const char *fileName);                         // Remove file (if exists)
 RLAPI int FileCopy(const char *srcPath, const char *dstPath);       // Copy file from one path to another, dstPath created if it doesn't exist
 RLAPI int FileMove(const char *srcPath, const char *dstPath);       // Move file from one directory to another, dstPath created if it doesn't exist
+
+/***************************************
+[[[ FileTextReplace Return Value Proposal ]]]
+
+Returning 1: Success even if there are 0 replacements, just because the file exists, feels strange. 
+I would like to see a way to distinguish between the presence or absence of replacements.
+
+Current Status (Results of actually testing FileTextReplace)
+No file                             : Return value 0
+File exists, 0 replacements         : Return value 1
+File exists, 1 or more replacements : Return value 1
+
+Proposed Change
+No file                             : Return value 0
+File exists, 0 replacements         : Return value -1
+File exists, 1 or more replacements : Return value 1
+
+***************************************/
 RLAPI int FileTextReplace(const char *fileName, const char *search, const char *replacement); // Replace text in an existing file
+
 RLAPI int FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file
 RLAPI bool FileExists(const char *fileName);                        // Check if file exists
 RLAPI bool DirectoryExists(const char *dirPath);                    // Check if a directory path exists
