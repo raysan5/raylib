@@ -76,7 +76,6 @@ typedef struct {
 
     char canvasId[64];                  // Keep current canvas id where wasm app is running
                                         // NOTE: Useful when trying to run multiple wasms in different canvases in same webpage
-
 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
     unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
 #endif
