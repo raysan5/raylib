@@ -2293,6 +2293,35 @@ ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount)
     return animations;
 }
 
+// Update model current pose (vertex buffers and bone matrices)
+void UpdateModelPose(Model model)
+{
+    if ((model.boneMatrices == NULL) || (model.currentPose == NULL) || (model.skeleton.bindPose == NULL) || (model.skeleton.boneCount < 1)) return;
+
+    Matrix bindPoseMatrix = { 0 };
+    Matrix currentPoseMatrix = { 0 };
+
+    // Compute bone matrix from model current pose
+    for (int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
+    {
+        Transform *bindPoseTransform = &model.skeleton.bindPose[boneIndex];
+        bindPoseMatrix = MatrixMultiply(
+            MatrixMultiply(MatrixScale(bindPoseTransform->scale.x, bindPoseTransform->scale.y, bindPoseTransform->scale.z),
+                QuaternionToMatrix(bindPoseTransform->rotation)),
+            MatrixTranslate(bindPoseTransform->translation.x, bindPoseTransform->translation.y, bindPoseTransform->translation.z));
+
+        Transform *currentPoseTransform = &model.currentPose[boneIndex];
+        currentPoseMatrix = MatrixMultiply(
+            MatrixMultiply(MatrixScale(currentPoseTransform->scale.x, currentPoseTransform->scale.y, currentPoseTransform->scale.z),
+                QuaternionToMatrix(currentPoseTransform->rotation)),
+            MatrixTranslate(currentPoseTransform->translation.x, currentPoseTransform->translation.y, currentPoseTransform->translation.z));
+
+        model.boneMatrices[boneIndex] = MatrixMultiply(MatrixInvert(bindPoseMatrix), currentPoseMatrix);
+    }
+
+    UpdateModelAnimationVertexBuffers(model);
+}
+
 // Update model animation data (vertex buffers / bone matrices) for a specific pose
 // NOTE 1: Request frame could be fractional, using a lerp interpolation between two frames
 // NOTE 2: Updated vertex animation data is uploaded to GPU in case of CPU skinning,

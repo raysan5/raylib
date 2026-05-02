@@ -1642,6 +1642,7 @@ RLAPI void SetModelMeshMaterial(Model *model, int meshId, int materialId);      
 
 // Model animations loading/unloading functions
 RLAPI ModelAnimation *LoadModelAnimations(const char *fileName, int *animCount);            // Load model animations from file
+RLAPI void UpdateModelPose(Model model);                                                    // Update model current pose (vertex buffers and bone matrices)
 RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim, float frame);             // Update model animation pose (vertex buffers and bone matrices)
 RLAPI void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, ModelAnimation animB, float frameB, float blend); // Update model animation pose, blending two animations
 RLAPI void UnloadModelAnimations(ModelAnimation *animations, int animCount);                // Unload animation array data
