@@ -212,10 +212,37 @@
 
 // Platform specific defines for process execution API
 #if defined(_WIN32)
-    struct _STARTUPINFOA;
-    struct _PROCESS_INFORMATION;
+    struct _STARTUPINFOA {
+        unsigned long cb;
+        char *lpReserved;
+        char *lpDesktop;
+        char *lpTitle;
+        unsigned long dwX;
+        unsigned long dwY;
+        unsigned long dwXSize;
+        unsigned long dwYSize;
+        unsigned long dwXCountChars;
+        unsigned long dwYCountChars;
+        unsigned long dwFillAttribute;
+        unsigned long dwFlags;
+        unsigned short wShowWindow;
+        unsigned short cbReserved2;
+        unsigned char *lpReserved2;
+        void *hStdInput;
+        void *hStdOutput;
+        void *hStdError;
+    };
 
-    __declspec(dllimport) void* __stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
+    struct _PROCESS_INFORMATION {
+        void *hProcess;
+        void *hThread;
+        unsigned long dwProcessId;
+        unsigned long dwThreadId;
+    };
+
+    __declspec(dllimport) void *__stdcall GetModuleHandleA(const char *lpModuleName);
+    __declspec(dllimport) void *__stdcall GetProcAddress(void *hModule, const char *lpProcName);
+    __declspec(dllimport) void *__stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
     __declspec(dllimport) int __stdcall CloseHandle(void *hObject);
     __declspec(dllimport) int __stdcall GetExitCodeProcess(void *hProcess, unsigned long *lpExitCode);
     __declspec(dllimport) int __stdcall TerminateProcess(void *hProcess, unsigned int uExitCode);
@@ -4252,34 +4279,6 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     Process process = { 0 };
 
 #if defined(_WIN32)
-    struct _STARTUPINFOA {
-        unsigned long cb;
-        char *lpReserved;
-        char *lpDesktop;
-        char *lpTitle;
-        unsigned long dwX;
-        unsigned long dwY;
-        unsigned long dwXSize;
-        unsigned long dwYSize;
-        unsigned long dwXCountChars;
-        unsigned long dwYCountChars;
-        unsigned long dwFillAttribute;
-        unsigned long dwFlags;
-        unsigned short wShowWindow;
-        unsigned short cbReserved2;
-        unsigned char *lpReserved2;
-        void *hStdInput;
-        void *hStdOutput;
-        void *hStdError;
-    };
-
-    struct _PROCESS_INFORMATION {
-        void *hProcess;
-        void *hThread;
-        unsigned long dwProcessId;
-        unsigned long dwThreadId;
-    };
-
     // Windows requires a single command line string
     char cmdLine[MAX_PATH * 4] = { 0 };
     int position = 0;
@@ -4307,7 +4306,7 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     struct _PROCESS_INFORMATION pi = { 0 };
 
     // Application name is specified as the first command line argument, so pass NULL to CreateProcessA here
-    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 0, 0, NULL, NULL, (void*)&si, (void*)&pi))
+    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
     {
         process.pid = (int)pi.dwProcessId;
         CloseHandle(pi.hThread);
@@ -4355,7 +4354,7 @@ RLAPI bool CheckProcess(Process *process)
 
 #if defined(_WIN32)
     // PROCESS_QUERY_INFORMATION
-    void* hProcess = OpenProcess(0x0400, 0, (unsigned long)process->pid);
+    void *hProcess = OpenProcess(0x0400, 0, (unsigned long)process->pid);
     if (hProcess == NULL) return false;
 
     unsigned long exitCode = 0;
@@ -4415,8 +4414,43 @@ RLAPI bool CheckProcess(Process *process)
 // Pause process execution
 RLAPI void PauseProcess(Process *process)
 {
+    if ((process == NULL) || (process->pid <= 0))
+    {
+        return;
+    }
 #if defined(_WIN32)
-    TRACELOG(LOG_WARNING, "PROCESS: Pausing process is not supported on Windows");
+    typedef long (*PFN_NtSuspendProcess)(void *handle);
+    static PFN_NtSuspendProcess NtSuspendProcess = NULL;
+
+    // Load NtSuspendProcess from ntdll.dll
+    if (NtSuspendProcess == NULL)
+    {
+        void *hNtDll = GetModuleHandleA("ntdll.dll");
+        if (hNtDll == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get handle for ntdll.dll");
+            return;
+        }
+
+        NtSuspendProcess = (PFN_NtSuspendProcess)GetProcAddress(hNtDll, "NtSuspendProcess");
+        if (NtSuspendProcess == NULL)    {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get address for NtSuspendProcess");
+            return;
+        }
+    }
+
+    // PROCESS_SUSPEND_RESUME
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process->pid);
+    if (hProcess == NULL)    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
+
+    if (NtSuspendProcess(hProcess) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to pause process");
+    }
+    CloseHandle(hProcess);
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     if (kill(process->pid, SIGSTOP) != 0)
     {
@@ -4430,8 +4464,45 @@ RLAPI void PauseProcess(Process *process)
 // Resume paused process execution
 RLAPI void ResumeProcess(Process *process)
 {
+    if ((process == NULL) || (process->pid <= 0))
+    {
+        return;
+    }
 #if defined(_WIN32)
-    TRACELOG(LOG_WARNING, "PROCESS: Resuming process is not supported on Windows");
+    typedef long (*PFN_NtResumeProcess)(void *handle);
+    static PFN_NtResumeProcess NtResumeProcess = NULL;
+
+    // Load NtResumeProcess from ntdll.dll
+    if (NtResumeProcess == NULL)
+    {
+        void *hNtDll = GetModuleHandleA("ntdll.dll");
+        if (hNtDll == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get handle for ntdll.dll");
+            return;
+        }
+
+        NtResumeProcess = (PFN_NtResumeProcess)GetProcAddress(hNtDll, "NtResumeProcess");
+        if (NtResumeProcess == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get address for NtResumeProcess");
+            return;
+        }
+    }
+
+    // PROCESS_SUSPEND_RESUME
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process->pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
+
+    if (NtResumeProcess(hProcess) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to resume process");
+    }
+    CloseHandle(hProcess);
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     if (kill(process->pid, SIGCONT) != 0)
     {
@@ -4450,8 +4521,8 @@ RLAPI void CloseProcess(Process *process)
         return;
     }
 #if defined(_WIN32)
-    // PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE | PROCESS_SUSPEND_RESUME
-    void* hProcess = OpenProcess(0x0400 | 0x0001 | 0x0800, 0, (unsigned long)process->pid);
+    // PROCESS_TERMINATE
+    void *hProcess = OpenProcess(0x0001, 0, (unsigned long)process->pid);
     if (hProcess == NULL)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
