@@ -963,6 +963,12 @@ typedef enum {
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
 } NPatchLayout;
 
+// Process info
+typedef struct Process {
+    int pid;                         // Process unique identifier
+    int exitCode;                    // Process exit code
+} Process;
+
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args); // Logging: Redirect trace log messages
@@ -1242,6 +1248,13 @@ RLAPI int GetTouchY(void);                                    // Get touch posit
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
 RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for given index
 RLAPI int GetTouchPointCount(void);                           // Get number of touch points
+
+// Process execution functions
+RLAPI Process InitProcess(const char *command, char *const args[]); // Initialize a new process, returns a Process struct
+RLAPI bool CheckProcess(Process *process);                          // Check if a process is still running, updates Process struct
+RLAPI void PauseProcess(Process *process);                          // Pause process execution
+RLAPI void ResumeProcess(Process *process);                         // Resume paused process execution
+RLAPI void CloseProcess(Process *process);                          // Close process and free resources
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: rgestures)
