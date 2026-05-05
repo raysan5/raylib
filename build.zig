@@ -536,7 +536,7 @@ pub const Options = struct {
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
             .config = b.option([]const u8, "config", "Compile with custom define macros overriding config.h") orelse &.{},
-            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse b.graph.environ_map.get("ANDROID_NDK_HOME") orelse "",
+            .android_ndk = b.option([]const u8, "android_ndk", "specify path to android ndk") orelse b.graph.env_map.get("ANDROID_NDK_HOME") orelse "",
             .android_api_version = b.option([]const u8, "android_api_version", "specify target android API level") orelse defaults.android_api_version,
         };
     }
@@ -794,4 +794,5 @@ fn waylandGenerate(
         }
     }
 }
+
 
