@@ -5517,7 +5517,9 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             }
             #endif
 
+        #ifdef SW_ENABLE_DEPTH_TEST
         discard:
+        #endif
             srcColor[0] += dSrcColordx[0];
             srcColor[1] += dSrcColordx[1];
             srcColor[2] += dSrcColordx[2];
@@ -5774,7 +5776,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             }
             #endif
 
+        #ifdef SW_ENABLE_DEPTH_TEST
         discard:
+        #endif
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
@@ -5927,7 +5931,9 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
         }
         #endif
 
+    #ifdef SW_ENABLE_DEPTH_TEST
     discard:
+    #endif
         x += xInc;
         y += yInc;
         #ifdef SW_ENABLE_DEPTH_TEST
