@@ -839,7 +839,7 @@ int GetCurrentMonitor(void)
             // this is probably an overengineered solution for a side case
             // trying to match SDL behaviour
 
-            int closestDist = 0x7FFFFFFF;
+            long long closestDist = 0x7FFFFFFFFFFFFFFFLL;
 
             // Window center position
             int wcx = 0;
@@ -883,7 +883,7 @@ int GetCurrentMonitor(void)
 
                     int dx = wcx - xclosest;
                     int dy = wcy - yclosest;
-                    int dist = (dx*dx) + (dy*dy);
+                    long long dist = (long long)dx*dx + (long long)dy*dy;
                     if (dist < closestDist)
                     {
                         index = i;
