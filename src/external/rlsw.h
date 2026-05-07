@@ -2483,6 +2483,7 @@ static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_
     {
         u = (tex->sWrap == SW_REPEAT)? sw_fract(u) : sw_saturate(u);
         x = (int)(u*tex->width);
+        x = sw_clamp_int(x, 0, tex->wMinus1);
     }
 
 #ifdef SW_TEXTURE_REPEAT_POT_FAST
@@ -2495,6 +2496,7 @@ static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_
     {
         v = (tex->tWrap == SW_REPEAT)? sw_fract(v) : sw_saturate(v);
         y = (int)(v*tex->height);
+        y = sw_clamp_int(y, 0, tex->hMinus1);
     }
 
     tex->readColor(color, tex->pixels, y*tex->width + x);
@@ -3484,6 +3486,11 @@ static void sw_triangle_clip_and_project(void)
 
             // Transformation to screen space
             sw_project_ndc_to_screen(v->position);
+
+            // NDC +1.0 projects to exactly (width + 0.5f), which truncates out of bounds
+            // Clamp screen-space coordinates to valid pixel centers.
+            v->position[0] = sw_clamp(v->position[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+            v->position[1] = sw_clamp(v->position[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
         }
     }
 }
@@ -3599,6 +3606,11 @@ static void sw_quad_clip_and_project(void)
 
             // Transformation to screen space
             sw_project_ndc_to_screen(v->position);
+
+            // NDC +1.0 projects to exactly (width + 0.5f), which truncates out of bounds
+            // Clamp screen-space coordinates to valid pixel centers.
+            v->position[0] = sw_clamp(v->position[0], 0.0f, (float)(RLSW.colorBuffer->width  - 1) + 0.5f);
+            v->position[1] = sw_clamp(v->position[1], 0.0f, (float)(RLSW.colorBuffer->height - 1) + 0.5f);
         }
     }
 }
