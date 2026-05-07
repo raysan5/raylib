@@ -29,11 +29,15 @@ option(GLFW_BUILD_WAYLAND "Build the bundled GLFW with Wayland support" OFF)
 option(GLFW_BUILD_X11 "Build the bundled GLFW with X11 support" ON)
 
 option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage)" OFF)
-set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
 
 include(ParseConfigHeader)
 
 foreach(FLAG IN LISTS CONFIG_HEADER_FLAGS)
     string(REGEX MATCH "([^=]+)=(.+)" _ ${FLAG})
-    cmake_dependent_option(${CMAKE_MATCH_1} "" ${CMAKE_MATCH_2} CUSTOMIZE_BUILD ${CMAKE_MATCH_2})
+    set(CONFIG_HEADER_FLAG_DEFAULT ${CMAKE_MATCH_2})
+    if (INCLUDE_EVERYTHING AND "${CONFIG_HEADER_FLAG_DEFAULT}" STREQUAL "OFF")
+        set(CONFIG_HEADER_FLAG_DEFAULT ON)
+    endif()
+
+    cmake_dependent_option(${CMAKE_MATCH_1} "" ${CONFIG_HEADER_FLAG_DEFAULT} CUSTOMIZE_BUILD ${CONFIG_HEADER_FLAG_DEFAULT})
 endforeach()
