@@ -178,12 +178,12 @@ typedef struct {
     RGFW_monitor *monitor;
     mg_gamepads minigamepad;
 
-    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-        RGFW_surface *surface;
-        u8 *surfacePixels;
-        i32 surfaceWidth;
-        i32 surfaceHeight;
-    #endif
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    RGFW_surface *surface;
+    u8 *surfacePixels;
+    i32 surfaceWidth;
+    i32 surfaceHeight;
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ void PollInputEvents(void)
             {
                 // set flag that the window was resized
                 CORE.Window.resizedLastFrame = true;
-                
+
                 #if defined(__APPLE__)
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {

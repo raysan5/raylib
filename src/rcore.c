@@ -442,18 +442,6 @@ typedef enum AutomationEventType {
     ACTION_SETTARGETFPS             // param[0]: fps
 } AutomationEventType;
 
-// Event type to config events flags
-// WARNING: Not used at the moment
-typedef enum {
-    EVENT_INPUT_KEYBOARD    = 0,
-    EVENT_INPUT_MOUSE       = 1,
-    EVENT_INPUT_GAMEPAD     = 2,
-    EVENT_INPUT_TOUCH       = 4,
-    EVENT_INPUT_GESTURE     = 8,
-    EVENT_WINDOW            = 16,
-    EVENT_CUSTOM            = 32
-} EventType;
-
 // Event type name strings, required for export
 static const char *autoEventTypeName[] = {
     "EVENT_NONE",
@@ -481,16 +469,6 @@ static const char *autoEventTypeName[] = {
     "ACTION_TAKE_SCREENSHOT",
     "ACTION_SETTARGETFPS"
 };
-
-/*
-// Automation event (24 bytes)
-// NOTE: Opaque struct, internal to raylib
-struct AutomationEvent {
-    unsigned int frame;                 // Event frame
-    unsigned int type;                  // Event type (AutomationEventType)
-    int params[4];                      // Event parameters (if required)
-};
-*/
 
 static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
 static bool automationEventRecording = false;               // Recording automation events flag

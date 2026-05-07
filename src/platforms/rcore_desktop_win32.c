@@ -1526,7 +1526,6 @@ int InitPlatform(void)
         if (hr < 0) TRACELOG(LOG_ERROR, "%s failed, hresult=0x%lx", "SetProcessDpiAwareness", (DWORD)hr);
     }
 */
-
     HINSTANCE hInstance = GetModuleHandleW(0);
 
     // Define window class
@@ -1775,9 +1774,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-            
+
 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later 
+            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later
             // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
             if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 #else
