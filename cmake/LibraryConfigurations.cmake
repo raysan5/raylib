@@ -7,6 +7,30 @@ if(POLICY CMP0072)
   cmake_policy(SET CMP0072 NEW)
 endif()
 
+include(CheckCSourceCompiles)
+include(CMakePushCheckState)
+
+function(raylib_check_libatomic_required result)
+    set(_atomic_test_source "
+int main(void)
+{
+    volatile long long value = 0;
+    return (int)__atomic_fetch_add(&value, 1, __ATOMIC_SEQ_CST);
+}")
+
+    check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+
+    if (RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+        set(${result} FALSE PARENT_SCOPE)
+    else ()
+        cmake_push_check_state()
+        list(APPEND CMAKE_REQUIRED_LIBRARIES atomic)
+        check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITH_LIBATOMIC)
+        cmake_pop_check_state()
+        set(${result} ${RAYLIB_ATOMICS_WITH_LIBATOMIC} PARENT_SCOPE)
+    endif ()
+endfunction()
+
 set(RAYLIB_DEPENDENCIES "include(CMakeFindDependencyMacro)")
 
 if (${PLATFORM} STREQUAL "Desktop")
@@ -221,6 +245,14 @@ if (NOT GRAPHICS)
 endif ()
 
 set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
+
+if (SUPPORT_MODULE_RAUDIO AND UNIX AND NOT APPLE)
+    raylib_check_libatomic_required(RAYLIB_LIBATOMIC_REQUIRED)
+    if (RAYLIB_LIBATOMIC_REQUIRED)
+        message(STATUS "64-bit atomics require libatomic")
+        list(APPEND LIBS_PRIVATE atomic)
+    endif ()
+endif ()
 
 if (${PLATFORM} MATCHES "Desktop")
     set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)
