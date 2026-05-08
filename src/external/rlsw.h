@@ -5389,6 +5389,11 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     int xEnd = (int)end->position[0];
     if (xStart == xEnd) return;
 
+    // Get the current row and skip if outside the framebuffer.
+    // Maybe this check is better suited elsewhere? 
+    int y = (int)start->position[1];
+    if (y < 0 || y >= RLSW.colorBuffer->height) return;
+
     // Compute the inverse horizontal distance along the X axis
     float dxRcp = sw_rcp(end->position[0] - start->position[0]);
 
@@ -5411,25 +5416,30 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     // Compute the subpixel distance to traverse before the first pixel
     float xSubstep = 1.0f - sw_fract(start->position[0]);
 
-    // Initializing the interpolation starting values
-    float w = start->position[3] + dWdx*xSubstep;
+    // Intercept the span bounds to ensure we don't write before the framebuffer.
+    int xLoopStart = sw_clamp_int(xStart, 0, RLSW.colorBuffer->width - 1);
+    int dxStart = xLoopStart - xStart;
+
+    // Initializing the interpolation starting values.
+    // Also step further into them to move away from the colorbuffer edge.
+    float w = start->position[3] + dWdx*xSubstep + dWdx*dxStart;
     float color[4] = {
-        start->color[0] + dCdx[0]*xSubstep,
-        start->color[1] + dCdx[1]*xSubstep,
-        start->color[2] + dCdx[2]*xSubstep,
-        start->color[3] + dCdx[3]*xSubstep
+        start->color[0] + dCdx[0]*xSubstep + dCdx[0]*dxStart,
+        start->color[1] + dCdx[1]*xSubstep + dCdx[1]*dxStart,
+        start->color[2] + dCdx[2]*xSubstep + dCdx[2]*dxStart,
+        start->color[3] + dCdx[3]*xSubstep + dCdx[3]*dxStart
     };
 #ifdef SW_ENABLE_DEPTH_TEST
-    float z = start->position[2] + dZdx*xSubstep;
+    float z = start->position[2] + dZdx*xSubstep + dZdx*dxStart;
 #endif
 #ifdef SW_ENABLE_TEXTURE
-    float u = start->texcoord[0] + dUdx*xSubstep;
-    float v = start->texcoord[1] + dVdx*xSubstep;
+    float u = start->texcoord[0] + dUdx*xSubstep + dUdx*dxStart;
+    float v = start->texcoord[1] + dVdx*xSubstep + dVdx*dxStart;
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
-    int y = (int)start->position[1];
-    int baseOffset = y*RLSW.colorBuffer->width + xStart;
+    // Don't allow a y value outside the buffer.
+    int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
 #ifdef SW_ENABLE_DEPTH_TEST
     uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
@@ -5437,12 +5447,14 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
 #define SW_AFFINE_BLOCK 16
 
-    int x = xStart;
-    while (x < xEnd)
+    int x = xLoopStart;
+    // Prevent pixels from beyond the buffer from processing.
+    int xLoopEnd = sw_clamp_int(xEnd, 0, RLSW.colorBuffer->width - 1);
+    while (x < xLoopEnd)
     {
         // Clamp last block to remaining pixels
         int blockEnd = x + SW_AFFINE_BLOCK;
-        if (blockEnd > xEnd) blockEnd = xEnd;
+        if (blockEnd > xLoopEnd) blockEnd = xLoopEnd;
         float blockLenF = (float)(blockEnd - x);
         float blockLenRcp = sw_rcp(blockLenF);
 
@@ -5730,21 +5742,38 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
-    for (int y = yMin; y < yMax; y++)
+    // Intercept the boundaries to stay within the framebuffer.
+    int yLoopMin = sw_clamp_int(yMin, 0, RLSW.colorBuffer->height - 1);
+    int yLoopMax = sw_clamp_int(yMax, 0, RLSW.colorBuffer->height - 1);
+    int xLoopMin = sw_clamp_int(xMin, 0, RLSW.colorBuffer->width - 1);
+    int xLoopMax = sw_clamp_int(xMax, 0, RLSW.colorBuffer->width - 1);
+    int dxMin = xLoopMin - xMin;
+    #if defined(SW_ENABLE_DEPTH_TEST) || defined(SW_ENABLE_TEXTURE)
+    int dyMin = yLoopMin - yMin;
+    #endif
+
+    for (int y = yLoopMin; y < yLoopMax; y++)
     {
-        int baseOffset = y*stride + xMin;
+        int baseOffset = y*stride + xLoopMin;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
     #ifdef SW_ENABLE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
-        float z = zRow;
+        // Correct our start by how far we clipped outside the framebuffer.
+        float z = zRow + dZdy*dyMin;
     #endif
     #ifdef SW_ENABLE_TEXTURE
-        float u = uRow;
-        float v = vRow;
+        // Correct our start by how far we clipped outside the framebuffer.
+        float u = uRow + dUdy*dyMin;
+        float v = vRow + dVdy*dyMin;
     #endif
-        float color[4] = { cRow[0], cRow[1], cRow[2], cRow[3] };
+        float color[4] = {
+            cRow[0] + dCdx[0]*dxMin,
+            cRow[1] + dCdx[1]*dxMin,
+            cRow[2] + dCdx[2]*dxMin,
+            cRow[3] + dCdx[3]*dxMin
+        };
 
-        for (int x = xMin; x < xMax; x++)
+        for (int x = xLoopMin; x < xLoopMax; x++)
         {
             float srcColor[4] = { color[0], color[1], color[2], color[3] };
 
