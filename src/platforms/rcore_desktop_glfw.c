@@ -1054,12 +1054,13 @@ Image GetClipboardImage(void)
 
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
-    unsigned long long int dataSize = 0;
+
+    unsigned int dataSize = 0;
     void *bmpData = NULL;
     int width = 0;
     int height = 0;
 
-    bmpData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    bmpData = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
@@ -1112,7 +1113,7 @@ Image GetClipboardImage(void)
     XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif // defined(_WIN32)
+#endif // _WIN32
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
