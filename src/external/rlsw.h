@@ -5752,25 +5752,36 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     int dyMin = yLoopMin - yMin;
     #endif
 
+    // Correct our start by how far we clipped outside the framebuffer.
+    cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
+    cRow[1] += dCdx[1]*dxMin + dCdy[1]*dyMin;
+    cRow[2] += dCdx[2]*dxMin + dCdy[2]*dyMin;
+    cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
+    #ifdef SW_ENABLE_DEPTH_TEST
+    zRow += dZdy*dyMin + dZdx*dxMin;
+    #ifdef SW_ENABLE_TEXTURE
+    uRow += dUdy*dyMin + dUdx*dxMin;
+    vRow += dVdy*dyMin + dVdx*dxMin;
+    #endif
+
     for (int y = yLoopMin; y < yLoopMax; y++)
     {
         int baseOffset = y*stride + xLoopMin;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
     #ifdef SW_ENABLE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
-        // Correct our start by how far we clipped outside the framebuffer.
-        float z = zRow + dZdy*dyMin;
+        // Copy the cursors so we increment them ourselves without destroying the offset maths.
+        float z = zRow;
     #endif
     #ifdef SW_ENABLE_TEXTURE
-        // Correct our start by how far we clipped outside the framebuffer.
-        float u = uRow + dUdy*dyMin;
-        float v = vRow + dVdy*dyMin;
+        float u = uRow;
+        float v = vRow;
     #endif
         float color[4] = {
-            cRow[0] + dCdx[0]*dxMin,
-            cRow[1] + dCdx[1]*dxMin,
-            cRow[2] + dCdx[2]*dxMin,
-            cRow[3] + dCdx[3]*dxMin
+            cRow[0],
+            cRow[1],
+            cRow[2],
+            cRow[3]
         };
 
         for (int x = xLoopMin; x < xLoopMax; x++)
@@ -5812,6 +5823,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         #ifdef SW_ENABLE_DEPTH_TEST
         discard:
         #endif
+            // We move one pixel over without touching the original "start offset"
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
@@ -5834,6 +5846,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
         }
 
+        // The for loop is clamped to the right side of the screen.
+        // However, these cursor start vars are still on the left.
+        // That's fine.  We just need to advance to the next row.
         cRow[0] += dCdy[0];
         cRow[1] += dCdy[1];
         cRow[2] += dCdy[2];
