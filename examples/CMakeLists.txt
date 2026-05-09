@@ -98,11 +98,13 @@ if (${PLATFORM} MATCHES "Android")
 
 elseif (${PLATFORM} MATCHES "Web")
     set(example_sources) # clear example_sources
-    list(APPEND example_sources others/web_basic_window.c)
     list(APPEND example_sources core/core_input_gestures_testbed.c)
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
+
+elseif ("${PLATFORM}" MATCHES "Memory")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
 
 elseif ("${OPENGL_VERSION}" STREQUAL "Software")

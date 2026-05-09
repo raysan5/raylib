@@ -117,9 +117,8 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
 
-# Enable support for X11 by default on Linux when using GLFW
-# NOTE: Wayland is disabled by default, only enable if you are sure
-GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
+# Enable support for Wayland and X11 by default on Linux when using GLFW
+GLFW_LINUX_ENABLE_WAYLAND  ?= TRUE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
 # Enable support for X11 by default on Linux when using RGFW
@@ -275,14 +274,27 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE # Uncomment to use software rendering
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
     # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
     #GRAPHICS = GRAPHICS_API_OPENGL_ES3
 endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
+    # On HTML5 OpenGL ES 2.0 is used, emscripten translates it to WebGL 1.0
+    GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
+    #GRAPHICS = GRAPHICS_API_OPENGL_ES3
+
+    ifeq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
+        $(error WEB_RGFW: Software rendering not supported!)
+    endif
+endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # By default use OpenGL ES 2.0 on Android
     GRAPHICS ?= GRAPHICS_API_OPENGL_ES2
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_MEMORY)
+    # By default use OpenGL Software
+    GRAPHICS = GRAPHICS_API_OPENGL_SOFTWARE
 endif
 
 # Define default C compiler and archiver to pack library: CC, AR
@@ -320,7 +332,12 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
         AR = $(RPI_TOOLCHAIN)/bin/$(RPI_TOOLCHAIN_NAME)-ar
     endif
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    # HTML5 emscripten compiler
+    CC = emcc
+    AR = emar
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
     # HTML5 emscripten compiler
     CC = emcc
     AR = emar
@@ -364,7 +381,6 @@ ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
 endif
 
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    # NOTE: When using multi-threading in the user code, it requires -pthread enabled
     CFLAGS += -std=gnu99
 else
     CFLAGS += -std=c99
@@ -383,11 +399,14 @@ ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
 endif
 
 ifeq ($(RAYLIB_BUILD_MODE),RELEASE)
-    ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-        CFLAGS += -Os
-    endif
     ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         CFLAGS += -O1
+    endif
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+        CFLAGS += -Os
+    endif
+    ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
+        CFLAGS += -Os
     endif
     ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
         CFLAGS += -O2
@@ -402,23 +421,12 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     CFLAGS += -Werror=implicit-function-declaration
 endif
-ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    # -Os                        # size optimization
-    # -O2                        # optimization level 2, if used, also set --memory-init-file 0
-    # -sUSE_GLFW=3               # Use glfw3 library (context/input management)
-    # -sALLOW_MEMORY_GROWTH=1    # to allow memory resizing -> WARNING: Audio buffers could FAIL!
-    # -sTOTAL_MEMORY=16777216    # to specify heap memory size (default = 16MB) (67108864 = 64MB)
-    # -sUSE_PTHREADS=1           # multithreading support
-    # -sWASM=0                   # disable Web Assembly, emitted by default
-    # -sASYNCIFY                 # lets synchronous C/C++ code interact with asynchronous JS
-    # -sFORCE_FILESYSTEM=1       # force filesystem to load/save files data
-    # -sASSERTIONS=1             # enable runtime checks for common memory allocation errors (-O1 and above turn it off)
-    # -sMINIFY_HTML=0            # minify generated html from shell.html
-    # --profiling                # include information for code profiling
-    # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
-    # --preload-file resources   # specify a resources folder for data compilation
-    # --source-map-base          # allow debugging in browser with source map
-    # --shell-file shell.html    # define a custom shell .html and output extension
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB)
+    ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
+        CFLAGS += --profiling
+    endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_WEB_RGFW)
     ifeq ($(RAYLIB_BUILD_MODE),DEBUG)
         CFLAGS += --profiling
     endif
@@ -768,7 +776,6 @@ all: raylib
 raylib: $(OBJS)
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
     # Compile raylib libray for web
-    #$(CC) $(OBJS) -r -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).bc
     ifeq ($(RAYLIB_LIBTYPE),SHARED)
 		@echo "WARNING: $(TARGET_PLATFORM) does not support SHARED libraries. Generating STATIC library."
     endif

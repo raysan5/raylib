@@ -266,9 +266,12 @@ static void PollKeyboardEvents(void);           // Process evdev keyboard events
 static void PollGamepadEvents(void);            // Process evdev gamepad events
 static void PollMouseEvents(void);              // Process evdev mouse events
 
+// Not used by software rendering.
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode);                               // Search matching DRM mode in connector's mode list
 static int FindExactConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);      // Search exactly matching DRM connector mode in connector's list
 static int FindNearestConnectorMode(const drmModeConnector *connector, uint width, uint height, uint fps, bool allowInterlaced);    // Search the nearest matching DRM connector mode in connector's list
+#endif
 
 static void SetupFramebuffer(int width, int height); // Setup main framebuffer (required by InitPlatform())
 
@@ -561,13 +564,13 @@ void ShowCursor(void)
     CORE.Input.Mouse.cursorHidden = false;
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     // Set cursor position in the middle
@@ -577,7 +580,7 @@ void EnableCursor(void)
     CORE.Input.Mouse.cursorLocked = false;
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     // Set cursor position in the middle
@@ -837,14 +840,8 @@ void SwapScreenBuffer(void)
     uint32_t height = mode->vdisplay;
 
     // Dumb buffers use a fixed format based on bpp
-#if SW_COLOR_BUFFER_BITS == 24
     const uint32_t bpp = 32;    // 32 bits per pixel (XRGB8888 format)
     const uint32_t depth = 24;  // Color depth, here only 24 bits, alpha is not used
-#else
-    // REVIEW: Not sure how it will be interpreted (RGB or RGBA?)
-    const uint32_t bpp = SW_COLOR_BUFFER_BITS;
-    const uint32_t depth = SW_COLOR_BUFFER_BITS;
-#endif
 
     // Create a dumb buffer for software rendering
     struct drm_mode_create_dumb creq = { 0 };
@@ -899,7 +896,7 @@ void SwapScreenBuffer(void)
 
     // Copy the software rendered buffer to the dumb buffer with scaling if needed
     // NOTE: RLSW will make a simple copy if the dimensions match
-    swBlitFramebuffer(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
+    swBlitPixels(0, 0, width, height, 0, 0, width, height, SW_RGBA, SW_UNSIGNED_BYTE, dumbBuffer);
 
     // Unmap the buffer
     munmap(dumbBuffer, creq.size);
@@ -1009,9 +1006,9 @@ double GetTime(void)
     double time = 0.0;
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
+    unsigned long long nanoSeconds = (unsigned long long)ts.tv_sec*1000000000LLU + (unsigned long long)ts.tv_nsec;
 
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+    time = (double)(nanoSeconds - CORE.Time.base)*1e-9; // Elapsed time since InitTimer()
 
     return time;
 }
@@ -1432,7 +1429,7 @@ int InitPlatform(void)
         if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
     }
 
-    // In case extension not found or display could not be retrieved, try useing legacy version
+    // In case extension not found or display could not be retrieved, try using legacy version
     if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
 #endif
     if (platform.device == EGL_NO_DISPLAY)
@@ -1555,12 +1552,6 @@ int InitPlatform(void)
         CORE.Window.render.height = CORE.Window.screen.height;
         CORE.Window.currentFbo.width = CORE.Window.render.width;
         CORE.Window.currentFbo.height = CORE.Window.render.height;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
     }
     else
     {
@@ -1586,13 +1577,14 @@ int InitPlatform(void)
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
+#endif
 
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully (Software Rendering)");
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+        FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
     TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window.renderOffset.x, CORE.Window.renderOffset.y);
-#endif
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
 
@@ -2571,6 +2563,7 @@ static void PollMouseEvents(void)
     }
 }
 
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
 // Search matching DRM mode in connector's mode list
 static int FindMatchingConnectorMode(const drmModeConnector *connector, const drmModeModeInfo *mode)
 {
@@ -2659,6 +2652,7 @@ static int FindNearestConnectorMode(const drmModeConnector *connector, uint widt
 
     return nearestIndex;
 }
+#endif
 
 // Compute framebuffer size relative to screen size and display size
 // NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified

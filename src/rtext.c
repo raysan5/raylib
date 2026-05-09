@@ -3,22 +3,22 @@
 *   rtext - Basic functions to load fonts and draw text
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RTEXT
+*       #define SUPPORT_MODULE_RTEXT        1
 *           rtext module is included in the build
 *
-*       #define SUPPORT_FILEFORMAT_FNT
-*       #define SUPPORT_FILEFORMAT_TTF
-*       #define SUPPORT_FILEFORMAT_BDF
+*       #define SUPPORT_FILEFORMAT_FNT      1
+*       #define SUPPORT_FILEFORMAT_TTF      1
+*       #define SUPPORT_FILEFORMAT_BDF      0
 *           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, comment unrequired #define in this module
+*           supported by default, to remove support, #define as 0 in this module or your build system
 *
-*       #define TEXTSPLIT_MAX_TEXT_BUFFER_LENGTH
-*           TextSplit() function static buffer max size
+*       #define MAX_TEXT_BUFFER_LENGTH   1024
+*           Text functions using static buffer max size
 *
-*       #define MAX_TEXTSPLIT_COUNT
+*       #define MAX_TEXTSPLIT_COUNT       128
 *           TextSplit() function static substrings pointers array (pointing to static buffer)
 *
-*       #define FONT_ATLAS_CORNER_REC_SIZE
+*       #define FONT_ATLAS_CORNER_REC_SIZE  3
 *           On font atlas image generation [GenImageFontAtlas()], add a NxN pixels white rectangle
 *           at the bottom-right corner of the atlas. It can be useful to for shapes drawing, to allow
 *           drawing text and shapes with a single draw call [SetShapesTexture()]
@@ -156,7 +156,7 @@ extern void LoadFontDefault(void)
 {
     #define BIT_CHECK(a,b) ((a) & (1u << (b)))
 
-    // Check to see if the font for an image has alreeady been allocated,
+    // Check to see if the font for an image has already been allocated,
     // and if no need to upload, then return
     if (defaultFont.glyphs != NULL) return;
 
@@ -1279,7 +1279,7 @@ void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSiz
     DrawTexturePro(font.texture, srcRec, dstRec, (Vector2){ 0, 0 }, 0.0f, tint);
 }
 
-// Draw multiple character (codepoints)
+// Draw multiple characters (codepoints)
 void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint)
 {
     float textOffsetY = 0;          // Offset between lines (on linebreak '\n')
@@ -1674,7 +1674,7 @@ int TextCopy(char *dst, const char *src)
     return bytes;
 }
 
-// Check if two text string are equal
+// Check if two text strings are equal
 // REQUIRES: strcmp()
 bool TextIsEqual(const char *text1, const char *text2)
 {
@@ -1724,7 +1724,7 @@ const char *TextRemoveSpaces(const char *text)
     if (text != NULL)
     {
         // Avoid copying the ' ' characters
-        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++)
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[i] != '\0'); i++)
         {
             if (text[i] != ' ') { buffer[j] = text[i]; j++; }
         }

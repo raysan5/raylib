@@ -11,22 +11,22 @@
 *       - Play/Stop/Pause/Resume loaded audio
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RAUDIO
+*       #define SUPPORT_MODULE_RAUDIO       1
 *           raudio module is included in the build
 *
 *       #define RAUDIO_STANDALONE
 *           Define to use the module as standalone library (independently of raylib)
 *           Required types and functions are defined in the same module
 *
-*       #define SUPPORT_FILEFORMAT_WAV
-*       #define SUPPORT_FILEFORMAT_OGG
-*       #define SUPPORT_FILEFORMAT_MP3
-*       #define SUPPORT_FILEFORMAT_QOA
-*       #define SUPPORT_FILEFORMAT_FLAC
-*       #define SUPPORT_FILEFORMAT_XM
-*       #define SUPPORT_FILEFORMAT_MOD
+*       #define SUPPORT_FILEFORMAT_WAV      1
+*       #define SUPPORT_FILEFORMAT_OGG      1
+*       #define SUPPORT_FILEFORMAT_MP3      1
+*       #define SUPPORT_FILEFORMAT_QOA      1
+*       #define SUPPORT_FILEFORMAT_FLAC     0
+*       #define SUPPORT_FILEFORMAT_XM       1
+*       #define SUPPORT_FILEFORMAT_MOD      1
 *           Selected desired fileformats to be supported for loading. Some of those formats are
-*           supported by default, to remove support, comment unrequired #define in this module
+*           supported by default, to remove support, #define as 0 in this module or your build system
 *
 *   DEPENDENCIES:
 *       miniaudio.h  - Audio device management lib (https://github.com/mackron/miniaudio)
@@ -378,7 +378,7 @@ struct rAudioProcessor {
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
 
-#define AudioBuffer rAudioBuffer    // HACK: To avoid CoreAudio (macOS) symbol collision
+#define AudioBuffer rAudioBuffer    // WARNING: Renamed to avoid symbol collision with CoreAudio (macOS) AudioBuffer type
 
 // Audio data context
 typedef struct AudioData {
@@ -434,6 +434,7 @@ static const char *GetFileName(const char *filePath);               // Get point
 static const char *GetFileNameWithoutExt(const char *filePath);     // Get filename string without extension (uses static string)
 
 static unsigned char *LoadFileData(const char *fileName, int *dataSize);    // Load file data as byte array (read)
+static void UnloadFileData(unsigned char *data);                     // Unload file data allocated by LoadFileData()
 static bool SaveFileData(const char *fileName, void *data, int dataSize);   // Save data to file from byte array (write)
 static bool SaveFileText(const char *fileName, char *text);         // Save text data to file (write), string must be '\0' terminated
 #endif
@@ -857,7 +858,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
         drmp3_config config = { 0 };
-        unsigned long long int totalFrameCount = 0;
+        unsigned long long totalFrameCount = 0;
 
         // NOTE: Forcing conversion to 32bit float sample size on reading
         wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
@@ -867,7 +868,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         {
             wave.channels = config.channels;
             wave.sampleRate = config.sampleRate;
-            wave.frameCount = (int)totalFrameCount;
+            wave.frameCount = (unsigned int)totalFrameCount; // WARNING: Potential loss of data
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
 
@@ -895,13 +896,13 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 #if SUPPORT_FILEFORMAT_FLAC
     else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
     {
-        unsigned long long int totalFrameCount = 0;
+        unsigned long long totalFrameCount = 0;
 
         // NOTE: Forcing conversion to 16bit sample size on reading
         wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
         wave.sampleSize = 16;
 
-        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount;
+        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount; // WARNING: Potential loss of data
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
     }
 #endif
@@ -912,7 +913,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     return wave;
 }
 
-// Checks if wave data is valid (data loaded and parameters)
+// Check if wave data is valid (data loaded and parameters)
 bool IsWaveValid(Wave wave)
 {
     bool result = false;
@@ -980,7 +981,7 @@ Sound LoadSoundFromWave(Wave wave)
     return sound;
 }
 
-// Clone sound from existing sound data, clone does not own wave data
+// Load sound alias, clone sound from existing sound data, clone does not own wave data
 // NOTE: Wave data must be unallocated manually and will be shared across all clones
 Sound LoadSoundAlias(Sound source)
 {
@@ -1012,7 +1013,7 @@ Sound LoadSoundAlias(Sound source)
     return sound;
 }
 
-// Checks if a sound is valid (data loaded and buffers initialized)
+// Check if a sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
 {
     bool result = false;
@@ -1702,8 +1703,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 
         // Copy data to allocated memory for default UnloadMusicStream
         unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
-        int it = dataSize/sizeof(unsigned char);
-        for (int i = 0; i < it; i++) newData[i] = data[i];
+        for (int i = 0; i < dataSize; i++) newData[i] = data[i];
 
         // Memory loaded version for jar_mod_load_file()
         if (dataSize && (dataSize < 32*1024*1024))
@@ -1750,7 +1750,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
-// Checks if a music stream is valid (context and buffers initialized)
+// Check if a music stream is valid (context and buffers initialized)
 bool IsMusicValid(Music music)
 {
     return ((music.ctxData != NULL) &&          // Validate context loaded
@@ -1763,6 +1763,8 @@ bool IsMusicValid(Music music)
 // Unload music stream
 void UnloadMusicStream(Music music)
 {
+    if (IsMusicStreamPlaying(music)) StopMusicStream(music);
+
     UnloadAudioStream(music.stream);
 
     if (music.ctxData != NULL)
@@ -2065,7 +2067,7 @@ void SetMusicPitch(Music music, float pitch)
     SetAudioBufferPitch(music.stream.buffer, pitch);
 }
 
-// Set pan for a music
+// Set pan for music
 void SetMusicPan(Music music, float pan)
 {
     SetAudioBufferPan(music.stream.buffer, pan);
@@ -2153,7 +2155,7 @@ AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, un
     return stream;
 }
 
-// Checks if an audio stream is valid (buffers initialized)
+// Check if an audio stream is valid (buffers initialized)
 bool IsAudioStreamValid(AudioStream stream)
 {
     return ((stream.buffer != NULL) &&    // Validate stream buffer
@@ -2879,6 +2881,12 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
     return data;
+}
+
+// Unload file data allocated by LoadFileData()
+static void UnloadFileData(unsigned char *data)
+{
+    RL_FREE(data);
 }
 
 // Save data to file from buffer

@@ -8,18 +8,18 @@
 *       are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
 *
 *       Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a
-*       user-provided texture with SetShapesTexture(), the pourpouse of this implementation
+*       user-provided texture with SetShapesTexture(), the purpose of this implementation
 *       is allowing to reduce draw calls when combined with a texture-atlas
 *
 *       By default, raylib sets the default texture and rectangle at InitWindow()[rcore] to one
-*       white character of default font [rtext], this way, raylib text and shapes can be draw with
+*       white character of default font [rtext], this way, raylib text and shapes can be drawn with
 *       a single draw call and it also allows users to configure it the same way with their own fonts
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RSHAPES
+*       #define SUPPORT_MODULE_RSHAPES      1
 *           rshapes module is included in the build
 *
-*       #define SUPPORT_QUADS_DRAW_MODE
+*       #define SUPPORT_QUADS_DRAW_MODE     1
 *           Use QUADS instead of TRIANGLES for drawing when possible. Lines-based shapes still use LINES
 *
 *
@@ -324,6 +324,22 @@ void DrawCircleV(Vector2 center, float radius, Color color)
     DrawCircleSector(center, radius, 0, 360, 36, color);
 }
 
+// Draw a gradient-filled circle
+void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer)
+{
+    rlBegin(RL_TRIANGLES);
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlColor4ub(inner.r, inner.g, inner.b, inner.a);
+            rlVertex2f(center.x, center.y);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*radius, center.y + sinf(DEG2RAD*(i + 10))*radius);
+            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*radius, center.y + sinf(DEG2RAD*i)*radius);
+        }
+    rlEnd();
+}
+
 // Draw a piece of a circle
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
@@ -469,22 +485,6 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
             rlColor4ub(color.r, color.g, color.b, color.a);
             rlVertex2f(center.x, center.y);
             rlVertex2f(center.x + cosf(DEG2RAD*angle)*radius, center.y + sinf(DEG2RAD*angle)*radius);
-        }
-    rlEnd();
-}
-
-// Draw a gradient-filled circle
-void DrawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer)
-{
-    rlBegin(RL_TRIANGLES);
-        for (int i = 0; i < 360; i += 10)
-        {
-            rlColor4ub(inner.r, inner.g, inner.b, inner.a);
-            rlVertex2f((float)centerX, (float)centerY);
-            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
-            rlVertex2f((float)centerX + cosf(DEG2RAD*(i + 10))*radius, (float)centerY + sinf(DEG2RAD*(i + 10))*radius);
-            rlColor4ub(outer.r, outer.g, outer.b, outer.a);
-            rlVertex2f((float)centerX + cosf(DEG2RAD*i)*radius, (float)centerY + sinf(DEG2RAD*i)*radius);
         }
     rlEnd();
 }
@@ -1422,23 +1422,32 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 // NOTE: Vertex must be provided in counter-clockwise order
 void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
+    DrawTriangleGradient(v1, v2, v3, color, color, color);
+}
+
+// Draw triangle with interpolated colors (vertex in counter-clockwise order!)
+void DrawTriangleGradient(Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3)
+{
 #if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
 
     rlBegin(RL_QUADS);
         rlNormal3f(0.0f, 0.0f, 1.0f);
-        rlColor4ub(color.r, color.g, color.b, color.a);
 
+        rlColor4ub(c1.r, c1.g, c1.b, c1.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(v1.x, v1.y);
 
+        rlColor4ub(c2.r, c2.g, c2.b, c2.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(v2.x, v2.y);
 
+        rlColor4ub(c3.r, c3.g, c3.b, c3.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(v3.x, v3.y);
 
+        rlColor4ub(c3.r, c3.g, c3.b, c3.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(v3.x, v3.y);
     rlEnd();
@@ -1446,9 +1455,11 @@ void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     rlSetTexture(0);
 #else
     rlBegin(RL_TRIANGLES);
-        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlColor4ub(c1.r, c1.g, c1.b, c1.a);
         rlVertex2f(v1.x, v1.y);
+        rlColor4ub(c2.r, c2.g, c2.b, c2.a);
         rlVertex2f(v2.x, v2.y);
+        rlColor4ub(c3.r, c3.g, c3.b, c3.a);
         rlVertex2f(v3.x, v3.y);
     rlEnd();
 #endif
@@ -1531,7 +1542,7 @@ void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color)
     }
 }
 
-// Draw a regular polygon of n sides (Vector version)
+// Draw a polygon of n sides
 void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color)
 {
     if (sides < 3) sides = 3;
@@ -2214,7 +2225,7 @@ Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
 }
 
 // Get spline point for a given t [0.0f .. 1.0f], Quadratic Bezier
-Vector2 GetSplinePointBezierQuad(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
+Vector2 GetSplinePointBezierQuadratic(Vector2 startPos, Vector2 controlPos, Vector2 endPos, float t)
 {
     Vector2 point = { 0 };
 
@@ -2387,8 +2398,11 @@ bool CheckCollisionLines(Vector2 startPos1, Vector2 endPos1, Vector2 startPos2, 
 
         if ((0.0f <= t) && (t <= 1.0f) && (0.0f <= u) && (u <= 1.0f))
         {
-            collisionPoint->x = startPos1.x + t*rx;
-            collisionPoint->y = startPos1.y + t*ry;
+            if (collisionPoint)
+            {
+                collisionPoint->x = startPos1.x + t*rx;
+                collisionPoint->y = startPos1.y + t*ry;
+            }
 
             collision = true;
         }

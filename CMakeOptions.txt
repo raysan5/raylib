@@ -6,7 +6,7 @@ if(EMSCRIPTEN)
     # When configuring web builds with "emcmake cmake -B build -S .", set PLATFORM to Web by default
     SET(PLATFORM Web CACHE STRING "Platform to build for.")
 endif()
-enum_option(PLATFORM "Desktop;Web;WebRGFW;Android;Raspberry Pi;DRM;SDL;RGFW" "Platform to build for.")
+enum_option(PLATFORM "Desktop;Web;WebRGFW;Android;Raspberry Pi;DRM;SDL;RGFW;Memory" "Platform to build for.")
 
 enum_option(OPENGL_VERSION "OFF;4.3;3.3;2.1;1.1;ES 2.0;ES 3.0;Software" "Force a specific OpenGL Version?")
 
@@ -29,11 +29,15 @@ option(GLFW_BUILD_WAYLAND "Build the bundled GLFW with Wayland support" OFF)
 option(GLFW_BUILD_X11 "Build the bundled GLFW with X11 support" ON)
 
 option(INCLUDE_EVERYTHING "Include everything disabled by default (for CI usage)" OFF)
-set(OFF ${INCLUDE_EVERYTHING} CACHE INTERNAL "Replace any OFF by default with \${OFF} to have it covered by this option")
 
 include(ParseConfigHeader)
 
 foreach(FLAG IN LISTS CONFIG_HEADER_FLAGS)
     string(REGEX MATCH "([^=]+)=(.+)" _ ${FLAG})
-    cmake_dependent_option(${CMAKE_MATCH_1} "" ${CMAKE_MATCH_2} CUSTOMIZE_BUILD ${CMAKE_MATCH_2})
+    set(CONFIG_HEADER_FLAG_DEFAULT ${CMAKE_MATCH_2})
+    if (INCLUDE_EVERYTHING AND "${CONFIG_HEADER_FLAG_DEFAULT}" STREQUAL "OFF")
+        set(CONFIG_HEADER_FLAG_DEFAULT ON)
+    endif()
+
+    cmake_dependent_option(${CMAKE_MATCH_1} "" ${CONFIG_HEADER_FLAG_DEFAULT} CUSTOMIZE_BUILD ${CONFIG_HEADER_FLAG_DEFAULT})
 endforeach()

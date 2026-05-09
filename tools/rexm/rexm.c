@@ -474,8 +474,8 @@ int main(int argc, char *argv[])
             exTextUpdated[1] = TextReplaceAlloc(exTextUpdated[0], "<name>", exName + strlen(exCategory) + 1);
             //TextReplaceAlloc(newExample, "<user_name>", "Ray");
             //TextReplaceAlloc(newExample, "@<user_github>", "@raysan5");
-            //TextReplaceAlloc(newExample, "<year_created>", 2025);
-            //TextReplaceAlloc(newExample, "<year_updated>", 2025);
+            //TextReplaceAlloc(newExample, "<year_created>", 2026);
+            //TextReplaceAlloc(newExample, "<year_updated>", 2026);
 
             SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), exTextUpdated[1]);
             for (int i = 0; i < 6; i++) { MemFree(exTextUpdated[i]); exTextUpdated[i] = NULL; }
@@ -1268,8 +1268,7 @@ int main(int argc, char *argv[])
 
                         // NOTE: Some examples should be excluded from VS2022 solution because
                         // they have specific platform/linkage requirements:
-                        if ((strcmp(exInfo->name, "web_basic_window") == 0) ||
-                            (strcmp(exInfo->name, "raylib_opengl_interop") == 0)) continue;
+                        if (strcmp(exInfo->name, "raylib_opengl_interop") == 0) continue;
 
                         // Review: Add: raylib/projects/VS2022/examples/<category>_example_name.vcxproj
                         // Review: Add: raylib/projects/VS2022/raylib.sln
@@ -1875,7 +1874,7 @@ int main(int argc, char *argv[])
             printf("\n////////////////////////////////////////////////////////////////////////////////////////////\n");
             printf("//                                                                                        //\n");
             printf("// rexm [raylib examples manager] - A simple command-line tool to manage raylib examples  //\n");
-            printf("// powered by raylib v5.6-dev                                                             //\n");
+            printf("// powered by raylib v6.0                                                                 //\n");
             printf("//                                                                                        //\n");
             printf("// Copyright (c) 2025-2026 Ramon Santamaria (@raysan5)                                    //\n");
             printf("//                                                                                        //\n");

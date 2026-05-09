@@ -7,6 +7,30 @@ if(POLICY CMP0072)
   cmake_policy(SET CMP0072 NEW)
 endif()
 
+include(CheckCSourceCompiles)
+include(CMakePushCheckState)
+
+function(raylib_check_libatomic_required result)
+    set(_atomic_test_source "
+int main(void)
+{
+    volatile long long value = 0;
+    return (int)__atomic_fetch_add(&value, 1, __ATOMIC_SEQ_CST);
+}")
+
+    check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+
+    if (RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+        set(${result} FALSE PARENT_SCOPE)
+    else ()
+        cmake_push_check_state()
+        list(APPEND CMAKE_REQUIRED_LIBRARIES atomic)
+        check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITH_LIBATOMIC)
+        cmake_pop_check_state()
+        set(${result} ${RAYLIB_ATOMICS_WITH_LIBATOMIC} PARENT_SCOPE)
+    endif ()
+endfunction()
+
 set(RAYLIB_DEPENDENCIES "include(CMakeFindDependencyMacro)")
 
 if (${PLATFORM} STREQUAL "Desktop")
@@ -96,21 +120,30 @@ elseif (${PLATFORM} STREQUAL "Android")
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
     set(PLATFORM_CPP "PLATFORM_DRM")
-    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
     add_definitions(-D_DEFAULT_SOURCE)
-    add_definitions(-DEGL_NO_X11)
     add_definitions(-DPLATFORM_DRM)
 
-    find_library(GLESV2 GLESv2)
-    find_library(EGL EGL)
     find_library(DRM drm)
-    find_library(GBM gbm)
 
     if (NOT CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSROOT)
         include_directories(/usr/include/libdrm)
     endif ()
-    set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread dl)
+
+    if ("${OPENGL_VERSION}" STREQUAL "Software")
+        # software rendering does not require EGL/GBM.
+        set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+        set(LIBS_PRIVATE ${DRM} atomic pthread dl)
+    else ()
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+        add_definitions(-DEGL_NO_X11)
+
+        find_library(GLESV2 GLESv2)
+        find_library(EGL EGL)
+        find_library(GBM gbm)
+
+        set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread dl)
+    endif ()
     set(LIBS_PUBLIC m)
 
 elseif ("${PLATFORM}" STREQUAL "SDL")
@@ -147,6 +180,7 @@ elseif ("${PLATFORM}" STREQUAL "SDL")
 			add_compile_definitions(USING_SDL2_PACKAGE)
 		endif()
 	endif()	
+
 elseif ("${PLATFORM}" STREQUAL "RGFW")
     set(PLATFORM_CPP "PLATFORM_DESKTOP_RGFW")
 
@@ -172,6 +206,15 @@ elseif ("${PLATFORM}" STREQUAL "WebRGFW")
     set(PLATFORM_CPP "PLATFORM_WEB_RGFW")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
+
+elseif ("${PLATFORM}" STREQUAL "Memory")
+    set(PLATFORM_CPP "PLATFORM_MEMORY")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+    set(OPENGL_VERSION "Software")
+
+    if(WIN32 OR CMAKE_C_COMPILER MATCHES "mingw|mingw32|mingw64")
+        set(LIBS_PRIVATE winmm)
+    endif()
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
@@ -202,6 +245,14 @@ if (NOT GRAPHICS)
 endif ()
 
 set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
+
+if (SUPPORT_MODULE_RAUDIO AND UNIX AND NOT APPLE)
+    raylib_check_libatomic_required(RAYLIB_LIBATOMIC_REQUIRED)
+    if (RAYLIB_LIBATOMIC_REQUIRED)
+        message(STATUS "64-bit atomics require libatomic")
+        list(APPEND LIBS_PRIVATE atomic)
+    endif ()
+endif ()
 
 if (${PLATFORM} MATCHES "Desktop")
     set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)

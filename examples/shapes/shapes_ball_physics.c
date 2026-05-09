@@ -17,6 +17,8 @@
 
 #include "raylib.h"
 
+#include "raymath.h"
+
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <math.h>           // Required for: hypot()
 
@@ -68,6 +70,8 @@ int main(void)
     Vector2 pressOffset = { 0 };    // Mouse press offset relative to the ball that grabbedd
 
     float gravity = 100;            // World gravity
+    
+    Vector2 windowPosition = GetWindowPosition();
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -125,6 +129,17 @@ int main(void)
                     .color = { GetRandomValue(0, 255), GetRandomValue(0, 255), GetRandomValue(0, 255), 255 },
                     .grabbed = false
                 };
+            }
+        }
+
+        // Get window position change for shaking
+        Vector2 windowPositionDelta = Vector2Subtract(windowPosition, GetWindowPosition());
+        
+        if (Vector2Length(windowPositionDelta) > 5.0f)
+        {
+            for (int i = 0; i < ballCount; i++)
+            {
+                if (!balls[i].grabbed) balls[i].speed = Vector2Add(balls[i].speed, Vector2Scale(windowPositionDelta, 10.0f));
             }
         }
 
@@ -194,6 +209,8 @@ int main(void)
                 ball->prevPosition = ball->position;
             }
         }
+
+        windowPosition = GetWindowPosition();
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -222,6 +239,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     RL_FREE(balls);
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

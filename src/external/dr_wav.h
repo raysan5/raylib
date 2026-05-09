@@ -1,6 +1,6 @@
 /*
 WAV audio loader and writer. Choice of public domain or MIT-0. See license statements at the end of this file.
-dr_wav - v0.14.5 - 2026-03-03
+dr_wav - v0.14.6 - TBD
 
 David Reid - mackron@gmail.com
 
@@ -147,7 +147,7 @@ extern "C" {
 
 #define DRWAV_VERSION_MAJOR     0
 #define DRWAV_VERSION_MINOR     14
-#define DRWAV_VERSION_REVISION  5
+#define DRWAV_VERSION_REVISION  6
 #define DRWAV_VERSION_STRING    DRWAV_XSTRINGIFY(DRWAV_VERSION_MAJOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_MINOR) "." DRWAV_XSTRINGIFY(DRWAV_VERSION_REVISION)
 
 #include <stddef.h> /* For size_t. */
@@ -1971,7 +1971,15 @@ DRWAV_PRIVATE drwav_result drwav__read_chunk_header(drwav_read_proc onRead, void
             return DRWAV_INVALID_FILE;
         }
 
-        pHeaderOut->sizeInBytes = drwav_bytes_to_u64(sizeInBytes) - 24;    /* <-- Subtract 24 because w64 includes the size of the header. */
+        pHeaderOut->sizeInBytes = drwav_bytes_to_u64(sizeInBytes);
+
+        /* Subtract 24 from the size because with w64 the reported chunk size includes the size of the header itself. */
+        if (pHeaderOut->sizeInBytes >= 24) {
+            pHeaderOut->sizeInBytes -= 24;
+        } else {
+            return DRWAV_INVALID_FILE;
+        }
+
         pHeaderOut->paddingSize = drwav__chunk_padding_size_w64(pHeaderOut->sizeInBytes);
         *pRunningBytesReadOut += 24;
     } else {
@@ -2201,7 +2209,7 @@ DRWAV_PRIVATE drwav_uint64 drwav__read_smpl_to_metadata_obj(drwav__metadata_pars
         so it's consistent with how we do it in the first stage.
         */
         loopCount = drwav_bytes_to_u32(smplHeaderData + 28);
-        calculatedLoopCount = (pChunkHeader->sizeInBytes - DRWAV_SMPL_BYTES) / DRWAV_SMPL_LOOP_BYTES;
+        calculatedLoopCount = (drwav_uint32)((pChunkHeader->sizeInBytes - DRWAV_SMPL_BYTES) / DRWAV_SMPL_LOOP_BYTES);
         if (loopCount != calculatedLoopCount) {
             return totalBytesRead;
         }
@@ -2580,8 +2588,10 @@ DRWAV_PRIVATE drwav_uint64 drwav__read_bext_to_metadata_obj(drwav__metadata_pars
                 pMetadata->data.bext.pCodingHistory = (char*)drwav__metadata_get_memory(pParser, extraBytes + 1, 1);
                 DRWAV_ASSERT(pMetadata->data.bext.pCodingHistory != NULL);
 
-                bytesRead += drwav__metadata_parser_read(pParser, pMetadata->data.bext.pCodingHistory, extraBytes, NULL);
-                pMetadata->data.bext.codingHistorySize = (drwav_uint32)drwav__strlen(pMetadata->data.bext.pCodingHistory);
+                pMetadata->data.bext.codingHistorySize = (drwav_uint32)drwav__metadata_parser_read(pParser, pMetadata->data.bext.pCodingHistory, extraBytes, NULL);
+                pMetadata->data.bext.pCodingHistory[pMetadata->data.bext.codingHistorySize] = '\0'; /* <-- Explicit null terminator in case of a badly formed file. */
+                
+                bytesRead += pMetadata->data.bext.codingHistorySize;
             } else {
                 pMetadata->data.bext.pCodingHistory    = NULL;
                 pMetadata->data.bext.codingHistorySize = 0;
@@ -2755,10 +2765,10 @@ DRWAV_PRIVATE drwav_uint64 drwav__metadata_process_chunk(drwav__metadata_parser*
                 bytesJustRead = drwav__metadata_parser_read(pParser, buffer, sizeof(buffer), &bytesRead);
                 if (bytesJustRead == sizeof(buffer)) {
                     drwav_uint32 loopCount = drwav_bytes_to_u32(buffer);
-                    drwav_uint64 calculatedLoopCount;
+                    drwav_uint32 calculatedLoopCount;
 
                     /* The loop count must be validated against the size of the chunk. */
-                    calculatedLoopCount = (pChunkHeader->sizeInBytes - DRWAV_SMPL_BYTES) / DRWAV_SMPL_LOOP_BYTES;
+                    calculatedLoopCount = (drwav_uint32)((pChunkHeader->sizeInBytes - DRWAV_SMPL_BYTES) / DRWAV_SMPL_LOOP_BYTES);
                     if (calculatedLoopCount == loopCount) {
                         bytesJustRead = drwav__metadata_parser_read(pParser, buffer, sizeof(buffer), &bytesRead);
                         if (bytesJustRead == sizeof(buffer)) {
@@ -2860,7 +2870,9 @@ DRWAV_PRIVATE drwav_uint64 drwav__metadata_process_chunk(drwav__metadata_parser*
                     return bytesRead;
                 }
                 allocSizeNeeded += drwav__strlen(buffer) + 1;
-                allocSizeNeeded += (size_t)pChunkHeader->sizeInBytes - DRWAV_BEXT_BYTES + 1; /* Coding history. */
+
+                /* Coding history. */
+                allocSizeNeeded += (size_t)pChunkHeader->sizeInBytes - DRWAV_BEXT_BYTES + 1;
 
                 drwav__metadata_request_extra_memory_for_stage_2(pParser, allocSizeNeeded, 1);
 
@@ -3320,6 +3332,10 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
         if (((pWav->container == drwav_container_riff || pWav->container == drwav_container_rifx || pWav->container == drwav_container_rf64) && drwav_fourcc_equal(header.id.fourcc, "fmt ")) ||
             ((pWav->container == drwav_container_w64) && drwav_guid_equal(header.id.guid, drwavGUID_W64_FMT))) {
             drwav_uint8 fmtData[16];
+
+            if (header.sizeInBytes < sizeof(fmtData)) {
+                return DRWAV_FALSE; /* Invalid fmt chunk. */
+            }
 
             foundChunk_fmt = DRWAV_TRUE;
 
@@ -3833,6 +3849,11 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
 
             /* We decode two samples per byte. There will be blockCount headers in the data chunk. This is enough to know how to calculate the total PCM frame count. */
             totalBlockHeaderSizeInBytes = blockCount * (6*fmt.channels);
+            if (totalBlockHeaderSizeInBytes >= dataChunkSize) {  /* <-- We'll be subtracting totalBlockHeaderSizeInBytes from dataChunkSize next so it must be validated. */
+                drwav_free(pWav->pMetadata, &pWav->allocationCallbacks);
+                return DRWAV_FALSE; /* Invalid file. */
+            }
+
             pWav->totalPCMFrameCount = ((dataChunkSize - totalBlockHeaderSizeInBytes) * 2) / fmt.channels;
         }
         if (pWav->translatedFormatTag == DR_WAVE_FORMAT_DVI_ADPCM) {
@@ -3846,6 +3867,11 @@ DRWAV_PRIVATE drwav_bool32 drwav_init__internal(drwav* pWav, drwav_chunk_proc on
 
             /* We decode two samples per byte. There will be blockCount headers in the data chunk. This is enough to know how to calculate the total PCM frame count. */
             totalBlockHeaderSizeInBytes = blockCount * (4*fmt.channels);
+            if (totalBlockHeaderSizeInBytes >= dataChunkSize) {  /* <-- We'll be subtracting totalBlockHeaderSizeInBytes from dataChunkSize next so it must be validated. */
+                drwav_free(pWav->pMetadata, &pWav->allocationCallbacks);
+                return DRWAV_FALSE; /* Invalid file. */
+            }
+
             pWav->totalPCMFrameCount = ((dataChunkSize - totalBlockHeaderSizeInBytes) * 2) / fmt.channels;
 
             /* The header includes a decoded sample for each channel which acts as the initial predictor sample. */
@@ -6725,6 +6751,10 @@ DRWAV_PRIVATE void drwav__pcm_to_s16(drwav_int16* pOut, const drwav_uint8* pIn, 
             shift  += 8;
         }
 
+        if (!drwav__is_little_endian()) {
+            sample = drwav__bswap64(sample);
+        }
+
         pIn += j;
         *pOut++ = (drwav_int16)((drwav_int64)sample >> 48);
     }
@@ -7164,6 +7194,10 @@ DRWAV_PRIVATE void drwav__pcm_to_f32(float* pOut, const drwav_uint8* pIn, size_t
             DRWAV_ASSERT(j < 8);
             sample |= (drwav_uint64)(pIn[j]) << shift;
             shift  += 8;
+        }
+
+        if (!drwav__is_little_endian()) {
+            sample = drwav__bswap64(sample);
         }
 
         pIn += j;
@@ -7648,6 +7682,10 @@ DRWAV_PRIVATE void drwav__pcm_to_s32(drwav_int32* pOut, const drwav_uint8* pIn, 
             DRWAV_ASSERT(j < 8);
             sample |= (drwav_uint64)(pIn[j]) << shift;
             shift  += 8;
+        }
+
+        if (!drwav__is_little_endian()) {
+            sample = drwav__bswap64(sample);
         }
 
         pIn += j;
@@ -8557,6 +8595,13 @@ DRWAV_API drwav_bool32 drwav_fourcc_equal(const drwav_uint8* a, const char* b)
 /*
 REVISION HISTORY
 ================
+v0.14.6 - TBD
+  - Fix an error when loading files with a malformed "bext" chunk.
+  - Fix an error when loading files with a malformed "fmt" chunk.
+  - Fix an underflow error with badly formed ADPCM encoded files.
+  - Fix an underflow error with badly formed W64 files.
+  - Fix an error when converting from >32 bit samples to s16/f32/s32 on big-endian architectures.
+
 v0.14.5 - 2026-03-03
   - Fix a crash when loading files with a malformed "smpl" chunk.
   - Fix a signed overflow bug with the MS-ADPCM decoder.

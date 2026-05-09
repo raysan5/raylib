@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Desktop platforms, Web (Wasm), Raspberry Pi (DRM mode) and Android
 #
-#   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.

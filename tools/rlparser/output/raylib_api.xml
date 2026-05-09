@@ -3,9 +3,9 @@
     <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="6" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="0" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="6.0" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="6.1-dev" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -667,7 +667,7 @@
         </Callback>
         <Callback name="SaveFileDataCallback" retType="bool" paramCount="3" desc="FileIO: Save binary data">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="void *" name="data" desc="" />
+            <Param type="const void *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Callback>
         <Callback name="LoadFileTextCallback" retType="char *" paramCount="1" desc="FileIO: Load text data">
@@ -682,7 +682,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="600">
+    <Functions count="602">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -809,39 +809,39 @@
         </Function>
         <Function name="DisableEventWaiting" retType="void" paramCount="0" desc="Disable waiting for events on EndDrawing(), automatic events polling">
         </Function>
-        <Function name="ShowCursor" retType="void" paramCount="0" desc="Shows cursor">
+        <Function name="ShowCursor" retType="void" paramCount="0" desc="Show cursor">
         </Function>
-        <Function name="HideCursor" retType="void" paramCount="0" desc="Hides cursor">
+        <Function name="HideCursor" retType="void" paramCount="0" desc="Hide cursor">
         </Function>
         <Function name="IsCursorHidden" retType="bool" paramCount="0" desc="Check if cursor is not visible">
         </Function>
-        <Function name="EnableCursor" retType="void" paramCount="0" desc="Enables cursor (unlock cursor)">
+        <Function name="EnableCursor" retType="void" paramCount="0" desc="Enable cursor (unlock cursor)">
         </Function>
-        <Function name="DisableCursor" retType="void" paramCount="0" desc="Disables cursor (lock cursor)">
+        <Function name="DisableCursor" retType="void" paramCount="0" desc="Disable cursor (lock cursor)">
         </Function>
         <Function name="IsCursorOnScreen" retType="bool" paramCount="0" desc="Check if cursor is on the screen">
         </Function>
-        <Function name="ClearBackground" retType="void" paramCount="1" desc="Set background color (framebuffer clear color)">
+        <Function name="ClearBackground" retType="void" paramCount="1" desc="Clear background (framebuffer) to color">
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="BeginDrawing" retType="void" paramCount="0" desc="Setup canvas (framebuffer) to start drawing">
+        <Function name="BeginDrawing" retType="void" paramCount="0" desc="Begin canvas (framebuffer) drawing">
         </Function>
-        <Function name="EndDrawing" retType="void" paramCount="0" desc="End canvas drawing and swap buffers (double buffering)">
+        <Function name="EndDrawing" retType="void" paramCount="0" desc="End canvas (framebuffer) drawing and swap buffers (double buffering)">
         </Function>
         <Function name="BeginMode2D" retType="void" paramCount="1" desc="Begin 2D mode with custom camera (2D)">
             <Param type="Camera2D" name="camera" desc="" />
         </Function>
-        <Function name="EndMode2D" retType="void" paramCount="0" desc="Ends 2D mode with custom camera">
+        <Function name="EndMode2D" retType="void" paramCount="0" desc="End 2D mode with custom camera">
         </Function>
         <Function name="BeginMode3D" retType="void" paramCount="1" desc="Begin 3D mode with custom camera (3D)">
             <Param type="Camera3D" name="camera" desc="" />
         </Function>
-        <Function name="EndMode3D" retType="void" paramCount="0" desc="Ends 3D mode and returns to default 2D orthographic mode">
+        <Function name="EndMode3D" retType="void" paramCount="0" desc="End 3D mode and returns to default 2D orthographic mode">
         </Function>
         <Function name="BeginTextureMode" retType="void" paramCount="1" desc="Begin drawing to render texture">
             <Param type="RenderTexture2D" name="target" desc="" />
         </Function>
-        <Function name="EndTextureMode" retType="void" paramCount="0" desc="Ends drawing to render texture">
+        <Function name="EndTextureMode" retType="void" paramCount="0" desc="End drawing to render texture">
         </Function>
         <Function name="BeginShaderMode" retType="void" paramCount="1" desc="Begin custom shader drawing">
             <Param type="Shader" name="shader" desc="" />
@@ -927,21 +927,21 @@
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
         </Function>
-        <Function name="GetWorldToScreen" retType="Vector2" paramCount="2" desc="Get the screen space position for a 3d world space position">
+        <Function name="GetWorldToScreen" retType="Vector2" paramCount="2" desc="Get screen space position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
         </Function>
-        <Function name="GetWorldToScreenEx" retType="Vector2" paramCount="4" desc="Get size position for a 3d world space position">
+        <Function name="GetWorldToScreenEx" retType="Vector2" paramCount="4" desc="Get sized screen space position for a 3d world space position">
             <Param type="Vector3" name="position" desc="" />
             <Param type="Camera" name="camera" desc="" />
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
         </Function>
-        <Function name="GetWorldToScreen2D" retType="Vector2" paramCount="2" desc="Get the screen space position for a 2d camera world space position">
+        <Function name="GetWorldToScreen2D" retType="Vector2" paramCount="2" desc="Get screen space position for a 2d camera world space position">
             <Param type="Vector2" name="position" desc="" />
             <Param type="Camera2D" name="camera" desc="" />
         </Function>
-        <Function name="GetScreenToWorld2D" retType="Vector2" paramCount="2" desc="Get the world space position for a 2d camera screen space position">
+        <Function name="GetScreenToWorld2D" retType="Vector2" paramCount="2" desc="Get world space position for a 2d camera screen space position">
             <Param type="Vector2" name="position" desc="" />
             <Param type="Camera2D" name="camera" desc="" />
         </Function>
@@ -985,7 +985,7 @@
         <Function name="TakeScreenshot" retType="void" paramCount="1" desc="Takes a screenshot of current screen (filename extension defines format)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="SetConfigFlags" retType="void" paramCount="1" desc="Setup init configuration flags (view FLAGS)">
+        <Function name="SetConfigFlags" retType="void" paramCount="1" desc="Set up init configuration flags (view FLAGS)">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
         <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">
@@ -1021,7 +1021,7 @@
         </Function>
         <Function name="SaveFileData" retType="bool" paramCount="3" desc="Save data to file from byte array (write), returns true on success">
             <Param type="const char *" name="fileName" desc="" />
-            <Param type="void *" name="data" desc="" />
+            <Param type="const void *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ExportDataAsCode" retType="bool" paramCount="3" desc="Export data to code (.h), returns true on success">
@@ -1125,7 +1125,7 @@
         <Function name="LoadDirectoryFiles" retType="FilePathList" paramCount="1" desc="Load directory filepaths, files and directories, no subdirs scan">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and subdir scan; some filters available: "*.*", "FILES*", "DIRS*"">
+        <Function name="LoadDirectoryFilesEx" retType="FilePathList" paramCount="3" desc="Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`">
             <Param type="const char *" name="basePath" desc="" />
             <Param type="const char *" name="filter" desc="" />
             <Param type="bool" name="scanSubdirs" desc="" />
@@ -1168,19 +1168,19 @@
             <Param type="int *" name="outputSize" desc="" />
         </Function>
         <Function name="ComputeCRC32" retType="unsigned int" paramCount="2" desc="Compute CRC32 hash code">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeMD5" retType="unsigned int *" paramCount="2" desc="Compute MD5 hash code, returns static int[4] (16 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeSHA1" retType="unsigned int *" paramCount="2" desc="Compute SHA1 hash code, returns static int[5] (20 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="ComputeSHA256" retType="unsigned int *" paramCount="2" desc="Compute SHA256 hash code, returns static int[8] (32 bytes)">
-            <Param type="unsigned char *" name="data" desc="" />
+            <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
         <Function name="LoadAutomationEventList" retType="AutomationEventList" paramCount="1" desc="Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS">
@@ -1325,7 +1325,7 @@
         <Function name="SetGesturesEnabled" retType="void" paramCount="1" desc="Enable a set of gestures using flags">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
-        <Function name="IsGestureDetected" retType="bool" paramCount="1" desc="Check if a gesture have been detected">
+        <Function name="IsGestureDetected" retType="bool" paramCount="1" desc="Check if a gesture has been detected">
             <Param type="unsigned int" name="gesture" desc="" />
         </Function>
         <Function name="GetGestureDetected" retType="int" paramCount="0" desc="Get latest detected gesture">
@@ -1409,6 +1409,17 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCircleV" retType="void" paramCount="3" desc="Draw a color-filled circle (Vector version)">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawCircleGradient" retType="void" paramCount="4" desc="Draw a gradient-filled circle">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
         <Function name="DrawCircleSector" retType="void" paramCount="6" desc="Draw a piece of a circle">
             <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radius" desc="" />
@@ -1423,18 +1434,6 @@
             <Param type="float" name="startAngle" desc="" />
             <Param type="float" name="endAngle" desc="" />
             <Param type="int" name="segments" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawCircleGradient" retType="void" paramCount="5" desc="Draw a gradient-filled circle">
-            <Param type="int" name="centerX" desc="" />
-            <Param type="int" name="centerY" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="Color" name="inner" desc="" />
-            <Param type="Color" name="outer" desc="" />
-        </Function>
-        <Function name="DrawCircleV" retType="void" paramCount="3" desc="Draw a color-filled circle (Vector version)">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCircleLines" retType="void" paramCount="4" desc="Draw circle outline">
@@ -1561,7 +1560,7 @@
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle with rounded edges outline">
+        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle lines with rounded edges outline">
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="float" name="roundness" desc="" />
             <Param type="int" name="segments" desc="" />
@@ -1573,6 +1572,14 @@
             <Param type="Vector2" name="v2" desc="" />
             <Param type="Vector2" name="v3" desc="" />
             <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawTriangleGradient" retType="void" paramCount="6" desc="Draw triangle with interpolated colors (vertex in counter-clockwise order!)">
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="c1" desc="" />
+            <Param type="Color" name="c2" desc="" />
+            <Param type="Color" name="c3" desc="" />
         </Function>
         <Function name="DrawTriangleLines" retType="void" paramCount="4" desc="Draw triangle outline (vertex in counter-clockwise order!)">
             <Param type="Vector2" name="v1" desc="" />
@@ -1590,7 +1597,7 @@
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawPoly" retType="void" paramCount="5" desc="Draw a regular polygon (Vector version)">
+        <Function name="DrawPoly" retType="void" paramCount="5" desc="Draw a polygon of n sides">
             <Param type="Vector2" name="center" desc="" />
             <Param type="int" name="sides" desc="" />
             <Param type="float" name="radius" desc="" />
@@ -1698,7 +1705,7 @@
             <Param type="Vector2" name="p4" desc="" />
             <Param type="float" name="t" desc="" />
         </Function>
-        <Function name="GetSplinePointBezierQuad" retType="Vector2" paramCount="4" desc="Get (evaluate) spline point: Quadratic Bezier">
+        <Function name="GetSplinePointBezierQuadratic" retType="Vector2" paramCount="4" desc="Get (evaluate) spline point: Quadratic Bezier">
             <Param type="Vector2" name="p1" desc="" />
             <Param type="Vector2" name="c2" desc="" />
             <Param type="Vector2" name="p3" desc="" />
@@ -1726,7 +1733,7 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
         </Function>
-        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created betweeen two points [p1] and [p2]">
+        <Function name="CheckCollisionCircleLine" retType="bool" paramCount="4" desc="Check if circle collides with a line created between two points [p1] and [p2]">
             <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="radius" desc="" />
             <Param type="Vector2" name="p1" desc="" />
@@ -1797,7 +1804,7 @@
         <Function name="LoadImageFromTexture" retType="Image" paramCount="1" desc="Load image from GPU texture data">
             <Param type="Texture2D" name="texture" desc="" />
         </Function>
-        <Function name="LoadImageFromScreen" retType="Image" paramCount="0" desc="Load image from screen buffer and (screenshot)">
+        <Function name="LoadImageFromScreen" retType="Image" paramCount="0" desc="Load image from screen buffer (screenshot)">
         </Function>
         <Function name="IsImageValid" retType="bool" paramCount="1" desc="Check if an image is valid (data and parameters)">
             <Param type="Image" name="image" desc="" />
@@ -1990,7 +1997,7 @@
         </Function>
         <Function name="ImageColorContrast" retType="void" paramCount="2" desc="Modify image color: contrast (-100 to 100)">
             <Param type="Image *" name="image" desc="" />
-            <Param type="float" name="contrast" desc="" />
+            <Param type="int" name="contrast" desc="" />
         </Function>
         <Function name="ImageColorBrightness" retType="void" paramCount="2" desc="Modify image color: brightness (-255 to 255)">
             <Param type="Image *" name="image" desc="" />
@@ -2105,7 +2112,15 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawRectangleLines" retType="void" paramCount="4" desc="Draw rectangle lines within an image">
+        <Function name="ImageDrawRectangleLines" retType="void" paramCount="6" desc="Draw rectangle lines within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleLinesEx" retType="void" paramCount="4" desc="Draw rectangle lines within an image with extended parameters">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="int" name="thick" desc="" />
@@ -2118,7 +2133,7 @@
             <Param type="Vector2" name="v3" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawTriangleEx" retType="void" paramCount="7" desc="Draw triangle with interpolated colors within an image">
+        <Function name="ImageDrawTriangleGradient" retType="void" paramCount="7" desc="Draw triangle with interpolated colors within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Vector2" name="v1" desc="" />
             <Param type="Vector2" name="v2" desc="" />
@@ -2248,7 +2263,7 @@
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextureNPatch" retType="void" paramCount="6" desc="Draws a texture (or part of it) that stretches or shrinks nicely">
+        <Function name="DrawTextureNPatch" retType="void" paramCount="6" desc="Draw a texture (or part of it) that stretches or shrinks nicely">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="NPatchInfo" name="nPatchInfo" desc="" />
             <Param type="Rectangle" name="dest" desc="" />
@@ -2415,7 +2430,7 @@
             <Param type="float" name="fontSize" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextCodepoints" retType="void" paramCount="7" desc="Draw multiple character (codepoint)">
+        <Function name="DrawTextCodepoints" retType="void" paramCount="7" desc="Draw multiple characters (codepoint)">
             <Param type="Font" name="font" desc="" />
             <Param type="const int *" name="codepoints" desc="" />
             <Param type="int" name="codepointCount" desc="" />
@@ -2501,7 +2516,7 @@
             <Param type="char *" name="dst" desc="" />
             <Param type="const char *" name="src" desc="" />
         </Function>
-        <Function name="TextIsEqual" retType="bool" paramCount="2" desc="Check if two text string are equal">
+        <Function name="TextIsEqual" retType="bool" paramCount="2" desc="Check if two text strings are equal">
             <Param type="const char *" name="text1" desc="" />
             <Param type="const char *" name="text2" desc="" />
         </Function>
@@ -2696,23 +2711,23 @@
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="startRadius" desc="" />
             <Param type="float" name="endRadius" desc="" />
-            <Param type="int" name="sides" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCapsule" retType="void" paramCount="6" desc="Draw a capsule with the center of its sphere caps at startPos and endPos">
             <Param type="Vector3" name="startPos" desc="" />
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="int" name="slices" desc="" />
             <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawCapsuleWires" retType="void" paramCount="6" desc="Draw capsule wireframe with the center of its sphere caps at startPos and endPos">
             <Param type="Vector3" name="startPos" desc="" />
             <Param type="Vector3" name="endPos" desc="" />
             <Param type="float" name="radius" desc="" />
-            <Param type="int" name="slices" desc="" />
             <Param type="int" name="rings" desc="" />
+            <Param type="int" name="slices" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawPlane" retType="void" paramCount="3" desc="Draw a plane XZ">
@@ -3003,7 +3018,7 @@
             <Param type="const unsigned char *" name="fileData" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
-        <Function name="IsWaveValid" retType="bool" paramCount="1" desc="Checks if wave data is valid (data loaded and parameters)">
+        <Function name="IsWaveValid" retType="bool" paramCount="1" desc="Check if wave data is valid (data loaded and parameters)">
             <Param type="Wave" name="wave" desc="" />
         </Function>
         <Function name="LoadSound" retType="Sound" paramCount="1" desc="Load sound from file">
@@ -3012,16 +3027,16 @@
         <Function name="LoadSoundFromWave" retType="Sound" paramCount="1" desc="Load sound from wave data">
             <Param type="Wave" name="wave" desc="" />
         </Function>
-        <Function name="LoadSoundAlias" retType="Sound" paramCount="1" desc="Create a new sound that shares the same sample data as the source sound, does not own the sound data">
+        <Function name="LoadSoundAlias" retType="Sound" paramCount="1" desc="Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data">
             <Param type="Sound" name="source" desc="" />
         </Function>
-        <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Checks if a sound is valid (data loaded and buffers initialized)">
+        <Function name="IsSoundValid" retType="bool" paramCount="1" desc="Check if a sound is valid (data loaded and buffers initialized)">
             <Param type="Sound" name="sound" desc="" />
         </Function>
         <Function name="UpdateSound" retType="void" paramCount="3" desc="Update sound buffer with new data (default data format: 32 bit float, stereo)">
             <Param type="Sound" name="sound" desc="" />
             <Param type="const void *" name="data" desc="" />
-            <Param type="int" name="sampleCount" desc="" />
+            <Param type="int" name="frameCount" desc="" />
         </Function>
         <Function name="UnloadWave" retType="void" paramCount="1" desc="Unload wave data">
             <Param type="Wave" name="wave" desc="" />
@@ -3029,7 +3044,7 @@
         <Function name="UnloadSound" retType="void" paramCount="1" desc="Unload sound">
             <Param type="Sound" name="sound" desc="" />
         </Function>
-        <Function name="UnloadSoundAlias" retType="void" paramCount="1" desc="Unload a sound alias (does not deallocate sample data)">
+        <Function name="UnloadSoundAlias" retType="void" paramCount="1" desc="Unload sound alias (does not deallocate sample data)">
             <Param type="Sound" name="alias" desc="" />
         </Function>
         <Function name="ExportWave" retType="bool" paramCount="2" desc="Export wave data to file, returns true on success">
@@ -3095,7 +3110,7 @@
             <Param type="const unsigned char *" name="data" desc="" />
             <Param type="int" name="dataSize" desc="" />
         </Function>
-        <Function name="IsMusicValid" retType="bool" paramCount="1" desc="Checks if a music stream is valid (context and buffers initialized)">
+        <Function name="IsMusicValid" retType="bool" paramCount="1" desc="Check if a music stream is valid (context and buffers initialized)">
             <Param type="Music" name="music" desc="" />
         </Function>
         <Function name="UnloadMusicStream" retType="void" paramCount="1" desc="Unload music stream">
@@ -3107,7 +3122,7 @@
         <Function name="IsMusicStreamPlaying" retType="bool" paramCount="1" desc="Check if music is playing">
             <Param type="Music" name="music" desc="" />
         </Function>
-        <Function name="UpdateMusicStream" retType="void" paramCount="1" desc="Updates buffers for music streaming">
+        <Function name="UpdateMusicStream" retType="void" paramCount="1" desc="Update buffers for music streaming">
             <Param type="Music" name="music" desc="" />
         </Function>
         <Function name="StopMusicStream" retType="void" paramCount="1" desc="Stop music playing">
@@ -3127,11 +3142,11 @@
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="volume" desc="" />
         </Function>
-        <Function name="SetMusicPitch" retType="void" paramCount="2" desc="Set pitch for a music (1.0 is base level)">
+        <Function name="SetMusicPitch" retType="void" paramCount="2" desc="Set pitch for music (1.0 is base level)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for a music (-1.0 left, 0.0 center, 1.0 right)">
+        <Function name="SetMusicPan" retType="void" paramCount="2" desc="Set pan for music (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="Music" name="music" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
@@ -3146,7 +3161,7 @@
             <Param type="unsigned int" name="sampleSize" desc="" />
             <Param type="unsigned int" name="channels" desc="" />
         </Function>
-        <Function name="IsAudioStreamValid" retType="bool" paramCount="1" desc="Checks if an audio stream is valid (buffers initialized)">
+        <Function name="IsAudioStreamValid" retType="bool" paramCount="1" desc="Check if an audio stream is valid (buffers initialized)">
             <Param type="AudioStream" name="stream" desc="" />
         </Function>
         <Function name="UnloadAudioStream" retType="void" paramCount="1" desc="Unload audio stream and free memory">
@@ -3183,7 +3198,7 @@
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pitch" desc="" />
         </Function>
-        <Function name="SetAudioStreamPan" retType="void" paramCount="2" desc="Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)">
+        <Function name="SetAudioStreamPan" retType="void" paramCount="2" desc="Set pan for audio stream (-1.0 left, 0.0 center, 1.0 right)">
             <Param type="AudioStream" name="stream" desc="" />
             <Param type="float" name="pan" desc="" />
         </Function>
