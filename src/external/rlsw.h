@@ -5759,6 +5759,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
     #ifdef SW_ENABLE_DEPTH_TEST
     zRow += dZdy*dyMin + dZdx*dxMin;
+    #endif
     #ifdef SW_ENABLE_TEXTURE
     uRow += dUdy*dyMin + dUdx*dxMin;
     vRow += dVdy*dyMin + dVdx*dxMin;
