@@ -578,6 +578,14 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_WASIGL)
+    WASI_SDK ?= /opt/wasi-sdk
+    CC = $(WASI_SDK)/bin/clang
+    AR = $(WASI_SDK)/bin/llvm-ar
+    LDFLAGS += -Wl,--allow-undefined
+    CFLAGS += -DPLATFORM_WASIGL -DGRAPHICS_API_OPENGL_ES2 
+endif
+
 # Define library paths containing required libs: LDFLAGS
 # NOTE: This is only required for dynamic library generation
 #------------------------------------------------------------------------------------------------

@@ -33,6 +33,8 @@
 *           - Android (ARM, ARM64)
 *       > PLATFORM_MEMORY
 *           - Memory framebuffer output, using software renderer, no OS required
+*       > PLATFORM_WASIGL
+*           - WASM that imports GL/GLFW from host
 *
 *   CONFIGURATION:
 *       #define SUPPORT_CAMERA_SYSTEM       1
@@ -528,6 +530,8 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_android.c"
 #elif defined(PLATFORM_MEMORY)
     #include "platforms/rcore_memory.c"
+#elif defined(PLATFORM_WASIGL)
+    #include "platforms/rcore_wasigl.c"
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!

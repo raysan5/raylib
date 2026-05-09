@@ -205,8 +205,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     if (options.rmodels) {
         try c_source_files.append("src/rmodels.c");
     }
-    raylib_mod.addCMacro("SUPPORT_MODULE_RAUDIO", &.{@as(u8, @intFromBool(options.raudio)) + 0x30});
-    if (options.raudio) {
+    const raudio_enabled = options.raudio and options.platform != .wasigl;
+    raylib_mod.addCMacro("SUPPORT_MODULE_RAUDIO", &.{@as(u8, @intFromBool(raudio_enabled)) + 0x30});
+    if (raudio_enabled) {
         try c_source_files.append("src/raudio.c");
     }
 
@@ -360,6 +361,12 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
             }
             raylib_mod.addCMacro(OpenglVersion.gl_soft.toCMacroStr(), "");
             raylib_mod.addCMacro("PLATFORM_MEMORY", "");
+        },
+        .wasigl => {
+            raylib_mod.addCMacro("PLATFORM_WASIGL", "");
+            raylib_mod.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
+            raylib_mod.addIncludePath(b.path("src/external/glfw/include"));
+            raylib.import_symbols = true;
         },
         .win32 => {
             if (target.result.os.tag != .windows) {
@@ -573,17 +580,7 @@ pub const LinuxDisplayBackend = enum {
     Both,
 };
 
-pub const PlatformBackend = enum {
-    glfw,
-    rgfw,
-    sdl,
-    sdl2,
-    sdl3,
-    memory,
-    win32,
-    drm,
-    android,
-};
+pub const PlatformBackend = enum { glfw, rgfw, sdl, sdl2, sdl3, memory, win32, drm, android, wasigl };
 
 fn translateCMod(
     comptime header: []const u8,
@@ -687,6 +684,7 @@ fn addExamples(
         }
         if (std.mem.eql(u8, filename, "raylib_opengl_interop")) {
             if (platform == .drm) continue;
+            if (platform == .wasigl) continue;
             if (target.result.os.tag == .macos) continue;
             exe_mod.addIncludePath(b.path("src/external"));
         }
@@ -794,4 +792,3 @@ fn waylandGenerate(
         }
     }
 }
-
