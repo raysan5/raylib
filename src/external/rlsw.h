@@ -5748,9 +5748,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     int xLoopMin = sw_clamp_int(xMin, 0, RLSW.colorBuffer->width - 1);
     int xLoopMax = sw_clamp_int(xMax, 0, RLSW.colorBuffer->width);
     int dxMin = xLoopMin - xMin;
-    #if defined(SW_ENABLE_DEPTH_TEST) || defined(SW_ENABLE_TEXTURE)
     int dyMin = yLoopMin - yMin;
-    #endif
 
     // Correct our start by how far we clipped outside the framebuffer.
     cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
