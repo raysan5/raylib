@@ -1538,10 +1538,10 @@ mulong jar_mod_load_file(jar_mod_context_t * modctx, const char* filename)
             modctx->modfile = (muchar *) JARMOD_MALLOC(fsize);
             modctx->modfilesize = fsize;
             memset(modctx->modfile, 0, fsize);
-            fread(modctx->modfile, fsize, 1, f);
+            if(fread(modctx->modfile, fsize, 1, f) != 1) fsize = 0;
             fclose(f);
 
-            if(!jar_mod_load(modctx, (void *)modctx->modfile, fsize)) fsize = 0;
+            if(fsize && !jar_mod_load(modctx, (void *)modctx->modfile, fsize)) fsize = 0;
         } else fsize = 0;
     }
     return fsize;
