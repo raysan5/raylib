@@ -5449,7 +5449,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
     int x = xLoopStart;
     // Prevent pixels from beyond the buffer from processing.
-    int xLoopEnd = sw_clamp_int(xEnd, 0, RLSW.colorBuffer->width - 1);
+    int xLoopEnd = sw_clamp_int(xEnd, 0, RLSW.colorBuffer->width);
     while (x < xLoopEnd)
     {
         // Clamp last block to remaining pixels
@@ -5744,9 +5744,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 
     // Intercept the boundaries to stay within the framebuffer.
     int yLoopMin = sw_clamp_int(yMin, 0, RLSW.colorBuffer->height - 1);
-    int yLoopMax = sw_clamp_int(yMax, 0, RLSW.colorBuffer->height - 1);
+    int yLoopMax = sw_clamp_int(yMax, 0, RLSW.colorBuffer->height);
     int xLoopMin = sw_clamp_int(xMin, 0, RLSW.colorBuffer->width - 1);
-    int xLoopMax = sw_clamp_int(xMax, 0, RLSW.colorBuffer->width - 1);
+    int xLoopMax = sw_clamp_int(xMax, 0, RLSW.colorBuffer->width);
     int dxMin = xLoopMin - xMin;
     #if defined(SW_ENABLE_DEPTH_TEST) || defined(SW_ENABLE_TEXTURE)
     int dyMin = yLoopMin - yMin;
