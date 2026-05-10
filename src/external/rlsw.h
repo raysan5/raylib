@@ -213,6 +213,7 @@ typedef double              GLclampd;
 #define GL_RENDERER                         0x1F01
 #define GL_VERSION                          0x1F02
 #define GL_EXTENSIONS                       0x1F03
+#define GL_SHADING_LANGUAGE_VERSION         0x8B8C
 
 //#define GL_ATTRIB_STACK_DEPTH             0x0BB0
 //#define GL_CLIENT_ATTRIB_STACK_DEPTH      0x0BB1
@@ -520,6 +521,7 @@ typedef enum {
     SW_RENDERER = GL_RENDERER,
     SW_VERSION = GL_VERSION,
     SW_EXTENSIONS = GL_EXTENSIONS,
+    SW_SHADING_LANGUAGE_VERSION = GL_SHADING_LANGUAGE_VERSION,
     SW_COLOR_CLEAR_VALUE = GL_COLOR_CLEAR_VALUE,
     SW_DEPTH_CLEAR_VALUE = GL_DEPTH_CLEAR_VALUE,
     SW_CURRENT_COLOR = GL_CURRENT_COLOR,
@@ -4279,6 +4281,7 @@ const char *swGetString(SWget name)
         case SW_RENDERER: result = "RLSW OpenGL Software Renderer"; break;
         case SW_VERSION: result = RLSW_VERSION; break;
         case SW_EXTENSIONS: result = "None"; break;
+        case SW_SHADING_LANGUAGE_VERSION: result = "Not supported"; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
 
@@ -5517,7 +5520,9 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             }
             #endif
 
+        #ifdef SW_ENABLE_DEPTH_TEST
         discard:
+        #endif
             srcColor[0] += dSrcColordx[0];
             srcColor[1] += dSrcColordx[1];
             srcColor[2] += dSrcColordx[2];
@@ -5562,9 +5567,10 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
 
     // Extracting coordinates from the sorted vertices
-    float x0 = v0->position[0], y0 = v0->position[1];
-    float x1 = v1->position[0], y1 = v1->position[1];
-    float x2 = v2->position[0], y2 = v2->position[1];
+    // Put x away for safe keeping.  Only y is used right now.  Silences warnings.
+    float y0 = v0->position[1];
+    float y1 = v1->position[1];
+    float y2 = v2->position[1];
 
     // Compute height differences
     float h02 = y2 - y0;
@@ -5774,7 +5780,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             }
             #endif
 
+        #ifdef SW_ENABLE_DEPTH_TEST
         discard:
+        #endif
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
@@ -5927,7 +5935,9 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
         }
         #endif
 
+    #ifdef SW_ENABLE_DEPTH_TEST
     discard:
+    #endif
         x += xInc;
         y += yInc;
         #ifdef SW_ENABLE_DEPTH_TEST

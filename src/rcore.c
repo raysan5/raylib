@@ -385,7 +385,7 @@ typedef struct CoreData {
         double draw;                        // Time measure for frame draw (seconds)
         double frame;                       // Time measure for one frame (seconds)
         double target;                      // Desired time for one frame, if 0 not applied (seconds)
-        unsigned long long int base;        // Base time measure for hi-res timer (ticks or nanoseconds)
+        unsigned long long base;            // Base time measure for hi-res timer (ticks or nanoseconds)
         unsigned int frameCounter;          // Frame counter (frames)
 
     } Time;
@@ -442,18 +442,6 @@ typedef enum AutomationEventType {
     ACTION_SETTARGETFPS             // param[0]: fps
 } AutomationEventType;
 
-// Event type to config events flags
-// WARNING: Not used at the moment
-typedef enum {
-    EVENT_INPUT_KEYBOARD    = 0,
-    EVENT_INPUT_MOUSE       = 1,
-    EVENT_INPUT_GAMEPAD     = 2,
-    EVENT_INPUT_TOUCH       = 4,
-    EVENT_INPUT_GESTURE     = 8,
-    EVENT_WINDOW            = 16,
-    EVENT_CUSTOM            = 32
-} EventType;
-
 // Event type name strings, required for export
 static const char *autoEventTypeName[] = {
     "EVENT_NONE",
@@ -481,16 +469,6 @@ static const char *autoEventTypeName[] = {
     "ACTION_TAKE_SCREENSHOT",
     "ACTION_SETTARGETFPS"
 };
-
-/*
-// Automation event (24 bytes)
-// NOTE: Opaque struct, internal to raylib
-struct AutomationEvent {
-    unsigned int frame;                 // Event frame
-    unsigned int type;                  // Event type (AutomationEventType)
-    int params[4];                      // Event parameters (if required)
-};
-*/
 
 static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
 static bool automationEventRecording = false;               // Recording automation events flag
@@ -1992,7 +1970,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
                     size_t count = fread(data, sizeof(unsigned char), size, file);
 
                     // WARNING: fread() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
-                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) there is a limitation
+                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes >INT_MAX (2147483647 bytes) there is a limitation
                     if (count > 2147483647)
                     {
                         TRACELOG(LOG_WARNING, "FILEIO: [%s] File is bigger than 2147483647 bytes, avoid using LoadFileData()", fileName);
@@ -3358,15 +3336,15 @@ unsigned int *ComputeSHA1(const unsigned char *data, int dataSize)
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
-    unsigned long long bitsLen = 8ULL * dataSize;
-    msg[newDataSize-1] = (unsigned char)(bitsLen);
-    msg[newDataSize-2] = (unsigned char)(bitsLen >> 8);
-    msg[newDataSize-3] = (unsigned char)(bitsLen >> 16);
-    msg[newDataSize-4] = (unsigned char)(bitsLen >> 24);
-    msg[newDataSize-5] = (unsigned char)(bitsLen >> 32);
-    msg[newDataSize-6] = (unsigned char)(bitsLen >> 40);
-    msg[newDataSize-7] = (unsigned char)(bitsLen >> 48);
-    msg[newDataSize-8] = (unsigned char)(bitsLen >> 56);
+    unsigned long long bitsLen = 8ULL*dataSize;
+    msg[newDataSize - 1] = (unsigned char)(bitsLen);
+    msg[newDataSize - 2] = (unsigned char)(bitsLen >> 8);
+    msg[newDataSize - 3] = (unsigned char)(bitsLen >> 16);
+    msg[newDataSize - 4] = (unsigned char)(bitsLen >> 24);
+    msg[newDataSize - 5] = (unsigned char)(bitsLen >> 32);
+    msg[newDataSize - 6] = (unsigned char)(bitsLen >> 40);
+    msg[newDataSize - 7] = (unsigned char)(bitsLen >> 48);
+    msg[newDataSize - 8] = (unsigned char)(bitsLen >> 56);
 
     // Process the message in successive 512-bit chunks
     for (int offset = 0; offset < newDataSize; offset += (512/8))
@@ -3475,8 +3453,8 @@ unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
     hash[6] = 0x1f83d9ab;
     hash[7] = 0x5be0cd19;
 
-    const unsigned long long int bitLen = ((unsigned long long int)dataSize)*8;
-    unsigned long long int paddedSize = dataSize + sizeof(dataSize);
+    const unsigned long long bitLen = 8ULL*dataSize;
+    unsigned long long paddedSize = dataSize + sizeof(dataSize);
     paddedSize += (64 - (paddedSize%64));
     unsigned char *buffer = (unsigned char *)RL_CALLOC(paddedSize, sizeof(unsigned char));
 
@@ -3487,7 +3465,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
         buffer[(paddedSize - sizeof(bitLen)) + (i - 1)] = (bitLen >> (8*(sizeof(bitLen) - i))) & 0xFF;
     }
 
-    for (unsigned long long int blockN = 0; blockN < paddedSize/64; blockN++)
+    for (unsigned long long blockN = 0; blockN < paddedSize/64; blockN++)
     {
         unsigned int a = hash[0];
         unsigned int b = hash[1];
@@ -3509,7 +3487,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
         }
         for (int t = 16; t < 64; t++) w[t] = SHA256_A1(w[t - 2]) + w[t - 7] + SHA256_A0(w[t - 15]) + w[t - 16];
 
-        for (unsigned long long int t = 0; t < 64; t++)
+        for (int t = 0; t < 64; t++)
         {
             unsigned int e1 = (SHA256_ROTATE_RIGHT(e, 6) ^ SHA256_ROTATE_RIGHT(e, 11) ^ SHA256_ROTATE_RIGHT(e, 25));
             unsigned int ch = ((e & f) ^ (~e & g));
@@ -4241,7 +4219,7 @@ void InitTimer(void)
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) // Success
     {
-        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
+        CORE.Time.base = (unsigned long long)now.tv_sec*1000000000LLU + (unsigned long long)now.tv_nsec;
     }
     else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
 #endif
