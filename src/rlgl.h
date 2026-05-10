@@ -575,14 +575,16 @@ typedef enum {
 
 // Framebuffer texture attachment type
 typedef enum {
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0,   // Framebuffer texture attachment type: cubemap, +X side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X = 1,   // Framebuffer texture attachment type: cubemap, -X side
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y = 2,   // Framebuffer texture attachment type: cubemap, +Y side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y = 3,   // Framebuffer texture attachment type: cubemap, -Y side
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z = 4,   // Framebuffer texture attachment type: cubemap, +Z side
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z = 5,   // Framebuffer texture attachment type: cubemap, -Z side
-    RL_ATTACHMENT_TEXTURE2D = 100,          // Framebuffer texture attachment type: texture2d
-    RL_ATTACHMENT_RENDERBUFFER = 200,       // Framebuffer texture attachment type: renderbuffer
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_X = 0,         // Framebuffer texture attachment type: cubemap, +X side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X = 1,         // Framebuffer texture attachment type: cubemap, -X side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y = 2,         // Framebuffer texture attachment type: cubemap, +Y side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y = 3,         // Framebuffer texture attachment type: cubemap, -Y side
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z = 4,         // Framebuffer texture attachment type: cubemap, +Z side
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z = 5,         // Framebuffer texture attachment type: cubemap, -Z side
+    RL_ATTACHMENT_TEXTURE2D = 100,                // Framebuffer texture attachment type: texture2d
+    RL_ATTACHMENT_RENDERBUFFER = 200,             // Framebuffer texture attachment type: renderbuffer
+    RL_ATTACHMENT_TEXTURE2D_MULTISAMPLE = 300,    // Framebuffer texture attachment type: texture2d, multisampled
+    RL_ATTACHMENT_RENDERBUFFER_MULTISAMPLE = 400  // Framebuffer texture attachment type: renderbuffer, multisampled
 } rlFramebufferAttachTextureType;
 
 // Face culling mode
@@ -754,6 +756,8 @@ RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, const void 
 RLAPI unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount); // Load texture data
 RLAPI unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer); // Load depth texture/renderbuffer (to be attached to fbo)
 RLAPI unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mipmapCount); // Load texture cubemap data
+RLAPI unsigned int rlLoadTextureMultisampled(int width, int height, int format, int samples); // Load multisample texture
+RLAPI unsigned int rlLoadTextureDepthMultisampled(int width, int height, int samples, bool useRenderBuffer); // Load multisample depth texture/renderbuffer
 RLAPI void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data); // Update texture with new data on GPU
 RLAPI void rlGetGlTextureFormats(int format, unsigned int *glInternalFormat, unsigned int *glFormat, unsigned int *glType); // Get OpenGL internal formats
 RLAPI const char *rlGetPixelFormatName(unsigned int format);              // Get name string for pixel format
@@ -770,6 +774,7 @@ RLAPI void rlUnloadFramebuffer(unsigned int id);                          // Del
 // WARNING: Copy and resize framebuffer functionality only defined for software backend
 RLAPI void rlCopyFramebuffer(int x, int y, int width, int height, int format, void *pixels); // Copy framebuffer pixel data to internal buffer
 RLAPI void rlResizeFramebuffer(int width, int height);                    // Resize internal framebuffer
+RLAPI void rlDownsampleFramebuffer(unsigned int fboId, unsigned int destFbo, int width, int height); // Downsample framebuffer with multisample attachments
 
 // Shaders management
 RLAPI unsigned int rlLoadShader(const char *code, int type);                    // Load (compile) shader and return shader id (type: RL_VERTEX_SHADER, RL_FRAGMENT_SHADER, RL_COMPUTE_SHADER)
@@ -3597,6 +3602,101 @@ unsigned int rlLoadTextureCubemap(const void *data, int size, int format, int mi
     return id;
 }
 
+// Load multisample texture (to attach to fbo)
+unsigned int rlLoadMultisampleTexture(int width, int height, int format, int samples)
+{
+    unsigned int id = 0;
+
+    if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return id; }
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    TRACELOG(RL_LOG_WARNING, "GL: OpenGL 1.1 does not support multisample textures");
+    return id;
+#elif !defined(GRAPHICS_API_OPENGL_ES3) && defined(GRAPHICS_API_OPENGL_ES2)
+    TRACELOG(RL_LOG_WARNING, "GL: OpenGL ES 2.0 does not support multisample textures");
+    return id;
+#endif // GRAPHICS_API_OPENGL_11
+
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0); // Free old binding
+
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, id);
+
+    unsigned int glInternalFormat, glFormat, glType;
+    rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
+
+    if (glInternalFormat != 0)
+    {
+    #if defined(GRAPHICS_API_OPENGL_43) || defined(GRAPHICS_API_OPENGL_ES3)
+        glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, glInternalFormat, width, height, 1);
+    #elif defined(GRAPHICS_API_OPENGL_33)
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, glInternalFormat, width, height, 1);
+    #endif
+    }
+
+    if (id > 0) TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Multisample texture loaded successfully (%ix%i | %s)", id, width, height, rlGetPixelFormatName(format));
+    else TRACELOG(RL_LOG_WARNING, "TEXTURE: Failed to load multisample texture");
+
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+    return id;
+}
+
+// Load multisample depth texture/renderbuffer (to attach to fbo)
+unsigned int rlLoadMultisampleTextureDepth(int width, int height, int samples, bool useRenderBuffer)
+{
+    unsigned int id = 0;
+    if (!isGpuReady) { TRACELOG(RL_LOG_WARNING, "GL: GPU is not ready to load data, trying to load before InitWindow()?"); return id; }
+
+#if defined(GRAPHICS_API_OPENGL_11)
+    TRACELOG(RL_LOG_WARNING, "GL: OpenGL 1.1 does not support multisample depth textures");
+    return id;
+#elif !defined(GRAPHICS_API_OPENGL_ES3) && defined(GRAPHICS_API_OPENGL_ES2)
+    TRACELOG(RL_LOG_WARNING, "GL: OpenGL ES 2.0 does not support multisample depth textures");
+    return id;
+#endif // GRAPHICS_API_OPENGL_11
+
+    if (!RLGL.ExtSupported.texDepth) useRenderBuffer = true;
+    unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
+
+#if defined(GRAPHICS_API_OPENGL_ES3)
+    if (RLGL.ExtSupported.maxDepthBits == 24) glInternalFormat = GL_DEPTH_COMPONENT24;
+    else glInternalFormat = GL_DEPTH_COMPONENT16;
+#endif
+
+    if (!useRenderBuffer && RLGL.ExtSupported.texDepth)
+    {
+        glGenTextures(1, &id);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, id);
+
+    #if defined(GRAPHICS_API_OPENGL_43) || defined(GRAPHICS_API_OPENGL_ES3)
+        glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, glInternalFormat, width, height, 1);
+    #elif defined(GRAPHICS_API_OPENGL_33)
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, glInternalFormat, width, height, 1);
+    #endif
+
+        glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
+        TRACELOG(RL_LOG_INFO, "TEXTURE: Multisample depth texture loaded successfully");
+    }
+    else
+    {
+        glGenRenderbuffers(1, &id);
+        glBindRenderbuffer(GL_RENDERBUFFER, id);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, glInternalFormat, width, height);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        TRACELOG(RL_LOG_INFO, "TEXTURE: [ID %i] Multisample depth renderbuffer loaded successfully (%i bits)", id, (RLGL.ExtSupported.maxDepthBits >= 24)? RLGL.ExtSupported.maxDepthBits : 16);
+    }
+
+    return id;
+}
+
 // Update already loaded texture in GPU with new data
 // WARNING: Not possible to know safely if internal texture format is the expected one...
 void rlUpdateTexture(unsigned int id, int offsetX, int offsetY, int width, int height, int format, const void *data)
@@ -3808,6 +3908,18 @@ void rlResizeFramebuffer(int width, int height)
 #endif
 }
 
+// Copy the contents of MSAA framebuffer to non-MSAA framebuffer
+void rlDownsampleFramebuffer(unsigned int fboId, unsigned int destFbo, int width, int height)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES3)
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fboId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
+
+    glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+#endif
+}
+
 // Read screen pixel data (color buffer)
 unsigned char *rlReadScreenPixels(int width, int height)
 {
@@ -3869,32 +3981,17 @@ void rlFramebufferAttach(unsigned int id, unsigned int texId, int attachType, in
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 
-    switch (attachType)
-    {
-        case RL_ATTACHMENT_COLOR_CHANNEL0:
-        case RL_ATTACHMENT_COLOR_CHANNEL1:
-        case RL_ATTACHMENT_COLOR_CHANNEL2:
-        case RL_ATTACHMENT_COLOR_CHANNEL3:
-        case RL_ATTACHMENT_COLOR_CHANNEL4:
-        case RL_ATTACHMENT_COLOR_CHANNEL5:
-        case RL_ATTACHMENT_COLOR_CHANNEL6:
-        case RL_ATTACHMENT_COLOR_CHANNEL7:
-        {
-            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_TEXTURE_2D, texId, mipLevel);
-            else if (texType == RL_ATTACHMENT_RENDERBUFFER) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_RENDERBUFFER, texId);
-            else if (texType >= RL_ATTACHMENT_CUBEMAP_POSITIVE_X) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachType, GL_TEXTURE_CUBE_MAP_POSITIVE_X + texType, texId, mipLevel);
-        } break;
-        case RL_ATTACHMENT_DEPTH:
-        {
-            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texId, mipLevel);
-            else if (texType == RL_ATTACHMENT_RENDERBUFFER)  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texId);
-        } break;
-        case RL_ATTACHMENT_STENCIL:
-        {
-            if (texType == RL_ATTACHMENT_TEXTURE2D) glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texId, mipLevel);
-            else if (texType == RL_ATTACHMENT_RENDERBUFFER)  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texId);
-        } break;
-        default: break;
+    int attach = 0;
+    if(attachType <= RL_ATTACHMENT_COLOR_CHANNEL7) attach = GL_COLOR_ATTACHMENT0 + attachType;
+    else if(attachType == RL_ATTACHMENT_DEPTH)     attach = GL_DEPTH_ATTACHMENT;
+    else if(attachType == RL_ATTACHMENT_STENCIL)   attach = GL_STENCIL_ATTACHMENT;
+
+    switch(texType) {
+        case RL_ATTACHMENT_RENDERBUFFER_MULTISAMPLE:
+        case RL_ATTACHMENT_RENDERBUFFER:              glFramebufferRenderbuffer(GL_FRAMEBUFFER, attach, GL_RENDERBUFFER, texId);  break;
+        case RL_ATTACHMENT_TEXTURE2D:                 glFramebufferTexture2D(GL_FRAMEBUFFER, attach, GL_TEXTURE_2D, texId, mipLevel); break;
+        case RL_ATTACHMENT_TEXTURE2D_MULTISAMPLE:     glFramebufferTexture2D(GL_FRAMEBUFFER, attach, GL_TEXTURE_2D_MULTISAMPLE, texId, mipLevel); break;
+        default:                                      if(attachType <= RL_ATTACHMENT_COLOR_CHANNEL7) glFramebufferTexture2D(GL_FRAMEBUFFER, attach, GL_TEXTURE_CUBE_MAP_POSITIVE_X + texType, texId, mipLevel);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
