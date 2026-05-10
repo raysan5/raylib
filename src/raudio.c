@@ -1048,6 +1048,7 @@ void UnloadSoundAlias(Sound alias)
     {
         UntrackAudioBuffer(alias.stream.buffer);
         ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
+        RL_FREE(alias.stream.buffer->converterResidual);
         RL_FREE(alias.stream.buffer);
     }
 }
