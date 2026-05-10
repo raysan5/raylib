@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - loading gltf with animations
+*   raylib [models] example - loading gltf
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   LIMITATIONS:
 *     - Only supports 1 armature per file, and skips loading it if there are multiple armatures
@@ -14,7 +16,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -30,7 +32,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - loading gltf animations");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - loading gltf");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -40,15 +42,17 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    // Load gltf model
+    // Load model
     Model model = LoadModel("resources/models/gltf/robot.glb");
-    Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
-    
-    // Load gltf model animations
-    int animsCount = 0;
-    unsigned int animIndex = 0;
-    unsigned int animCurrentFrame = 0;
-    ModelAnimation *modelAnimations = LoadModelAnimations("resources/models/gltf/robot.glb", &animsCount);
+    Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model world position
+
+    // Load model animations
+    int animCount = 0;
+    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
+
+    // Animation playing variables
+    unsigned int animIndex = 0;         // Current animation playing
+    unsigned int animCurrentFrame = 0;  // Current animation frame
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -61,13 +65,12 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Select current animation
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) animIndex = (animIndex + 1)%animsCount;
-        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) animIndex = (animIndex + animsCount - 1)%animsCount;
+        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1)%animCount;
+        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1)%animCount;
 
         // Update model animation
-        ModelAnimation anim = modelAnimations[animIndex];
-        animCurrentFrame = (animCurrentFrame + 1)%anim.frameCount;
-        UpdateModelAnimation(model, anim, animCurrentFrame);
+        animCurrentFrame = (animCurrentFrame + 1)%anims[animIndex].keyframeCount;
+        UpdateModelAnimation(model, anims[animIndex], (float)animCurrentFrame);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -77,12 +80,15 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
-                DrawModel(model, position, 1.0f, WHITE);    // Draw animated model
+
+                DrawModel(model, position, 1.0f, WHITE);
+
                 DrawGrid(10, 1.0f);
+
             EndMode3D();
 
-            DrawText("Use the LEFT/RIGHT mouse buttons to switch animation", 10, 10, 20, GRAY);
-            DrawText(TextFormat("Animation: %s", anim.name), 10, GetScreenHeight() - 20, 10, DARKGRAY);
+            DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 40, 20, MAROON);
+            DrawText("Use the LEFT/RIGHT keys to switch animation", 10, 10, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -90,7 +96,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(model);         // Unload model and meshes/material
+    UnloadModelAnimations(anims, animCount); // Unload model animations data
+    UnloadModel(model);         // Unload model
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

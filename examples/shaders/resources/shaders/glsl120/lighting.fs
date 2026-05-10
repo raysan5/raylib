@@ -10,7 +10,7 @@ varying vec3 fragNormal;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 #define     MAX_LIGHTS              4
 #define     LIGHT_DIRECTIONAL       0
@@ -38,7 +38,7 @@ void main()
     vec3 viewD = normalize(viewPos - fragPosition);
     vec3 specular = vec3(0.0);
 
-    vec4 tint = colDiffuse * fragColor;
+    vec4 tint = colDiffuse*fragColor;
 
     // NOTE: Implement here your fragment shader code
 

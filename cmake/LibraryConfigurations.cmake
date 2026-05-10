@@ -7,7 +7,33 @@ if(POLICY CMP0072)
   cmake_policy(SET CMP0072 NEW)
 endif()
 
-if (${PLATFORM} MATCHES "Desktop")
+include(CheckCSourceCompiles)
+include(CMakePushCheckState)
+
+function(raylib_check_libatomic_required result)
+    set(_atomic_test_source "
+int main(void)
+{
+    volatile long long value = 0;
+    return (int)__atomic_fetch_add(&value, 1, __ATOMIC_SEQ_CST);
+}")
+
+    check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+
+    if (RAYLIB_ATOMICS_WITHOUT_LIBATOMIC)
+        set(${result} FALSE PARENT_SCOPE)
+    else ()
+        cmake_push_check_state()
+        list(APPEND CMAKE_REQUIRED_LIBRARIES atomic)
+        check_c_source_compiles("${_atomic_test_source}" RAYLIB_ATOMICS_WITH_LIBATOMIC)
+        cmake_pop_check_state()
+        set(${result} ${RAYLIB_ATOMICS_WITH_LIBATOMIC} PARENT_SCOPE)
+    endif ()
+endfunction()
+
+set(RAYLIB_DEPENDENCIES "include(CMakeFindDependencyMacro)")
+
+if (${PLATFORM} STREQUAL "Desktop")
     set(PLATFORM_CPP "PLATFORM_DESKTOP")
 
     if (APPLE)
@@ -36,6 +62,12 @@ if (${PLATFORM} MATCHES "Desktop")
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
         find_package(OpenGL QUIET)
         set(LIBS_PRIVATE ${OPENGL_LIBRARIES} winmm)
+    elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+        find_library(GLESV2 GLESv2)
+        find_library(EGL EGL)
+        set(LIBS_PUBLIC m)
+        set(LIBS_PRIVATE ${GLESV2} ${EGL} atomic pthread dl)
     elseif (UNIX)
         find_library(pthread NAMES pthread)
         find_package(OpenGL QUIET)
@@ -47,7 +79,8 @@ if (${PLATFORM} MATCHES "Desktop")
             find_library(OSS_LIBRARY ossaudio)
         endif ()
 
-        set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        set(LIBS_PRIVATE pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        set(LIBS_PUBLIC m)
     else ()
         find_library(pthread NAMES pthread)
         find_package(OpenGL QUIET)
@@ -55,11 +88,13 @@ if (${PLATFORM} MATCHES "Desktop")
             set(OPENGL_LIBRARIES "GL")
         endif ()
 
-        set(LIBS_PRIVATE m atomic pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        set(LIBS_PRIVATE pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        set(LIBS_PUBLIC m)
 
         if ("${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD")
             find_library(OSS_LIBRARY ossaudio)
-            set(LIBS_PRIVATE m pthread ${OPENGL_LIBRARIES} ${OSS_LIBRARY})
+        else ()
+            set(LIBS_PRIVATE ${LIBS_PRIVATE} atomic)
         endif ()
 
         if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "(Net|Open)BSD" AND USE_AUDIO)
@@ -67,47 +102,130 @@ if (${PLATFORM} MATCHES "Desktop")
         endif ()
     endif ()
 
-elseif (${PLATFORM} MATCHES "Web")
+elseif (${PLATFORM} STREQUAL "Web")
     set(PLATFORM_CPP "PLATFORM_WEB")
     if(NOT GRAPHICS)
         set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     endif()
     set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
 
-elseif (${PLATFORM} MATCHES "Android")
+elseif (${PLATFORM} STREQUAL "Android")
     set(PLATFORM_CPP "PLATFORM_ANDROID")
     set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     list(APPEND raylib_sources ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
     include_directories(${ANDROID_NDK}/sources/android/native_app_glue)
+
+    # NOTE: We remove '-Wl,--no-undefined' (set by default) as it conflicts with '-Wl,-undefined,dynamic_lookup' needed 
+    #       for compiling with the missing 'void main(void)' declaration in `android_main()`.
+    #       We also remove other unnecessary or problematic flags.
+
+    string(REPLACE "-Wl,--no-undefined -Qunused-arguments" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    string(REPLACE "-static-libstdc++" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--warn-shared-textrel -Wl,--fatal-warnings -u ANativeActivity_onCreate -Wl,-undefined,dynamic_lookup")
 
     find_library(OPENGL_LIBRARY OpenGL)
-    set(LIBS_PRIVATE m log android EGL GLESv2 OpenSLES atomic c)
+    set(LIBS_PRIVATE log android EGL GLESv2 OpenSLES atomic c)
+    set(LIBS_PUBLIC m)
 
-elseif ("${PLATFORM}" MATCHES "DRM")
+elseif ("${PLATFORM}" STREQUAL "DRM")
     set(PLATFORM_CPP "PLATFORM_DRM")
-    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
 
     add_definitions(-D_DEFAULT_SOURCE)
-    add_definitions(-DEGL_NO_X11)
     add_definitions(-DPLATFORM_DRM)
 
-    find_library(GLESV2 GLESv2)
-    find_library(EGL EGL)
     find_library(DRM drm)
-    find_library(GBM gbm)
 
     if (NOT CMAKE_CROSSCOMPILING OR NOT CMAKE_SYSROOT)
         include_directories(/usr/include/libdrm)
     endif ()
-    set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread m dl)
 
-elseif ("${PLATFORM}" MATCHES "SDL")
-    find_package(SDL2 REQUIRED)
-    set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
-    set(LIBS_PRIVATE SDL2::SDL2)
+    if ("${OPENGL_VERSION}" STREQUAL "Software")
+        # software rendering does not require EGL/GBM.
+        set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+        set(LIBS_PRIVATE ${DRM} atomic pthread dl)
+    else ()
+        set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+        add_definitions(-DEGL_NO_X11)
 
+        find_library(GLESV2 GLESv2)
+        find_library(EGL EGL)
+        find_library(GBM gbm)
+
+        set(LIBS_PRIVATE ${GLESV2} ${EGL} ${DRM} ${GBM} atomic pthread dl)
+    endif ()
+    set(LIBS_PUBLIC m)
+
+elseif ("${PLATFORM}" STREQUAL "SDL")
+	# First, check if SDL is included as a subdirectory
+	if(TARGET SDL3::SDL3)
+		message(STATUS "Using SDL3 from subdirectory")
+		set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+		set(LIBS_PRIVATE SDL3::SDL3)
+		add_compile_definitions(USING_SDL3_PROJECT)
+	elseif(TARGET SDL2::SDL2)
+		message(STATUS "Using SDL2 from subdirectory")
+		set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+		set(LIBS_PRIVATE SDL2::SDL2)
+		add_compile_definitions(USING_SDL2_PROJECT)
+	else()
+		# No SDL added via add_subdirectory(), try find_package()
+		message(STATUS "No SDL target from subdirectory, searching via find_package()...")
+
+		# First try SDL3
+		find_package(SDL3 QUIET)
+		if(SDL3_FOUND)
+			message(STATUS "Found SDL3 via find_package()")
+			set(LIBS_PUBLIC SDL3::SDL3)
+			set(RAYLIB_DEPENDENCIES "${RAYLIB_DEPENDENCIES}\nfind_dependency(SDL3 REQUIRED)")
+			set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+			add_compile_definitions(USING_SDL3_PACKAGE)
+		else()
+			# Fallback to SDL2
+			find_package(SDL2 REQUIRED)
+			message(STATUS "Found SDL2 via find_package()")
+			set(PLATFORM_CPP "PLATFORM_DESKTOP_SDL")
+			set(LIBS_PUBLIC SDL2::SDL2)
+			set(RAYLIB_DEPENDENCIES "${RAYLIB_DEPENDENCIES}\nfind_dependency(SDL2 REQUIRED)")
+			add_compile_definitions(USING_SDL2_PACKAGE)
+		endif()
+	endif()	
+
+elseif ("${PLATFORM}" STREQUAL "RGFW")
+    set(PLATFORM_CPP "PLATFORM_DESKTOP_RGFW")
+
+    if (APPLE)
+        find_library(COCOA Cocoa)
+        find_library(OPENGL OpenGL)
+
+        set(LIBS_PRIVATE ${COCOA} ${OPENGL})
+    elseif (WIN32)
+        find_package(OpenGL REQUIRED)
+
+        set(LIBS_PRIVATE ${OPENGL_LIBRARIES} gdi32)
+    elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
+        message(FATAL_ERROR "RGFW platform does not support QNX. Use PLATFORM=Desktop or PLATFORM=SDL instead.")
+    elseif (UNIX)
+        find_package(X11 REQUIRED)
+        find_package(OpenGL REQUIRED)
+
+        set(LIBS_PRIVATE ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+    endif ()
+
+elseif ("${PLATFORM}" STREQUAL "WebRGFW")
+    set(PLATFORM_CPP "PLATFORM_WEB_RGFW")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
+    set(CMAKE_STATIC_LIBRARY_SUFFIX ".a")
+
+elseif ("${PLATFORM}" STREQUAL "Memory")
+    set(PLATFORM_CPP "PLATFORM_MEMORY")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+    set(OPENGL_VERSION "Software")
+
+    if(WIN32 OR CMAKE_C_COMPILER MATCHES "mingw|mingw32|mingw64")
+        set(LIBS_PRIVATE winmm)
+    endif()
 endif ()
 
 if (NOT ${OPENGL_VERSION} MATCHES "OFF")
@@ -125,6 +243,8 @@ if (NOT ${OPENGL_VERSION} MATCHES "OFF")
         set(GRAPHICS "GRAPHICS_API_OPENGL_ES2")
     elseif (${OPENGL_VERSION} MATCHES "ES 3.0")
         set(GRAPHICS "GRAPHICS_API_OPENGL_ES3")
+    elseif (${OPENGL_VERSION} MATCHES "Software")
+        set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
     endif ()
     if (NOT "${SUGGESTED_GRAPHICS}" STREQUAL "" AND NOT "${SUGGESTED_GRAPHICS}" STREQUAL "${GRAPHICS}")
         message(WARNING "You are overriding the suggested GRAPHICS=${SUGGESTED_GRAPHICS} with ${GRAPHICS}! This may fail.")
@@ -136,6 +256,14 @@ if (NOT GRAPHICS)
 endif ()
 
 set(LIBS_PRIVATE ${LIBS_PRIVATE} ${OPENAL_LIBRARY})
+
+if (SUPPORT_MODULE_RAUDIO AND UNIX AND NOT APPLE)
+    raylib_check_libatomic_required(RAYLIB_LIBATOMIC_REQUIRED)
+    if (RAYLIB_LIBATOMIC_REQUIRED)
+        message(STATUS "64-bit atomics require libatomic")
+        list(APPEND LIBS_PRIVATE atomic)
+    endif ()
+endif ()
 
 if (${PLATFORM} MATCHES "Desktop")
     set(LIBS_PRIVATE ${LIBS_PRIVATE} glfw)

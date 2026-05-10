@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib example - procedural mesh generation
+*   raylib [models] example - mesh generation
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.8, last time updated with raylib 4.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,6 +17,9 @@
 
 #define NUM_MODELS  9               // Parametric 3d shapes to generate
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static Mesh GenMeshCustom(void);    // Generate a simple triangle mesh from code
 
 //------------------------------------------------------------------------------------
@@ -45,17 +50,8 @@ int main(void)
     models[6] = LoadModelFromMesh(GenMeshKnot(1.0f, 2.0f, 16, 128));
     models[7] = LoadModelFromMesh(GenMeshPoly(5, 2.0f));
     models[8] = LoadModelFromMesh(GenMeshCustom());
-    
-    // Generated meshes could be exported as .obj files
-    //ExportMesh(models[0].meshes[0], "plane.obj");
-    //ExportMesh(models[1].meshes[0], "cube.obj");
-    //ExportMesh(models[2].meshes[0], "sphere.obj");
-    //ExportMesh(models[3].meshes[0], "hemisphere.obj");
-    //ExportMesh(models[4].meshes[0], "cylinder.obj");
-    //ExportMesh(models[5].meshes[0], "torus.obj");
-    //ExportMesh(models[6].meshes[0], "knot.obj");
-    //ExportMesh(models[7].meshes[0], "poly.obj");
-    //ExportMesh(models[8].meshes[0], "custom.obj");
+
+    // NOTE: Generated meshes could be exported using ExportMesh()
 
     // Set checked texture as default diffuse component for all models material
     for (int i = 0; i < NUM_MODELS; i++) models[i].materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
@@ -112,7 +108,7 @@ int main(void)
             DrawRectangleLines(30, 400, 310, 30, Fade(DARKBLUE, 0.5f));
             DrawText("MOUSE LEFT BUTTON to CYCLE PROCEDURAL MODELS", 40, 410, 10, BLUE);
 
-            switch(currentModel)
+            switch (currentModel)
             {
                 case 0: DrawText("PLANE", 680, 10, 20, DARKBLUE); break;
                 case 1: DrawText("CUBE", 680, 10, 20, DARKBLUE); break;
@@ -143,6 +139,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Definition
+//------------------------------------------------------------------------------------
 // Generate a simple triangle mesh from code
 static Mesh GenMeshCustom(void)
 {

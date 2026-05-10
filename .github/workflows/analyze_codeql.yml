@@ -1,0 +1,135 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+name: Analyze raylib with CodeQL
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main", "master" ]
+  pull_request:
+    branches: '*'
+  schedule:
+  - cron: '0 0 * * 1'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  analyze:
+    name: Analyze
+    # Runner size impacts CodeQL analysis time. To learn more, please see:
+    #   - https://gh.io/recommended-hardware-resources-for-running-codeql
+    #   - https://gh.io/supported-runners-and-hardware-resources
+    #   - https://gh.io/using-larger-runners
+    # Consider using larger runners for possible analysis time improvements.
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift' ]
+        # Use only 'java' to analyze code written in Java, Kotlin or both
+        # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Create Build Environment
+      # Some projects don't allow in-source building, so create a separate build directory
+      # We'll use this as our working directory for all subsequent commands
+      run: cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Setup Environment
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install gcc-multilib
+        sudo apt-get install -y --no-install-recommends libglfw3 libglfw3-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-dev libxkbcommon-dev
+
+    - name: Configure CMake
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPLATFORM=Desktop
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+
+        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+        # queries: security-extended,security-and-quality
+        queries: security-and-quality
+
+    - name: Build
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: |
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPLATFORM=Desktop
+        cmake --build . --config $BUILD_TYPE
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: false
+      id: step1
+
+    # Filter out rules with low severity or high false positve rate
+    # Also filter out warnings in third-party code
+    - name: Filter out unwanted errors and warnings
+      uses: advanced-security/filter-sarif@v1
+      with:
+        patterns: |
+          -**:cpp/path-injection
+          -**:cpp/world-writable-file-creation
+          -**:cpp/poorly-documented-function
+          -**:cpp/potentially-dangerous-function
+          -**:cpp/use-of-goto
+          -**:cpp/integer-multiplication-cast-to-long
+          -**:cpp/comparison-with-wider-type
+          -**:cpp/leap-year/*
+          -**:cpp/ambiguously-signed-bit-field
+          -**:cpp/suspicious-pointer-scaling
+          -**:cpp/suspicious-pointer-scaling-void
+          -**:cpp/unsigned-comparison-zero
+          -**/cmake*/Modules/**
+          -**/src/external/glfw/**
+          -**/src/external/**
+        input: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
+        output: ${{ steps.step1.outputs.sarif-output }}/cpp.sarif
+
+    - name: Upload CodeQL results to code scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.step1.outputs.sarif-output }}
+        category: "/language:${{matrix.language}}"
+
+    - name: Upload CodeQL results as an artifact
+      if: success() || failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: codeql-results
+        path: ${{ steps.step1.outputs.sarif-output }}
+        retention-days: 5

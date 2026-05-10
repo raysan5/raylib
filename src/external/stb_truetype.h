@@ -1863,11 +1863,11 @@ static int stbtt__GetGlyphShapeTT(const stbtt_fontinfo *info, int glyph_index, s
                stbtt_vertex* v = &comp_verts[i];
                stbtt_vertex_type x,y;
                x=v->x; y=v->y;
-               v->x = (stbtt_vertex_type)(m * (mtx[0]*x + mtx[2]*y + mtx[4]));
-               v->y = (stbtt_vertex_type)(n * (mtx[1]*x + mtx[3]*y + mtx[5]));
+               v->x = (stbtt_vertex_type)(mtx[0]*x + mtx[2]*y + mtx[4]*m);
+               v->y = (stbtt_vertex_type)(mtx[1]*x + mtx[3]*y + mtx[5]*n);
                x=v->cx; y=v->cy;
-               v->cx = (stbtt_vertex_type)(m * (mtx[0]*x + mtx[2]*y + mtx[4]));
-               v->cy = (stbtt_vertex_type)(n * (mtx[1]*x + mtx[3]*y + mtx[5]));
+               v->cx = (stbtt_vertex_type)(mtx[0]*x + mtx[2]*y + mtx[4]*m);
+               v->cy = (stbtt_vertex_type)(mtx[1]*x + mtx[3]*y + mtx[5]*n);
             }
             // Append vertices.
             tmp = (stbtt_vertex*)STBTT_malloc((num_vertices+comp_num_verts)*sizeof(stbtt_vertex), info->userdata);

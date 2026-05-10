@@ -7,7 +7,7 @@ in vec4 fragColor;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 #define MAX_SPOTS   3
 
@@ -53,7 +53,7 @@ void main()
         else
         {
             if (d < spots[fi].inner) alpha = 0.0;
-            else alpha = (d - spots[fi].inner) / (spots[fi].radius - spots[fi].inner);
+            else alpha = (d - spots[fi].inner)/(spots[fi].radius - spots[fi].inner);
         }
     }
 

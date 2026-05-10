@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v2.0 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
+*   raymath v2.0 - Math functions to work with Vector2, Vector3, Vector4, Matrix and Quaternions
 *
 *   CONVENTIONS:
 *     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
@@ -15,24 +15,29 @@
 *     - Functions use always a "result" variable for return (except C++ operators)
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
-*     - No compound literals used to make sure libray is compatible with C++
+*     - No compound literals used to make sure the library is compatible with C++
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
-*           Generates the implementation of the library into the included file.
+*           Generates the implementation of the library into the included file
 *           If not defined, the library is in header only mode and can be included in other headers
-*           or source files without problems. But only ONE file should hold the implementation.
+*           or source files without problems. But only ONE file should hold the implementation
 *
 *       #define RAYMATH_STATIC_INLINE
-*           Define static inline functions code, so #include header suffices for use.
-*           This may use up lots of memory.
+*           Define static inline functions code, so #include header suffices for use
+*           This may use up lots of memory
 *
 *       #define RAYMATH_DISABLE_CPP_OPERATORS
 *           Disables C++ operator overloads for raymath types.
 *
+*       #define RAYMATH_USE_SIMD_INTRINSICS   1
+*           Try to enable SIMD intrinsics for MatrixMultiply()
+*           Note that users enabling it must be aware of the target platform where application will
+*           run to support the selected SIMD intrinsic, for now, only SSE is supported
+*
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2026 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -61,11 +66,11 @@
 // Function specifiers definition
 #if defined(RAYMATH_IMPLEMENTATION)
     #if defined(_WIN32) && defined(BUILD_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllexport) extern inline // We are building raylib as a Win32 shared library (.dll)
+        #define RMAPI __declspec(dllexport) extern inline    // Building raylib as a Win32 shared library (.dll)
     #elif defined(BUILD_LIBTYPE_SHARED)
-        #define RMAPI __attribute__((visibility("default"))) // We are building raylib as a Unix shared library (.so/.dylib)
+        #define RMAPI __attribute__((visibility("default"))) // Building raylib as a Unix shared library (.so/.dylib)
     #elif defined(_WIN32) && defined(USE_LIBTYPE_SHARED)
-        #define RMAPI __declspec(dllimport)         // We are using raylib as a Win32 shared library (.dll)
+        #define RMAPI __declspec(dllimport)                  // Using raylib as a Win32 shared library (.dll)
     #else
         #define RMAPI extern inline // Provide external definition
     #endif
@@ -78,7 +83,6 @@
         #define RMAPI inline        // Functions may be inlined or external definition used
     #endif
 #endif
-
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
@@ -160,15 +164,50 @@ typedef struct Matrix {
 #endif
 
 // NOTE: Helper types to be used instead of array return types for *ToFloat functions
+#if !defined(RL_FLOAT3_TYPE)
 typedef struct float3 {
     float v[3];
 } float3;
+#define RL_FLOAT3_TYPE
+#endif
 
+#if !defined(RL_FLOAT16_TYPE)
 typedef struct float16 {
     float v[16];
 } float16;
+#define RL_FLOAT16_TYPE
+#endif
 
 #include <math.h>       // Required for: sinf(), cosf(), tan(), atan2f(), sqrtf(), floor(), fminf(), fmaxf(), fabsf()
+
+#if RAYMATH_USE_SIMD_INTRINSICS
+    // SIMD is used on the most costly raymath function MatrixMultiply()
+    // NOTE: Only SSE intrinsics support implemented
+    // TODO: Consider support for other SIMD intrinsics:
+    //  - SSEx, AVX, AVX2, FMA, NEON, RVV
+    /*
+    #if defined(__SSE4_2__)
+        #include <nmmintrin.h>
+        #define RAYMATH_SSE42_ENABLED
+    #elif defined(__SSE4_1__)
+        #include <smmintrin.h>
+        #define RAYMATH_SSE41_ENABLED
+    #elif defined(__SSSE3__)
+        #include <tmmintrin.h>
+        #define RAYMATH_SSSE3_ENABLED
+    #elif defined(__SSE3__)
+        #include <pmmintrin.h>
+        #define RAYMATH_SSE3_ENABLED
+    #elif defined(__SSE2__) || (defined(_M_AMD64) || defined(_M_X64)) // SSE2 x64
+        #include <emmintrin.h>
+        #define RAYMATH_SSE2_ENABLED
+    #endif
+    */
+    #if defined(__SSE__) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 1))
+        #include <xmmintrin.h>
+        #define RAYMATH_SSE_ENABLED
+    #endif
+#endif
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Utils math
@@ -304,6 +343,14 @@ RMAPI float Vector2DotProduct(Vector2 v1, Vector2 v2)
     return result;
 }
 
+// Calculate two vectors cross product
+RMAPI float Vector2CrossProduct(Vector2 v1, Vector2 v2)
+{
+    float result = (v1.x*v2.y - v1.y*v2.x);
+
+    return result;
+}
+
 // Calculate distance between two vectors
 RMAPI float Vector2Distance(Vector2 v1, Vector2 v2)
 {
@@ -320,8 +367,9 @@ RMAPI float Vector2DistanceSqr(Vector2 v1, Vector2 v2)
     return result;
 }
 
-// Calculate angle between two vectors
-// NOTE: Angle is calculated from origin point (0, 0)
+// Calculate the signed angle from v1 to v2, relative to the origin (0, 0)
+// NOTE: Coordinate system convention: positive X right, positive Y down
+// positive angles appear clockwise, and negative angles appear counterclockwise
 RMAPI float Vector2Angle(Vector2 v1, Vector2 v2)
 {
     float result = 0.0f;
@@ -519,15 +567,9 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -553,7 +595,7 @@ RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 // v: normalized direction of the incoming ray
 // n: normalized normal vector of the interface of two optical media
 // r: ratio of the refractive index of the medium from where the ray comes
-//    to the refractive index of the medium on the other side of the surface
+// to the refractive index of the medium on the other side of the surface
 RMAPI Vector2 Vector2Refract(Vector2 v, Vector2 n, float r)
 {
     Vector2 result = { 0 };
@@ -1041,7 +1083,7 @@ RMAPI Vector3 Vector3Barycenter(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
 }
 
 // Projects a Vector3 from screen space into object space
-// NOTE: We are avoiding calling other raymath functions despite available
+// NOTE: Self-contained function, no other raymath functions are called
 RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
 {
     Vector3 result = { 0 };
@@ -1109,7 +1151,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unprojecte matrix
+    // Multiply quat point by unprojected matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
@@ -1167,15 +1209,9 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
     {
         length = sqrtf(length);
 
-        float scale = 1;    // By default, 1 as the neutral element.
-        if (length < min)
-        {
-            scale = min/length;
-        }
-        else if (length > max)
-        {
-            scale = max/length;
-        }
+        float scale = 1; // By default, 1 as the neutral element
+        if (length < min) scale = min/length;
+        else if (length > max) scale = max/length;
 
         result.x = v.x*scale;
         result.y = v.y*scale;
@@ -1203,7 +1239,7 @@ RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 // v: normalized direction of the incoming ray
 // n: normalized normal vector of the interface of two optical media
 // r: ratio of the refractive index of the medium from where the ray comes
-//    to the refractive index of the medium on the other side of the surface
+// to the refractive index of the medium on the other side of the surface
 RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 {
     Vector3 result = { 0 };
@@ -1228,19 +1264,21 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector4 math
 //----------------------------------------------------------------------------------
-
+// Get  vector zero
 RMAPI Vector4 Vector4Zero(void)
 {
     Vector4 result = { 0.0f, 0.0f, 0.0f, 0.0f };
     return result;
 }
 
+// Get vector one
 RMAPI Vector4 Vector4One(void)
 {
     Vector4 result = { 1.0f, 1.0f, 1.0f, 1.0f };
     return result;
 }
 
+// Add two vectors
 RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1252,6 +1290,7 @@ RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Add value to vector components
 RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1263,6 +1302,7 @@ RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
     return result;
 }
 
+// Substract vectors
 RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1274,6 +1314,7 @@ RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Substract value from vector components
 RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1285,18 +1326,21 @@ RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
     return result;
 }
 
+// Vector length
 RMAPI float Vector4Length(Vector4 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w));
     return result;
 }
 
+// Vector square length
 RMAPI float Vector4LengthSqr(Vector4 v)
 {
     float result = (v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w);
     return result;
 }
 
+// Vectors dot product
 RMAPI float Vector4DotProduct(Vector4 v1, Vector4 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
@@ -1322,6 +1366,7 @@ RMAPI float Vector4DistanceSqr(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Scale vector components by value (multiply)
 RMAPI Vector4 Vector4Scale(Vector4 v, float scale)
 {
     Vector4 result = { v.x*scale, v.y*scale, v.z*scale, v.w*scale };
@@ -1459,19 +1504,35 @@ RMAPI int Vector4Equals(Vector4 p, Vector4 q)
 RMAPI float MatrixDeterminant(Matrix mat)
 {
     float result = 0.0f;
-
+/*
     // Cache the matrix values (speed optimization)
     float a00 = mat.m0, a01 = mat.m1, a02 = mat.m2, a03 = mat.m3;
     float a10 = mat.m4, a11 = mat.m5, a12 = mat.m6, a13 = mat.m7;
     float a20 = mat.m8, a21 = mat.m9, a22 = mat.m10, a23 = mat.m11;
     float a30 = mat.m12, a31 = mat.m13, a32 = mat.m14, a33 = mat.m15;
 
+    // NOTE: It takes 72 multiplication to calculate 4x4 matrix determinant
     result = a30*a21*a12*a03 - a20*a31*a12*a03 - a30*a11*a22*a03 + a10*a31*a22*a03 +
              a20*a11*a32*a03 - a10*a21*a32*a03 - a30*a21*a02*a13 + a20*a31*a02*a13 +
              a30*a01*a22*a13 - a00*a31*a22*a13 - a20*a01*a32*a13 + a00*a21*a32*a13 +
              a30*a11*a02*a23 - a10*a31*a02*a23 - a30*a01*a12*a23 + a00*a31*a12*a23 +
              a10*a01*a32*a23 - a00*a11*a32*a23 - a20*a11*a02*a33 + a10*a21*a02*a33 +
              a20*a01*a12*a33 - a00*a21*a12*a33 - a10*a01*a22*a33 + a00*a11*a22*a33;
+*/
+    // Using Laplace expansion (https://en.wikipedia.org/wiki/Laplace_expansion),
+    // previous operation can be simplified to 40 multiplications, decreasing matrix
+    // size from 4x4 to 2x2 using minors
+
+    // Cache the matrix values (speed optimization)
+    float m0 = mat.m0, m1 = mat.m1, m2 = mat.m2, m3 = mat.m3;
+    float m4 = mat.m4, m5 = mat.m5, m6 = mat.m6, m7 = mat.m7;
+    float m8 = mat.m8, m9 = mat.m9, m10 = mat.m10, m11 = mat.m11;
+    float m12 = mat.m12, m13 = mat.m13, m14 = mat.m14, m15 = mat.m15;
+
+    result = (m0*((m5*(m10*m15 - m11*m14) - m9*(m6*m15 - m7*m14) + m13*(m6*m11 - m7*m10))) -
+        m4*((m1*(m10*m15 - m11*m14) - m9*(m2*m15 - m3*m14) + m13*(m2*m11 - m3*m10))) +
+        m8*((m1*(m6*m15 - m7*m14) - m5*(m2*m15 - m3*m14) + m13*(m2*m7 - m3*m6))) -
+        m12*((m1*(m6*m11 - m7*m10) - m5*(m2*m11 - m3*m10) + m9*(m2*m7 - m3*m6))));
 
     return result;
 }
@@ -1623,6 +1684,63 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
 {
     Matrix result = { 0 };
 
+#if defined(RAYMATH_SSE_ENABLED)
+    // Load left side and right side
+    __m128 c0 = _mm_set_ps(right.m12, right.m8,  right.m4,  right.m0);
+    __m128 c1 = _mm_set_ps(right.m13, right.m9,  right.m5,  right.m1);
+    __m128 c2 = _mm_set_ps(right.m14, right.m10, right.m6,  right.m2);
+    __m128 c3 = _mm_set_ps(right.m15, right.m11, right.m7,  right.m3);
+
+    // Transpose so c0..c3 become *rows* of the right matrix in semantic order
+    _MM_TRANSPOSE4_PS(c0, c1, c2, c3);
+
+    float tmp[4] = { 0 };
+    __m128 row;
+
+    // Row 0 of result: [m0, m1, m2, m3]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m0),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m1),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m2),  c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m3),  c3));
+    _mm_storeu_ps(tmp, row);
+    result.m0 = tmp[0];
+    result.m1 = tmp[1];
+    result.m2 = tmp[2];
+    result.m3 = tmp[3];
+
+    // Row 1 of result: [m4, m5, m6, m7]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m4),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m5),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m6),  c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m7),  c3));
+    _mm_storeu_ps(tmp, row);
+    result.m4 = tmp[0];
+    result.m5 = tmp[1];
+    result.m6 = tmp[2];
+    result.m7 = tmp[3];
+
+    // Row 2 of result: [m8, m9, m10, m11]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m8),  c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m9),  c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m10), c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m11), c3));
+    _mm_storeu_ps(tmp, row);
+    result.m8  = tmp[0];
+    result.m9  = tmp[1];
+    result.m10 = tmp[2];
+    result.m11 = tmp[3];
+
+    // Row 3 of result: [m12, m13, m14, m15]
+    row  = _mm_mul_ps(_mm_set1_ps(left.m12), c0);
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m13), c1));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m14), c2));
+    row  = _mm_add_ps(row, _mm_mul_ps(_mm_set1_ps(left.m15), c3));
+    _mm_storeu_ps(tmp, row);
+    result.m12 = tmp[0];
+    result.m13 = tmp[1];
+    result.m14 = tmp[2];
+    result.m15 = tmp[3];
+#else
     result.m0 = left.m0*right.m0 + left.m1*right.m4 + left.m2*right.m8 + left.m3*right.m12;
     result.m1 = left.m0*right.m1 + left.m1*right.m5 + left.m2*right.m9 + left.m3*right.m13;
     result.m2 = left.m0*right.m2 + left.m1*right.m6 + left.m2*right.m10 + left.m3*right.m14;
@@ -1639,6 +1757,20 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     result.m13 = left.m12*right.m1 + left.m13*right.m5 + left.m14*right.m9 + left.m15*right.m13;
     result.m14 = left.m12*right.m2 + left.m13*right.m6 + left.m14*right.m10 + left.m15*right.m14;
     result.m15 = left.m12*right.m3 + left.m13*right.m7 + left.m14*right.m11 + left.m15*right.m15;
+#endif
+
+    return result;
+}
+
+// Multiply matrix components by value
+RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
+{
+    Matrix result = {
+        left.m0*value, left.m4*value, left.m8*value, left.m12*value,
+        left.m1*value, left.m5*value, left.m9*value, left.m13*value,
+        left.m2*value, left.m6*value, left.m10*value, left.m14*value,
+        left.m3*value, left.m7*value, left.m11*value, left.m15*value
+    };
 
     return result;
 }
@@ -2247,13 +2379,13 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
 {
     Quaternion result = { 0 };
 
-    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z);    // Vector3DotProduct(from, to)
+    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z); // Vector3DotProduct(from, to)
     Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
 
     result.x = cross.x;
     result.y = cross.y;
     result.z = cross.z;
-    result.w = 1.0f + cos2Theta;
+    result.w = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta) + cos2Theta;
 
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
@@ -2373,19 +2505,14 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
 
-    if (axisLength != 0.0f)
+    if (length != 0.0f)
     {
         angle *= 0.5f;
 
-        float length = 0.0f;
-        float ilength = 0.0f;
-
         // Vector3Normalize(axis)
-        length = axisLength;
-        if (length == 0.0f) length = 1.0f;
-        ilength = 1.0f/length;
+        float ilength = 1.0f/length;
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;
@@ -2440,8 +2567,8 @@ RMAPI void QuaternionToAxisAngle(Quaternion q, Vector3 *outAxis, float *outAngle
     }
     else
     {
-        // This occurs when the angle is zero.
-        // Not a problem: just set an arbitrary normalized axis.
+        // This occurs when the angle is zero
+        // Not a problem, set an arbitrary normalized axis
         resAxis.x = 1.0f;
     }
 
@@ -2527,65 +2654,119 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
     return result;
 }
 
-// Decompose a transformation matrix into its rotational, translational and scaling components
+// Compose a transformation matrix from rotational, translational and scaling components
+// TODO: This function is not following raymath conventions defined in header: NOT self-contained
+RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 scale)
+{
+    // Initialize vectors
+    Vector3 right = { 1.0f, 0.0f, 0.0f };
+    Vector3 up = { 0.0f, 1.0f, 0.0f };
+    Vector3 forward = { 0.0f, 0.0f, 1.0f };
+
+    // Scale vectors
+    right = Vector3Scale(right, scale.x);
+    up = Vector3Scale(up, scale.y);
+    forward = Vector3Scale(forward , scale.z);
+
+    // Rotate vectors
+    right = Vector3RotateByQuaternion(right, rotation);
+    up = Vector3RotateByQuaternion(up, rotation);
+    forward = Vector3RotateByQuaternion(forward, rotation);
+
+    // Set result matrix output
+    Matrix result = {
+        right.x, up.x, forward.x, translation.x,
+        right.y, up.y, forward.y, translation.y,
+        right.z, up.z, forward.z, translation.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    return result;
+}
+
+// Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
+// TODO: This function is not following raymath conventions defined in header: NOT self-contained
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
-    // Extract translation.
+    float eps = (float)1e-9;
+
+    // Extract Translation
     translation->x = mat.m12;
     translation->y = mat.m13;
     translation->z = mat.m14;
 
-    // Extract upper-left for determinant computation
-    const float a = mat.m0;
-    const float b = mat.m4;
-    const float c = mat.m8;
-    const float d = mat.m1;
-    const float e = mat.m5;
-    const float f = mat.m9;
-    const float g = mat.m2;
-    const float h = mat.m6;
-    const float i = mat.m10;
-    const float A = e*i - f*h;
-    const float B = f*g - d*i;
-    const float C = d*h - e*g;
+    // Matrix Columns - Rotation will be extracted into here
+    Vector3 matColumns[3] = {{ mat.m0, mat.m4, mat.m8 },
+                             { mat.m1, mat.m5, mat.m9 },
+                             { mat.m2, mat.m6, mat.m10 }};
 
-    // Extract scale
-    const float det = a*A + b*B + c*C;
-    Vector3 abc = { a, b, c };
-    Vector3 def = { d, e, f };
-    Vector3 ghi = { g, h, i };
+    // Shear Parameters XY, XZ, and YZ (extract and ignored)
+    float shear[3] = { 0 };
 
-    float scalex = Vector3Length(abc);
-    float scaley = Vector3Length(def);
-    float scalez = Vector3Length(ghi);
-    Vector3 s = { scalex, scaley, scalez };
+    // Normalized Scale Parameters
+    Vector3 scl = { 0 };
 
-    if (det < 0) s = Vector3Negate(s);
-
-    *scale = s;
-
-    // Remove scale from the matrix if it is not close to zero
-    Matrix clone = mat;
-    if (!FloatEquals(det, 0))
+    // Max-Normalizing helps numerical stability
+    float stabilizer = eps;
+    for (int i = 0; i < 3; i++)
     {
-        clone.m0 /= s.x;
-        clone.m4 /= s.x;
-        clone.m8 /= s.x;
-        clone.m1 /= s.y;
-        clone.m5 /= s.y;
-        clone.m9 /= s.y;
-        clone.m2 /= s.z;
-        clone.m6 /= s.z;
-        clone.m10 /= s.z;
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].x));
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].y));
+        stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].z));
+    }
+    matColumns[0] = Vector3Scale(matColumns[0], 1.0f / stabilizer);
+    matColumns[1] = Vector3Scale(matColumns[1], 1.0f / stabilizer);
+    matColumns[2] = Vector3Scale(matColumns[2], 1.0f / stabilizer);
 
-        // Extract rotation
-        *rotation = QuaternionFromMatrix(clone);
-    }
-    else
+    // X Scale
+    scl.x = Vector3Length(matColumns[0]);
+    if (scl.x > eps) matColumns[0] = Vector3Scale(matColumns[0], 1.0f / scl.x);
+
+    // Compute XY shear and make col2 orthogonal
+    shear[0] = Vector3DotProduct(matColumns[0], matColumns[1]);
+    matColumns[1] = Vector3Subtract(matColumns[1], Vector3Scale(matColumns[0], shear[0]));
+
+    // Y Scale
+    scl.y = Vector3Length(matColumns[1]);
+    if (scl.y > eps)
     {
-        // Set to identity if close to zero
-        *rotation = QuaternionIdentity();
+        matColumns[1] = Vector3Scale(matColumns[1], 1.0f / scl.y);
+        shear[0] /= scl.y; // Correct XY shear
     }
+
+    // Compute XZ and YZ shears and make col3 orthogonal
+    shear[1] = Vector3DotProduct(matColumns[0], matColumns[2]);
+    matColumns[2] = Vector3Subtract(matColumns[2], Vector3Scale(matColumns[0], shear[1]));
+    shear[2] = Vector3DotProduct(matColumns[1], matColumns[2]);
+    matColumns[2] = Vector3Subtract(matColumns[2], Vector3Scale(matColumns[1], shear[2]));
+
+    // Z Scale
+    scl.z = Vector3Length(matColumns[2]);
+    if (scl.z > eps)
+    {
+        matColumns[2] = Vector3Scale(matColumns[2], 1.0f / scl.z);
+        shear[1] /= scl.z; // Correct XZ shear
+        shear[2] /= scl.z; // Correct YZ shear
+    }
+
+    // matColumns are now orthonormal in O(3). Now ensure its in SO(3) by enforcing det = 1
+    if (Vector3DotProduct(matColumns[0], Vector3CrossProduct(matColumns[1], matColumns[2])) < 0)
+    {
+        scl = Vector3Negate(scl);
+        matColumns[0] = Vector3Negate(matColumns[0]);
+        matColumns[1] = Vector3Negate(matColumns[1]);
+        matColumns[2] = Vector3Negate(matColumns[2]);
+    }
+
+    // Set Scale
+    *scale = Vector3Scale(scl, stabilizer);
+
+    // Extract Rotation
+    Matrix rotationMatrix = { matColumns[0].x, matColumns[0].y, matColumns[0].z, 0,
+                             matColumns[1].x, matColumns[1].y, matColumns[1].z, 0,
+                             matColumns[2].x, matColumns[2].y, matColumns[2].z, 0,
+                             0, 0, 0, 1 };
+    *rotation = QuaternionFromMatrix(rotationMatrix);
 }
 
 #if defined(__cplusplus) && !defined(RAYMATH_DISABLE_CPP_OPERATORS)
@@ -2621,6 +2802,11 @@ inline const Vector2& operator -= (Vector2& lhs, const Vector2& rhs)
     return lhs;
 }
 
+inline Vector2 operator * (const float& lhs, const Vector2& rhs)
+{
+    return Vector2Scale(rhs, lhs);
+}
+
 inline Vector2 operator * (const Vector2& lhs, const float& rhs)
 {
     return Vector2Scale(lhs, rhs);
@@ -2648,7 +2834,7 @@ inline Vector2 operator * (const Vector2& lhs, const Matrix& rhs)
     return Vector2Transform(lhs, rhs);
 }
 
-inline const Vector2& operator -= (Vector2& lhs, const Matrix& rhs)
+inline const Vector2& operator *= (Vector2& lhs, const Matrix& rhs)
 {
     lhs = Vector2Transform(lhs, rhs);
     return lhs;
@@ -2656,12 +2842,12 @@ inline const Vector2& operator -= (Vector2& lhs, const Matrix& rhs)
 
 inline Vector2 operator / (const Vector2& lhs, const float& rhs)
 {
-    return Vector2Scale(lhs, 1.0f / rhs);
+    return Vector2Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector2& operator /= (Vector2& lhs, const float& rhs)
 {
-    lhs = Vector2Scale(lhs, rhs);
+    lhs = Vector2Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 
@@ -2715,6 +2901,11 @@ inline const Vector3& operator -= (Vector3& lhs, const Vector3& rhs)
     return lhs;
 }
 
+inline Vector3 operator * (const float& lhs, const Vector3& rhs)
+{
+    return Vector3Scale(rhs, lhs);
+}
+
 inline Vector3 operator * (const Vector3& lhs, const float& rhs)
 {
     return Vector3Scale(lhs, rhs);
@@ -2742,7 +2933,7 @@ inline Vector3 operator * (const Vector3& lhs, const Matrix& rhs)
     return Vector3Transform(lhs, rhs);
 }
 
-inline const Vector3& operator -= (Vector3& lhs, const Matrix& rhs)
+inline const Vector3& operator *= (Vector3& lhs, const Matrix& rhs)
 {
     lhs = Vector3Transform(lhs, rhs);
     return lhs;
@@ -2750,12 +2941,12 @@ inline const Vector3& operator -= (Vector3& lhs, const Matrix& rhs)
 
 inline Vector3 operator / (const Vector3& lhs, const float& rhs)
 {
-    return Vector3Scale(lhs, 1.0f / rhs);
+    return Vector3Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector3& operator /= (Vector3& lhs, const float& rhs)
 {
-    lhs = Vector3Scale(lhs, rhs);
+    lhs = Vector3Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 
@@ -2810,6 +3001,11 @@ inline const Vector4& operator -= (Vector4& lhs, const Vector4& rhs)
     return lhs;
 }
 
+inline Vector4 operator * (const float& lhs, const Vector4& rhs)
+{
+    return Vector4Scale(rhs, lhs);
+}
+
 inline Vector4 operator * (const Vector4& lhs, const float& rhs)
 {
     return Vector4Scale(lhs, rhs);
@@ -2834,12 +3030,12 @@ inline const Vector4& operator *= (Vector4& lhs, const Vector4& rhs)
 
 inline Vector4 operator / (const Vector4& lhs, const float& rhs)
 {
-    return Vector4Scale(lhs, 1.0f / rhs);
+    return Vector4Scale(lhs, 1.0f/rhs);
 }
 
 inline const Vector4& operator /= (Vector4& lhs, const float& rhs)
 {
-    lhs = Vector4Scale(lhs, rhs);
+    lhs = Vector4Scale(lhs, 1.0f/rhs);
     return lhs;
 }
 
@@ -2903,6 +3099,11 @@ inline const Quaternion& operator *= (Quaternion& lhs, const Matrix& rhs)
 }
 
 // Matrix operators
+static constexpr Matrix MatrixUnit = { 1, 0, 0, 0,
+                                       0, 1, 0, 0,
+                                       0, 0, 1, 0,
+                                       0, 0, 0, 1 };
+
 inline Matrix operator + (const Matrix& lhs, const Matrix& rhs)
 {
     return MatrixAdd(lhs, rhs);
@@ -2935,7 +3136,19 @@ inline const Matrix& operator *= (Matrix& lhs, const Matrix& rhs)
     lhs = MatrixMultiply(lhs, rhs);
     return lhs;
 }
-//-------------------------------------------------------------------------------
-#endif  // C++ operators
 
-#endif  // RAYMATH_H
+inline Matrix operator * (const Matrix& lhs, const float value)
+{
+    return MatrixMultiplyValue(lhs, value);
+}
+
+inline const Matrix& operator *= (Matrix& lhs, const float value)
+{
+    lhs = MatrixMultiplyValue(lhs, value);
+    return lhs;
+}
+
+//-------------------------------------------------------------------------------
+#endif // C++ operators
+
+#endif // RAYMATH_H

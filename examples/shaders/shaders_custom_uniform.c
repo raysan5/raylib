@@ -1,9 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Postprocessing with custom uniform variable
+*   raylib [shaders] example - custom uniform
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3), to test this example
 *         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
@@ -14,7 +16,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -38,7 +40,7 @@ int main(void)
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);      // Enable Multi Sampling Anti Aliasing 4x (if available)
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - custom uniform variable");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - custom uniform");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -76,7 +78,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
-        
+
         Vector2 mousePosition = GetMousePosition();
 
         swirlCenter[0] = mousePosition.x;

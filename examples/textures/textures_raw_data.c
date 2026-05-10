@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Load textures from raw data
+*   raylib [textures] example - raw data
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -9,13 +11,11 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
-
-#include <stdlib.h>         // Required for: malloc() and free()
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -27,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture from raw data");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - raw data");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
@@ -37,26 +37,31 @@ int main(void)
     UnloadImage(fudesumiRaw);                                // Unload CPU (RAM) image data
 
     // Generate a checked texture by code
-    int width = 960;
-    int height = 480;
+    int imWidth = 960;
+    int imHeight = 480;
 
     // Dynamic memory allocation to store pixels data (Color type)
-    Color *pixels = (Color *)malloc(width*height*sizeof(Color));
+    // WARNING: Using raylib provided MemAlloc() that uses default raylib
+    // internal memory allocator, so this data can be freed using UnloadImage()
+    // that also uses raylib internal memory de-allocator
+    Color *pixels = (Color *)MemAlloc(imWidth*imHeight*sizeof(Color));
 
-    for (int y = 0; y < height; y++)
+    for (int y = 0; y < imHeight; y++)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < imWidth; x++)
         {
-            if (((x/32+y/32)/1)%2 == 0) pixels[y*width + x] = ORANGE;
-            else pixels[y*width + x] = GOLD;
+            if (((x/32+y/32)/1)%2 == 0) pixels[y*imWidth + x] = ORANGE;
+            else pixels[y*imWidth + x] = GOLD;
         }
     }
 
     // Load pixels data into an image structure and create texture
+    // NOTE: We can assign pixels directly to data because Color is R8G8B8A8
+    // data structure defining that pixelformat, format must be set properly
     Image checkedIm = {
-        .data = pixels,             // We can assign pixels directly to data
-        .width = width,
-        .height = height,
+        .data = pixels,
+        .width = imWidth,
+        .height = imHeight,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };

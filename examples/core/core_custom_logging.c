@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Custom logging
+*   raylib [core] example - custom logging
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
@@ -9,17 +11,17 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2024 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Pablo Marcos Oltra (@pamarcos) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
 #include "raylib.h"
 
-#include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
-#include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
+#include <stdio.h>          // Required for: printf(), vprintf(), fprintf()
+#include <time.h>           // Required for: time_t, tm, time(), localtime(), strftime()
 
 // Custom logging function
-void CustomLog(int msgType, const char *text, va_list args)
+void CustomTraceLog(int msgType, const char *text, va_list args)
 {
     char timeStr[64] = { 0 };
     time_t now = time(NULL);
@@ -52,7 +54,7 @@ int main(void)
     const int screenHeight = 450;
 
     // Set custom logger
-    SetTraceLogCallback(CustomLog);
+    SetTraceLogCallback(CustomTraceLog);
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - custom logging");
 

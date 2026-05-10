@@ -1,9 +1,11 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Color palette switch
+*   raylib [shaders] example - palette switch
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: This example requires raylib OpenGL 3.3 or ES2 versions for shaders support,
-*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version.
+*         OpenGL 1.1 does not support shaders, recompile raylib to OpenGL 3.3 version
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3), to test this example
 *         on OpenGL ES 2.0 platforms (Android, Raspberry Pi, HTML5), use #version 100 shaders
@@ -16,7 +18,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 Marco Lizza (@MarcoLizza) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 Marco Lizza (@MarcoLizza) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -32,6 +34,9 @@
 #define COLORS_PER_PALETTE      8
 #define VALUES_PER_COLOR        3
 
+//------------------------------------------------------------------------------------
+// Global Variables Definition
+//------------------------------------------------------------------------------------
 static const int palettes[MAX_PALETTES][COLORS_PER_PALETTE*VALUES_PER_COLOR] = {
     {   // 3-BIT RGB
         0, 0, 0,
@@ -81,7 +86,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color palette switch");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - palette switch");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version

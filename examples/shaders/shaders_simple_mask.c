@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Simple shader mask
+*   raylib [shaders] example - simple mask
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 3.7
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 Chris Camacho (@chriscamacho) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************
 *
@@ -39,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - simple shader mask");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - simple mask");
 
     // Define the camera to look into our 3d world
     Camera camera = { 0 };
@@ -95,7 +97,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_FIRST_PERSON);
-        
+
         framesCounter++;
         rotation.x += 0.01f;
         rotation.y += 0.005f;

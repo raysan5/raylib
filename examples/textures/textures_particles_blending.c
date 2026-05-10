@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib example - particles blending
+*   raylib [textures] example - particles blending
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 1.7, last time updated with raylib 3.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,7 +17,10 @@
 
 #define MAX_PARTICLES 200
 
-// Particle structure with basic data
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Particle structure
 typedef struct {
     Vector2 position;
     Color color;
@@ -69,7 +74,7 @@ int main(void)
         // Activate one particle every frame and Update active particles
         // NOTE: Particles initial position should be mouse position when activated
         // NOTE: Particles fall down with gravity and rotation... and disappear after 2 seconds (alpha = 0)
-        // NOTE: When a particle disappears, active = false and it can be reused.
+        // NOTE: When a particle disappears, active = false and it can be reused
         for (int i = 0; i < MAX_PARTICLES; i++)
         {
             if (!mouseTail[i].active)

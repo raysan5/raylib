@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Waving cubes
+*   raylib [models] example - waving cubes
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 2.5, last time updated with raylib 3.7
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 Codecat (@codecat) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 Codecat (@codecat) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -20,7 +22,7 @@
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
@@ -83,13 +85,13 @@ int main()
 
                             // Calculate the cube position
                             Vector3 cubePos = {
-                                (float)(x - numBlocks/2)*(scale*3.0f) + scatter,
-                                (float)(y - numBlocks/2)*(scale*2.0f) + scatter,
-                                (float)(z - numBlocks/2)*(scale*3.0f) + scatter
+                                (float)(x - (float)numBlocks/2)*(scale*3.0f) + scatter,
+                                (float)(y - (float)numBlocks/2)*(scale*2.0f) + scatter,
+                                (float)(z - (float)numBlocks/2)*(scale*3.0f) + scatter
                             };
 
                             // Pick a color with a hue depending on cube position for the rainbow color effect
-                            // NOTE: This function is quite costly to be done per cube and frame, 
+                            // NOTE: This function is quite costly to be done per cube and frame,
                             // pre-catching the results into a separate array could improve performance
                             Color cubeColor = ColorFromHSV((float)(((x + y + z)*18)%360), 0.75f, 0.9f);
 

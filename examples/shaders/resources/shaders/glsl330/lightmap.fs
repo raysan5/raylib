@@ -19,5 +19,5 @@ void main()
     vec4 texelColor = texture(texture0, fragTexCoord);
     vec4 texelColor2 = texture(texture1, fragTexCoord2);
 
-    finalColor = texelColor * texelColor2;
+    finalColor = texelColor*texelColor2;
 }

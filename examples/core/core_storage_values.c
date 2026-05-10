@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - Storage save/load values
+*   raylib [core] example - storage values
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.4, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -23,7 +25,9 @@ typedef enum {
     STORAGE_POSITION_HISCORE    = 1
 } StorageData;
 
-// Persistent storage functions
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 static bool SaveStorageValue(unsigned int position, int value);
 static int LoadStorageValue(unsigned int position);
 
@@ -37,7 +41,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage save/load values");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - storage values");
 
     int score = 0;
     int hiscore = 0;
@@ -99,6 +103,9 @@ int main(void)
     return 0;
 }
 
+//------------------------------------------------------------------------------------
+// Module Functions Declaration
+//------------------------------------------------------------------------------------
 // Save integer value to storage file (to defined position)
 // NOTE: Storage positions is directly related to file memory layout (4 bytes each integer)
 bool SaveStorageValue(unsigned int position, int value)

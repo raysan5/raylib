@@ -4,7 +4,7 @@ Hello contributors! Welcome to raylib!
 
 Do you enjoy raylib and want to contribute? Nice! You can help with the following points:
 
-- `C programming` - Can you write/review/test/improve the code? 
+- `C programming` - Can you write/review/test/improve the code?
 - `Documentation/Tutorials/Example` - Can you write some tutorials/examples?
 - `Porting to other platforms` - Can you port/adapt/compile raylib on other systems?
 - `Web Development` - Can you help [with the website](https://github.com/raysan5/raylib.com)?
@@ -54,7 +54,7 @@ To open new issues for raylib (bug, enhancement, discussion...), just try to fol
  - If applicable, attach some screenshot of the issue and a .zip file with the code sample and required resources.
  - On issue description, add a brackets tag about the raylib module that relates to this issue. 
  If don't know which module, just report the issue, I will review it.
- - You can check other issues to see how is being done!
+ - You can check other issues to see how it's being done!
 
 ### Sending a Pull-Request
 
@@ -69,8 +69,8 @@ If you have any doubt, don't hesitate to [contact me](mailto:ray@raylib.com)!.
 You can write me a direct mail but you can also contact me on the following networks:
 
  - [raylib Discord](https://discord.gg/raylib) - A direct communication channel for project discussions.
- - [raylib twitter](https://twitter.com/raysan5) - My personal twitter account, I usually post about raylib, you can send me PMs.
  - [raylib reddit](https://www.reddit.com/r/raylib/) - A good place for discussions or to ask for help.
  - [raylib web](http://www.raylib.com/) - On top-right corner there is a bunch of networks where you can find me.
+ - [raylib X](https://x.com/raysan5) - My personal X account, I usually post about raylib, you can send me PMs.
 
 Thank you very much for your time! :)

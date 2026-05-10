@@ -13,7 +13,7 @@ uniform mat4 mvp;
 varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {

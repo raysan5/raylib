@@ -1,14 +1,20 @@
 #version 330 core
 
-uniform sampler2D diffuseMap;
+// Input vertex attributes (from vertex shader)
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+// Input uniform values
+uniform sampler2D texture0;
+uniform vec4 colDiffuse;
+
 uniform vec2 tiling;
 
-in vec2 fragTexCoord;
-
-out vec4 fragColor;
+out vec4 finalColor;
 
 void main()
 {
-    vec2 texCoord = fragTexCoord * tiling;
-    fragColor = texture(diffuseMap, texCoord);
+    vec2 texCoord = fragTexCoord*tiling;
+
+    finalColor = texture(texture0, texCoord)*colDiffuse;
 }

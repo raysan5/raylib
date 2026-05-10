@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Input Box
+*   raylib [text] example - input box
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.7, last time updated with raylib 3.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2017-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -61,7 +63,7 @@ int main(void)
                 if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
                 {
                     name[letterCount] = (char)key;
-                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string
                     letterCount++;
                 }
 

@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font filters
+*   raylib [text] example - font filters
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   NOTE: After font loading, font texture atlas filter could be configured for a softer
 *   display of the font when scaling it to different sizes, that way, it's not required
@@ -11,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2015-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2015-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -92,7 +94,7 @@ int main(void)
                 UnloadFont(font);
                 font = LoadFontEx(droppedFiles.paths[0], (int)fontSize, 0, 0);
             }
-            
+
             UnloadDroppedFiles(droppedFiles);    // Unload filepaths from memory
         }
         //----------------------------------------------------------------------------------

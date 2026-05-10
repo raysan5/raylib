@@ -1,11 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [rlgl] example - Using rlgl module as standalone module
+*   raylib [others] example - standalone
 *
 *   rlgl library is an abstraction layer for multiple OpenGL versions (1.1, 2.1, 3.3 Core, ES 2.0)
 *   that provides a pseudo-OpenGL 1.1 immediate-mode style API (rlVertex, rlTranslate, rlRotate...)
 *
-*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile.
+*   Example complexity rating: [★★★★] 4/4
+*
+*   Example originally created with raylib 1.6, last time updated with raylib 4.0
+*
+*   WARNING: This example is intended only for PLATFORM_DESKTOP and OpenGL 3.3 Core profile
 *       It could work on other platforms if redesigned for those platforms (out-of-scope)
 *
 *   DEPENDENCIES:
@@ -29,7 +33,7 @@
 *   This example is licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software:
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -44,7 +48,7 @@
 *     2. Altered source versions must be plainly marked as such, and must not be misrepresented
 *     as being the original software.
 *
-*     3. This notice may not be removed or altered from any source distribution.
+*     3. This notice may not be removed or altered from any source distribution
 *
 ********************************************************************************************/
 
@@ -73,7 +77,7 @@
 #define DARKGRAY   (Color){ 80, 80, 80, 255 }      // Dark Gray
 
 //----------------------------------------------------------------------------------
-// Structures Definition
+// Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Color, 4 components, R8G8B8A8 (32bit)
 typedef struct Color {
@@ -93,7 +97,7 @@ typedef struct Camera {
 } Camera;
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Declaration
+// Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void ErrorCallback(int error, const char *description);
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -133,7 +137,7 @@ int main(void)
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
-    
+
     // WARNING: OpenGL 3.3 Core profile only
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -143,7 +147,7 @@ int main(void)
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "rlgl standalone", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib [others] example - rlgl standalone", NULL, NULL);
 
     if (!window)
     {
@@ -256,7 +260,7 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// Module specific Functions Definitions
+// Module Functions Definitions
 //----------------------------------------------------------------------------------
 
 // GLFW3: Error callback
@@ -293,7 +297,7 @@ static void DrawRectangleV(Vector2 position, Vector2 size, Color color)
 // Draw a grid centered at (0, 0, 0)
 static void DrawGrid(int slices, float spacing)
 {
-    int halfSlices = slices / 2;
+    int halfSlices = slices/2;
 
     rlBegin(RL_LINES);
         for (int i = -halfSlices; i <= halfSlices; i++)

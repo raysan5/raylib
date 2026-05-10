@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(RaylibSrcPath)\raudio.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rcore.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rmodels.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rglfw.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rshapes.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rtext.c" />
+    <ClCompile Include="$(RaylibSrcPath)\rtextures.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(RaylibSrcPath)\config.h" />
+    <ClInclude Include="$(RaylibSrcPath)\rgestures.h" />
+    <ClInclude Include="$(RaylibSrcPath)\raylib.h" />
+    <ClInclude Include="$(RaylibSrcPath)\raymath.h" />
+    <ClInclude Include="$(RaylibSrcPath)\rlgl.h" />
+    <ClInclude Include="$(RaylibSrcPath)\rcamera.h" />
+    <ClInclude Include="$(RaylibSrcPath)\external\cgltf.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\glad.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\jar_mod.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\jar_xm.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\miniaudio.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_image.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_image_resize.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_image_write.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_rect_pack.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_truetype.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="$(RaylibSrcPath)\external\stb_vorbis.h">
+      <Filter>external</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="external">
+      <UniqueIdentifier>{7c380c65-acd0-428f-83d9-70ef06f69b6d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

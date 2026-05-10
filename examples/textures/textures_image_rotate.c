@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Image Rotation
+*   raylib [textures] example - image rotate
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 1.0, last time updated with raylib 1.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -25,7 +27,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - texture rotation");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - image rotate");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
     Image image45 = LoadImage("resources/raylib_logo.png");

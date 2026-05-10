@@ -34,12 +34,8 @@
     <link rel="shortcut icon" href="https://www.raylib.com/favicon.ico">
 
     <style>
-        body { 
-          margin: 0px; 
-          overflow: hidden; 
-          background-color: black;
-        }
-        canvas.emscripten { border: 0px none; background-color: black;}
+        body { margin: 0px; overflow: hidden; background-color: black; }
+        canvas.emscripten { border: 0px none; background-color: black; }
     </style>
     <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
     <script type='text/javascript'>
@@ -58,6 +54,12 @@
             // 'Ask where to save each file before downloading' - which you can set true/false.
             // If you enable this setting it would always ask you and bring the SaveAsDialog
             saveAs(blob, localFSname);
+          
+            // Alternative implementation to avoid FileSaver.js
+            //const link = document.createElement("a");
+            //link.href = URL.createObjectURL(blob);
+            //link.download = localFSname;
+            //link.click();
         }
     </script>
     </head>

@@ -17,14 +17,14 @@ out vec4 finalColor;
 void main()
 {
     // Texel color fetching from texture sampler
-    // NOTE: The texel is actually the a GRAYSCALE index color
+    // NOTE: The texel is actually the GRAYSCALE index color
     vec4 texelColor = texture(texture0, fragTexCoord)*fragColor;
 
     // Convert the (normalized) texel color RED component (GB would work, too)
     // to the palette index by scaling up from [0..1] to [0..255]
     int index = int(texelColor.r*255.0);
     ivec3 color = palette[index];
-    
+
     //finalColor = texture(palette, texelColor.xy); // Alternative to ivec3
 
     // Calculate final fragment color. Note that the palette color components

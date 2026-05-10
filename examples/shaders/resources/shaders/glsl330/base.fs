@@ -11,7 +11,7 @@ uniform vec4 colDiffuse;
 // Output fragment color
 out vec4 finalColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {
@@ -20,7 +20,7 @@ void main()
 
     // NOTE: Implement here your fragment shader code
 
-    // final color is the color from the texture 
+    // final color is the color from the texture
     //    times the tint color (colDiffuse)
     //    times the fragment color (interpolated vertex color)
     finalColor = texelColor*colDiffuse*fragColor;

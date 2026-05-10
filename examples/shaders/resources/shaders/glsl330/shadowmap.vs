@@ -17,7 +17,7 @@ out vec2 fragTexCoord;
 out vec4 fragColor;
 out vec3 fragNormal;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {

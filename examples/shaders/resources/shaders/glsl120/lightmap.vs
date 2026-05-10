@@ -16,7 +16,7 @@ varying vec2 fragTexCoord;
 varying vec2 fragTexCoord2;
 varying vec4 fragColor;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
 void main()
 {

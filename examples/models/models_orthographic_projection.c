@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [models] example - Show the difference between perspective and orthographic projection
+*   raylib [models] example - orthographic projection
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 2.0, last time updated with raylib 3.7
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2024 Max Danielsson (@autious) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Max Danielsson (@autious) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -28,7 +30,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [models] example - geometric shapes");
+    InitWindow(screenWidth, screenHeight, "raylib [models] example - orthographic projection");
 
     // Define the camera to look into our 3d world
     Camera camera = { { 0.0f, 10.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, FOVY_PERSPECTIVE, CAMERA_PERSPECTIVE };

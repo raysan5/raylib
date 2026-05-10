@@ -55,15 +55,26 @@ packages/
 *.so
 *.so.*
 *.dll
+*.h.pch
+./*.obj
+
+# Ignore SDL libs for testing
+src/external/SDL2
+src/external/SDL3
 
 # Emscripten
 emsdk
 
 # Ignore wasm data in examples/
+examples/**/*
+!examples/**/*.*
+!examples/**/*/
+examples/**/*.exe
 examples/**/*.wasm
 examples/**/*.data
 examples/**/*.js
 examples/**/*.html
+examples/**/logs/*
 
 # Ignore files build by xcode
 *.mode*v*
@@ -81,6 +92,7 @@ DerivedData/
 
 # VSCode project
 .vscode
+.clangd
 
 # Jetbrains project
 .idea/
@@ -106,10 +118,23 @@ GTAGS
 # Zig programming language
 .zig-cache/
 zig-cache/
+zig-pkg/
 zig-out/
 build/
 build-*/
 docgen_tmp/
 
-# Parser stuff
-parser/raylib_parser
+# Tools stuff
+tools/rlparser/rlparser.exe
+tools/rlparser/rlparser
+tools/rexm/rexm.exe
+tools/rexm/rexm
+
+# CI
+emsdk-cache/
+raylib.com/
+
+# Wayland files
+src/*protocol.h
+src/*protocol-code.h
+src/*protocol-code.c

@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Bunnymark
+*   raylib [textures] example - bunnymark
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 1.6, last time updated with raylib 2.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2014-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -15,12 +17,15 @@
 
 #include <stdlib.h>                 // Required for: malloc(), free()
 
-#define MAX_BUNNIES        50000    // 50K bunnies limit
+#define MAX_BUNNIES        80000    // 80K bunnies limit
 
 // This is the maximum amount of elements (quads) per batch
 // NOTE: This value is defined in [rlgl] module and can be changed there
 #define MAX_BATCH_ELEMENTS  8192
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct Bunny {
     Vector2 position;
     Vector2 speed;
@@ -40,13 +45,15 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - bunnymark");
 
     // Load bunny texture
-    Texture2D texBunny = LoadTexture("resources/wabbit_alpha.png");
+    Texture2D texBunny = LoadTexture("resources/raybunny.png");
 
-    Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
+    Bunny *bunnies = (Bunny *)RL_MALLOC(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
 
     int bunniesCount = 0;           // Bunnies counter
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    bool paused = false;
+
+    //SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -62,8 +69,8 @@ int main(void)
                 if (bunniesCount < MAX_BUNNIES)
                 {
                     bunnies[bunniesCount].position = GetMousePosition();
-                    bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
+                    bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250);
+                    bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250);
                     bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
                                                        GetRandomValue(80, 240),
                                                        GetRandomValue(100, 240), 255 };
@@ -72,16 +79,21 @@ int main(void)
             }
         }
 
-        // Update bunnies
-        for (int i = 0; i < bunniesCount; i++)
-        {
-            bunnies[i].position.x += bunnies[i].speed.x;
-            bunnies[i].position.y += bunnies[i].speed.y;
+        if (IsKeyPressed(KEY_P)) paused = !paused;
 
-            if (((bunnies[i].position.x + texBunny.width/2) > GetScreenWidth()) ||
-                ((bunnies[i].position.x + texBunny.width/2) < 0)) bunnies[i].speed.x *= -1;
-            if (((bunnies[i].position.y + texBunny.height/2) > GetScreenHeight()) ||
-                ((bunnies[i].position.y + texBunny.height/2 - 40) < 0)) bunnies[i].speed.y *= -1;
+        if (!paused)
+        {
+            // Update bunnies
+            for (int i = 0; i < bunniesCount; i++)
+            {
+                bunnies[i].position.x += bunnies[i].speed.x*GetFrameTime();
+                bunnies[i].position.y += bunnies[i].speed.y*GetFrameTime();
+
+                if (((bunnies[i].position.x + (float)texBunny.width/2) > GetScreenWidth()) ||
+                    ((bunnies[i].position.x + (float)texBunny.width/2) < 0)) bunnies[i].speed.x *= -1;
+                if (((bunnies[i].position.y + (float)texBunny.height/2) > GetScreenHeight()) ||
+                    ((bunnies[i].position.y + (float)texBunny.height/2 - 40) < 0)) bunnies[i].speed.y *= -1;
+            }
         }
         //----------------------------------------------------------------------------------
 
@@ -114,7 +126,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(bunnies);              // Unload bunnies data array
+    RL_FREE(bunnies);           // Unload bunnies data array
 
     UnloadTexture(texBunny);    // Unload bunny texture
 

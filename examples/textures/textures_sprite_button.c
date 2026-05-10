@@ -2,12 +2,14 @@
 *
 *   raylib [textures] example - sprite button
 *
+*   Example complexity rating: [★★☆☆] 2/4
+*
 *   Example originally created with raylib 2.5, last time updated with raylib 2.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2019-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2019-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -38,7 +40,7 @@ int main(void)
     Rectangle sourceRec = { 0, 0, (float)button.width, frameHeight };
 
     // Define button bounds on screen
-    Rectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
+    Rectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - (float)button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
