@@ -1674,8 +1674,12 @@ void PollInputEvents(void)
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
+    int result = RGFW_init();
+    if (result != 0) { TRACELOG(LOG_WARNING, "RGFW: Failed to initialize RGFW"); return -1; }
     // Initialize RGFW internal global state, only required systems
     unsigned int flags = RGFW_windowCenter | RGFW_windowAllowDND;
+
+    if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0)) FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
     // Check window creation flags
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
@@ -1691,7 +1695,40 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, RGFW_windowNoBorder);
     if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, RGFW_windowNoResize);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, RGFW_windowTransparent);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) FLAG_SET(flags, RGFW_windowFullscreen);
+    // Init window in fullscreen mode if requested
+    // NOTE: Keeping original screen size for toggle
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) {
+        FLAG_SET(flags, RGFW_windowFullscreen);
+        // NOTE: Fullscreen applications default to the primary monitor
+        RGFW_monitor *monitor = RGFW_getPrimaryMonitor();
+        if (!monitor)
+        {
+            TRACELOG(LOG_WARNING, "RGFW: Failed to get primary monitor");
+            return -1;
+        }
+        // Default display resolution to that of the current mode
+        CORE.Window.display.width = monitor->mode.w;
+        CORE.Window.display.height = monitor->mode.h;
+
+        // Check if user requested some screen size
+        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        {
+            // Set some default screen size in case user decides to exit fullscreen mode
+            CORE.Window.previousScreen.width = 800;
+            CORE.Window.previousScreen.height = 450;
+            CORE.Window.previousPosition.x = CORE.Window.display.width/2 - 800/2;
+            CORE.Window.previousPosition.y = CORE.Window.display.height/2 - 450/2;
+
+            // Set screen width/height to the display width/height
+            if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+            if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+        }
+        else
+        {
+            CORE.Window.previousScreen = CORE.Window.screen;
+            CORE.Window.screen = CORE.Window.display;
+        }
+    }
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, RGFW_windowHide);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(flags, RGFW_windowMaximize);
 
