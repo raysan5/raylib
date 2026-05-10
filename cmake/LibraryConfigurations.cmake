@@ -67,6 +67,21 @@ if (${PLATFORM} STREQUAL "Desktop")
         endif ()
     endif ()
 
+elseif (${PLATFORM} STREQUAL "Win32")
+    if ((NOT WIN32) AND (NOT CMAKE_C_COMPILER MATCHES "mingw|mingw32|mingw64"))
+        message(FATAL_ERROR "Win32 platform requires Windows or a cross compiler.")
+    endif ()
+
+    set(PLATFORM_CPP "PLATFORM_DESKTOP_WIN32")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
+    if (${OPENGL_VERSION} MATCHES "Software")
+        set(GRAPHICS "GRAPHICS_API_OPENGL_SOFTWARE")
+    endif ()
+
+    find_package(OpenGL QUIET)
+    set(LIBS_PRIVATE ${OPENGL_LIBRARIES} winmm)
+
 elseif (${PLATFORM} STREQUAL "Web")
     set(PLATFORM_CPP "PLATFORM_WEB")
     if(NOT GRAPHICS)
