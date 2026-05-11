@@ -1690,20 +1690,12 @@ int InitPlatform(void)
     }
 
     // Check window creation flags
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-    {
-        FLAG_SET(flags, RGFW_windowFullscreen);
-    }
-
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
-    {
-        FLAG_SET(flags, RGFW_windowedFullscreen);
-    }
 
     // Init window in fullscreen mode if requested
     // NOTE: Keeping original screen size for toggle
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
+        FLAG_SET(flags, RGFW_windowFullscreen);
         int result = RGFW_init();
         if (result != 0)
         {
@@ -1741,6 +1733,11 @@ int InitPlatform(void)
             CORE.Window.previousScreen = CORE.Window.screen;
             CORE.Window.screen = CORE.Window.display;
         }
+    }
+
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        FLAG_SET(flags, RGFW_windowedFullscreen);
     }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
