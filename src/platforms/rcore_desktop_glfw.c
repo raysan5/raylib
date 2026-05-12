@@ -111,6 +111,12 @@
 //----------------------------------------------------------------------------------
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
+#if defined(__linux__) && defined(_GLFW_X11)
+    // Local storage for the window handle returned by glfwGetX11Window
+    // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
+    // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
+    XID windowHandleX11;
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -755,12 +761,6 @@ void SetWindowFocused(void)
     glfwFocusWindow(platform.handle);
 }
 
-#if defined(__linux__) && defined(_GLFW_X11)
-// Local storage for the window handle returned by glfwGetX11Window
-// This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
-// Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
-static XID X11WindowHandle;
-#endif
 // Get native window handle
 void *GetWindowHandle(void)
 {
@@ -778,17 +778,16 @@ void *GetWindowHandle(void)
             }
             else
             {
-                X11WindowHandle = glfwGetX11Window(platform.handle);
-                return &X11WindowHandle;
+                platform.windowHandleX11 = glfwGetX11Window(platform.handle);
+                return &platform.windowHandleX11;
             }
         #else
             return glfwGetWaylandWindow(platform.handle);
         #endif
     #elif defined(_GLFW_X11)
         // Store the window handle localy and return a pointer to the variable instead
-        // Reasoning detailed in the declaration of X11WindowHandle
-        X11WindowHandle = glfwGetX11Window(platform.handle);
-        return &X11WindowHandle;
+        platform.windowHandleX11 = glfwGetX11Window(platform.handle);
+        return &platform.windowHandleX11;
     #endif
 #endif
 #if defined(__APPLE__)
@@ -1055,12 +1054,13 @@ Image GetClipboardImage(void)
 
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
-    unsigned long long int dataSize = 0;
+
+    unsigned int dataSize = 0;
     void *bmpData = NULL;
     int width = 0;
     int height = 0;
 
-    bmpData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    bmpData = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (bmpData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
@@ -1113,7 +1113,7 @@ Image GetClipboardImage(void)
     XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif // defined(_WIN32)
+#endif // _WIN32
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
@@ -1129,7 +1129,7 @@ void ShowCursor(void)
     CORE.Input.Mouse.cursorHidden = false;
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -1137,7 +1137,7 @@ void HideCursor(void)
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     glfwSetInputMode(platform.handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -1151,7 +1151,7 @@ void EnableCursor(void)
     CORE.Input.Mouse.cursorLocked = false;
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     // Reset mouse position within the window area before disabling cursor

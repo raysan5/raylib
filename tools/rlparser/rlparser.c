@@ -9,10 +9,10 @@
      - struct AliasInfo
      - struct EnumInfo
      - struct FunctionInfo
-     
+
     WARNING: This parser is specifically designed to work with raylib.h, and has some contraints
     in that regards. Still, it can also work with other header files that follow same file structure
-    conventions as raylib.h: rlgl.h, raymath.h, raygui.h, reasings.h 
+    conventions as raylib.h: rlgl.h, raymath.h, raygui.h, reasings.h
 
     CONSTRAINTS:
     This parser is specifically designed to work with raylib.h, so, it has some constraints:
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 {
     if (argc > 1) ProcessCommandLine(argc, argv);
 
-    const char *raylibhPath = "../src/raylib.h\0";
+    const char *raylibhPath = "../../src/raylib.h\0";
     const char *raylibapiPath = "raylib_api.txt\0";
     const char *rlapiPath = "RLAPI\0";
     if (inFileName[0] == '\0') MemoryCopy(inFileName, raylibhPath, TextLength(raylibhPath) + 1);
@@ -1154,7 +1154,7 @@ static void ProcessCommandLine(int argc, char *argv[])
                 else if (IsTextEqual(argv[i + 1], "JSON\0", 5)) outputFormat = JSON;
                 else if (IsTextEqual(argv[i + 1], "XML\0", 4)) outputFormat = XML;
                 else if (IsTextEqual(argv[i + 1], "LUA\0", 4)) outputFormat = LUA;
-                else if (IsTextEqual(argv[i + 1], "CODE\0", 4)) outputFormat = CODE;
+                else if (IsTextEqual(argv[i + 1], "CODE\0", 5)) outputFormat = CODE;
             }
             else printf("WARNING: No format parameters provided\n");
         }

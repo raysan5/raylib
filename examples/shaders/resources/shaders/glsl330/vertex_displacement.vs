@@ -11,7 +11,7 @@ uniform mat4 mvp;
 uniform mat4 matModel;
 uniform mat4 matNormal;
 
-uniform float time; 
+uniform float time;
 
 uniform sampler2D perlinNoiseMap;
 

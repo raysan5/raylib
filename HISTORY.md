@@ -526,26 +526,79 @@ Last but not least, I want to thank **raylib sponsors and all the raylib communi
 notes on raylib 6.0
 -------------------
 
-A new raylib release is finally ready, after almost 1.5 years since last release. This is the biggest release ever with many improvements to the library, thanks to the support of many amazing contributors and also thanks to the financial support of NLnet/NGI0 funds.
+A new `raylib` release is finally ready and, again, this is the **biggest `raylib` release ever**! Thanks to the support of many amazing contributors this release comes packed with many new features and improvements, also thanks to the financial support of [NLnet](https://nlnet.nl/) and the [NGI Zero Commond Fund](https://nlnet.nl/NGI0/) that allow me to work on this project mostly fulltime for the past few months.
 
 Some astonishing numbers for this release:
 
- - **+320** closed issues (for a TOTAL of **+2130**!)
- - **+1800** commits since previous RELEASE (for a TOTAL of **+9600**!)
- - **18** functions ADDED to raylib API (for a TOTAL of **599**!)
- - **+50** new examples to learn from (for a TOTAL of **212**!)
- - **+200** new contributors (for a TOTAL of **+840**!)
+ - **+330** closed issues (for a TOTAL of **+2150**!)
+ - **+2000** commits since previous RELEASE (for a TOTAL of **+9760**!)
+ - **+20** new functions ADDED to raylib API (for a TOTAL of **600**!)
+ - **+70** new examples to learn from (for a TOTAL of **+215**!)
+ - **+210** new contributors (for a TOTAL of **+850**!)
 
 Highlights for `raylib 6.0`:
 
- - New Software Renderer backend [rlsw]
- - New rcore platform backend: Memory (memory buffer)
- - New rcore platform backend: Win32 (experimental)
- - New rcore platform backend: Emscripten (experimental)
- - Redesigned Skeletal Animation System
- - Redesigned fullscreen modes and high-dpi content scaling
- - Redesigned Build Config System [config.h]
- - New File System API
- - New Text Management API
- - New tool: [rexm] raylib examples manager
+ - **`NEW` Software Renderer - [`rlsw`](https://github.com/raysan5/raylib/blob/master/src/external/rlsw.h)**: The biggest addition of this new release. A new software renderer backend, that allows raylib to run purely on CPU, with no neeed for a GPU. It finally closes the circle of my search for a portable self-contained, with **no-external-dependencies**, graphics library, able to run on any device providing some CPU-power and some RAM memory. It has been possible thanks to the amazing work of **Le Juez Victor** ([@Bigfoot71](https://github.com/Bigfoot71)), who created [`rlsw`](https://github.com/raysan5/raylib/blob/master/src/external/rlsw.h), a single-file header-only library implementing OpenGL 1.1+ specification, tailored to fit into raylib [`rlgl`](https://github.com/raysan5/raylib/blob/master/src/rlgl.h) OpenGL wrapper, and allowing to run raylib seamlessly over CPU with **no code changes required on user side**. As expected, software rendering is slower than hardware-accelerated rendering but it is still fast enough to run basic application at 30-60 fps. Actually, it already proved it usefulness on a new [raylib port for ESP32](https://components.espressif.com/components/georgik/raylib/versions/6.0.0/readme) microcontroller by Espressif, useful for industrial applications, and opens the door to the upcoming RISC-V powered devices that start arriving to the marked, and many times come with no GPU. Along the new software renderer, some of the existing platform backends have been adapted to support it (SDL, RGFW, DRM) and also **new platforms backends have been created** to accomodate it (Win32, Emscripten), incluing a new `PLATFORM_MEMORY`, that allows direct rendering to a memory framebuffer.
 
+ - **`NEW` Platform backend: Memory - [`rcore_memory`](https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_memory.c)**: This new platform has been added along the **software renderer** backend, allowing 2d and 3d rendering over a **platform-agnostic memory framebuffer**, it can run headless and output frames can be directly exported to images. This new backend could also be useful for graphics rendering on servers or process images directly using the memory buffer.
+
+ - **`NEW` Platform backend: Win32 - [`rcore_desktop_win32`](https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_desktop_win32.c)**: A new **Windows platform backend** and the first step towards a potential replacement/alternative to the platform libraries currently used by raylib (GLFW/SDL/RGFW). This backend follows same API template structure than the other raylib backends, but directly implementing Win32 API calls. It allows initializing OpenGL GPU-accelerated windows and also GDI based windows, useful for the software renderer backend. This new backend approach, following a common template-structure and separating the platform logic by specific OS/Windowing system, will simplify code, improve maintenance, readability and portability for raylib, setting some bases for the future. *NOTE: This backend is new and it could require further testing, use it as an experimental backend for now.*
+
+ - **`NEW` Platform backend: Emscripten - [`rcore_web_emscripten`](https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_web_emscripten.c)**: In the same line as Win32 backend, this new web backend moves away from `libglfw.js` and **directly implements Emscripten/JS functionality**, with **no other dependencies**, adding support for the new software renderer to draw directly on a **non-accelerated 2d canvas** but also supporting a WebGL-hardware-accelerated canvas when required. *NOTE: This backend is new and it could require further testing, use it as an experimental backend for now.*
+
+ - **`REDESIGNED` Fullscreen modes and High-DPI content scaling**: After many years and many related issues, the full-screen and high-dpi content scaling support has been **completely redesigned** from scratch. New design prioritizes **borderless fullscreen modes** and automatically detects current monitor content scaling configuration to scale window and framebuffer accordingly when required. Still, High-DPI support must be requested by user if desired enabling `FLAG_WINDOW_HIGHDPI` on window creation. This new system has been carefully tested on Windows, Linux (X11, Wayland), macOS with multiple monitors and multiple resolutions, including 4K monitors.
+
+ - **`REDESIGNED` Skeletal Animation System**: A new animation system for 3d models has been created to support animation blending, between single frames but also between differents frames on different animations, to allow easy **timed transitions** between animations. This redesign implied reviewing several raylib structures to better accomodate animation data: `Model`, `ModelSkeleton`, `ModelAnimation`, but the API was simplified and support for GPU-skinning was improved with multiple optimizations.
+
+ - **`REDESIGNED` Build Config System - [`config.h`](https://github.com/raysan5/raylib/blob/master/src/config.h)**: raylib allows lot of customization for specific needs (i.e. disabling modules not needed for specific applications like rmodels or raudio) but previous implementation did not allow easely disabling some features from **custom build systems**. New design not only allows disabling features with simple `-DSUPPORT_FILEFORMAT_OBJ=0` on building command-line but also the full system has been reviewed, removing useless flags and exposing new ones.
+
+ - **`NEW` File System API**: Along the years, multiple filesystem functions have been added to raylib API as required but it felt somewhat inconsistent with some pieces missing. In this new release, the full filesystem API has beeen reviewed and reorganized, compiling all the functionality single module: [rcore](https://github.com/raysan5/raylib/blob/master/src/raylib.h#L1126), consequently `utils` module has been removed and build system has been simplified even more; **only 6-7 modules (.c) need to be compiled containing the full raylib library**. This new filesystem API will allow raylib to be used on the creation of custom build systems, as already demostrated with the new `rexm` tool for examples management. At the moment raylib includes **+40 file system management functions**, here a list with the new functions added:
+```c
+    int FileRename(const char *fileName, const char *fileRename); // Rename file (if exists)
+    int FileRemove(const char *fileName);                         // Remove file (if exists)
+    int FileCopy(const char *srcPath, const char *dstPath);       // Copy file from one path to another, dstPath created if it doesn't exist
+    int FileMove(const char *srcPath, const char *dstPath);       // Move file from one directory to another, dstPath created if it doesn't exist
+    int FileTextReplace(const char *fileName, const char *search, const char *replacement); // Replace text in an existing file
+    int FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file
+```
+
+ - **`NEW` Text Management API**: Along with the new file system functionality, a new set of text management functions has been added, also very useful for text procesing and also used in custom build systems creation using raylib. At the moment raylib includes **+30 text management functions**, here a list with the new functions added:
+```c
+    char **LoadTextLines(const char *text, int *count); // Load text as separate lines ('\n')
+    void UnloadTextLines(char **text, int lineCount);   // Unload text lines
+    const char *TextRemoveSpaces(const char *text);     // Remove text spaces, concat words
+    char *GetTextBetween(const char *text, const char *begin, const char *end); // Get text between two strings
+    char *TextReplace(const char *text, const char *search, const char *replacement); // Replace text string with new string
+    char *TextReplaceAlloc(const char *text, const char *search, const char *replacement); // Replace text string with new string, memory must be MemFree()
+    char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings
+    char *TextReplaceBetweenAlloc(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings, memory must be MemFree()
+    char *TextInsertAlloc(const char *text, const char *insert, int position); // Insert text in a defined byte position, memory must be MemFree()
+```
+
+ - **`NEW` tool: raylib examples manager - [rexm](https://github.com/raysan5/raylib/tree/master/tools/rexm)**: raylib examples collection is huge, with **more than 200 examples** it was quite difficult to manage: adding, removing, renaming examples was a very costly process involving many files to be modified (including build systems), also the examples did not follow a common header convention neither a structure conventions. For that reason, a new support tool has been created: **rexm**, a raylib examples manager that allows to easely add/remove/rename examples, automatically fix inconsistencies and even **building and automated testing** on multiple platforms.
+```
+USAGE:
+    > rexm <command> <example_name> [<example_rename>]
+
+COMMANDS:
+    create <new_example_name>     : Creates an empty example, from internal template
+    add <example_name>            : Add existing example to collection
+    rename <old_examples_name> <new_example_name> : Rename an existing example
+    remove <example_name>         : Remove an existing example from collection
+    build <example_name>          : Build example for Desktop and Web platforms
+    test <example_name>           : Build and Test example for Desktop and Web platforms
+    validate                      : Validate examples collection, generates report
+    update                        : Validate and update examples collection, generates report
+```
+
+ - **`NEW` +70 new examples**: Thanks to `rexm` and the simplification on examples management, this new raylib release includes +70 new examples to learn from, most of them contributed by community. Multiple examples have also been renamed for consistency and all examples header and structure have been reviewed and unified. 
+
+Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) for a detailed list of changes!
+
+I want to **thank all the contributors (+850!**) that along the years have **greatly improved raylib** and pushed it further and better day after day. And **many thanks to raylib community and all raylib users** for supporting the library along those many years.
+
+Finally, I want to thank [puffer.ai](https://puffer.ai/) and [comma.ai](https://comma.ai/) for **using raylib and supporting the project** as platinum sponsors, along many others individuals that have been sponsoring raylib along the years. Thanks to all of you for allowing me to keep working on this library!
+
+**After +12 years of development, `raylib 6.0` is today one of the bests libraries to enjoy games/tools/graphics programming!**
+
+**Enjoy graphics programming with raylib!** :)

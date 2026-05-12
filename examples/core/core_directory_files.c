@@ -21,6 +21,7 @@
 #include "raygui.h"                 // Required for GUI controls
 
 #define MAX_FILEPATH_SIZE       1024
+#define FILE_FILTER             "DIRS*;.png;.c"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -41,7 +42,7 @@ int main(void)
     // NOTE: LoadDirectoryFiles() loads files and directories by default,
     // use LoadDirectoryFilesEx() for custom filters and recursive directories loading
     //FilePathList files = LoadDirectoryFiles(directory);
-    FilePathList files = LoadDirectoryFilesEx(directory, ".png;.c", false);
+    FilePathList files = LoadDirectoryFilesEx(directory, FILE_FILTER, false);
 
     int btnBackPressed = false;
 
@@ -61,7 +62,22 @@ int main(void)
         {
             TextCopy(directory, GetPrevDirectoryPath(directory));
             UnloadDirectoryFiles(files);
-            files = LoadDirectoryFiles(directory);
+            files = LoadDirectoryFilesEx(directory, FILE_FILTER, false);
+
+            listScrollIndex = 0;
+            listItemActive = -1;
+            listItemFocused = -1;
+        }
+
+        if ((listItemActive >= 0) && (listItemActive < (int)files.count) && DirectoryExists(files.paths[listItemActive]))
+        {
+            TextCopy(directory, files.paths[listItemActive]);
+            UnloadDirectoryFiles(files);
+            files = LoadDirectoryFilesEx(directory, FILE_FILTER, false);
+
+            listScrollIndex = 0;
+            listItemActive = -1;
+            listItemFocused = -1;
         }
         //----------------------------------------------------------------------------------
 

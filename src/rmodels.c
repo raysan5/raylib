@@ -3,18 +3,19 @@
 *   rmodels - Basic functions to draw 3d shapes and load and draw 3d models
 *
 *   CONFIGURATION:
-*       #define SUPPORT_MODULE_RMODELS
+*       #define SUPPORT_MODULE_RMODELS      1
 *           rmodels module is included in the build
 *
-*       #define SUPPORT_FILEFORMAT_OBJ
-*       #define SUPPORT_FILEFORMAT_MTL
-*       #define SUPPORT_FILEFORMAT_IQM
-*       #define SUPPORT_FILEFORMAT_GLTF
-*       #define SUPPORT_FILEFORMAT_VOX
-*       #define SUPPORT_FILEFORMAT_M3D
+*       #define SUPPORT_FILEFORMAT_OBJ      1
+*       #define SUPPORT_FILEFORMAT_MTL      1
+*       #define SUPPORT_FILEFORMAT_IQM      1
+*       #define SUPPORT_FILEFORMAT_GLTF     1
+*       #define SUPPORT_FILEFORMAT_GLTF_WRITE   0
+*       #define SUPPORT_FILEFORMAT_VOX      1
+*       #define SUPPORT_FILEFORMAT_M3D      1
 *           Selected desired fileformats to be supported for model data loading
 *
-*       #define SUPPORT_MESH_GENERATION
+*       #define SUPPORT_MESH_GENERATION     1
 *           Support procedural mesh generation functions, uses external par_shapes.h library
 *           NOTE: Some generated meshes DO NOT include generated texture coordinates
 *
@@ -71,6 +72,11 @@
     #define CGLTF_IMPLEMENTATION
     #include "external/cgltf.h"         // glTF file format loading
 #endif
+#if SUPPORT_FILEFORMAT_GLTF_WRITE
+    // NOTE: No need for custom allocators, memory buffer provided
+    #define CGLTF_WRITE_IMPLEMENTATION
+    #include "external/cgltf_write.h"   // glTF file format writing
+#endif
 
 #if SUPPORT_FILEFORMAT_VOX
     #define VOX_MALLOC RL_MALLOC
@@ -79,7 +85,7 @@
     #define VOX_FREE RL_FREE
 
     #define VOX_LOADER_IMPLEMENTATION
-    #include "external/vox_loader.h"    // VOX file format loading (MagikaVoxel)
+    #include "external/vox_loader.h"    // VOX file format loading (MagicaVoxel)
 #endif
 
 #if SUPPORT_FILEFORMAT_M3D
@@ -713,9 +719,9 @@ void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, fl
 
 // Draw a wired cylinder with base at startPos and top at endPos
 // NOTE: It could be also used for pyramid and cone
-void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color)
+void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int slices, Color color)
 {
-    if (sides < 3) sides = 3;
+    if (slices < 3) slices = 3;
 
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
     if ((direction.x == 0) && (direction.y == 0) && (direction.z == 0)) return; // Security check
@@ -724,12 +730,12 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
     Vector3 b1 = Vector3Normalize(Vector3Perpendicular(direction));
     Vector3 b2 = Vector3Normalize(Vector3CrossProduct(b1, direction));
 
-    float baseAngle = (2.0f*PI)/sides;
+    float baseAngle = (2.0f*PI)/slices;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
 
-        for (int i = 0; i < sides; i++)
+        for (int i = 0; i < slices; i++)
         {
             // Compute the four vertices
             float s1 = sinf(baseAngle*(i + 0))*startRadius;
@@ -758,7 +764,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 }
 
 // Draw a capsule with the center of its sphere caps at startPos and endPos
-void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color)
+void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color)
 {
     if (slices < 3) slices = 3;
 
@@ -897,7 +903,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int
 }
 
 // Draw capsule wires with the center of its sphere caps at startPos and endPos
-void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color)
+void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color)
 {
     if (slices < 3) slices = 3;
 
@@ -1171,16 +1177,17 @@ bool IsModelValid(Model model)
     // but some VBOs could not be used, it depends on Mesh vertex data
     for (int i = 0; i < model.meshCount; i++)
     {
-        if ((model.meshes[i].vertices != NULL) && (model.meshes[i].vboId[0] == 0)) { result = false; break; }  // Vertex position buffer not uploaded to GPU
+        if ((model.meshes[i].vertices != NULL) && (model.meshes[i].vboId[0] == 0)) { result = false; break; }   // Vertex position buffer not uploaded to GPU
         if ((model.meshes[i].texcoords != NULL) && (model.meshes[i].vboId[1] == 0)) { result = false; break; }  // Vertex textcoords buffer not uploaded to GPU
-        if ((model.meshes[i].normals != NULL) && (model.meshes[i].vboId[2] == 0)) { result = false; break; }  // Vertex normals buffer not uploaded to GPU
-        if ((model.meshes[i].colors != NULL) && (model.meshes[i].vboId[3] == 0)) { result = false; break; }  // Vertex colors buffer not uploaded to GPU
-        if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }  // Vertex tangents buffer not uploaded to GPU
-        if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; }  // Vertex texcoords2 buffer not uploaded to GPU
-        if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }  // Vertex indices buffer not uploaded to GPU
-        if ((model.meshes[i].boneIndices != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; }  // Vertex boneIndices buffer not uploaded to GPU
-        if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; }  // Vertex boneWeights buffer not uploaded to GPU
-
+        if ((model.meshes[i].normals != NULL) && (model.meshes[i].vboId[2] == 0)) { result = false; break; }    // Vertex normals buffer not uploaded to GPU
+        if ((model.meshes[i].colors != NULL) && (model.meshes[i].vboId[3] == 0)) { result = false; break; }     // Vertex colors buffer not uploaded to GPU
+        if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }   // Vertex tangents buffer not uploaded to GPU
+        if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; } // Vertex texcoords2 buffer not uploaded to GPU
+        if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }    // Vertex indices buffer not uploaded to GPU
+#if SUPPORT_GPU_SKINNING
+        if ((model.meshes[i].boneIndices != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; } // Vertex boneIndices buffer not uploaded to GPU
+        if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; } // Vertex boneWeights buffer not uploaded to GPU
+#endif
         // NOTE: Some OpenGL versions do not support VAO, so avoid below check
         //if (model.meshes[i].vaoId == 0) { result = false; break }
     }
@@ -1276,7 +1283,6 @@ void UploadMesh(Mesh *mesh, bool dynamic)
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     mesh->vaoId = rlLoadVertexArray();
-    if (mesh->vaoId == 0) return;
 
     rlEnableVertexArray(mesh->vaoId);
 
@@ -1945,7 +1951,7 @@ void UnloadMesh(Mesh mesh)
 // Export mesh data to file
 bool ExportMesh(Mesh mesh, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
     if (IsFileExtension(fileName, ".obj"))
     {
@@ -2009,22 +2015,35 @@ bool ExportMesh(Mesh mesh, const char *fileName)
         }
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
-        success = SaveFileText(fileName, txtData);
+        result = SaveFileText(fileName, txtData);
 
         RL_FREE(txtData);
+    }
+    else if (IsFileExtension(fileName, ".gltf")) // Or .glb
+    {
+        // TODO: Implement gltf/glb support
+        /*
+        cgltf_size expected = cgltf_write(options, NULL, 0, data);
+        char *buffer = (char *)RL_CALLOC(expected, 0);
+        cgltf_size actual = cgltf_write(options, buffer, expected, data);
+
+        // NOTE: cgltf_write() includes a NULL terminator that should be ommited in case of a .glb
+        if (options->type == cgltf_file_type_glb) cgltf_write_glb(file, buffer, actual - 1, data->bin, data->bin_size);
+        else SaveFileText(fileName, buffer); // Write a plain JSON file
+        */
     }
     else if (IsFileExtension(fileName, ".raw"))
     {
         // TODO: Support additional file formats to export mesh vertex data
     }
 
-    return success;
+    return result;
 }
 
 // Export mesh as code file (.h) defining multiple arrays of vertex attributes
 bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -2108,14 +2127,14 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
     //-----------------------------------------------------------------------------------------
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    //if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image as code exported successfully", fileName);
+    //if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Image as code exported successfully", fileName);
     //else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image as code", fileName);
 
-    return success;
+    return result;
 }
 
 #if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
@@ -3912,7 +3931,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
         Color colDiffuse = mat.maps[MATERIAL_MAP_DIFFUSE].color;
 
         // Applying color tint directly to material diffuse map,
-        // because is comes as an input paramter to the function
+        // because it comes as an input parameter to the function
         Color colTinted = { 0 };
         colTinted.r = (unsigned char)(((int)colDiffuse.r*(int)tint.r)/255);
         colTinted.g = (unsigned char)(((int)colDiffuse.g*(int)tint.g)/255);
@@ -3954,32 +3973,6 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
     DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
 
     rlDisableWireMode();
-}
-
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModel(model, position, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
-}
-
-// Draw a model points
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
-void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
-{
-    rlEnablePointMode();
-    rlDisableBackfaceCulling();
-
-    DrawModelEx(model, position, rotationAxis, rotationAngle, scale, tint);
-
-    rlEnableBackfaceCulling();
-    rlDisablePointMode();
 }
 
 // Draw a billboard
@@ -4107,7 +4100,8 @@ bool CheckCollisionSpheres(Vector3 center1, float radius1, Vector3 center2, floa
     */
 
     // Check for distances squared to avoid sqrtf()
-    if (Vector3DotProduct(Vector3Subtract(center2, center1), Vector3Subtract(center2, center1)) <= (radius1 + radius2)*(radius1 + radius2)) collision = true;
+    float radSum = radius1 + radius2;
+    if (Vector3DistanceSqr(center1, center2) <= (radSum*radSum)) collision = true;
 
     return collision;
 }
@@ -4133,18 +4127,13 @@ bool CheckCollisionBoxSphere(BoundingBox box, Vector3 center, float radius)
 {
     bool collision = false;
 
-    float dmin = 0;
+    Vector3 closestPoint = {
+        Clamp(center.x, box.min.x, box.max.x),
+        Clamp(center.y, box.min.y, box.max.y),
+        Clamp(center.z, box.min.z, box.max.z)
+    };
 
-    if (center.x < box.min.x) dmin += powf(center.x - box.min.x, 2);
-    else if (center.x > box.max.x) dmin += powf(center.x - box.max.x, 2);
-
-    if (center.y < box.min.y) dmin += powf(center.y - box.min.y, 2);
-    else if (center.y > box.max.y) dmin += powf(center.y - box.max.y, 2);
-
-    if (center.z < box.min.z) dmin += powf(center.z - box.min.z, 2);
-    else if (center.z > box.max.z) dmin += powf(center.z - box.max.z, 2);
-
-    if (dmin <= (radius*radius)) collision = true;
+    if (Vector3DistanceSqr(center, closestPoint) <= (radius*radius)) collision = true;
 
     return collision;
 }
@@ -5286,7 +5275,7 @@ static cgltf_result LoadFileGLTFCallback(const struct cgltf_memory_options *memo
 }
 
 // Release file data callback for cgltf
-static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data)
+static void ReleaseFileGLTFCallback(const struct cgltf_memory_options *memoryOptions, const struct cgltf_file_options *fileOptions, void *data, cgltf_size size)
 {
     UnloadFileData((unsigned char *)data);
 }
@@ -6900,7 +6889,7 @@ static Model LoadM3D(const char *fileName)
                 mi = m3d->face[i].materialid;
 
                 // Only allocate colors VertexBuffer if there's a color vertex in the model for this material batch
-                // if all colors are fully transparent black for all verteces of this materal, then assuming no vertex colors
+                // if all colors are fully transparent black for all vertices of this material, then assuming no vertex colors
                 for (j = i, l = vcolor = 0; (j < (int)m3d->numface) && (mi == m3d->face[j].materialid); j++, l++)
                 {
                     if (!m3d->vertex[m3d->face[j].vertex[0]].color ||

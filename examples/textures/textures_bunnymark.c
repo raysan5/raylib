@@ -47,7 +47,7 @@ int main(void)
     // Load bunny texture
     Texture2D texBunny = LoadTexture("resources/raybunny.png");
 
-    Bunny *bunnies = (Bunny *)malloc(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
+    Bunny *bunnies = (Bunny *)RL_MALLOC(MAX_BUNNIES*sizeof(Bunny));    // Bunnies array
 
     int bunniesCount = 0;           // Bunnies counter
 
@@ -126,7 +126,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(bunnies);              // Unload bunnies data array
+    RL_FREE(bunnies);           // Unload bunnies data array
 
     UnloadTexture(texBunny);    // Unload bunny texture
 

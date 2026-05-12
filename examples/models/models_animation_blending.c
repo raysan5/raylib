@@ -3,7 +3,7 @@
 *   raylib [models] example - animation blending
 *
 *   Example complexity rating: [★★★★] 4/4
-* 
+*
 *   Example originally created with raylib 5.5, last time updated with raylib 6.0
 *
 *   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra) and reviewed by Ramon Santamaria (@raysan5)
@@ -57,7 +57,7 @@ int main(void)
     // WARNING: It requires SUPPORT_GPU_SKINNING enabled on raylib (disabled by default)
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
-    
+
     // Assign skinning shader to all materials shaders
     //for (int i = 0; i < model.materialCount; i++) model.materials[i].shader = skinningShader;
 
@@ -105,7 +105,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
-        
+
         if (IsKeyPressed(KEY_P)) animPause = !animPause;
 
         if (!animPause)
@@ -127,7 +127,7 @@ int main(void)
                 }
 
                 // Set animation transition
-                animTransition = true; 
+                animTransition = true;
                 animBlendTimeCounter = 0.0f;
                 animBlendFactor = 0.0f;
             }
@@ -182,7 +182,7 @@ int main(void)
                     animCurrentFrame0 += animFrameSpeed0;
                     if (animCurrentFrame0 >= anims[animIndex0].keyframeCount) animCurrentFrame0 = 0.0f;
                     UpdateModelAnimation(model, anims[animIndex0], animCurrentFrame0);
-                    //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0, 
+                    //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0,
                     //    anims[animIndex1], animCurrentFrame1, 0.0f); // Same as above, first animation frame blend
                 }
                 else if (currentAnimPlaying == 1)
@@ -191,7 +191,7 @@ int main(void)
                     animCurrentFrame1 += animFrameSpeed1;
                     if (animCurrentFrame1 >= anims[animIndex1].keyframeCount) animCurrentFrame1 = 0.0f;
                     UpdateModelAnimation(model, anims[animIndex1], animCurrentFrame1);
-                    //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0, 
+                    //UpdateModelAnimationEx(model, anims[animIndex0], animCurrentFrame0,
                     //    anims[animIndex1], animCurrentFrame1, 1.0f); // Same as above, second animation frame blend
                 }
             }
@@ -213,7 +213,7 @@ int main(void)
                 DrawModel(model, position, 1.0f, WHITE); // Draw animated model
 
                 DrawGrid(10, 1.0f);
-                
+
             EndMode3D();
 
             if (animTransition) DrawText("ANIM TRANSITION BLENDING!", 170, 50, 30, BLUE);
@@ -221,18 +221,18 @@ int main(void)
             // Draw UI elements
             //---------------------------------------------------------------------------------------------
             if (dropdownEditMode0) GuiDisable();
-            GuiSlider((Rectangle){ 10, 38, 160, 12 }, 
+            GuiSlider((Rectangle){ 10, 38, 160, 12 },
                 NULL, TextFormat("x%.1f", animFrameSpeed0), &animFrameSpeed0, 0.1f, 2.0f);
             GuiEnable();
             if (dropdownEditMode1) GuiDisable();
-            GuiSlider((Rectangle){ GetScreenWidth() - 170.0f, 38, 160, 12 }, 
+            GuiSlider((Rectangle){ GetScreenWidth() - 170.0f, 38, 160, 12 },
                 TextFormat("%.1fx", animFrameSpeed1), NULL, &animFrameSpeed1, 0.1f, 2.0f);
             GuiEnable();
 
             // Draw animation selectors for blending transition
-            // NOTE: Transition does not start until requested 
+            // NOTE: Transition does not start until requested
             GuiSetStyle(DROPDOWNBOX, DROPDOWN_ITEMS_SPACING, 1);
-            if (GuiDropdownBox((Rectangle){ 10, 10, 160, 24 }, TextJoin(animNames, animCount, ";"), 
+            if (GuiDropdownBox((Rectangle){ 10, 10, 160, 24 }, TextJoin(animNames, animCount, ";"),
                 &animIndex0, dropdownEditMode0)) dropdownEditMode0 = !dropdownEditMode0;
 
             // Blending process progress bar
@@ -249,7 +249,7 @@ int main(void)
                 TextFormat("FRAME: %.2f / %i", animFrameProgress0, anims[animIndex0].keyframeCount),
                 &animFrameProgress0, 0.0f, (float)anims[animIndex0].keyframeCount);
             for (int i = 0; i < anims[animIndex0].keyframeCount; i++)
-                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i), 
+                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i),
                     GetScreenHeight() - 60, 1, 20, BLUE);
 
             // Draw playing timeline with keyframes for anim1[]
@@ -257,7 +257,7 @@ int main(void)
                 TextFormat("FRAME: %.2f / %i", animFrameProgress1, anims[animIndex1].keyframeCount),
                 &animFrameProgress1, 0.0f, (float)anims[animIndex1].keyframeCount);
             for (int i = 0; i < anims[animIndex1].keyframeCount; i++)
-                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i), 
+                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i),
                     GetScreenHeight() - 30, 1, 20, BLUE);
             //---------------------------------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ int main(void)
     UnloadModelAnimations(anims, animCount); // Unload model animation
     UnloadModel(model);             // Unload model and meshes/material
     UnloadShader(skinningShader);   // Unload GPU skinning shader
-    
+
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

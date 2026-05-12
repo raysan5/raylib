@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v2.0 - Math functions to work with Vector2, Vector3, Matrix and Quaternions
+*   raymath v2.0 - Math functions to work with Vector2, Vector3, Vector4, Matrix and Quaternions
 *
 *   CONVENTIONS:
 *     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
@@ -15,7 +15,7 @@
 *     - Functions use always a "result" variable for return (except C++ operators)
 *     - Functions are always defined inline
 *     - Angles are always in radians (DEG2RAD/RAD2DEG macros provided for convenience)
-*     - No compound literals used to make sure libray is compatible with C++
+*     - No compound literals used to make sure the library is compatible with C++
 *
 *   CONFIGURATION:
 *       #define RAYMATH_IMPLEMENTATION
@@ -183,7 +183,7 @@ typedef struct float16 {
 #if RAYMATH_USE_SIMD_INTRINSICS
     // SIMD is used on the most costly raymath function MatrixMultiply()
     // NOTE: Only SSE intrinsics support implemented
-    // TODO: Consider support for other SIMD instrinsics:
+    // TODO: Consider support for other SIMD intrinsics:
     //  - SSEx, AVX, AVX2, FMA, NEON, RVV
     /*
     #if defined(__SSE4_2__)
@@ -1151,7 +1151,7 @@ RMAPI Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view)
     // Create quaternion from source point
     Quaternion quat = { source.x, source.y, source.z, 1.0f };
 
-    // Multiply quat point by unprojecte matrix
+    // Multiply quat point by unprojected matrix
     Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
         matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
         matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
@@ -1264,19 +1264,21 @@ RMAPI Vector3 Vector3Refract(Vector3 v, Vector3 n, float r)
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Vector4 math
 //----------------------------------------------------------------------------------
-
+// Get  vector zero
 RMAPI Vector4 Vector4Zero(void)
 {
     Vector4 result = { 0.0f, 0.0f, 0.0f, 0.0f };
     return result;
 }
 
+// Get vector one
 RMAPI Vector4 Vector4One(void)
 {
     Vector4 result = { 1.0f, 1.0f, 1.0f, 1.0f };
     return result;
 }
 
+// Add two vectors
 RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1288,6 +1290,7 @@ RMAPI Vector4 Vector4Add(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Add value to vector components
 RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1299,6 +1302,7 @@ RMAPI Vector4 Vector4AddValue(Vector4 v, float add)
     return result;
 }
 
+// Substract vectors
 RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
 {
     Vector4 result = {
@@ -1310,6 +1314,7 @@ RMAPI Vector4 Vector4Subtract(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Substract value from vector components
 RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
 {
     Vector4 result = {
@@ -1321,18 +1326,21 @@ RMAPI Vector4 Vector4SubtractValue(Vector4 v, float add)
     return result;
 }
 
+// Vector length
 RMAPI float Vector4Length(Vector4 v)
 {
     float result = sqrtf((v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w));
     return result;
 }
 
+// Vector square length
 RMAPI float Vector4LengthSqr(Vector4 v)
 {
     float result = (v.x*v.x) + (v.y*v.y) + (v.z*v.z) + (v.w*v.w);
     return result;
 }
 
+// Vectors dot product
 RMAPI float Vector4DotProduct(Vector4 v1, Vector4 v2)
 {
     float result = (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w);
@@ -1358,6 +1366,7 @@ RMAPI float Vector4DistanceSqr(Vector4 v1, Vector4 v2)
     return result;
 }
 
+// Scale vector components by value (multiply)
 RMAPI Vector4 Vector4Scale(Vector4 v, float scale)
 {
     Vector4 result = { v.x*scale, v.y*scale, v.z*scale, v.w*scale };
@@ -1753,13 +1762,14 @@ RMAPI Matrix MatrixMultiply(Matrix left, Matrix right)
     return result;
 }
 
+// Multiply matrix components by value
 RMAPI Matrix MatrixMultiplyValue(Matrix left, float value)
 {
     Matrix result = {
-        left.m0 * value, left.m4 * value, left.m8  * value, left.m12 * value,
-        left.m1 * value, left.m5 * value, left.m9  * value, left.m13 * value,
-        left.m2 * value, left.m6 * value, left.m10 * value, left.m14 * value,
-        left.m3 * value, left.m7 * value, left.m11 * value, left.m15 * value
+        left.m0*value, left.m4*value, left.m8*value, left.m12*value,
+        left.m1*value, left.m5*value, left.m9*value, left.m13*value,
+        left.m2*value, left.m6*value, left.m10*value, left.m14*value,
+        left.m3*value, left.m7*value, left.m11*value, left.m15*value
     };
 
     return result;
@@ -2495,19 +2505,14 @@ RMAPI Quaternion QuaternionFromAxisAngle(Vector3 axis, float angle)
 {
     Quaternion result = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    float axisLength = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
+    float length = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
 
-    if (axisLength != 0.0f)
+    if (length != 0.0f)
     {
         angle *= 0.5f;
 
-        float length = 0.0f;
-        float ilength = 0.0f;
-
         // Vector3Normalize(axis)
-        length = axisLength;
-        if (length == 0.0f) length = 1.0f;
-        ilength = 1.0f/length;
+        float ilength = 1.0f/length;
         axis.x *= ilength;
         axis.y *= ilength;
         axis.z *= ilength;
@@ -2797,6 +2802,11 @@ inline const Vector2& operator -= (Vector2& lhs, const Vector2& rhs)
     return lhs;
 }
 
+inline Vector2 operator * (const float& lhs, const Vector2& rhs)
+{
+    return Vector2Scale(rhs, lhs);
+}
+
 inline Vector2 operator * (const Vector2& lhs, const float& rhs)
 {
     return Vector2Scale(lhs, rhs);
@@ -2889,6 +2899,11 @@ inline const Vector3& operator -= (Vector3& lhs, const Vector3& rhs)
 {
     lhs = Vector3Subtract(lhs, rhs);
     return lhs;
+}
+
+inline Vector3 operator * (const float& lhs, const Vector3& rhs)
+{
+    return Vector3Scale(rhs, lhs);
 }
 
 inline Vector3 operator * (const Vector3& lhs, const float& rhs)
@@ -2984,6 +2999,11 @@ inline const Vector4& operator -= (Vector4& lhs, const Vector4& rhs)
 {
     lhs = Vector4Subtract(lhs, rhs);
     return lhs;
+}
+
+inline Vector4 operator * (const float& lhs, const Vector4& rhs)
+{
+    return Vector4Scale(rhs, lhs);
 }
 
 inline Vector4 operator * (const Vector4& lhs, const float& rhs)

@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib v6.0 - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
+*   raylib v6.1-dev - A simple and easy-to-use library to enjoy videogames programming (www.raylib.com)
 *
 *   FEATURES:
 *       - NO external dependencies, all required libraries included with raylib
@@ -10,7 +10,7 @@
 *       - Software renderer optional, for systems with no GPU: [rlsw]
 *       - Custom OpenGL abstraction layer (usable as standalone module): [rlgl]
 *       - Multiple Fonts formats supported (TTF, OTF, FNT, BDF, Sprite fonts)
-*       - Many texture formats supportted, including compressed formats (DXT, ETC, ASTC)
+*       - Many texture formats supported, including compressed formats (DXT, ETC, ASTC)
 *       - Full 3d support for 3d Shapes, Models, Billboards, Heightmaps and more!
 *       - Flexible Materials system, supporting classic maps and PBR maps
 *       - Animated 3D models supported (skeletal bones animation) (IQM, M3D, GLTF)
@@ -35,14 +35,14 @@
 *       [rcore] sinfl (Micha Mettke) for DEFLATE decompression algorithm
 *       [rcore] sdefl (Micha Mettke) for DEFLATE compression algorithm
 *       [rcore] rprand (Ramon Santamaria) for pseudo-random numbers generation
-*       [rtextures] qoi (Dominic Szablewski - https://phoboslab.org) for QOI image manage
-*       [rtextures] stb_image (Sean Barret) for images loading (BMP, TGA, PNG, JPEG, HDR...)
-*       [rtextures] stb_image_write (Sean Barret) for image writing (BMP, TGA, PNG, JPG)
-*       [rtextures] stb_image_resize2 (Sean Barret) for image resizing algorithms
-*       [rtextures] stb_perlin (Sean Barret) for Perlin Noise image generation
+*       [rtextures] qoi (Dominic Szablewski - https://phoboslab.org) for QOI image management
+*       [rtextures] stb_image (Sean Barrett) for images loading (BMP, TGA, PNG, JPEG, HDR...)
+*       [rtextures] stb_image_write (Sean Barrett) for image writing (BMP, TGA, PNG, JPG)
+*       [rtextures] stb_image_resize2 (Sean Barrett) for image resizing algorithms
+*       [rtextures] stb_perlin (Sean Barrett) for Perlin Noise image generation
 *       [rtextures] rltexgpu (Ramon Santamaria) for GPU-compressed texture formats
-*       [rtext] stb_truetype (Sean Barret) for ttf fonts loading
-*       [rtext] stb_rect_pack (Sean Barret) for rectangles packing
+*       [rtext] stb_truetype (Sean Barrett) for ttf fonts loading
+*       [rtext] stb_rect_pack (Sean Barrett) for rectangles packing
 *       [rmodels] par_shapes (Philip Rideout) for parametric 3d shapes generation
 *       [rmodels] tinyobj_loader_c (Syoyo Fujita) for models loading (OBJ, MTL)
 *       [rmodels] cgltf (Johannes Kuhlmann) for models loading (glTF)
@@ -51,10 +51,10 @@
 *       [raudio] dr_wav (David Reid) for WAV audio file loading
 *       [raudio] dr_flac (David Reid) for FLAC audio file loading
 *       [raudio] dr_mp3 (David Reid) for MP3 audio file loading
-*       [raudio] stb_vorbis (Sean Barret) for OGG audio loading
+*       [raudio] stb_vorbis (Sean Barrett) for OGG audio loading
 *       [raudio] jar_xm (Joshua Reisenauer) for XM audio module loading
 *       [raudio] jar_mod (Joshua Reisenauer) for MOD audio module loading
-*       [raudio] qoa (Dominic Szablewski - https://phoboslab.org) for QOA audio manage
+*       [raudio] qoa (Dominic Szablewski - https://phoboslab.org) for QOA audio management
 *
 *
 *   LICENSE: zlib/libpng
@@ -87,9 +87,9 @@
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
 #define RAYLIB_VERSION_MAJOR 6
-#define RAYLIB_VERSION_MINOR 0
+#define RAYLIB_VERSION_MINOR 1
 #define RAYLIB_VERSION_PATCH 0
-#define RAYLIB_VERSION  "6.0"
+#define RAYLIB_VERSION  "6.1-dev"
 
 // Function specifiers in case library is build/used as a shared library
 // NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
@@ -203,11 +203,13 @@
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 // Boolean type
+#if !defined(__cplusplus)
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
-#elif !defined(__cplusplus) && !defined(bool)
+#elif !defined(bool)
     typedef enum bool { false = 0, true = !false } bool;
     #define RL_BOOL_TYPE
+#endif
 #endif
 
 // Vector2, 2 components
@@ -963,10 +965,10 @@ typedef enum {
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
-typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
-typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
-typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
-typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
+typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args); // Logging: Redirect trace log messages
+typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize); // FileIO: Load binary data
+typedef bool (*SaveFileDataCallback)(const char *fileName, const void *data, int dataSize); // FileIO: Save binary data
+typedef char *(*LoadFileTextCallback)(const char *fileName);                  // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); // FileIO: Save text data
 
 //------------------------------------------------------------------------------------
@@ -1034,23 +1036,23 @@ RLAPI void EnableEventWaiting(void);                              // Enable wait
 RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling
 
 // Cursor-related functions
-RLAPI void ShowCursor(void);                                      // Shows cursor
-RLAPI void HideCursor(void);                                      // Hides cursor
+RLAPI void ShowCursor(void);                                      // Show cursor
+RLAPI void HideCursor(void);                                      // Hide cursor
 RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
-RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
-RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
+RLAPI void EnableCursor(void);                                    // Enable cursor (unlock cursor)
+RLAPI void DisableCursor(void);                                   // Disable cursor (lock cursor)
 RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the screen
 
 // Drawing-related functions
-RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
-RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
-RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
+RLAPI void ClearBackground(Color color);                          // Clear background (framebuffer) to color
+RLAPI void BeginDrawing(void);                                    // Begin canvas (framebuffer) drawing
+RLAPI void EndDrawing(void);                                      // End canvas (framebuffer) drawing and swap buffers (double buffering)
 RLAPI void BeginMode2D(Camera2D camera);                          // Begin 2D mode with custom camera (2D)
-RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
+RLAPI void EndMode2D(void);                                       // End 2D mode with custom camera
 RLAPI void BeginMode3D(Camera3D camera);                          // Begin 3D mode with custom camera (3D)
-RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
+RLAPI void EndMode3D(void);                                       // End 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Begin drawing to render texture
-RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
+RLAPI void EndTextureMode(void);                                  // End drawing to render texture
 RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
 RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
 RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied, subtract, custom)
@@ -1071,9 +1073,9 @@ RLAPI Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode); // Lo
 RLAPI bool IsShaderValid(Shader shader);                                   // Check if a shader is valid (loaded on GPU)
 RLAPI int GetShaderLocation(Shader shader, const char *uniformName);       // Get shader uniform location
 RLAPI int GetShaderLocationAttrib(Shader shader, const char *attribName);  // Get shader attribute location
-RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);               // Set shader uniform value
-RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count);   // Set shader uniform value vector
-RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);         // Set shader uniform value (matrix 4x4)
+RLAPI void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType); // Set shader uniform value
+RLAPI void SetShaderValueV(Shader shader, int locIndex, const void *value, int uniformType, int count); // Set shader uniform value vector
+RLAPI void SetShaderValueMatrix(Shader shader, int locIndex, Matrix mat);  // Set shader uniform value (matrix 4x4)
 RLAPI void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture); // Set shader uniform value and bind the texture (sampler2d)
 RLAPI void UnloadShader(Shader shader);                                    // Unload shader from GPU memory (VRAM)
 
@@ -1081,10 +1083,10 @@ RLAPI void UnloadShader(Shader shader);                                    // Un
 #define GetMouseRay GetScreenToWorldRay     // Compatibility hack for previous raylib versions
 RLAPI Ray GetScreenToWorldRay(Vector2 position, Camera camera);         // Get a ray trace from screen position (i.e mouse)
 RLAPI Ray GetScreenToWorldRayEx(Vector2 position, Camera camera, int width, int height); // Get a ray trace from screen position (i.e mouse) in a viewport
-RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);        // Get the screen space position for a 3d world space position
-RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Get size position for a 3d world space position
-RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera);    // Get the screen space position for a 2d camera world space position
-RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera);    // Get the world space position for a 2d camera screen space position
+RLAPI Vector2 GetWorldToScreen(Vector3 position, Camera camera);        // Get screen space position for a 3d world space position
+RLAPI Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height); // Get sized screen space position for a 3d world space position
+RLAPI Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera);    // Get screen space position for a 2d camera world space position
+RLAPI Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera);    // Get world space position for a 2d camera screen space position
 RLAPI Matrix GetCameraMatrix(Camera camera);                            // Get camera transform matrix (view matrix)
 RLAPI Matrix GetCameraMatrix2D(Camera2D camera);                        // Get camera 2d transform matrix
 
@@ -1110,7 +1112,7 @@ RLAPI void UnloadRandomSequence(int *sequence);         // Unload random values 
 
 // Misc. functions
 RLAPI void TakeScreenshot(const char *fileName);                // Takes a screenshot of current screen (filename extension defines format)
-RLAPI void SetConfigFlags(unsigned int flags);                  // Setup init configuration flags (view FLAGS)
+RLAPI void SetConfigFlags(unsigned int flags);                  // Set up init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                            // Open URL with default system browser (if available)
 
 // Logging system
@@ -1126,7 +1128,7 @@ RLAPI void MemFree(void *ptr);                                  // Internal memo
 // File system management functions
 RLAPI unsigned char *LoadFileData(const char *fileName, int *dataSize); // Load file data as byte array (read)
 RLAPI void UnloadFileData(unsigned char *data);                     // Unload file data allocated by LoadFileData()
-RLAPI bool SaveFileData(const char *fileName, void *data, int dataSize); // Save data to file from byte array (write), returns true on success
+RLAPI bool SaveFileData(const char *fileName, const void *data, int dataSize); // Save data to file from byte array (write), returns true on success
 RLAPI bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName); // Export data to code (.h), returns true on success
 RLAPI char *LoadFileText(const char *fileName);                     // Load text data from file (read), returns a '\0' terminated string
 RLAPI void UnloadFileText(char *text);                              // Unload file text data allocated by LoadFileText()
@@ -1161,8 +1163,8 @@ RLAPI int MakeDirectory(const char *dirPath);                       // Create di
 RLAPI bool ChangeDirectory(const char *dirPath);                    // Change working directory, return true on success
 RLAPI bool IsPathFile(const char *path);                            // Check if a given path is a file or a directory
 RLAPI bool IsFileNameValid(const char *fileName);                   // Check if fileName is valid for the platform/OS
-RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths
-RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result
+RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths, files and directories, no subdirs scan
+RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`
 RLAPI void UnloadDirectoryFiles(FilePathList files);                // Unload filepaths
 RLAPI bool IsFileDropped(void);                                     // Check if a file has been dropped into window
 RLAPI FilePathList LoadDroppedFiles(void);                          // Load dropped filepaths
@@ -1175,10 +1177,10 @@ RLAPI unsigned char *CompressData(const unsigned char *data, int dataSize, int *
 RLAPI unsigned char *DecompressData(const unsigned char *compData, int compDataSize, int *dataSize);  // Decompress data (DEFLATE algorithm), memory must be MemFree()
 RLAPI char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize);               // Encode data to Base64 string (includes NULL terminator), memory must be MemFree()
 RLAPI unsigned char *DecodeDataBase64(const char *text, int *outputSize);                             // Decode Base64 string (expected NULL terminated), memory must be MemFree()
-RLAPI unsigned int ComputeCRC32(unsigned char *data, int dataSize);       // Compute CRC32 hash code
-RLAPI unsigned int *ComputeMD5(unsigned char *data, int dataSize);        // Compute MD5 hash code, returns static int[4] (16 bytes)
-RLAPI unsigned int *ComputeSHA1(unsigned char *data, int dataSize);       // Compute SHA1 hash code, returns static int[5] (20 bytes)
-RLAPI unsigned int *ComputeSHA256(unsigned char *data, int dataSize);     // Compute SHA256 hash code, returns static int[8] (32 bytes)
+RLAPI unsigned int ComputeCRC32(const unsigned char *data, int dataSize); // Compute CRC32 hash code
+RLAPI unsigned int *ComputeMD5(const unsigned char *data, int dataSize);  // Compute MD5 hash code, returns static int[4] (16 bytes)
+RLAPI unsigned int *ComputeSHA1(const unsigned char *data, int dataSize); // Compute SHA1 hash code, returns static int[5] (20 bytes)
+RLAPI unsigned int *ComputeSHA256(const unsigned char *data, int dataSize); // Compute SHA256 hash code, returns static int[8] (32 bytes)
 
 // Automation events functionality
 RLAPI AutomationEventList LoadAutomationEventList(const char *fileName); // Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS
@@ -1245,7 +1247,7 @@ RLAPI int GetTouchPointCount(void);                           // Get number of t
 // Gestures and Touch Handling Functions (Module: rgestures)
 //------------------------------------------------------------------------------------
 RLAPI void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
-RLAPI bool IsGestureDetected(unsigned int gesture);           // Check if a gesture have been detected
+RLAPI bool IsGestureDetected(unsigned int gesture);           // Check if a gesture has been detected
 RLAPI int GetGestureDetected(void);                           // Get latest detected gesture
 RLAPI float GetGestureHoldDuration(void);                     // Get gesture hold time in seconds
 RLAPI Vector2 GetGestureDragVector(void);                     // Get gesture drag vector
@@ -1279,10 +1281,10 @@ RLAPI void DrawLineStrip(const Vector2 *points, int pointCount, Color color);   
 RLAPI void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color);                   // Draw line segment cubic-bezier in-out interpolation
 RLAPI void DrawLineDashed(Vector2 startPos, Vector2 endPos, int dashSize, int spaceSize, Color color);   // Draw a dashed line
 RLAPI void DrawCircle(int centerX, int centerY, float radius, Color color);                              // Draw a color-filled circle
-RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color);      // Draw a piece of a circle
-RLAPI void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw circle sector outline
-RLAPI void DrawCircleGradient(int centerX, int centerY, float radius, Color inner, Color outer);         // Draw a gradient-filled circle
 RLAPI void DrawCircleV(Vector2 center, float radius, Color color);                                       // Draw a color-filled circle (Vector version)
+RLAPI void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer);                   // Draw a gradient-filled circle
+RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw a piece of a circle
+RLAPI void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw circle sector outline
 RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
 RLAPI void DrawCircleLinesV(Vector2 center, float radius, Color color);                                  // Draw circle outline (Vector version)
 RLAPI void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color);             // Draw ellipse
@@ -1290,7 +1292,7 @@ RLAPI void DrawEllipseV(Vector2 center, float radiusH, float radiusV, Color colo
 RLAPI void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color);        // Draw ellipse outline
 RLAPI void DrawEllipseLinesV(Vector2 center, float radiusH, float radiusV, Color color);                 // Draw ellipse outline (Vector version)
 RLAPI void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color); // Draw ring
-RLAPI void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color);    // Draw ring outline
+RLAPI void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color); // Draw ring outline
 RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
 RLAPI void DrawRectangleV(Vector2 position, Vector2 size, Color color);                                  // Draw a color-filled rectangle (Vector version)
 RLAPI void DrawRectangleRec(Rectangle rec, Color color);                                                 // Draw a color-filled rectangle
@@ -1302,12 +1304,13 @@ RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color c
 RLAPI void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color);                            // Draw rectangle outline with extended parameters
 RLAPI void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color);              // Draw rectangle with rounded edges
 RLAPI void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color);         // Draw rectangle lines with rounded edges
-RLAPI void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color); // Draw rectangle with rounded edges outline
+RLAPI void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color); // Draw rectangle lines with rounded edges outline
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle (vertex in counter-clockwise order!)
+RLAPI void DrawTriangleGradient(Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3);       // Draw triangle with interpolated colors (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline (vertex in counter-clockwise order!)
 RLAPI void DrawTriangleFan(const Vector2 *points, int pointCount, Color color);                          // Draw a triangle fan defined by points (first vertex is the center)
 RLAPI void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color);                        // Draw a triangle strip defined by points
-RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a regular polygon (Vector version)
+RLAPI void DrawPoly(Vector2 center, int sides, float radius, float rotation, Color color);               // Draw a polygon of n sides
 RLAPI void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Color color);          // Draw a polygon outline of n sides
 RLAPI void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color); // Draw a polygon outline of n sides with extended parameters
 
@@ -1327,14 +1330,14 @@ RLAPI void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vect
 RLAPI Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t);                           // Get (evaluate) spline point: Linear
 RLAPI Vector2 GetSplinePointBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);              // Get (evaluate) spline point: B-Spline
 RLAPI Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);         // Get (evaluate) spline point: Catmull-Rom
-RLAPI Vector2 GetSplinePointBezierQuad(Vector2 p1, Vector2 c2, Vector2 p3, float t);                     // Get (evaluate) spline point: Quadratic Bezier
+RLAPI Vector2 GetSplinePointBezierQuadratic(Vector2 p1, Vector2 c2, Vector2 p3, float t);                // Get (evaluate) spline point: Quadratic Bezier
 RLAPI Vector2 GetSplinePointBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float t);        // Get (evaluate) spline point: Cubic Bezier
 
 // Basic shapes collision detection functions
 RLAPI bool CheckCollisionRecs(Rectangle rec1, Rectangle rec2);                                           // Check collision between two rectangles
 RLAPI bool CheckCollisionCircles(Vector2 center1, float radius1, Vector2 center2, float radius2);        // Check collision between two circles
 RLAPI bool CheckCollisionCircleRec(Vector2 center, float radius, Rectangle rec);                         // Check collision between circle and rectangle
-RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2);               // Check if circle collides with a line created betweeen two points [p1] and [p2]
+RLAPI bool CheckCollisionCircleLine(Vector2 center, float radius, Vector2 p1, Vector2 p2);               // Check if circle collides with a line created between two points [p1] and [p2]
 RLAPI bool CheckCollisionPointRec(Vector2 point, Rectangle rec);                                         // Check if point is inside rectangle
 RLAPI bool CheckCollisionPointCircle(Vector2 point, Vector2 center, float radius);                       // Check if point is inside circle
 RLAPI bool CheckCollisionPointTriangle(Vector2 point, Vector2 p1, Vector2 p2, Vector2 p3);               // Check if point is inside a triangle
@@ -1355,11 +1358,11 @@ RLAPI Image LoadImageAnim(const char *fileName, int *frames);                   
 RLAPI Image LoadImageAnimFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int *frames); // Load image sequence from memory buffer
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
 RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
-RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
+RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer (screenshot)
 RLAPI bool IsImageValid(Image image);                                                                    // Check if an image is valid (data and parameters)
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
-RLAPI unsigned char *ExportImageToMemory(Image image, const char *fileType, int *fileSize);              // Export image to memory buffer
+RLAPI unsigned char *ExportImageToMemory(Image image, const char *fileType, int *fileSize);              // Export image to memory buffer, memory must be MemFree()
 RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
 
 // Image generation functions
@@ -1401,7 +1404,7 @@ RLAPI void ImageRotateCCW(Image *image);                                        
 RLAPI void ImageColorTint(Image *image, Color color);                                                    // Modify image color: tint
 RLAPI void ImageColorInvert(Image *image);                                                               // Modify image color: invert
 RLAPI void ImageColorGrayscale(Image *image);                                                            // Modify image color: grayscale
-RLAPI void ImageColorContrast(Image *image, float contrast);                                             // Modify image color: contrast (-100 to 100)
+RLAPI void ImageColorContrast(Image *image, int contrast);                                               // Modify image color: contrast (-100 to 100)
 RLAPI void ImageColorBrightness(Image *image, int brightness);                                           // Modify image color: brightness (-255 to 255)
 RLAPI void ImageColorReplace(Image *image, Color color, Color replace);                                  // Modify image color: replace color
 RLAPI Color *LoadImageColors(Image image);                                                               // Load color data from image as a Color array (RGBA - 32bit)
@@ -1426,9 +1429,10 @@ RLAPI void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color c
 RLAPI void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color);       // Draw rectangle within an image
 RLAPI void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color);                 // Draw rectangle within an image (Vector version)
 RLAPI void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color);                                // Draw rectangle within an image
-RLAPI void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color);                   // Draw rectangle lines within an image
+RLAPI void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color);  // Draw rectangle lines within an image
+RLAPI void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color);                 // Draw rectangle lines within an image with extended parameters
 RLAPI void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color);               // Draw triangle within an image
-RLAPI void ImageDrawTriangleEx(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3); // Draw triangle with interpolated colors within an image
+RLAPI void ImageDrawTriangleGradient(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3); // Draw triangle with interpolated colors within an image
 RLAPI void ImageDrawTriangleLines(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color);          // Draw triangle outline within an image
 RLAPI void ImageDrawTriangleFan(Image *dst, const Vector2 *points, int pointCount, Color color);         // Draw a triangle fan defined by points within an image (first vertex is the center)
 RLAPI void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, Color color);       // Draw a triangle strip defined by points within an image
@@ -1460,7 +1464,7 @@ RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);       
 RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
 RLAPI void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint);            // Draw a part of a texture defined by a rectangle
 RLAPI void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
-RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely
+RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draw a texture (or part of it) that stretches or shrinks nicely
 
 // Color/pixel related functions
 RLAPI bool ColorIsEqual(Color col1, Color col2);                            // Check if two colors are equal
@@ -1504,7 +1508,7 @@ RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color co
 RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
 RLAPI void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); // Draw text using Font and pro parameters (rotation)
 RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); // Draw one character (codepoint)
-RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
+RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple characters (codepoint)
 
 // Text font info functions
 RLAPI void SetTextLineSpacing(int spacing);                                                 // Set vertical line spacing when drawing with line-breaks
@@ -1528,19 +1532,22 @@ RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);                
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
 // WARNING 1: Most of these functions use internal static buffers[], it's recommended to store returned data on user-side for re-use
-// WARNING 2: Some strings allocate memory internally for the returned strings, those strings must be free by user using MemFree()
+// WARNING 2: Some functions allocate memory internally for the returned strings, those strings must be freed by user using MemFree()
 RLAPI char **LoadTextLines(const char *text, int *count);                                   // Load text as separate lines ('\n')
 RLAPI void UnloadTextLines(char **text, int lineCount);                                     // Unload text lines
 RLAPI int TextCopy(char *dst, const char *src);                                             // Copy one string to another, returns bytes copied
-RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
+RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text strings are equal
 RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
 RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf() style)
 RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
 RLAPI const char *TextRemoveSpaces(const char *text);                                       // Remove text spaces, concat words
 RLAPI char *GetTextBetween(const char *text, const char *begin, const char *end);           // Get text between two strings
-RLAPI char *TextReplace(const char *text, const char *search, const char *replacement);     // Replace text string (WARNING: memory must be freed!)
-RLAPI char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings (WARNING: memory must be freed!)
-RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (WARNING: memory must be freed!)
+RLAPI char *TextReplace(const char *text, const char *search, const char *replacement);     // Replace text string with new string
+RLAPI char *TextReplaceAlloc(const char *text, const char *search, const char *replacement); // Replace text string with new string, memory must be MemFree()
+RLAPI char *TextReplaceBetween(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings
+RLAPI char *TextReplaceBetweenAlloc(const char *text, const char *begin, const char *end, const char *replacement); // Replace text between two specific strings, memory must be MemFree()
+RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a defined byte position
+RLAPI char *TextInsertAlloc(const char *text, const char *insert, int position);            // Insert text in a defined byte position, memory must be MemFree()
 RLAPI char *TextJoin(char **textList, int count, const char *delimiter);                    // Join text strings with delimiter
 RLAPI char **TextSplit(const char *text, char delimiter, int *count);                       // Split text into multiple strings, using MAX_TEXTSPLIT_COUNT static strings
 RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor
@@ -1573,9 +1580,9 @@ RLAPI void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slice
 RLAPI void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone
 RLAPI void DrawCylinderEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color); // Draw a cylinder with base at startPos and top at endPos
 RLAPI void DrawCylinderWires(Vector3 position, float radiusTop, float radiusBottom, float height, int slices, Color color); // Draw a cylinder/cone wires
-RLAPI void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int sides, Color color); // Draw a cylinder wires with base at startPos and top at endPos
-RLAPI void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color); // Draw a capsule with the center of its sphere caps at startPos and endPos
-RLAPI void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int slices, int rings, Color color); // Draw capsule wireframe with the center of its sphere caps at startPos and endPos
+RLAPI void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, float endRadius, int slices, Color color); // Draw a cylinder wires with base at startPos and top at endPos
+RLAPI void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color); // Draw a capsule with the center of its sphere caps at startPos and endPos
+RLAPI void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color); // Draw capsule wireframe with the center of its sphere caps at startPos and endPos
 RLAPI void DrawPlane(Vector3 centerPos, Vector2 size, Color color);                                      // Draw a plane XZ
 RLAPI void DrawRay(Ray ray, Color color);                                                                // Draw a ray line
 RLAPI void DrawGrid(int slices, float spacing);                                                          // Draw a grid (centered at (0, 0, 0))
@@ -1596,10 +1603,8 @@ RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);   
 RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model with extended parameters
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);          // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters
-RLAPI void DrawModelPoints(Model model, Vector3 position, float scale, Color tint); // Draw a model as points
-RLAPI void DrawModelPointsEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model as points with extended parameters
 RLAPI void DrawBoundingBox(BoundingBox box, Color color);                                   // Draw bounding box (wires)
-RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint);   // Draw a billboard texture
+RLAPI void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint); // Draw a billboard texture
 RLAPI void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint); // Draw a billboard texture defined by source
 RLAPI void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint); // Draw a billboard texture defined by source and rotation
 
@@ -1667,15 +1672,15 @@ RLAPI float GetMasterVolume(void);                                    // Get mas
 // Wave/Sound loading/unloading functions
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
 RLAPI Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize); // Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
-RLAPI bool IsWaveValid(Wave wave);                                    // Checks if wave data is valid (data loaded and parameters)
+RLAPI bool IsWaveValid(Wave wave);                                    // Check if wave data is valid (data loaded and parameters)
 RLAPI Sound LoadSound(const char *fileName);                          // Load sound from file
 RLAPI Sound LoadSoundFromWave(Wave wave);                             // Load sound from wave data
-RLAPI Sound LoadSoundAlias(Sound source);                             // Create a new sound that shares the same sample data as the source sound, does not own the sound data
-RLAPI bool IsSoundValid(Sound sound);                                 // Checks if a sound is valid (data loaded and buffers initialized)
-RLAPI void UpdateSound(Sound sound, const void *data, int sampleCount); // Update sound buffer with new data (default data format: 32 bit float, stereo)
+RLAPI Sound LoadSoundAlias(Sound source);                             // Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data
+RLAPI bool IsSoundValid(Sound sound);                                 // Check if a sound is valid (data loaded and buffers initialized)
+RLAPI void UpdateSound(Sound sound, const void *data, int frameCount); // Update sound buffer with new data (default data format: 32 bit float, stereo)
 RLAPI void UnloadWave(Wave wave);                                     // Unload wave data
 RLAPI void UnloadSound(Sound sound);                                  // Unload sound
-RLAPI void UnloadSoundAlias(Sound alias);                             // Unload a sound alias (does not deallocate sample data)
+RLAPI void UnloadSoundAlias(Sound alias);                             // Unload sound alias (does not deallocate sample data)
 RLAPI bool ExportWave(Wave wave, const char *fileName);               // Export wave data to file, returns true on success
 RLAPI bool ExportWaveAsCode(Wave wave, const char *fileName);         // Export wave sample data to code (.h), returns true on success
 
@@ -1697,24 +1702,24 @@ RLAPI void UnloadWaveSamples(float *samples);                         // Unload 
 // Music management functions
 RLAPI Music LoadMusicStream(const char *fileName);                    // Load music stream from file
 RLAPI Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data, int dataSize); // Load music stream from data
-RLAPI bool IsMusicValid(Music music);                                 // Checks if a music stream is valid (context and buffers initialized)
+RLAPI bool IsMusicValid(Music music);                                 // Check if a music stream is valid (context and buffers initialized)
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing
 RLAPI bool IsMusicStreamPlaying(Music music);                         // Check if music is playing
-RLAPI void UpdateMusicStream(Music music);                            // Updates buffers for music streaming
+RLAPI void UpdateMusicStream(Music music);                            // Update buffers for music streaming
 RLAPI void StopMusicStream(Music music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing
 RLAPI void ResumeMusicStream(Music music);                            // Resume playing paused music
 RLAPI void SeekMusicStream(Music music, float position);              // Seek music to a position (in seconds)
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
-RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for a music (1.0 is base level)
-RLAPI void SetMusicPan(Music music, float pan);                       // Set pan for a music (-1.0 left, 0.0 center, 1.0 right)
+RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for music (1.0 is base level)
+RLAPI void SetMusicPan(Music music, float pan);                       // Set pan for music (-1.0 left, 0.0 center, 1.0 right)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
 RLAPI float GetMusicTimePlayed(Music music);                          // Get current music time played (in seconds)
 
 // AudioStream management functions
 RLAPI AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Load audio stream (to stream raw audio pcm data)
-RLAPI bool IsAudioStreamValid(AudioStream stream);                    // Checks if an audio stream is valid (buffers initialized)
+RLAPI bool IsAudioStreamValid(AudioStream stream);                    // Check if an audio stream is valid (buffers initialized)
 RLAPI void UnloadAudioStream(AudioStream stream);                     // Unload audio stream and free memory
 RLAPI void UpdateAudioStream(AudioStream stream, const void *data, int frameCount); // Update audio stream buffers with data
 RLAPI bool IsAudioStreamProcessed(AudioStream stream);                // Check if any audio stream buffers requires refill
@@ -1725,7 +1730,7 @@ RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check i
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
-RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)
+RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (-1.0 left, 0.0 center, 1.0 right)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
 RLAPI void SetAudioStreamCallback(AudioStream stream, AudioCallback callback); // Audio thread callback to request new data
 

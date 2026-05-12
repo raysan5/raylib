@@ -92,7 +92,7 @@ int main(void)
     }
     else
     {
-        // TODO: WARNING: On PLATFORM_WEB it requires a big amount of memory to process input image 
+        // TODO: WARNING: On PLATFORM_WEB it requires a big amount of memory to process input image
         // and generate the required cubemap image to be passed to rlLoadTextureCubemap()
         Image image = LoadImage("resources/skybox.png");
         skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);

@@ -15,7 +15,7 @@ return {
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 0,
+      value = 1,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "6.0",
+      value = "6.1-dev",
       description = ""
     },
     {
@@ -3101,7 +3101,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -3450,12 +3450,12 @@ return {
     },
     {
       name = "ShowCursor",
-      description = "Shows cursor",
+      description = "Show cursor",
       returnType = "void"
     },
     {
       name = "HideCursor",
-      description = "Hides cursor",
+      description = "Hide cursor",
       returnType = "void"
     },
     {
@@ -3465,12 +3465,12 @@ return {
     },
     {
       name = "EnableCursor",
-      description = "Enables cursor (unlock cursor)",
+      description = "Enable cursor (unlock cursor)",
       returnType = "void"
     },
     {
       name = "DisableCursor",
-      description = "Disables cursor (lock cursor)",
+      description = "Disable cursor (lock cursor)",
       returnType = "void"
     },
     {
@@ -3480,7 +3480,7 @@ return {
     },
     {
       name = "ClearBackground",
-      description = "Set background color (framebuffer clear color)",
+      description = "Clear background (framebuffer) to color",
       returnType = "void",
       params = {
         {type = "Color", name = "color"}
@@ -3488,12 +3488,12 @@ return {
     },
     {
       name = "BeginDrawing",
-      description = "Setup canvas (framebuffer) to start drawing",
+      description = "Begin canvas (framebuffer) drawing",
       returnType = "void"
     },
     {
       name = "EndDrawing",
-      description = "End canvas drawing and swap buffers (double buffering)",
+      description = "End canvas (framebuffer) drawing and swap buffers (double buffering)",
       returnType = "void"
     },
     {
@@ -3506,7 +3506,7 @@ return {
     },
     {
       name = "EndMode2D",
-      description = "Ends 2D mode with custom camera",
+      description = "End 2D mode with custom camera",
       returnType = "void"
     },
     {
@@ -3519,7 +3519,7 @@ return {
     },
     {
       name = "EndMode3D",
-      description = "Ends 3D mode and returns to default 2D orthographic mode",
+      description = "End 3D mode and returns to default 2D orthographic mode",
       returnType = "void"
     },
     {
@@ -3532,7 +3532,7 @@ return {
     },
     {
       name = "EndTextureMode",
-      description = "Ends drawing to render texture",
+      description = "End drawing to render texture",
       returnType = "void"
     },
     {
@@ -3723,7 +3723,7 @@ return {
     },
     {
       name = "GetWorldToScreen",
-      description = "Get the screen space position for a 3d world space position",
+      description = "Get screen space position for a 3d world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector3", name = "position"},
@@ -3732,7 +3732,7 @@ return {
     },
     {
       name = "GetWorldToScreenEx",
-      description = "Get size position for a 3d world space position",
+      description = "Get sized screen space position for a 3d world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector3", name = "position"},
@@ -3743,7 +3743,7 @@ return {
     },
     {
       name = "GetWorldToScreen2D",
-      description = "Get the screen space position for a 2d camera world space position",
+      description = "Get screen space position for a 2d camera world space position",
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
@@ -3752,7 +3752,7 @@ return {
     },
     {
       name = "GetScreenToWorld2D",
-      description = "Get the world space position for a 2d camera screen space position",
+      description = "Get world space position for a 2d camera screen space position",
       returnType = "Vector2",
       params = {
         {type = "Vector2", name = "position"},
@@ -3861,7 +3861,7 @@ return {
     },
     {
       name = "SetConfigFlags",
-      description = "Setup init configuration flags (view FLAGS)",
+      description = "Set up init configuration flags (view FLAGS)",
       returnType = "void",
       params = {
         {type = "unsigned int", name = "flags"}
@@ -3949,7 +3949,7 @@ return {
       returnType = "bool",
       params = {
         {type = "const char *", name = "fileName"},
-        {type = "void *", name = "data"},
+        {type = "const void *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4199,7 +4199,7 @@ return {
     },
     {
       name = "LoadDirectoryFiles",
-      description = "Load directory filepaths",
+      description = "Load directory filepaths, files and directories, no subdirs scan",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "dirPath"}
@@ -4207,7 +4207,7 @@ return {
     },
     {
       name = "LoadDirectoryFilesEx",
-      description = "Load directory filepaths with extension filtering and recursive directory scan. Use 'DIR' in the filter string to include directories in the result",
+      description = "Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "basePath"},
@@ -4303,7 +4303,7 @@ return {
       description = "Compute CRC32 hash code",
       returnType = "unsigned int",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4312,7 +4312,7 @@ return {
       description = "Compute MD5 hash code, returns static int[4] (16 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4321,7 +4321,7 @@ return {
       description = "Compute SHA1 hash code, returns static int[5] (20 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4330,7 +4330,7 @@ return {
       description = "Compute SHA256 hash code, returns static int[8] (32 bytes)",
       returnType = "unsigned int *",
       params = {
-        {type = "unsigned char *", name = "data"},
+        {type = "const unsigned char *", name = "data"},
         {type = "int", name = "dataSize"}
       }
     },
@@ -4690,7 +4690,7 @@ return {
     },
     {
       name = "IsGestureDetected",
-      description = "Check if a gesture have been detected",
+      description = "Check if a gesture has been detected",
       returnType = "bool",
       params = {
         {type = "unsigned int", name = "gesture"}
@@ -4862,6 +4862,27 @@ return {
       }
     },
     {
+      name = "DrawCircleV",
+      description = "Draw a color-filled circle (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawCircleGradient",
+      description = "Draw a gradient-filled circle",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "Color", name = "inner"},
+        {type = "Color", name = "outer"}
+      }
+    },
+    {
       name = "DrawCircleSector",
       description = "Draw a piece of a circle",
       returnType = "void",
@@ -4884,28 +4905,6 @@ return {
         {type = "float", name = "startAngle"},
         {type = "float", name = "endAngle"},
         {type = "int", name = "segments"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawCircleGradient",
-      description = "Draw a gradient-filled circle",
-      returnType = "void",
-      params = {
-        {type = "int", name = "centerX"},
-        {type = "int", name = "centerY"},
-        {type = "float", name = "radius"},
-        {type = "Color", name = "inner"},
-        {type = "Color", name = "outer"}
-      }
-    },
-    {
-      name = "DrawCircleV",
-      description = "Draw a color-filled circle (Vector version)",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "center"},
-        {type = "float", name = "radius"},
         {type = "Color", name = "color"}
       }
     },
@@ -5130,7 +5129,7 @@ return {
     },
     {
       name = "DrawRectangleRoundedLinesEx",
-      description = "Draw rectangle with rounded edges outline",
+      description = "Draw rectangle lines with rounded edges outline",
       returnType = "void",
       params = {
         {type = "Rectangle", name = "rec"},
@@ -5149,6 +5148,19 @@ return {
         {type = "Vector2", name = "v2"},
         {type = "Vector2", name = "v3"},
         {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawTriangleGradient",
+      description = "Draw triangle with interpolated colors (vertex in counter-clockwise order!)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "c1"},
+        {type = "Color", name = "c2"},
+        {type = "Color", name = "c3"}
       }
     },
     {
@@ -5184,7 +5196,7 @@ return {
     },
     {
       name = "DrawPoly",
-      description = "Draw a regular polygon (Vector version)",
+      description = "Draw a polygon of n sides",
       returnType = "void",
       params = {
         {type = "Vector2", name = "center"},
@@ -5371,7 +5383,7 @@ return {
       }
     },
     {
-      name = "GetSplinePointBezierQuad",
+      name = "GetSplinePointBezierQuadratic",
       description = "Get (evaluate) spline point: Quadratic Bezier",
       returnType = "Vector2",
       params = {
@@ -5425,7 +5437,7 @@ return {
     },
     {
       name = "CheckCollisionCircleLine",
-      description = "Check if circle collides with a line created betweeen two points [p1] and [p2]",
+      description = "Check if circle collides with a line created between two points [p1] and [p2]",
       returnType = "bool",
       params = {
         {type = "Vector2", name = "center"},
@@ -5566,7 +5578,7 @@ return {
     },
     {
       name = "LoadImageFromScreen",
-      description = "Load image from screen buffer and (screenshot)",
+      description = "Load image from screen buffer (screenshot)",
       returnType = "Image"
     },
     {
@@ -5596,7 +5608,7 @@ return {
     },
     {
       name = "ExportImageToMemory",
-      description = "Export image to memory buffer",
+      description = "Export image to memory buffer, memory must be MemFree()",
       returnType = "unsigned char *",
       params = {
         {type = "Image", name = "image"},
@@ -5969,7 +5981,7 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "image"},
-        {type = "float", name = "contrast"}
+        {type = "int", name = "contrast"}
       }
     },
     {
@@ -6196,6 +6208,19 @@ return {
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleLinesEx",
+      description = "Draw rectangle lines within an image with extended parameters",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
         {type = "Rectangle", name = "rec"},
         {type = "int", name = "thick"},
         {type = "Color", name = "color"}
@@ -6214,7 +6239,7 @@ return {
       }
     },
     {
-      name = "ImageDrawTriangleEx",
+      name = "ImageDrawTriangleGradient",
       description = "Draw triangle with interpolated colors within an image",
       returnType = "void",
       params = {
@@ -6470,7 +6495,7 @@ return {
     },
     {
       name = "DrawTextureNPatch",
-      description = "Draws a texture (or part of it) that stretches or shrinks nicely",
+      description = "Draw a texture (or part of it) that stretches or shrinks nicely",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -6805,7 +6830,7 @@ return {
     },
     {
       name = "DrawTextCodepoints",
-      description = "Draw multiple character (codepoint)",
+      description = "Draw multiple characters (codepoint)",
       returnType = "void",
       params = {
         {type = "Font", name = "font"},
@@ -6991,7 +7016,7 @@ return {
     },
     {
       name = "TextIsEqual",
-      description = "Check if two text string are equal",
+      description = "Check if two text strings are equal",
       returnType = "bool",
       params = {
         {type = "const char *", name = "text1"},
@@ -7045,7 +7070,17 @@ return {
     },
     {
       name = "TextReplace",
-      description = "Replace text string (WARNING: memory must be freed!)",
+      description = "Replace text string with new string",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "search"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "TextReplaceAlloc",
+      description = "Replace text string with new string, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
@@ -7055,7 +7090,18 @@ return {
     },
     {
       name = "TextReplaceBetween",
-      description = "Replace text between two specific strings (WARNING: memory must be freed!)",
+      description = "Replace text between two specific strings",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "begin"},
+        {type = "const char *", name = "end"},
+        {type = "const char *", name = "replacement"}
+      }
+    },
+    {
+      name = "TextReplaceBetweenAlloc",
+      description = "Replace text between two specific strings, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
@@ -7066,7 +7112,17 @@ return {
     },
     {
       name = "TextInsert",
-      description = "Insert text in a position (WARNING: memory must be freed!)",
+      description = "Insert text in a defined byte position",
+      returnType = "char *",
+      params = {
+        {type = "const char *", name = "text"},
+        {type = "const char *", name = "insert"},
+        {type = "int", name = "position"}
+      }
+    },
+    {
+      name = "TextInsertAlloc",
+      description = "Insert text in a defined byte position, memory must be MemFree()",
       returnType = "char *",
       params = {
         {type = "const char *", name = "text"},
@@ -7347,7 +7403,7 @@ return {
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "startRadius"},
         {type = "float", name = "endRadius"},
-        {type = "int", name = "sides"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
@@ -7359,8 +7415,8 @@ return {
         {type = "Vector3", name = "startPos"},
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "radius"},
-        {type = "int", name = "slices"},
         {type = "int", name = "rings"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
@@ -7372,8 +7428,8 @@ return {
         {type = "Vector3", name = "startPos"},
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "radius"},
-        {type = "int", name = "slices"},
         {type = "int", name = "rings"},
+        {type = "int", name = "slices"},
         {type = "Color", name = "color"}
       }
     },
@@ -7483,30 +7539,6 @@ return {
     {
       name = "DrawModelWiresEx",
       description = "Draw a model wires (with texture if set) with extended parameters",
-      returnType = "void",
-      params = {
-        {type = "Model", name = "model"},
-        {type = "Vector3", name = "position"},
-        {type = "Vector3", name = "rotationAxis"},
-        {type = "float", name = "rotationAngle"},
-        {type = "Vector3", name = "scale"},
-        {type = "Color", name = "tint"}
-      }
-    },
-    {
-      name = "DrawModelPoints",
-      description = "Draw a model as points",
-      returnType = "void",
-      params = {
-        {type = "Model", name = "model"},
-        {type = "Vector3", name = "position"},
-        {type = "float", name = "scale"},
-        {type = "Color", name = "tint"}
-      }
-    },
-    {
-      name = "DrawModelPointsEx",
-      description = "Draw a model as points with extended parameters",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
@@ -7991,7 +8023,7 @@ return {
     },
     {
       name = "IsWaveValid",
-      description = "Checks if wave data is valid (data loaded and parameters)",
+      description = "Check if wave data is valid (data loaded and parameters)",
       returnType = "bool",
       params = {
         {type = "Wave", name = "wave"}
@@ -8015,7 +8047,7 @@ return {
     },
     {
       name = "LoadSoundAlias",
-      description = "Create a new sound that shares the same sample data as the source sound, does not own the sound data",
+      description = "Load sound alias, new sound that shares the same sample data as the source sound, does not own the sound data",
       returnType = "Sound",
       params = {
         {type = "Sound", name = "source"}
@@ -8023,7 +8055,7 @@ return {
     },
     {
       name = "IsSoundValid",
-      description = "Checks if a sound is valid (data loaded and buffers initialized)",
+      description = "Check if a sound is valid (data loaded and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -8036,7 +8068,7 @@ return {
       params = {
         {type = "Sound", name = "sound"},
         {type = "const void *", name = "data"},
-        {type = "int", name = "sampleCount"}
+        {type = "int", name = "frameCount"}
       }
     },
     {
@@ -8057,7 +8089,7 @@ return {
     },
     {
       name = "UnloadSoundAlias",
-      description = "Unload a sound alias (does not deallocate sample data)",
+      description = "Unload sound alias (does not deallocate sample data)",
       returnType = "void",
       params = {
         {type = "Sound", name = "alias"}
@@ -8213,7 +8245,7 @@ return {
     },
     {
       name = "IsMusicValid",
-      description = "Checks if a music stream is valid (context and buffers initialized)",
+      description = "Check if a music stream is valid (context and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}
@@ -8245,7 +8277,7 @@ return {
     },
     {
       name = "UpdateMusicStream",
-      description = "Updates buffers for music streaming",
+      description = "Update buffers for music streaming",
       returnType = "void",
       params = {
         {type = "Music", name = "music"}
@@ -8295,7 +8327,7 @@ return {
     },
     {
       name = "SetMusicPitch",
-      description = "Set pitch for a music (1.0 is base level)",
+      description = "Set pitch for music (1.0 is base level)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},
@@ -8304,7 +8336,7 @@ return {
     },
     {
       name = "SetMusicPan",
-      description = "Set pan for a music (-1.0 left, 0.0 center, 1.0 right)",
+      description = "Set pan for music (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "Music", name = "music"},
@@ -8339,7 +8371,7 @@ return {
     },
     {
       name = "IsAudioStreamValid",
-      description = "Checks if an audio stream is valid (buffers initialized)",
+      description = "Check if an audio stream is valid (buffers initialized)",
       returnType = "bool",
       params = {
         {type = "AudioStream", name = "stream"}
@@ -8431,7 +8463,7 @@ return {
     },
     {
       name = "SetAudioStreamPan",
-      description = "Set pan for audio stream (-1.0 to 1.0 range, 0.0 is centered)",
+      description = "Set pan for audio stream (-1.0 left, 0.0 center, 1.0 right)",
       returnType = "void",
       params = {
         {type = "AudioStream", name = "stream"},

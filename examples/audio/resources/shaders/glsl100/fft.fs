@@ -23,15 +23,15 @@ void main()
     float localX = mod(fragCoord.x, cellWidth);
     float barWidth = cellWidth - 1.0;
     vec4 color = WHITE;
-    
+
     if (localX <= barWidth)
     {
         float sampleX = (binIndex + 0.5)/NUM_OF_BINS;
         vec2  sampleCoord = vec2(sampleX, FFT_ROW);
         float amplitude = texture2D(iChannel0, sampleCoord).r; // Only filled the red channel, all channels left open for alternative use
-        
+
         if (fragTexCoord.y < amplitude) color = BLACK;
     }
-    
+
     gl_FragColor = color;
 }

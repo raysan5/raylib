@@ -1,14 +1,19 @@
 .{
     .name = .raylib,
-    .version = "5.6.0-dev",
-    .minimum_zig_version = "0.15.1",
+    .version = "6.0.0",
+    .minimum_zig_version = "0.16.0",
 
     .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
 
     .dependencies = .{
         .xcode_frameworks = .{
-            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
-            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
+            .url = "https://pkg.machengine.org/xcode-frameworks/8a1cfb373587ea4c9bb1468b7c986462d8d4e10e.tar.gz",
+            .hash = "N-V-__8AALShqgXkvqYU6f__FrA22SMWmi2TXCJjNTO1m8XJ",
+            .lazy = true,
+        },
+        .raygui = .{
+            .url = "git+https://github.com/raysan5/raygui#3b2855842ab578a034f827c38cf8f62c042fc983",
+            .hash = "N-V-__8AAHvybwBw1kyBGn0BW_s1RqIpycNjLf_XbE-fpLUF",
             .lazy = true,
         },
         .emsdk = .{

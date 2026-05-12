@@ -111,7 +111,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(rectangles);
+    RL_FREE(rectangles);
     CloseWindow(); // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

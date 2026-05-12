@@ -43,7 +43,7 @@
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
 static bool IsUpperBodyBone(const char *boneName);
-static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim1, int frame1, 
+static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim1, int frame1,
     ModelAnimation *anim2, int frame2, float blend, bool upperBodyBlend);
 
 //------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ int main(void)
     int animIndex1 = 3; // Attack animation (index 3)
     int animCurrentFrame0 = 0;
     int animCurrentFrame1 = 0;
-    
+
     // Validate indices
     if (animIndex0 >= animCount) animIndex0 = 0;
     if (animIndex1 >= animCount) animIndex1 = (animCount > 1) ? 1 : 0;
@@ -109,7 +109,7 @@ int main(void)
         // Update animation frames
         ModelAnimation anim0 = anims[animIndex0];
         ModelAnimation anim1 = anims[animIndex1];
-        
+
         animCurrentFrame0 = (animCurrentFrame0 + 1)%anim0.keyframeCount;
         animCurrentFrame1 = (animCurrentFrame1 + 1)%anim1.keyframeCount;
 
@@ -117,11 +117,11 @@ int main(void)
         // When upperBodyBlend is ON: upper body = attack (1.0), lower body = walk (0.0)
         // When upperBodyBlend is OFF: uniform blend at 0.5 (50% walk, 50% attack)
         float blendFactor = (upperBodyBlend? 1.0f : 0.5f);
-        UpdateModelAnimationBones(&model, &anim0, animCurrentFrame0, 
+        UpdateModelAnimationBones(&model, &anim0, animCurrentFrame0,
             &anim1, animCurrentFrame1, blendFactor, upperBodyBlend);
 
         // raylib provided animation blending function
-        //UpdateModelAnimationEx(model, anim0, (float)animCurrentFrame0, 
+        //UpdateModelAnimationEx(model, anim0, (float)animCurrentFrame0,
         //    anim1, (float)animCurrentFrame1, blendFactor);
         //----------------------------------------------------------------------------------
 
@@ -142,8 +142,8 @@ int main(void)
             // Draw UI
             DrawText(TextFormat("ANIM 0: %s", anim0.name), 10, 10, 20, GRAY);
             DrawText(TextFormat("ANIM 1: %s", anim1.name), 10, 40, 20, GRAY);
-            DrawText(TextFormat("[SPACE] Toggle blending mode: %s", 
-                upperBodyBlend? "Upper/Lower Body Blending" : "Uniform Blending"), 
+            DrawText(TextFormat("[SPACE] Toggle blending mode: %s",
+                upperBodyBlend? "Upper/Lower Body Blending" : "Uniform Blending"),
                 10, GetScreenHeight() - 30, 20, DARKGRAY);
 
         EndDrawing();
@@ -180,7 +180,7 @@ static bool IsUpperBodyBone(const char *boneName)
     {
         return true;
     }
-    
+
     // Check if bone name contains upper body keywords
     if (strstr(boneName, "spine") != NULL || strstr(boneName, "chest") != NULL ||
         strstr(boneName, "neck") != NULL || strstr(boneName, "head") != NULL ||
@@ -189,12 +189,12 @@ static bool IsUpperBodyBone(const char *boneName)
     {
         return true;
     }
-    
+
     return false;
 }
 
 // Blend two animations per-bone with selective upper/lower body blending
-static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int frame0, 
+static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int frame0,
     ModelAnimation *anim1, int frame1, float blend, bool upperBodyBlend)
 {
     // Validate inputs
@@ -204,59 +204,59 @@ static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int f
     {
         // Clamp blend factor to [0, 1]
         blend = fminf(1.0f, fmaxf(0.0f, blend));
-        
+
         // Ensure frame indices are valid
         if (frame0 >= anim0->keyframeCount) frame0 = anim0->keyframeCount - 1;
         if (frame1 >= anim1->keyframeCount) frame1 = anim1->keyframeCount - 1;
         if (frame0 < 0) frame0 = 0;
         if (frame1 < 0) frame1 = 0;
-        
+
         // Get bone count (use minimum of all to be safe)
         int boneCount = model->skeleton.boneCount;
         if (anim0->boneCount < boneCount) boneCount = anim0->boneCount;
         if (anim1->boneCount < boneCount) boneCount = anim1->boneCount;
-        
+
         // Blend each bone
         for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
         {
             // Determine blend factor for this bone
             float boneBlendFactor = blend;
-            
+
             // If upper body blending is enabled, use different blend factors for upper vs lower body
             if (upperBodyBlend)
             {
                 const char *boneName = model->skeleton.bones[boneIndex].name;
                 bool isUpperBody = IsUpperBodyBone(boneName);
-                
+
                 // Upper body: use anim1 (attack), Lower body: use anim0 (walk)
                 // blend = 0.0 means full anim0 (walk), 1.0 means full anim1 (attack)
                 if (isUpperBody) boneBlendFactor = blend; // Upper body: blend towards anim1 (attack)
                 else boneBlendFactor = 1.0f - blend; // Lower body: blend towards anim0 (walk) - invert the blend
             }
-            
+
             // Get transforms from both animations
             Transform *bindTransform = &model->skeleton.bindPose[boneIndex];
             Transform *animTransform0 = &anim0->keyframePoses[frame0][boneIndex];
             Transform *animTransform1 = &anim1->keyframePoses[frame1][boneIndex];
-            
+
             // Blend the transforms
             Transform blended = { 0 };
             blended.translation = Vector3Lerp(animTransform0->translation, animTransform1->translation, boneBlendFactor);
             blended.rotation = QuaternionSlerp(animTransform0->rotation, animTransform1->rotation, boneBlendFactor);
             blended.scale = Vector3Lerp(animTransform0->scale, animTransform1->scale, boneBlendFactor);
-            
+
             // Convert bind pose to matrix
             Matrix bindMatrix = MatrixMultiply(MatrixMultiply(
                 MatrixScale(bindTransform->scale.x, bindTransform->scale.y, bindTransform->scale.z),
                 QuaternionToMatrix(bindTransform->rotation)),
                 MatrixTranslate(bindTransform->translation.x, bindTransform->translation.y, bindTransform->translation.z));
-            
+
             // Convert blended transform to matrix
             Matrix blendedMatrix = MatrixMultiply(MatrixMultiply(
                 MatrixScale(blended.scale.x, blended.scale.y, blended.scale.z),
                 QuaternionToMatrix(blended.rotation)),
                 MatrixTranslate(blended.translation.x, blended.translation.y, blended.translation.z));
-            
+
             // Calculate final bone matrix (similar to UpdateModelAnimationBones)
             model->boneMatrices[boneIndex] = MatrixMultiply(MatrixInvert(bindMatrix), blendedMatrix);
         }
@@ -276,7 +276,7 @@ static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int f
             bool bufferUpdateRequired = false; // Flag to check when anim vertex information is updated
 
             // Skip if missing bone data or missing anim buffers initialization
-            if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) || 
+            if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) ||
                 (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
 
             for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)

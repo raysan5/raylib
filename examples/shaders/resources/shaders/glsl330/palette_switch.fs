@@ -24,7 +24,7 @@ void main()
     // to the palette index by scaling up from [0..1] to [0..255]
     int index = int(texelColor.r*255.0);
     ivec3 color = palette[index];
-    
+
     //finalColor = texture(palette, texelColor.xy); // Alternative to ivec3
 
     // Calculate final fragment color. Note that the palette color components

@@ -48,7 +48,7 @@ void main()
             float normR = float(iter - (iter/55)*55)/55.0;
             float normG = float(iter - (iter/69)*69)/69.0;
             float normB = float(iter - (iter/40)*40)/40.0;
-        
+
             gl_FragColor = vec4(sin(normR*PI), sin(normG*PI), sin(normB*PI), 1.0);
             return;
         }

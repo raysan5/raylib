@@ -51,7 +51,7 @@ int main(void)
         {
             // Unload textures to avoid memory leaks
             for (int i = 0; i < MAX_TEXTURE_COLLECTION; i++) UnloadTexture(collection[i].texture);
-            
+
             currentCollectionIndex = 0;
         }
 
@@ -59,7 +59,7 @@ int main(void)
             (currentCollectionIndex < MAX_TEXTURE_COLLECTION))
         {
             Image image = GetClipboardImage();
-            
+
             if (IsImageValid(image))
             {
                 collection[currentCollectionIndex].texture = LoadTextureFromImage(image);
@@ -76,15 +76,15 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            
+
             for (int i = 0; i < currentCollectionIndex; i++)
             {
                 if (IsTextureValid(collection[i].texture))
                 {
-                    DrawTexturePro(collection[i].texture, 
-                        (Rectangle){0,0,collection[i].texture.width, collection[i].texture.height}, 
+                    DrawTexturePro(collection[i].texture,
+                        (Rectangle){0,0,collection[i].texture.width, collection[i].texture.height},
                         (Rectangle){collection[i].position.x,collection[i].position.y,collection[i].texture.width, collection[i].texture.height},
-                        (Vector2){collection[i].texture.width*0.5f, collection[i].texture.height*0.5f}, 
+                        (Vector2){collection[i].texture.width*0.5f, collection[i].texture.height*0.5f},
                         0.0f, WHITE);
                 }
             }

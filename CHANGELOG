@@ -1,10 +1,10 @@
 changelog
 ---------
 
-Current Release:    raylib 5.5 (18 November 2024)
+Current Release:    raylib 6.0 (23 April 2026)
 
 -------------------------------------------------------------------------
-Release:     raylib 6.0 (?? March 2026)
+Release:     raylib 6.0 (23 April 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - New Software Renderer backend [rlsw]
@@ -17,15 +17,21 @@ KEY CHANGES:
  - New File System API
  - New Text Management API
  - New tool: [rexm] raylib examples manager
-     - Added +50 new examples to learn from
+     - Added +70 new examples to learn from
 
 Detailed changes:
 
+[rcore] ADDED: `FileRename()`, by @raysan5
+[rcore] ADDED: `FileRemove()`, by @raysan5
+[rcore] ADDED: `FileCopy()`, by @raysan5
+[rcore] ADDED: `FileMove()`, by @raysan5
+[rcore] ADDED: `FileTextReplace()`, by @raysan5
+[rcore] ADDED: `FileTextFindIndex()`, by @raysan5
+[rcore] ADDED: `ComputeSHA256()` (#5264) by @iamahuman1395
+[rcore] ADDED: `GetKeyName()` (#4544) by @lecongsebastien
 [rcore] ADDED: Logging and file-system functionality from `utils` (#4551) by @raysan5 -WARNING-
 [rcore] ADDED: Flags set/clear macros: FLAG_SET, FLAG_CLEAR, FLAG_IS_SET (#5169) by @raysan5
 [rcore] ADDED: Warnings in case of no platform backend defined by @raysan5
-[rcore] ADDED: `ComputeSHA256()` (#5264) by @iamahuman1395
-[rcore] ADDED: `GetKeyName()` (#4544) by @lecongsebastien
 [rcore] REMOVED: GIF recording option, added example by @raysan5 -WARNING-
 [rcore] REMOVED: `CORE.Window.fullscreen` variable, using available flag instead by @raysan5
 [rcore] REMOVED: `SetupFramebuffer()`, most platforms do not need it any more by @raysan5
@@ -109,9 +115,10 @@ Detailed changes:
 [rcore][GLFW] REVIEWED: `GetGamepadButtonPressed()`, return GAMEPAD_BUTTON_*_TRIGGER_2 if pressed (#4742) by @whaleymar
 [rcore][GLFW] REVIEWED: Update `mappings.h` using `GenerateMappings.cmake` by @sleeptightAnsiC
 [rcore][RGFW] ADDED: New backend option: `PLATFORM_WEB_RGFW` and update RGFW (#4480) by @colleagueRiley
+[rcore][RGFW] ADDED: Support for software rendering (#5773) by @CrackedPixel
 [rcore][RGFW] REVIEWED: Added missing Right Control key by @M374LX
 [rcore][RGFW] REVIEWED: Changed `RGFW_window_eventWait` timeout to -1 by @doggymangc
-[rcore][RGFW] REVIEWED: Duplicate entries reemoved from `keyMappingRGFW` (#5242) by @iamahuman1395
+[rcore][RGFW] REVIEWED: Duplicate entries removed from `keyMappingRGFW` (#5242) by @iamahuman1395
 [rcore][RGFW] REVIEWED: Fix Escape always closing the window by @M374LX
 [rcore][RGFW] REVIEWED: Forward declare the windows stuff, prevents failures in GCC (#5269) by @Jeffm2501
 [rcore][RGFW] REVIEWED: Requires RGBA8 images as window icons (#5431) by @crisserpl2
@@ -198,7 +205,7 @@ Detailed changes:
 [rlgl] REVIEWED: `rlActiveDrawBuffers`, fix for OpenGL ES 3.0 (#4605) by @Bigfoot71
 [rlgl] REVIEWED: `rlGetPixelDataSize()`, correct compressed data size calculation per blocks #5416 by @raysan5
 [rlgl] REVIEWED: `instranceTransform` shader location index #4538 (#4579) by @meadiode
-[rlgl] REVIEWED: `SetShaderValueTexture()`, updatee comments (#4703) by @pejorativefox
+[rlgl] REVIEWED: `SetShaderValueTexture()`, update comments (#4703) by @pejorativefox
 [rlgl] REDESIGNED: Avoid program crash if GPU data is tried to be loaded before `InitWindow()` #4751 by @raysan5 -WARNING-
 [rlgl] REDESIGNED: Shader loading API function names for more consistency #5631 by @raysan5 -WARNING-
 [rlsw] ADDED: `swGetColorBuffer()` for convenience by @raysan5
@@ -215,6 +222,7 @@ Detailed changes:
 [rlsw] REVIEWED: C++ support (#5291) by @alexgb0
 [rshapes] ADDED: `DrawLineDashed()` (#5222) by @luis605
 [rshapes] ADDED: `DrawEllipseV()` and `DrawEllipseLinesV()` (#4963) by @meowstr
+[rshapes] REDESIGNED: `DrawCircleGradient()` to use Vector2 as center parameter by @raysan5 -WARNING-
 [rshapes] REVIEWED: `DrawLine()`, fix pixel offset issue on drawing (#4666) by @Bigfoot71
 [rshapes] REVIEWED: `DrawRectangleGradientEx()`, incorrect parameter names (#4980) by @vincent
 [rshapes] REVIEWED: `DrawRectangleLines`, fix pixel offset issue (#4669) by @Bigfoot71
@@ -239,6 +247,13 @@ Detailed changes:
 [rtextures] REVIEWED: `ImageDrawLineEx(), to be able to draw even numbered thicknesses (#5042) by @Sir-Irk
 [rtextures] REVIEWED: `ImageBlurGaussian()`, fix integer overflow in cast (#5037) by @garrisonhh
 [rtext] ADDED: `LoadTextLines()`/`UnloadTextLines()` by @raysan5
+[rtext] ADDED: `TextInsertAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `TextReplace()`, using static buffer by @raysan5
+[rtext] ADDED: `TextReplaceAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `TextReplaceBetween()`, using static buffer by @raysan5
+[rtext] ADDED: `TextReplaceBetweenAlloc()`, returns memory allocated string by @raysan5
+[rtext] ADDED: `GetTextBetween()`, using static buffer by @raysan5
+[rtext] ADDED: `TextRemoveSpaces()`, using static buffer by @raysan5
 [rtext] ADDED: `MeasureTextCodepoints()` for direct measurement of codepoints (#5623) by @creeperblin
 [rtext] RENAMED: Variable names for consistency, `textLength` (length in bytes) vs `textSize` (measure in pixels) by @raysan5
 [rtext] REVIEWED: Support default font loading with no GPU enabled, to be used with Image API
@@ -263,16 +278,16 @@ Detailed changes:
 [rtext] REVIEWED: `GetCodepointCount()`, misuse of cast (#4741) by @sleeptightAnsiC
 [rtext] REVIEWED: `GenImageFontAtlas()`, memory corruption and invalid size calculation (#5602) by @konakona418
 [rtext] REVIEWED: `TextInsert()`, fix bug on insertion (#5644) by @CrackedPixel
+[rtext] REVIEWED: `TextInsert()`, use static buffer, easier to use by @raysan5 -WARNING-
 [rtext] REVIEWED: `TextJoin()`, convert `const char **` to `char**` by @raysan5
-[rtext] REVIEWED: `TextReplace()` and `TextLength()`, avoid using `strcpy()` by @raysan5
-[rtext] REVIEWED: `TextReplace()` by @raysan5
 [rtext] REVIEWED: `TextReplace()`, improvements (#5511) by @belan2470
-[rtext] REVIEWED: `TextReplaceBetween()` by @raysan5
+[rtext] REVIEWED: `TextReplace()` and `TextLength()`, avoid using `strcpy()` by @raysan5
 [rtext] REVIEWED: `TextSubtext(), fixes (#4759) by @veins1
 [rtext] REVIEWED: `TextToPascal()`, fix issue by @raysan5
 [rtext] REVIEWED: `TextToFloat()`, remove removed inaccurate comment (#4596) by @hexmaster111
 [rtext] REDESIGNED: `LoadFontData()`, added input parameter by @raysan5 -WARNING-
 [rmodels] ADDED: Support CPU animation in OpenGL 1.1 (#4925) by @JeffM2501
+[rmodels] REMOVED: `DrawModelPoints()` and `DrawModelPointsEx()`, moved to an example (#5697) by @maiconpintoabreu -WARNING-
 [rmodels] RENAMED: Skinning shader variables (new default naming) by @raysan5
 [rmodels] REVIEWED: glTF animation framerate calculation (#4472, #5445) by @TheLazyIndianTechie
 [rmodels] REVIEWED: Assign meshes without bone weights to the bone they are attached to so they animate by @Jeffm2501
@@ -299,6 +314,7 @@ Detailed changes:
 [rmodels] REVIEWED: `LoadModelAnimationsGLTF()`, properly load 1 frame animations (#5561) by @arlez80
 [rmodels] REVIEWED: `LoadModelAnimationsGLTF()`, anim correctly inherits world transform (#5206) by @ArmanOmmid
 [rmodels] REVIEWED: `UploadMesh()`, improve default normal and tangent values (#4763) by @Bigfoot71
+[rmodels] REVIEWED: `UplaodMesh()`, fix for devices without VAO support (#5692) by @psxdev
 [rmodels] REVIEWED: `GenMeshTangents()`, improvements (#4937) by @Bigfoot71
 [rmodels] REVIEWED: `UpdateModelAnimation()` optimization (#5244) by @Arrangemonk
 [rmodels] REVIEWED: `UpdateModelAnimationBones()`, break on first mesh found and formating by @raysan5
@@ -310,6 +326,8 @@ Detailed changes:
 [rmodels] REVIEWED: `DrawMeshInstanced()`, breaking if instanceTransform was unused (#5469) by @al13n321
 [rmodels] REVIEWED: `DrawSphereEx()`, normals support (#4926) by @karl-zylinski
 [rmodels] REVIEWED: `ExportMesh()`, improve OBJ vertex data precision and lower memory usage (#4496) by @mikeemm
+[rmodels] REVIEWED: `CheckCollisionSpheres()`, simplified using `Vector3DistanceSqr()` (#5695) by @Bigfoot71
+[rmodels] REVIEWED: `CheckCollisionBoxSphere()`, improved performance and consistency (#5776) by @maiconpintoabreu
 [raudio] REVIEWED: Fix a glitch at the end of a sound (#5578) by @mackron
 [raudio] REVIEWED: Improvements to device configuration (#5577) by @mackron
 [raudio] REVIEWED: Initialize sound alias properties as if it was a new sound (#5123) by @JeffM2501
@@ -394,11 +412,12 @@ Detailed changes:
 [build][CMake] REVIEWED: Set `libm` as public so it can be linked by consumer (#5193) by @brccabral
 [build][Cmake] REVIEWED: Expose PLATFORM_WEB_RGFW (#5579) by @crisserpl2
 [build][Zig] ADDED: Android target to build by @lumenkeyes
+[build][Zig] REDESIGNED: Complete refactor of build.zig to support Zig 0.16.0 (#5764) by @HaxSam
 [build][Zig] REVIEWED: Link EGL for Android by @lumenkeyes
 [build][Zig] REVIEWED: Approach to build for web with zig-build (#5157) by @haxsam
 [build][Zig] REVIEWED: Fix build accessing env vars (#5490) by @iisakki
 [build][Zig] REVIEWED: Fix emscripten building by @johnnymarler
-[build][Zig] REVIWED: Move examples/build.zig into main build.zig by @johnnymarler
+[build][Zig] REVIEWED: Move examples/build.zig into main build.zig by @johnnymarler
 [build][Zig] REVIEWED: Fix raygui inclusion in windows crosscompilation (#4489) by @kimierik
 [build][Zig] REVIEWED: Issue on emscripten run if the user has not installed emsdk by @emilhakimov415
 [build][Zig] REVIEWED: Make X11 the default display backend instead of choosing at runtime (#5168) by @Not-Nik
@@ -446,6 +465,7 @@ Detailed changes:
 [examples] ADDED: `shapes_rlgl_triangle` example (#5353) by @robinsaviary
 [examples] ADDED: `shapes_starfield` (#5255) by @themushroompirates
 [examples] ADDED: `shapes_triangle_strip` (#5240) by @Jopestpe
+[examples] ADDED: `shapes_collision_ellipses` (#5722) by @Monjaris
 [examples] ADDED: `text_inline_styling` by @raysan5
 [examples] ADDED: `text_strings_management` (#5379) by @davidbuzatto
 [examples] ADDED: `text_words_alignment` (#5254) by @themushroompirates
@@ -735,7 +755,7 @@ Detailed changes:
 [rexm] REVIEWED: `ScanExampleResources()` avoid resources to be saved by the program by @raysan5
 [rexm] REVIEWED: `UpdateSourceMetadata()` and `TextReplaceBetween()` by @raysan5
 [rexm] REVIEWED: `examples.js` example addition working by @raysan5
-[rexm] REVIEWED: `add` command logic for existing examplee addition by @raysan5
+[rexm] REVIEWED: `add` command logic for existing example addition by @raysan5
 [rexm] REVIEWED: Replace example name on project file by @raysan5
 [rexm] REVIEWED: Report issues if logs can not be loaded by @raysan5
 [rexm] REVIEWED: VS project adding to solution by @raysan5
@@ -747,6 +767,7 @@ Detailed changes:
 [rexm] REVIEWED: `Makefile.Web` before trying to rebuild new example for web by @raysan5
 [rexm] REVIEWED: Using `Makefile.Web` for specific web versions generation by @raysan5
 
+[external] ADDED: `cgltf_write` 1.15, to support glTF models export in the future, by @raysan5
 [external] RENAMED: `rl_gputex.h` to `rltexgpu.h`, compressed textures loading
 [external] REVIEWED: `rltexgpu.h`, make it usable standalone by @raysan5
 [external] REVIEWED: `rltexgpu.h, fix the swizzling in `rl_load_dds_from_memory()` (#5422) by @msmith-codes
@@ -755,16 +776,23 @@ Detailed changes:
 [external] REVIEWED: `sdefl` and `sinfl` issues (#5367) by @raysan5
 [external] REVIEWED: `sinfl_bsr()`, improvements by @RicoP
 [external] REVIEWED: `stb_truetype`, fix composite glyph scaling logic (#4811) by @ashishbhattarai
+[external] UPDATED: `raygui` to 5.0-dev for examples by @raysan5
 [external] UPDATED: dr_libs (#5020) by @Emil2010
-[external] UPDATED: miniaudio to v0.11.22 (#4983) by @M374LX
-[external] UPDATED: miniaudio to v0.11.23 (#5234) by @pyrokn8
-[external] UPDATED: miniaudio to v0.11.24 (#5506) by @vdemcak
-[external] UPDATED: raygui to 5.0-dev for examples by @raysan5
-[external] UPDATED: RGFW to 1.5 (#4688) by @ColleagueRiley
-[external] UPDATED: RGFW to 1.6 (#4795) by @colleagueRiley
-[external] UPDATED: RGFW to 1.7 (#4965) by @M374LX
-[external] UPDATED: RGFW to 1.7.5-dev (#4976) by @M374LX
-[external] UPDATED: RGFW to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `miniaudio` to v0.11.22 (#4983) by @M374LX
+[external] UPDATED: `miniaudio` to v0.11.23 (#5234) by @pyrokn8
+[external] UPDATED: `miniaudio` to v0.11.24 (#5506) by @vdemcak
+[external] UPDATED: `RGFW` to 1.5 (#4688) by @ColleagueRiley
+[external] UPDATED: `RGFW` to 1.6 (#4795) by @colleagueRiley
+[external] UPDATED: `RGFW` to 1.7 (#4965) by @M374LX
+[external] UPDATED: `RGFW` to 1.7.5-dev (#4976) by @M374LX
+[external] UPDATED: `RGFW` to 2.0.0 (#5582) by @CrackedPixel
+[external] UPDATED: `cgltf` 1.14 to 1.15 by @raysan5
+[external] UPDATED: `dr_flac` v0.13.0 to v0.13.3 by @raysan5
+[external] UPDATED: `dr_mp3` v0.7.0 to v0.7.4 by @raysan5
+[external] UPDATED: `m3d` to latest master by @raysan5
+[external] UPDATED: `qoi` to latest master by @raysan5
+[external] UPDATED: `qoa` to latest master by @raysan5
+[external] UPDATED: `stb_image_resize2` v2.12 to v2.18 by @raysan5
 
 [misc] ADDED: SECURITY.md for security reporting policies by @raysan5
 [misc] ADDED: `examples/examples_list`, to be used by `rexm` or other tools by @raysan5

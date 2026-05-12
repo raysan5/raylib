@@ -20,6 +20,8 @@
 #         - Linux (X11 desktop mode)
 #         - macOS/OSX (x64, arm64 (not tested))
 #         - Others (not tested)
+#     > PLATFORM_DESKTOP_WIN32 (native Win32):
+#         - Windows (Win32, Win64)
 #     > PLATFORM_WEB_RGFW:
 #         - HTML5 (WebAssembly)
 #     > PLATFORM_WEB:
@@ -510,7 +512,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     # Libraries for Windows desktop compilation
     LDFLAGS += -L..\src
     LDLIBS = -lraylib -lgdi32 -lwinmm -lshcore
-    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_11_SOFTWARE)
+    ifneq ($(GRAPHICS),GRAPHICS_API_OPENGL_SOFTWARE)
         LDLIBS += -lopengl32
     endif
 endif
@@ -792,6 +794,23 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),OSX)
 		find . -type f -perm +ugo+x -delete
 		rm -f *.o
+    endif
+endif
+ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
+    ifeq ($(PLATFORM_OS),WINDOWS)
+        del *.o *.exe /s
+    endif
+    ifeq ($(PLATFORM_OS),BSD)
+        find . -type f -perm -ugo+x -delete
+        rm -fv *.o
+    endif
+    ifeq ($(PLATFORM_OS),LINUX)
+        find . -type f -executable -delete
+        rm -fv *.o
+    endif
+    ifeq ($(PLATFORM_OS),OSX)
+        find . -type f -perm +ugo+x -delete
+        rm -f *.o
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)

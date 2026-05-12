@@ -14,7 +14,7 @@ out vec4 finalColor;
 void main()
 {
     vec4 texelColor = texture(texture0, fragTexCoord);
-    
+
     finalColor = texelColor*colDiffuse*fragColor;
     gl_FragDepth = 1.0 - finalColor.z;
 }

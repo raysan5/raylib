@@ -1,6 +1,6 @@
 #version 120
 
-#extension GL_EXT_frag_depth : enable   // Extension required for writing depth         
+#extension GL_EXT_frag_depth : enable   // Extension required for writing depth
 
 varying vec2 fragTexCoord;
 varying vec4 fragColor;

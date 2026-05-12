@@ -73,7 +73,7 @@
     #define SUPPORT_RPRAND_GENERATOR        1
 #endif
 #ifndef SUPPORT_MOUSE_GESTURES
-    // Mouse gestures are directly mapped like touches and processed by gestures system
+    // Mouse gestures are directly mapped like touches and processed by the gestures system
     #define SUPPORT_MOUSE_GESTURES          1
 #endif
 #ifndef SUPPORT_SSH_KEYBOARD_RPI
@@ -125,7 +125,7 @@
 #endif
 
 // rcore: Configuration values
-// NOTE: Below values are alread defined inside [rcore.c] so there is no need to be
+// NOTE: Below values are already defined inside [rcore.c] so there is no need to be
 // redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
@@ -159,7 +159,7 @@
 #endif
 
 // rlgl: Configuration values
-// NOTE: Below values are alread defined inside [rlgl.h] so there is no need to be
+// NOTE: Below values are already defined inside [rlgl.h] so there is no need to be
 // redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
@@ -251,6 +251,9 @@
 #endif
 #ifndef SUPPORT_FILEFORMAT_PIC
     #define SUPPORT_FILEFORMAT_PIC      0       // Disabled by default
+#endif
+#ifndef SUPPORT_FILEFORMAT_PNM
+    #define SUPPORT_FILEFORMAT_PNM      0       // Disabled by default
 #endif
 #ifndef SUPPORT_FILEFORMAT_KTX
     #define SUPPORT_FILEFORMAT_KTX      0       // Disabled by default
@@ -349,7 +352,7 @@
 #endif
 
 // raudio: Configuration values
-// NOTE: Below values are alread defined inside [rlgl.h] so there is no need to be
+// NOTE: Below values are already defined inside [rlgl.h] so there is no need to be
 // redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------

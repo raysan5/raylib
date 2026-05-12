@@ -103,7 +103,7 @@
         Vector3 position;       // Camera position
         Vector3 target;         // Camera target it looks-at
         Vector3 up;             // Camera up vector (rotation over its axis)
-        float fovy;             // Camera field-of-view apperture in Y (degrees) in perspective, used as near plane width in orthographic
+        float fovy;             // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
         int projection;         // Camera projection type: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
     } Camera3D;
 
@@ -352,7 +352,7 @@ void CameraYaw(Camera *camera, float angle, bool rotateAroundTarget)
 // Rotates the camera around its right vector, pitch is "looking up and down"
 //  - lockView prevents camera overrotation (aka "somersaults")
 //  - rotateAroundTarget defines if rotation is around target or around its position
-//  - rotateUp rotates the up direction as well (typically only usefull in CAMERA_FREE)
+//  - rotateUp rotates the up direction as well (typically only useful in CAMERA_FREE)
 // NOTE: [angle] must be provided in radians
 void CameraPitch(Camera *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp)
 {

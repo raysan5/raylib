@@ -84,11 +84,11 @@ vec3 ComputePBR()
 {
     vec3 albedo = texture(albedoMap,vec2(fragTexCoord.x*tiling.x + offset.x, fragTexCoord.y*tiling.y + offset.y)).rgb;
     albedo = vec3(albedoColor.x*albedo.x, albedoColor.y*albedo.y, albedoColor.z*albedo.z);
-    
+
     float metallic = clamp(metallicValue, 0.0, 1.0);
     float roughness = clamp(roughnessValue, 0.0, 1.0);
     float ao = clamp(aoValue, 0.0, 1.0);
-    
+
     if (useTexMRA == 1)
     {
         vec4 mra = texture(mraMap, vec2(fragTexCoord.x*tiling.x + offset.x, fragTexCoord.y*tiling.y + offset.y));
@@ -133,18 +133,18 @@ vec3 ComputePBR()
         vec3 F = SchlickFresnel(hDotV, baseRefl);       // Fresnel proportion of specular reflectance
 
         vec3 spec = (D*G*F)/(4.0*nDotV*nDotL);
-        
+
         // Difuse and spec light can't be above 1.0
         // kD = 1.0 - kS  diffuse component is equal 1.0 - spec comonent
         vec3 kD = vec3(1.0) - F;
-        
+
         // Mult kD by the inverse of metallnes, only non-metals should have diffuse light
         kD *= 1.0 - metallic;
         lightAccum += ((kD*albedo.rgb/PI + spec)*radiance*nDotL)*lights[i].enabled; // Angle of light has impact on result
     }
-    
+
     vec3 ambientFinal = (ambientColor + albedo)*ambient*0.5;
-    
+
     return (ambientFinal + lightAccum*ao + emissive);
 }
 
@@ -154,7 +154,7 @@ void main()
 
     // HDR tonemapping
     color = pow(color, color + vec3(1.0));
-    
+
     // Gamma correction
     color = pow(color, vec3(1.0/2.2));
 

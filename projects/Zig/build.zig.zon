@@ -1,0 +1,23 @@
+.{
+    .name = .example,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.16.0",
+    .paths = .{""},
+
+    .dependencies = .{
+        .raylib = .{
+            .path = "../../",
+        },
+        .emsdk = .{
+            .url = "git+https://github.com/emscripten-core/emsdk?ref=4.0.9#3bcf1dcd01f040f370e10fe673a092d9ed79ebb5",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
+        },
+        .sdl3 = .{
+            .url = "git+https://codeberg.org/7Games/zig-sdl3?ref=master#6d418ef3ddae99098414a96a88bf5e5fdb41785e",
+            .hash = "sdl3-0.1.9-NmT1QwiEJwByePqkmArtppCHQn8Y7kiSWcncT_Mop8ie",
+            .lazy = true,
+        },
+    },
+
+    .fingerprint = 0x6eec9b9f1a9d7aca,
+}

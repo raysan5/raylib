@@ -1,7 +1,7 @@
 IDI_APP_ICON ICON "rlparser.ico"
 1 VERSIONINFO
-FILEVERSION     5,5,0,0
-PRODUCTVERSION  5,5,0,0
+FILEVERSION     6,0,0,0
+PRODUCTVERSION  6,0,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -11,7 +11,7 @@ BEGIN
       VALUE "FileDescription", "rlparser | raylib header API parser"
       VALUE "FileVersion", "1.0"
       VALUE "InternalName", "rlparser"
-      VALUE "LegalCopyright", "(c) 2025 Ramon Santamaria (@raysan5)"
+      VALUE "LegalCopyright", "(c) 2026 Ramon Santamaria (@raysan5)"
       VALUE "OriginalFilename", "rlparser"
       VALUE "ProductName", "rlparser"
       VALUE "ProductVersion", "1.0"

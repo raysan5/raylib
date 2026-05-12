@@ -50,7 +50,7 @@ void main()
 
     float specCo = 0.0;
 
-    if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewDir, reflect(-lightDir, normal))), specularExponent); // 16 refers to shine
+    if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewDir, reflect(-lightDir, normal))), specularExponent);
 
     specular += specCo;
 

@@ -891,7 +891,7 @@ void ShowCursor(void)
     }
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     if (!CORE.Input.Mouse.cursorHidden)
@@ -902,7 +902,7 @@ void HideCursor(void)
     }
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     emscripten_exit_pointerlock();
@@ -913,7 +913,7 @@ void EnableCursor(void)
     // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     emscripten_request_pointerlock(platform.canvasId, 1);
@@ -1245,7 +1245,8 @@ int InitPlatform(void)
         CORE.Window.currentFbo.width = fbWidth;
         CORE.Window.currentFbo.height = fbHeight;
 
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+            FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
         TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
         TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
         TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);

@@ -52,7 +52,7 @@ int main(void)
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
-    
+
     // Load model
     Model model = LoadModel("resources/models/old_car_new.glb");
 
@@ -61,7 +61,7 @@ int main(void)
         TextFormat("resources/shaders/glsl%i/cel.vs", GLSL_VERSION),
         TextFormat("resources/shaders/glsl%i/cel.fs", GLSL_VERSION));
     celShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(celShader, "viewPos");
-    
+
     // Apply cel shader to model, keep copy of default shader
     Shader defaultShader = model.materials[0].shader;
     model.materials[0].shader = celShader;
@@ -134,16 +134,16 @@ int main(void)
                     // Outline pass: cull front faces, draw extruded back faces as silhouette
                     float thickness = 0.005f;
                     SetShaderValue(outlineShader, outlineThicknessLoc, &thickness, SHADER_UNIFORM_FLOAT);
-                    
+
                     rlSetCullFace(RL_CULL_FACE_FRONT);
-                    
+
                     model.materials[0].shader = outlineShader;
-                    
+
                     DrawModel(model, Vector3Zero(), 0.75f, WHITE);
-                    
+
                     if (celEnabled) model.materials[0].shader = celShader; // Apply cel shader to model
                     else model.materials[0].shader = defaultShader; // Apply default shader to model
-                    
+
                     rlSetCullFace(RL_CULL_FACE_BACK);
                 }
 
@@ -167,7 +167,7 @@ int main(void)
     UnloadModel(model);
     UnloadShader(celShader);
     UnloadShader(outlineShader);
-    
+
     CloseWindow();
     //--------------------------------------------------------------------------------------
 

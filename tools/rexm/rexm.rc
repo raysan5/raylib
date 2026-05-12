@@ -13,7 +13,7 @@ BEGIN
       VALUE "FileDescription", "rexm | raylib examples manager"
       VALUE "FileVersion", "1.0"
       VALUE "InternalName", "rexm"
-      VALUE "LegalCopyright", "(c) 2025 Ramon Santamaria"
+      VALUE "LegalCopyright", "(c) 2026 Ramon Santamaria"
       //VALUE "OriginalFilename", "rexm.exe"
       VALUE "rexm", "rexm"
       VALUE "ProductVersion", "1.0"

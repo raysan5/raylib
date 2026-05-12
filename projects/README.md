@@ -13,6 +13,7 @@ IDE | Platform(s) | Source | Example(s)
 [SublimeText](https://www.sublimetext.com/) | Windows, Linux, macOS | ✔️ | ✔️
 [VS2019](https://www.visualstudio.com) | Windows | ✔️ | ✔️
 [VSCode](https://code.visualstudio.com/) | Windows, macOS | ❌ | ✔️
+[Zig](https://ziglang.org) | Windows, Linux, macOS, Web | ✔️ | ✔️
 scripts | Windows, Linux, macOS | ✔️ | ✔️
 
  *New IDEs config files are welcome!*

@@ -427,7 +427,7 @@ void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
 				run = 0;
 			}
 
-			index_pos = QOI_COLOR_HASH(px) % 64;
+			index_pos = QOI_COLOR_HASH(px) & (64 - 1);
 
 			if (index[index_pos].v == px.v) {
 				bytes[p++] = QOI_OP_INDEX | index_pos;
@@ -574,7 +574,7 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 				run = (b1 & 0x3f);
 			}
 
-			index[QOI_COLOR_HASH(px) % 64] = px;
+			index[QOI_COLOR_HASH(px) & (64 - 1)] = px;
 		}
 
 		pixels[px_pos + 0] = px.rgba.r;

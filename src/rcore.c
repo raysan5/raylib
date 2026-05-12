@@ -35,31 +35,31 @@
 *           - Memory framebuffer output, using software renderer, no OS required
 *
 *   CONFIGURATION:
-*       #define SUPPORT_CAMERA_SYSTEM
+*       #define SUPPORT_CAMERA_SYSTEM       1
 *           Camera module is included (rcamera.h) and multiple predefined cameras are available:
 *               free, 1st/3rd person, orbital, custom
 *
-*       #define SUPPORT_GESTURES_SYSTEM
+*       #define SUPPORT_GESTURES_SYSTEM     1
 *           Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
-*       #define SUPPORT_MOUSE_GESTURES
+*       #define SUPPORT_MOUSE_GESTURES      1
 *           Mouse gestures are directly mapped like touches and processed by gestures system
 *
-*       #define SUPPORT_BUSY_WAIT_LOOP
+*       #define SUPPORT_BUSY_WAIT_LOOP      1
 *           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
-*       #define SUPPORT_PARTIALBUSY_WAIT_LOOP
+*       #define SUPPORT_PARTIALBUSY_WAIT_LOOP 0
 *           Use a partial-busy wait loop, in this case frame sleeps for most of the time and runs a busy-wait-loop at the end
 *
-*       #define SUPPORT_SCREEN_CAPTURE
+*       #define SUPPORT_SCREEN_CAPTURE      1
 *           Allow automatic screen capture of current screen pressing F12, defined in KeyCallback()
 *
-*       #define SUPPORT_COMPRESSION_API
+*       #define SUPPORT_COMPRESSION_API     1
 *           Support CompressData() and DecompressData() functions, those functions use zlib implementation
 *           provided by stb_image and stb_image_write libraries, so, those libraries must be enabled on textures module
 *           for linkage
 *
-*       #define SUPPORT_AUTOMATION_EVENTS
+*       #define SUPPORT_AUTOMATION_EVENTS   1
 *           Support automatic events recording and playing, useful for automated testing systems or AI based game playing
 *
 *   DEPENDENCIES:
@@ -106,7 +106,7 @@
 
 #include "config.h"                 // Defines module configuration flags
 
-#include <stdlib.h>                 // Required for: srand(), rand(), atexit(), exit()
+#include <stdlib.h>                 // Required for: srand(), rand(), exit()
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset(), strcat()
 #include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
@@ -267,15 +267,18 @@
     #define MAX_AUTOMATION_EVENTS      16384        // Maximum number of automation events to record
 #endif
 
+// File and directory scan filters
+// NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+// WARNING: Custom file filters can be specified but following raylib IsFileExtension() convention: ".png;.wav;.glb"
 #ifndef FILE_FILTER_TAG_ALL
-    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_ALL        "*.*"        // Filter to include all file types and directories on scan
+#endif
 #ifndef FILE_FILTER_TAG_FILE_ONLY
-    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_FILE_ONLY  "FILES*"     // Filter to include all file types on scan (no directories)
+#endif
 #ifndef FILE_FILTER_TAG_DIR_ONLY
-    #define FILE_FILTER_TAG_DIR_ONLY   "DIR*"       // Filter to include directories on directory scan
-#endif                                              // NOTE: Used in ScanDirectoryFiles(), LoadDirectoryFilesEx() and GetDirectoryFileCountEx()
+    #define FILE_FILTER_TAG_DIR_ONLY   "DIRS*"      // Filter to include only directories on scan
+#endif
 
 // Flags bitwise operation macros
 #define FLAG_SET(n, f) ((n) |= (f))
@@ -304,7 +307,7 @@ typedef struct CoreData {
         Size screen;                        // Screen current width and height
         Point position;                     // Window current position
         Size previousScreen;                // Screen previous width and height (required on fullscreen/borderless-windowed toggle)
-        Point previousPosition;             // Window previous position (required on fullscreeen/borderless-windowed toggle)
+        Point previousPosition;             // Window previous position (required on fullscreen/borderless-windowed toggle)
         Size render;                        // Screen framebuffer width and height
         Point renderOffset;                 // Screen framebuffer render offset (Not required anymore?)
         Size currentFbo;                    // Current framebuffer render width and height (depends on active render texture)
@@ -326,7 +329,7 @@ typedef struct CoreData {
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
-            // NOTE: Since key press logic involves comparing previous vs currrent key state,
+            // NOTE: Since key press logic involves comparing previous vs current key state,
             // key repeats needs to be handled specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame
 
@@ -376,14 +379,14 @@ typedef struct CoreData {
         } Gamepad;
     } Input;
     struct {
-        double current;                     // Current time measure
-        double previous;                    // Previous time measure
-        double update;                      // Time measure for frame update
-        double draw;                        // Time measure for frame draw
-        double frame;                       // Time measure for one frame
-        double target;                      // Desired time for one frame, if 0 not applied
-        unsigned long long int base;        // Base time measure for hi-res timer (PLATFORM_ANDROID, PLATFORM_DRM)
-        unsigned int frameCounter;          // Frame counter
+        double current;                     // Current time measure (seconds)
+        double previous;                    // Previous time measure (seconds)
+        double update;                      // Time measure for frame update (seconds)
+        double draw;                        // Time measure for frame draw (seconds)
+        double frame;                       // Time measure for one frame (seconds)
+        double target;                      // Desired time for one frame, if 0 not applied (seconds)
+        unsigned long long base;            // Base time measure for hi-res timer (ticks or nanoseconds)
+        unsigned int frameCounter;          // Frame counter (frames)
 
     } Time;
 } CoreData;
@@ -439,18 +442,6 @@ typedef enum AutomationEventType {
     ACTION_SETTARGETFPS             // param[0]: fps
 } AutomationEventType;
 
-// Event type to config events flags
-// WARNING: Not used at the moment
-typedef enum {
-    EVENT_INPUT_KEYBOARD    = 0,
-    EVENT_INPUT_MOUSE       = 1,
-    EVENT_INPUT_GAMEPAD     = 2,
-    EVENT_INPUT_TOUCH       = 4,
-    EVENT_INPUT_GESTURE     = 8,
-    EVENT_WINDOW            = 16,
-    EVENT_CUSTOM            = 32
-} EventType;
-
 // Event type name strings, required for export
 static const char *autoEventTypeName[] = {
     "EVENT_NONE",
@@ -478,16 +469,6 @@ static const char *autoEventTypeName[] = {
     "ACTION_TAKE_SCREENSHOT",
     "ACTION_SETTARGETFPS"
 };
-
-/*
-// Automation event (24 bytes)
-// NOTE: Opaque struct, internal to raylib
-struct AutomationEvent {
-    unsigned int frame;                 // Event frame
-    unsigned int type;                  // Event type (AutomationEventType)
-    int params[4];                      // Event parameters (if required)
-};
-*/
 
 static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
 static bool automationEventRecording = false;               // Recording automation events flag
@@ -684,7 +665,7 @@ void InitWindow(int width, int height, const char *title)
     }
 
     // Initialize render dimensions for embedded platforms
-    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation 
+    // NOTE: On desktop platforms (GLFW, SDL, etc.), CORE.Window.render.width/height are set during window creation
     // On embedded platforms with no window manager, InitPlatform() doesn't set these values, so they should be initialized
     // here from screen dimensions (which are set from the InitWindow parameters)
     if ((CORE.Window.render.width == 0) || (CORE.Window.render.height == 0))
@@ -711,7 +692,7 @@ void InitWindow(int width, int height, const char *title)
     Rectangle rec = GetFontDefault().recs[95];
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))
     {
-        // NOTE: Try to maxime rec padding to avoid pixel bleeding on MSAA filtering
+        // NOTE: Try to maximize rec padding to avoid pixel bleeding on MSAA filtering
         SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
     }
     else
@@ -821,7 +802,7 @@ int GetRenderWidth(void)
 {
     int width = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
+    if (CORE.Window.usingFbo) width = CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
     return width;
@@ -832,7 +813,7 @@ int GetRenderHeight(void)
 {
     int height = 0;
 
-    if (CORE.Window.usingFbo) return CORE.Window.currentFbo.height;
+    if (CORE.Window.usingFbo) height = CORE.Window.currentFbo.height;
     else height = CORE.Window.render.height;
 
     return height;
@@ -866,14 +847,14 @@ bool IsCursorOnScreen(void)
 // Module Functions Definition: Screen Drawing
 //----------------------------------------------------------------------------------
 
-// Set background color (framebuffer clear color)
+// Clear background (framebuffer) to color
 void ClearBackground(Color color)
 {
     rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
     rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
-// Setup canvas (framebuffer) to start drawing
+// Begin canvas (framebuffer) drawing
 void BeginDrawing(void)
 {
     // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
@@ -890,7 +871,7 @@ void BeginDrawing(void)
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
-// End canvas drawing and swap buffers (double buffering)
+// End canvas (framebuffer) drawing and swap buffers (double buffering)
 void EndDrawing(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -946,7 +927,7 @@ void BeginMode2D(Camera2D camera)
     rlMultMatrixf(MatrixToFloat(GetCameraMatrix2D(camera)));
 }
 
-// Ends 2D mode with custom camera
+// End 2D mode with custom camera
 void EndMode2D(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -995,7 +976,7 @@ void BeginMode3D(Camera camera)
     rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
 }
 
-// Ends 3D mode and returns to default 2D orthographic mode
+// End 3D mode and returns to default 2D orthographic mode
 void EndMode3D(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -1042,7 +1023,7 @@ void BeginTextureMode(RenderTexture2D target)
     CORE.Window.usingFbo = true;
 }
 
-// Ends drawing to render texture
+// End drawing to render texture
 void EndTextureMode(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -1227,7 +1208,7 @@ void UnloadVrStereoConfig(VrStereoConfig config)
 //----------------------------------------------------------------------------------
 
 // Load shader from files and bind default locations
-// NOTE: If shader string is NULL, using default vertex/fragment shaders
+// NOTE: If shader filename is NULL, using default vertex/fragment shaders
 Shader LoadShader(const char *vsFileName, const char *fsFileName)
 {
     Shader shader = { 0 };
@@ -1511,7 +1492,7 @@ Matrix GetCameraMatrix2D(Camera2D camera)
     return matTransform;
 }
 
-// Get the screen space position from a 3d world space position
+// Get screen space position from a 3d world space position
 Vector2 GetWorldToScreen(Vector3 position, Camera camera)
 {
     Vector2 screenPosition = GetWorldToScreenEx(position, camera, GetScreenWidth(), GetScreenHeight());
@@ -1519,7 +1500,7 @@ Vector2 GetWorldToScreen(Vector3 position, Camera camera)
     return screenPosition;
 }
 
-// Get size position for a 3d world space position (useful for texture drawing)
+// Get sized screen space position for a 3d world space position (useful for texture drawing)
 Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int height)
 {
     // Calculate projection matrix (from perspective instead of frustum
@@ -1561,7 +1542,7 @@ Vector2 GetWorldToScreenEx(Vector3 position, Camera camera, int width, int heigh
     return screenPosition;
 }
 
-// Get the screen space position for a 2d camera world space position
+// Get screen space position for a 2d camera world space position
 Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
 {
     Matrix matCamera = GetCameraMatrix2D(camera);
@@ -1570,7 +1551,7 @@ Vector2 GetWorldToScreen2D(Vector2 position, Camera2D camera)
     return (Vector2){ transform.x, transform.y };
 }
 
-// Get the world space position for a 2d camera screen space position
+// Get world space position for a 2d camera screen space position
 Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
 {
     Matrix invMatCamera = MatrixInvert(GetCameraMatrix2D(camera));
@@ -1621,18 +1602,20 @@ int GetFPS(void)
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
 
-    if (fpsFrame == 0) return 0;
-
-    if ((GetTime() - last) > FPS_STEP)
+    if (fpsFrame != 0)
     {
-        last = (float)GetTime();
-        index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
-        average -= history[index];
-        history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
-        average += history[index];
-    }
+        if ((GetTime() - last) > FPS_STEP)
+        {
+            last = (float)GetTime();
+            index = (index + 1)%FPS_CAPTURE_FRAMES_COUNT;
+            average -= history[index];
+            history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
+            average += history[index];
+        }
 
-    fps = (int)roundf(1.0f/average);
+        fps = (int)roundf(1.0f/average);
+    }
+    else fps = 0;
 #endif
 
     return fps;
@@ -1752,9 +1735,9 @@ int GetRandomValue(int min, int max)
     else
     {
         // Rejection sampling to get a uniform integer in [min, max]
-        unsigned long c = (unsigned long)RAND_MAX + 1UL;  // number of possible rand() results
-        unsigned long m = (unsigned long)range;           // size of the target interval
-        unsigned long t = c - (c%m);                    // largest multiple of m <= c
+        unsigned long c = (unsigned long)RAND_MAX + 1UL; // Number of possible results
+        unsigned long m = (unsigned long)range;          // Size of the target interval
+        unsigned long t = c - (c%m);                     // Largest multiple of m <= c
         unsigned long r = 0;
 
         for (;;)
@@ -1848,7 +1831,7 @@ void TakeScreenshot(const char *fileName)
 #endif
 }
 
-// Setup window configuration flags (view FLAGS)
+// Set up window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
 // because it sets up some flags for the window creation process
 // To configure window states after creation, use SetWindowState()
@@ -1987,7 +1970,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
                     size_t count = fread(data, sizeof(unsigned char), size, file);
 
                     // WARNING: fread() returns a size_t value, usually 'unsigned int' (32bit compilation) and 'unsigned long long' (64bit compilation)
-                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes > INT_MAX (2147483647 bytes) there is a limitation
+                    // dataSize is unified along raylib as a 'int' type, so, for file-sizes >INT_MAX (2147483647 bytes) there is a limitation
                     if (count > 2147483647)
                     {
                         TRACELOG(LOG_WARNING, "FILEIO: [%s] File is bigger than 2147483647 bytes, avoid using LoadFileData()", fileName);
@@ -1999,7 +1982,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
                     {
                         *dataSize = (int)count;
 
-                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, dataSize, count);
+                        if ((*dataSize) != size) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially loaded (%i bytes out of %i)", fileName, *dataSize, size);
                         else TRACELOG(LOG_INFO, "FILEIO: [%s] File loaded successfully", fileName);
                     }
                 }
@@ -2023,9 +2006,9 @@ void UnloadFileData(unsigned char *data)
 }
 
 // Save data to file from buffer
-bool SaveFileData(const char *fileName, void *data, int dataSize)
+bool SaveFileData(const char *fileName, const void *data, int dataSize)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
@@ -2043,20 +2026,20 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
             else if (count != dataSize) TRACELOG(LOG_WARNING, "FILEIO: [%s] File partially written", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] File saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // Export data to code (.h), returns true on success
 bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #ifndef TEXT_BYTES_PER_LINE
     #define TEXT_BYTES_PER_LINE     20
@@ -2096,14 +2079,14 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
     byteCount += sprintf(txtData + byteCount, "0x%x };\n", data[dataSize - 1]);
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 
-    if (success != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
+    if (result != 0) TRACELOG(LOG_INFO, "FILEIO: [%s] Data as code exported successfully", fileName);
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export data as code", fileName);
 
-    return success;
+    return result;
 }
 
 // Load text data from file, returns a '\0' terminated string
@@ -2166,7 +2149,7 @@ void UnloadFileText(char *text)
 // Save text data to file (write), string must be '\0' terminated
 bool SaveFileText(const char *fileName, const char *text)
 {
-    bool success = false;
+    bool result = false;
 
     if (fileName != NULL)
     {
@@ -2181,14 +2164,14 @@ bool SaveFileText(const char *fileName, const char *text)
             if (count < 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to write text file", fileName);
             else TRACELOG(LOG_INFO, "FILEIO: [%s] Text file saved successfully", fileName);
 
-            int result = fclose(file);
-            if (result == 0) success = true;
+            int closed = fclose(file);
+            if (closed == 0) result = true;
         }
         else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open text file", fileName);
     }
     else TRACELOG(LOG_WARNING, "FILEIO: File name provided is not valid");
 
-    return success;
+    return result;
 }
 
 // File access custom callbacks
@@ -2278,10 +2261,11 @@ int FileMove(const char *srcPath, const char *dstPath)
 
     if (FileExists(srcPath))
     {
-		if (FileCopy(srcPath, dstPath) == 0)
-            result = FileRemove(srcPath);
-        else
-            TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
+        FileCopy(srcPath, dstPath);
+
+        // Make sure file has been correctly copied before removing
+        if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) result = FileRemove(srcPath);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
     }
 	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
@@ -2300,7 +2284,7 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
-        fileTextUpdated = TextReplace(fileText, search, replacement);
+        fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
         result = SaveFileText(fileName, fileTextUpdated);
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
@@ -2359,8 +2343,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     {
         int fileExtLength = (int)strlen(fileExt);
         char fileExtLower[16] = { 0 };
-        char *fileExtLowerPtr = fileExtLower;
-        for (int i = 0; (i < fileExtLength) && (i < 16); i++)
+        for (int i = 0; (i < fileExtLength) && (i < 15); i++)
         {
             // Copy and convert to lower-case
             if ((fileExt[i] >= 'A') && (fileExt[i] <= 'Z')) fileExtLower[i] =  fileExt[i] + 32;
@@ -2371,7 +2354,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         int extLength = (int)strlen(ext);
         char *extList = (char *)RL_CALLOC(extLength + 1, 1);
         char *extListPtrs[MAX_FILE_EXTENSIONS] = { 0 };
-        strncpy(extList, ext, extLength);
+        memcpy(extList, ext, extLength);
         extListPtrs[0] = extList;
 
         for (int i = 0; i < extLength; i++)
@@ -2380,11 +2363,15 @@ bool IsFileExtension(const char *fileName, const char *ext)
             if ((extList[i] >= 'A') && (extList[i] <= 'Z')) extList[i] += 32;
 
             // Get pointer to next extension and add null-terminator
-            if ((extList[i] == ';') && (extCount < (MAX_FILE_EXTENSIONS - 1)))
+            if (extList[i] == ';')
             {
                 extList[i] = '\0';
-                extListPtrs[extCount] = extList + i + 1;
-                extCount++;
+
+                if (extCount < MAX_FILE_EXTENSIONS)
+                {
+                    extListPtrs[extCount] = extList + i + 1;
+                    extCount++;
+                }
             }
         }
 
@@ -2392,7 +2379,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
         {
             // Consider the case where extension provided
             // does not start with the '.'
-            fileExtLowerPtr = fileExtLower;
+            char *fileExtLowerPtr = fileExtLower;
             if (extListPtrs[i][0] != '.') fileExtLowerPtr++;
 
             if (strcmp(fileExtLowerPtr, extListPtrs[i]) == 0)
@@ -2511,9 +2498,9 @@ const char *GetFileNameWithoutExt(const char *filePath)
     if (filePath != NULL)
     {
         strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
-        int fileNameLenght = (int)strlen(fileName); // Get size in bytes
+        int fileNameLength = (int)strlen(fileName); // Get size in bytes
 
-        for (int i = fileNameLenght; i > 0; i--) // Reverse search '.'
+        for (int i = fileNameLength; i > 0; i--) // Reverse search '.'
         {
             if (fileName[i] == '.')
             {
@@ -2605,7 +2592,7 @@ const char *GetWorkingDirectory(void)
     static char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
     memset(currentDir, 0, MAX_FILEPATH_LENGTH);
 
-    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH - 1);
+    char *path = GETCWD(currentDir, MAX_FILEPATH_LENGTH);
 
     return path;
 }
@@ -2720,17 +2707,18 @@ const char *GetApplicationDirectory(void)
 
 // Load directory filepaths
 // NOTE: Base path is prepended to the scanned filepaths
-// WARNING: Directory is scanned twice, first time to get files count
-// No recursive scanning is done!
+// WARNING: Directory is scanned twice, first time to get paths count
+// Scanneed files and directories, no recursive/subdirs scanning
 FilePathList LoadDirectoryFiles(const char *dirPath)
 {
     return LoadDirectoryFilesEx(dirPath, FILE_FILTER_TAG_ALL, false);
 }
 
 // Load directory filepaths with extension filtering and recursive directory scan
-// Use 'DIR*' to include directories on directory scan
-// Use '*.*' to include all file types and directories on directory scan
-// WARNING: Directory is scanned twice, first time to get files count
+// Use "*.*" to include all files and directories on scan
+// Use "FILES*" to include only files on scan
+// Use "DIRS*" to include only directories on scan
+// WARNING: Directory is scanned twice, first time to get paths count
 FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs)
 {
     FilePathList files = { 0 };
@@ -2951,9 +2939,9 @@ unsigned int GetDirectoryFileCountEx(const char *basePath, const char *filter, b
             {
                 // Construct new path from our base path
                 #if defined(_WIN32)
-                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, entity->d_name);
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s\\%s", basePath, entity->d_name);
                 #else
-                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, entity->d_name);
+                    int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s/%s", basePath, entity->d_name);
                 #endif
                 // Don't add to count if path too long
                 if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
@@ -3035,7 +3023,7 @@ unsigned char *DecompressData(const unsigned char *compData, int compDataSize, i
 char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 {
     // Base64 conversion table from RFC 4648 [0..63]
-    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sixtets" (6bit characters)
+    // NOTE: They represent 64 values (6 bits), to encode 3 bytes of data into 4 "sextets" (6bit characters)
     static const char base64EncodeTable[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     // Compute expected size and padding
@@ -3122,7 +3110,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     int outputCount = 0;
     for (int i = 0; i < dataSize;)
     {
-        // Every 4 sixtets must generate 3 octets
+        // Every 4 sextets must generate 3 octets
         if ((i + 2) >= dataSize)
         {
             TRACELOG(LOG_WARNING, "BASE64: Decoding error: Input data size is not valid");
@@ -3156,7 +3144,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
 }
 
 // Compute CRC32 hash code
-unsigned int ComputeCRC32(unsigned char *data, int dataSize)
+unsigned int ComputeCRC32(const unsigned char *data, int dataSize)
 {
     static unsigned int crcTable[256] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
@@ -3202,7 +3190,7 @@ unsigned int ComputeCRC32(unsigned char *data, int dataSize)
 
 // Compute MD5 hash code
 // NOTE: Returns a static int[4] array (16 bytes)
-unsigned int *ComputeMD5(unsigned char *data, int dataSize)
+unsigned int *ComputeMD5(const unsigned char *data, int dataSize)
 {
     #define ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -3320,7 +3308,7 @@ unsigned int *ComputeMD5(unsigned char *data, int dataSize)
 
 // Compute SHA-1 hash code
 // NOTE: Returns a static int[5] array (20 bytes)
-unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
+unsigned int *ComputeSHA1(const unsigned char *data, int dataSize)
 {
     #define SHA1_ROTATE_LEFT(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -3348,15 +3336,15 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
     memcpy(msg, data, dataSize);
     msg[dataSize] = 128; // Write the '1' bit
 
-    unsigned long long bitsLen = 8ULL * dataSize;
-    msg[newDataSize-1] = (unsigned char)(bitsLen);
-    msg[newDataSize-2] = (unsigned char)(bitsLen >> 8);
-    msg[newDataSize-3] = (unsigned char)(bitsLen >> 16);
-    msg[newDataSize-4] = (unsigned char)(bitsLen >> 24);
-    msg[newDataSize-5] = (unsigned char)(bitsLen >> 32);
-    msg[newDataSize-6] = (unsigned char)(bitsLen >> 40);
-    msg[newDataSize-7] = (unsigned char)(bitsLen >> 48);
-    msg[newDataSize-8] = (unsigned char)(bitsLen >> 56);
+    unsigned long long bitsLen = 8ULL*dataSize;
+    msg[newDataSize - 1] = (unsigned char)(bitsLen);
+    msg[newDataSize - 2] = (unsigned char)(bitsLen >> 8);
+    msg[newDataSize - 3] = (unsigned char)(bitsLen >> 16);
+    msg[newDataSize - 4] = (unsigned char)(bitsLen >> 24);
+    msg[newDataSize - 5] = (unsigned char)(bitsLen >> 32);
+    msg[newDataSize - 6] = (unsigned char)(bitsLen >> 40);
+    msg[newDataSize - 7] = (unsigned char)(bitsLen >> 48);
+    msg[newDataSize - 8] = (unsigned char)(bitsLen >> 56);
 
     // Process the message in successive 512-bit chunks
     for (int offset = 0; offset < newDataSize; offset += (512/8))
@@ -3430,7 +3418,7 @@ unsigned int *ComputeSHA1(unsigned char *data, int dataSize)
 
 // Compute SHA-256 hash code
 // NOTE: Returns a static int[8] array (32 bytes)
-unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
+unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
 {
     #define SHA256_ROTATE_RIGHT(x, c) ((x >> c) | (x << ((sizeof(unsigned int)*8) - c)))
     #define SHA256_A0(x) (SHA256_ROTATE_RIGHT(x, 7) ^ SHA256_ROTATE_RIGHT(x, 18) ^ (x >> 3))
@@ -3465,8 +3453,8 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
     hash[6] = 0x1f83d9ab;
     hash[7] = 0x5be0cd19;
 
-    const unsigned long long int bitLen = ((unsigned long long int)dataSize)*8;
-    unsigned long long int paddedSize = dataSize + sizeof(dataSize);
+    const unsigned long long bitLen = 8ULL*dataSize;
+    unsigned long long paddedSize = dataSize + sizeof(dataSize);
     paddedSize += (64 - (paddedSize%64));
     unsigned char *buffer = (unsigned char *)RL_CALLOC(paddedSize, sizeof(unsigned char));
 
@@ -3477,7 +3465,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         buffer[(paddedSize - sizeof(bitLen)) + (i - 1)] = (bitLen >> (8*(sizeof(bitLen) - i))) & 0xFF;
     }
 
-    for (unsigned long long int blockN = 0; blockN < paddedSize/64; blockN++)
+    for (unsigned long long blockN = 0; blockN < paddedSize/64; blockN++)
     {
         unsigned int a = hash[0];
         unsigned int b = hash[1];
@@ -3499,7 +3487,7 @@ unsigned int *ComputeSHA256(unsigned char *data, int dataSize)
         }
         for (int t = 16; t < 64; t++) w[t] = SHA256_A1(w[t - 2]) + w[t - 7] + SHA256_A0(w[t - 15]) + w[t - 16];
 
-        for (unsigned long long int t = 0; t < 64; t++)
+        for (int t = 0; t < 64; t++)
         {
             unsigned int e1 = (SHA256_ROTATE_RIGHT(e, 6) ^ SHA256_ROTATE_RIGHT(e, 11) ^ SHA256_ROTATE_RIGHT(e, 25));
             unsigned int ch = ((e & f) ^ (~e & g));
@@ -3630,7 +3618,7 @@ void UnloadAutomationEventList(AutomationEventList list)
 // Export automation events list as text file
 bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
 {
-    bool success = false;
+    bool result = false;
 
 #if SUPPORT_AUTOMATION_EVENTS
     // Export events as binary file
@@ -3648,7 +3636,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
         memcpy(binBuffer + offset, list.events, sizeof(AutomationEvent)*list.count);
         offset += sizeof(AutomationEvent)*list.count;
 
-        success = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
+        result = SaveFileData(TextFormat("%s.rae",fileName), binBuffer, binarySize);
         RL_FREE(binBuffer);
     }
     */
@@ -3679,12 +3667,12 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     }
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
-    success = SaveFileText(fileName, txtData);
+    result = SaveFileText(fileName, txtData);
 
     RL_FREE(txtData);
 #endif
 
-    return success;
+    return result;
 }
 
 // Setup automation event list to record to
@@ -4121,8 +4109,8 @@ Vector2 GetMouseDelta(void)
 {
     Vector2 delta = { 0 };
 
-    delta.x = CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x;
-    delta.y = CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y;
+    delta.x = (CORE.Input.Mouse.currentPosition.x - CORE.Input.Mouse.previousPosition.x)*CORE.Input.Mouse.scale.x;
+    delta.y = (CORE.Input.Mouse.currentPosition.y - CORE.Input.Mouse.previousPosition.y)*CORE.Input.Mouse.scale.y;
 
     return delta;
 }
@@ -4231,7 +4219,7 @@ void InitTimer(void)
 
     if (clock_gettime(CLOCK_MONOTONIC, &now) == 0) // Success
     {
-        CORE.Time.base = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;
+        CORE.Time.base = (unsigned long long)now.tv_sec*1000000000LLU + (unsigned long long)now.tv_nsec;
     }
     else TRACELOG(LOG_WARNING, "TIMER: Hi-resolution timer not available");
 #endif
@@ -4279,9 +4267,9 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
             {
                 // Construct new path from our base path
             #if defined(_WIN32)
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s\\%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s\\%s", basePath, dp->d_name);
             #else
-                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH - 1, "%s/%s", basePath, dp->d_name);
+                int pathLength = snprintf(path, MAX_FILEPATH_LENGTH, "%s/%s", basePath, dp->d_name);
             #endif
 
                 if ((pathLength < 0) || (pathLength >= MAX_FILEPATH_LENGTH))
@@ -4293,7 +4281,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                     if ((filter == NULL) || (strstr(filter, FILE_FILTER_TAG_ALL) != NULL) ||
                         (strstr(filter, FILE_FILTER_TAG_FILE_ONLY) != NULL) || IsFileExtension(path, filter))
                     {
-                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
+                        memcpy(files->paths[files->count], path, pathLength);
                         files->count++;
                     }
                 }
@@ -4301,7 +4289,7 @@ static void ScanDirectoryFiles(const char *basePath, FilePathList *files, const 
                 {
                     if ((filter != NULL) && ((strstr(filter, FILE_FILTER_TAG_DIR_ONLY) != NULL) || (strstr(filter, FILE_FILTER_TAG_ALL) != NULL)))
                     {
-                        strncpy(files->paths[files->count], path, MAX_FILEPATH_LENGTH - 1);
+                        memcpy(files->paths[files->count], path, pathLength);
                         files->count++;
                     }
 

@@ -56,6 +56,7 @@ int main(void)
     // Set the texture tiling using a shader
     float tiling[2] = { 3.0f, 3.0f };
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/tiling.fs", GLSL_VERSION));
+    SetTextureWrap(texture, TEXTURE_WRAP_REPEAT);
     SetShaderValue(shader, GetShaderLocation(shader, "tiling"), tiling, SHADER_UNIFORM_VEC2);
     model.materials[0].shader = shader;
 

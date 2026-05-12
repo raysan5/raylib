@@ -48,7 +48,7 @@ void main()
 {
     // Calculate vertex attributes for fragment shader
     vec4 worldPos = matModel*vec4(vertexPosition, 1.0);
-    fragPosition = worldPos.xyz; 
+    fragPosition = worldPos.xyz;
     fragTexCoord = vertexTexCoord;
     fragColor = vertexColor;
 

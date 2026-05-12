@@ -23,7 +23,7 @@ void main()
     int boneIndex1 = int(vertexBoneIndices.y);
     int boneIndex2 = int(vertexBoneIndices.z);
     int boneIndex3 = int(vertexBoneIndices.w);
-    
+
     // WARNING: OpenGL ES 2.0 does not support automatic matrix transposing, neither transpose() function
     mat4 boneMatrixTransposed0 = mat4(
         vec4(boneMatrices[boneIndex0][0].x, boneMatrices[boneIndex0][1].x, boneMatrices[boneIndex0][2].x, boneMatrices[boneIndex0][3].x),
@@ -45,13 +45,13 @@ void main()
         vec4(boneMatrices[boneIndex3][0].y, boneMatrices[boneIndex3][1].y, boneMatrices[boneIndex3][2].y, boneMatrices[boneIndex3][3].y),
         vec4(boneMatrices[boneIndex3][0].z, boneMatrices[boneIndex3][1].z, boneMatrices[boneIndex3][2].z, boneMatrices[boneIndex3][3].z),
         vec4(boneMatrices[boneIndex3][0].w, boneMatrices[boneIndex3][1].w, boneMatrices[boneIndex3][2].w, boneMatrices[boneIndex3][3].w));
-    
+
     vec4 skinnedPosition =
         vertexBoneWeights.x*(boneMatrixTransposed0*vec4(vertexPosition, 1.0)) +
-        vertexBoneWeights.y*(boneMatrixTransposed1*vec4(vertexPosition, 1.0)) + 
-        vertexBoneWeights.z*(boneMatrixTransposed2*vec4(vertexPosition, 1.0)) + 
+        vertexBoneWeights.y*(boneMatrixTransposed1*vec4(vertexPosition, 1.0)) +
+        vertexBoneWeights.z*(boneMatrixTransposed2*vec4(vertexPosition, 1.0)) +
         vertexBoneWeights.w*(boneMatrixTransposed3*vec4(vertexPosition, 1.0));
-    
+
     fragTexCoord = vertexTexCoord;
     fragColor = vertexColor;
 

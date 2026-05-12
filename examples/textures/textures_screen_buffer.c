@@ -52,7 +52,7 @@ int main(void)
         float hue = t*t;
         float saturation = t;
         float value = t;
-        
+
         palette[i] = ColorFromHSV(250.0f + 150.0f*hue, saturation, value);
     }
 
@@ -92,14 +92,14 @@ int main(void)
             {
                 unsigned int i = x + y*imageWidth;
                 unsigned char colorIndex = indexBuffer[i];
-                
+
                 if (colorIndex != 0)
                 {
                     // Move pixel a row above
                     indexBuffer[i] = 0;
                     int moveX = GetRandomValue(0, 2) - 1;
                     int newX = x + moveX;
-                    
+
                     if ((newX > 0) && (newX < imageWidth))
                     {
                         unsigned int iabove = i - imageWidth + moveX;
@@ -130,7 +130,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-            
+
             ClearBackground(RAYWHITE);
 
             DrawTextureEx(screenTexture, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
