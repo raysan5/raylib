@@ -166,16 +166,15 @@
 
 // Fast power-of-two texture wrap (SW_REPEAT mode only)
 // When defined, textures whose width/height are powers of two use a bitmask
-// wrap (`x & (size-1)`) instead of `floorf`-based fractional wrap or the
-// signed `%` chain in the linear sampler. Saves a software divide on Xtensa
-// and a few instructions everywhere. NPOT textures keep using the original
-// path via a runtime `(size & (size-1)) == 0` check, so SW_REPEAT remains
-// correct for them. The only observable behavior change is for POT textures
-// sampled with negative UV coordinates: bitmask wrap (two's complement) can
-// differ from `sw_fract` by one texel. Off by default to keep bit-for-bit
-// behavior; opt in if you control your asset UVs.
+// wrap (`x & (size-1)`) instead of `floorf`-based fractional wrap or the signed `%` chain in the linear sampler
+// Saves a software divide on Xtensa and a few instructions everywhere
+// NPOT textures keep using the original path via a runtime `(size & (size-1)) == 0` check, 
+// so SW_REPEAT remains correct for them
+// The only observable behavior change is for POT textures sampled with negative UV coordinates: 
+// bitmask wrap (two's complement) can differ from `sw_fract` by one texel
+// Off by default to keep bit-for-bit behavior; opt in if you control your asset UVs
 //
-// #define SW_TEXTURE_REPEAT_POT_FAST
+//#define SW_TEXTURE_REPEAT_POT_FAST
 
 //----------------------------------------------------------------------------------
 // OpenGL Compatibility Types
@@ -860,11 +859,9 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #endif
 
 // ESP-DSP acceleration: ESP-IDF ships an optimized math library that includes
-// `dspm_mult_4x4x4_f32` (4x4 matrix multiply) and `dspm_mult_4x4x1_f32`
-// (matrix * vector). These are S3-tuned hand-vectorized kernels that beat the
-// scalar versions for both throughput and code-size. Detection is opt-in to
-// keep the dependency optional: define SW_USE_ESP_DSP from your build system
-// (or rely on the `idf_component.yml` example shown in the rlsw docs).
+// `dspm_mult_4x4x4_f32` (4x4 matrix multiply) and `dspm_mult_4x4x1_f32` (matrix * vector)
+// These are S3-tuned hand-vectorized kernels that beat the scalar versions for both throughput and code-size
+// Detection is opt-in to keep the dependency optional: define SW_USE_ESP_DSP from your build system
 #if defined(ESP_PLATFORM) && defined(SW_USE_ESP_DSP)
     #define SW_HAS_ESP_DSP
     #include "dspm_mult.h"
@@ -884,41 +881,41 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_DEG2RAD  (SW_PI/180.0f)
 #define SW_RAD2DEG  (180.0f/SW_PI)
 
-// When clipping a convex polygon against a plane, at most one vertex is added.
+// When clipping a convex polygon against a plane, at most one vertex is added
 // Starting from a quadrilateral (4 vertices), clipped sequentially against
 // the frustum (6 planes) then the scissor rectangle (4 planes):
-// 4 + 6 + 4 = 14 vertices maximum.
-#define SW_MAX_CLIPPED_POLYGON_VERTICES 14
-#define SW_CLIP_EPSILON                 1e-4f
+// 4 + 6 + 4 = 14 vertices maximum
+#define SW_MAX_CLIPPED_POLYGON_VERTICES     14
+#define SW_CLIP_EPSILON                     1e-4f
 
-#define SW_HANDLE_NULL          0u
-#define SW_POOL_SLOT_LIVE       0x80u   // bit7 of the generation byte
-#define SW_POOL_SLOT_VER_MASK   0x7Fu   // bits6:0 = anti-ABA counter
+#define SW_HANDLE_NULL                      0u
+#define SW_POOL_SLOT_LIVE                   0x80u   // bit7 of the generation byte
+#define SW_POOL_SLOT_VER_MASK               0x7Fu   // bits6:0 = anti-ABA counter
 
-#define SW_CONCAT(a, b) a##b
-#define SW_CONCATX(a, b) SW_CONCAT(a, b)
+#define SW_CONCAT(a, b)                     a##b
+#define SW_CONCATX(a, b)                    SW_CONCAT(a, b)
 
-#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o) SW_CONCATX(sw_pixel_read_color8_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_GET(c,p,o) SW_CONCATX(sw_pixel_read_color_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_SET(p,c,o) SW_CONCATX(sw_pixel_write_color_, SW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
+#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o)    SW_CONCATX(sw_pixel_read_color8_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_GET(c,p,o)     SW_CONCATX(sw_pixel_read_color_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_SET(p,c,o)     SW_CONCATX(sw_pixel_write_color_, SW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
 
-#define SW_FRAMEBUFFER_DEPTH_GET(p,o) SW_CONCATX(sw_pixel_read_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
-#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o) SW_CONCATX(sw_pixel_write_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
+#define SW_FRAMEBUFFER_DEPTH_GET(p,o)       SW_CONCATX(sw_pixel_read_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
+#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o)     SW_CONCATX(sw_pixel_write_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
 
-#define SW_FRAMEBUFFER_COLOR_FORMAT SW_CONCATX(SW_PIXELFORMAT_COLOR_, SW_FRAMEBUFFER_COLOR_TYPE)
-#define SW_FRAMEBUFFER_DEPTH_FORMAT SW_CONCATX(SW_PIXELFORMAT_DEPTH_, SW_FRAMEBUFFER_DEPTH_TYPE)
+#define SW_FRAMEBUFFER_COLOR_FORMAT         SW_CONCATX(SW_PIXELFORMAT_COLOR_, SW_FRAMEBUFFER_COLOR_TYPE)
+#define SW_FRAMEBUFFER_DEPTH_FORMAT         SW_CONCATX(SW_PIXELFORMAT_DEPTH_, SW_FRAMEBUFFER_DEPTH_TYPE)
 
-#define SW_FRAMEBUFFER_COLOR_SIZE SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_COLOR_FORMAT]
-#define SW_FRAMEBUFFER_DEPTH_SIZE SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_DEPTH_FORMAT]
+#define SW_FRAMEBUFFER_COLOR_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_COLOR_FORMAT]
+#define SW_FRAMEBUFFER_DEPTH_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_DEPTH_FORMAT]
 
-#define SW_STATE_SCISSOR_TEST   (1 << 0)
-#define SW_STATE_TEXTURE_2D     (1 << 1)
-#define SW_STATE_DEPTH_TEST     (1 << 2)
-#define SW_STATE_CULL_FACE      (1 << 3)
-#define SW_STATE_BLEND          (1 << 4)
+#define SW_STATE_SCISSOR_TEST               (1 << 0)
+#define SW_STATE_TEXTURE_2D                 (1 << 1)
+#define SW_STATE_DEPTH_TEST                 (1 << 2)
+#define SW_STATE_CULL_FACE                  (1 << 3)
+#define SW_STATE_BLEND                      (1 << 4)
 
-#define SW_BLEND_FLAG_NOOP          (1 << 0)
-#define SW_BLEND_FLAG_NEEDS_ALPHA   (1 << 1)
+#define SW_BLEND_FLAG_NOOP                  (1 << 0)
+#define SW_BLEND_FLAG_NEEDS_ALPHA           (1 << 1)
 
 //----------------------------------------------------------------------------------
 // Module Types and Structures Definition
@@ -1175,7 +1172,7 @@ static inline void sw_matrix_mul_rst(float *SW_RESTRICT dst, const float *SW_RES
     // column-major, so passing them flat is equivalent to passing transposes:
     // dspm_mult(L^T, R^T) computes (L^T)*(R^T) = (R*L)^T, written back into a
     // flat array gives the same bit pattern as the column-major product (R*L)
-    // -- exactly the semantic the scalar fallback below has.
+    // -- exactly the semantic the scalar fallback below has
     dspm_mult_4x4x4_f32(left, right, dst);
 #else
     float l00 = left[0],  l01 = left[1],  l02 = left[2],  l03 = left[3];
@@ -1248,12 +1245,12 @@ static inline float sw_fract(float x)
     return (x - floorf(x));
 }
 
-// Fast reciprocal: 1-ULP accurate in ~7 instructions on Xtensa using the
-// hardware `recip0.s` seed + two Newton-Raphson refinement steps. All work
-// stays in FPU registers — no `__divsf3` software call. Hot-path divisions
-// in the rasterizer (span/triangle setup, perspective divide, etc.) call
-// this. On non-Xtensa targets it transparently expands to `1.0f / x`, so
-// generated code is identical to before.
+// Xtensa architecture optimization
+// Fast reciprocal: 1-ULP accurate in ~7 instructions using the
+// hardware `recip0.s` seed + two Newton-Raphson refinement steps 
+// All work stays in FPU registers — no `__divsf3` software call 
+// Hot-path divisions in the rasterizer (span/triangle setup, perspective divide, etc.) call this
+// On non-Xtensa targets it transparently expands to `1.0f / x`, so generated code is identical to before
 #if defined(__XTENSA__)
 __attribute__((always_inline))
 static inline float sw_rcp(float x)
@@ -3558,8 +3555,8 @@ static inline bool sw_quad_face_culling(void)
     // winding in the projected space when all w > 0
     // A value of 0 for sgnArea means P0, P1, P2 are collinear in (x, y, w)
     // space, which corresponds to a degenerate triangle projection
-    // Such quads might also be degenerate or non-planar. They are typically
-    // not culled by this test (0 < 0 is false, 0 > 0 is false)
+    // Such quads might also be degenerate or non-planar
+    // They are typically not culled by this test (0 < 0 is false, 0 > 0 is false)
     // and should be handled by the clipper if necessary
 
     return (RLSW.cullFace == SW_FRONT)? (sgnArea < 0.0f) : (sgnArea > 0.0f); // Cull if winding is "clockwise" : "counter-clockwise"
@@ -3879,8 +3876,7 @@ static inline void sw_poly_fill_render(uint32_t state)
 //-------------------------------------------------------------------------------------------
 static void sw_immediate_begin(SWdraw mode)
 {
-    // NOTE: Any checks to ensure command recording can start
-    //       must be performed before calling this function.
+    // NOTE: Any checks to ensure command recording can start must be performed before calling this function
 
     // Recalculate the MVP if this is needed
     if (RLSW.isDirtyMVP)
@@ -3891,8 +3887,8 @@ static void sw_immediate_begin(SWdraw mode)
 
 #ifdef SW_HAS_ESP_DSP
         // Pre-transpose to row-major so dspm_mult_4x4x1_f32(matMVP_rm, v, out)
-        // computes M*v directly in the per-vertex hot path. 16 scalar copies
-        // per MVP update vs. saving ~20 cycles per vertex transform.
+        // computes M*v directly in the per-vertex hot path; 16 scalar copies
+        // per MVP update vs saving ~20 cycles per vertex transform
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
@@ -3955,7 +3951,7 @@ static void sw_immediate_push_vertex(const float position[4])
     // Calculate clip coordinates
 #ifdef SW_HAS_ESP_DSP
     // dspm_mult_4x4x1_f32 declares its inputs non-const; rlsw treats them as
-    // read-only and the cast is safe (the kernel only loads from B).
+    // read-only and the cast is safe (the kernel only loads from B)
     dspm_mult_4x4x1_f32(RLSW.matMVP_rm, (float *)position, vertex->position);
 #else
     const float *m = RLSW.matMVP;
@@ -5567,7 +5563,7 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
 
     // Extracting coordinates from the sorted vertices
-    // Put x away for safe keeping.  Only y is used right now.  Silences warnings.
+    // Put x away for safe keeping; only y is used right now; silences warnings
     float y0 = v0->position[1];
     float y1 = v1->position[1];
     float y2 = v2->position[1];
