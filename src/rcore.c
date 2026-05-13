@@ -506,6 +506,7 @@ __declspec(dllimport) void __stdcall Sleep(unsigned long msTimeout); // Required
 const char *TextFormat(const char *text, ...); // Formatting of text with variables to 'embed'
 #endif
 
+// NOTE: PLATFORM_DESKTOP defaults to GLFW backend
 #if defined(PLATFORM_DESKTOP)
     #define PLATFORM_DESKTOP_GLFW
 #endif
