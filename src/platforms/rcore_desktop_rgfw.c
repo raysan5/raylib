@@ -1132,8 +1132,8 @@ void SwapScreenBuffer(void)
     {
         if (platform.surface)
         {
-            // copy rlsw pixel data to the surface framebuffer
-            swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_UNSIGNED_BYTE, platform.surfacePixels);
+            // Copy rlsw pixel data to the surface framebuffer
+            rlCopyFramebuffer(0, 0, platform.surfaceWidth, platform.surfaceHeight, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.surfacePixels);
 
             // Mac wants a different pixel order. I cant seem to get this to work any other way
             #if defined(__APPLE__)
