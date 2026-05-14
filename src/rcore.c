@@ -511,7 +511,6 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #define PLATFORM_DESKTOP_GLFW
 #endif
 
-
 // Include platform-specific submodules
 #if defined(PLATFORM_DESKTOP_GLFW)
     #include "platforms/rcore_desktop_glfw.c"
@@ -2319,7 +2318,7 @@ bool FileExists(const char *fileName)
 {
     bool result = false;
 
-    if (ACCESS(fileName) != -1) result = true;
+    if ((fileName != NULL) && (ACCESS(fileName) != -1)) result = true;
 
     // NOTE: Alternatively, stat() can be used instead of access()
     //#include <sys/stat.h>
