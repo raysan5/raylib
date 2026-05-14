@@ -65,7 +65,7 @@ src/external/SDL3
 # Emscripten
 emsdk
 
-# Ignore wasm data in examples/
+# Ignore binaries generated in examples/
 examples/**/*
 !examples/**/*.*
 !examples/**/*/
