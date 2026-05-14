@@ -1901,7 +1901,7 @@ void _glfwSetWindowMonitorWin32(_GLFWwindow* window,
         acquireMonitorWin32(window);
 
         GetMonitorInfoW(window->monitor->win32.handle, &mi);
-        SetWindowPos(window->win32.handle, HWND_TOPMOST,
+        SetWindowPos(window->win32.handle, HWND_TOP,
                      mi.rcMonitor.left,
                      mi.rcMonitor.top,
                      mi.rcMonitor.right - mi.rcMonitor.left,
