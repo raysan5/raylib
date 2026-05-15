@@ -112,6 +112,13 @@
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
 #if defined(__linux__) && defined(_GLFW_X11)
+#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
+    // Clipboard specific
+    Display *cbDisplay;
+    XID cbWindow;
+    Atom cbAtom, cbTargetAtom, cbPropertyAtom;
+#endif
+
     // Local storage for the window handle returned by glfwGetX11Window
     // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
     // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
@@ -1042,11 +1049,6 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(platform.handle);
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE && defined(__linux__) && defined(_GLFW_X11)
-    #include <X11/Xlib.h>
-    #include <X11/Xatom.h>
-#endif
-
 // Get clipboard image
 Image GetClipboardImage(void)
 {
@@ -1068,30 +1070,32 @@ Image GetClipboardImage(void)
 #elif defined(__linux__) && defined(_GLFW_X11)
 
     // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
-    Display *dpy = XOpenDisplay(NULL);
-    if (!dpy) return image;
+    if(!platform.cbDisplay)
+    {
+        platform.cbDisplay = XOpenDisplay(NULL);
+        if (!platform.cbDisplay) return image;
 
-    Window root = DefaultRootWindow(dpy);
-    Window win = XCreateSimpleWindow(
-        dpy,      // The connection to the X Server
-        root,     // The 'Parent' window (usually the desktop/root)
-        0, 0,     // X and Y position on the screen
-        1, 1,     // Width and Height (1x1 pixel)
-        0,        // Border width
-        0,        // Border color
-        0         // Background color
-    );
+        platform.cbWindow = XCreateSimpleWindow(
+            platform.cbDisplay,                    // The connection to the X Server
+            DefaultRootWindow(platform.cbDisplay), // The 'Parent' window (usually the desktop/root)
+            0, 0,                                         // X and Y position on the screen
+            1, 1,                                         // Width and Height (1x1 pixel)
+            0,                                            // Border width
+            0,                                            // Border color
+            0                                             // Background color
+        );
 
-    Atom clipboard = XInternAtom(dpy, "CLIPBOARD", False);
-    Atom targetType = XInternAtom(dpy, "image/png", False); // Ask for PNG
-    Atom property = XInternAtom(dpy, "RAYLIB_CLIPBOARD_MANAGER", False);
+        platform.cbAtom = XInternAtom(platform.cbDisplay, "CLIPBOARD", False);
+        platform.cbTargetAtom = XInternAtom(platform.cbDisplay, "image/png", False); // Ask for PNG
+        platform.cbPropertyAtom = XInternAtom(platform.cbDisplay, "RAYLIB_CLIPBOARD_MANAGER", False);
+    }
 
     // Request the data: "Convert whatever is in CLIPBOARD to image/png and put it in RAYLIB_CLIPBOARD_MANAGER"
-    XConvertSelection(dpy, clipboard, targetType, property, win, CurrentTime);
+    XConvertSelection(platform.cbDisplay, platform.cbAtom, platform.cbTargetAtom, platform.cbPropertyAtom, platform.cbWindow, CurrentTime);
 
     // Wait for the SelectionNotify event
     XEvent ev = { 0 };
-    XNextEvent(dpy, &ev);
+    XNextEvent(platform.cbDisplay, &ev);
 
     Atom actualType = { 0 };
     int actualFormat = 0;
@@ -1100,7 +1104,7 @@ Image GetClipboardImage(void)
     unsigned char *data = NULL;
 
     // Read the data from our ghost window's property
-    XGetWindowProperty(dpy, win, property, 0, ~0L, False, AnyPropertyType,
+    XGetWindowProperty(platform.cbDisplay, platform.cbWindow, platform.cbPropertyAtom, 0, ~0L, False, AnyPropertyType,
         &actualType, &actualFormat, &nitems, &bytesAfter, &data);
 
     if (data != NULL)
@@ -1108,9 +1112,6 @@ Image GetClipboardImage(void)
         image = LoadImageFromMemory(".png", data, (int)nitems);
         XFree(data);
     }
-
-    XDestroyWindow(dpy, win);
-    XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif // _WIN32
@@ -1876,6 +1877,13 @@ void ClosePlatform(void)
 
 #if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1);           // Restore time period
+#elif defined(__linux__) && defined(_GLFW_X11) && SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
+    if(platform.cbDisplay)     // Unload clipboard connection
+    {
+        XDestroyWindow(platform.cbDisplay, platform.cbWindow);
+        XCloseDisplay(platform.cbDisplay);
+        platform.cbDisplay = NULL;
+    }
 #endif
 }
 
