@@ -883,7 +883,14 @@ int GetCurrentMonitor(void)
 
                     int dx = wcx - xclosest;
                     int dy = wcy - yclosest;
-                    int dist = (dx*dx) + (dy*dy);
+
+                    // Use unsigned int to avoid signed integer overflow UB.
+                    // Note: (-x)^2 == x^2 (mod 2^32), so sign of dx/dy does not matter
+                    unsigned int ux = (unsigned int)dx;
+                    unsigned int uy = (unsigned int)dy;
+                    unsigned int udist = ux*ux + uy*uy;
+                    int dist = (int)udist;
+
                     if (dist < closestDist)
                     {
                         index = i;
