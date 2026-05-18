@@ -112,13 +112,6 @@
 typedef struct {
     GLFWwindow *handle;                 // GLFW window handle (graphic device)
 #if defined(__linux__) && defined(_GLFW_X11)
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-    // Clipboard specific
-    Display *cbDisplay;
-    XID cbWindow;
-    Atom cbAtom, cbTargetAtom, cbPropertyAtom;
-#endif
-
     // Local storage for the window handle returned by glfwGetX11Window
     // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
     // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
@@ -1068,34 +1061,31 @@ Image GetClipboardImage(void)
     else image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
 
 #elif defined(__linux__) && defined(_GLFW_X11)
-
     // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
-    if(!platform.cbDisplay)
+
+    static Atom clipboard = 0;
+    static Atom targetType = 0;
+    static Atom property = 0;
+
+    Display *display = glfwGetX11Display();
+    XID window = glfwGetX11Window(platform.handle);
+
+    // Lazy-load X11 atoms
+    if(clipboard == 0)
     {
-        platform.cbDisplay = XOpenDisplay(NULL);
-        if (!platform.cbDisplay) return image;
-
-        platform.cbWindow = XCreateSimpleWindow(
-            platform.cbDisplay,                    // The connection to the X Server
-            DefaultRootWindow(platform.cbDisplay), // The 'Parent' window (usually the desktop/root)
-            0, 0,                                         // X and Y position on the screen
-            1, 1,                                         // Width and Height (1x1 pixel)
-            0,                                            // Border width
-            0,                                            // Border color
-            0                                             // Background color
-        );
-
-        platform.cbAtom = XInternAtom(platform.cbDisplay, "CLIPBOARD", False);
-        platform.cbTargetAtom = XInternAtom(platform.cbDisplay, "image/png", False); // Ask for PNG
-        platform.cbPropertyAtom = XInternAtom(platform.cbDisplay, "RAYLIB_CLIPBOARD_MANAGER", False);
+        clipboard = XInternAtom(display, "CLIPBOARD", False);
+        targetType = XInternAtom(display, "image/png", False);
+        property = XInternAtom(display, "RAYLIB_CLIPBOARD_MANAGER", False);
     }
 
-    // Request the data: "Convert whatever is in CLIPBOARD to image/png and put it in RAYLIB_CLIPBOARD_MANAGER"
-    XConvertSelection(platform.cbDisplay, platform.cbAtom, platform.cbTargetAtom, platform.cbPropertyAtom, platform.cbWindow, CurrentTime);
+    XConvertSelection(display, clipboard, targetType, property, window, CurrentTime);
+    XSync(display, 0);
 
-    // Wait for the SelectionNotify event
     XEvent ev = { 0 };
-    XNextEvent(platform.cbDisplay, &ev);
+    bool eventFound;
+
+    // Keep calling until we get SelectionNotify
+    do { eventFound = XCheckTypedEvent(display, SelectionNotify, &ev); } while(!eventFound);
 
     Atom actualType = { 0 };
     int actualFormat = 0;
@@ -1103,15 +1093,15 @@ Image GetClipboardImage(void)
     unsigned long bytesAfter = 0;
     unsigned char *data = NULL;
 
-    // Read the data from our ghost window's property
-    XGetWindowProperty(platform.cbDisplay, platform.cbWindow, platform.cbPropertyAtom, 0, ~0L, False, AnyPropertyType,
-        &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+    XGetWindowProperty(display, window, property, 0, ~0L, False, AnyPropertyType,
+                       &actualType, &actualFormat, &nitems, &bytesAfter, &data);
 
     if (data != NULL)
     {
         image = LoadImageFromMemory(".png", data, (int)nitems);
         XFree(data);
     }
+
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
 #endif // _WIN32
@@ -1877,13 +1867,6 @@ void ClosePlatform(void)
 
 #if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1);           // Restore time period
-#elif defined(__linux__) && defined(_GLFW_X11) && SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-    if(platform.cbDisplay)     // Unload clipboard connection
-    {
-        XDestroyWindow(platform.cbDisplay, platform.cbWindow);
-        XCloseDisplay(platform.cbDisplay);
-        platform.cbDisplay = NULL;
-    }
 #endif
 }
 
