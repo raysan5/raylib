@@ -1082,10 +1082,9 @@ Image GetClipboardImage(void)
     XSync(display, 0);
 
     XEvent ev = { 0 };
-    bool eventFound;
 
     // Keep calling until we get SelectionNotify
-    do { eventFound = XCheckTypedEvent(display, SelectionNotify, &ev); } while(!eventFound);
+    while (XCheckTypedEvent(display, SelectionNotify, &ev) == False);
 
     Atom actualType = { 0 };
     int actualFormat = 0;
