@@ -541,6 +541,13 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     font.baseSize = fontSize;
     font.glyphPadding = 0;
 
+#if SUPPORT_FILEFORMAT_FNT
+    if (IsFileExtension(fileExtLower, ".fnt"))
+    {
+        font = LoadBMFont(fileExtLower);
+    }
+#endif 
+
 #if SUPPORT_FILEFORMAT_TTF
     if (TextIsEqual(fileExtLower, ".ttf") ||
         TextIsEqual(fileExtLower, ".otf"))
