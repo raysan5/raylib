@@ -157,8 +157,8 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
     extern "C" {        // Prevents name mangling of functions
     #endif
     // Functions required to query time on Windows
-    int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
-    int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
+    int __stdcall QueryPerformanceCounter(unsigned long long *lpPerformanceCount);
+    int __stdcall QueryPerformanceFrequency(unsigned long long *lpFrequency);
     #if defined(__cplusplus)
     }
     #endif
@@ -518,37 +518,36 @@ static double rgGetCurrentTime(void)
     time = GetTime();
 #else
 #if defined(_WIN32)
-    unsigned long long int clockFrequency, currentTime;
+    unsigned long long clockFrequency = 0;
+    unsigned long long currentClockTicks = 0;
 
     QueryPerformanceFrequency(&clockFrequency); // BE CAREFUL: Costly operation!
-    QueryPerformanceCounter(&currentTime);
+    QueryPerformanceCounter(&currentClockTicks);
 
-    time = (double)currentTime/clockFrequency;  // Time in seconds
+    time = (double)currentClockTicks/clockFrequency; // Time in seconds
 #endif
-
 #if defined(__linux__)
     // NOTE: Only for Linux-based systems
-    struct timespec now;
+    struct timespec now = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &now);
-    unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
+    unsigned long long nanoSeconds = (unsigned long long)now.tv_sec*1000000000LLU + (unsigned long long)now.tv_nsec;
 
-    time = ((double)nowTime*1e-9);     // Time in seconds
+    time = ((double)nanoSeconds*1e-9); // Time in seconds
 #endif
-
 #if defined(__APPLE__)
     //#define CLOCK_REALTIME  CALENDAR_CLOCK    // returns UTC time since 1970-01-01
     //#define CLOCK_MONOTONIC SYSTEM_CLOCK      // returns the time since boot time
 
-    clock_serv_t cclock;
-    mach_timespec_t now;
+    clock_serv_t cclock = { 0 };
+    mach_timespec_t now = { 0 };
     host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
 
     // NOTE: OS X does not have clock_gettime(), using clock_get_time()
     clock_get_time(cclock, &now);
     mach_port_deallocate(mach_task_self(), cclock);
-    unsigned long long int nowTime = (unsigned long long int)now.tv_sec*1000000000LLU + (unsigned long long int)now.tv_nsec;     // Time in nanoseconds
+    unsigned long long nanoSeconds = (unsigned long long)now.tv_sec*1000000000LLU + (unsigned long long)now.tv_nsec;
 
-    time = ((double)nowTime*1e-9);     // Time in seconds
+    time = ((double)nanoSeconds*1e-9); // Time in seconds
 #endif
 #endif
 

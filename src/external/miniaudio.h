@@ -41495,11 +41495,11 @@ Web Audio Backend
 #ifdef MA_HAS_WEBAUDIO
 #include <emscripten/emscripten.h>
 
-#if (__EMSCRIPTEN_major__ > 3) || (__EMSCRIPTEN_major__ == 3 && (__EMSCRIPTEN_minor__ > 1 || (__EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 32)))
+#if (__EMSCRIPTEN_MAJOR__ > 3) || (__EMSCRIPTEN_MAJOR__ == 3 && (__EMSCRIPTEN_MINOR__ > 1 || (__EMSCRIPTEN_MINOR__ == 1 && __EMSCRIPTEN_TINY__ >= 32)))
     #include <emscripten/webaudio.h>
     #define MA_SUPPORT_AUDIO_WORKLETS
 
-    #if (__EMSCRIPTEN_major__ > 3) || (__EMSCRIPTEN_major__ == 3 && (__EMSCRIPTEN_minor__ > 1 || (__EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 70)))
+    #if (__EMSCRIPTEN_MAJOR__ > 3) || (__EMSCRIPTEN_MAJOR__ == 3 && (__EMSCRIPTEN_MINOR__ > 1 || (__EMSCRIPTEN_MINOR__ == 1 && __EMSCRIPTEN_TINY__ >= 70)))
         #define MA_SUPPORT_AUDIO_WORKLETS_VARIABLE_BUFFER_SIZE
     #endif
 #endif

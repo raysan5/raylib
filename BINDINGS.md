@@ -37,7 +37,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-freebasic](https://github.com/WIITD/raylib-freebasic)                            | **5.0**          | [FreeBASIC](https://www.freebasic.net)                               | MIT                  |
 | [raylib.f](https://github.com/cthulhuology/raylib.f)                                     | **5.5**          | [Forth](https://forth.com)                                           | Zlib                 |
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **5.5**          | [Fortran](https://fortran-lang.org)                                  | ISC                  |
-| [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **5.5**          | [Go](https://golang.org)                                             | Zlib                 |
+| [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **6.0**          | [Go](https://golang.org)                                             | Zlib                 |
 | [raylib-guile](https://github.com/petelliott/raylib-guile)                               | **auto**         | [Guile](https://www.gnu.org/software/guile)                          | Zlib                 |
 | [gforth-raylib](https://github.com/ArnautDaniel/gforth-raylib)                           | 3.5              | [Gforth](https://gforth.org)                                         | **???**              |
 | [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **5.5-dev**      | [Haskell](https://haskell.org)                                       | Apache-2.0           |
@@ -105,7 +105,8 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-jai](https://github.com/ahmedqarmout2/raylib-jai)                                | **5.5**          | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | MIT                  |
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                   | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                        | **???**              | 
-| [Target](https://github.com/FinnDemonCat/Target/tree/main/libs/raylib)                                              | **5.5**          | [Dart](https://dart.dev/)                                        | Apache-2.0 license               | 
+| [Target](https://github.com/FinnDemonCat/Target/tree/main/libs/raylib)                   | **5.5**          | [Dart](https://dart.dev/)                                            | Apache-2.0 license   | 
+| [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0**          | [gclang](https://github.com/gnuchanos/gcLang_Compiler)                                 | AGPL-3.0             |
 
 
 ### Utility Wrapers

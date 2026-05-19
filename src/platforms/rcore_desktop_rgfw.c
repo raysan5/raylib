@@ -810,8 +810,8 @@ void SetWindowSize(int width, int height)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
@@ -1024,15 +1024,15 @@ Image GetClipboardImage(void)
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
 
-    unsigned long long int dataSize = 0; // moved into _WIN32 scope until other platforms gain support
-    void *fileData = NULL; // moved into _WIN32 scope until other platforms gain support
+    unsigned int dataSize = 0;
+    void *fileData = NULL;
 
     int width = 0;
     int height = 0;
-    fileData  = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
+    fileData = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, dataSize);
+    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
 
 #elif defined(__linux__) && defined(DRGFW_X11)
 
@@ -1082,7 +1082,7 @@ Image GetClipboardImage(void)
     XCloseDisplay(dpy);
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
-#endif // defined(_WIN32)
+#endif // _WIN32
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
@@ -1132,16 +1132,16 @@ void SwapScreenBuffer(void)
     {
         if (platform.surface)
         {
-            // copy rlsw pixel data to the surface framebuffer
-            swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_UNSIGNED_BYTE, platform.surfacePixels);
+            // Copy rlsw pixel data to the surface framebuffer
+            rlCopyFramebuffer(0, 0, platform.surfaceWidth, platform.surfaceHeight, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.surfacePixels);
 
             // Mac wants a different pixel order. I cant seem to get this to work any other way
             #if defined(__APPLE__)
                 unsigned char temp = 0;
                 unsigned char *p = NULL;
-                for (int i = 0; i < (platform.surfaceWidth * platform.surfaceHeight); i += 1)
+                for (int i = 0; i < (platform.surfaceWidth*platform.surfaceHeight); i += 1)
                 {
-                    p = platform.surfacePixels + (i * 4);
+                    p = platform.surfacePixels + (i*4);
                     temp = p[0];
                     p[0] = p[2];
                     p[2] = temp;
@@ -1357,13 +1357,13 @@ void PollInputEvents(void)
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
                         RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
-                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
                         CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
                         CORE.Window.screen.width = platform.window->w;
                         CORE.Window.screen.height = platform.window->h;
-                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
                     }
                     else
                     {
@@ -1406,10 +1406,10 @@ void PollInputEvents(void)
                     #if defined(__APPLE__)
                         RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
                         CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
-                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
 
-                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
                         CORE.Window.currentFbo.width = CORE.Window.render.width;
                         CORE.Window.currentFbo.height = CORE.Window.render.height;
                     #endif
@@ -1427,7 +1427,7 @@ void PollInputEvents(void)
                     if (platform.surfacePixels != NULL)
                     {
                         RL_FREE(platform.surfacePixels);
-                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
                     }
 
                     if (platform.surface != NULL)
@@ -1677,10 +1677,62 @@ int InitPlatform(void)
     // Initialize RGFW internal global state, only required systems
     unsigned int flags = RGFW_windowCenter | RGFW_windowAllowDND;
 
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, RGFW_windowNoBorder);
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, RGFW_windowNoResize);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, RGFW_windowTransparent);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, RGFW_windowHide);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(flags, RGFW_windowMaximize);
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
+
+    if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
+    }
+
     // Check window creation flags
+
+    // Init window in fullscreen mode if requested
+    // NOTE: Keeping original screen size for toggle
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         FLAG_SET(flags, RGFW_windowFullscreen);
+        int result = RGFW_init();
+        if (result != 0)
+        {
+            TRACELOG(LOG_WARNING, "RGFW: Failed to initialize RGFW");
+            return -1;
+        }
+
+        // NOTE: Fullscreen applications default to the primary monitor
+        RGFW_monitor *monitor = RGFW_getPrimaryMonitor();
+        if (!monitor)
+        {
+            TRACELOG(LOG_WARNING, "RGFW: Failed to get primary monitor");
+            return -1;
+        }
+
+        // Default display resolution to that of the current mode
+        CORE.Window.display.width = monitor->mode.w;
+        CORE.Window.display.height = monitor->mode.h;
+
+        // Check if user requested some screen size
+        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        {
+            // Set some default screen size in case user decides to exit fullscreen mode
+            CORE.Window.previousScreen.width = 800;
+            CORE.Window.previousScreen.height = 450;
+            CORE.Window.previousPosition.x = (CORE.Window.display.width - CORE.Window.previousScreen.width)/2;
+            CORE.Window.previousPosition.y = (CORE.Window.display.height - CORE.Window.previousScreen.height)/2;
+
+            // Set screen width/height to the display width/height
+            if (CORE.Window.screen.width == 0) CORE.Window.screen.width = CORE.Window.display.width;
+            if (CORE.Window.screen.height == 0) CORE.Window.screen.height = CORE.Window.display.height;
+        }
+        else
+        {
+            CORE.Window.previousScreen = CORE.Window.screen;
+            CORE.Window.screen = CORE.Window.display;
+        }
     }
 
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
@@ -1688,16 +1740,16 @@ int InitPlatform(void)
         FLAG_SET(flags, RGFW_windowedFullscreen);
     }
 
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNDECORATED)) FLAG_SET(flags, RGFW_windowNoBorder);
-    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) FLAG_SET(flags, RGFW_windowNoResize);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_TRANSPARENT)) FLAG_SET(flags, RGFW_windowTransparent);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) FLAG_SET(flags, RGFW_windowFullscreen);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIDDEN)) FLAG_SET(flags, RGFW_windowHide);
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED)) FLAG_SET(flags, RGFW_windowMaximize);
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
+        #if !defined(__APPLE__)
+            CORE.Window.screen.width = CORE.Window.screen.width*GetWindowScaleDPI().x;
+            CORE.Window.screen.height = CORE.Window.screen.height*GetWindowScaleDPI().y;
+        #endif
+    }
 
     // NOTE: Some OpenGL context attributes must be set before window creation
     // Check selection OpenGL version
-
     RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
     if (rlGetVersion() == RL_OPENGL_21)
     {
@@ -1720,20 +1772,9 @@ int InitPlatform(void)
         hints->minor = 1;
         hints->renderer = RGFW_glSoftware;
     }
-
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT)) hints->samples = 4;
-
-    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED)) FLAG_SET(flags, RGFW_windowFocusOnShow | RGFW_windowFocus);
-
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-    {
-        #if !defined(__APPLE__)
-            CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
-            CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
-        #endif
-    }
-
     RGFW_setGlobalHints_OpenGL(hints);
+
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
 
 #ifndef PLATFORM_WEB_RGFW
@@ -1787,8 +1828,8 @@ int InitPlatform(void)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
@@ -1805,8 +1846,8 @@ int InitPlatform(void)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #endif
@@ -1814,7 +1855,7 @@ int InitPlatform(void)
         platform.surfaceWidth = CORE.Window.currentFbo.width;
         platform.surfaceHeight = CORE.Window.currentFbo.height;
 
-        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
         if (platform.surfacePixels == NULL)
         {
             TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software pixel buffer");

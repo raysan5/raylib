@@ -28,7 +28,7 @@
 
 #include "raylib.h"
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL)
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_DESKTOP_SDL) || defined(PLATFORM_DESKTOP_RGFW)
     #if defined(GRAPHICS_API_OPENGL_ES2)
         #include "glad_gles2.h"       // Required for: OpenGL functionality
         #define glGenVertexArrays glGenVertexArraysOES

@@ -858,7 +858,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     else if ((strcmp(fileType, ".mp3") == 0) || (strcmp(fileType, ".MP3") == 0))
     {
         drmp3_config config = { 0 };
-        unsigned long long int totalFrameCount = 0;
+        unsigned long long totalFrameCount = 0;
 
         // NOTE: Forcing conversion to 32bit float sample size on reading
         wave.data = drmp3_open_memory_and_read_pcm_frames_f32(fileData, dataSize, &config, &totalFrameCount, NULL);
@@ -868,7 +868,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         {
             wave.channels = config.channels;
             wave.sampleRate = config.sampleRate;
-            wave.frameCount = (int)totalFrameCount;
+            wave.frameCount = (unsigned int)totalFrameCount; // WARNING: Potential loss of data
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load MP3 data");
 
@@ -896,13 +896,13 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 #if SUPPORT_FILEFORMAT_FLAC
     else if ((strcmp(fileType, ".flac") == 0) || (strcmp(fileType, ".FLAC") == 0))
     {
-        unsigned long long int totalFrameCount = 0;
+        unsigned long long totalFrameCount = 0;
 
         // NOTE: Forcing conversion to 16bit sample size on reading
         wave.data = drflac_open_memory_and_read_pcm_frames_s16(fileData, dataSize, &wave.channels, &wave.sampleRate, &totalFrameCount, NULL);
         wave.sampleSize = 16;
 
-        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount;
+        if (wave.data != NULL) wave.frameCount = (unsigned int)totalFrameCount; // WARNING: Potential loss of data
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load FLAC data");
     }
 #endif
@@ -1048,6 +1048,7 @@ void UnloadSoundAlias(Sound alias)
     {
         UntrackAudioBuffer(alias.stream.buffer);
         ma_data_converter_uninit(&alias.stream.buffer->converter, NULL);
+        RL_FREE(alias.stream.buffer->converterResidual);
         RL_FREE(alias.stream.buffer);
     }
 }
