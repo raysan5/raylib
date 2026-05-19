@@ -5420,23 +5420,25 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #endif
 
     // Compute the subpixel distance to traverse before the first pixel
+    // Also step further into them to move away from the colorbuffer edge.
     float xSubstep = 1.0f - sw_fract(start->position[0]);
+    float dxStart = (float)(xLoopStart - xStart);
+    float xOffset = xSubstep + dxStart;
 
     // Initializing the interpolation starting values.
-    // Also step further into them to move away from the colorbuffer edge.
-    float w = start->position[3] + dWdx*xSubstep + dWdx*dxStart;
+    float w = start->position[3] + dWdx*xOffset;
     float color[4] = {
-        start->color[0] + dCdx[0]*xSubstep + dCdx[0]*dxStart,
-        start->color[1] + dCdx[1]*xSubstep + dCdx[1]*dxStart,
-        start->color[2] + dCdx[2]*xSubstep + dCdx[2]*dxStart,
-        start->color[3] + dCdx[3]*xSubstep + dCdx[3]*dxStart
+        start->color[0] + dCdx[0]*xOffset,
+        start->color[1] + dCdx[1]*xOffset,
+        start->color[2] + dCdx[2]*xOffset,
+        start->color[3] + dCdx[3]*xOffset
     };
 #ifdef SW_ENABLE_DEPTH_TEST
-    float z = start->position[2] + dZdx*xSubstep + dZdx*dxStart;
+    float z = start->position[2] + dZdx*xOffset;
 #endif
 #ifdef SW_ENABLE_TEXTURE
-    float u = start->texcoord[0] + dUdx*xSubstep + dUdx*dxStart;
-    float v = start->texcoord[1] + dVdx*xSubstep + dVdx*dxStart;
+    float u = start->texcoord[0] + dUdx*xOffset;
+    float v = start->texcoord[1] + dVdx*xOffset;
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
