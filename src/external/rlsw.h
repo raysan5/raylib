@@ -5692,6 +5692,14 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     int xMax = (int)br->position[0];
     int yMax = (int)br->position[1];
 
+    // Exit early if no pixels to draw.  Use these later for loop boundaries
+    int yLoopMin = (yMin >= 0)? yMin : 0;
+    int xLoopMin = (xMin >= 0)? xMin : 0;
+    int yLoopMax = (yMax <= RLSW.colorBuffer->height)? yMax : RLSW.colorBuffer->height;
+    int xLoopMax = (xMax <= RLSW.colorBuffer->width)?  xMax : RLSW.colorBuffer->width;
+
+    if (yLoopMin >= yLoopMax || xLoopMin >= xLoopMax) return;
+
     float w = (float)(xMax - xMin);
     float h = (float)(yMax - yMin);
     if ((w <= 0) || (h <= 0)) return;
@@ -5745,13 +5753,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
-    // Intercept the boundaries to stay within the framebuffer.
-    int yLoopMin = sw_clamp_int(yMin, 0, RLSW.colorBuffer->height - 1);
-    int yLoopMax = sw_clamp_int(yMax, 0, RLSW.colorBuffer->height);
-    int xLoopMin = sw_clamp_int(xMin, 0, RLSW.colorBuffer->width - 1);
-    int xLoopMax = sw_clamp_int(xMax, 0, RLSW.colorBuffer->width);
-    int dxMin = xLoopMin - xMin;
-    int dyMin = yLoopMin - yMin;
+    // Calculate the distance the in-bounds boundary is from the quad's edges, only on the left and top.
+    float dxMin = (float)(xLoopMin - xMin);
+    float dyMin = (float)(yLoopMin - yMin);
 
     // Correct our start by how far we clipped outside the framebuffer.
     cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
