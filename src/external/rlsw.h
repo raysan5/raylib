@@ -5389,6 +5389,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     int xEnd = (int)end->position[0];
     if (xStart == xEnd) return;
 
+    // Intercept the span bounds to ensure we don't write before the framebuffer.
+    int xLoopStart = (xStart >= 0)? xStart : 0;
+    int xLoopEnd = (xEnd <= RLSW.colorBuffer->width)? xEnd : RLSW.colorBuffer->width;
+    // Nothing to draw.
+    if (xLoopStart >= xLoopEnd) return;
+
     // Get the current row and skip if outside the framebuffer.
     // Maybe this check is better suited elsewhere? 
     int y = (int)start->position[1];
@@ -5415,10 +5421,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
     // Compute the subpixel distance to traverse before the first pixel
     float xSubstep = 1.0f - sw_fract(start->position[0]);
-
-    // Intercept the span bounds to ensure we don't write before the framebuffer.
-    int xLoopStart = sw_clamp_int(xStart, 0, RLSW.colorBuffer->width - 1);
-    int dxStart = xLoopStart - xStart;
 
     // Initializing the interpolation starting values.
     // Also step further into them to move away from the colorbuffer edge.
