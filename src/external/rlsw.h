@@ -5451,8 +5451,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #define SW_AFFINE_BLOCK 16
 
     int x = xLoopStart;
-    // Prevent pixels from beyond the buffer from processing.
-    int xLoopEnd = sw_clamp_int(xEnd, 0, RLSW.colorBuffer->width);
     while (x < xLoopEnd)
     {
         // Clamp last block to remaining pixels
