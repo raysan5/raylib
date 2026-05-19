@@ -5442,7 +5442,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
-    // Don't allow a y value outside the buffer.
     int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
 #ifdef SW_ENABLE_DEPTH_TEST
