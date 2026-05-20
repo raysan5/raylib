@@ -5385,6 +5385,16 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     int xEnd = (int)end->position[0];
     if (xStart == xEnd) return;
 
+    // Intercept the span bounds to ensure to not write before the framebuffer
+    int xLoopStart = (xStart >= 0)? xStart : 0;
+    int xLoopEnd = (xEnd <= RLSW.colorBuffer->width)? xEnd : RLSW.colorBuffer->width;
+    if (xLoopStart >= xLoopEnd) return; // Nothing to draw
+
+    // Get the current row and skip if outside the framebuffer
+    // Maybe this check is better suited elsewhere? 
+    int y = (int)start->position[1];
+    if (y < 0 || y >= RLSW.colorBuffer->height) return;
+
     // Compute the inverse horizontal distance along the X axis
     float dxRcp = sw_rcp(end->position[0] - start->position[0]);
 
@@ -5405,27 +5415,29 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #endif
 
     // Compute the subpixel distance to traverse before the first pixel
+    // Also step further into them to move away from the colorbuffer edge
     float xSubstep = 1.0f - sw_fract(start->position[0]);
+    float dxStart = (float)(xLoopStart - xStart);
+    float xOffset = xSubstep + dxStart;
 
     // Initializing the interpolation starting values
-    float w = start->position[3] + dWdx*xSubstep;
+    float w = start->position[3] + dWdx*xOffset;
     float color[4] = {
-        start->color[0] + dCdx[0]*xSubstep,
-        start->color[1] + dCdx[1]*xSubstep,
-        start->color[2] + dCdx[2]*xSubstep,
-        start->color[3] + dCdx[3]*xSubstep
+        start->color[0] + dCdx[0]*xOffset,
+        start->color[1] + dCdx[1]*xOffset,
+        start->color[2] + dCdx[2]*xOffset,
+        start->color[3] + dCdx[3]*xOffset
     };
 #ifdef SW_ENABLE_DEPTH_TEST
-    float z = start->position[2] + dZdx*xSubstep;
+    float z = start->position[2] + dZdx*xOffset;
 #endif
 #ifdef SW_ENABLE_TEXTURE
-    float u = start->texcoord[0] + dUdx*xSubstep;
-    float v = start->texcoord[1] + dVdx*xSubstep;
+    float u = start->texcoord[0] + dUdx*xOffset;
+    float v = start->texcoord[1] + dVdx*xOffset;
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
-    int y = (int)start->position[1];
-    int baseOffset = y*RLSW.colorBuffer->width + xStart;
+    int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
 #ifdef SW_ENABLE_DEPTH_TEST
     uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
@@ -5433,12 +5445,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
 #define SW_AFFINE_BLOCK 16
 
-    int x = xStart;
-    while (x < xEnd)
+    int x = xLoopStart;
+    while (x < xLoopEnd)
     {
         // Clamp last block to remaining pixels
         int blockEnd = x + SW_AFFINE_BLOCK;
-        if (blockEnd > xEnd) blockEnd = xEnd;
+        if (blockEnd > xLoopEnd) blockEnd = xLoopEnd;
         float blockLenF = (float)(blockEnd - x);
         float blockLenRcp = sw_rcp(blockLenF);
 
@@ -5673,6 +5685,14 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     int xMax = (int)br->position[0];
     int yMax = (int)br->position[1];
 
+    // Exit early if no pixels to draw.  Use these later for loop boundaries
+    int yLoopMin = (yMin >= 0)? yMin : 0;
+    int xLoopMin = (xMin >= 0)? xMin : 0;
+    int yLoopMax = (yMax <= RLSW.colorBuffer->height)? yMax : RLSW.colorBuffer->height;
+    int xLoopMax = (xMax <= RLSW.colorBuffer->width)?  xMax : RLSW.colorBuffer->width;
+
+    if (yLoopMin >= yLoopMax || xLoopMin >= xLoopMax) return;
+
     float w = (float)(xMax - xMin);
     float h = (float)(yMax - yMin);
     if ((w <= 0) || (h <= 0)) return;
@@ -5726,21 +5746,44 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
-    for (int y = yMin; y < yMax; y++)
+    // Calculate the distance the in-bounds boundary is from the quad's edges, only on the left and top
+    float dxMin = (float)(xLoopMin - xMin);
+    float dyMin = (float)(yLoopMin - yMin);
+
+    // Correct our start by how far it's clipped outside the framebuffer
+    cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
+    cRow[1] += dCdx[1]*dxMin + dCdy[1]*dyMin;
+    cRow[2] += dCdx[2]*dxMin + dCdy[2]*dyMin;
+    cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
+    #ifdef SW_ENABLE_DEPTH_TEST
+    zRow += dZdy*dyMin + dZdx*dxMin;
+    #endif
+    #ifdef SW_ENABLE_TEXTURE
+    uRow += dUdy*dyMin + dUdx*dxMin;
+    vRow += dVdy*dyMin + dVdx*dxMin;
+    #endif
+
+    for (int y = yLoopMin; y < yLoopMax; y++)
     {
-        int baseOffset = y*stride + xMin;
+        int baseOffset = y*stride + xLoopMin;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
     #ifdef SW_ENABLE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
+        // Copy the cursors without destroying the offset maths
         float z = zRow;
     #endif
     #ifdef SW_ENABLE_TEXTURE
         float u = uRow;
         float v = vRow;
     #endif
-        float color[4] = { cRow[0], cRow[1], cRow[2], cRow[3] };
+        float color[4] = {
+            cRow[0],
+            cRow[1],
+            cRow[2],
+            cRow[3]
+        };
 
-        for (int x = xMin; x < xMax; x++)
+        for (int x = xLoopMin; x < xLoopMax; x++)
         {
             float srcColor[4] = { color[0], color[1], color[2], color[3] };
 
@@ -5779,6 +5822,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         #ifdef SW_ENABLE_DEPTH_TEST
         discard:
         #endif
+            // Move one pixel over without touching the original "start offset"
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
@@ -5801,6 +5845,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
         }
 
+        // The for loop is clamped to the right side of the screen
+        // However, these cursor start vars are still on the left
+        // That's fine, advancing to the next row
         cRow[0] += dCdy[0];
         cRow[1] += dCdy[1];
         cRow[2] += dCdy[2];

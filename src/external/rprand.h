@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rprand v1.0 - A simple and easy-to-use pseudo-random numbers generator (PRNG)
+*   rprand v1.1 - A simple and easy-to-use pseudo-random numbers generator (PRNG)
 *
 *   FEATURES:
 *       - Pseudo-random values generation, 32 bits: [0..4294967295]
@@ -118,6 +118,7 @@ extern "C" {                // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 RPRANDAPI void rprand_set_seed(unsigned long long seed);        // Set rprand_state for Xoshiro128**, seed is 64bit
 RPRANDAPI int rprand_get_value(int min, int max);               // Get random value within a range, min and max included
+RPRANDAPI int rprand_get_value_raw(void);                       // Get random value, Xoshiro128** generator (uses global rprand_state)
 
 RPRANDAPI int *rprand_load_sequence(unsigned int count, int min, int max); // Load pseudo-random numbers sequence with no duplicates
 RPRANDAPI void rprand_unload_sequence(int *sequence);           // Unload pseudo-random numbers sequence
@@ -182,6 +183,13 @@ void rprand_set_seed(unsigned long long seed)
 int rprand_get_value(int min, int max)
 {
     int value = rprand_xoshiro()%(abs(max - min) + 1) + min;
+
+    return value;
+}
+
+int rprand_get_value_raw(void)
+{
+    int value = rprand_xoshiro();
 
     return value;
 }
