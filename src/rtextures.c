@@ -3524,6 +3524,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     if (yLonger)
     {
         // If line is more vertical, iterate over y-axis
+		// Init j with 0.5 in 16-bit fixed point (1 << 15) for better rounding.
         for (int i = 0, j = (1 << 15); i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
