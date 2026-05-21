@@ -31,7 +31,6 @@ set(raylib_public_headers
 # Sources to be compiled
 set(raylib_sources
     rcore.c
-    rmodels.c
     rshapes.c
     rtext.c
     rtextures.c
@@ -40,6 +39,11 @@ set(raylib_sources
 # Only build raudio if it's enabled
 if (NOT DEFINED SUPPORT_MODULE_RAUDIO OR SUPPORT_MODULE_RAUDIO)
     list(APPEND raylib_sources raudio.c)
+endif()
+
+# Only build rmodels if it's enabled
+if (NOT DEFINED SUPPORT_MODULE_RMODELS OR SUPPORT_MODULE_RMODELS)
+    list(APPEND raylib_sources rmodels.c)
 endif()
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
