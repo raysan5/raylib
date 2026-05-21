@@ -30,13 +30,17 @@ set(raylib_public_headers
 
 # Sources to be compiled
 set(raylib_sources
-    raudio.c
     rcore.c
     rmodels.c
     rshapes.c
     rtext.c
     rtextures.c
     )
+
+# Only build raudio if it's enabled
+if (NOT DEFINED SUPPORT_MODULE_RAUDIO OR SUPPORT_MODULE_RAUDIO)
+    list(APPEND raylib_sources raudio.c)
+endif()
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 if (NOT ${PLATFORM} MATCHES "Web")
@@ -48,10 +52,10 @@ endif ()
 # Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
 
-if (SUPPORT_MODULE_RAUDIO)
-    MESSAGE(STATUS "Audio Backend: miniaudio")
-else ()
+if (DEFINED SUPPORT_MODULE_RAUDIO AND NOT SUPPORT_MODULE_RAUDIO)
     MESSAGE(STATUS "Audio Backend: None (-DCUSTOMIZE_BUILD=ON -DSUPPORT_MODULE_RAUDIO=OFF)")
+else ()
+    MESSAGE(STATUS "Audio Backend: miniaudio")
 endif ()
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
