@@ -876,9 +876,16 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
-    #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
-    #define GL_GLEXT_PROTOTYPES
-    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+    #if defined(PLATFORM_IOS)
+        #include <OpenGLES/ES3/gl.h>     // OpenGL ES 3.0 library
+        #define GL_GLEXT_PROTOTYPES
+        #include <OpenGLES/ES2/glext.h>   // OpenGL ES extensions used by raylib
+        #include <OpenGLES/ES3/glext.h>   // OpenGL ES 3.0 extensions library
+    #else
+        #include <GLES3/gl3.h>           // OpenGL ES 3.0 library
+        #define GL_GLEXT_PROTOTYPES
+        #include <GLES2/gl2ext.h>        // OpenGL ES 2.0 extensions library
+    #endif
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on Desktop platforms,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0

@@ -38,6 +38,12 @@ set(raylib_sources
     rtextures.c
     )
 
+if (${PLATFORM} STREQUAL "iOS")
+    list(APPEND raylib_sources
+        rcore_ios_main.m
+    )
+endif()
+
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
 if (NOT ${PLATFORM} MATCHES "Web")
     include(GlfwImport)
@@ -103,6 +109,11 @@ target_link_libraries(raylib PUBLIC ${LIBS_PUBLIC})
 # If CUSTOMIZE_BUILD option is on you will not use config.h by default
 # and you will be able to select more build options
 include(CompileDefinitions)
+
+if (${PLATFORM} STREQUAL "iOS")
+    target_compile_definitions(raylib PRIVATE GLES_SILENCE_DEPRECATION=1)
+    target_compile_options(raylib PRIVATE -Wno-deprecated-declarations)
+endif()
 
 # Registering include directories
 target_include_directories(raylib
