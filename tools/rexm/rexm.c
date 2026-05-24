@@ -675,13 +675,12 @@ int main(int argc, char *argv[])
             // WARNING 2: raylib.a and raylib.web.a must be available when compiling locally
 #if defined(_WIN32)
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", GetFileNameWithoutExt(inFileName));
-            //putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 #else
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", GetFileNameWithoutExt(inFileName));
-            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 #endif
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            
             // Update generated .html metadata
             LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
             UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -778,10 +777,9 @@ int main(int argc, char *argv[])
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
 #if defined(_WIN32)
             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
-#else
-            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 #endif
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+
             // Update generated .html metadata
             UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename),
                 TextFormat("%s/%s/%s.c", exBasePath, exCategory, exRename));
@@ -917,7 +915,7 @@ int main(int argc, char *argv[])
             // Set required environment variables
             //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=mingw32-make");
+            //putenv("MAKE=make");
             //ChangeDirectory(exBasePath);
 #endif
             for (int i = 0; i < exBuildListCount; i++)
@@ -933,7 +931,7 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
@@ -949,13 +947,9 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.data
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
-    #if defined(_WIN32)
-                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-    #else
-                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
+                LOG("INFO: [%s] Building example for PLATFORM_WEB\n", exName);
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-    #endif
+
                 // Update generated .html metadata
                 LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
                 UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -1312,11 +1306,10 @@ int main(int argc, char *argv[])
                         #if defined(_WIN32)
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exInfo->name);
                             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #else
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
-                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #endif
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
                             LOG("INFO: [%s.html] Updating HTML Metadata...\n", exInfo->name);
@@ -1495,7 +1488,7 @@ int main(int argc, char *argv[])
             // Set required environment variables
             //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
             //_putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=mingw32-make");
+            //putenv("MAKE=make");
             //ChangeDirectory(exBasePath);
             //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
             //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
@@ -1592,7 +1585,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
@@ -1641,13 +1634,13 @@ int main(int argc, char *argv[])
                 // Set required environment variables
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=mingw32-make");
+                //putenv("MAKE=make");
                 //ChangeDirectory(exBasePath);
     #endif
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
