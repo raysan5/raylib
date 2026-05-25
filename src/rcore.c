@@ -4587,11 +4587,9 @@ RLAPI int WaitProcess(Process process)
             // Normal exit
             return WEXITSTATUS(status);
         }
-        else if (WIFSIGNALED(status))
-        {
-            // Terminated by signal
-            return -1;
-        }
+
+        // Terminated by signal or other non-normal exit
+        return -1;
     }
     else
     {
