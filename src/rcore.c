@@ -271,6 +271,13 @@
         void **hWritePipe,
         struct _SECURITY_ATTRIBUTES *lpPipeAttributes,
         unsigned long nSize);
+    __declspec(dllimport) int __stdcall PeekNamedPipe(
+        void *hNamedPipe,
+        void *lpBuffer,
+        unsigned long nBufferSize,
+        unsigned long *lpBytesRead,
+        unsigned long *lpTotalBytesAvail,
+        unsigned long *lpBytesLeftThisMessage);
     __declspec(dllimport) int __stdcall ReadFile(
         void *hFile,
         void *lpBuffer,
@@ -4614,6 +4621,15 @@ RLAPI const char *ReadProcessOutput(Process process, int *length)
 #if defined(_WIN32)
     // Read from output pipe
     // NOTE: This will read whatever in the pipe buffer
+
+    // ReadFile will block if there is no data, so call PeekNamedPipe to check for data before reading
+    unsigned long bytesAvail = 0;
+    if ((!PeekNamedPipe(process.internal->pipeStdoutRead, NULL, 0, NULL, &bytesAvail, NULL)) ||
+        (bytesAvail == 0))
+    {
+        *length = 0;
+        return NULL;
+    }
 
     unsigned long bytesRead = 0;
     if (!ReadFile(process.internal->pipeStdoutRead, output, sizeof(output), &bytesRead, NULL))
