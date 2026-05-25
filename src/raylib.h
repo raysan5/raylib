@@ -1260,6 +1260,7 @@ RLAPI int GetTouchPointCount(void);                           // Get number of t
 // Process execution functions
 RLAPI Process InitProcess(const char *command, char *const args[]); // Initialize a new process, returns a Process struct
 RLAPI ProcessInfo CheckProcess(Process process);                    // Check if a process is still running
+RLAPI int WaitProcess(Process process);                             // Wait for process to finish, returns exit code, blocking
 RLAPI void PauseProcess(Process process);                           // Pause process execution
 RLAPI void ResumeProcess(Process process);                          // Resume paused process execution
 RLAPI void CloseProcess(Process process);                           // Close process and free resources

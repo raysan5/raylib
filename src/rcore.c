@@ -4428,6 +4428,65 @@ RLAPI ProcessInfo CheckProcess(Process process)
     return info;
 }
 
+RLAPI int WaitProcess(Process process)
+{
+    if (process.pid <= 0)
+    {
+        return -1;
+    }
+
+#if defined(_WIN32)
+    // PROCESS_QUERY_INFORMATION | SYNCHRONIZE
+    // SYNCHRONIZE for WaitForSingleObject
+    void *hProcess = OpenProcess(0x0400 | 0x00100000, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return -1;
+    }
+
+    // Wait indefinitely for process termination
+    // INFINITE
+    WaitForSingleObject(hProcess, 0xFFFFFFFF);
+
+    // Get exit code
+    unsigned long exitCode = 0;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        CloseHandle(hProcess);
+        return (int)exitCode;
+    }
+
+    CloseHandle(hProcess);
+    return -1;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    int status = 0;
+    pid_t result = waitpid(process.pid, &status, 0);
+
+    if (result == process.pid)
+    {
+        if (WIFEXITED(status))
+        {
+            // Normal exit
+            return WEXITSTATUS(status);
+        }
+        else if (WIFSIGNALED(status))
+        {
+            // Terminated by signal
+            return -1;
+        }
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to wait for process");
+        return -1;
+    }
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return -1;
+#endif
+}
+
 // Pause process execution
 RLAPI void PauseProcess(Process process)
 {
