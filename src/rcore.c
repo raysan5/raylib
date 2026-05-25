@@ -4776,6 +4776,8 @@ RLAPI void CloseProcess(Process process)
     void *pipes[] = { process.internal->pipeStdoutRead, process.internal->pipeStdinWrite };
     CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
 
+    RL_FREE(process.internal);
+
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     // If process is not running or not found, nothing to do
     ProcessInfo info = CheckProcess(process);
