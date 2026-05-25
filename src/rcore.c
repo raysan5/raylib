@@ -4345,76 +4345,93 @@ RLAPI Process InitProcess(const char *command, char *const args[])
 }
 
 // Check if a process is still running, updates Process struct
-RLAPI bool CheckProcess(Process *process)
+RLAPI ProcessInfo CheckProcess(Process process)
 {
-    if ((process == NULL) || (process->pid <= 0))
+    ProcessInfo info = { 0 };
+
+    if (process.pid <= 0)
     {
-        return false;
+        info.state = PROCESS_STATE_NONE;
+        return info;
     }
 
 #if defined(_WIN32)
     // PROCESS_QUERY_INFORMATION
-    void *hProcess = OpenProcess(0x0400, 0, (unsigned long)process->pid);
-    if (hProcess == NULL) return false;
+    void *hProcess = OpenProcess(0x0400, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        // Process does not exist
+        info.state = PROCESS_STATE_NONE;
+        return info;
+    }
 
     unsigned long exitCode = 0;
     if (GetExitCodeProcess(hProcess, &exitCode))
     {
         CloseHandle(hProcess);
         // STILL_ACTIVE (259) means the process is still running
-        if (exitCode == 259) return true;
-        
-        process->exitCode = (int)exitCode;
-        process->pid = 0;
-        return false;
+        if (exitCode == 259)
+        {
+            info.state = PROCESS_STATE_RUNNING;
+            return info;
+        }
+
+        info.state = PROCESS_STATE_FINISHED;
+        info.exitCode = (int)exitCode;
+
+        return info;
     }
 
     CloseHandle(hProcess);
-    return false;
+
+    // If GetExitCodeProcess fails, we consider the process state as unknown
+    info.state = PROCESS_STATE_NONE;
+    return info;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     int status = 0;
-    pid_t result = waitpid(process->pid, &status, WNOHANG);
+    pid_t result = waitpid(process.pid, &status, WNOHANG);
 
     if (result == 0)
     {
         // Still running
-        return true;
+        info.state = PROCESS_STATE_RUNNING;
+        return info;
     }
-    else if (result == process->pid)
+    else if (result == process.pid)
     {
         // Not running
         if (WIFEXITED(status))
         {
-            process->exitCode = WEXITSTATUS(status);
+            // Normal exit
+            info.state = PROCESS_STATE_FINISHED;
+            info.exitCode = WEXITSTATUS(status);
         }
         else if (WIFSIGNALED(status))
         {
             // Terminated by signal
-            process->exitCode = -1;
+            info.state = PROCESS_STATE_FINISHED;
+            info.exitCode = -1;
         }
     
-        // Mark as completed
-        process->pid = 0;
-    
-        return false;
+        return info;
     }
     else
     {
         // Error occurred
-        TRACELOG(LOG_WARNING, "PROCESS: Failed to check process status");
-        return false;
+        info.state = PROCESS_STATE_NONE;
+        return info;
     }
 #else
     TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
 #endif
 
-    return false;
+    return info;
 }
 
 // Pause process execution
-RLAPI void PauseProcess(Process *process)
+RLAPI void PauseProcess(Process process)
 {
-    if ((process == NULL) || (process->pid <= 0))
+    if (process.pid <= 0)
     {
         return;
     }
@@ -4440,7 +4457,7 @@ RLAPI void PauseProcess(Process *process)
     }
 
     // PROCESS_SUSPEND_RESUME
-    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process->pid);
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process.pid);
     if (hProcess == NULL)    {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
         return;
@@ -4452,7 +4469,7 @@ RLAPI void PauseProcess(Process *process)
     }
     CloseHandle(hProcess);
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-    if (kill(process->pid, SIGSTOP) != 0)
+    if (kill(process.pid, SIGSTOP) != 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to pause process");
     }
@@ -4462,9 +4479,9 @@ RLAPI void PauseProcess(Process *process)
 }
 
 // Resume paused process execution
-RLAPI void ResumeProcess(Process *process)
+RLAPI void ResumeProcess(Process process)
 {
-    if ((process == NULL) || (process->pid <= 0))
+    if (process.pid <= 0)
     {
         return;
     }
@@ -4491,7 +4508,7 @@ RLAPI void ResumeProcess(Process *process)
     }
 
     // PROCESS_SUSPEND_RESUME
-    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process->pid);
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process.pid);
     if (hProcess == NULL)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
@@ -4504,7 +4521,7 @@ RLAPI void ResumeProcess(Process *process)
     }
     CloseHandle(hProcess);
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-    if (kill(process->pid, SIGCONT) != 0)
+    if (kill(process.pid, SIGCONT) != 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to resume process");
     }
@@ -4514,15 +4531,15 @@ RLAPI void ResumeProcess(Process *process)
 }
 
 // Close process and free resources
-RLAPI void CloseProcess(Process *process)
+RLAPI void CloseProcess(Process process)
 {
-    if ((process == NULL) || (process->pid <= 0))
+    if (process.pid <= 0)
     {
         return;
     }
 #if defined(_WIN32)
     // PROCESS_TERMINATE
-    void *hProcess = OpenProcess(0x0001, 0, (unsigned long)process->pid);
+    void *hProcess = OpenProcess(0x0001, 0, (unsigned long)process.pid);
     if (hProcess == NULL)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
@@ -4532,31 +4549,27 @@ RLAPI void CloseProcess(Process *process)
     TerminateProcess(hProcess, 0);
     CloseHandle(hProcess);
 
-    process->exitCode = -1;
-    process->pid = 0;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-    if (!CheckProcess(process))
+    // If process is not running or not found, nothing to do
+    ProcessInfo info = CheckProcess(process);
+    if (info.state != PROCESS_STATE_RUNNING)
     {
         return;
     }
 
     // In case that the process is paused
-    kill(process->pid, SIGCONT);
+    kill(process.pid, SIGCONT);
 
-    if (kill(process->pid, SIGTERM) != 0)
+    if (kill(process.pid, SIGTERM) != 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to terminate process");
 
         // Kill the process anyway
-        kill(process->pid, SIGKILL);
+        kill(process.pid, SIGKILL);
     }
 
     // Wait process termination
-    waitpid(process->pid, NULL, 0);
-
-    // Align as CheckProcess() would do for a killed process
-    process->exitCode = -1;
-    process->pid = 0;
+    waitpid(process.pid, NULL, 0);
 #else
     TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
 #endif

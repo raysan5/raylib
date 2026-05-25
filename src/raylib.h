@@ -963,9 +963,19 @@ typedef enum {
 
 // Process info
 typedef struct Process {
-    int pid;                         // Process unique identifier
-    int exitCode;                    // Process exit code
+    int pid;                        // Process unique identifier
 } Process;
+
+typedef enum {
+    PROCESS_STATE_NONE = 0,         // No state information
+    PROCESS_STATE_RUNNING,          // Process is running
+    PROCESS_STATE_FINISHED          // Process has exited
+} ProcessState;
+
+typedef struct ProcessInfo {
+    ProcessState state;             // Process state (PROCESS_STATE_*)
+    int exitCode;                   // Process exit code (if finished)
+} ProcessInfo;
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
@@ -1249,10 +1259,10 @@ RLAPI int GetTouchPointCount(void);                           // Get number of t
 
 // Process execution functions
 RLAPI Process InitProcess(const char *command, char *const args[]); // Initialize a new process, returns a Process struct
-RLAPI bool CheckProcess(Process *process);                          // Check if a process is still running, updates Process struct
-RLAPI void PauseProcess(Process *process);                          // Pause process execution
-RLAPI void ResumeProcess(Process *process);                         // Resume paused process execution
-RLAPI void CloseProcess(Process *process);                          // Close process and free resources
+RLAPI ProcessInfo CheckProcess(Process process);                    // Check if a process is still running
+RLAPI void PauseProcess(Process process);                           // Pause process execution
+RLAPI void ResumeProcess(Process process);                          // Resume paused process execution
+RLAPI void CloseProcess(Process process);                           // Close process and free resources
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: rgestures)
