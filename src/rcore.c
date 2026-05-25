@@ -281,6 +281,7 @@
     #include <sys/wait.h>           // Required for: waitpid() [Used in CheckProcess()]
     #include <signal.h>             // Required for: kill() [Used in PauseProcess(), ResumeProcess(), CloseProcess()]
     #include <sys/types.h>          // Required for: pid_t [Used as function local variable type and for Process PID type]
+    #include <poll.h>               // Required for: pollfd, poll() [Used in ReadProcessOutput()]
 #endif
 
 //----------------------------------------------------------------------------------
@@ -4289,6 +4290,11 @@ int GetTouchPointCount(void)
 //----------------------------------------------------------------------------------
 
 #if defined(_WIN32)
+struct ProcessInternal {
+    void *pipeStdoutRead;           // Process stdout and stderr read pipe
+    void *pipeStdinWrite;           // Process stdin write pipe
+};
+
 static bool CreatePipeWindows(void** readPipe, void** writePipe) {
     struct _SECURITY_ATTRIBUTES sa = { 0 };
     sa.nLength = sizeof(struct _SECURITY_ATTRIBUTES);
@@ -4300,6 +4306,17 @@ static bool CreatePipeWindows(void** readPipe, void** writePipe) {
 static void CloseAllPipesWindows(void** pipes, int count) {
     for (int i = 0; i < count; i++) {
         if (pipes[i] != NULL) CloseHandle(pipes[i]);
+    }
+}
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+struct ProcessInternal {
+    int pipefdStdout[2];           // Process stdout and stderr pipe file descriptors
+    int pipefdStdin[2];            // Process stdin pipe file descriptors
+};
+
+static void CloseAllPipesUnix(int* pipefds, int count) {
+    for (int i = 0; i < count; i++) {
+        if (pipefds[i] != -1) close(pipefds[i]);
     }
 }
 #endif
@@ -4366,8 +4383,9 @@ RLAPI Process InitProcess(const char *command, char *const args[])
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        process.pipeStdoutRead = pipeStdoutRead;
-        process.pipeStdinWrite = pipeStdinWrite;
+        process.internal = (struct ProcessInternal *)RL_MALLOC(sizeof(struct ProcessInternal));
+        process.internal->pipeStdoutRead = pipeStdoutRead;
+        process.internal->pipeStdinWrite = pipeStdinWrite;
 
         // Free parent process handles
         CloseHandle(pipeStdoutWrite);
@@ -4380,15 +4398,46 @@ RLAPI Process InitProcess(const char *command, char *const args[])
 
     return process;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    // Initialize fd to -1 for error checking
+    int pipefd[4] = { -1, -1, -1, -1 };
+
+    if ((pipe(&pipefd[0]) == -1) || 
+        (pipe(&pipefd[2]) == -1))
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes");
+        CloseAllPipesUnix(pipefd, 4);
+        return process;
+    }
+
+    process.internal = (struct ProcessInternal *)RL_MALLOC(sizeof(struct ProcessInternal));
+    memcpy(process.internal->pipefdStdout, &pipefd[0], sizeof(int) * 2);
+    memcpy(process.internal->pipefdStdin, &pipefd[2], sizeof(int) * 2);
+
     pid_t pid = fork();
 
     if (pid < 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to create process");
+        CloseAllPipesUnix(pipefd, 4);
+        RL_FREE(process.internal);
+        return process;
     }
     else if (pid == 0)
     {
         // Child process
+
+        // Close pipe read end, redirect stdout and stderr to pipe write end
+        close(process.internal->pipefdStdout[0]);
+        dup2(process.internal->pipefdStdout[1], STDOUT_FILENO);
+        dup2(process.internal->pipefdStdout[1], STDERR_FILENO);
+        close(process.internal->pipefdStdout[1]);
+
+        // Close pipe write end, redirect stdin to pipe read end
+        close(process.internal->pipefdStdin[1]);
+        dup2(process.internal->pipefdStdin[0], STDIN_FILENO);
+        close(process.internal->pipefdStdin[0]);
+
+        // Execute command
         execvp(command, args);
 
         // If execvp returns, it must have failed
@@ -4396,7 +4445,12 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     }
     else
     {
+        // Parent process
         process.pid = pid;
+
+        // Close stdout pipe write end and stdin pipe read end
+        close(process.internal->pipefdStdout[1]);
+        close(process.internal->pipefdStdin[0]);
     }
 
     return process;
@@ -4564,7 +4618,7 @@ RLAPI const char *ReadProcessOutput(Process process, int *length)
     // NOTE: This will read whatever in the pipe buffer
 
     unsigned long bytesRead = 0;
-    if (!ReadFile(process.pipeStdoutRead, output, sizeof(output), &bytesRead, NULL))
+    if (!ReadFile(process.internal->pipeStdoutRead, output, sizeof(output), &bytesRead, NULL))
     {
         *length = 0;
         return NULL;
@@ -4573,7 +4627,22 @@ RLAPI const char *ReadProcessOutput(Process process, int *length)
     *length = (int)bytesRead;
     return output;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-    TRACELOG(LOG_WARNING, "PROCESS: Reading process output not supported on this platform");
+    struct pollfd fds[1];
+    fds[0].fd = process.internal->pipefdStdout[0];
+    fds[0].events = POLLIN;
+
+    // No timeout, just check if there is data to read
+    int pollResult = poll(fds, 1, 0);
+    if ((pollResult > 0) && (fds[0].revents & POLLIN))
+    {
+        ssize_t bytesRead = read(process.internal->pipefdStdout[0], output, sizeof(output));
+        if (bytesRead > 0)
+        {
+            *length = (int)bytesRead;
+            return output;
+        }
+    }
+
     *length = 0;
     return NULL;
 #else
@@ -4704,7 +4773,7 @@ RLAPI void CloseProcess(Process process)
     CloseHandle(hProcess);
 
     // Clean up pipes
-    void* pipes[] = { process.pipeStdoutRead, process.pipeStdinWrite };
+    void *pipes[] = { process.internal->pipeStdoutRead, process.internal->pipeStdinWrite };
     CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
 
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -4728,6 +4797,10 @@ RLAPI void CloseProcess(Process process)
 
     // Wait process termination
     waitpid(process.pid, NULL, 0);
+
+    int pipefd[2] = { process.internal->pipefdStdout[0], process.internal->pipefdStdin[1] };
+    CloseAllPipesUnix(pipefd, 2);
+    RL_FREE(process.internal);
 #else
     TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
 #endif

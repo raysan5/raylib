@@ -961,20 +961,20 @@ typedef enum {
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
 } NPatchLayout;
 
-// Process info
+// Process resources
 typedef struct Process {
-    int pid;                        // Process unique identifier
-
-    void *pipeStdoutRead;           // Process stdout and stderr read pipe [Windows only]
-    void *pipeStdinWrite;           // Process stdin write pipe [Windows only]
+    int pid;                          // Process unique identifier
+    struct ProcessInternal *internal; // Platform-specific process data
 } Process;
 
+// Process state
 typedef enum {
     PROCESS_STATE_NONE = 0,         // No state information
     PROCESS_STATE_RUNNING,          // Process is running
     PROCESS_STATE_FINISHED          // Process has exited
 } ProcessState;
 
+// Process information for CheckProcess() function
 typedef struct ProcessInfo {
     ProcessState state;             // Process state (PROCESS_STATE_*)
     int exitCode;                   // Process exit code (if finished)
