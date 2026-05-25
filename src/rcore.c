@@ -233,6 +233,12 @@
         void *hStdError;
     };
 
+    struct _SECURITY_ATTRIBUTES {
+        unsigned long nLength;
+        void *lpSecurityDescriptor;
+        int bInheritHandle;
+    };
+
     struct _PROCESS_INFORMATION {
         void *hProcess;
         void *hThread;
@@ -260,6 +266,17 @@
         const char *lpCurrentDirectory,
         struct _STARTUPINFOA *lpStartupInfo,
         struct _PROCESS_INFORMATION *lpProcessInformation);
+    __declspec(dllimport) int __stdcall CreatePipe(
+        void **hReadPipe,
+        void **hWritePipe,
+        struct _SECURITY_ATTRIBUTES *lpPipeAttributes,
+        unsigned long nSize);
+    __declspec(dllimport) int __stdcall ReadFile(
+        void *hFile,
+        void *lpBuffer,
+        unsigned long nNumberOfBytesToRead,
+        unsigned long *lpNumberOfBytesRead,
+        void *lpOverlapped);
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     #include <sys/wait.h>           // Required for: waitpid() [Used in CheckProcess()]
     #include <signal.h>             // Required for: kill() [Used in PauseProcess(), ResumeProcess(), CloseProcess()]
@@ -4271,6 +4288,22 @@ int GetTouchPointCount(void)
 // Module Functions Definition: Process Execution
 //----------------------------------------------------------------------------------
 
+#if defined(_WIN32)
+static bool CreatePipeWindows(void** readPipe, void** writePipe) {
+    struct _SECURITY_ATTRIBUTES sa = { 0 };
+    sa.nLength = sizeof(struct _SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = 1;
+    sa.lpSecurityDescriptor = NULL;
+    return CreatePipe(readPipe, writePipe, &sa, 0) != 0;
+}
+
+static void CloseAllPipesWindows(void** pipes, int count) {
+    for (int i = 0; i < count; i++) {
+        if (pipes[i] != NULL) CloseHandle(pipes[i]);
+    }
+}
+#endif
+
 // Initialize a new process, returns a Process struct
 RLAPI Process InitProcess(const char *command, char *const args[])
 {
@@ -4301,16 +4334,44 @@ RLAPI Process InitProcess(const char *command, char *const args[])
         }
     }
 
+    // For stdout/stderr, read handles reserved for Raylib side, write handles passed to child process
+    // For stdin, write handle reserved for Raylib side, read handle passed to child process
+    // NOTE: stdout and stderr are merged into a single pipe
+    void *pipeStdoutRead, *pipeStdoutWrite;
+    void *pipeStdinRead, *pipeStdinWrite;
+
+    if ((!CreatePipeWindows(&pipeStdoutRead, &pipeStdoutWrite)) ||
+        (!CreatePipeWindows(&pipeStdinRead, &pipeStdinWrite)))
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes for process I/O redirection");
+        void *pipes[] = { pipeStdoutRead, pipeStdoutWrite, pipeStdinRead, pipeStdinWrite };
+        CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
+        return process;
+    }
+
     struct _STARTUPINFOA si = { 0 };
     si.cb = sizeof(struct _STARTUPINFOA);
+    // STARTF_USESTDHANDLES
+    si.dwFlags = 0x00000100;
+    si.hStdError = pipeStdoutWrite;
+    si.hStdOutput = pipeStdoutWrite;
+    si.hStdInput = pipeStdinRead;
     struct _PROCESS_INFORMATION pi = { 0 };
 
     // Application name is specified as the first command line argument, so pass NULL to CreateProcessA here
-    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
+    // Flag bInheritHandles is set to TRUE, so child process will have access to the pipes
+    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 1, 0, NULL, NULL, &si, &pi))
     {
         process.pid = (int)pi.dwProcessId;
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
+
+        process.pipeStdoutRead = pipeStdoutRead;
+        process.pipeStdinWrite = pipeStdinWrite;
+
+        // Free parent process handles
+        CloseHandle(pipeStdoutWrite);
+        CloseHandle(pipeStdinRead);
     }
     else
     {
@@ -4337,11 +4398,12 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     {
         process.pid = pid;
     }
-#else
-    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
-#endif
 
     return process;
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return process;
+#endif
 }
 
 // Check if a process is still running, updates Process struct
@@ -4446,6 +4508,7 @@ RLAPI int WaitProcess(Process process)
     }
 
     // Wait indefinitely for process termination
+    // NOTE: calling WaitProcess while trying to read process output may cause deadlock
     // INFINITE
     WaitForSingleObject(hProcess, 0xFFFFFFFF);
 
@@ -4484,6 +4547,38 @@ RLAPI int WaitProcess(Process process)
 #else
     TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
     return -1;
+#endif
+}
+
+RLAPI const char *ReadProcessOutput(Process process, int *length)
+{
+    static char output[4096] = { 0 };
+
+    if (process.pid <= 0)
+    {
+        return NULL;
+    }
+
+#if defined(_WIN32)
+    // Read from output pipe
+    // NOTE: This will read whatever in the pipe buffer
+
+    unsigned long bytesRead = 0;
+    if (!ReadFile(process.pipeStdoutRead, output, sizeof(output), &bytesRead, NULL))
+    {
+        *length = 0;
+        return NULL;
+    }
+
+    *length = (int)bytesRead;
+    return output;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    TRACELOG(LOG_WARNING, "PROCESS: Reading process output not supported on this platform");
+    *length = 0;
+    return NULL;
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return NULL;
 #endif
 }
 
@@ -4607,6 +4702,10 @@ RLAPI void CloseProcess(Process process)
 
     TerminateProcess(hProcess, 0);
     CloseHandle(hProcess);
+
+    // Clean up pipes
+    void* pipes[] = { process.pipeStdoutRead, process.pipeStdinWrite };
+    CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
 
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     // If process is not running or not found, nothing to do

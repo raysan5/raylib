@@ -964,6 +964,9 @@ typedef enum {
 // Process info
 typedef struct Process {
     int pid;                        // Process unique identifier
+
+    void *pipeStdoutRead;           // Process stdout and stderr read pipe [Windows only]
+    void *pipeStdinWrite;           // Process stdin write pipe [Windows only]
 } Process;
 
 typedef enum {
@@ -1261,6 +1264,7 @@ RLAPI int GetTouchPointCount(void);                           // Get number of t
 RLAPI Process InitProcess(const char *command, char *const args[]); // Initialize a new process, returns a Process struct
 RLAPI ProcessInfo CheckProcess(Process process);                    // Check if a process is still running
 RLAPI int WaitProcess(Process process);                             // Wait for process to finish, returns exit code, blocking
+RLAPI const char *ReadProcessOutput(Process process, int *length);  // Read process output as raw buffer (not null-terminated), returns pointer to a static buffer, so data must be copied before next call to ReadProcessOutput()
 RLAPI void PauseProcess(Process process);                           // Pause process execution
 RLAPI void ResumeProcess(Process process);                          // Resume paused process execution
 RLAPI void CloseProcess(Process process);                           // Close process and free resources
