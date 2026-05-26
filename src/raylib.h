@@ -961,10 +961,14 @@ typedef enum {
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
 } NPatchLayout;
 
+// Opaque structs declaration for Process
+// NOTE: actual definition in rcore.c
+typedef struct rProcessData rProcessData;
+
 // Process resources
 typedef struct Process {
     int pid;                          // Process unique identifier
-    struct ProcessInternal *internal; // Platform-specific process data
+    rProcessData *processData;        // Platform-specific process data
 } Process;
 
 // Process state
