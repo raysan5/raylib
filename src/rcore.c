@@ -4602,14 +4602,14 @@ RLAPI int WaitProcess(Process process)
 
 RLAPI const char *ReadProcessOutput(Process process, int *length)
 {
-    static char output[4096] = { 0 };
-
     if (process.pid <= 0)
     {
         return NULL;
     }
 
 #if defined(_WIN32)
+    static char output[4096] = { 0 };
+
     // Read from output pipe
 
     // ReadFile will block if there is no data, so call PeekNamedPipe to check for data before reading
@@ -4631,6 +4631,8 @@ RLAPI const char *ReadProcessOutput(Process process, int *length)
     *length = (int)bytesRead;
     return output;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    static char output[4096] = { 0 };
+
     struct pollfd fds[1];
     fds[0].fd = process.processData->pipefdStdout[0];
     fds[0].events = POLLIN;
