@@ -4301,31 +4301,11 @@ struct rProcessData {
     void *pipeStdoutRead;           // Process stdout and stderr read pipe
     void *pipeStdinWrite;           // Process stdin write pipe
 };
-
-static bool CreatePipeWindows(void** readPipe, void** writePipe) {
-    struct _SECURITY_ATTRIBUTES sa = { 0 };
-    sa.nLength = sizeof(struct _SECURITY_ATTRIBUTES);
-    sa.bInheritHandle = 1;
-    sa.lpSecurityDescriptor = NULL;
-    return CreatePipe(readPipe, writePipe, &sa, 0) != 0;
-}
-
-static void CloseAllPipesWindows(void** pipes, int count) {
-    for (int i = 0; i < count; i++) {
-        if (pipes[i] != NULL) CloseHandle(pipes[i]);
-    }
-}
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 struct rProcessData {
     int pipefdStdout[2];           // Process stdout and stderr pipe file descriptors
     int pipefdStdin[2];            // Process stdin pipe file descriptors
 };
-
-static void CloseAllPipesUnix(int* pipefds, int count) {
-    for (int i = 0; i < count; i++) {
-        if (pipefds[i] != -1) close(pipefds[i]);
-    }
-}
 #endif
 
 // Initialize a new process, returns a Process struct
@@ -4361,15 +4341,22 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     // For stdout/stderr, read handles reserved for Raylib side, write handles passed to child process
     // For stdin, write handle reserved for Raylib side, read handle passed to child process
     // NOTE: stdout and stderr are merged into a single pipe
-    void *pipeStdoutRead, *pipeStdoutWrite;
-    void *pipeStdinRead, *pipeStdinWrite;
+    void *pipeStdoutRead = NULL, *pipeStdoutWrite = NULL;
+    void *pipeStdinRead = NULL, *pipeStdinWrite = NULL;
 
-    if ((!CreatePipeWindows(&pipeStdoutRead, &pipeStdoutWrite)) ||
-        (!CreatePipeWindows(&pipeStdinRead, &pipeStdinWrite)))
+    struct _SECURITY_ATTRIBUTES sa = { 0 };
+    sa.nLength = sizeof(struct _SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = 1;
+    sa.lpSecurityDescriptor = NULL;
+
+    if ((!CreatePipe(&pipeStdoutRead, &pipeStdoutWrite, &sa, 0)) ||
+        (!CreatePipe(&pipeStdinRead, &pipeStdinWrite, &sa, 0)))
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes for process I/O redirection");
         void *pipes[] = { pipeStdoutRead, pipeStdoutWrite, pipeStdinRead, pipeStdinWrite };
-        CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
+        for (int i = 0; i < 4; i++) {
+            if (pipes[i] != NULL) CloseHandle(pipes[i]);
+        }
         return process;
     }
 
@@ -4412,7 +4399,9 @@ RLAPI Process InitProcess(const char *command, char *const args[])
         (pipe(&pipefd[2]) == -1))
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes");
-        CloseAllPipesUnix(pipefd, 4);
+        for (int i = 0; i < 4; i++) {
+            if (pipefd[i] != -1) close(pipefd[i]);
+        }
         return process;
     }
 
@@ -4425,8 +4414,10 @@ RLAPI Process InitProcess(const char *command, char *const args[])
     if (pid < 0)
     {
         TRACELOG(LOG_WARNING, "PROCESS: Failed to create process");
-        CloseAllPipesUnix(pipefd, 4);
+
+        for (int i = 0; i < 4; i++) close(pipefd[i]);
         RL_FREE(process.processData);
+
         return process;
     }
     else if (pid == 0)
@@ -4786,8 +4777,8 @@ RLAPI void CloseProcess(Process process)
     CloseHandle(hProcess);
 
     // Clean up pipes
-    void *pipes[] = { process.processData->pipeStdoutRead, process.processData->pipeStdinWrite };
-    CloseAllPipesWindows(pipes, sizeof(pipes) / sizeof(pipes[0]));
+    if (process.processData->pipeStdoutRead != NULL) CloseHandle(process.processData->pipeStdoutRead);
+    if (process.processData->pipeStdinWrite != NULL) CloseHandle(process.processData->pipeStdinWrite);
 
     RL_FREE(process.processData);
 
@@ -4813,8 +4804,9 @@ RLAPI void CloseProcess(Process process)
     // Wait process termination
     waitpid(process.pid, NULL, 0);
 
-    int pipefd[2] = { process.processData->pipefdStdout[0], process.processData->pipefdStdin[1] };
-    CloseAllPipesUnix(pipefd, 2);
+    close(process.processData->pipefdStdout[0]);
+    close(process.processData->pipefdStdin[1]);
+
     RL_FREE(process.processData);
 #else
     TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
