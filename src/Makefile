@@ -240,6 +240,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     ifeq ($(ANDROID_ARCH),x86_64)
         ANDROID_COMPILER_ARCH = x86_64
     endif
+    ifndef ANDROID_COMPILER_ARCH
+        $(error ANDROID_COMPILER_ARCH: Unknown ANDROID_ARCH=$(ANDROID_ARCH))
+    endif
 endif
 
 # Define raylib graphics api depending on selected platform
