@@ -33,7 +33,7 @@
 // UIKit/OpenGL bridge functions implemented in rcore_ios_main.m
 RLAPI bool ios_initialize_window(int requestedWidth, int requestedHeight, int *screenWidth, int *screenHeight, int *renderWidth, int *renderHeight, float *scaleX, float *scaleY);
 RLAPI void ios_make_current_context(void);
-RLAPI void ios_shutdown_window(void);
+RLAPI void ios_close_platform(void);
 RLAPI void ios_present_frame(void);
 RLAPI void *ios_get_window_handle(void);
 RLAPI void ios_get_window_metrics(int *screenWidth, int *screenHeight, int *renderWidth, int *renderHeight, float *scaleX, float *scaleY);
@@ -433,9 +433,11 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+    ios_close_platform();
+
+    CORE = (CoreData){ 0 };
     platform = (PlatformData){ 0 };
     touchRaw = (TouchRaw){ 0 };
-    ios_shutdown_window();
 }
 
 // Find or allocate a touch slot for the given touchId
