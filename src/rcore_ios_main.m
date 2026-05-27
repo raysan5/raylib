@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
+#import <QuartzCore/CADisplayLink.h>
+#include <QuartzCore/CAFrameRateRange.h>
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
@@ -41,6 +43,11 @@ typedef struct IOSBridgeState {
 
 static IOSBridgeState ios = {0};
 
+static dispatch_queue_t raylibQueue = nil;
+static CADisplayLink *displayLink = nil;
+static dispatch_semaphore_t frameSem = nil;
+static int64_t vsyncCount = 0;
+
 @interface RaylibGLView : UIView
 @end
 
@@ -75,6 +82,7 @@ static IOSBridgeState ios = {0};
   [super viewWillDisappear:animated];
   ios_set_window_focused(false);
 }
+
 - (void)forwardTouches:(NSSet<UITouch *> *)touches action:(int)action {
   for (UITouch *touch in touches) {
     CGPoint point = [touch locationInView:self.view];
@@ -122,57 +130,113 @@ static IOSBridgeState ios = {0};
 
 @end
 
-void ios_shutdown_window(void) {
+@interface RaylibDisplayLinkTarget : NSObject
++ (void)startDisplayLink;
++ (void)onDisplayFrame:(CADisplayLink *)link;
++ (void)stopDisplayLink;
+@end
+
+@implementation RaylibDisplayLinkTarget
+
++ (void)startDisplayLink {
+  if (displayLink != nil)
+    return;
+
+  frameSem = dispatch_semaphore_create(0);
+  vsyncCount = 0;
+
+  displayLink =
+      [CADisplayLink displayLinkWithTarget:[self class]
+                                  selector:@selector(onDisplayFrame:)];
+
+  NSInteger maxFPS = [UIScreen mainScreen].maximumFramesPerSecond;
+  
+  // Use the display native refresh rate
+  displayLink.preferredFrameRateRange =
+      CAFrameRateRangeMake(60.0f, maxFPS, maxFPS);
+
+  [displayLink addToRunLoop:[NSRunLoop mainRunLoop]
+                    forMode:NSRunLoopCommonModes];
+}
+
++ (void)onDisplayFrame:(CADisplayLink *)link {
+  (void)link;
+  __atomic_fetch_add(&vsyncCount, 1, __ATOMIC_RELEASE);
+  dispatch_semaphore_signal(frameSem);
+}
+
++ (void)stopDisplayLink {
+  if (displayLink == nil)
+    return;
+
+  [displayLink invalidate];
+  displayLink = nil;
+
+  dispatch_semaphore_signal(frameSem);
+}
+
+@end
+
+static void shutdown_internal(void) {
+  [RaylibDisplayLinkTarget stopDisplayLink];
+
+  if (ios.context != nil) {
+    [EAGLContext setCurrentContext:ios.context];
+
+    if (ios.framebuffer != 0)
+      glDeleteFramebuffers(1, &ios.framebuffer);
+    if (ios.colorBuffer != 0)
+      glDeleteRenderbuffers(1, &ios.colorBuffer);
+    if (ios.depthBuffer != 0)
+      glDeleteRenderbuffers(1, &ios.depthBuffer);
+
+    ios.framebuffer = 0;
+    ios.colorBuffer = 0;
+    ios.depthBuffer = 0;
+    ios.context = nil;
+  }
+
+  ios.glView = nil;
+  ios.viewController = nil;
+  ios.window = nil;
+  ios.initialized = false;
+}
+
+void ios_close_platform(void) {
   if (!ios.initialized || ios.shuttingDown)
     return;
+
   ios.shuttingDown = true;
 
-  void (^shutdownBlock)(void) = ^{
-    if (ios.context != nil) {
-      [EAGLContext setCurrentContext:ios.context];
-
-      if (ios.framebuffer != 0)
-        glDeleteFramebuffers(1, &ios.framebuffer);
-      if (ios.colorBuffer != 0)
-        glDeleteRenderbuffers(1, &ios.colorBuffer);
-      if (ios.depthBuffer != 0)
-        glDeleteRenderbuffers(1, &ios.depthBuffer);
-
-      ios.framebuffer = 0;
-      ios.colorBuffer = 0;
-      ios.depthBuffer = 0;
-      ios.context = nil;
-    }
-
-    ios.glView = nil;
-    ios.viewController = nil;
-    ios.window = nil;
-    ios.initialized = false;
-  };
-
   if ([NSThread isMainThread])
-    shutdownBlock();
+    shutdown_internal();
   else
-    dispatch_sync(dispatch_get_main_queue(), shutdownBlock);
-
-  ios.shuttingDown = false;
+    dispatch_async(dispatch_get_main_queue(), ^{
+      shutdown_internal();
+    });
 }
 
 @interface RaylibAppDelegate : UIResponder <UIApplicationDelegate>
 @end
 
 @interface RaylibSceneDelegate : UIResponder <UIWindowSceneDelegate>
-
 @property(strong, nonatomic) UIWindow *window;
-
 @end
 
 static void ios_start_raylib_main(void) {
   if (ios.raylibStarted)
     return;
+
   ios.raylibStarted = true;
 
-  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+  raylibQueue =
+      dispatch_queue_create("com.raylib.engine", DISPATCH_QUEUE_SERIAL);
+
+  dispatch_async(raylibQueue, ^{
+    [[NSThread currentThread] setName:@"com.raylib.engine"];
+
+    // NSLog(@"[raylib][IOS] raylib thread: %@", [NSThread currentThread].name);
+
     raylib_main(ios.argc, ios.argv);
   });
 }
@@ -240,6 +304,8 @@ static void ios_start_raylib_main(void) {
   self.window.rootViewController = ios.viewController;
   [self.window makeKeyAndVisible];
 
+  [RaylibDisplayLinkTarget startDisplayLink];
+
   ios_start_raylib_main();
 }
 
@@ -256,7 +322,7 @@ static void ios_start_raylib_main(void) {
 - (void)sceneDidDisconnect:(UIScene *)scene {
   (void)scene;
   ios_request_close();
-  ios_shutdown_window();
+  ios_close_platform();
 }
 
 @end
@@ -314,9 +380,6 @@ static BOOL ios_setup_gl(void) {
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                             GL_RENDERBUFFER, ios.depthBuffer);
 
-  BOOL fbComplete =
-      (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
   GLenum fbStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (fbStatus != GL_FRAMEBUFFER_COMPLETE) {
     NSLog(@"[raylib][IOS] Framebuffer incomplete: 0x%04X", fbStatus);
@@ -327,7 +390,7 @@ static BOOL ios_setup_gl(void) {
 
   [EAGLContext setCurrentContext:nil];
 
-  return fbComplete;
+  return fbStatus == GL_FRAMEBUFFER_COMPLETE;
 }
 
 bool ios_initialize_window(int requestedWidth, int requestedHeight,
@@ -419,6 +482,17 @@ void ios_present_frame(void) {
   err = glGetError();
   if (err != GL_NO_ERROR)
     NSLog(@"[raylib][IOS] glGetError after present: 0x%04X", err);
+  if (frameSem != nil && !ios.shuttingDown) {
+    static int64_t lastVsync = 0;
+    int64_t current = __atomic_load_n(&vsyncCount, __ATOMIC_ACQUIRE);
+
+    while ((current - lastVsync) < 1 && !ios.shuttingDown) {
+      dispatch_semaphore_wait(frameSem, DISPATCH_TIME_FOREVER);
+      current = __atomic_load_n(&vsyncCount, __ATOMIC_ACQUIRE);
+    }
+
+    lastVsync = current;
+  }
 }
 
 void *ios_get_window_handle(void) { return (__bridge void *)ios.window; }
@@ -442,7 +516,7 @@ void ios_get_window_metrics(int *screenWidth, int *screenHeight,
     *scaleX = ios.scaleX;
     
   if (scaleY)
-    *scaleY = ios.scaleY;
+      *scaleY = ios.scaleY;
 }
 
 void *ios_get_proc_address(const char *name) {
