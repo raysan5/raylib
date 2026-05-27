@@ -738,7 +738,7 @@ par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
         *norms++ = nnormal[2];
     }
     mesh->ntriangles = slices;
-    mesh->triangles = PAR_MALLOC(PAR_SHAPES_T, 3 * mesh->ntriangles);
+    mesh->triangles = PAR_MALLOC(PAR_SHAPES_T, 3 * (uint32_t) mesh->ntriangles);
     PAR_SHAPES_T* triangles = mesh->triangles;
     for (int i = 0; i < slices; i++) {
         *triangles++ = 0;
