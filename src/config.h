@@ -232,7 +232,7 @@
     #define SUPPORT_FILEFORMAT_TGA      0       // Disabled by default
 #endif
 #ifndef SUPPORT_FILEFORMAT_JPG
-    #define SUPPORT_FILEFORMAT_JPG      0       // Disabled by default
+    #define SUPPORT_FILEFORMAT_JPG      1
 #endif
 #ifndef SUPPORT_FILEFORMAT_GIF
     #define SUPPORT_FILEFORMAT_GIF      1
