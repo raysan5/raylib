@@ -1399,7 +1399,9 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Map touch position to mouse position for convenience
-    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    // I believe this was intefering with swipe events on 5.5, maybe the pointCount check fixes this
+    // Uncomment if it breaks mouse, but for now, we'll use the last pointCount
+    // if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
     bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones
@@ -1709,13 +1711,24 @@ void PollInputEvents(void)
             } break;
             case SDL_FINGERUP:
             {
+                // fingerup returns a touchCount of 0 which is ignored by rgestures.h
+                // use the last pointCount from down
+                int count = CORE.Input.Touch.pointCount;
                 UpdateTouchPointsSDL(event.tfinger);
+                CORE.Input.Touch.pointCount = count;
+
                 touchAction = 0;
                 realTouch = true;
             } break;
             case SDL_FINGERMOTION:
             {
+                // fingermotion returns a touchCount of 0 on SDL3 pinephone? (not sure why)
+                // which is ignored by rgestures.h
+                // use the last pointCount from down
+                int count = CORE.Input.Touch.pointCount;
                 UpdateTouchPointsSDL(event.tfinger);
+                CORE.Input.Touch.pointCount = count;
+
                 touchAction = 2;
                 realTouch = true;
             } break;
@@ -1924,24 +1937,42 @@ void PollInputEvents(void)
             // Register touch actions
             gestureEvent.touchAction = touchAction;
 
-            // Assign a pointer ID
-            gestureEvent.pointId[0] = 0;
+            if (realTouch)
+            {
+              // Register touch points count
+              gestureEvent.pointCount = CORE.Input.Touch.pointCount;
 
-            // Register touch points count
-            gestureEvent.pointCount = 1;
+              // we want to track every touch.
+              for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+              {
+                gestureEvent.pointId[i] = i;
+                gestureEvent.position[i].x = CORE.Input.Touch.position[i].x / (float)GetScreenWidth();
+                gestureEvent.position[i].y = CORE.Input.Touch.position[i].y / (float)GetScreenWidth();
+              }
+            }
+            else
+            {
+              // Assign a pointer ID
+              gestureEvent.pointId[0] = 0;
 
-            // Register touch points position, only one point registered
-            if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
-            else gestureEvent.position[0] = GetMousePosition();
+              // Register touch points count
+              gestureEvent.pointCount = 1;
 
-            // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-            gestureEvent.position[0].x /= (float)GetScreenWidth();
-            gestureEvent.position[0].y /= (float)GetScreenHeight();
+              // Register touch points position, only one point registered
+              if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
+              else gestureEvent.position[0] = GetMousePosition();
+
+              // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+              gestureEvent.position[0].x /= (float)GetScreenWidth();
+              gestureEvent.position[0].y /= (float)GetScreenHeight();
+            }
 
             // Gesture data is sent to gestures-system for processing
             ProcessGestureEvent(gestureEvent);
 
             touchAction = -1;
+             // not sure how this behaves when mixing Mouse/Touch
+            realTouch = false;
         }
 #endif
     }
