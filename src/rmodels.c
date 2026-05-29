@@ -5375,16 +5375,18 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
         cgltf_node node = *skin.joints[i];
         if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name) - 1);
 
-        // Find parent bone index
+        // Find parent bone index by walking up the node tree past any
+        // non-joint ancestors (intermediate transform nodes used by some
+        // DCC exporters), until we hit a node that is also in skin.joints.
         int parentIndex = -1;
-
-        for (unsigned int j = 0; j < skin.joints_count; j++)
+        cgltf_node *ancestor = node.parent;
+        while (ancestor != NULL && parentIndex == -1)
         {
-            if (skin.joints[j] == node.parent)
+            for (unsigned int j = 0; j < skin.joints_count; j++)
             {
-                parentIndex = (int)j;
-                break;
+                if (skin.joints[j] == ancestor) { parentIndex = (int)j; break; }
             }
+            if (parentIndex == -1) ancestor = ancestor->parent;
         }
 
         bones[i].parent = parentIndex;
@@ -6515,20 +6517,58 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
         if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
+
+            // Precompute, per joint, the static transform contributed by any
+            // intermediate non-joint nodes between the joint and its nearest
+            // joint ancestor. This handles exporters (e.g. wow.export) that
+            // store bone offsets on dummy parent nodes rather than on the
+            // joints themselves. Depends only on the skin, not the animation.
+            int jointCount = (int)skin.joints_count;
+            Matrix *extOffset = (Matrix *)RL_MALLOC(jointCount*sizeof(Matrix));
+
+            if (extOffset == NULL)
+            {
+                // Allocation failed: abort animation loading at the source rather than
+                // propagating a NULL pointer into the per-frame transform loop below
+                TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to allocate joint offset buffer", fileName);
+                cgltf_free(data);
+                UnloadFileData(fileData);
+                *animCount = 0;
+                return NULL;
+            }
+
             *animCount = (int)data->animations_count;
             animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
-            Transform worldTransform = { 0 };
-            cgltf_float cgltf_worldTransform[16] = { 0 };
-            cgltf_node *node = skin.joints[0];
-            cgltf_node_transform_world(node->parent, cgltf_worldTransform);
-            Matrix worldMatrix = {
-                cgltf_worldTransform[0], cgltf_worldTransform[4], cgltf_worldTransform[8], cgltf_worldTransform[12],
-                cgltf_worldTransform[1], cgltf_worldTransform[5], cgltf_worldTransform[9], cgltf_worldTransform[13],
-                cgltf_worldTransform[2], cgltf_worldTransform[6], cgltf_worldTransform[10], cgltf_worldTransform[14],
-                cgltf_worldTransform[3], cgltf_worldTransform[7], cgltf_worldTransform[11], cgltf_worldTransform[15]
-            };
-            MatrixDecompose(worldMatrix, &worldTransform.translation, &worldTransform.rotation, &worldTransform.scale);
+            for (int k = 0; k < jointCount; k++)
+            {
+                extOffset[k] = MatrixIdentity();
+                cgltf_node *n = skin.joints[k]->parent;
+
+                while (n != NULL)
+                {
+                    bool isJoint = false;
+                    for (int jj = 0; jj < jointCount; jj++)
+                    {
+                        if (skin.joints[jj] == n)
+                        {
+                            isJoint = true;
+                            break;
+                        }
+                    }
+
+                    if (isJoint) break;
+
+                    // Compose the intermediate node's local TRS (scale, then rotation, then translation)
+                    Matrix nodeScale = MatrixScale(n->scale[0], n->scale[1], n->scale[2]);
+                    Matrix nodeRotation = QuaternionToMatrix((Quaternion){ n->rotation[0], n->rotation[1], n->rotation[2], n->rotation[3] });
+                    Matrix nodeTranslation = MatrixTranslate(n->translation[0], n->translation[1], n->translation[2]);
+                    Matrix nodeTransform = MatrixMultiply(MatrixMultiply(nodeScale, nodeRotation), nodeTranslation);
+
+                    extOffset[k] = MatrixMultiply(extOffset[k], nodeTransform);
+                    n = n->parent;
+                }
+            }
 
             for (unsigned int a = 0; a < data->animations_count; a++)
             {
@@ -6637,19 +6677,19 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                             }
                         }
 
-                        animations[a].keyframePoses[j][k] = (Transform){
-                            .translation = translation,
-                            .rotation = rotation,
-                            .scale = scale
-                        };
-                    }
+                        // Compose joint local TRS, then prepend the static
+                        // intermediate non-joint offsets so the final TRS is
+                        // expressed relative to the joint's skeleton parent.
+                        Matrix S = MatrixScale(scale.x, scale.y, scale.z);
+                        Matrix R = QuaternionToMatrix(rotation);
+                        Matrix T = MatrixTranslate(translation.x, translation.y, translation.z);
+                        Matrix jointLocal = MatrixMultiply(MatrixMultiply(S, R), T);
+                        Matrix combined = MatrixMultiply(jointLocal, extOffset[k]);
 
-                    Transform *root = &animations[a].keyframePoses[j][0];
-                    root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
-                    root->scale = Vector3Multiply(root->scale, worldTransform.scale);
-                    root->translation = Vector3Multiply(root->translation, worldTransform.scale);
-                    root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
-                    root->translation = Vector3Add(root->translation, worldTransform.translation);
+                        Transform tr;
+                        MatrixDecompose(combined, &tr.translation, &tr.rotation, &tr.scale);
+                        animations[a].keyframePoses[j][k] = tr;
+                    }
 
                     BuildPoseFromParentJoints(bones, animations[a].boneCount, animations[a].keyframePoses[j]);
                 }
@@ -6658,6 +6698,8 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                 RL_FREE(boneChannels);
                 RL_FREE(bones);
             }
+
+            RL_FREE(extOffset);
         }
 
         if (data->skins_count > 1)
