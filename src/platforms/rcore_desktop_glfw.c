@@ -839,7 +839,7 @@ int GetCurrentMonitor(void)
             // this is probably an overengineered solution for a side case
             // trying to match SDL behaviour
 
-            int closestDist = 0x7FFFFFFF;
+            unsigned int closestDist = 0xFFFFFFFFu;
 
             // Window center position
             int wcx = 0;
@@ -883,7 +883,14 @@ int GetCurrentMonitor(void)
 
                     int dx = wcx - xclosest;
                     int dy = wcy - yclosest;
-                    int dist = (dx*dx) + (dy*dy);
+
+                    // Unsigned to dodge signed overflow UB; (-x)^2 == x^2 mod 2^32 so sign drops out.
+                    // If |dx| or |dy| >= 65536, dist wraps and the wrong monitor may win.
+                    // Not a concern for realistic monitor layouts.
+                    unsigned int ux = (unsigned int)dx;
+                    unsigned int uy = (unsigned int)dy;
+                    unsigned int dist = ux*ux + uy*uy;
+
                     if (dist < closestDist)
                     {
                         index = i;
