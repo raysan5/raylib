@@ -6517,8 +6517,6 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
         if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
-            *animCount = (int)data->animations_count;
-            animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
             // Precompute, per joint, the static transform contributed by any
             // intermediate non-joint nodes between the joint and its nearest
@@ -6527,23 +6525,47 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
             // joints themselves. Depends only on the skin, not the animation.
             int jointCount = (int)skin.joints_count;
             Matrix *extOffset = (Matrix *)RL_MALLOC(jointCount*sizeof(Matrix));
+
+            if (extOffset == NULL)
+            {
+                // Allocation failed: abort animation loading at the source rather than
+                // propagating a NULL pointer into the per-frame transform loop below
+                TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to allocate joint offset buffer", fileName);
+                cgltf_free(data);
+                UnloadFileData(fileData);
+                *animCount = 0;
+                return NULL;
+            }
+
+            *animCount = (int)data->animations_count;
+            animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
+
             for (int k = 0; k < jointCount; k++)
             {
                 extOffset[k] = MatrixIdentity();
                 cgltf_node *n = skin.joints[k]->parent;
+
                 while (n != NULL)
                 {
                     bool isJoint = false;
                     for (int jj = 0; jj < jointCount; jj++)
                     {
-                        if (skin.joints[jj] == n) { isJoint = true; break; }
+                        if (skin.joints[jj] == n)
+                        {
+                            isJoint = true;
+                            break;
+                        }
                     }
+
                     if (isJoint) break;
-                    Matrix nm = MatrixMultiply(MatrixMultiply(
-                        MatrixScale(n->scale[0], n->scale[1], n->scale[2]),
-                        QuaternionToMatrix((Quaternion){ n->rotation[0], n->rotation[1], n->rotation[2], n->rotation[3] })),
-                        MatrixTranslate(n->translation[0], n->translation[1], n->translation[2]));
-                    extOffset[k] = MatrixMultiply(extOffset[k], nm);
+
+                    // Compose the intermediate node's local TRS (scale, then rotation, then translation)
+                    Matrix nodeScale = MatrixScale(n->scale[0], n->scale[1], n->scale[2]);
+                    Matrix nodeRotation = QuaternionToMatrix((Quaternion){ n->rotation[0], n->rotation[1], n->rotation[2], n->rotation[3] });
+                    Matrix nodeTranslation = MatrixTranslate(n->translation[0], n->translation[1], n->translation[2]);
+                    Matrix nodeTransform = MatrixMultiply(MatrixMultiply(nodeScale, nodeRotation), nodeTranslation);
+
+                    extOffset[k] = MatrixMultiply(extOffset[k], nodeTransform);
                     n = n->parent;
                 }
             }
