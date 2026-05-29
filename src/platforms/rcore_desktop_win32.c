@@ -1257,8 +1257,9 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
-        snprintf(cmd, strlen(url) + 32, "explorer \"%s\"", url);
+        int len = strlen(url) + 32;
+        char *cmd = (char *)RL_CALLOC(len, sizeof(char));
+        snprintf(cmd, len, "explorer \"%s\"", url);
         int result = system(cmd);
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
