@@ -2277,10 +2277,11 @@ int FileMove(const char *srcPath, const char *dstPath)
 int FileTextReplace(const char *fileName, const char *search, const char *replacement)
 {
     int result = 0;
+
+#if SUPPORT_MODULE_RTEXT
     char *fileText = NULL;
     char *fileTextUpdated = { 0 };
 
-#if SUPPORT_MODULE_RTEXT
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
