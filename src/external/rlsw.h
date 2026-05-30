@@ -165,9 +165,8 @@
 #endif
 
 // Full NPOT texture support (enabled by default)
-// When disabled, POT dimensions are assumed, enabling fast bitmask wrapping
-// (x & (size-1)) for SW_REPEAT; SW_CLAMP remains supported for any dimension
-// Setting SW_REPEAT on an NPOT texture will trigger SW_INVALID_OPERATION
+// When disabled, SW_REPEAT requires POT on its axis (fast bitmask wrap)
+// SW_CLAMP remains supported for any dimension, per-axis
 #define SW_SUPPORT_NPOT_TEXTURE true
 
 //----------------------------------------------------------------------------------
