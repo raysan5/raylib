@@ -3506,7 +3506,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     }
 
     // Initialize variables for drawing loop
-    int endVal = longLen;
+    int endVal = longLen + 1;
     int sgnInc = 1;
 
     // Adjust direction increment based on longLen sign
@@ -3514,6 +3514,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     {
         longLen = -longLen;
         sgnInc = -1;
+        endVal -= 2;
     }
 
     // Calculate fixed-point increment for shorter length
@@ -3523,7 +3524,8 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     if (yLonger)
     {
         // If line is more vertical, iterate over y-axis
-        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
+		// Init j with 0.5 in 16-bit fixed point (1 << 15) for better rounding.
+        for (int i = 0, j = (1 << 15); i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
             ImageDrawPixel(dst, startPosX + (j >> 16), startPosY + i, color);
@@ -3532,7 +3534,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     else
     {
         // If line is more horizontal, iterate over x-axis
-        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
+        for (int i = 0, j = (1 << 15); i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
             ImageDrawPixel(dst, startPosX + i, startPosY + (j >> 16), color);
