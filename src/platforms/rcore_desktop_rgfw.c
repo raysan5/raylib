@@ -184,6 +184,9 @@ typedef struct {
     i32 surfaceWidth;
     i32 surfaceHeight;
 #endif
+#if defined(__linux__) && defined(RGFW_X11)
+    Window windowHandleX11;             // Underlying type: unsigned long
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -851,15 +854,25 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    if (platform.window == NULL) return NULL;
+    void *handle = NULL;
 
-#if defined(RGFW_WASM)
-    return (void *)&platform.window->src.ctx;
-#elif defined(RGFW_WAYLAND)
-    return (void *)platform.window->src.surface;
-#else
-    return (void *)platform.window->src.window;
+    if (platform.window != NULL)
+    {
+#if defined(_WIN32)
+        handle = (void *)platform.window->src.window; // Type: HWND
+#elif defined(__linux__)
+    #if defined(RGFW_X11)
+        platform.windowHandleX11 = platform.window->src.window; // Type: Window (unsigned long)
+        handle = &platform.window->src.window; 
+    #elif defined(RGFW_WAYLAND)
+        handle = (void *)platform.window->src.surface; // Type: struct wl_surface*
+    #endif
+#elif defined(__APPLE__)
+        handle = (void *)platform.window->src.window; // Type: id, NSWindow*
 #endif
+    }
+
+    return handle;
 }
 
 // Get number of monitors

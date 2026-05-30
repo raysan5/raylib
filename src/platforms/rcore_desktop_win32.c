@@ -1023,7 +1023,7 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return platform.hwnd;
+    return (void *)platform.hwnd;
 }
 
 int GetMonitorCount(void)

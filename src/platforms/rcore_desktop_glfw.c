@@ -115,7 +115,7 @@ typedef struct {
     // Local storage for the window handle returned by glfwGetX11Window
     // This is needed as X11 handles are integers and may not fit inside a pointer depending on platform
     // Storing the handle locally and returning a pointer in GetWindowHandle allows the code to work regardless of pointer width
-    XID windowHandleX11;
+    Window windowHandleX11;             // Underlying type: unsigned long (XID, Window)
 #endif
 } PlatformData;
 
@@ -764,9 +764,10 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
+    void *handle = NULL;
+
 #if defined(_WIN32)
-    // NOTE: Returned handle is: void *HWND (windows.h)
-    return glfwGetWin32Window(platform.handle);
+    handle = glfwGetWin32Window(platform.handle); // Type: HWND
 #endif
 #if defined(__linux__)
     #if defined(_GLFW_WAYLAND)
@@ -774,28 +775,27 @@ void *GetWindowHandle(void)
             int platformID = glfwGetPlatform();
             if (platformID == GLFW_PLATFORM_WAYLAND)
             {
-                return glfwGetWaylandWindow(platform.handle);
+                handle = (void *)glfwGetWaylandWindow(platform.handle); // Type: struct wl_surface*
             }
             else
             {
-                platform.windowHandleX11 = glfwGetX11Window(platform.handle);
-                return &platform.windowHandleX11;
+                platform.windowHandleX11 = glfwGetX11Window(platform.handle); // Type: Window (unsigned long)
+                handle = &platform.windowHandleX11;
             }
         #else
-            return glfwGetWaylandWindow(platform.handle);
+            handle = (void *)glfwGetWaylandWindow(platform.handle);
         #endif
     #elif defined(_GLFW_X11)
-        // Store the window handle localy and return a pointer to the variable instead
+        // Store the window handle locally and return a pointer to the variable instead
         platform.windowHandleX11 = glfwGetX11Window(platform.handle);
-        return &platform.windowHandleX11;
+        handle = &platform.windowHandleX11;
     #endif
 #endif
 #if defined(__APPLE__)
-    // NOTE: Returned handle is: (objc_object *)
-    return (void *)glfwGetCocoaWindow(platform.handle);
+    handle = (void *)glfwGetCocoaWindow(platform.handle); // Type: NSWindow*
 #endif
 
-    return NULL;
+    return handle;
 }
 
 // Get number of monitors
