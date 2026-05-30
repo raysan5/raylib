@@ -5571,8 +5571,7 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     if (v1->position[1] > v2->position[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; }
     if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
 
-    // Extracting coordinates from the sorted vertices
-    // Put x away for safe keeping; only y is used right now; silences warnings
+    // Extracting Y coordinates from the sorted vertices
     float y0 = v0->position[1];
     float y1 = v1->position[1];
     float y2 = v2->position[1];
