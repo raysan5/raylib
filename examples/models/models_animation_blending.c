@@ -58,7 +58,7 @@ int main(void)
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
 
-    // Assign skinning shader to all materials shaders
+    // NOTE: Assign skinning shader to all materials shaders
     //for (int i = 0; i < model.materialCount; i++) model.materials[i].shader = skinningShader;
 
     // Load model animations
@@ -243,6 +243,12 @@ int main(void)
 
             if (GuiDropdownBox((Rectangle){ GetScreenWidth() - 170.0f, 10, 160, 24 }, TextJoin(animNames, animCount, ";"),
                 &animIndex1, dropdownEditMode1)) dropdownEditMode1 = !dropdownEditMode1;
+
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*2);
+            GuiLabel((Rectangle){ 0, GetScreenHeight() - 100.0f, GetScreenWidth(), 40 }, "PRESS SPACE to START BLENDING");
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
 
             // Draw playing timeline with keyframes for anim0[]
             GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 0",
