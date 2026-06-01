@@ -2487,9 +2487,12 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         float boneWeight = 0.0f;
         bool bufferUpdateRequired = false; // Flag to check when anim vertex information is updated
 
+#if defined (SUPPORT_GPU_SKINNING)
+        Material material = model.materials[model.meshMaterial[m]];
         // Skip if missing bone data or missing anim buffers initialization
-        if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) ||
+        if ((material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1) && (mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) ||
             (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
+#endif
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
         {
