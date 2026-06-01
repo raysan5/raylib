@@ -322,11 +322,7 @@
 #endif
 #ifndef SUPPORT_GPU_SKINNING
     // GPU skinning disabled by default, some GPUs do not support more than 8 VBOs
-    #if defined (GRAPHICS_API_OPENGL_33) || defined (GRAPHICS_API_OPENGL_43)
-        #define SUPPORT_GPU_SKINNING        1
-    #else
-        #define SUPPORT_GPU_SKINNING        0
-    #endif
+    #define SUPPORT_GPU_SKINNING        0
 #endif
 
 //------------------------------------------------------------------------------------
