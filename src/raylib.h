@@ -113,10 +113,6 @@
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
 #endif
 
-// iOS owns the real main() via UIApplicationMain.
-#if defined(PLATFORM_IOS)
-    #define main raylib_main
-#endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
