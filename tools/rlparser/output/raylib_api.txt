@@ -1667,37 +1667,37 @@ Function 123: SetSaveFileTextCallback() (1 input parameters)
 Function 124: FileRename() (2 input parameters)
   Name: FileRename
   Return type: int
-  Description: Rename file (if exists)
+  Description: Rename file (if exists), returns 0 on success
   Param[1]: fileName (type: const char *)
   Param[2]: fileRename (type: const char *)
 Function 125: FileRemove() (1 input parameters)
   Name: FileRemove
   Return type: int
-  Description: Remove file (if exists)
+  Description: Remove file (if exists), returns 0 on success
   Param[1]: fileName (type: const char *)
 Function 126: FileCopy() (2 input parameters)
   Name: FileCopy
   Return type: int
-  Description: Copy file from one path to another, dstPath created if it doesn't exist
+  Description: Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success
   Param[1]: srcPath (type: const char *)
   Param[2]: dstPath (type: const char *)
 Function 127: FileMove() (2 input parameters)
   Name: FileMove
   Return type: int
-  Description: Move file from one directory to another, dstPath created if it doesn't exist
+  Description: Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success
   Param[1]: srcPath (type: const char *)
   Param[2]: dstPath (type: const char *)
 Function 128: FileTextReplace() (3 input parameters)
   Name: FileTextReplace
   Return type: int
-  Description: Replace text in an existing file
+  Description: Replace text in an existing file, returns 0 on success
   Param[1]: fileName (type: const char *)
   Param[2]: search (type: const char *)
   Param[3]: replacement (type: const char *)
 Function 129: FileTextFindIndex() (2 input parameters)
   Name: FileTextFindIndex
   Return type: int
-  Description: Find text in existing file
+  Description: Find text in existing file, returns -1 if index not found or index otherwise
   Param[1]: fileName (type: const char *)
   Param[2]: search (type: const char *)
 Function 130: FileExists() (1 input parameters)
@@ -1768,8 +1768,8 @@ Function 142: MakeDirectory() (1 input parameters)
   Param[1]: dirPath (type: const char *)
 Function 143: ChangeDirectory() (1 input parameters)
   Name: ChangeDirectory
-  Return type: bool
-  Description: Change working directory, return true on success
+  Return type: int
+  Description: Change working directory, returns 0 on success
   Param[1]: dirPath (type: const char *)
 Function 144: IsPathFile() (1 input parameters)
   Name: IsPathFile

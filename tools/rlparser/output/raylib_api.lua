@@ -4022,7 +4022,7 @@ return {
     },
     {
       name = "FileRename",
-      description = "Rename file (if exists)",
+      description = "Rename file (if exists), returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4031,7 +4031,7 @@ return {
     },
     {
       name = "FileRemove",
-      description = "Remove file (if exists)",
+      description = "Remove file (if exists), returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"}
@@ -4039,7 +4039,7 @@ return {
     },
     {
       name = "FileCopy",
-      description = "Copy file from one path to another, dstPath created if it doesn't exist",
+      description = "Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "srcPath"},
@@ -4048,7 +4048,7 @@ return {
     },
     {
       name = "FileMove",
-      description = "Move file from one directory to another, dstPath created if it doesn't exist",
+      description = "Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "srcPath"},
@@ -4057,7 +4057,7 @@ return {
     },
     {
       name = "FileTextReplace",
-      description = "Replace text in an existing file",
+      description = "Replace text in an existing file, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4067,7 +4067,7 @@ return {
     },
     {
       name = "FileTextFindIndex",
-      description = "Find text in existing file",
+      description = "Find text in existing file, returns -1 if index not found or index otherwise",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4175,8 +4175,8 @@ return {
     },
     {
       name = "ChangeDirectory",
-      description = "Change working directory, return true on success",
-      returnType = "bool",
+      description = "Change working directory, returns 0 on success",
+      returnType = "int",
       params = {
         {type = "const char *", name = "dirPath"}
       }

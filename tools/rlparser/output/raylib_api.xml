@@ -1051,27 +1051,27 @@
         <Function name="SetSaveFileTextCallback" retType="void" paramCount="1" desc="Set custom file text data saver">
             <Param type="SaveFileTextCallback" name="callback" desc="" />
         </Function>
-        <Function name="FileRename" retType="int" paramCount="2" desc="Rename file (if exists)">
+        <Function name="FileRename" retType="int" paramCount="2" desc="Rename file (if exists), returns 0 on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="fileRename" desc="" />
         </Function>
-        <Function name="FileRemove" retType="int" paramCount="1" desc="Remove file (if exists)">
+        <Function name="FileRemove" retType="int" paramCount="1" desc="Remove file (if exists), returns 0 on success">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="FileCopy" retType="int" paramCount="2" desc="Copy file from one path to another, dstPath created if it doesn't exist">
+        <Function name="FileCopy" retType="int" paramCount="2" desc="Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success">
             <Param type="const char *" name="srcPath" desc="" />
             <Param type="const char *" name="dstPath" desc="" />
         </Function>
-        <Function name="FileMove" retType="int" paramCount="2" desc="Move file from one directory to another, dstPath created if it doesn't exist">
+        <Function name="FileMove" retType="int" paramCount="2" desc="Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success">
             <Param type="const char *" name="srcPath" desc="" />
             <Param type="const char *" name="dstPath" desc="" />
         </Function>
-        <Function name="FileTextReplace" retType="int" paramCount="3" desc="Replace text in an existing file">
+        <Function name="FileTextReplace" retType="int" paramCount="3" desc="Replace text in an existing file, returns 0 on success">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="search" desc="" />
             <Param type="const char *" name="replacement" desc="" />
         </Function>
-        <Function name="FileTextFindIndex" retType="int" paramCount="2" desc="Find text in existing file">
+        <Function name="FileTextFindIndex" retType="int" paramCount="2" desc="Find text in existing file, returns -1 if index not found or index otherwise">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="search" desc="" />
         </Function>
@@ -1113,7 +1113,7 @@
         <Function name="MakeDirectory" retType="int" paramCount="1" desc="Create directories (including full path requested), returns 0 on success">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="ChangeDirectory" retType="bool" paramCount="1" desc="Change working directory, return true on success">
+        <Function name="ChangeDirectory" retType="int" paramCount="1" desc="Change working directory, returns 0 on success">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if given path is a file or a directory">
