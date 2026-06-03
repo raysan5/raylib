@@ -5180,7 +5180,7 @@ Color GetColor(unsigned int hexValue)
 }
 
 // Get color from a pixel from certain format
-Color GetPixelColor(void *srcPtr, int format)
+Color GetPixelColor(const void *srcPtr, int format)
 {
     Color color = { 0 };
 
