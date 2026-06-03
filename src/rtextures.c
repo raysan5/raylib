@@ -1744,7 +1744,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Check if a fast path can be used on image scaling
+    // Check if fast path can be used on image scaling
     // It can be for 8 bit per channel images with 1 to 4 channels per pixel
     if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
         (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
@@ -4295,7 +4295,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
     return target;
 }
 
-// Check if a texture is valid (loaded in GPU)
+// Check if texture is valid (loaded in GPU)
 bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
@@ -4320,7 +4320,7 @@ void UnloadTexture(Texture2D texture)
     }
 }
 
-// Check if a render texture is valid (loaded in GPU)
+// Check if render texture is valid (loaded in GPU)
 bool IsRenderTextureValid(RenderTexture2D target)
 {
     bool result = false;

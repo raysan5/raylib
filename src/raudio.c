@@ -1013,7 +1013,7 @@ Sound LoadSoundAlias(Sound source)
     return sound;
 }
 
-// Check if a sound is valid (data loaded and buffers initialized)
+// Check if sound is valid (data loaded and buffers initialized)
 bool IsSoundValid(Sound sound)
 {
     bool result = false;
@@ -1215,7 +1215,7 @@ void StopSound(Sound sound)
     StopAudioBuffer(sound.stream.buffer);
 }
 
-// Check if a sound is playing
+// Check if sound is playing
 bool IsSoundPlaying(Sound sound)
 {
     bool result = false;
@@ -1751,7 +1751,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     return music;
 }
 
-// Check if a music stream is valid (context and buffers initialized)
+// Check if music stream is valid (context and buffers initialized)
 bool IsMusicValid(Music music)
 {
     return ((music.ctxData != NULL) &&          // Validate context loaded

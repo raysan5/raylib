@@ -1167,7 +1167,7 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
-// Check if a model is valid (loaded in GPU, VAO/VBOs)
+// Check if model is valid (loaded in GPU, VAO/VBOs)
 bool IsModelValid(Model model)
 {
     bool result = false;
@@ -2228,7 +2228,7 @@ Material LoadMaterialDefault(void)
     return material;
 }
 
-// Check if a material is valid (map textures loaded in GPU)
+// Check if material is valid (map textures loaded in GPU)
 bool IsMaterialValid(Material material)
 {
     bool result = false;

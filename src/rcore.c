@@ -1293,7 +1293,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     return shader;
 }
 
-// Check if a shader is valid (loaded on GPU)
+// Check if shader is valid (loaded on GPU)
 bool IsShaderValid(Shader shader)
 {
     return ((shader.id > 0) &&          // Validate shader id (GPU loaded successfully)
@@ -2396,7 +2396,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
-// Check if a directory path exists
+// Check if directory path exists
 bool DirectoryExists(const char *dirPath)
 {
     bool result = false;
@@ -2811,7 +2811,7 @@ bool ChangeDirectory(const char *dirPath)
     return (result == 0);
 }
 
-// Check if a given path point to a file
+// Check if given path point to a file
 bool IsPathFile(const char *path)
 {
     struct stat result = { 0 };
@@ -2876,7 +2876,7 @@ bool IsFileNameValid(const char *fileName)
     return valid;
 }
 
-// Check if a file has been dropped into window
+// Check if file has been dropped into window
 bool IsFileDropped(void)
 {
     bool result = false;
@@ -3787,7 +3787,7 @@ void PlayAutomationEvent(AutomationEvent event)
 // Module Functions Definition: Input Handling: Keyboard
 //----------------------------------------------------------------------------------
 
-// Check if a key has been pressed once
+// Check if key has been pressed once
 bool IsKeyPressed(int key)
 {
     bool pressed = false;
@@ -3800,7 +3800,7 @@ bool IsKeyPressed(int key)
     return pressed;
 }
 
-// Check if a key has been pressed again
+// Check if key has been pressed again
 bool IsKeyPressedRepeat(int key)
 {
     bool repeat = false;
@@ -3813,7 +3813,7 @@ bool IsKeyPressedRepeat(int key)
     return repeat;
 }
 
-// Check if a key is being pressed (key held down)
+// Check if key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
     bool down = false;
@@ -3826,7 +3826,7 @@ bool IsKeyDown(int key)
     return down;
 }
 
-// Check if a key has been released once
+// Check if key has been released once
 bool IsKeyReleased(int key)
 {
     bool released = false;
@@ -3839,7 +3839,7 @@ bool IsKeyReleased(int key)
     return released;
 }
 
-// Check if a key is NOT being pressed (key not held down)
+// Check if key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
     bool up = false;
@@ -3910,7 +3910,7 @@ void SetExitKey(int key)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //int SetGamepadMappings(const char *mappings)
 
-// Check if a gamepad is available
+// Check if gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
@@ -3926,7 +3926,7 @@ const char *GetGamepadName(int gamepad)
     return CORE.Input.Gamepad.name[gamepad];
 }
 
-// Check if a gamepad button has been pressed once
+// Check if gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
@@ -3939,7 +3939,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
     return pressed;
 }
 
-// Check if a gamepad button is being pressed
+// Check if gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool down = false;
@@ -3952,7 +3952,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     return down;
 }
 
-// Check if a gamepad button has NOT been pressed once
+// Check if gamepad button has NOT been pressed once
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
@@ -3965,7 +3965,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
     return released;
 }
 
-// Check if a gamepad button is NOT being pressed
+// Check if gamepad button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool up = false;
@@ -4014,7 +4014,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 //void SetMousePosition(int x, int y)
 //void SetMouseCursor(int cursor)
 
-// Check if a mouse button has been pressed once
+// Check if mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
@@ -4030,7 +4030,7 @@ bool IsMouseButtonPressed(int button)
     return pressed;
 }
 
-// Check if a mouse button is being pressed
+// Check if mouse button is being pressed
 bool IsMouseButtonDown(int button)
 {
     bool down = false;
@@ -4046,7 +4046,7 @@ bool IsMouseButtonDown(int button)
     return down;
 }
 
-// Check if a mouse button has been released once
+// Check if mouse button has been released once
 bool IsMouseButtonReleased(int button)
 {
     bool released = false;
@@ -4062,7 +4062,7 @@ bool IsMouseButtonReleased(int button)
     return released;
 }
 
-// Check if a mouse button is NOT being pressed
+// Check if mouse button is NOT being pressed
 bool IsMouseButtonUp(int button)
 {
     bool up = false;

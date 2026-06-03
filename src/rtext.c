@@ -593,7 +593,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     return font;
 }
 
-// Check if a font is valid (font data loaded)
+// Check if font is valid (font data loaded)
 // WARNING: GPU texture not checked
 bool IsFontValid(Font font)
 {
@@ -683,7 +683,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
                 //      stbtt_MakeCodepointBitmap()          -- renders into a provided bitmap
 
-                // Check if a glyph is available in the font
+                // Check if glyph is available in the font
                 // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
                 int index = stbtt_FindGlyphIndex(&fontInfo, cp);
 
