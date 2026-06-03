@@ -7364,7 +7364,7 @@ return {
         {type = "float", name = "radiusTop"},
         {type = "float", name = "radiusBottom"},
         {type = "float", name = "height"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
@@ -7390,7 +7390,7 @@ return {
         {type = "float", name = "radiusTop"},
         {type = "float", name = "radiusBottom"},
         {type = "float", name = "height"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
@@ -7403,7 +7403,7 @@ return {
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "startRadius"},
         {type = "float", name = "endRadius"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
