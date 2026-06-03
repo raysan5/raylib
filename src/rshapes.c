@@ -90,12 +90,12 @@ static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic eas
 // Set texture and rectangle to be used on shapes drawing
 // NOTE: It can be useful when using basic shapes and one single font,
 // defining a font char white rectangle would allow drawing everything in a single draw call
-void SetShapesTexture(Texture2D texture, Rectangle source)
+void SetShapesTexture(Texture2D texture, Rectangle rec)
 {
     // Reset texture to default pixel if required
     // WARNING: Shapes texture should be probably better validated,
     // it can break the rendering of all shapes if misused
-    if ((texture.id == 0) || (source.width == 0) || (source.height == 0))
+    if ((texture.id == 0) || (rec.width == 0) || (rec.height == 0))
     {
         texShapes = (Texture2D){ 1, 1, 1, 1, 7 };
         texShapesRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
@@ -103,7 +103,7 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
     else
     {
         texShapes = texture;
-        texShapesRec = source;
+        texShapesRec = rec;
     }
 }
 
