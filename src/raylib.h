@@ -1141,12 +1141,12 @@ RLAPI void SetSaveFileDataCallback(SaveFileDataCallback callback);  // Set custo
 RLAPI void SetLoadFileTextCallback(LoadFileTextCallback callback);  // Set custom file text data loader
 RLAPI void SetSaveFileTextCallback(SaveFileTextCallback callback);  // Set custom file text data saver
 
-RLAPI int FileRename(const char *fileName, const char *fileRename); // Rename file (if exists)
-RLAPI int FileRemove(const char *fileName);                         // Remove file (if exists)
-RLAPI int FileCopy(const char *srcPath, const char *dstPath);       // Copy file from one path to another, dstPath created if it doesn't exist
-RLAPI int FileMove(const char *srcPath, const char *dstPath);       // Move file from one directory to another, dstPath created if it doesn't exist
-RLAPI int FileTextReplace(const char *fileName, const char *search, const char *replacement); // Replace text in an existing file
-RLAPI int FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file
+RLAPI int FileRename(const char *fileName, const char *fileRename); // Rename file (if exists), returns 0 on success
+RLAPI int FileRemove(const char *fileName);                         // Remove file (if exists), returns 0 on success
+RLAPI int FileCopy(const char *srcPath, const char *dstPath);       // Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success
+RLAPI int FileMove(const char *srcPath, const char *dstPath);       // Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success
+RLAPI int FileTextReplace(const char *fileName, const char *search, const char *replacement); // Replace text in an existing file, returns 0 on success
+RLAPI int FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file, returns -1 if index not found or index otherwise
 RLAPI bool FileExists(const char *fileName);                        // Check if file exists
 RLAPI bool DirectoryExists(const char *dirPath);                    // Check if directory path exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);  // Check file extension (recommended include point: .png, .wav)
@@ -1160,7 +1160,7 @@ RLAPI const char *GetPrevDirectoryPath(const char *dirPath);        // Get previ
 RLAPI const char *GetWorkingDirectory(void);                        // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                    // Get the directory of the running application (uses static string)
 RLAPI int MakeDirectory(const char *dirPath);                       // Create directories (including full path requested), returns 0 on success
-RLAPI bool ChangeDirectory(const char *dirPath);                    // Change working directory, return true on success
+RLAPI int ChangeDirectory(const char *dirPath);                     // Change working directory, returns 0 on success
 RLAPI bool IsPathFile(const char *path);                            // Check if given path is a file or a directory
 RLAPI bool IsFileNameValid(const char *fileName);                   // Check if fileName is valid for the platform/OS
 RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths, files and directories, no subdirs scan

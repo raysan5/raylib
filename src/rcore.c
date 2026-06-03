@@ -2205,13 +2205,12 @@ void SetSaveFileTextCallback(SaveFileTextCallback callback)
 // NOTE: Only rename file name required, not full path
 int FileRename(const char *fileName, const char *fileRename)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(fileName))
     {
         result = rename(fileName, fileRename);
     }
-    else result = -1;
 
     return result;
 }
@@ -2219,13 +2218,12 @@ int FileRename(const char *fileName, const char *fileRename)
 // Remove file (if exists)
 int FileRemove(const char *fileName)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(fileName))
     {
         result = remove(fileName);
     }
-    else result = -1;
 
     return result;
 }
@@ -2234,7 +2232,7 @@ int FileRemove(const char *fileName)
 // NOTE: If destination path does not exist, it is created!
 int FileCopy(const char *srcPath, const char *dstPath)
 {
-    int result = 0;
+    int result = -1;
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
@@ -2245,7 +2243,10 @@ int FileCopy(const char *srcPath, const char *dstPath)
     if (result == 0) // Directory created successfully (or already exists)
     {
         if ((srcFileData != NULL) && (srcDataSize > 0))
-            result = SaveFileData(dstPath, srcFileData, srcDataSize);
+        {
+            bool saved = SaveFileData(dstPath, srcFileData, srcDataSize);
+            if (saved) result = 0;
+        }
     }
 
     UnloadFileData(srcFileData);
@@ -2261,11 +2262,18 @@ int FileMove(const char *srcPath, const char *dstPath)
 
     if (FileExists(srcPath))
     {
-        FileCopy(srcPath, dstPath);
-
-        // Make sure file has been correctly copied before removing
-        if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) result = FileRemove(srcPath);
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
+        result = FileCopy(srcPath, dstPath);
+        
+        if (result == 0)
+        {
+            // Make sure file has been correctly copied before removing
+            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) 
+            {
+                result = FileRemove(srcPath);
+                if (result != 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to remove source file after copy", srcPath);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
+        }
     }
 	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
@@ -2276,7 +2284,7 @@ int FileMove(const char *srcPath, const char *dstPath)
 // WARNING: DEPENDENCY: [rtext] module
 int FileTextReplace(const char *fileName, const char *search, const char *replacement)
 {
-    int result = 0;
+    int result = -1;
 
 #if SUPPORT_MODULE_RTEXT
     char *fileText = NULL;
@@ -2286,7 +2294,8 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     {
         fileText = LoadFileText(fileName);
         fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
-        result = SaveFileText(fileName, fileTextUpdated);
+        bool saved = SaveFileText(fileName, fileTextUpdated);
+        if (saved) result = 0;
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
     }
@@ -2801,14 +2810,16 @@ int MakeDirectory(const char *dirPath)
 }
 
 // Change working directory, returns true on success
-bool ChangeDirectory(const char *dirPath)
+int ChangeDirectory(const char *dirPath)
 {
-    bool result = CHDIR(dirPath);
+    // NOTE: On success, CHDIR() return 0; on error, returns -1 and errno is set to indicate the error,
+    // depending on the filesystem, other errors can be returned
+    int result = CHDIR(dirPath);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dirPath);
     else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dirPath);
 
-    return (result == 0);
+    return result;
 }
 
 // Check if given path point to a file
