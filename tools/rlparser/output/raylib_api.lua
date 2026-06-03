@@ -3626,7 +3626,7 @@ return {
     },
     {
       name = "IsShaderValid",
-      description = "Check if a shader is valid (loaded on GPU)",
+      description = "Check if shader is valid (loaded on GPU)",
       returnType = "bool",
       params = {
         {type = "Shader", name = "shader"}
@@ -4084,7 +4084,7 @@ return {
     },
     {
       name = "DirectoryExists",
-      description = "Check if a directory path exists",
+      description = "Check if directory path exists",
       returnType = "bool",
       params = {
         {type = "const char *", name = "dirPath"}
@@ -4183,7 +4183,7 @@ return {
     },
     {
       name = "IsPathFile",
-      description = "Check if a given path is a file or a directory",
+      description = "Check if given path is a file or a directory",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}
@@ -4225,7 +4225,7 @@ return {
     },
     {
       name = "IsFileDropped",
-      description = "Check if a file has been dropped into window",
+      description = "Check if file has been dropped into window",
       returnType = "bool"
     },
     {
@@ -4395,7 +4395,7 @@ return {
     },
     {
       name = "IsKeyPressed",
-      description = "Check if a key has been pressed once",
+      description = "Check if key has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4403,7 +4403,7 @@ return {
     },
     {
       name = "IsKeyPressedRepeat",
-      description = "Check if a key has been pressed again",
+      description = "Check if key has been pressed again",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4411,7 +4411,7 @@ return {
     },
     {
       name = "IsKeyDown",
-      description = "Check if a key is being pressed",
+      description = "Check if key is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4419,7 +4419,7 @@ return {
     },
     {
       name = "IsKeyReleased",
-      description = "Check if a key has been released once",
+      description = "Check if key has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4427,7 +4427,7 @@ return {
     },
     {
       name = "IsKeyUp",
-      description = "Check if a key is NOT being pressed",
+      description = "Check if key is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4461,7 +4461,7 @@ return {
     },
     {
       name = "IsGamepadAvailable",
-      description = "Check if a gamepad is available",
+      description = "Check if gamepad is available",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"}
@@ -4477,7 +4477,7 @@ return {
     },
     {
       name = "IsGamepadButtonPressed",
-      description = "Check if a gamepad button has been pressed once",
+      description = "Check if gamepad button has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4486,7 +4486,7 @@ return {
     },
     {
       name = "IsGamepadButtonDown",
-      description = "Check if a gamepad button is being pressed",
+      description = "Check if gamepad button is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4495,7 +4495,7 @@ return {
     },
     {
       name = "IsGamepadButtonReleased",
-      description = "Check if a gamepad button has been released once",
+      description = "Check if gamepad button has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4504,7 +4504,7 @@ return {
     },
     {
       name = "IsGamepadButtonUp",
-      description = "Check if a gamepad button is NOT being pressed",
+      description = "Check if gamepad button is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4554,7 +4554,7 @@ return {
     },
     {
       name = "IsMouseButtonPressed",
-      description = "Check if a mouse button has been pressed once",
+      description = "Check if mouse button has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4562,7 +4562,7 @@ return {
     },
     {
       name = "IsMouseButtonDown",
-      description = "Check if a mouse button is being pressed",
+      description = "Check if mouse button is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4570,7 +4570,7 @@ return {
     },
     {
       name = "IsMouseButtonReleased",
-      description = "Check if a mouse button has been released once",
+      description = "Check if mouse button has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4578,7 +4578,7 @@ return {
     },
     {
       name = "IsMouseButtonUp",
-      description = "Check if a mouse button is NOT being pressed",
+      description = "Check if mouse button is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4690,7 +4690,7 @@ return {
     },
     {
       name = "IsGestureDetected",
-      description = "Check if a gesture has been detected",
+      description = "Check if gesture has been detected",
       returnType = "bool",
       params = {
         {type = "unsigned int", name = "gesture"}
@@ -6361,7 +6361,7 @@ return {
     },
     {
       name = "IsTextureValid",
-      description = "Check if a texture is valid (loaded in GPU)",
+      description = "Check if texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Texture2D", name = "texture"}
@@ -6377,7 +6377,7 @@ return {
     },
     {
       name = "IsRenderTextureValid",
-      description = "Check if a render texture is valid (loaded in GPU)",
+      description = "Check if render texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "RenderTexture2D", name = "target"}
@@ -6635,7 +6635,7 @@ return {
       description = "Get Color from a source pixel pointer of certain format",
       returnType = "Color",
       params = {
-        {type = "void *", name = "srcPtr"},
+        {type = "const void *", name = "srcPtr"},
         {type = "int", name = "format"}
       }
     },
@@ -6708,7 +6708,7 @@ return {
     },
     {
       name = "IsFontValid",
-      description = "Check if a font is valid (font data loaded, WARNING: GPU texture not checked)",
+      description = "Check if font is valid (font data loaded, WARNING: GPU texture not checked)",
       returnType = "bool",
       params = {
         {type = "Font", name = "font"}
@@ -7479,7 +7479,7 @@ return {
     },
     {
       name = "IsModelValid",
-      description = "Check if a model is valid (loaded in GPU, VAO/VBOs)",
+      description = "Check if model is valid (loaded in GPU, VAO/VBOs)",
       returnType = "bool",
       params = {
         {type = "Model", name = "model"}
@@ -7809,7 +7809,7 @@ return {
     },
     {
       name = "IsMaterialValid",
-      description = "Check if a material is valid (shader assigned, map textures loaded in GPU)",
+      description = "Check if material is valid (shader assigned, map textures loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Material", name = "material"}
@@ -8055,7 +8055,7 @@ return {
     },
     {
       name = "IsSoundValid",
-      description = "Check if a sound is valid (data loaded and buffers initialized)",
+      description = "Check if sound is valid (data loaded and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -8147,7 +8147,7 @@ return {
     },
     {
       name = "IsSoundPlaying",
-      description = "Check if a sound is currently playing",
+      description = "Check if sound is currently playing",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -8245,7 +8245,7 @@ return {
     },
     {
       name = "IsMusicValid",
-      description = "Check if a music stream is valid (context and buffers initialized)",
+      description = "Check if music stream is valid (context and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}

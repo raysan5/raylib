@@ -1397,7 +1397,7 @@ Function 076: LoadShaderFromMemory() (2 input parameters)
 Function 077: IsShaderValid() (1 input parameters)
   Name: IsShaderValid
   Return type: bool
-  Description: Check if a shader is valid (loaded on GPU)
+  Description: Check if shader is valid (loaded on GPU)
   Param[1]: shader (type: Shader)
 Function 078: GetShaderLocation() (2 input parameters)
   Name: GetShaderLocation
@@ -1708,7 +1708,7 @@ Function 130: FileExists() (1 input parameters)
 Function 131: DirectoryExists() (1 input parameters)
   Name: DirectoryExists
   Return type: bool
-  Description: Check if a directory path exists
+  Description: Check if directory path exists
   Param[1]: dirPath (type: const char *)
 Function 132: IsFileExtension() (2 input parameters)
   Name: IsFileExtension
@@ -1774,7 +1774,7 @@ Function 143: ChangeDirectory() (1 input parameters)
 Function 144: IsPathFile() (1 input parameters)
   Name: IsPathFile
   Return type: bool
-  Description: Check if a given path is a file or a directory
+  Description: Check if given path is a file or a directory
   Param[1]: path (type: const char *)
 Function 145: IsFileNameValid() (1 input parameters)
   Name: IsFileNameValid
@@ -1801,7 +1801,7 @@ Function 148: UnloadDirectoryFiles() (1 input parameters)
 Function 149: IsFileDropped() (0 input parameters)
   Name: IsFileDropped
   Return type: bool
-  Description: Check if a file has been dropped into window
+  Description: Check if file has been dropped into window
   No input parameters
 Function 150: LoadDroppedFiles() (0 input parameters)
   Name: LoadDroppedFiles
@@ -1920,27 +1920,27 @@ Function 169: PlayAutomationEvent() (1 input parameters)
 Function 170: IsKeyPressed() (1 input parameters)
   Name: IsKeyPressed
   Return type: bool
-  Description: Check if a key has been pressed once
+  Description: Check if key has been pressed once
   Param[1]: key (type: int)
 Function 171: IsKeyPressedRepeat() (1 input parameters)
   Name: IsKeyPressedRepeat
   Return type: bool
-  Description: Check if a key has been pressed again
+  Description: Check if key has been pressed again
   Param[1]: key (type: int)
 Function 172: IsKeyDown() (1 input parameters)
   Name: IsKeyDown
   Return type: bool
-  Description: Check if a key is being pressed
+  Description: Check if key is being pressed
   Param[1]: key (type: int)
 Function 173: IsKeyReleased() (1 input parameters)
   Name: IsKeyReleased
   Return type: bool
-  Description: Check if a key has been released once
+  Description: Check if key has been released once
   Param[1]: key (type: int)
 Function 174: IsKeyUp() (1 input parameters)
   Name: IsKeyUp
   Return type: bool
-  Description: Check if a key is NOT being pressed
+  Description: Check if key is NOT being pressed
   Param[1]: key (type: int)
 Function 175: GetKeyPressed() (0 input parameters)
   Name: GetKeyPressed
@@ -1965,7 +1965,7 @@ Function 178: SetExitKey() (1 input parameters)
 Function 179: IsGamepadAvailable() (1 input parameters)
   Name: IsGamepadAvailable
   Return type: bool
-  Description: Check if a gamepad is available
+  Description: Check if gamepad is available
   Param[1]: gamepad (type: int)
 Function 180: GetGamepadName() (1 input parameters)
   Name: GetGamepadName
@@ -1975,25 +1975,25 @@ Function 180: GetGamepadName() (1 input parameters)
 Function 181: IsGamepadButtonPressed() (2 input parameters)
   Name: IsGamepadButtonPressed
   Return type: bool
-  Description: Check if a gamepad button has been pressed once
+  Description: Check if gamepad button has been pressed once
   Param[1]: gamepad (type: int)
   Param[2]: button (type: int)
 Function 182: IsGamepadButtonDown() (2 input parameters)
   Name: IsGamepadButtonDown
   Return type: bool
-  Description: Check if a gamepad button is being pressed
+  Description: Check if gamepad button is being pressed
   Param[1]: gamepad (type: int)
   Param[2]: button (type: int)
 Function 183: IsGamepadButtonReleased() (2 input parameters)
   Name: IsGamepadButtonReleased
   Return type: bool
-  Description: Check if a gamepad button has been released once
+  Description: Check if gamepad button has been released once
   Param[1]: gamepad (type: int)
   Param[2]: button (type: int)
 Function 184: IsGamepadButtonUp() (2 input parameters)
   Name: IsGamepadButtonUp
   Return type: bool
-  Description: Check if a gamepad button is NOT being pressed
+  Description: Check if gamepad button is NOT being pressed
   Param[1]: gamepad (type: int)
   Param[2]: button (type: int)
 Function 185: GetGamepadButtonPressed() (0 input parameters)
@@ -2028,22 +2028,22 @@ Function 189: SetGamepadVibration() (4 input parameters)
 Function 190: IsMouseButtonPressed() (1 input parameters)
   Name: IsMouseButtonPressed
   Return type: bool
-  Description: Check if a mouse button has been pressed once
+  Description: Check if mouse button has been pressed once
   Param[1]: button (type: int)
 Function 191: IsMouseButtonDown() (1 input parameters)
   Name: IsMouseButtonDown
   Return type: bool
-  Description: Check if a mouse button is being pressed
+  Description: Check if mouse button is being pressed
   Param[1]: button (type: int)
 Function 192: IsMouseButtonReleased() (1 input parameters)
   Name: IsMouseButtonReleased
   Return type: bool
-  Description: Check if a mouse button has been released once
+  Description: Check if mouse button has been released once
   Param[1]: button (type: int)
 Function 193: IsMouseButtonUp() (1 input parameters)
   Name: IsMouseButtonUp
   Return type: bool
-  Description: Check if a mouse button is NOT being pressed
+  Description: Check if mouse button is NOT being pressed
   Param[1]: button (type: int)
 Function 194: GetMouseX() (0 input parameters)
   Name: GetMouseX
@@ -2131,7 +2131,7 @@ Function 209: SetGesturesEnabled() (1 input parameters)
 Function 210: IsGestureDetected() (1 input parameters)
   Name: IsGestureDetected
   Return type: bool
-  Description: Check if a gesture has been detected
+  Description: Check if gesture has been detected
   Param[1]: gesture (type: unsigned int)
 Function 211: GetGestureDetected() (0 input parameters)
   Name: GetGestureDetected
@@ -3340,7 +3340,7 @@ Function 372: LoadRenderTexture() (2 input parameters)
 Function 373: IsTextureValid() (1 input parameters)
   Name: IsTextureValid
   Return type: bool
-  Description: Check if a texture is valid (loaded in GPU)
+  Description: Check if texture is valid (loaded in GPU)
   Param[1]: texture (type: Texture2D)
 Function 374: UnloadTexture() (1 input parameters)
   Name: UnloadTexture
@@ -3350,7 +3350,7 @@ Function 374: UnloadTexture() (1 input parameters)
 Function 375: IsRenderTextureValid() (1 input parameters)
   Name: IsRenderTextureValid
   Return type: bool
-  Description: Check if a render texture is valid (loaded in GPU)
+  Description: Check if render texture is valid (loaded in GPU)
   Param[1]: target (type: RenderTexture2D)
 Function 376: UnloadRenderTexture() (1 input parameters)
   Name: UnloadRenderTexture
@@ -3525,7 +3525,7 @@ Function 402: GetPixelColor() (2 input parameters)
   Name: GetPixelColor
   Return type: Color
   Description: Get Color from a source pixel pointer of certain format
-  Param[1]: srcPtr (type: void *)
+  Param[1]: srcPtr (type: const void *)
   Param[2]: format (type: int)
 Function 403: SetPixelColor() (3 input parameters)
   Name: SetPixelColor
@@ -3579,7 +3579,7 @@ Function 409: LoadFontFromMemory() (6 input parameters)
 Function 410: IsFontValid() (1 input parameters)
   Name: IsFontValid
   Return type: bool
-  Description: Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
+  Description: Check if font is valid (font data loaded, WARNING: GPU texture not checked)
   Param[1]: font (type: Font)
 Function 411: LoadFontData() (7 input parameters)
   Name: LoadFontData
@@ -4119,7 +4119,7 @@ Function 486: LoadModelFromMesh() (1 input parameters)
 Function 487: IsModelValid() (1 input parameters)
   Name: IsModelValid
   Return type: bool
-  Description: Check if a model is valid (loaded in GPU, VAO/VBOs)
+  Description: Check if model is valid (loaded in GPU, VAO/VBOs)
   Param[1]: model (type: Model)
 Function 488: UnloadModel() (1 input parameters)
   Name: UnloadModel
@@ -4353,7 +4353,7 @@ Function 519: LoadMaterialDefault() (0 input parameters)
 Function 520: IsMaterialValid() (1 input parameters)
   Name: IsMaterialValid
   Return type: bool
-  Description: Check if a material is valid (shader assigned, map textures loaded in GPU)
+  Description: Check if material is valid (shader assigned, map textures loaded in GPU)
   Param[1]: material (type: Material)
 Function 521: UnloadMaterial() (1 input parameters)
   Name: UnloadMaterial
@@ -4527,7 +4527,7 @@ Function 547: LoadSoundAlias() (1 input parameters)
 Function 548: IsSoundValid() (1 input parameters)
   Name: IsSoundValid
   Return type: bool
-  Description: Check if a sound is valid (data loaded and buffers initialized)
+  Description: Check if sound is valid (data loaded and buffers initialized)
   Param[1]: sound (type: Sound)
 Function 549: UpdateSound() (3 input parameters)
   Name: UpdateSound
@@ -4586,7 +4586,7 @@ Function 558: ResumeSound() (1 input parameters)
 Function 559: IsSoundPlaying() (1 input parameters)
   Name: IsSoundPlaying
   Return type: bool
-  Description: Check if a sound is currently playing
+  Description: Check if sound is currently playing
   Param[1]: sound (type: Sound)
 Function 560: SetSoundVolume() (2 input parameters)
   Name: SetSoundVolume
@@ -4651,7 +4651,7 @@ Function 569: LoadMusicStreamFromMemory() (3 input parameters)
 Function 570: IsMusicValid() (1 input parameters)
   Name: IsMusicValid
   Return type: bool
-  Description: Check if a music stream is valid (context and buffers initialized)
+  Description: Check if music stream is valid (context and buffers initialized)
   Param[1]: music (type: Music)
 Function 571: UnloadMusicStream() (1 input parameters)
   Name: UnloadMusicStream
