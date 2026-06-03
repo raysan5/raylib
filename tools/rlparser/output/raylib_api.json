@@ -5489,7 +5489,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         }
       ]
     },
@@ -8913,7 +8913,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector2",
@@ -8927,7 +8927,7 @@
     },
     {
       "name": "DrawTexturePro",
-      "description": "Draw a part of a texture defined by a rectangle with 'pro' parameters",
+      "description": "Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation",
       "returnType": "void",
       "params": [
         {
@@ -8936,11 +8936,11 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "srcrec"
         },
         {
           "type": "Rectangle",
-          "name": "dest"
+          "name": "dstrec"
         },
         {
           "type": "Vector2",
@@ -8971,7 +8971,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "dest"
+          "name": "dstrec"
         },
         {
           "type": "Vector2",
@@ -10983,7 +10983,7 @@
     },
     {
       "name": "DrawBillboardRec",
-      "description": "Draw a billboard texture defined by source",
+      "description": "Draw a billboard texture defined by rectangle",
       "returnType": "void",
       "params": [
         {
@@ -10996,7 +10996,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector3",
@@ -11014,7 +11014,7 @@
     },
     {
       "name": "DrawBillboardPro",
-      "description": "Draw a billboard texture defined by source and rotation",
+      "description": "Draw a billboard texture defined by source rectangle with scaling and rotation",
       "returnType": "void",
       "params": [
         {
@@ -11027,7 +11027,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector3",

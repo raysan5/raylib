@@ -4752,7 +4752,7 @@ return {
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"}
+        {type = "Rectangle", name = "rec"}
       }
     },
     {
@@ -6475,19 +6475,19 @@ return {
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector2", name = "position"},
         {type = "Color", name = "tint"}
       }
     },
     {
       name = "DrawTexturePro",
-      description = "Draw a part of a texture defined by a rectangle with 'pro' parameters",
+      description = "Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
-        {type = "Rectangle", name = "dest"},
+        {type = "Rectangle", name = "srcrec"},
+        {type = "Rectangle", name = "dstrec"},
         {type = "Vector2", name = "origin"},
         {type = "float", name = "rotation"},
         {type = "Color", name = "tint"}
@@ -6500,7 +6500,7 @@ return {
       params = {
         {type = "Texture2D", name = "texture"},
         {type = "NPatchInfo", name = "nPatchInfo"},
-        {type = "Rectangle", name = "dest"},
+        {type = "Rectangle", name = "dstrec"},
         {type = "Vector2", name = "origin"},
         {type = "float", name = "rotation"},
         {type = "Color", name = "tint"}
@@ -7572,12 +7572,12 @@ return {
     },
     {
       name = "DrawBillboardRec",
-      description = "Draw a billboard texture defined by source",
+      description = "Draw a billboard texture defined by rectangle",
       returnType = "void",
       params = {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector3", name = "position"},
         {type = "Vector2", name = "size"},
         {type = "Color", name = "tint"}
@@ -7585,12 +7585,12 @@ return {
     },
     {
       name = "DrawBillboardPro",
-      description = "Draw a billboard texture defined by source and rotation",
+      description = "Draw a billboard texture defined by source rectangle with scaling and rotation",
       returnType = "void",
       params = {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector3", name = "position"},
         {type = "Vector3", name = "up"},
         {type = "Vector2", name = "size"},

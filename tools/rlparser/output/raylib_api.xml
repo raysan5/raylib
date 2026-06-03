@@ -1352,7 +1352,7 @@
         </Function>
         <Function name="SetShapesTexture" retType="void" paramCount="2" desc="Set texture and rectangle to be used on shapes drawing">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
         </Function>
         <Function name="GetShapesTexture" retType="Texture2D" paramCount="0" desc="Get texture that is used for shapes drawing">
         </Function>
@@ -2251,14 +2251,14 @@
         </Function>
         <Function name="DrawTextureRec" retType="void" paramCount="4" desc="Draw a part of a texture defined by a rectangle">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTexturePro" retType="void" paramCount="6" desc="Draw a part of a texture defined by a rectangle with 'pro' parameters">
+        <Function name="DrawTexturePro" retType="void" paramCount="6" desc="Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation">
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
-            <Param type="Rectangle" name="dest" desc="" />
+            <Param type="Rectangle" name="srcrec" desc="" />
+            <Param type="Rectangle" name="dstrec" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
@@ -2266,7 +2266,7 @@
         <Function name="DrawTextureNPatch" retType="void" paramCount="6" desc="Draw a texture (or part of it) that stretches or shrinks nicely">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="NPatchInfo" name="nPatchInfo" desc="" />
-            <Param type="Rectangle" name="dest" desc="" />
+            <Param type="Rectangle" name="dstrec" desc="" />
             <Param type="Vector2" name="origin" desc="" />
             <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
@@ -2797,18 +2797,18 @@
             <Param type="float" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawBillboardRec" retType="void" paramCount="6" desc="Draw a billboard texture defined by source">
+        <Function name="DrawBillboardRec" retType="void" paramCount="6" desc="Draw a billboard texture defined by rectangle">
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector2" name="size" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawBillboardPro" retType="void" paramCount="9" desc="Draw a billboard texture defined by source and rotation">
+        <Function name="DrawBillboardPro" retType="void" paramCount="9" desc="Draw a billboard texture defined by source rectangle with scaling and rotation">
             <Param type="Camera" name="camera" desc="" />
             <Param type="Texture2D" name="texture" desc="" />
-            <Param type="Rectangle" name="source" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="up" desc="" />
             <Param type="Vector2" name="size" desc="" />

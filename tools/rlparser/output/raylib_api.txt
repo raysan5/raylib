@@ -2182,7 +2182,7 @@ Function 219: SetShapesTexture() (2 input parameters)
   Return type: void
   Description: Set texture and rectangle to be used on shapes drawing
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
+  Param[2]: rec (type: Rectangle)
 Function 220: GetShapesTexture() (0 input parameters)
   Name: GetShapesTexture
   Return type: Texture2D
@@ -3416,16 +3416,16 @@ Function 385: DrawTextureRec() (4 input parameters)
   Return type: void
   Description: Draw a part of a texture defined by a rectangle
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
+  Param[2]: rec (type: Rectangle)
   Param[3]: position (type: Vector2)
   Param[4]: tint (type: Color)
 Function 386: DrawTexturePro() (6 input parameters)
   Name: DrawTexturePro
   Return type: void
-  Description: Draw a part of a texture defined by a rectangle with 'pro' parameters
+  Description: Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation
   Param[1]: texture (type: Texture2D)
-  Param[2]: source (type: Rectangle)
-  Param[3]: dest (type: Rectangle)
+  Param[2]: srcrec (type: Rectangle)
+  Param[3]: dstrec (type: Rectangle)
   Param[4]: origin (type: Vector2)
   Param[5]: rotation (type: float)
   Param[6]: tint (type: Color)
@@ -3435,7 +3435,7 @@ Function 387: DrawTextureNPatch() (6 input parameters)
   Description: Draw a texture (or part of it) that stretches or shrinks nicely
   Param[1]: texture (type: Texture2D)
   Param[2]: nPatchInfo (type: NPatchInfo)
-  Param[3]: dest (type: Rectangle)
+  Param[3]: dstrec (type: Rectangle)
   Param[4]: origin (type: Vector2)
   Param[5]: rotation (type: float)
   Param[6]: tint (type: Color)
@@ -4185,20 +4185,20 @@ Function 495: DrawBillboard() (5 input parameters)
 Function 496: DrawBillboardRec() (6 input parameters)
   Name: DrawBillboardRec
   Return type: void
-  Description: Draw a billboard texture defined by source
+  Description: Draw a billboard texture defined by rectangle
   Param[1]: camera (type: Camera)
   Param[2]: texture (type: Texture2D)
-  Param[3]: source (type: Rectangle)
+  Param[3]: rec (type: Rectangle)
   Param[4]: position (type: Vector3)
   Param[5]: size (type: Vector2)
   Param[6]: tint (type: Color)
 Function 497: DrawBillboardPro() (9 input parameters)
   Name: DrawBillboardPro
   Return type: void
-  Description: Draw a billboard texture defined by source and rotation
+  Description: Draw a billboard texture defined by source rectangle with scaling and rotation
   Param[1]: camera (type: Camera)
   Param[2]: texture (type: Texture2D)
-  Param[3]: source (type: Rectangle)
+  Param[3]: rec (type: Rectangle)
   Param[4]: position (type: Vector3)
   Param[5]: up (type: Vector3)
   Param[6]: size (type: Vector2)
