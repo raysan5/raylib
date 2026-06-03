@@ -881,13 +881,12 @@ mg_bool mg_gamepads_check_queued_event(mg_gamepads* gamepads, mg_event* event) {
 }
 
 void mg_gamepads_free(mg_gamepads* gamepads) {
-    mg_gamepad* cur;
     MG_ASSERT(gamepads != NULL);
 
     mg_gamepads_free_platform(gamepads);
 
-    for (cur = gamepads->list.cur; cur != NULL; cur = cur->prev) {
-        mg_gamepad_release(gamepads, cur);
+    while (gamepads->list.cur != NULL) {
+        mg_gamepad_release(gamepads, gamepads->list.cur);
     }
     MG_MEMSET(gamepads, 0, sizeof(mg_gamepads));
 }
