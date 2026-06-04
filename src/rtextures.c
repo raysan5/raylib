@@ -1744,7 +1744,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    // Check if a fast path can be used on image scaling
+    // Check if fast path can be used on image scaling
     // It can be for 8 bit per channel images with 1 to 4 channels per pixel
     if ((image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
         (image->format == PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) ||
@@ -3506,7 +3506,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     }
 
     // Initialize variables for drawing loop
-    int endVal = longLen;
+    int endVal = longLen + 1;
     int sgnInc = 1;
 
     // Adjust direction increment based on longLen sign
@@ -3514,6 +3514,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     {
         longLen = -longLen;
         sgnInc = -1;
+        endVal -= 2;
     }
 
     // Calculate fixed-point increment for shorter length
@@ -3523,7 +3524,8 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     if (yLonger)
     {
         // If line is more vertical, iterate over y-axis
-        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
+		// Init j with 0.5 in 16-bit fixed point (1 << 15) for better rounding.
+        for (int i = 0, j = (1 << 15); i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
             ImageDrawPixel(dst, startPosX + (j >> 16), startPosY + i, color);
@@ -3532,7 +3534,7 @@ void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int en
     else
     {
         // If line is more horizontal, iterate over x-axis
-        for (int i = 0, j = 0; i != endVal; i += sgnInc, j += decInc)
+        for (int i = 0, j = (1 << 15); i != endVal; i += sgnInc, j += decInc)
         {
             // Calculate pixel position and draw it
             ImageDrawPixel(dst, startPosX + i, startPosY + (j >> 16), color);
@@ -4293,7 +4295,7 @@ RenderTexture2D LoadRenderTexture(int width, int height)
     return target;
 }
 
-// Check if a texture is valid (loaded in GPU)
+// Check if texture is valid (loaded in GPU)
 bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
@@ -4318,7 +4320,7 @@ void UnloadTexture(Texture2D texture)
     }
 }
 
-// Check if a render texture is valid (loaded in GPU)
+// Check if render texture is valid (loaded in GPU)
 bool IsRenderTextureValid(RenderTexture2D target)
 {
     bool result = false;
@@ -4489,25 +4491,25 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 // Draw a texture with extended parameters
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
-    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
-    Rectangle dest = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
+    Rectangle srcrec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    Rectangle dstrec = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
     Vector2 origin = { 0.0f, 0.0f };
 
-    DrawTexturePro(texture, source, dest, origin, rotation, tint);
+    DrawTexturePro(texture, srcrec, dstrec, origin, rotation, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle)
-void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint)
+void DrawTextureRec(Texture2D texture, Rectangle rec, Vector2 position, Color tint)
 {
-    Rectangle dest = { position.x, position.y, fabsf(source.width), fabsf(source.height) };
+    Rectangle dstrec = { position.x, position.y, fabsf(rec.width), fabsf(rec.height) };
     Vector2 origin = { 0.0f, 0.0f };
 
-    DrawTexturePro(texture, source, dest, origin, 0.0f, tint);
+    DrawTexturePro(texture, rec, dstrec, origin, 0.0f, tint);
 }
 
 // Draw a part of a texture (defined by a rectangle) with 'pro' parameters
 // NOTE: origin is relative to destination rectangle size
-void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint)
+void DrawTexturePro(Texture2D texture, Rectangle srcrec, Rectangle dstrec, Vector2 origin, float rotation, Color tint)
 {
     // Check if texture is valid
     if (texture.id > 0)
@@ -4517,11 +4519,11 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 
         bool flipX = false;
 
-        if (source.width < 0) { flipX = true; source.width *= -1; }
-        if (source.height < 0) source.y -= source.height;
+        if (srcrec.width < 0) { flipX = true; srcrec.width *= -1; }
+        if (srcrec.height < 0) srcrec.y -= srcrec.height;
 
-        if (dest.width < 0) dest.width *= -1;
-        if (dest.height < 0) dest.height *= -1;
+        if (dstrec.width < 0) dstrec.width *= -1;
+        if (dstrec.height < 0) dstrec.height *= -1;
 
         Vector2 topLeft = { 0 };
         Vector2 topRight = { 0 };
@@ -4531,33 +4533,33 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         // Only calculate rotation if needed
         if (rotation == 0.0f)
         {
-            float x = dest.x - origin.x;
-            float y = dest.y - origin.y;
+            float x = dstrec.x - origin.x;
+            float y = dstrec.y - origin.y;
             topLeft = (Vector2){ x, y };
-            topRight = (Vector2){ x + dest.width, y };
-            bottomLeft = (Vector2){ x, y + dest.height };
-            bottomRight = (Vector2){ x + dest.width, y + dest.height };
+            topRight = (Vector2){ x + dstrec.width, y };
+            bottomLeft = (Vector2){ x, y + dstrec.height };
+            bottomRight = (Vector2){ x + dstrec.width, y + dstrec.height };
         }
         else
         {
             float sinRotation = sinf(rotation*DEG2RAD);
             float cosRotation = cosf(rotation*DEG2RAD);
-            float x = dest.x;
-            float y = dest.y;
+            float x = dstrec.x;
+            float y = dstrec.y;
             float dx = -origin.x;
             float dy = -origin.y;
 
             topLeft.x = x + dx*cosRotation - dy*sinRotation;
             topLeft.y = y + dx*sinRotation + dy*cosRotation;
 
-            topRight.x = x + (dx + dest.width)*cosRotation - dy*sinRotation;
-            topRight.y = y + (dx + dest.width)*sinRotation + dy*cosRotation;
+            topRight.x = x + (dx + dstrec.width)*cosRotation - dy*sinRotation;
+            topRight.y = y + (dx + dstrec.width)*sinRotation + dy*cosRotation;
 
-            bottomLeft.x = x + dx*cosRotation - (dy + dest.height)*sinRotation;
-            bottomLeft.y = y + dx*sinRotation + (dy + dest.height)*cosRotation;
+            bottomLeft.x = x + dx*cosRotation - (dy + dstrec.height)*sinRotation;
+            bottomLeft.y = y + dx*sinRotation + (dy + dstrec.height)*cosRotation;
 
-            bottomRight.x = x + (dx + dest.width)*cosRotation - (dy + dest.height)*sinRotation;
-            bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
+            bottomRight.x = x + (dx + dstrec.width)*cosRotation - (dy + dstrec.height)*sinRotation;
+            bottomRight.y = y + (dx + dstrec.width)*sinRotation + (dy + dstrec.height)*cosRotation;
         }
 
         rlSetTexture(texture.id);
@@ -4567,23 +4569,23 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
             // Top-left corner for texture and quad
-            if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
-            else rlTexCoord2f(source.x/width, source.y/height);
+            if (flipX) rlTexCoord2f((srcrec.x + srcrec.width)/width, srcrec.y/height);
+            else rlTexCoord2f(srcrec.x/width, srcrec.y/height);
             rlVertex2f(topLeft.x, topLeft.y);
 
             // Bottom-left corner for texture and quad
-            if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-            else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
+            if (flipX) rlTexCoord2f((srcrec.x + srcrec.width)/width, (srcrec.y + srcrec.height)/height);
+            else rlTexCoord2f(srcrec.x/width, (srcrec.y + srcrec.height)/height);
             rlVertex2f(bottomLeft.x, bottomLeft.y);
 
             // Bottom-right corner for texture and quad
-            if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-            else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
+            if (flipX) rlTexCoord2f(srcrec.x/width, (srcrec.y + srcrec.height)/height);
+            else rlTexCoord2f((srcrec.x + srcrec.width)/width, (srcrec.y + srcrec.height)/height);
             rlVertex2f(bottomRight.x, bottomRight.y);
 
             // Top-right corner for texture and quad
-            if (flipX) rlTexCoord2f(source.x/width, source.y/height);
-            else rlTexCoord2f((source.x + source.width)/width, source.y/height);
+            if (flipX) rlTexCoord2f(srcrec.x/width, srcrec.y/height);
+            else rlTexCoord2f((srcrec.x + srcrec.width)/width, srcrec.y/height);
             rlVertex2f(topRight.x, topRight.y);
 
         rlEnd();
@@ -4597,7 +4599,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
         /*
         rlSetTexture(texture.id);
         rlPushMatrix();
-            rlTranslatef(dest.x, dest.y, 0.0f);
+            rlTranslatef(dstrec.x, dstrec.y, 0.0f);
             if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
@@ -4606,24 +4608,24 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
                 rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
 
                 // Bottom-left corner for texture and quad
-                if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
-                else rlTexCoord2f(source.x/width, source.y/height);
+                if (flipX) rlTexCoord2f((srcrec.x + srcrec.width)/width, srcrec.y/height);
+                else rlTexCoord2f(srcrec.x/width, srcrec.y/height);
                 rlVertex2f(0.0f, 0.0f);
 
                 // Bottom-right corner for texture and quad
-                if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-                else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-                rlVertex2f(0.0f, dest.height);
+                if (flipX) rlTexCoord2f((srcrec.x + srcrec.width)/width, (srcrec.y + srcrec.height)/height);
+                else rlTexCoord2f(srcrec.x/width, (srcrec.y + srcrec.height)/height);
+                rlVertex2f(0.0f, dstrec.height);
 
                 // Top-right corner for texture and quad
-                if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-                else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-                rlVertex2f(dest.width, dest.height);
+                if (flipX) rlTexCoord2f(srcrec.x/width, (srcrec.y + srcrec.height)/height);
+                else rlTexCoord2f((srcrec.x + srcrec.width)/width, (srcrec.y + srcrec.height)/height);
+                rlVertex2f(dstrec.width, dstrec.height);
 
                 // Top-left corner for texture and quad
-                if (flipX) rlTexCoord2f(source.x/width, source.y/height);
-                else rlTexCoord2f((source.x + source.width)/width, source.y/height);
-                rlVertex2f(dest.width, 0.0f);
+                if (flipX) rlTexCoord2f(srcrec.x/width, srcrec.y/height);
+                else rlTexCoord2f((srcrec.x + srcrec.width)/width, srcrec.y/height);
+                rlVertex2f(dstrec.width, 0.0f);
             rlEnd();
         rlPopMatrix();
         rlSetTexture(0);
@@ -4632,15 +4634,15 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
 }
 
 // Draw a texture (or part of it) that stretches or shrinks nicely using n-patch info
-void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint)
+void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dstrec, Vector2 origin, float rotation, Color tint)
 {
     if (texture.id > 0)
     {
         float width = (float)texture.width;
         float height = (float)texture.height;
 
-        float patchWidth = ((int)dest.width <= 0)? 0.0f : dest.width;
-        float patchHeight = ((int)dest.height <= 0)? 0.0f : dest.height;
+        float patchWidth = ((int)dstrec.width <= 0)? 0.0f : dstrec.width;
+        float patchHeight = ((int)dstrec.height <= 0)? 0.0f : dstrec.height;
 
         if (nPatchInfo.source.width < 0) nPatchInfo.source.x -= nPatchInfo.source.width;
         if (nPatchInfo.source.height < 0) nPatchInfo.source.y -= nPatchInfo.source.height;
@@ -4699,7 +4701,7 @@ void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest,
         rlSetTexture(texture.id);
 
         rlPushMatrix();
-            rlTranslatef(dest.x, dest.y, 0.0f);
+            rlTranslatef(dstrec.x, dstrec.y, 0.0f);
             rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
             rlTranslatef(-origin.x, -origin.y, 0.0f);
 
@@ -5178,7 +5180,7 @@ Color GetColor(unsigned int hexValue)
 }
 
 // Get color from a pixel from certain format
-Color GetPixelColor(void *srcPtr, int format)
+Color GetPixelColor(const void *srcPtr, int format)
 {
     Color color = { 0 };
 

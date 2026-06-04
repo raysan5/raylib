@@ -1023,7 +1023,7 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return platform.hwnd;
+    return (void *)platform.hwnd;
 }
 
 int GetMonitorCount(void)
@@ -1257,8 +1257,9 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
-        sprintf(cmd, "explorer \"%s\"", url);
+        int len = strlen(url) + 32;
+        char *cmd = (char *)RL_CALLOC(len, sizeof(char));
+        snprintf(cmd, len, "explorer \"%s\"", url);
         int result = system(cmd);
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
@@ -2052,8 +2053,11 @@ static void HandleMouseButton(int button, char state)
 static void HandleRawInput(LPARAM lparam)
 {
     RAWINPUT input = { 0 };
+    UINT inputSize = 0;
 
-    UINT inputSize = sizeof(input);
+    if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &inputSize, sizeof(RAWINPUTHEADER)) != 0) return;
+    if (inputSize > sizeof(input)) return;
+
     UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &inputSize, sizeof(RAWINPUTHEADER));
 
     if (size == (UINT)-1) TRACELOG(LOG_ERROR, "WIN32: Failed to get raw input data [ERROR: %lu]", GetLastError());

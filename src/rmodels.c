@@ -1162,7 +1162,7 @@ Model LoadModelFromMesh(Mesh mesh)
     return model;
 }
 
-// Check if a model is valid (loaded in GPU, VAO/VBOs)
+// Check if model is valid (loaded in GPU, VAO/VBOs)
 bool IsModelValid(Model model)
 {
     bool result = false;
@@ -2223,7 +2223,7 @@ Material LoadMaterialDefault(void)
     return material;
 }
 
-// Check if a material is valid (map textures loaded in GPU)
+// Check if material is valid (map textures loaded in GPU)
 bool IsMaterialValid(Material material)
 {
     bool result = false;
@@ -3978,22 +3978,22 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 // Draw a billboard
 void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float scale, Color tint)
 {
-    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
+    Rectangle rec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, source, position, (Vector2){ scale*fabsf((float)source.width/source.height), scale }, tint);
+    DrawBillboardRec(camera, texture, rec, position, (Vector2){ scale*fabsf((float)rec.width/rec.height), scale }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
-void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector2 size, Color tint)
+void DrawBillboardRec(Camera camera, Texture2D texture, Rectangle rec, Vector3 position, Vector2 size, Color tint)
 {
     // NOTE: Billboard locked on axis-Y
     Vector3 up = { 0.0f, 1.0f, 0.0f };
 
-    DrawBillboardPro(camera, texture, source, position, up, size, Vector2Scale(size, 0.5), 0.0f, tint);
+    DrawBillboardPro(camera, texture, rec, position, up, size, Vector2Scale(size, 0.5), 0.0f, tint);
 }
 
-// Draw a billboard with additional parameters
-void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
+// Draw a billboard texture defined by source rectangle with scaling and rotation
+void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle rec, Vector3 position, Vector3 up, Vector2 size, Vector2 origin, float rotation, Color tint)
 {
     // Compute the up vector and the right vector
     Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
@@ -4004,20 +4004,20 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     // Flip the content of the billboard while maintaining the counterclockwise edge rendering order
     if (size.x < 0.0f)
     {
-        source.x -= size.x;
-        source.width *= -1.0;
+        rec.x -= size.x;
+        rec.width *= -1.0;
         right = Vector3Negate(right);
         origin.x *= -1.0f;
     }
     if (size.y < 0.0f)
     {
-        source.y -= size.y;
-        source.height *= -1.0;
+        rec.y -= size.y;
+        rec.height *= -1.0;
         up = Vector3Negate(up);
         origin.y *= -1.0f;
     }
 
-    // Draw the texture region described by source on the following rectangle in 3D space:
+    // Draw the texture region described by rec on the following rectangle in 3D space:
     //
     //                size.x          <--.
     //  3 ^---------------------------+ 2 \ rotation
@@ -4049,10 +4049,10 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle source, Vector
     }
 
     Vector2 texcoords[4];
-    texcoords[0] = (Vector2){ (float)source.x/texture.width, (float)(source.y + source.height)/texture.height };
-    texcoords[1] = (Vector2){ (float)(source.x + source.width)/texture.width, (float)(source.y + source.height)/texture.height };
-    texcoords[2] = (Vector2){ (float)(source.x + source.width)/texture.width, (float)source.y/texture.height };
-    texcoords[3] = (Vector2){ (float)source.x/texture.width, (float)source.y/texture.height };
+    texcoords[0] = (Vector2){ (float)rec.x/texture.width, (float)(rec.y + rec.height)/texture.height };
+    texcoords[1] = (Vector2){ (float)(rec.x + rec.width)/texture.width, (float)(rec.y + rec.height)/texture.height };
+    texcoords[2] = (Vector2){ (float)(rec.x + rec.width)/texture.width, (float)rec.y/texture.height };
+    texcoords[3] = (Vector2){ (float)rec.x/texture.width, (float)rec.y/texture.height };
 
     rlSetTexture(texture.id);
     rlBegin(RL_QUADS);
@@ -5370,16 +5370,18 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
         cgltf_node node = *skin.joints[i];
         if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name) - 1);
 
-        // Find parent bone index
+        // Find parent bone index by walking up the node tree past any
+        // non-joint ancestors (intermediate transform nodes used by some
+        // DCC exporters), until we hit a node that is also in skin.joints.
         int parentIndex = -1;
-
-        for (unsigned int j = 0; j < skin.joints_count; j++)
+        cgltf_node *ancestor = node.parent;
+        while (ancestor != NULL && parentIndex == -1)
         {
-            if (skin.joints[j] == node.parent)
+            for (unsigned int j = 0; j < skin.joints_count; j++)
             {
-                parentIndex = (int)j;
-                break;
+                if (skin.joints[j] == ancestor) { parentIndex = (int)j; break; }
             }
+            if (parentIndex == -1) ancestor = ancestor->parent;
         }
 
         bones[i].parent = parentIndex;
@@ -6510,20 +6512,58 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
         if (data->skins_count > 0)
         {
             cgltf_skin skin = data->skins[0];
+
+            // Precompute, per joint, the static transform contributed by any
+            // intermediate non-joint nodes between the joint and its nearest
+            // joint ancestor. This handles exporters (e.g. wow.export) that
+            // store bone offsets on dummy parent nodes rather than on the
+            // joints themselves. Depends only on the skin, not the animation.
+            int jointCount = (int)skin.joints_count;
+            Matrix *extOffset = (Matrix *)RL_MALLOC(jointCount*sizeof(Matrix));
+
+            if (extOffset == NULL)
+            {
+                // Allocation failed: abort animation loading at the source rather than
+                // propagating a NULL pointer into the per-frame transform loop below
+                TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to allocate joint offset buffer", fileName);
+                cgltf_free(data);
+                UnloadFileData(fileData);
+                *animCount = 0;
+                return NULL;
+            }
+
             *animCount = (int)data->animations_count;
             animations = (ModelAnimation *)RL_CALLOC(data->animations_count, sizeof(ModelAnimation));
 
-            Transform worldTransform = { 0 };
-            cgltf_float cgltf_worldTransform[16] = { 0 };
-            cgltf_node *node = skin.joints[0];
-            cgltf_node_transform_world(node->parent, cgltf_worldTransform);
-            Matrix worldMatrix = {
-                cgltf_worldTransform[0], cgltf_worldTransform[4], cgltf_worldTransform[8], cgltf_worldTransform[12],
-                cgltf_worldTransform[1], cgltf_worldTransform[5], cgltf_worldTransform[9], cgltf_worldTransform[13],
-                cgltf_worldTransform[2], cgltf_worldTransform[6], cgltf_worldTransform[10], cgltf_worldTransform[14],
-                cgltf_worldTransform[3], cgltf_worldTransform[7], cgltf_worldTransform[11], cgltf_worldTransform[15]
-            };
-            MatrixDecompose(worldMatrix, &worldTransform.translation, &worldTransform.rotation, &worldTransform.scale);
+            for (int k = 0; k < jointCount; k++)
+            {
+                extOffset[k] = MatrixIdentity();
+                cgltf_node *n = skin.joints[k]->parent;
+
+                while (n != NULL)
+                {
+                    bool isJoint = false;
+                    for (int jj = 0; jj < jointCount; jj++)
+                    {
+                        if (skin.joints[jj] == n)
+                        {
+                            isJoint = true;
+                            break;
+                        }
+                    }
+
+                    if (isJoint) break;
+
+                    // Compose the intermediate node's local TRS (scale, then rotation, then translation)
+                    Matrix nodeScale = MatrixScale(n->scale[0], n->scale[1], n->scale[2]);
+                    Matrix nodeRotation = QuaternionToMatrix((Quaternion){ n->rotation[0], n->rotation[1], n->rotation[2], n->rotation[3] });
+                    Matrix nodeTranslation = MatrixTranslate(n->translation[0], n->translation[1], n->translation[2]);
+                    Matrix nodeTransform = MatrixMultiply(MatrixMultiply(nodeScale, nodeRotation), nodeTranslation);
+
+                    extOffset[k] = MatrixMultiply(extOffset[k], nodeTransform);
+                    n = n->parent;
+                }
+            }
 
             for (unsigned int a = 0; a < data->animations_count; a++)
             {
@@ -6632,19 +6672,19 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                             }
                         }
 
-                        animations[a].keyframePoses[j][k] = (Transform){
-                            .translation = translation,
-                            .rotation = rotation,
-                            .scale = scale
-                        };
-                    }
+                        // Compose joint local TRS, then prepend the static
+                        // intermediate non-joint offsets so the final TRS is
+                        // expressed relative to the joint's skeleton parent.
+                        Matrix S = MatrixScale(scale.x, scale.y, scale.z);
+                        Matrix R = QuaternionToMatrix(rotation);
+                        Matrix T = MatrixTranslate(translation.x, translation.y, translation.z);
+                        Matrix jointLocal = MatrixMultiply(MatrixMultiply(S, R), T);
+                        Matrix combined = MatrixMultiply(jointLocal, extOffset[k]);
 
-                    Transform *root = &animations[a].keyframePoses[j][0];
-                    root->rotation = QuaternionMultiply(worldTransform.rotation, root->rotation);
-                    root->scale = Vector3Multiply(root->scale, worldTransform.scale);
-                    root->translation = Vector3Multiply(root->translation, worldTransform.scale);
-                    root->translation = Vector3RotateByQuaternion(root->translation, worldTransform.rotation);
-                    root->translation = Vector3Add(root->translation, worldTransform.translation);
+                        Transform tr;
+                        MatrixDecompose(combined, &tr.translation, &tr.rotation, &tr.scale);
+                        animations[a].keyframePoses[j][k] = tr;
+                    }
 
                     BuildPoseFromParentJoints(bones, animations[a].boneCount, animations[a].keyframePoses[j]);
                 }
@@ -6653,6 +6693,8 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                 RL_FREE(boneChannels);
                 RL_FREE(bones);
             }
+
+            RL_FREE(extOffset);
         }
 
         if (data->skins_count > 1)

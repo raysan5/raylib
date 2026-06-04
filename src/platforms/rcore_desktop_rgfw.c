@@ -184,6 +184,9 @@ typedef struct {
     i32 surfaceWidth;
     i32 surfaceHeight;
 #endif
+#if defined(__linux__) && defined(RGFW_X11)
+    Window windowHandleX11;             // Underlying type: unsigned long
+#endif
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -810,8 +813,8 @@ void SetWindowSize(int width, int height)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
@@ -851,15 +854,25 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    if (platform.window == NULL) return NULL;
+    void *handle = NULL;
 
-#if defined(RGFW_WASM)
-    return (void *)&platform.window->src.ctx;
-#elif defined(RGFW_WAYLAND)
-    return (void *)platform.window->src.surface;
-#else
-    return (void *)platform.window->src.window;
+    if (platform.window != NULL)
+    {
+#if defined(_WIN32)
+        handle = (void *)platform.window->src.window; // Type: HWND
+#elif defined(__linux__)
+    #if defined(RGFW_X11)
+        platform.windowHandleX11 = platform.window->src.window; // Type: Window (unsigned long)
+        handle = &platform.window->src.window; 
+    #elif defined(RGFW_WAYLAND)
+        handle = (void *)platform.window->src.surface; // Type: struct wl_surface*
+    #endif
+#elif defined(__APPLE__)
+        handle = (void *)platform.window->src.window; // Type: id, NSWindow*
 #endif
+    }
+
+    return handle;
 }
 
 // Get number of monitors
@@ -1132,16 +1145,16 @@ void SwapScreenBuffer(void)
     {
         if (platform.surface)
         {
-            // copy rlsw pixel data to the surface framebuffer
-            swReadPixels(0, 0, platform.surfaceWidth, platform.surfaceHeight, SW_RGBA, SW_UNSIGNED_BYTE, platform.surfacePixels);
+            // Copy rlsw pixel data to the surface framebuffer
+            rlCopyFramebuffer(0, 0, platform.surfaceWidth, platform.surfaceHeight, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.surfacePixels);
 
             // Mac wants a different pixel order. I cant seem to get this to work any other way
             #if defined(__APPLE__)
                 unsigned char temp = 0;
                 unsigned char *p = NULL;
-                for (int i = 0; i < (platform.surfaceWidth * platform.surfaceHeight); i += 1)
+                for (int i = 0; i < (platform.surfaceWidth*platform.surfaceHeight); i += 1)
                 {
-                    p = platform.surfacePixels + (i * 4);
+                    p = platform.surfacePixels + (i*4);
                     temp = p[0];
                     p[0] = p[2];
                     p[2] = temp;
@@ -1357,13 +1370,13 @@ void PollInputEvents(void)
                     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                     {
                         RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
-                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
                         CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
                         CORE.Window.screen.width = platform.window->w;
                         CORE.Window.screen.height = platform.window->h;
-                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
                     }
                     else
                     {
@@ -1406,10 +1419,10 @@ void PollInputEvents(void)
                     #if defined(__APPLE__)
                         RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
                         CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
-                        SetupViewport(platform.window->w * currentMonitor->pixelRatio, platform.window->h * currentMonitor->pixelRatio);
+                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
 
-                        CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
                         CORE.Window.currentFbo.width = CORE.Window.render.width;
                         CORE.Window.currentFbo.height = CORE.Window.render.height;
                     #endif
@@ -1427,7 +1440,7 @@ void PollInputEvents(void)
                     if (platform.surfacePixels != NULL)
                     {
                         RL_FREE(platform.surfacePixels);
-                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
                     }
 
                     if (platform.surface != NULL)
@@ -1743,8 +1756,8 @@ int InitPlatform(void)
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
         #if !defined(__APPLE__)
-            CORE.Window.screen.width = CORE.Window.screen.width * GetWindowScaleDPI().x;
-            CORE.Window.screen.height = CORE.Window.screen.height * GetWindowScaleDPI().y;
+            CORE.Window.screen.width = CORE.Window.screen.width*GetWindowScaleDPI().x;
+            CORE.Window.screen.height = CORE.Window.screen.height*GetWindowScaleDPI().y;
         #endif
     }
 
@@ -1828,8 +1841,8 @@ int InitPlatform(void)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #else
@@ -1846,8 +1859,8 @@ int InitPlatform(void)
             RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
-            CORE.Window.render.width = CORE.Window.screen.width * currentMonitor->pixelRatio;
-            CORE.Window.render.height = CORE.Window.screen.height * currentMonitor->pixelRatio;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
             CORE.Window.currentFbo.width = CORE.Window.render.width;
             CORE.Window.currentFbo.height = CORE.Window.render.height;
         #endif
@@ -1855,7 +1868,7 @@ int InitPlatform(void)
         platform.surfaceWidth = CORE.Window.currentFbo.width;
         platform.surfaceHeight = CORE.Window.currentFbo.height;
 
-        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth * platform.surfaceHeight * 4);
+        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
         if (platform.surfacePixels == NULL)
         {
             TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software pixel buffer");

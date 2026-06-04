@@ -91,7 +91,7 @@ bool InitGraphicsDevice(void);          // Initialize graphics device
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if !defined(_WIN32)
-static int kbhit(void);                         // Check if a key has been pressed
+static int kbhit(void);                         // Check if key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
 
@@ -374,6 +374,8 @@ double GetTime(void)
     unsigned long long nanoSeconds = (unsigned long long)ts.tv_sec*1000000000LLU + (unsigned long long)ts.tv_nsec;
 
     time = (double)(nanoSeconds - CORE.Time.base)*1e-9; // Elapsed time since InitTimer()
+#elif defined(PICO_RP2350)
+    time = (double)to_ms_since_boot(get_absolute_time())/1000.0;
 #endif
     return time;
 }
@@ -560,7 +562,7 @@ void ClosePlatform(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if !defined(_WIN32)
-// Check if a key has been pressed
+// Check if key has been pressed
 static int kbhit(void)
 {
     struct termios oldt = { 0 };

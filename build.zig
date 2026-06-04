@@ -739,7 +739,6 @@ fn addExamples(
                 .root_module = exe_mod,
                 .use_lld = target.result.os.tag == .windows,
             });
-            b.installArtifact(exe);
 
             const install_cmd = b.addInstallArtifact(exe, .{ .dest_sub_path = b.fmt("{s}/{s}", .{ module, filename }) });
 

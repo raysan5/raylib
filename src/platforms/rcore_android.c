@@ -473,8 +473,7 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on target platform");
-    return NULL;
+    return (void *)platform.app->window; // Type: ANativeWindow*
 }
 
 // Get number of monitors

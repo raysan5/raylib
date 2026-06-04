@@ -580,15 +580,20 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
-    else font = GetFontDefault();
+    else 
+    {
+        TRACELOG(LOG_WARNING, "FONT: Font is not supported by LoadFontEx/LoadFontFromMemory or no glyphs found, reverted to default font");
+        font = GetFontDefault();
+    }
 #else
+    TRACELOG(LOG_WARNING, "FONT: Font is not supported by LoadFontEx/LoadFontFromMemory or no glyphs found, reverted to default font");
     font = GetFontDefault();
 #endif
 
     return font;
 }
 
-// Check if a font is valid (font data loaded)
+// Check if font is valid (font data loaded)
 // WARNING: GPU texture not checked
 bool IsFontValid(Font font)
 {
@@ -678,7 +683,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
                 //      stbtt_MakeCodepointBitmap()          -- renders into a provided bitmap
 
-                // Check if a glyph is available in the font
+                // Check if glyph is available in the font
                 // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
                 int index = stbtt_FindGlyphIndex(&fontInfo, cp);
 
@@ -2667,8 +2672,8 @@ static Font LoadBMFont(const char *fileName)
         for (int i = 1; i < pageCount; i++)
         {
             Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
-            Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
-            ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);
+            Rectangle dstRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
+            ImageDraw(&fullFont, imFonts[i], srcRec, dstRec, WHITE);
         }
     }
 

@@ -127,7 +127,7 @@ void UpdateGestures(void);                              // Update gestures detec
 
 #if defined(RGESTURES_STANDALONE)
 void SetGesturesEnabled(unsigned int flags);            // Enable a set of gestures using flags
-bool IsGestureDetected(int gesture);                    // Check if a gesture has been detected
+bool IsGestureDetected(int gesture);                    // Check if gesture has been detected
 int GetGestureDetected(void);                           // Get latest detected gesture
 
 float GetGestureHoldDuration(void);                     // Get gesture hold time in seconds
@@ -257,7 +257,7 @@ void SetGesturesEnabled(unsigned int flags)
     GESTURES.enabledFlags = flags;
 }
 
-// Check if a gesture have been detected
+// Check if gesture have been detected
 bool IsGestureDetected(unsigned int gesture)
 {
     if ((GESTURES.enabledFlags & GESTURES.current) == gesture) return true;

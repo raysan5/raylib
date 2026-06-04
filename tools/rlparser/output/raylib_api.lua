@@ -3626,7 +3626,7 @@ return {
     },
     {
       name = "IsShaderValid",
-      description = "Check if a shader is valid (loaded on GPU)",
+      description = "Check if shader is valid (loaded on GPU)",
       returnType = "bool",
       params = {
         {type = "Shader", name = "shader"}
@@ -4022,7 +4022,7 @@ return {
     },
     {
       name = "FileRename",
-      description = "Rename file (if exists)",
+      description = "Rename file (if exists), returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4031,7 +4031,7 @@ return {
     },
     {
       name = "FileRemove",
-      description = "Remove file (if exists)",
+      description = "Remove file (if exists), returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"}
@@ -4039,7 +4039,7 @@ return {
     },
     {
       name = "FileCopy",
-      description = "Copy file from one path to another, dstPath created if it doesn't exist",
+      description = "Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "srcPath"},
@@ -4048,7 +4048,7 @@ return {
     },
     {
       name = "FileMove",
-      description = "Move file from one directory to another, dstPath created if it doesn't exist",
+      description = "Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "srcPath"},
@@ -4057,7 +4057,7 @@ return {
     },
     {
       name = "FileTextReplace",
-      description = "Replace text in an existing file",
+      description = "Replace text in an existing file, returns 0 on success",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4067,7 +4067,7 @@ return {
     },
     {
       name = "FileTextFindIndex",
-      description = "Find text in existing file",
+      description = "Find text in existing file, returns -1 if index not found or index otherwise",
       returnType = "int",
       params = {
         {type = "const char *", name = "fileName"},
@@ -4084,7 +4084,7 @@ return {
     },
     {
       name = "DirectoryExists",
-      description = "Check if a directory path exists",
+      description = "Check if directory path exists",
       returnType = "bool",
       params = {
         {type = "const char *", name = "dirPath"}
@@ -4175,15 +4175,15 @@ return {
     },
     {
       name = "ChangeDirectory",
-      description = "Change working directory, return true on success",
-      returnType = "bool",
+      description = "Change working directory, returns 0 on success",
+      returnType = "int",
       params = {
         {type = "const char *", name = "dirPath"}
       }
     },
     {
       name = "IsPathFile",
-      description = "Check if a given path is a file or a directory",
+      description = "Check if given path is a file or a directory",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}
@@ -4207,7 +4207,7 @@ return {
     },
     {
       name = "LoadDirectoryFilesEx",
-      description = "Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`",
+      description = "Load directory filepaths with extension filtering and subdir scan; some filters available: '*.*','FILES*','DIRS*'",
       returnType = "FilePathList",
       params = {
         {type = "const char *", name = "basePath"},
@@ -4225,7 +4225,7 @@ return {
     },
     {
       name = "IsFileDropped",
-      description = "Check if a file has been dropped into window",
+      description = "Check if file has been dropped into window",
       returnType = "bool"
     },
     {
@@ -4395,7 +4395,7 @@ return {
     },
     {
       name = "IsKeyPressed",
-      description = "Check if a key has been pressed once",
+      description = "Check if key has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4403,7 +4403,7 @@ return {
     },
     {
       name = "IsKeyPressedRepeat",
-      description = "Check if a key has been pressed again",
+      description = "Check if key has been pressed again",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4411,7 +4411,7 @@ return {
     },
     {
       name = "IsKeyDown",
-      description = "Check if a key is being pressed",
+      description = "Check if key is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4419,7 +4419,7 @@ return {
     },
     {
       name = "IsKeyReleased",
-      description = "Check if a key has been released once",
+      description = "Check if key has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4427,7 +4427,7 @@ return {
     },
     {
       name = "IsKeyUp",
-      description = "Check if a key is NOT being pressed",
+      description = "Check if key is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "key"}
@@ -4461,7 +4461,7 @@ return {
     },
     {
       name = "IsGamepadAvailable",
-      description = "Check if a gamepad is available",
+      description = "Check if gamepad is available",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"}
@@ -4477,7 +4477,7 @@ return {
     },
     {
       name = "IsGamepadButtonPressed",
-      description = "Check if a gamepad button has been pressed once",
+      description = "Check if gamepad button has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4486,7 +4486,7 @@ return {
     },
     {
       name = "IsGamepadButtonDown",
-      description = "Check if a gamepad button is being pressed",
+      description = "Check if gamepad button is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4495,7 +4495,7 @@ return {
     },
     {
       name = "IsGamepadButtonReleased",
-      description = "Check if a gamepad button has been released once",
+      description = "Check if gamepad button has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4504,7 +4504,7 @@ return {
     },
     {
       name = "IsGamepadButtonUp",
-      description = "Check if a gamepad button is NOT being pressed",
+      description = "Check if gamepad button is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "gamepad"},
@@ -4554,7 +4554,7 @@ return {
     },
     {
       name = "IsMouseButtonPressed",
-      description = "Check if a mouse button has been pressed once",
+      description = "Check if mouse button has been pressed once",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4562,7 +4562,7 @@ return {
     },
     {
       name = "IsMouseButtonDown",
-      description = "Check if a mouse button is being pressed",
+      description = "Check if mouse button is being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4570,7 +4570,7 @@ return {
     },
     {
       name = "IsMouseButtonReleased",
-      description = "Check if a mouse button has been released once",
+      description = "Check if mouse button has been released once",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4578,7 +4578,7 @@ return {
     },
     {
       name = "IsMouseButtonUp",
-      description = "Check if a mouse button is NOT being pressed",
+      description = "Check if mouse button is NOT being pressed",
       returnType = "bool",
       params = {
         {type = "int", name = "button"}
@@ -4690,7 +4690,7 @@ return {
     },
     {
       name = "IsGestureDetected",
-      description = "Check if a gesture has been detected",
+      description = "Check if gesture has been detected",
       returnType = "bool",
       params = {
         {type = "unsigned int", name = "gesture"}
@@ -4752,7 +4752,7 @@ return {
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"}
+        {type = "Rectangle", name = "rec"}
       }
     },
     {
@@ -6361,7 +6361,7 @@ return {
     },
     {
       name = "IsTextureValid",
-      description = "Check if a texture is valid (loaded in GPU)",
+      description = "Check if texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Texture2D", name = "texture"}
@@ -6377,7 +6377,7 @@ return {
     },
     {
       name = "IsRenderTextureValid",
-      description = "Check if a render texture is valid (loaded in GPU)",
+      description = "Check if render texture is valid (loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "RenderTexture2D", name = "target"}
@@ -6475,19 +6475,19 @@ return {
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector2", name = "position"},
         {type = "Color", name = "tint"}
       }
     },
     {
       name = "DrawTexturePro",
-      description = "Draw a part of a texture defined by a rectangle with 'pro' parameters",
+      description = "Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
-        {type = "Rectangle", name = "dest"},
+        {type = "Rectangle", name = "srcrec"},
+        {type = "Rectangle", name = "dstrec"},
         {type = "Vector2", name = "origin"},
         {type = "float", name = "rotation"},
         {type = "Color", name = "tint"}
@@ -6500,7 +6500,7 @@ return {
       params = {
         {type = "Texture2D", name = "texture"},
         {type = "NPatchInfo", name = "nPatchInfo"},
-        {type = "Rectangle", name = "dest"},
+        {type = "Rectangle", name = "dstrec"},
         {type = "Vector2", name = "origin"},
         {type = "float", name = "rotation"},
         {type = "Color", name = "tint"}
@@ -6635,7 +6635,7 @@ return {
       description = "Get Color from a source pixel pointer of certain format",
       returnType = "Color",
       params = {
-        {type = "void *", name = "srcPtr"},
+        {type = "const void *", name = "srcPtr"},
         {type = "int", name = "format"}
       }
     },
@@ -6708,7 +6708,7 @@ return {
     },
     {
       name = "IsFontValid",
-      description = "Check if a font is valid (font data loaded, WARNING: GPU texture not checked)",
+      description = "Check if font is valid (font data loaded, WARNING: GPU texture not checked)",
       returnType = "bool",
       params = {
         {type = "Font", name = "font"}
@@ -7364,7 +7364,7 @@ return {
         {type = "float", name = "radiusTop"},
         {type = "float", name = "radiusBottom"},
         {type = "float", name = "height"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
@@ -7390,7 +7390,7 @@ return {
         {type = "float", name = "radiusTop"},
         {type = "float", name = "radiusBottom"},
         {type = "float", name = "height"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
@@ -7403,7 +7403,7 @@ return {
         {type = "Vector3", name = "endPos"},
         {type = "float", name = "startRadius"},
         {type = "float", name = "endRadius"},
-        {type = "int", name = "slices"},
+        {type = "int", name = "sides"},
         {type = "Color", name = "color"}
       }
     },
@@ -7479,7 +7479,7 @@ return {
     },
     {
       name = "IsModelValid",
-      description = "Check if a model is valid (loaded in GPU, VAO/VBOs)",
+      description = "Check if model is valid (loaded in GPU, VAO/VBOs)",
       returnType = "bool",
       params = {
         {type = "Model", name = "model"}
@@ -7572,12 +7572,12 @@ return {
     },
     {
       name = "DrawBillboardRec",
-      description = "Draw a billboard texture defined by source",
+      description = "Draw a billboard texture defined by rectangle",
       returnType = "void",
       params = {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector3", name = "position"},
         {type = "Vector2", name = "size"},
         {type = "Color", name = "tint"}
@@ -7585,12 +7585,12 @@ return {
     },
     {
       name = "DrawBillboardPro",
-      description = "Draw a billboard texture defined by source and rotation",
+      description = "Draw a billboard texture defined by source rectangle with scaling and rotation",
       returnType = "void",
       params = {
         {type = "Camera", name = "camera"},
         {type = "Texture2D", name = "texture"},
-        {type = "Rectangle", name = "source"},
+        {type = "Rectangle", name = "rec"},
         {type = "Vector3", name = "position"},
         {type = "Vector3", name = "up"},
         {type = "Vector2", name = "size"},
@@ -7809,7 +7809,7 @@ return {
     },
     {
       name = "IsMaterialValid",
-      description = "Check if a material is valid (shader assigned, map textures loaded in GPU)",
+      description = "Check if material is valid (shader assigned, map textures loaded in GPU)",
       returnType = "bool",
       params = {
         {type = "Material", name = "material"}
@@ -8055,7 +8055,7 @@ return {
     },
     {
       name = "IsSoundValid",
-      description = "Check if a sound is valid (data loaded and buffers initialized)",
+      description = "Check if sound is valid (data loaded and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -8147,7 +8147,7 @@ return {
     },
     {
       name = "IsSoundPlaying",
-      description = "Check if a sound is currently playing",
+      description = "Check if sound is currently playing",
       returnType = "bool",
       params = {
         {type = "Sound", name = "sound"}
@@ -8245,7 +8245,7 @@ return {
     },
     {
       name = "IsMusicValid",
-      description = "Check if a music stream is valid (context and buffers initialized)",
+      description = "Check if music stream is valid (context and buffers initialized)",
       returnType = "bool",
       params = {
         {type = "Music", name = "music"}
