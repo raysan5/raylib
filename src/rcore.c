@@ -110,7 +110,12 @@
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset(), strcat()
 #include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
+
+#ifndef PICO_RP2350
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
+#else
+#include "pico/rand.h"              // Pico doesn't implement time, and will implement its own hardware timer elsewhere.  However, we need something to get a random seed from...
+#endif
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
 #if defined(PLATFORM_MEMORY) || defined(PLATFORM_WEB)
@@ -713,8 +718,12 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
 
-    // Initialize random seed
+    // Initialize random seed using available timer source instead of standard time() on embedded platforms
+    #ifndef PICO_RP2350
     SetRandomSeed((unsigned int)time(NULL));
+    #else
+    SetRandomSeed(get_rand_32());
+    #endif
 
     TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", GetWorkingDirectory());
 }
