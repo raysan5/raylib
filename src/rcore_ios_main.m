@@ -2,7 +2,7 @@
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
 #import <QuartzCore/CADisplayLink.h>
-#include <QuartzCore/CAFrameRateRange.h>
+#import <QuartzCore/CAFrameRateRange.h>
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
@@ -150,7 +150,7 @@ static int64_t vsyncCount = 0;
                                   selector:@selector(onDisplayFrame:)];
 
   NSInteger maxFPS = [UIScreen mainScreen].maximumFramesPerSecond;
-  
+
   // Use the display native refresh rate
   displayLink.preferredFrameRateRange =
       CAFrameRateRangeMake(60.0f, maxFPS, maxFPS);
@@ -514,9 +514,9 @@ void ios_get_window_metrics(int *screenWidth, int *screenHeight,
 
   if (scaleX)
     *scaleX = ios.scaleX;
-    
+
   if (scaleY)
-      *scaleY = ios.scaleY;
+    *scaleY = ios.scaleY;
 }
 
 void *ios_get_proc_address(const char *name) {
@@ -524,11 +524,25 @@ void *ios_get_proc_address(const char *name) {
 }
 
 void ios_open_url(const char *url) {
-  NSString *nsurlString = [NSString stringWithUTF8String:url];
-  NSURL *nsurl = [NSURL URLWithString:nsurlString];
-  if (nsurl != nil) {
+  if (!url) {
+    NSLog(@"[raylib][IOS] invalid URL: null");
+    return;
+  }
+
+  NSURLComponents *components = [NSURLComponents
+      componentsWithString:[NSString stringWithUTF8String:url]];
+
+  if (components == nil || components.scheme == nil) {
+
+    NSLog(@"[raylib][IOS] invalid URL: %s, Scheme: %s", url,
+          components ? components.scheme.UTF8String : "nil");
+    return;
+  }
+
+  if (components.URL != nil) {
+
     dispatch_async(dispatch_get_main_queue(), ^{
-      [[UIApplication sharedApplication] openURL:nsurl
+      [[UIApplication sharedApplication] openURL:components.URL
                                          options:@{}
                                completionHandler:nil];
     });
