@@ -772,7 +772,7 @@ void DrawCylinderWiresEx(Vector3 startPos, Vector3 endPos, float startRadius, fl
 void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color)
 {
     if (slices < 3) slices = 3;
-
+    if (rings  < 1) rings  = 1;
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
 
     // draw a sphere if start and end points are the same
@@ -911,7 +911,7 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int 
 void DrawCapsuleWires(Vector3 startPos, Vector3 endPos, float radius, int rings, int slices, Color color)
 {
     if (slices < 3) slices = 3;
-
+    if (rings  < 1) rings = 1;
     Vector3 direction = { endPos.x - startPos.x, endPos.y - startPos.y, endPos.z - startPos.z };
 
     // draw a sphere if start and end points are the same
