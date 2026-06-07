@@ -3942,6 +3942,12 @@ void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
 }
 
 // Draw an image (source) within an image (destination)
+// Draw a gradient-filled circle within an image
+void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inner, Color outer)
+{
+    // TODO: Implement gradient circle drawing
+}
+
 // NOTE: Color tint is applied to source image
 void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint)
 {
