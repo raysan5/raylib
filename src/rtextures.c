@@ -3618,144 +3618,6 @@ void ImageDrawLineStrip(Image *dst, const Vector2 *points, int pointCount, Color
     }
 }
 
-// Draw circle within an image
-void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
-{
-    int x = 0;
-    int y = radius;
-    int decesionParameter = 3 - 2*radius;
-
-    while (y >= x)
-    {
-        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
-        x++;
-
-        if (decesionParameter > 0)
-        {
-            y--;
-            decesionParameter = decesionParameter + 4*(x - y) + 10;
-        }
-        else decesionParameter = decesionParameter + 4*x + 6;
-    }
-}
-
-// Draw circle within an image (Vector version)
-void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
-{
-    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
-}
-
-// Draw circle outline within an image
-void ImageDrawCircleLines(Image *dst, int centerX, int centerY, int radius, Color color)
-{
-    int x = 0;
-    int y = radius;
-    int decesionParameter = 3 - 2*radius;
-
-    while (y >= x)
-    {
-        ImageDrawPixel(dst, centerX + x, centerY + y, color);
-        ImageDrawPixel(dst, centerX - x, centerY + y, color);
-        ImageDrawPixel(dst, centerX + x, centerY - y, color);
-        ImageDrawPixel(dst, centerX - x, centerY - y, color);
-        ImageDrawPixel(dst, centerX + y, centerY + x, color);
-        ImageDrawPixel(dst, centerX - y, centerY + x, color);
-        ImageDrawPixel(dst, centerX + y, centerY - x, color);
-        ImageDrawPixel(dst, centerX - y, centerY - x, color);
-        x++;
-
-        if (decesionParameter > 0)
-        {
-            y--;
-            decesionParameter = decesionParameter + 4*(x - y) + 10;
-        }
-        else decesionParameter = decesionParameter + 4*x + 6;
-    }
-}
-
-// Draw circle outline within an image (Vector version)
-void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
-{
-    ImageDrawCircleLines(dst, (int)center.x, (int)center.y, radius, color);
-}
-
-// Draw rectangle within an image
-void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
-{
-    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
-}
-
-// Draw rectangle within an image (Vector version)
-void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
-{
-    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
-}
-
-// Draw rectangle within an image
-void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
-{
-    // Security check to avoid program crash
-    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
-
-    // Security check to avoid drawing out of bounds in case of bad user data
-    if (rec.x < 0) { rec.width += rec.x; rec.x = 0; }
-    if (rec.y < 0) { rec.height += rec.y; rec.y = 0; }
-    if (rec.width < 0) rec.width = 0;
-    if (rec.height < 0) rec.height = 0;
-
-    // Clamp the size the the image bounds
-    if ((rec.x + rec.width) >= dst->width) rec.width = dst->width - rec.x;
-    if ((rec.y + rec.height) >= dst->height) rec.height = dst->height - rec.y;
-
-    // Check if the rect is even inside the image
-    if ((rec.x >= dst->width) || (rec.y >= dst->height)) return;
-    if (((rec.x + rec.width) <= 0) || (rec.y + rec.height <= 0)) return;
-
-    int sy = (int)rec.y;
-    int sx = (int)rec.x;
-
-    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
-
-    // Fill in the first pixel of the first row based on image format
-    ImageDrawPixel(dst, sx, sy, color);
-
-    int bytesOffset = ((sy*dst->width) + sx)*bytesPerPixel;
-    unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
-
-    // Repeat the first pixel data throughout the row
-    for (int x = 1; x < (int)rec.width; x *= 2)
-    {
-        int pixelsToCopy = MIN(x, (int)rec.width - x);
-        memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, pixelsToCopy*bytesPerPixel);
-    }
-
-    // Repeat the first row data for all other rows
-    int bytesPerRow = bytesPerPixel*(int)rec.width;
-    for (int y = 1; y < (int)rec.height; y++)
-    {
-        memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
-    }
-}
-
-// Draw rectangle lines within an image
-void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color)
-{
-    Rectangle rec = { posX, posY, width, height };
-    ImageDrawRectangleLinesEx(dst, rec, 1, color);
-}
-
-// Draw rectangle lines within an image with line thickness
-void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color)
-{
-    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
-    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
-}
-
 // Draw triangle within an image
 void ImageDrawTriangle(Image *dst, Vector2 v1, Vector2 v2, Vector2 v3, Color color)
 {
@@ -3939,6 +3801,144 @@ void ImageDrawTriangleStrip(Image *dst, const Vector2 *points, int pointCount, C
             else ImageDrawTriangle(dst, points[i], points[i - 1], points[i - 2], color);
         }
     }
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color)
+{
+    ImageDrawRectangleRec(dst, (Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, color);
+}
+
+// Draw rectangle within an image (Vector version)
+void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color)
+{
+    ImageDrawRectangle(dst, (int)position.x, (int)position.y, (int)size.x, (int)size.y, color);
+}
+
+// Draw rectangle within an image
+void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
+{
+    // Security check to avoid program crash
+    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;
+
+    // Security check to avoid drawing out of bounds in case of bad user data
+    if (rec.x < 0) { rec.width += rec.x; rec.x = 0; }
+    if (rec.y < 0) { rec.height += rec.y; rec.y = 0; }
+    if (rec.width < 0) rec.width = 0;
+    if (rec.height < 0) rec.height = 0;
+
+    // Clamp the size the the image bounds
+    if ((rec.x + rec.width) >= dst->width) rec.width = dst->width - rec.x;
+    if ((rec.y + rec.height) >= dst->height) rec.height = dst->height - rec.y;
+
+    // Check if the rect is even inside the image
+    if ((rec.x >= dst->width) || (rec.y >= dst->height)) return;
+    if (((rec.x + rec.width) <= 0) || (rec.y + rec.height <= 0)) return;
+
+    int sy = (int)rec.y;
+    int sx = (int)rec.x;
+
+    int bytesPerPixel = GetPixelDataSize(1, 1, dst->format);
+
+    // Fill in the first pixel of the first row based on image format
+    ImageDrawPixel(dst, sx, sy, color);
+
+    int bytesOffset = ((sy*dst->width) + sx)*bytesPerPixel;
+    unsigned char *pSrcPixel = (unsigned char *)dst->data + bytesOffset;
+
+    // Repeat the first pixel data throughout the row
+    for (int x = 1; x < (int)rec.width; x *= 2)
+    {
+        int pixelsToCopy = MIN(x, (int)rec.width - x);
+        memcpy(pSrcPixel + x*bytesPerPixel, pSrcPixel, pixelsToCopy*bytesPerPixel);
+    }
+
+    // Repeat the first row data for all other rows
+    int bytesPerRow = bytesPerPixel*(int)rec.width;
+    for (int y = 1; y < (int)rec.height; y++)
+    {
+        memcpy(pSrcPixel + (y*dst->width)*bytesPerPixel, pSrcPixel, bytesPerRow);
+    }
+}
+
+// Draw rectangle lines within an image
+void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color)
+{
+    Rectangle rec = { posX, posY, width, height };
+    ImageDrawRectangleLinesEx(dst, rec, 1, color);
+}
+
+// Draw rectangle lines within an image with line thickness
+void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color)
+{
+    ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
+    ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
+}
+
+// Draw circle within an image
+void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
+{
+    int x = 0;
+    int y = radius;
+    int decesionParameter = 3 - 2*radius;
+
+    while (y >= x)
+    {
+        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
+        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
+        x++;
+
+        if (decesionParameter > 0)
+        {
+            y--;
+            decesionParameter = decesionParameter + 4*(x - y) + 10;
+        }
+        else decesionParameter = decesionParameter + 4*x + 6;
+    }
+}
+
+// Draw circle within an image (Vector version)
+void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color)
+{
+    ImageDrawCircle(dst, (int)center.x, (int)center.y, radius, color);
+}
+
+// Draw circle outline within an image
+void ImageDrawCircleLines(Image *dst, int centerX, int centerY, int radius, Color color)
+{
+    int x = 0;
+    int y = radius;
+    int decesionParameter = 3 - 2*radius;
+
+    while (y >= x)
+    {
+        ImageDrawPixel(dst, centerX + x, centerY + y, color);
+        ImageDrawPixel(dst, centerX - x, centerY + y, color);
+        ImageDrawPixel(dst, centerX + x, centerY - y, color);
+        ImageDrawPixel(dst, centerX - x, centerY - y, color);
+        ImageDrawPixel(dst, centerX + y, centerY + x, color);
+        ImageDrawPixel(dst, centerX - y, centerY + x, color);
+        ImageDrawPixel(dst, centerX + y, centerY - x, color);
+        ImageDrawPixel(dst, centerX - y, centerY - x, color);
+        x++;
+
+        if (decesionParameter > 0)
+        {
+            y--;
+            decesionParameter = decesionParameter + 4*(x - y) + 10;
+        }
+        else decesionParameter = decesionParameter + 4*x + 6;
+    }
+}
+
+// Draw circle outline within an image (Vector version)
+void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
+{
+    ImageDrawCircleLines(dst, (int)center.x, (int)center.y, radius, color);
 }
 
 // Draw an image (source) within an image (destination)
