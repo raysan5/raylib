@@ -911,13 +911,13 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 // Draw rectangle outline with line thickness
 void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
 {
-    if ((lineThick > rec.width) || (lineThick > rec.height))
+    if ((thick > rec.width) || (thick > rec.height))
     {
-        if (rec.width >= rec.height) lineThick = rec.height/2;
-        else if (rec.width <= rec.height) lineThick = rec.width/2;
+        if (rec.width >= rec.height) thick = rec.height/2;
+        else if (rec.width <= rec.height) thick = rec.width/2;
     }
 
-    // When rec = { x, y, 8.0f, 6.0f } and lineThick = 2, the following
+    // When rec = { x, y, 8.0f, 6.0f } and thick = 2, the following
     // four rectangles are drawn ([T]op, [B]ottom, [L]eft, [R]ight):
     //
     //   TTTTTTTT
@@ -928,10 +928,10 @@ void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
     //   BBBBBBBB
     //
 
-    Rectangle top = { rec.x, rec.y, rec.width, lineThick };
-    Rectangle bottom = { rec.x, rec.y - lineThick + rec.height, rec.width, lineThick };
-    Rectangle left = { rec.x, rec.y + lineThick, lineThick, rec.height - lineThick*2.0f };
-    Rectangle right = { rec.x - lineThick + rec.width, rec.y + lineThick, lineThick, rec.height - lineThick*2.0f };
+    Rectangle top = { rec.x, rec.y, rec.width, thick };
+    Rectangle bottom = { rec.x, rec.y - thick + rec.height, rec.width, thick };
+    Rectangle left = { rec.x, rec.y + thick, thick, rec.height - thick*2.0f };
+    Rectangle right = { rec.x - thick + rec.width, rec.y + thick, thick, rec.height - thick*2.0f };
 
     DrawRectangleRec(top, color);
     DrawRectangleRec(bottom, color);
@@ -1172,15 +1172,15 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
     DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
 }
 
-// Draw rectangle with rounded edges outline
-void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float lineThick, Color color)
+// Draw rectangle with rounded edges outline with line thickness
+void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float thick, Color color)
 {
-    if (lineThick < 0) lineThick = 0;
+    if (thick < 0) thick = 0;
 
     // Not a rounded rectangle
     if (roundness <= 0.0f)
     {
-        DrawRectangleLinesEx((Rectangle){rec.x-lineThick, rec.y-lineThick, rec.width+2*lineThick, rec.height+2*lineThick}, lineThick, color);
+        DrawRectangleLinesEx((Rectangle){rec.x - thick, rec.y - thick, rec.width + 2*thick, rec.height + 2*thick}, thick, color);
         return;
     }
 
@@ -1200,7 +1200,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     }
 
     float stepLength = 90.0f/(float)segments;
-    const float outerRadius = radius + lineThick, innerRadius = radius;
+    const float outerRadius = radius + thick, innerRadius = radius;
 
     /*
     Quick sketch to make sense of all of this,
@@ -1219,14 +1219,14 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
            P5 ================== P4
     */
     const Vector2 point[16] = {
-        {(float)rec.x + innerRadius + 0.5f, rec.y - lineThick + 0.5f},
-        {(float)(rec.x + rec.width) - innerRadius - 0.5f, rec.y - lineThick + 0.5f},
-        {rec.x + rec.width + lineThick - 0.5f, (float)rec.y + innerRadius + 0.5f}, // PO, P1, P2
-        {rec.x + rec.width + lineThick - 0.5f, (float)(rec.y + rec.height) - innerRadius - 0.5f},
-        {(float)(rec.x + rec.width) - innerRadius - 0.5f, rec.y + rec.height + lineThick - 0.5f}, // P3, P4
-        {(float)rec.x + innerRadius + 0.5f, rec.y + rec.height + lineThick - 0.5f},
-        {rec.x - lineThick + 0.5f, (float)(rec.y + rec.height) - innerRadius - 0.5f},
-        {rec.x - lineThick + 0.5f, (float)rec.y + innerRadius + 0.5f}, // P5, P6, P7
+        {(float)rec.x + innerRadius + 0.5f, rec.y - thick + 0.5f},
+        {(float)(rec.x + rec.width) - innerRadius - 0.5f, rec.y - thick + 0.5f},
+        {rec.x + rec.width + thick - 0.5f, (float)rec.y + innerRadius + 0.5f}, // PO, P1, P2
+        {rec.x + rec.width + thick - 0.5f, (float)(rec.y + rec.height) - innerRadius - 0.5f},
+        {(float)(rec.x + rec.width) - innerRadius - 0.5f, rec.y + rec.height + thick - 0.5f}, // P3, P4
+        {(float)rec.x + innerRadius + 0.5f, rec.y + rec.height + thick - 0.5f},
+        {rec.x - thick + 0.5f, (float)(rec.y + rec.height) - innerRadius - 0.5f},
+        {rec.x - thick + 0.5f, (float)rec.y + innerRadius + 0.5f}, // P5, P6, P7
         {(float)rec.x + innerRadius + 0.5f, rec.y + 0.5f},
         {(float)(rec.x + rec.width) - innerRadius - 0.5f, rec.y + 0.5f}, // P8, P9
         {rec.x + rec.width - 0.5f, (float)rec.y + innerRadius + 0.5f},
@@ -1246,7 +1246,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
 
-    if (lineThick > 1)
+    if (thick > 1)
     {
 #if SUPPORT_QUADS_DRAW_MODE
         rlSetTexture(GetShapesTexture().id);
@@ -1611,12 +1611,12 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
     rlEnd();
 }
 
-void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float lineThick, Color color)
+void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float thick, Color color)
 {
     if (sides < 3) sides = 3;
     float centralAngle = rotation*DEG2RAD;
     float exteriorAngle = 360.0f/(float)sides*DEG2RAD;
-    float innerRadius = radius - (lineThick*cosf(DEG2RAD*exteriorAngle/2.0f));
+    float innerRadius = radius - (thick*cosf(DEG2RAD*exteriorAngle/2.0f));
 
 #if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
