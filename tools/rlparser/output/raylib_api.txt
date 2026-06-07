@@ -3405,7 +3405,7 @@ Function 383: DrawTextureV() (3 input parameters)
 Function 384: DrawTextureEx() (5 input parameters)
   Name: DrawTextureEx
   Return type: void
-  Description: Draw a Texture2D with extended parameters
+  Description: Draw a Texture2D with rotation and scale
   Param[1]: texture (type: Texture2D)
   Param[2]: position (type: Vector2)
   Param[3]: rotation (type: float)
@@ -3554,7 +3554,7 @@ Function 406: LoadFont() (1 input parameters)
 Function 407: LoadFontEx() (4 input parameters)
   Name: LoadFontEx
   Return type: Font
-  Description: Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height
+  Description: Load font from file with defined codepoints and generation size, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height
   Param[1]: fileName (type: const char *)
   Param[2]: fontSize (type: int)
   Param[3]: codepoints (type: const int *)
@@ -3958,7 +3958,7 @@ Function 466: DrawCircle3D() (5 input parameters)
 Function 467: DrawTriangle3D() (4 input parameters)
   Name: DrawTriangle3D
   Return type: void
-  Description: Draw a color-filled triangle (vertex in counter-clockwise order!)
+  Description: Draw a color-filled triangle, counter-clockwise vertex order
   Param[1]: v1 (type: Vector3)
   Param[2]: v2 (type: Vector3)
   Param[3]: v3 (type: Vector3)
@@ -4012,7 +4012,7 @@ Function 473: DrawSphere() (3 input parameters)
 Function 474: DrawSphereEx() (5 input parameters)
   Name: DrawSphereEx
   Return type: void
-  Description: Draw sphere with extended parameters
+  Description: Draw sphere with defined rings and slices
   Param[1]: centerPos (type: Vector3)
   Param[2]: radius (type: float)
   Param[3]: rings (type: int)
@@ -4142,7 +4142,7 @@ Function 490: DrawModel() (4 input parameters)
 Function 491: DrawModelEx() (6 input parameters)
   Name: DrawModelEx
   Return type: void
-  Description: Draw a model with extended parameters
+  Description: Draw a model with custom transform
   Param[1]: model (type: Model)
   Param[2]: position (type: Vector3)
   Param[3]: rotationAxis (type: Vector3)
@@ -4160,7 +4160,7 @@ Function 492: DrawModelWires() (4 input parameters)
 Function 493: DrawModelWiresEx() (6 input parameters)
   Name: DrawModelWiresEx
   Return type: void
-  Description: Draw a model wires (with texture if set) with extended parameters
+  Description: Draw a model wires with custom transform
   Param[1]: model (type: Model)
   Param[2]: position (type: Vector3)
   Param[3]: rotationAxis (type: Vector3)

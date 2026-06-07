@@ -6459,7 +6459,7 @@ return {
     },
     {
       name = "DrawTextureEx",
-      description = "Draw a Texture2D with extended parameters",
+      description = "Draw a Texture2D with rotation and scale",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -6674,7 +6674,7 @@ return {
     },
     {
       name = "LoadFontEx",
-      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
+      description = "Load font from file with defined codepoints and generation size, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
       returnType = "Font",
       params = {
         {type = "const char *", name = "fileName"},
@@ -7258,7 +7258,7 @@ return {
     },
     {
       name = "DrawTriangle3D",
-      description = "Draw a color-filled triangle (vertex in counter-clockwise order!)",
+      description = "Draw a color-filled triangle, counter-clockwise vertex order",
       returnType = "void",
       params = {
         {type = "Vector3", name = "v1"},
@@ -7333,7 +7333,7 @@ return {
     },
     {
       name = "DrawSphereEx",
-      description = "Draw sphere with extended parameters",
+      description = "Draw sphere with defined rings and slices",
       returnType = "void",
       params = {
         {type = "Vector3", name = "centerPos"},
@@ -7514,7 +7514,7 @@ return {
     },
     {
       name = "DrawModelEx",
-      description = "Draw a model with extended parameters",
+      description = "Draw a model with custom transform",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
@@ -7538,7 +7538,7 @@ return {
     },
     {
       name = "DrawModelWiresEx",
-      description = "Draw a model wires (with texture if set) with extended parameters",
+      description = "Draw a model wires with custom transform",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
