@@ -908,8 +908,8 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 */
 }
 
-// Draw rectangle outline with extended parameters
-void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color)
+// Draw rectangle outline with line thickness
+void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
 {
     if ((lineThick > rec.width) || (lineThick > rec.height))
     {

@@ -3738,7 +3738,7 @@ void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int heig
     ImageDrawRectangleLinesEx(dst, rec, 1, color);
 }
 
-// Draw rectangle lines within an image with extended parameters
+// Draw rectangle lines within an image with line thickness
 void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color)
 {
     ImageDrawRectangle(dst, (int)rec.x, (int)rec.y, (int)rec.width, thick, color);
@@ -4488,7 +4488,7 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
     DrawTextureEx(texture, position, 0, 1.0f, tint);
 }
 
-// Draw a texture with extended parameters
+// Draw a texture with rotation and scale
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
     Rectangle srcrec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
