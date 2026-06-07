@@ -2349,10 +2349,10 @@ Function 241: DrawRectangleGradientEx() (5 input parameters)
   Return type: void
   Description: Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order
   Param[1]: rec (type: Rectangle)
-  Param[2]: topLeft (type: Color)
-  Param[3]: bottomLeft (type: Color)
-  Param[4]: bottomRight (type: Color)
-  Param[5]: topRight (type: Color)
+  Param[2]: col1 (type: Color)
+  Param[3]: col2 (type: Color)
+  Param[4]: col3 (type: Color)
+  Param[5]: col4 (type: Color)
 Function 242: DrawRectangleLines() (5 input parameters)
   Name: DrawRectangleLines
   Return type: void
