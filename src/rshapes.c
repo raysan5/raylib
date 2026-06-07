@@ -547,8 +547,8 @@ void DrawRectangleGradientH(int posX, int posY, int width, int height, Color lef
     DrawRectangleGradientEx((Rectangle){ (float)posX, (float)posY, (float)width, (float)height }, left, left, right, right);
 }
 
-// Draw a gradient-filled rectangle
-void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Color bottomRight, Color topRight)
+// Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order
+void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
     rlSetTexture(GetShapesTexture().id);
     Rectangle shapeRect = GetShapesTextureRectangle();
@@ -557,19 +557,19 @@ void DrawRectangleGradientEx(Rectangle rec, Color topLeft, Color bottomLeft, Col
         rlNormal3f(0.0f, 0.0f, 1.0f);
 
         // NOTE: Default raylib font character 95 is a white square
-        rlColor4ub(topLeft.r, topLeft.g, topLeft.b, topLeft.a);
+        rlColor4ub(col1.r, col1.g, col1.b, col1.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(rec.x, rec.y);
 
-        rlColor4ub(bottomLeft.r, bottomLeft.g, bottomLeft.b, bottomLeft.a);
+        rlColor4ub(col2.r, col2.g, col2.b, col2.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x, rec.y + rec.height);
 
-        rlColor4ub(bottomRight.r, bottomRight.g, bottomRight.b, bottomRight.a);
+        rlColor4ub(col3.r, col3.g, col3.b, col3.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y + rec.height);
 
-        rlColor4ub(topRight.r, topRight.g, topRight.b, topRight.a);
+        rlColor4ub(col4.r, col4.g, col4.b, col4.a);
         rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(rec.x + rec.width, rec.y);
     rlEnd();
