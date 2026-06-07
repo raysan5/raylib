@@ -3609,6 +3609,15 @@ void ImageDrawLineEx(Image *dst, Vector2 start, Vector2 end, int thick, Color co
     }
 }
 
+// Draw a lines sequence within an image
+void ImageDrawLineStrip(Image *dst, const Vector2 *points, int pointCount, Color color)
+{
+    for (int i = 0; i < pointCount - 1; i++)
+    {
+        ImageDrawLineV(dst, points[i], points[i + 1], color);
+    }
+}
+
 // Draw circle within an image
 void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color)
 {
