@@ -5158,6 +5158,17 @@ return {
       }
     },
     {
+      name = "DrawCircleLinesEx",
+      description = "Draw circle outline with line thickness",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "DrawEllipse",
       description = "Draw ellipse",
       returnType = "void",
@@ -6119,6 +6130,17 @@ return {
         {type = "Vector2", name = "start"},
         {type = "Vector2", name = "end"},
         {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawLineStrip",
+      description = "Draw a lines sequence within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "const Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
     },
