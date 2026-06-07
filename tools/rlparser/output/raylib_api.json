@@ -335,12 +335,6 @@
       "type": "UNKNOWN",
       "value": "SHADER_LOC_MAP_METALNESS",
       "description": ""
-    },
-    {
-      "name": "GetMouseRay",
-      "type": "UNKNOWN",
-      "value": "GetScreenToWorldRay",
-      "description": "Compatibility hack for previous raylib versions"
     }
   ],
   "structs": [

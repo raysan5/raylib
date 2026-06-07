@@ -1,5 +1,5 @@
 
-Defines found: 57
+Defines found: 56
 
 Define 001: RAYLIB_H
   Name: RAYLIB_H
@@ -281,11 +281,6 @@ Define 056: SHADER_LOC_MAP_SPECULAR
   Type: UNKNOWN
   Value: SHADER_LOC_MAP_METALNESS
   Description: 
-Define 057: GetMouseRay
-  Name: GetMouseRay
-  Type: UNKNOWN
-  Value: GetScreenToWorldRay
-  Description: Compatibility hack for previous raylib versions
 
 Structures found: 35
 
