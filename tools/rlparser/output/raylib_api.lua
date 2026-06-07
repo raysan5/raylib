@@ -6199,18 +6199,6 @@ return {
       }
     },
     {
-      name = "ImageDraw",
-      description = "Draw a source image within a destination image (tint applied to source)",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Image", name = "src"},
-        {type = "Rectangle", name = "srcRec"},
-        {type = "Rectangle", name = "dstRec"},
-        {type = "Color", name = "tint"}
-      }
-    },
-    {
       name = "ImageDrawRectangle",
       description = "Draw rectangle within an image",
       returnType = "void",

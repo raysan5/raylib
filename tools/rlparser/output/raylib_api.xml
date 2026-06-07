@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="605">
+    <Functions count="604">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -2112,13 +2112,6 @@
             <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDraw" retType="void" paramCount="5" desc="Draw a source image within a destination image (tint applied to source)">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Image" name="src" desc="" />
-            <Param type="Rectangle" name="srcRec" desc="" />
-            <Param type="Rectangle" name="dstRec" desc="" />
-            <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="ImageDrawRectangle" retType="void" paramCount="6" desc="Draw rectangle within an image">
             <Param type="Image *" name="dst" desc="" />
