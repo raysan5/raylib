@@ -8637,6 +8637,33 @@
       ]
     },
     {
+      "name": "ImageDrawCircleGradient",
+      "description": "Draw a gradient-filled circle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "inner"
+        },
+        {
+          "type": "Color",
+          "name": "outer"
+        }
+      ]
+    },
+    {
       "name": "ImageDrawText",
       "description": "Draw text (using default font) within an image (destination)",
       "returnType": "void",
