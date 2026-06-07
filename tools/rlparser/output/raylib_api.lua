@@ -6303,18 +6303,6 @@ return {
       }
     },
     {
-      name = "ImageDraw",
-      description = "Draw a source image into a destination image (tint applied to source)",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Image", name = "src"},
-        {type = "Rectangle", name = "srcRec"},
-        {type = "Rectangle", name = "dstRec"},
-        {type = "Color", name = "tint"}
-      }
-    },
-    {
       name = "ImageDrawCircleGradient",
       description = "Draw a gradient-filled circle within an image",
       returnType = "void",
@@ -6324,6 +6312,44 @@ return {
         {type = "float", name = "radius"},
         {type = "Color", name = "inner"},
         {type = "Color", name = "outer"}
+      }
+    },
+    {
+      name = "ImageDrawImage",
+      description = "Draw an image within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawImageRec",
+      description = "Draw a part of an image defined by a rectangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "Rectangle", name = "srcRec"},
+        {type = "Vector2", name = "position"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawImagePro",
+      description = "Draw a part of an image defined by a rectangle into destination rectangle, with scaling and rotation, within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "Rectangle", name = "srcRec"},
+        {type = "Rectangle", name = "dstRec"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "tint"}
       }
     },
     {
