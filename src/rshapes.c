@@ -510,6 +510,11 @@ void DrawCircleLinesV(Vector2 center, float radius, Color color)
     rlEnd();
 }
 
+void DrawCircleLinesEx(Vector2 center, float radius, float thick, Color color)
+{
+    DrawRing(center, radius - thick, radius, 0.0f, 360.0f, 36, color);
+}
+
 // Draw ellipse
 void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, Color color)
 {
