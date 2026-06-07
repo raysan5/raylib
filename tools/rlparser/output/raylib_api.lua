@@ -4979,10 +4979,10 @@ return {
       returnType = "void",
       params = {
         {type = "Rectangle", name = "rec"},
-        {type = "Color", name = "topLeft"},
-        {type = "Color", name = "bottomLeft"},
-        {type = "Color", name = "bottomRight"},
-        {type = "Color", name = "topRight"}
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"},
+        {type = "Color", name = "col3"},
+        {type = "Color", name = "col4"}
       }
     },
     {

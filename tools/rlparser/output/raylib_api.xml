@@ -1473,10 +1473,10 @@
         </Function>
         <Function name="DrawRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order">
             <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Color" name="topLeft" desc="" />
-            <Param type="Color" name="bottomLeft" desc="" />
-            <Param type="Color" name="bottomRight" desc="" />
-            <Param type="Color" name="topRight" desc="" />
+            <Param type="Color" name="col1" desc="" />
+            <Param type="Color" name="col2" desc="" />
+            <Param type="Color" name="col3" desc="" />
+            <Param type="Color" name="col4" desc="" />
         </Function>
         <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
             <Param type="int" name="posX" desc="" />

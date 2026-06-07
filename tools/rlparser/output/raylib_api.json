@@ -5947,19 +5947,19 @@
         },
         {
           "type": "Color",
-          "name": "topLeft"
+          "name": "col1"
         },
         {
           "type": "Color",
-          "name": "bottomLeft"
+          "name": "col2"
         },
         {
           "type": "Color",
-          "name": "bottomRight"
+          "name": "col3"
         },
         {
           "type": "Color",
-          "name": "topRight"
+          "name": "col4"
         }
       ]
     },
