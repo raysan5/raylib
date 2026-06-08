@@ -78,6 +78,12 @@
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1  "texture1"          // texture1 (texture slot active 1)
 *       #define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2  "texture2"          // texture2 (texture slot active 2)
 *
+*       When gles is used, the standard precision for vertex and fragment shaders is mediump.
+*       For more precision, use these defines
+*
+*       #define RL_DEFAULT_SHADER_VERTEX_PRECISION_HIGHP
+*       #define RL_DEFAULT_SHADER_FRAGMENT_PRECISION_HIGHP
+*
 *   DEPENDENCIES:
 *      - OpenGL libraries (depending on platform and OpenGL version selected)
 *      - GLAD OpenGL extensions loading library (only for OpenGL 3.3 Core, 4.3 Core)
@@ -5028,7 +5034,11 @@ static void rlLoadShaderDefault(void)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
+#ifdef RL_DEFAULT_SHADER_VERTEX_PRECISION_HIGHP
+    "precision highp float;             \n"
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
+#endif
     "in vec3 vertexPosition;            \n"
     "in vec2 vertexTexCoord;            \n"
     "in vec4 vertexColor;               \n"
@@ -5036,7 +5046,11 @@ static void rlLoadShaderDefault(void)
     "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+#ifdef RL_DEFAULT_SHADER_VERTEX_PRECISION_HIGHP
+    "precision highp float;             \n"
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
+#endif
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
@@ -5081,7 +5095,11 @@ static void rlLoadShaderDefault(void)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
+#ifdef RL_DEFAULT_SHADER_FRAGMENT_PRECISION_HIGHP
+    "precision highp float;             \n"
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2)
+#endif
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
@@ -5094,7 +5112,11 @@ static void rlLoadShaderDefault(void)
     "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
+#ifdef RL_DEFAULT_SHADER_FRAGMENT_PRECISION_HIGHP
+    "precision highp float;             \n"
+#else
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
+#endif
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
     "uniform sampler2D texture0;        \n"

@@ -206,6 +206,12 @@
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0    "texture0"           // texture0 (texture slot active 0)
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1    "texture1"           // texture1 (texture slot active 1)
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2    "texture2"           // texture2 (texture slot active 2)
+
+// When gles is used, the standard precision for vertex and fragment shaders is mediump.
+// For more precision, use these defines
+
+// #define RL_DEFAULT_SHADER_VERTEX_PRECISION_HIGHP
+// #define RL_DEFAULT_SHADER_FRAGMENT_PRECISION_HIGHP
 //------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------
