@@ -77,7 +77,7 @@ int main(void)
         {
             // Cast a ray from the screen center (where crosshair would be)
             Vector2 screenCenter = { GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
-            Ray ray = GetMouseRay(screenCenter, camera);
+            Ray ray = GetScreenToWorldRay(screenCenter, camera);
 
             // Check ray collision with all voxels
             float closestDistance = 99999.0f;

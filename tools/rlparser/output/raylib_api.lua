@@ -335,12 +335,6 @@ return {
       type = "UNKNOWN",
       value = "SHADER_LOC_MAP_METALNESS",
       description = ""
-    },
-    {
-      name = "GetMouseRay",
-      type = "UNKNOWN",
-      value = "GetScreenToWorldRay",
-      description = "Compatibility hack for previous raylib versions"
     }
   },
   structs = {
@@ -4851,6 +4845,234 @@ return {
       }
     },
     {
+      name = "DrawTriangle",
+      description = "Draw a color-filled triangle, counter-clockwise vertex order",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawTriangleGradient",
+      description = "Draw triangle with interpolated colors, counter-clockwise vertex/color order",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "c1"},
+        {type = "Color", name = "c2"},
+        {type = "Color", name = "c3"}
+      }
+    },
+    {
+      name = "DrawTriangleLines",
+      description = "Draw triangle outline, counter-clockwise vertex order",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "v1"},
+        {type = "Vector2", name = "v2"},
+        {type = "Vector2", name = "v3"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawTriangleFan",
+      description = "Draw a triangle fan defined by points (first vertex is the center)",
+      returnType = "void",
+      params = {
+        {type = "const Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawTriangleStrip",
+      description = "Draw a triangle strip defined by points",
+      returnType = "void",
+      params = {
+        {type = "const Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangle",
+      description = "Draw a color-filled rectangle",
+      returnType = "void",
+      params = {
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleV",
+      description = "Draw a color-filled rectangle (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "size"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRec",
+      description = "Draw a color-filled rectangle",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectanglePro",
+      description = "Draw a color-filled rectangle with pro parameters",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleGradientV",
+      description = "Draw a vertical-gradient-filled rectangle",
+      returnType = "void",
+      params = {
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "top"},
+        {type = "Color", name = "bottom"}
+      }
+    },
+    {
+      name = "DrawRectangleGradientH",
+      description = "Draw a horizontal-gradient-filled rectangle",
+      returnType = "void",
+      params = {
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "left"},
+        {type = "Color", name = "right"}
+      }
+    },
+    {
+      name = "DrawRectangleGradientEx",
+      description = "Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"},
+        {type = "Color", name = "col3"},
+        {type = "Color", name = "col4"}
+      }
+    },
+    {
+      name = "DrawRectangleLines",
+      description = "Draw rectangle outline",
+      returnType = "void",
+      params = {
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleLinesEx",
+      description = "Draw rectangle outline with line thickness",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRounded",
+      description = "Draw rectangle with rounded edges",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "roundness"},
+        {type = "int", name = "segments"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRoundedLines",
+      description = "Draw rectangle lines with rounded edges",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "roundness"},
+        {type = "int", name = "segments"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawRectangleRoundedLinesEx",
+      description = "Draw rectangle lines with rounded edges outline and line thickness",
+      returnType = "void",
+      params = {
+        {type = "Rectangle", name = "rec"},
+        {type = "float", name = "roundness"},
+        {type = "int", name = "segments"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawPoly",
+      description = "Draw a polygon of n sides",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "sides"},
+        {type = "float", name = "radius"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawPolyLines",
+      description = "Draw a polygon outline of n sides",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "sides"},
+        {type = "float", name = "radius"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "DrawPolyLinesEx",
+      description = "Draw a polygon outline of n sides with line thickness",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "sides"},
+        {type = "float", name = "radius"},
+        {type = "float", name = "rotation"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "DrawCircle",
       description = "Draw a color-filled circle",
       returnType = "void",
@@ -4930,6 +5152,17 @@ return {
       }
     },
     {
+      name = "DrawCircleLinesEx",
+      description = "Draw circle outline with line thickness",
+      returnType = "void",
+      params = {
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "float", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "DrawEllipse",
       description = "Draw ellipse",
       returnType = "void",
@@ -5000,234 +5233,6 @@ return {
         {type = "float", name = "startAngle"},
         {type = "float", name = "endAngle"},
         {type = "int", name = "segments"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangle",
-      description = "Draw a color-filled rectangle",
-      returnType = "void",
-      params = {
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleV",
-      description = "Draw a color-filled rectangle (Vector version)",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "position"},
-        {type = "Vector2", name = "size"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleRec",
-      description = "Draw a color-filled rectangle",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectanglePro",
-      description = "Draw a color-filled rectangle with pro parameters",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "Vector2", name = "origin"},
-        {type = "float", name = "rotation"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleGradientV",
-      description = "Draw a vertical-gradient-filled rectangle",
-      returnType = "void",
-      params = {
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "top"},
-        {type = "Color", name = "bottom"}
-      }
-    },
-    {
-      name = "DrawRectangleGradientH",
-      description = "Draw a horizontal-gradient-filled rectangle",
-      returnType = "void",
-      params = {
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "left"},
-        {type = "Color", name = "right"}
-      }
-    },
-    {
-      name = "DrawRectangleGradientEx",
-      description = "Draw a gradient-filled rectangle with custom vertex colors",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "Color", name = "topLeft"},
-        {type = "Color", name = "bottomLeft"},
-        {type = "Color", name = "bottomRight"},
-        {type = "Color", name = "topRight"}
-      }
-    },
-    {
-      name = "DrawRectangleLines",
-      description = "Draw rectangle outline",
-      returnType = "void",
-      params = {
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleLinesEx",
-      description = "Draw rectangle outline with extended parameters",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "float", name = "lineThick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleRounded",
-      description = "Draw rectangle with rounded edges",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "float", name = "roundness"},
-        {type = "int", name = "segments"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleRoundedLines",
-      description = "Draw rectangle lines with rounded edges",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "float", name = "roundness"},
-        {type = "int", name = "segments"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawRectangleRoundedLinesEx",
-      description = "Draw rectangle lines with rounded edges outline",
-      returnType = "void",
-      params = {
-        {type = "Rectangle", name = "rec"},
-        {type = "float", name = "roundness"},
-        {type = "int", name = "segments"},
-        {type = "float", name = "lineThick"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawTriangle",
-      description = "Draw a color-filled triangle (vertex in counter-clockwise order!)",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "v1"},
-        {type = "Vector2", name = "v2"},
-        {type = "Vector2", name = "v3"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawTriangleGradient",
-      description = "Draw triangle with interpolated colors (vertex in counter-clockwise order!)",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "v1"},
-        {type = "Vector2", name = "v2"},
-        {type = "Vector2", name = "v3"},
-        {type = "Color", name = "c1"},
-        {type = "Color", name = "c2"},
-        {type = "Color", name = "c3"}
-      }
-    },
-    {
-      name = "DrawTriangleLines",
-      description = "Draw triangle outline (vertex in counter-clockwise order!)",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "v1"},
-        {type = "Vector2", name = "v2"},
-        {type = "Vector2", name = "v3"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawTriangleFan",
-      description = "Draw a triangle fan defined by points (first vertex is the center)",
-      returnType = "void",
-      params = {
-        {type = "const Vector2 *", name = "points"},
-        {type = "int", name = "pointCount"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawTriangleStrip",
-      description = "Draw a triangle strip defined by points",
-      returnType = "void",
-      params = {
-        {type = "const Vector2 *", name = "points"},
-        {type = "int", name = "pointCount"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawPoly",
-      description = "Draw a polygon of n sides",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "center"},
-        {type = "int", name = "sides"},
-        {type = "float", name = "radius"},
-        {type = "float", name = "rotation"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawPolyLines",
-      description = "Draw a polygon outline of n sides",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "center"},
-        {type = "int", name = "sides"},
-        {type = "float", name = "radius"},
-        {type = "float", name = "rotation"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "DrawPolyLinesEx",
-      description = "Draw a polygon outline of n sides with extended parameters",
-      returnType = "void",
-      params = {
-        {type = "Vector2", name = "center"},
-        {type = "int", name = "sides"},
-        {type = "float", name = "radius"},
-        {type = "float", name = "rotation"},
-        {type = "float", name = "lineThick"},
         {type = "Color", name = "color"}
       }
     },
@@ -6123,106 +6128,13 @@ return {
       }
     },
     {
-      name = "ImageDrawCircle",
-      description = "Draw a filled circle within an image",
+      name = "ImageDrawLineStrip",
+      description = "Draw a lines sequence within an image",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
-        {type = "int", name = "centerX"},
-        {type = "int", name = "centerY"},
-        {type = "int", name = "radius"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawCircleV",
-      description = "Draw a filled circle within an image (Vector version)",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Vector2", name = "center"},
-        {type = "int", name = "radius"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawCircleLines",
-      description = "Draw circle outline within an image",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "int", name = "centerX"},
-        {type = "int", name = "centerY"},
-        {type = "int", name = "radius"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawCircleLinesV",
-      description = "Draw circle outline within an image (Vector version)",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Vector2", name = "center"},
-        {type = "int", name = "radius"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawRectangle",
-      description = "Draw rectangle within an image",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawRectangleV",
-      description = "Draw rectangle within an image (Vector version)",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Vector2", name = "position"},
-        {type = "Vector2", name = "size"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawRectangleRec",
-      description = "Draw rectangle within an image",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Rectangle", name = "rec"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawRectangleLines",
-      description = "Draw rectangle lines within an image",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "int", name = "posX"},
-        {type = "int", name = "posY"},
-        {type = "int", name = "width"},
-        {type = "int", name = "height"},
-        {type = "Color", name = "color"}
-      }
-    },
-    {
-      name = "ImageDrawRectangleLinesEx",
-      description = "Draw rectangle lines within an image with extended parameters",
-      returnType = "void",
-      params = {
-        {type = "Image *", name = "dst"},
-        {type = "Rectangle", name = "rec"},
-        {type = "int", name = "thick"},
+        {type = "const Vector2 *", name = "points"},
+        {type = "int", name = "pointCount"},
         {type = "Color", name = "color"}
       }
     },
@@ -6287,14 +6199,156 @@ return {
       }
     },
     {
-      name = "ImageDraw",
-      description = "Draw a source image within a destination image (tint applied to source)",
+      name = "ImageDrawRectangle",
+      description = "Draw rectangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleV",
+      description = "Draw rectangle within an image (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "size"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleRec",
+      description = "Draw rectangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleLines",
+      description = "Draw rectangle lines within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleLinesEx",
+      description = "Draw rectangle lines within an image with line thickness",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "int", name = "thick"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircle",
+      description = "Draw a filled circle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "centerX"},
+        {type = "int", name = "centerY"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleV",
+      description = "Draw a filled circle within an image (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleLines",
+      description = "Draw circle outline within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "int", name = "centerX"},
+        {type = "int", name = "centerY"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleLinesV",
+      description = "Draw circle outline within an image (Vector version)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "center"},
+        {type = "int", name = "radius"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawCircleGradient",
+      description = "Draw a gradient-filled circle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Vector2", name = "center"},
+        {type = "float", name = "radius"},
+        {type = "Color", name = "inner"},
+        {type = "Color", name = "outer"}
+      }
+    },
+    {
+      name = "ImageDrawImage",
+      description = "Draw an image within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "int", name = "posX"},
+        {type = "int", name = "posY"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawImageRec",
+      description = "Draw a part of an image defined by a rectangle within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "Rectangle", name = "srcRec"},
+        {type = "Vector2", name = "position"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawImagePro",
+      description = "Draw a part of an image defined by a rectangle into destination rectangle, with scaling and rotation, within an image",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
         {type = "Image", name = "src"},
         {type = "Rectangle", name = "srcRec"},
         {type = "Rectangle", name = "dstRec"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
         {type = "Color", name = "tint"}
       }
     },
@@ -6459,7 +6513,7 @@ return {
     },
     {
       name = "DrawTextureEx",
-      description = "Draw a Texture2D with extended parameters",
+      description = "Draw a Texture2D with rotation and scale",
       returnType = "void",
       params = {
         {type = "Texture2D", name = "texture"},
@@ -6674,7 +6728,7 @@ return {
     },
     {
       name = "LoadFontEx",
-      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
+      description = "Load font from file with defined codepoints and generation size, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
       returnType = "Font",
       params = {
         {type = "const char *", name = "fileName"},
@@ -7258,7 +7312,7 @@ return {
     },
     {
       name = "DrawTriangle3D",
-      description = "Draw a color-filled triangle (vertex in counter-clockwise order!)",
+      description = "Draw a color-filled triangle, counter-clockwise vertex order",
       returnType = "void",
       params = {
         {type = "Vector3", name = "v1"},
@@ -7333,7 +7387,7 @@ return {
     },
     {
       name = "DrawSphereEx",
-      description = "Draw sphere with extended parameters",
+      description = "Draw sphere with defined rings and slices",
       returnType = "void",
       params = {
         {type = "Vector3", name = "centerPos"},
@@ -7514,7 +7568,7 @@ return {
     },
     {
       name = "DrawModelEx",
-      description = "Draw a model with extended parameters",
+      description = "Draw a model with custom transform",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},
@@ -7538,7 +7592,7 @@ return {
     },
     {
       name = "DrawModelWiresEx",
-      description = "Draw a model wires (with texture if set) with extended parameters",
+      description = "Draw a model wires with custom transform",
       returnType = "void",
       params = {
         {type = "Model", name = "model"},

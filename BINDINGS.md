@@ -26,6 +26,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-cr](https://github.com/sol-vin/raylib-cr)                                        | 4.6-dev (5e1a81) | [Crystal](https://crystal-lang.org)                                  | Apache-2.0           |
 | [ray-cyber](https://github.com/fubark/ray-cyber)                                         | **5.0**          | [Cyber](https://cyberscript.dev)                                     | MIT                  |
 | [dart-raylib](https://gitlab.com/wolfenrain/dart-raylib)                                 | 4.0              | [Dart](https://dart.dev)                                             | MIT                  |
+| [raylib_dart](https://pub.dev/packages/raylib_dart)                                      | 6.0              | [Dart](https://dart.dev)                                             | MIT                  |
 | [bindbc-raylib3](https://github.com/o3o/bindbc-raylib3)                                  | **5.0**          | [D](https://dlang.org)                                               | BSL-1.0              |
 | [dray](https://github.com/redthing1/dray)                                                | **5.0**          | [D](https://dlang.org)                                               | Apache-2.0           |
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **6.0**          | [D](https://dlang.org)                                               | Zlib                 |
@@ -62,7 +63,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 4.5              | [Node.js](https://nodejs.org/en)                                     | Zlib                 |
 | [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **5.5**          | [Odin](https://odin-lang.org)                                        | Zlib                 |
 | [raylib_odin_bindings](https://github.com/Deathbat2190/raylib_odin_bindings)             | 4.0-dev          | [Odin](https://odin-lang.org)                                        | MIT                  |
-| [raylib-ocaml](https://github.com/tjammer/raylib-ocaml)                                  | **5.0**          | [OCaml](https://ocaml.org)                                           | MIT                  |
+| [raylib-ocaml](https://github.com/tjammer/raylib-ocaml)                                  | **6.0**          | [OCaml](https://ocaml.org)                                           | MIT                  |
 | [TurboRaylib](https://github.com/turborium/TurboRaylib)                                  | 4.5              | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal)         | MIT                  |
 | [Ray4Laz](https://github.com/GuvaCode/Ray4Laz)                                           | **6.0**          | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)/[Delphi](https://en.wikipedia.org/wiki/Delphi_(software))             | Zlib                 |
 | [Raylib.4.0.Pascal](https://github.com/sysrpl/Raylib.4.0.Pascal)                         | 4.0              | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)             | Zlib                 |
