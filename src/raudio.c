@@ -282,7 +282,7 @@ typedef struct tagBITMAPINFOHEADER {
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef AUDIO_DEVICE_FORMAT
-    #define AUDIO_DEVICE_FORMAT    ma_format_s32    // Device output format (signed-32bit)
+    #define AUDIO_DEVICE_FORMAT    ma_format_f32    // Device output format (float-32bit)
 #endif
 #ifndef AUDIO_DEVICE_CHANNELS
     #define AUDIO_DEVICE_CHANNELS              2    // Device output channels: stereo
