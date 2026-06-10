@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <raylibAPI>
-    <Defines count="57">
+    <Defines count="56">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
         <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="6" desc="" />
         <Define name="RAYLIB_VERSION_MINOR" type="INT" value="1" desc="" />
@@ -57,7 +57,6 @@
         <Define name="MATERIAL_MAP_SPECULAR" type="UNKNOWN" value="MATERIAL_MAP_METALNESS" desc="" />
         <Define name="SHADER_LOC_MAP_DIFFUSE" type="UNKNOWN" value="SHADER_LOC_MAP_ALBEDO" desc="" />
         <Define name="SHADER_LOC_MAP_SPECULAR" type="UNKNOWN" value="SHADER_LOC_MAP_METALNESS" desc="" />
-        <Define name="GetMouseRay" type="UNKNOWN" value="GetScreenToWorldRay" desc="Compatibility hack for previous raylib versions" />
     </Defines>
     <Structs count="35">
         <Struct name="Vector2" fieldCount="2" desc="Vector2, 2 components">
@@ -682,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="602">
+    <Functions count="607">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1403,6 +1402,134 @@
             <Param type="int" name="spaceSize" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawTriangle" retType="void" paramCount="4" desc="Draw a color-filled triangle, counter-clockwise vertex order">
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawTriangleGradient" retType="void" paramCount="6" desc="Draw triangle with interpolated colors, counter-clockwise vertex/color order">
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="c1" desc="" />
+            <Param type="Color" name="c2" desc="" />
+            <Param type="Color" name="c3" desc="" />
+        </Function>
+        <Function name="DrawTriangleLines" retType="void" paramCount="4" desc="Draw triangle outline, counter-clockwise vertex order">
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawTriangleFan" retType="void" paramCount="3" desc="Draw a triangle fan defined by points (first vertex is the center)">
+            <Param type="const Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawTriangleStrip" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
+            <Param type="const Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangle" retType="void" paramCount="5" desc="Draw a color-filled rectangle">
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleV" retType="void" paramCount="3" desc="Draw a color-filled rectangle (Vector version)">
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Vector2" name="size" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRec" retType="void" paramCount="2" desc="Draw a color-filled rectangle">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectanglePro" retType="void" paramCount="4" desc="Draw a color-filled rectangle with pro parameters">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Vector2" name="origin" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleGradientV" retType="void" paramCount="6" desc="Draw a vertical-gradient-filled rectangle">
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="top" desc="" />
+            <Param type="Color" name="bottom" desc="" />
+        </Function>
+        <Function name="DrawRectangleGradientH" retType="void" paramCount="6" desc="Draw a horizontal-gradient-filled rectangle">
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="left" desc="" />
+            <Param type="Color" name="right" desc="" />
+        </Function>
+        <Function name="DrawRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Color" name="col1" desc="" />
+            <Param type="Color" name="col2" desc="" />
+            <Param type="Color" name="col3" desc="" />
+            <Param type="Color" name="col4" desc="" />
+        </Function>
+        <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleLinesEx" retType="void" paramCount="3" desc="Draw rectangle outline with line thickness">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRounded" retType="void" paramCount="4" desc="Draw rectangle with rounded edges">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="roundness" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="4" desc="Draw rectangle lines with rounded edges">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="roundness" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle lines with rounded edges outline and line thickness">
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="float" name="roundness" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawPoly" retType="void" paramCount="5" desc="Draw a polygon of n sides">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="sides" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawPolyLines" retType="void" paramCount="5" desc="Draw a polygon outline of n sides">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="sides" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawPolyLinesEx" retType="void" paramCount="6" desc="Draw a polygon outline of n sides with line thickness">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="sides" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawCircle" retType="void" paramCount="4" desc="Draw a color-filled circle">
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
@@ -1447,6 +1574,12 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCircleLinesEx" retType="void" paramCount="4" desc="Draw circle outline with line thickness">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawEllipse" retType="void" paramCount="5" desc="Draw ellipse">
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
@@ -1489,134 +1622,6 @@
             <Param type="float" name="startAngle" desc="" />
             <Param type="float" name="endAngle" desc="" />
             <Param type="int" name="segments" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangle" retType="void" paramCount="5" desc="Draw a color-filled rectangle">
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleV" retType="void" paramCount="3" desc="Draw a color-filled rectangle (Vector version)">
-            <Param type="Vector2" name="position" desc="" />
-            <Param type="Vector2" name="size" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleRec" retType="void" paramCount="2" desc="Draw a color-filled rectangle">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectanglePro" retType="void" paramCount="4" desc="Draw a color-filled rectangle with pro parameters">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Vector2" name="origin" desc="" />
-            <Param type="float" name="rotation" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleGradientV" retType="void" paramCount="6" desc="Draw a vertical-gradient-filled rectangle">
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="top" desc="" />
-            <Param type="Color" name="bottom" desc="" />
-        </Function>
-        <Function name="DrawRectangleGradientH" retType="void" paramCount="6" desc="Draw a horizontal-gradient-filled rectangle">
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="left" desc="" />
-            <Param type="Color" name="right" desc="" />
-        </Function>
-        <Function name="DrawRectangleGradientEx" retType="void" paramCount="5" desc="Draw a gradient-filled rectangle with custom vertex colors">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Color" name="topLeft" desc="" />
-            <Param type="Color" name="bottomLeft" desc="" />
-            <Param type="Color" name="bottomRight" desc="" />
-            <Param type="Color" name="topRight" desc="" />
-        </Function>
-        <Function name="DrawRectangleLines" retType="void" paramCount="5" desc="Draw rectangle outline">
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleLinesEx" retType="void" paramCount="3" desc="Draw rectangle outline with extended parameters">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="float" name="lineThick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleRounded" retType="void" paramCount="4" desc="Draw rectangle with rounded edges">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="float" name="roundness" desc="" />
-            <Param type="int" name="segments" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleRoundedLines" retType="void" paramCount="4" desc="Draw rectangle lines with rounded edges">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="float" name="roundness" desc="" />
-            <Param type="int" name="segments" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawRectangleRoundedLinesEx" retType="void" paramCount="5" desc="Draw rectangle lines with rounded edges outline">
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="float" name="roundness" desc="" />
-            <Param type="int" name="segments" desc="" />
-            <Param type="float" name="lineThick" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawTriangle" retType="void" paramCount="4" desc="Draw a color-filled triangle (vertex in counter-clockwise order!)">
-            <Param type="Vector2" name="v1" desc="" />
-            <Param type="Vector2" name="v2" desc="" />
-            <Param type="Vector2" name="v3" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawTriangleGradient" retType="void" paramCount="6" desc="Draw triangle with interpolated colors (vertex in counter-clockwise order!)">
-            <Param type="Vector2" name="v1" desc="" />
-            <Param type="Vector2" name="v2" desc="" />
-            <Param type="Vector2" name="v3" desc="" />
-            <Param type="Color" name="c1" desc="" />
-            <Param type="Color" name="c2" desc="" />
-            <Param type="Color" name="c3" desc="" />
-        </Function>
-        <Function name="DrawTriangleLines" retType="void" paramCount="4" desc="Draw triangle outline (vertex in counter-clockwise order!)">
-            <Param type="Vector2" name="v1" desc="" />
-            <Param type="Vector2" name="v2" desc="" />
-            <Param type="Vector2" name="v3" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawTriangleFan" retType="void" paramCount="3" desc="Draw a triangle fan defined by points (first vertex is the center)">
-            <Param type="const Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointCount" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawTriangleStrip" retType="void" paramCount="3" desc="Draw a triangle strip defined by points">
-            <Param type="const Vector2 *" name="points" desc="" />
-            <Param type="int" name="pointCount" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawPoly" retType="void" paramCount="5" desc="Draw a polygon of n sides">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="int" name="sides" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="rotation" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawPolyLines" retType="void" paramCount="5" desc="Draw a polygon outline of n sides">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="int" name="sides" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="rotation" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="DrawPolyLinesEx" retType="void" paramCount="6" desc="Draw a polygon outline of n sides with extended parameters">
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="int" name="sides" desc="" />
-            <Param type="float" name="radius" desc="" />
-            <Param type="float" name="rotation" desc="" />
-            <Param type="float" name="lineThick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineLinear" retType="void" paramCount="4" desc="Draw spline: Linear, minimum 2 points">
@@ -2067,63 +2072,10 @@
             <Param type="int" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDrawCircle" retType="void" paramCount="5" desc="Draw a filled circle within an image">
+        <Function name="ImageDrawLineStrip" retType="void" paramCount="4" desc="Draw a lines sequence within an image">
             <Param type="Image *" name="dst" desc="" />
-            <Param type="int" name="centerX" desc="" />
-            <Param type="int" name="centerY" desc="" />
-            <Param type="int" name="radius" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawCircleV" retType="void" paramCount="4" desc="Draw a filled circle within an image (Vector version)">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="int" name="radius" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawCircleLines" retType="void" paramCount="5" desc="Draw circle outline within an image">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="int" name="centerX" desc="" />
-            <Param type="int" name="centerY" desc="" />
-            <Param type="int" name="radius" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawCircleLinesV" retType="void" paramCount="4" desc="Draw circle outline within an image (Vector version)">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Vector2" name="center" desc="" />
-            <Param type="int" name="radius" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawRectangle" retType="void" paramCount="6" desc="Draw rectangle within an image">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawRectangleV" retType="void" paramCount="4" desc="Draw rectangle within an image (Vector version)">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Vector2" name="position" desc="" />
-            <Param type="Vector2" name="size" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawRectangleRec" retType="void" paramCount="3" desc="Draw rectangle within an image">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawRectangleLines" retType="void" paramCount="6" desc="Draw rectangle lines within an image">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="int" name="posX" desc="" />
-            <Param type="int" name="posY" desc="" />
-            <Param type="int" name="width" desc="" />
-            <Param type="int" name="height" desc="" />
-            <Param type="Color" name="color" desc="" />
-        </Function>
-        <Function name="ImageDrawRectangleLinesEx" retType="void" paramCount="4" desc="Draw rectangle lines within an image with extended parameters">
-            <Param type="Image *" name="dst" desc="" />
-            <Param type="Rectangle" name="rec" desc="" />
-            <Param type="int" name="thick" desc="" />
+            <Param type="const Vector2 *" name="points" desc="" />
+            <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="ImageDrawTriangle" retType="void" paramCount="5" desc="Draw triangle within an image">
@@ -2161,11 +2113,93 @@
             <Param type="int" name="pointCount" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="ImageDraw" retType="void" paramCount="5" desc="Draw a source image within a destination image (tint applied to source)">
+        <Function name="ImageDrawRectangle" retType="void" paramCount="6" desc="Draw rectangle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleV" retType="void" paramCount="4" desc="Draw rectangle within an image (Vector version)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Vector2" name="size" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleRec" retType="void" paramCount="3" desc="Draw rectangle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleLines" retType="void" paramCount="6" desc="Draw rectangle lines within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="int" name="width" desc="" />
+            <Param type="int" name="height" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleLinesEx" retType="void" paramCount="4" desc="Draw rectangle lines within an image with line thickness">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="int" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircle" retType="void" paramCount="5" desc="Draw a filled circle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="centerX" desc="" />
+            <Param type="int" name="centerY" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleV" retType="void" paramCount="4" desc="Draw a filled circle within an image (Vector version)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleLines" retType="void" paramCount="5" desc="Draw circle outline within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="int" name="centerX" desc="" />
+            <Param type="int" name="centerY" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleLinesV" retType="void" paramCount="4" desc="Draw circle outline within an image (Vector version)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="int" name="radius" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawCircleGradient" retType="void" paramCount="5" desc="Draw a gradient-filled circle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="Color" name="inner" desc="" />
+            <Param type="Color" name="outer" desc="" />
+        </Function>
+        <Function name="ImageDrawImage" retType="void" paramCount="5" desc="Draw an image within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Image" name="src" desc="" />
+            <Param type="int" name="posX" desc="" />
+            <Param type="int" name="posY" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="ImageDrawImageRec" retType="void" paramCount="5" desc="Draw a part of an image defined by a rectangle within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Image" name="src" desc="" />
+            <Param type="Rectangle" name="srcRec" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="ImageDrawImagePro" retType="void" paramCount="7" desc="Draw a part of an image defined by a rectangle into destination rectangle, with scaling and rotation, within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Image" name="src" desc="" />
             <Param type="Rectangle" name="srcRec" desc="" />
             <Param type="Rectangle" name="dstRec" desc="" />
+            <Param type="Vector2" name="origin" desc="" />
+            <Param type="float" name="rotation" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
         <Function name="ImageDrawText" retType="void" paramCount="6" desc="Draw text (using default font) within an image (destination)">
@@ -2242,7 +2276,7 @@
             <Param type="Vector2" name="position" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawTextureEx" retType="void" paramCount="5" desc="Draw a Texture2D with extended parameters">
+        <Function name="DrawTextureEx" retType="void" paramCount="5" desc="Draw a Texture2D with rotation and scale">
             <Param type="Texture2D" name="texture" desc="" />
             <Param type="Vector2" name="position" desc="" />
             <Param type="float" name="rotation" desc="" />
@@ -2344,7 +2378,7 @@
         <Function name="LoadFont" retType="Font" paramCount="1" desc="Load font from file into GPU memory (VRAM)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height">
+        <Function name="LoadFontEx" retType="Font" paramCount="4" desc="Load font from file with defined codepoints and generation size, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="int" name="fontSize" desc="" />
             <Param type="const int *" name="codepoints" desc="" />
@@ -2628,7 +2662,7 @@
             <Param type="float" name="rotationAngle" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawTriangle3D" retType="void" paramCount="4" desc="Draw a color-filled triangle (vertex in counter-clockwise order!)">
+        <Function name="DrawTriangle3D" retType="void" paramCount="4" desc="Draw a color-filled triangle, counter-clockwise vertex order">
             <Param type="Vector3" name="v1" desc="" />
             <Param type="Vector3" name="v2" desc="" />
             <Param type="Vector3" name="v3" desc="" />
@@ -2668,7 +2702,7 @@
             <Param type="float" name="radius" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
-        <Function name="DrawSphereEx" retType="void" paramCount="5" desc="Draw sphere with extended parameters">
+        <Function name="DrawSphereEx" retType="void" paramCount="5" desc="Draw sphere with defined rings and slices">
             <Param type="Vector3" name="centerPos" desc="" />
             <Param type="float" name="radius" desc="" />
             <Param type="int" name="rings" desc="" />
@@ -2764,7 +2798,7 @@
             <Param type="float" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawModelEx" retType="void" paramCount="6" desc="Draw a model with extended parameters">
+        <Function name="DrawModelEx" retType="void" paramCount="6" desc="Draw a model with custom transform">
             <Param type="Model" name="model" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="rotationAxis" desc="" />
@@ -2778,7 +2812,7 @@
             <Param type="float" name="scale" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
-        <Function name="DrawModelWiresEx" retType="void" paramCount="6" desc="Draw a model wires (with texture if set) with extended parameters">
+        <Function name="DrawModelWiresEx" retType="void" paramCount="6" desc="Draw a model wires with custom transform">
             <Param type="Model" name="model" desc="" />
             <Param type="Vector3" name="position" desc="" />
             <Param type="Vector3" name="rotationAxis" desc="" />
