@@ -76,7 +76,7 @@
 
 void ShowCursor(void);
 void CloseWindow(void);
-double get_time_seconds(void);
+double GetTimeSeconds(void);
 
 #if defined(__unix__) || defined(__linux__)
     #define _XTYPEDEF_FONT
@@ -457,7 +457,7 @@ static int mg_axisConvertTable[] = {
 };
 
 static KeyboardKey ConvertScancodeToKey(u32 keycode);
-void mouse_touch_remap(int touchAction);
+void RemapMouseToTouch(int touchAction);
 
 // ---------------------------------------------------------------------------------
 // RGFW Callbacks (instead of the older polling)
@@ -647,19 +647,22 @@ static void RGFW_cb_mousebuttonfunc(const RGFW_event* e)
         CORE.Input.Mouse.currentButtonState[btn - 1] = 1;
         CORE.Input.Touch.currentTouchState[btn - 1] = 1;
 
-        mouse_touch_remap(1);
-    } else {
+        // simulate touch with the mouse
+        RemapMouseToTouch(1);
+    } else
+    {
         CORE.Input.Mouse.currentButtonState[btn - 1] = 0;
         CORE.Input.Touch.currentTouchState[btn - 1] = 0;
 
-        mouse_touch_remap(0);
+        // simulate touch with the mouse
+        RemapMouseToTouch(0);
     }
 }
 static void RGFW_cb_mouserawmotionfunc(const RGFW_event* e)
 {
     if (!RGFW_window_isRawMouseMode(platform.window))
     {
-        // if not captured, use non-raw motion
+        // if not raw, use non-raw motion. this prevents the doubled events
         return;
     }
 
@@ -679,14 +682,15 @@ static void RGFW_cb_mouserawmotionfunc(const RGFW_event* e)
     CORE.Input.Mouse.currentPosition.x += mouseX;
     CORE.Input.Mouse.currentPosition.y += mouseY;
 
+    // simulate touch with the mouse
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-    mouse_touch_remap(2);
+    RemapMouseToTouch(2);
 }
 static void RGFW_cb_mousemotionfunc(const RGFW_event* e)
 {
     if (RGFW_window_isRawMouseMode(platform.window))
     {
-        // if captured, use raw motion
+        // if raw, use raw motion. this prevents the doubled events
         return;
     }
 
@@ -706,8 +710,9 @@ static void RGFW_cb_mousemotionfunc(const RGFW_event* e)
     CORE.Input.Mouse.currentPosition.x = mouseX;
     CORE.Input.Mouse.currentPosition.y = mouseY;
 
+    // simulate touch with the mouse
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-    mouse_touch_remap(2);
+    RemapMouseToTouch(2);
 }
 static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
 {
@@ -717,7 +722,8 @@ static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
     if (key == KEY_NULL) return;
 
     // pressed or released
-    if (e->state) {
+    if (e->state)
+    {
         // If key was up, add it to the key pressed queue
         if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
         {
@@ -728,7 +734,9 @@ static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
         CORE.Input.Keyboard.currentKeyState[key] = 1;
 
         if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
-    } else {
+    }
+    else
+    {
         CORE.Input.Keyboard.currentKeyState[key] = 0;
     }
 }
@@ -1455,7 +1463,7 @@ double GetTime(void)
 {
     // CORE.Time.base is nanoseconds as integer
     double baseTime = (double)CORE.Time.base*1e-9;
-    double time = get_time_seconds() - baseTime;
+    double time = GetTimeSeconds() - baseTime;
 
     return time;
 }
@@ -1652,9 +1660,12 @@ void PollInputEvents(void)
 
                 int axisCount = 0;
                 for (int i = 0; i < MG_AXIS_COUNT; i += 1) {
-                    if (platform.minigamepad.gamepads[gamepadIndex].axes[i].supported) {
+                    if (platform.minigamepad.gamepads[gamepadIndex].axes[i].supported)
+                    {
                         axisCount += 1;
-                    } else {
+                    }
+                    else
+                    {
                         break;
                     }
                 }
@@ -2017,7 +2028,7 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
 
 // assign mouse to touches
 // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
-void mouse_touch_remap(int touchAction)
+void RemapMouseToTouch(int touchAction)
 {
     #if SUPPORT_GESTURES_SYSTEM
         if (touchAction < 0) return;
@@ -2047,7 +2058,7 @@ void mouse_touch_remap(int touchAction)
 }
 
 // Helper functions for Time
-double get_time_seconds(void)
+double GetTimeSeconds(void)
 {
     double currentTime = 0.0;
 
