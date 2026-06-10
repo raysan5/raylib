@@ -460,7 +460,7 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode);
 void mouse_touch_remap(int touchAction);
 
 // ---------------------------------------------------------------------------------
-// RGFW Callbacks (could also use the older polling)
+// RGFW Callbacks (instead of the older polling)
 // ---------------------------------------------------------------------------------
 static void RGFW_cb_mousenotifyfunc(const RGFW_event* e)
 {
@@ -475,14 +475,33 @@ static void RGFW_cb_mousenotifyfunc(const RGFW_event* e)
 //     // we don't want to close here. raylib handles it
 //     // RGFW_window_setShouldClose(platform.window, true);
 // }
-// drag
-// drop
+static void RGFW_cb_dropfunc(const RGFW_event* e)
+{
+    if (e->common.win != platform.window) return;
+
+    if (CORE.Window.dropFileCount == 0)
+    {
+        CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+
+        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
+
+        CORE.Window.dropFileCount++;
+    }
+    else if (CORE.Window.dropFileCount < 1024)
+    {
+        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
+
+        CORE.Window.dropFileCount++;   
+    }
+    else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
+}
 static void RGFW_cb_windowresizefunc(const RGFW_event* e)
 {
     if (e->common.win != platform.window) return;
 
     CORE.Window.resizedLastFrame = true;
-    // printf("window resized %i %i\n", e->update.w, e->update.h);
 
     #if defined(__APPLE__)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
@@ -519,9 +538,6 @@ static void RGFW_cb_windowresizefunc(const RGFW_event* e)
             CORE.Window.screen.width = (int)(platform.window->w/scaleDpi.x);
             CORE.Window.screen.height = (int)(platform.window->h/scaleDpi.y);
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
-
-            // Mouse scale does not seem to be needed
-            //SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
         }
         else
         {
@@ -596,7 +612,6 @@ static void RGFW_cb_windowmovefunc(const RGFW_event* e)
 
     CORE.Window.position.x = platform.window->x;
     CORE.Window.position.y = platform.window->x;
-    // printf("window moved %i %i\n", e->mouse.x, e->mouse.y);
 }
 static void RGFW_cb_keycharfunc(const RGFW_event* e)
 {
@@ -1578,45 +1593,9 @@ void PollInputEvents(void)
         CORE.Time.previous = GetTime();
     }
 
+    //-----------------------------------------------------------------------------
+    // using RGFW callbacks instead of polling
     RGFW_pollEvents();
-    // RGFW_event rgfw_event;
-    // while (RGFW_window_checkEvent(platform.window, &rgfw_event))
-    // {
-    //     // All input events can be processed after polling
-    //     switch (rgfw_event.type)
-    //     {
-    //         case RGFW_dataDrag:
-    //         {
-                
-    //         } break;
-    //         case RGFW_dataDrop:      // Dropped file
-    //         {
-    //             // for (int i = 0; i < rgfw_event.drop.count; i++)
-    //             // {
-    //             //     if (CORE.Window.dropFileCount == 0)
-    //             //     {
-    //             //         // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
-    //             //         // at the moment limiting the number of drops at once to 1024 files but this behaviour should probably be reviewed
-    //             //         // TODO: Pointers should probably be reallocated for any new file added...
-    //             //         CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
-
-    //             //         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-    //             //         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], rgfw_event.drop.files[i]);
-
-    //             //         CORE.Window.dropFileCount++;
-    //             //     }
-    //             //     else if (CORE.Window.dropFileCount < 1024)
-    //             //     {
-    //             //         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-    //             //         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], rgfw_event.drop.files[i]);
-
-    //             //         CORE.Window.dropFileCount++;
-    //             //     }
-    //             //     else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
-    //             // }
-    //         } break;
-    //     }
-    // }
     //-----------------------------------------------------------------------------
 
     mg_event gamepad_event;
@@ -1900,8 +1879,7 @@ int InitPlatform(void)
     RGFW_setEventCallback(RGFW_mouseEnter, RGFW_cb_mousenotifyfunc);
     RGFW_setEventCallback(RGFW_mouseLeave, RGFW_cb_mousenotifyfunc);
     // RGFW_setEventCallback(RGFW_windowClose, RGFW_cb_windowclosefunc); // do not close here. let raylib handle it
-    // drag
-    // drop
+    RGFW_setEventCallback(RGFW_dataDrop, RGFW_cb_dropfunc);
     RGFW_setEventCallback(RGFW_windowResized, RGFW_cb_windowresizefunc);
     RGFW_setEventCallback(RGFW_windowMaximized, RGFW_cb_windowmaximizefunc);
     RGFW_setEventCallback(RGFW_windowMinimized, RGFW_cb_windowminimizefunc);
