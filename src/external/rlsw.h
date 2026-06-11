@@ -677,6 +677,9 @@ SWAPI bool swResize(int w, int h);
 SWAPI void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
 SWAPI void *swGetColorBuffer(int *width, int *height); // Restored for ESP-IDF compatibility
+#ifdef RLSW_BACKBUFFER
+SWAPI void swSwapColorBuffers(void); // Swap software renderer color/back buffers by pointer only
+#endif
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -993,6 +996,9 @@ typedef struct {
 
 typedef struct {
     sw_texture_t color;         // Default framebuffer color texture
+#ifdef RLSW_BACKBUFFER
+    sw_texture_t backColor; // Back buffer for multicore.
+#endif
     sw_texture_t depth;         // Default framebuffer depth texture
 } sw_default_framebuffer_t;
 
@@ -1061,6 +1067,9 @@ typedef struct {
 
     sw_handle_t boundFramebufferId;                             // Framebuffer currently bound
     sw_texture_t *colorBuffer;                                  // Color buffer currently bound
+#ifdef RLSW_BACKBUFFER
+    sw_texture_t *colorBackBuffer;
+#endif
     sw_texture_t *depthBuffer;                                  // Depth buffer currently bound
     sw_pool_t framebufferPool;                                  // Framebuffer object pool
 
@@ -2583,6 +2592,13 @@ static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, in
         return false;
     }
 
+#ifdef RLSW_BACKBUFFER
+    if (!sw_texture_alloc(&fb->backColor, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
+    {
+        return false;
+    }
+#endif
+
     if (!sw_texture_alloc(&fb->depth, NULL, w, h, SW_FRAMEBUFFER_DEPTH_FORMAT))
     {
         return false;
@@ -2595,6 +2611,9 @@ static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
+#ifdef RLSW_BACKBUFFER
+    sw_texture_free(&fb->backColor);
+#endif
 }
 
 static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
@@ -4006,6 +4025,9 @@ bool swInit(int w, int h)
     }
 
     RLSW.colorBuffer = &RLSW.framebuffer.color;
+#ifdef RLSW_BACKBUFFER
+    RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
+#endif
     RLSW.depthBuffer = &RLSW.framebuffer.depth;
 
     swViewport(0, 0, w, h);
@@ -4157,6 +4179,18 @@ void *swGetColorBuffer(int *width, int *height)
     if (height != NULL) *height = RLSW.framebuffer.color.height;
     return RLSW.framebuffer.color.pixels;
 }
+
+#ifdef RLSW_BACKBUFFER
+void swSwapColorBuffers(void)
+{
+    sw_texture_t tmp = RLSW.framebuffer.color;
+    RLSW.framebuffer.color = RLSW.framebuffer.backColor;
+    RLSW.framebuffer.backColor = tmp;
+
+    RLSW.colorBuffer = &RLSW.framebuffer.color;
+    RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
+}
+#endif
 
 void swEnable(SWstate state)
 {
@@ -4332,6 +4366,8 @@ void swClear(uint32_t bitmask)
     {
         sw_framebuffer_fill_color(RLSW.colorBuffer, RLSW.clearColor);
     }
+
+    // Don't clear back buffer, it might be locked by another core.
 
     if ((bitmask & (SW_DEPTH_BUFFER_BIT)) && (RLSW.depthBuffer != NULL) && (RLSW.depthBuffer->pixels != NULL))
     {
@@ -4982,6 +5018,9 @@ void swDeleteTextures(int count, sw_handle_t *textures)
         if (!tex) { RLSW.errCode = SW_INVALID_VALUE; continue; }
         if (tex == RLSW.boundTexture) RLSW.boundTexture = NULL;
         if (tex == RLSW.colorBuffer) RLSW.colorBuffer = NULL;
+#ifdef RLSW_BACKBUFFER
+        if (tex == RLSW.colorBackBuffer) RLSW.colorBackBuffer = NULL;
+#endif
         if (tex == RLSW.depthBuffer) RLSW.depthBuffer = NULL;
 
         sw_texture_free(tex);
@@ -5232,6 +5271,9 @@ void swDeleteFramebuffers(int count, uint32_t *framebuffers)
         {
             RLSW.boundFramebufferId = SW_HANDLE_NULL;
             RLSW.colorBuffer = &RLSW.framebuffer.color;
+#ifdef RLSW_BACKBUFFER
+            RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
+#endif
             RLSW.depthBuffer = &RLSW.framebuffer.depth;
         }
 
@@ -5251,6 +5293,9 @@ void swBindFramebuffer(uint32_t id)
     {
         RLSW.boundFramebufferId = SW_HANDLE_NULL;
         RLSW.colorBuffer = &RLSW.framebuffer.color;
+#ifdef RLSW_BACKBUFFER
+        RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
+#endif
         RLSW.depthBuffer = &RLSW.framebuffer.depth;
         return;
     }
@@ -5264,6 +5309,7 @@ void swBindFramebuffer(uint32_t id)
 
     RLSW.boundFramebufferId = id;
     RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, fb->colorAttachment);
+    // No back buffer available for binding rendertextures.
     RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, fb->depthAttachment);
 }
 
