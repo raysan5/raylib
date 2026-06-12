@@ -2237,9 +2237,12 @@ int FileCopy(const char *srcPath, const char *dstPath)
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
     // Create required paths if they do not exist
-    if (DirectoryExists(GetDirectoryPath(dstPath))) {
+    if (DirectoryExists(GetDirectoryPath(dstPath))) 
+    {
         result = 0;
-    } else {
+    } 
+    else 
+    {
         result = MakeDirectory(GetDirectoryPath(dstPath));
     }
 
