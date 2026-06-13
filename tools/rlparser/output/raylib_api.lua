@@ -7930,6 +7930,29 @@ return {
       }
     },
     {
+      name = "UpdateModelAnimationBones",
+      description = "Update model animation pose (bones only)",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "ModelAnimation", name = "anim"},
+        {type = "float", name = "frame"}
+      }
+    },
+    {
+      name = "UpdateModelAnimationBonesEx",
+      description = "Update model animation bones to pose, blending two animations",
+      returnType = "void",
+      params = {
+        {type = "Model", name = "model"},
+        {type = "ModelAnimation", name = "animA"},
+        {type = "float", name = "frameA"},
+        {type = "ModelAnimation", name = "animB"},
+        {type = "float", name = "frameB"},
+        {type = "float", name = "blend"}
+      }
+    },
+    {
       name = "UnloadModelAnimations",
       description = "Unload animation array data",
       returnType = "void",
