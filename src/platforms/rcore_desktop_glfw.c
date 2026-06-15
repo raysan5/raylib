@@ -1078,7 +1078,7 @@ Image GetClipboardImage(void)
     XID window = glfwGetX11Window(platform.handle);
 
     // Lazy-load X11 atoms
-    if(clipboard == 0)
+    if (clipboard == 0)
     {
         clipboard = XInternAtom(display, "CLIPBOARD", False);
         targetType = XInternAtom(display, "image/png", False);
