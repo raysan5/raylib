@@ -36,17 +36,141 @@ typedef struct IOSBridgeState {
   int renderHeight;
   float scaleX;
   float scaleY;
-  bool raylibStarted;
   bool shuttingDown;
   bool initialized;
 } IOSBridgeState;
 
 static IOSBridgeState ios = {0};
 
-static dispatch_queue_t raylibQueue = nil;
-static CADisplayLink *displayLink = nil;
-static dispatch_semaphore_t frameSem = nil;
-static int64_t vsyncCount = 0;
+@interface RaylibController : NSObject
+
++ (instancetype)sharedController;
+
+- (void)startInternal;
+
+- (void)startDisplayLink:(float)minFPS;
+
+- (void)stopDisplayLink;
+
+- (void)waitForVSync;
+
+@end
+
+@implementation RaylibController {
+  CADisplayLink *_displayLink;
+  dispatch_semaphore_t _frameSemaphore;
+  dispatch_queue_t _raylibQueue;
+  int64_t _vsyncCount;
+  int64_t _lastConsumedVsync;
+  float _minimumFPS;
+  BOOL _raylibStarted;
+}
+
++ (instancetype)sharedController {
+  static RaylibController *instance = nil;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    instance = [[self alloc] init];
+  });
+
+  return instance;
+}
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    _frameSemaphore = dispatch_semaphore_create(0);
+    _raylibQueue =
+        dispatch_queue_create("com.raylib.engine", DISPATCH_QUEUE_SERIAL);
+    _vsyncCount = 0;
+    _lastConsumedVsync = 0;
+    _raylibStarted = NO;
+    _minimumFPS = 60.0f;
+  }
+
+  return self;
+}
+
+- (void)startInternal {
+  if (_raylibStarted)
+    return;
+
+  _raylibStarted = YES;
+
+  dispatch_async(_raylibQueue, ^{
+    [[NSThread currentThread] setName:@"com.raylib.engine"];
+
+    // NSLog(@"[raylib][IOS] raylib thread: %@", [NSThread currentThread].name);
+
+    raylib_main(ios.argc, ios.argv);
+  });
+}
+
+- (void)startDisplayLink:(float)minFPS {
+  if (![NSThread isMainThread]) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self startDisplayLink:_minimumFPS];
+    });
+
+    return;
+  }
+
+  _minimumFPS = minFPS;
+
+  if (_displayLink != nil)
+    return;
+
+  _displayLink =
+      [CADisplayLink displayLinkWithTarget:self
+                                  selector:@selector(onDisplayFrame:)];
+
+  NSInteger maxFPS = [UIScreen mainScreen].maximumFramesPerSecond;
+
+  // Use the display native refresh rate
+  _displayLink.preferredFrameRateRange =
+      CAFrameRateRangeMake(_minimumFPS, maxFPS, maxFPS);
+
+  [_displayLink addToRunLoop:[NSRunLoop mainRunLoop]
+                     forMode:NSRunLoopCommonModes];
+}
+
+- (void)onDisplayFrame:(CADisplayLink *)link {
+  (void)link;
+
+  __atomic_fetch_add(&_vsyncCount, 1, __ATOMIC_RELEASE);
+  dispatch_semaphore_signal(_frameSemaphore);
+}
+
+- (void)stopDisplayLink {
+  if (![NSThread isMainThread]) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self stopDisplayLink];
+    });
+    
+    return;
+  }
+
+  if (_displayLink == nil)
+    return;
+
+  [_displayLink invalidate];
+  _displayLink = nil;
+
+  dispatch_semaphore_signal(_frameSemaphore);
+}
+
+- (void)waitForVSync {
+  int64_t current = __atomic_load_n(&_vsyncCount, __ATOMIC_ACQUIRE);
+
+  while ((current - _lastConsumedVsync) < 1 && !ios.shuttingDown) {
+    dispatch_semaphore_wait(_frameSemaphore, DISPATCH_TIME_FOREVER);
+    current = __atomic_load_n(&_vsyncCount, __ATOMIC_ACQUIRE);
+  }
+
+  _lastConsumedVsync = current;
+}
+
+@end
 
 @interface RaylibGLView : UIView
 @end
@@ -130,55 +254,8 @@ static int64_t vsyncCount = 0;
 
 @end
 
-@interface RaylibDisplayLinkTarget : NSObject
-+ (void)startDisplayLink;
-+ (void)onDisplayFrame:(CADisplayLink *)link;
-+ (void)stopDisplayLink;
-@end
-
-@implementation RaylibDisplayLinkTarget
-
-+ (void)startDisplayLink {
-  if (displayLink != nil)
-    return;
-
-  frameSem = dispatch_semaphore_create(0);
-  vsyncCount = 0;
-
-  displayLink =
-      [CADisplayLink displayLinkWithTarget:[self class]
-                                  selector:@selector(onDisplayFrame:)];
-
-  NSInteger maxFPS = [UIScreen mainScreen].maximumFramesPerSecond;
-
-  // Use the display native refresh rate
-  displayLink.preferredFrameRateRange =
-      CAFrameRateRangeMake(60.0f, maxFPS, maxFPS);
-
-  [displayLink addToRunLoop:[NSRunLoop mainRunLoop]
-                    forMode:NSRunLoopCommonModes];
-}
-
-+ (void)onDisplayFrame:(CADisplayLink *)link {
-  (void)link;
-  __atomic_fetch_add(&vsyncCount, 1, __ATOMIC_RELEASE);
-  dispatch_semaphore_signal(frameSem);
-}
-
-+ (void)stopDisplayLink {
-  if (displayLink == nil)
-    return;
-
-  [displayLink invalidate];
-  displayLink = nil;
-
-  dispatch_semaphore_signal(frameSem);
-}
-
-@end
-
 static void shutdown_internal(void) {
-  [RaylibDisplayLinkTarget stopDisplayLink];
+  [[RaylibController sharedController] stopDisplayLink];
 
   if (ios.context != nil) {
     [EAGLContext setCurrentContext:ios.context];
@@ -222,24 +299,6 @@ void ios_close_platform(void) {
 @interface RaylibSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @property(strong, nonatomic) UIWindow *window;
 @end
-
-static void ios_start_raylib_main(void) {
-  if (ios.raylibStarted)
-    return;
-
-  ios.raylibStarted = true;
-
-  raylibQueue =
-      dispatch_queue_create("com.raylib.engine", DISPATCH_QUEUE_SERIAL);
-
-  dispatch_async(raylibQueue, ^{
-    [[NSThread currentThread] setName:@"com.raylib.engine"];
-
-    // NSLog(@"[raylib][IOS] raylib thread: %@", [NSThread currentThread].name);
-
-    raylib_main(ios.argc, ios.argv);
-  });
-}
 
 @implementation RaylibAppDelegate
 
@@ -304,9 +363,9 @@ static void ios_start_raylib_main(void) {
   self.window.rootViewController = ios.viewController;
   [self.window makeKeyAndVisible];
 
-  [RaylibDisplayLinkTarget startDisplayLink];
+  [[RaylibController sharedController] startDisplayLink:60.0f];
 
-  ios_start_raylib_main();
+  [[RaylibController sharedController] startInternal];
 }
 
 - (void)sceneDidBecomeActive:(UIScene *)scene {
@@ -482,16 +541,9 @@ void ios_present_frame(void) {
   err = glGetError();
   if (err != GL_NO_ERROR)
     NSLog(@"[raylib][IOS] glGetError after present: 0x%04X", err);
-  if (frameSem != nil && !ios.shuttingDown) {
-    static int64_t lastVsync = 0;
-    int64_t current = __atomic_load_n(&vsyncCount, __ATOMIC_ACQUIRE);
 
-    while ((current - lastVsync) < 1 && !ios.shuttingDown) {
-      dispatch_semaphore_wait(frameSem, DISPATCH_TIME_FOREVER);
-      current = __atomic_load_n(&vsyncCount, __ATOMIC_ACQUIRE);
-    }
-
-    lastVsync = current;
+  if (!ios.shuttingDown) {
+    [[RaylibController sharedController] waitForVSync];
   }
 }
 
