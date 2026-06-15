@@ -335,12 +335,6 @@
       "type": "UNKNOWN",
       "value": "SHADER_LOC_MAP_METALNESS",
       "description": ""
-    },
-    {
-      "name": "GetMouseRay",
-      "type": "UNKNOWN",
-      "value": "GetScreenToWorldRay",
-      "description": "Compatibility hack for previous raylib versions"
     }
   ],
   "structs": [
@@ -3800,7 +3794,7 @@
     },
     {
       "name": "IsShaderValid",
-      "description": "Check if a shader is valid (loaded on GPU)",
+      "description": "Check if shader is valid (loaded on GPU)",
       "returnType": "bool",
       "params": [
         {
@@ -4427,7 +4421,7 @@
     },
     {
       "name": "FileRename",
-      "description": "Rename file (if exists)",
+      "description": "Rename file (if exists), returns 0 on success",
       "returnType": "int",
       "params": [
         {
@@ -4442,7 +4436,7 @@
     },
     {
       "name": "FileRemove",
-      "description": "Remove file (if exists)",
+      "description": "Remove file (if exists), returns 0 on success",
       "returnType": "int",
       "params": [
         {
@@ -4453,7 +4447,7 @@
     },
     {
       "name": "FileCopy",
-      "description": "Copy file from one path to another, dstPath created if it doesn't exist",
+      "description": "Copy file from one path to another, dstPath created if it doesn't exist, returns 0 on success",
       "returnType": "int",
       "params": [
         {
@@ -4468,7 +4462,7 @@
     },
     {
       "name": "FileMove",
-      "description": "Move file from one directory to another, dstPath created if it doesn't exist",
+      "description": "Move file from one directory to another, dstPath created if it doesn't exist, returns 0 on success",
       "returnType": "int",
       "params": [
         {
@@ -4483,7 +4477,7 @@
     },
     {
       "name": "FileTextReplace",
-      "description": "Replace text in an existing file",
+      "description": "Replace text in an existing file, returns 0 on success",
       "returnType": "int",
       "params": [
         {
@@ -4502,7 +4496,7 @@
     },
     {
       "name": "FileTextFindIndex",
-      "description": "Find text in existing file",
+      "description": "Find text in existing file, returns -1 if index not found or index otherwise",
       "returnType": "int",
       "params": [
         {
@@ -4528,7 +4522,7 @@
     },
     {
       "name": "DirectoryExists",
-      "description": "Check if a directory path exists",
+      "description": "Check if directory path exists",
       "returnType": "bool",
       "params": [
         {
@@ -4652,8 +4646,8 @@
     },
     {
       "name": "ChangeDirectory",
-      "description": "Change working directory, return true on success",
-      "returnType": "bool",
+      "description": "Change working directory, returns 0 on success",
+      "returnType": "int",
       "params": [
         {
           "type": "const char *",
@@ -4663,7 +4657,7 @@
     },
     {
       "name": "IsPathFile",
-      "description": "Check if a given path is a file or a directory",
+      "description": "Check if given path is a file or a directory",
       "returnType": "bool",
       "params": [
         {
@@ -4696,7 +4690,7 @@
     },
     {
       "name": "LoadDirectoryFilesEx",
-      "description": "Load directory filepaths with extension filtering and subdir scan; some filters available: `*.*`,`FILES*`,`DIRS*`",
+      "description": "Load directory filepaths with extension filtering and subdir scan; some filters available: '*.*','FILES*','DIRS*'",
       "returnType": "FilePathList",
       "params": [
         {
@@ -4726,7 +4720,7 @@
     },
     {
       "name": "IsFileDropped",
-      "description": "Check if a file has been dropped into window",
+      "description": "Check if file has been dropped into window",
       "returnType": "bool"
     },
     {
@@ -4989,7 +4983,7 @@
     },
     {
       "name": "IsKeyPressed",
-      "description": "Check if a key has been pressed once",
+      "description": "Check if key has been pressed once",
       "returnType": "bool",
       "params": [
         {
@@ -5000,7 +4994,7 @@
     },
     {
       "name": "IsKeyPressedRepeat",
-      "description": "Check if a key has been pressed again",
+      "description": "Check if key has been pressed again",
       "returnType": "bool",
       "params": [
         {
@@ -5011,7 +5005,7 @@
     },
     {
       "name": "IsKeyDown",
-      "description": "Check if a key is being pressed",
+      "description": "Check if key is being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5022,7 +5016,7 @@
     },
     {
       "name": "IsKeyReleased",
-      "description": "Check if a key has been released once",
+      "description": "Check if key has been released once",
       "returnType": "bool",
       "params": [
         {
@@ -5033,7 +5027,7 @@
     },
     {
       "name": "IsKeyUp",
-      "description": "Check if a key is NOT being pressed",
+      "description": "Check if key is NOT being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5076,7 +5070,7 @@
     },
     {
       "name": "IsGamepadAvailable",
-      "description": "Check if a gamepad is available",
+      "description": "Check if gamepad is available",
       "returnType": "bool",
       "params": [
         {
@@ -5098,7 +5092,7 @@
     },
     {
       "name": "IsGamepadButtonPressed",
-      "description": "Check if a gamepad button has been pressed once",
+      "description": "Check if gamepad button has been pressed once",
       "returnType": "bool",
       "params": [
         {
@@ -5113,7 +5107,7 @@
     },
     {
       "name": "IsGamepadButtonDown",
-      "description": "Check if a gamepad button is being pressed",
+      "description": "Check if gamepad button is being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5128,7 +5122,7 @@
     },
     {
       "name": "IsGamepadButtonReleased",
-      "description": "Check if a gamepad button has been released once",
+      "description": "Check if gamepad button has been released once",
       "returnType": "bool",
       "params": [
         {
@@ -5143,7 +5137,7 @@
     },
     {
       "name": "IsGamepadButtonUp",
-      "description": "Check if a gamepad button is NOT being pressed",
+      "description": "Check if gamepad button is NOT being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5223,7 +5217,7 @@
     },
     {
       "name": "IsMouseButtonPressed",
-      "description": "Check if a mouse button has been pressed once",
+      "description": "Check if mouse button has been pressed once",
       "returnType": "bool",
       "params": [
         {
@@ -5234,7 +5228,7 @@
     },
     {
       "name": "IsMouseButtonDown",
-      "description": "Check if a mouse button is being pressed",
+      "description": "Check if mouse button is being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5245,7 +5239,7 @@
     },
     {
       "name": "IsMouseButtonReleased",
-      "description": "Check if a mouse button has been released once",
+      "description": "Check if mouse button has been released once",
       "returnType": "bool",
       "params": [
         {
@@ -5256,7 +5250,7 @@
     },
     {
       "name": "IsMouseButtonUp",
-      "description": "Check if a mouse button is NOT being pressed",
+      "description": "Check if mouse button is NOT being pressed",
       "returnType": "bool",
       "params": [
         {
@@ -5401,7 +5395,7 @@
     },
     {
       "name": "IsGestureDetected",
-      "description": "Check if a gesture has been detected",
+      "description": "Check if gesture has been detected",
       "returnType": "bool",
       "params": [
         {
@@ -5489,7 +5483,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         }
       ]
     },
@@ -5676,6 +5670,498 @@
       ]
     },
     {
+      "name": "DrawTriangle",
+      "description": "Draw a color-filled triangle, counter-clockwise vertex order",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "v1"
+        },
+        {
+          "type": "Vector2",
+          "name": "v2"
+        },
+        {
+          "type": "Vector2",
+          "name": "v3"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawTriangleGradient",
+      "description": "Draw triangle with interpolated colors, counter-clockwise vertex/color order",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "v1"
+        },
+        {
+          "type": "Vector2",
+          "name": "v2"
+        },
+        {
+          "type": "Vector2",
+          "name": "v3"
+        },
+        {
+          "type": "Color",
+          "name": "c1"
+        },
+        {
+          "type": "Color",
+          "name": "c2"
+        },
+        {
+          "type": "Color",
+          "name": "c3"
+        }
+      ]
+    },
+    {
+      "name": "DrawTriangleLines",
+      "description": "Draw triangle outline, counter-clockwise vertex order",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "v1"
+        },
+        {
+          "type": "Vector2",
+          "name": "v2"
+        },
+        {
+          "type": "Vector2",
+          "name": "v3"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawTriangleFan",
+      "description": "Draw a triangle fan defined by points (first vertex is the center)",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "const Vector2 *",
+          "name": "points"
+        },
+        {
+          "type": "int",
+          "name": "pointCount"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawTriangleStrip",
+      "description": "Draw a triangle strip defined by points",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "const Vector2 *",
+          "name": "points"
+        },
+        {
+          "type": "int",
+          "name": "pointCount"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangle",
+      "description": "Draw a color-filled rectangle",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleV",
+      "description": "Draw a color-filled rectangle (Vector version)",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "position"
+        },
+        {
+          "type": "Vector2",
+          "name": "size"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleRec",
+      "description": "Draw a color-filled rectangle",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectanglePro",
+      "description": "Draw a color-filled rectangle with pro parameters",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "Vector2",
+          "name": "origin"
+        },
+        {
+          "type": "float",
+          "name": "rotation"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleGradientV",
+      "description": "Draw a vertical-gradient-filled rectangle",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "top"
+        },
+        {
+          "type": "Color",
+          "name": "bottom"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleGradientH",
+      "description": "Draw a horizontal-gradient-filled rectangle",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "left"
+        },
+        {
+          "type": "Color",
+          "name": "right"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleGradientEx",
+      "description": "Draw a gradient-filled rectangle with custom vertex colors, counter-clockwise color order",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "Color",
+          "name": "col1"
+        },
+        {
+          "type": "Color",
+          "name": "col2"
+        },
+        {
+          "type": "Color",
+          "name": "col3"
+        },
+        {
+          "type": "Color",
+          "name": "col4"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleLines",
+      "description": "Draw rectangle outline",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleLinesEx",
+      "description": "Draw rectangle outline with line thickness",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "float",
+          "name": "thick"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleRounded",
+      "description": "Draw rectangle with rounded edges",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "float",
+          "name": "roundness"
+        },
+        {
+          "type": "int",
+          "name": "segments"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleRoundedLines",
+      "description": "Draw rectangle lines with rounded edges",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "float",
+          "name": "roundness"
+        },
+        {
+          "type": "int",
+          "name": "segments"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawRectangleRoundedLinesEx",
+      "description": "Draw rectangle lines with rounded edges outline and line thickness",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "float",
+          "name": "roundness"
+        },
+        {
+          "type": "int",
+          "name": "segments"
+        },
+        {
+          "type": "float",
+          "name": "thick"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawPoly",
+      "description": "Draw a polygon of n sides",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "int",
+          "name": "sides"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "float",
+          "name": "rotation"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawPolyLines",
+      "description": "Draw a polygon outline of n sides",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "int",
+          "name": "sides"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "float",
+          "name": "rotation"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawPolyLinesEx",
+      "description": "Draw a polygon outline of n sides with line thickness",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "int",
+          "name": "sides"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "float",
+          "name": "rotation"
+        },
+        {
+          "type": "float",
+          "name": "thick"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
       "name": "DrawCircle",
       "description": "Draw a color-filled circle",
       "returnType": "void",
@@ -5837,6 +6323,29 @@
         {
           "type": "float",
           "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "DrawCircleLinesEx",
+      "description": "Draw circle outline with line thickness",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "float",
+          "name": "thick"
         },
         {
           "type": "Color",
@@ -6007,498 +6516,6 @@
         {
           "type": "int",
           "name": "segments"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangle",
-      "description": "Draw a color-filled rectangle",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleV",
-      "description": "Draw a color-filled rectangle (Vector version)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "position"
-        },
-        {
-          "type": "Vector2",
-          "name": "size"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleRec",
-      "description": "Draw a color-filled rectangle",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectanglePro",
-      "description": "Draw a color-filled rectangle with pro parameters",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "Vector2",
-          "name": "origin"
-        },
-        {
-          "type": "float",
-          "name": "rotation"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleGradientV",
-      "description": "Draw a vertical-gradient-filled rectangle",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "top"
-        },
-        {
-          "type": "Color",
-          "name": "bottom"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleGradientH",
-      "description": "Draw a horizontal-gradient-filled rectangle",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "left"
-        },
-        {
-          "type": "Color",
-          "name": "right"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleGradientEx",
-      "description": "Draw a gradient-filled rectangle with custom vertex colors",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "Color",
-          "name": "topLeft"
-        },
-        {
-          "type": "Color",
-          "name": "bottomLeft"
-        },
-        {
-          "type": "Color",
-          "name": "bottomRight"
-        },
-        {
-          "type": "Color",
-          "name": "topRight"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleLines",
-      "description": "Draw rectangle outline",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleLinesEx",
-      "description": "Draw rectangle outline with extended parameters",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "float",
-          "name": "lineThick"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleRounded",
-      "description": "Draw rectangle with rounded edges",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "float",
-          "name": "roundness"
-        },
-        {
-          "type": "int",
-          "name": "segments"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleRoundedLines",
-      "description": "Draw rectangle lines with rounded edges",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "float",
-          "name": "roundness"
-        },
-        {
-          "type": "int",
-          "name": "segments"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawRectangleRoundedLinesEx",
-      "description": "Draw rectangle lines with rounded edges outline",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "float",
-          "name": "roundness"
-        },
-        {
-          "type": "int",
-          "name": "segments"
-        },
-        {
-          "type": "float",
-          "name": "lineThick"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawTriangle",
-      "description": "Draw a color-filled triangle (vertex in counter-clockwise order!)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawTriangleGradient",
-      "description": "Draw triangle with interpolated colors (vertex in counter-clockwise order!)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "c1"
-        },
-        {
-          "type": "Color",
-          "name": "c2"
-        },
-        {
-          "type": "Color",
-          "name": "c3"
-        }
-      ]
-    },
-    {
-      "name": "DrawTriangleLines",
-      "description": "Draw triangle outline (vertex in counter-clockwise order!)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "v1"
-        },
-        {
-          "type": "Vector2",
-          "name": "v2"
-        },
-        {
-          "type": "Vector2",
-          "name": "v3"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawTriangleFan",
-      "description": "Draw a triangle fan defined by points (first vertex is the center)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "const Vector2 *",
-          "name": "points"
-        },
-        {
-          "type": "int",
-          "name": "pointCount"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawTriangleStrip",
-      "description": "Draw a triangle strip defined by points",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "const Vector2 *",
-          "name": "points"
-        },
-        {
-          "type": "int",
-          "name": "pointCount"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawPoly",
-      "description": "Draw a polygon of n sides",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "center"
-        },
-        {
-          "type": "int",
-          "name": "sides"
-        },
-        {
-          "type": "float",
-          "name": "radius"
-        },
-        {
-          "type": "float",
-          "name": "rotation"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawPolyLines",
-      "description": "Draw a polygon outline of n sides",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "center"
-        },
-        {
-          "type": "int",
-          "name": "sides"
-        },
-        {
-          "type": "float",
-          "name": "radius"
-        },
-        {
-          "type": "float",
-          "name": "rotation"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "DrawPolyLinesEx",
-      "description": "Draw a polygon outline of n sides with extended parameters",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Vector2",
-          "name": "center"
-        },
-        {
-          "type": "int",
-          "name": "sides"
-        },
-        {
-          "type": "float",
-          "name": "radius"
-        },
-        {
-          "type": "float",
-          "name": "rotation"
-        },
-        {
-          "type": "float",
-          "name": "lineThick"
         },
         {
           "type": "Color",
@@ -8208,8 +8225,8 @@
       ]
     },
     {
-      "name": "ImageDrawCircle",
-      "description": "Draw a filled circle within an image",
+      "name": "ImageDrawLineStrip",
+      "description": "Draw a lines sequence within an image",
       "returnType": "void",
       "params": [
         {
@@ -8217,216 +8234,12 @@
           "name": "dst"
         },
         {
-          "type": "int",
-          "name": "centerX"
+          "type": "const Vector2 *",
+          "name": "points"
         },
         {
           "type": "int",
-          "name": "centerY"
-        },
-        {
-          "type": "int",
-          "name": "radius"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawCircleV",
-      "description": "Draw a filled circle within an image (Vector version)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "center"
-        },
-        {
-          "type": "int",
-          "name": "radius"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawCircleLines",
-      "description": "Draw circle outline within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "int",
-          "name": "centerX"
-        },
-        {
-          "type": "int",
-          "name": "centerY"
-        },
-        {
-          "type": "int",
-          "name": "radius"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawCircleLinesV",
-      "description": "Draw circle outline within an image (Vector version)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "center"
-        },
-        {
-          "type": "int",
-          "name": "radius"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawRectangle",
-      "description": "Draw rectangle within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawRectangleV",
-      "description": "Draw rectangle within an image (Vector version)",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Vector2",
-          "name": "position"
-        },
-        {
-          "type": "Vector2",
-          "name": "size"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawRectangleRec",
-      "description": "Draw rectangle within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawRectangleLines",
-      "description": "Draw rectangle lines within an image",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "int",
-          "name": "posX"
-        },
-        {
-          "type": "int",
-          "name": "posY"
-        },
-        {
-          "type": "int",
-          "name": "width"
-        },
-        {
-          "type": "int",
-          "name": "height"
-        },
-        {
-          "type": "Color",
-          "name": "color"
-        }
-      ]
-    },
-    {
-      "name": "ImageDrawRectangleLinesEx",
-      "description": "Draw rectangle lines within an image with extended parameters",
-      "returnType": "void",
-      "params": [
-        {
-          "type": "Image *",
-          "name": "dst"
-        },
-        {
-          "type": "Rectangle",
-          "name": "rec"
-        },
-        {
-          "type": "int",
-          "name": "thick"
+          "name": "pointCount"
         },
         {
           "type": "Color",
@@ -8570,8 +8383,316 @@
       ]
     },
     {
-      "name": "ImageDraw",
-      "description": "Draw a source image within a destination image (tint applied to source)",
+      "name": "ImageDrawRectangle",
+      "description": "Draw rectangle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawRectangleV",
+      "description": "Draw rectangle within an image (Vector version)",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Vector2",
+          "name": "position"
+        },
+        {
+          "type": "Vector2",
+          "name": "size"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawRectangleRec",
+      "description": "Draw rectangle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawRectangleLines",
+      "description": "Draw rectangle lines within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "int",
+          "name": "width"
+        },
+        {
+          "type": "int",
+          "name": "height"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawRectangleLinesEx",
+      "description": "Draw rectangle lines within an image with line thickness",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Rectangle",
+          "name": "rec"
+        },
+        {
+          "type": "int",
+          "name": "thick"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawCircle",
+      "description": "Draw a filled circle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "int",
+          "name": "centerX"
+        },
+        {
+          "type": "int",
+          "name": "centerY"
+        },
+        {
+          "type": "int",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawCircleV",
+      "description": "Draw a filled circle within an image (Vector version)",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "int",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawCircleLines",
+      "description": "Draw circle outline within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "int",
+          "name": "centerX"
+        },
+        {
+          "type": "int",
+          "name": "centerY"
+        },
+        {
+          "type": "int",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawCircleLinesV",
+      "description": "Draw circle outline within an image (Vector version)",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "int",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "color"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawCircleGradient",
+      "description": "Draw a gradient-filled circle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Vector2",
+          "name": "center"
+        },
+        {
+          "type": "float",
+          "name": "radius"
+        },
+        {
+          "type": "Color",
+          "name": "inner"
+        },
+        {
+          "type": "Color",
+          "name": "outer"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawImage",
+      "description": "Draw an image within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Image",
+          "name": "src"
+        },
+        {
+          "type": "int",
+          "name": "posX"
+        },
+        {
+          "type": "int",
+          "name": "posY"
+        },
+        {
+          "type": "Color",
+          "name": "tint"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawImageRec",
+      "description": "Draw a part of an image defined by a rectangle within an image",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "Image *",
+          "name": "dst"
+        },
+        {
+          "type": "Image",
+          "name": "src"
+        },
+        {
+          "type": "Rectangle",
+          "name": "srcRec"
+        },
+        {
+          "type": "Vector2",
+          "name": "position"
+        },
+        {
+          "type": "Color",
+          "name": "tint"
+        }
+      ]
+    },
+    {
+      "name": "ImageDrawImagePro",
+      "description": "Draw a part of an image defined by a rectangle into destination rectangle, with scaling and rotation, within an image",
       "returnType": "void",
       "params": [
         {
@@ -8589,6 +8710,14 @@
         {
           "type": "Rectangle",
           "name": "dstRec"
+        },
+        {
+          "type": "Vector2",
+          "name": "origin"
+        },
+        {
+          "type": "float",
+          "name": "rotation"
         },
         {
           "type": "Color",
@@ -8716,7 +8845,7 @@
     },
     {
       "name": "IsTextureValid",
-      "description": "Check if a texture is valid (loaded in GPU)",
+      "description": "Check if texture is valid (loaded in GPU)",
       "returnType": "bool",
       "params": [
         {
@@ -8738,7 +8867,7 @@
     },
     {
       "name": "IsRenderTextureValid",
-      "description": "Check if a render texture is valid (loaded in GPU)",
+      "description": "Check if render texture is valid (loaded in GPU)",
       "returnType": "bool",
       "params": [
         {
@@ -8877,7 +9006,7 @@
     },
     {
       "name": "DrawTextureEx",
-      "description": "Draw a Texture2D with extended parameters",
+      "description": "Draw a Texture2D with rotation and scale",
       "returnType": "void",
       "params": [
         {
@@ -8913,7 +9042,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector2",
@@ -8927,7 +9056,7 @@
     },
     {
       "name": "DrawTexturePro",
-      "description": "Draw a part of a texture defined by a rectangle with 'pro' parameters",
+      "description": "Draw a part of a texture defined by a source rectangle to destination rectangle, with scaling and rotation",
       "returnType": "void",
       "params": [
         {
@@ -8936,11 +9065,11 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "srcrec"
         },
         {
           "type": "Rectangle",
-          "name": "dest"
+          "name": "dstrec"
         },
         {
           "type": "Vector2",
@@ -8971,7 +9100,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "dest"
+          "name": "dstrec"
         },
         {
           "type": "Vector2",
@@ -9195,7 +9324,7 @@
       "returnType": "Color",
       "params": [
         {
-          "type": "void *",
+          "type": "const void *",
           "name": "srcPtr"
         },
         {
@@ -9260,7 +9389,7 @@
     },
     {
       "name": "LoadFontEx",
-      "description": "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
+      "description": "Load font from file with defined codepoints and generation size, use NULL for codepoints and 0 for codepointCount to load the default character set, font size is provided in pixels height",
       "returnType": "Font",
       "params": [
         {
@@ -9333,7 +9462,7 @@
     },
     {
       "name": "IsFontValid",
-      "description": "Check if a font is valid (font data loaded, WARNING: GPU texture not checked)",
+      "description": "Check if font is valid (font data loaded, WARNING: GPU texture not checked)",
       "returnType": "bool",
       "params": [
         {
@@ -10336,7 +10465,7 @@
     },
     {
       "name": "DrawTriangle3D",
-      "description": "Draw a color-filled triangle (vertex in counter-clockwise order!)",
+      "description": "Draw a color-filled triangle, counter-clockwise vertex order",
       "returnType": "void",
       "params": [
         {
@@ -10489,7 +10618,7 @@
     },
     {
       "name": "DrawSphereEx",
-      "description": "Draw sphere with extended parameters",
+      "description": "Draw sphere with defined rings and slices",
       "returnType": "void",
       "params": [
         {
@@ -10564,7 +10693,7 @@
         },
         {
           "type": "int",
-          "name": "slices"
+          "name": "sides"
         },
         {
           "type": "Color",
@@ -10626,7 +10755,7 @@
         },
         {
           "type": "int",
-          "name": "slices"
+          "name": "sides"
         },
         {
           "type": "Color",
@@ -10657,7 +10786,7 @@
         },
         {
           "type": "int",
-          "name": "slices"
+          "name": "sides"
         },
         {
           "type": "Color",
@@ -10800,7 +10929,7 @@
     },
     {
       "name": "IsModelValid",
-      "description": "Check if a model is valid (loaded in GPU, VAO/VBOs)",
+      "description": "Check if model is valid (loaded in GPU, VAO/VBOs)",
       "returnType": "bool",
       "params": [
         {
@@ -10856,7 +10985,7 @@
     },
     {
       "name": "DrawModelEx",
-      "description": "Draw a model with extended parameters",
+      "description": "Draw a model with custom transform",
       "returnType": "void",
       "params": [
         {
@@ -10910,7 +11039,7 @@
     },
     {
       "name": "DrawModelWiresEx",
-      "description": "Draw a model wires (with texture if set) with extended parameters",
+      "description": "Draw a model wires with custom transform",
       "returnType": "void",
       "params": [
         {
@@ -10983,7 +11112,7 @@
     },
     {
       "name": "DrawBillboardRec",
-      "description": "Draw a billboard texture defined by source",
+      "description": "Draw a billboard texture defined by rectangle",
       "returnType": "void",
       "params": [
         {
@@ -10996,7 +11125,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector3",
@@ -11014,7 +11143,7 @@
     },
     {
       "name": "DrawBillboardPro",
-      "description": "Draw a billboard texture defined by source and rotation",
+      "description": "Draw a billboard texture defined by source rectangle with scaling and rotation",
       "returnType": "void",
       "params": [
         {
@@ -11027,7 +11156,7 @@
         },
         {
           "type": "Rectangle",
-          "name": "source"
+          "name": "rec"
         },
         {
           "type": "Vector3",
@@ -11433,7 +11562,7 @@
     },
     {
       "name": "IsMaterialValid",
-      "description": "Check if a material is valid (shader assigned, map textures loaded in GPU)",
+      "description": "Check if material is valid (shader assigned, map textures loaded in GPU)",
       "returnType": "bool",
       "params": [
         {
@@ -11853,7 +11982,7 @@
     },
     {
       "name": "IsSoundValid",
-      "description": "Check if a sound is valid (data loaded and buffers initialized)",
+      "description": "Check if sound is valid (data loaded and buffers initialized)",
       "returnType": "bool",
       "params": [
         {
@@ -11990,7 +12119,7 @@
     },
     {
       "name": "IsSoundPlaying",
-      "description": "Check if a sound is currently playing",
+      "description": "Check if sound is currently playing",
       "returnType": "bool",
       "params": [
         {
@@ -12151,7 +12280,7 @@
     },
     {
       "name": "IsMusicValid",
-      "description": "Check if a music stream is valid (context and buffers initialized)",
+      "description": "Check if music stream is valid (context and buffers initialized)",
       "returnType": "bool",
       "params": [
         {

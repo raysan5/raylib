@@ -91,7 +91,7 @@ bool InitGraphicsDevice(void);          // Initialize graphics device
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 #if !defined(_WIN32)
-static int kbhit(void);                         // Check if a key has been pressed
+static int kbhit(void);                         // Check if key has been pressed
 static char getch(void) { return getchar(); }   // Get pressed character
 #endif
 
@@ -562,7 +562,7 @@ void ClosePlatform(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if !defined(_WIN32)
-// Check if a key has been pressed
+// Check if key has been pressed
 static int kbhit(void)
 {
     struct termios oldt = { 0 };

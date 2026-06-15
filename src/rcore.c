@@ -1297,7 +1297,7 @@ Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode)
     return shader;
 }
 
-// Check if a shader is valid (loaded on GPU)
+// Check if shader is valid (loaded on GPU)
 bool IsShaderValid(Shader shader)
 {
     return ((shader.id > 0) &&          // Validate shader id (GPU loaded successfully)
@@ -2209,13 +2209,12 @@ void SetSaveFileTextCallback(SaveFileTextCallback callback)
 // NOTE: Only rename file name required, not full path
 int FileRename(const char *fileName, const char *fileRename)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(fileName))
     {
         result = rename(fileName, fileRename);
     }
-    else result = -1;
 
     return result;
 }
@@ -2223,13 +2222,12 @@ int FileRename(const char *fileName, const char *fileRename)
 // Remove file (if exists)
 int FileRemove(const char *fileName)
 {
-    int result = 0;
+    int result = -1;
 
     if (FileExists(fileName))
     {
         result = remove(fileName);
     }
-    else result = -1;
 
     return result;
 }
@@ -2238,18 +2236,21 @@ int FileRemove(const char *fileName)
 // NOTE: If destination path does not exist, it is created!
 int FileCopy(const char *srcPath, const char *dstPath)
 {
-    int result = 0;
+    int result = -1;
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
     // Create required paths if they do not exist
-    if (!DirectoryExists(GetDirectoryPath(dstPath)))
-        result = MakeDirectory(GetDirectoryPath(dstPath));
+    if (DirectoryExists(GetDirectoryPath(dstPath))) result = 0; // Already exists
+    else result = MakeDirectory(GetDirectoryPath(dstPath));
 
-    if (result == 0) // Directory created successfully (or already exists)
+    if (result == 0) // Directory created successfully or already exists
     {
         if ((srcFileData != NULL) && (srcDataSize > 0))
-            result = SaveFileData(dstPath, srcFileData, srcDataSize);
+        {
+            bool saved = SaveFileData(dstPath, srcFileData, srcDataSize);
+            if (saved) result = 0;
+        }
     }
 
     UnloadFileData(srcFileData);
@@ -2265,11 +2266,18 @@ int FileMove(const char *srcPath, const char *dstPath)
 
     if (FileExists(srcPath))
     {
-        FileCopy(srcPath, dstPath);
-
-        // Make sure file has been correctly copied before removing
-        if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) result = FileRemove(srcPath);
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
+        result = FileCopy(srcPath, dstPath);
+        
+        if (result == 0)
+        {
+            // Make sure file has been correctly copied before removing
+            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) 
+            {
+                result = FileRemove(srcPath);
+                if (result != 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to remove source file after copy", srcPath);
+            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
+        }
     }
 	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
 
@@ -2280,16 +2288,18 @@ int FileMove(const char *srcPath, const char *dstPath)
 // WARNING: DEPENDENCY: [rtext] module
 int FileTextReplace(const char *fileName, const char *search, const char *replacement)
 {
-    int result = 0;
+    int result = -1;
+
+#if SUPPORT_MODULE_RTEXT
     char *fileText = NULL;
     char *fileTextUpdated = { 0 };
 
-#if SUPPORT_MODULE_RTEXT
     if (FileExists(fileName))
     {
         fileText = LoadFileText(fileName);
         fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
-        result = SaveFileText(fileName, fileTextUpdated);
+        bool saved = SaveFileText(fileName, fileTextUpdated);
+        if (saved) result = 0;
         MemFree(fileTextUpdated);
         UnloadFileText(fileText);
     }
@@ -2399,7 +2409,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
-// Check if a directory path exists
+// Check if directory path exists
 bool DirectoryExists(const char *dirPath)
 {
     bool result = false;
@@ -2804,17 +2814,19 @@ int MakeDirectory(const char *dirPath)
 }
 
 // Change working directory, returns true on success
-bool ChangeDirectory(const char *dirPath)
+int ChangeDirectory(const char *dirPath)
 {
-    bool result = CHDIR(dirPath);
+    // NOTE: On success, CHDIR() return 0; on error, returns -1 and errno is set to indicate the error,
+    // depending on the filesystem, other errors can be returned
+    int result = CHDIR(dirPath);
 
     if (result != 0) TRACELOG(LOG_WARNING, "SYSTEM: Failed to change to directory: %s", dirPath);
     else TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", dirPath);
 
-    return (result == 0);
+    return result;
 }
 
-// Check if a given path point to a file
+// Check if given path point to a file
 bool IsPathFile(const char *path)
 {
     struct stat result = { 0 };
@@ -2879,7 +2891,7 @@ bool IsFileNameValid(const char *fileName)
     return valid;
 }
 
-// Check if a file has been dropped into window
+// Check if file has been dropped into window
 bool IsFileDropped(void)
 {
     bool result = false;
@@ -3790,7 +3802,7 @@ void PlayAutomationEvent(AutomationEvent event)
 // Module Functions Definition: Input Handling: Keyboard
 //----------------------------------------------------------------------------------
 
-// Check if a key has been pressed once
+// Check if key has been pressed once
 bool IsKeyPressed(int key)
 {
     bool pressed = false;
@@ -3803,7 +3815,7 @@ bool IsKeyPressed(int key)
     return pressed;
 }
 
-// Check if a key has been pressed again
+// Check if key has been pressed again
 bool IsKeyPressedRepeat(int key)
 {
     bool repeat = false;
@@ -3816,7 +3828,7 @@ bool IsKeyPressedRepeat(int key)
     return repeat;
 }
 
-// Check if a key is being pressed (key held down)
+// Check if key is being pressed (key held down)
 bool IsKeyDown(int key)
 {
     bool down = false;
@@ -3829,7 +3841,7 @@ bool IsKeyDown(int key)
     return down;
 }
 
-// Check if a key has been released once
+// Check if key has been released once
 bool IsKeyReleased(int key)
 {
     bool released = false;
@@ -3842,7 +3854,7 @@ bool IsKeyReleased(int key)
     return released;
 }
 
-// Check if a key is NOT being pressed (key not held down)
+// Check if key is NOT being pressed (key not held down)
 bool IsKeyUp(int key)
 {
     bool up = false;
@@ -3913,7 +3925,7 @@ void SetExitKey(int key)
 // NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
 //int SetGamepadMappings(const char *mappings)
 
-// Check if a gamepad is available
+// Check if gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
     bool result = false;
@@ -3929,7 +3941,7 @@ const char *GetGamepadName(int gamepad)
     return CORE.Input.Gamepad.name[gamepad];
 }
 
-// Check if a gamepad button has been pressed once
+// Check if gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
 {
     bool pressed = false;
@@ -3942,7 +3954,7 @@ bool IsGamepadButtonPressed(int gamepad, int button)
     return pressed;
 }
 
-// Check if a gamepad button is being pressed
+// Check if gamepad button is being pressed
 bool IsGamepadButtonDown(int gamepad, int button)
 {
     bool down = false;
@@ -3955,7 +3967,7 @@ bool IsGamepadButtonDown(int gamepad, int button)
     return down;
 }
 
-// Check if a gamepad button has NOT been pressed once
+// Check if gamepad button has NOT been pressed once
 bool IsGamepadButtonReleased(int gamepad, int button)
 {
     bool released = false;
@@ -3968,7 +3980,7 @@ bool IsGamepadButtonReleased(int gamepad, int button)
     return released;
 }
 
-// Check if a gamepad button is NOT being pressed
+// Check if gamepad button is NOT being pressed
 bool IsGamepadButtonUp(int gamepad, int button)
 {
     bool up = false;
@@ -4017,7 +4029,7 @@ float GetGamepadAxisMovement(int gamepad, int axis)
 //void SetMousePosition(int x, int y)
 //void SetMouseCursor(int cursor)
 
-// Check if a mouse button has been pressed once
+// Check if mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
 {
     bool pressed = false;
@@ -4033,7 +4045,7 @@ bool IsMouseButtonPressed(int button)
     return pressed;
 }
 
-// Check if a mouse button is being pressed
+// Check if mouse button is being pressed
 bool IsMouseButtonDown(int button)
 {
     bool down = false;
@@ -4049,7 +4061,7 @@ bool IsMouseButtonDown(int button)
     return down;
 }
 
-// Check if a mouse button has been released once
+// Check if mouse button has been released once
 bool IsMouseButtonReleased(int button)
 {
     bool released = false;
@@ -4065,7 +4077,7 @@ bool IsMouseButtonReleased(int button)
     return released;
 }
 
-// Check if a mouse button is NOT being pressed
+// Check if mouse button is NOT being pressed
 bool IsMouseButtonUp(int button)
 {
     bool up = false;

@@ -327,7 +327,7 @@ extern void UnloadFontDefault(void)
     defaultFont.recs = NULL;
 }
 
-// Get the default font, useful to be used with extended parameters
+// Get the default font
 Font GetFontDefault()
 {
     return defaultFont;
@@ -381,9 +381,9 @@ Font LoadFont(const char *fileName)
     return font;
 }
 
-// Load Font from TTF or BDF font file with generation parameters
-// NOTE: You can pass an array with desired characters, those characters should be available in the font
-// if array is NULL, default char set is selected 32..126
+// Load font from file with defined codepoints and generation size
+// NOTE: NULL for codepoints and 0 for codepointCount to load the default character set (32..126),
+// font size is provided in pixels height
 Font LoadFontEx(const char *fileName, int fontSize, const int *codepoints, int codepointCount)
 {
     Font font = { 0 };
@@ -593,7 +593,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     return font;
 }
 
-// Check if a font is valid (font data loaded)
+// Check if font is valid (font data loaded)
 // WARNING: GPU texture not checked
 bool IsFontValid(Font font)
 {
@@ -683,7 +683,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                 //      stbtt_GetCodepointBitmapBox()        -- how big the bitmap must be
                 //      stbtt_MakeCodepointBitmap()          -- renders into a provided bitmap
 
-                // Check if a glyph is available in the font
+                // Check if glyph is available in the font
                 // WARNING: if (index == 0), glyph not found, it could fallback to default .notdef glyph (if defined in font)
                 int index = stbtt_FindGlyphIndex(&fontInfo, cp);
 
@@ -2672,8 +2672,8 @@ static Font LoadBMFont(const char *fileName)
         for (int i = 1; i < pageCount; i++)
         {
             Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
-            Rectangle destRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
-            ImageDraw(&fullFont, imFonts[i], srcRec, destRec, WHITE);
+            Rectangle dstRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
+            ImageDrawImagePro(&fullFont, imFonts[i], srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
         }
     }
 

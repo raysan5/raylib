@@ -164,17 +164,10 @@
     #endif
 #endif
 
-// Fast power-of-two texture wrap (SW_REPEAT mode only)
-// When defined, textures whose width/height are powers of two use a bitmask
-// wrap (`x & (size-1)`) instead of `floorf`-based fractional wrap or the signed `%` chain in the linear sampler
-// Saves a software divide on Xtensa and a few instructions everywhere
-// NPOT textures keep using the original path via a runtime `(size & (size-1)) == 0` check, 
-// so SW_REPEAT remains correct for them
-// The only observable behavior change is for POT textures sampled with negative UV coordinates: 
-// bitmask wrap (two's complement) can differ from `sw_fract` by one texel
-// Off by default to keep bit-for-bit behavior; opt in if you control your asset UVs
-//
-//#define SW_TEXTURE_REPEAT_POT_FAST
+// Full NPOT texture support (enabled by default)
+// When disabled, SW_REPEAT requires POT on its axis (fast bitmask wrap)
+// SW_CLAMP remains supported for any dimension, per-axis
+#define SW_SUPPORT_NPOT_TEXTURE true
 
 //----------------------------------------------------------------------------------
 // OpenGL Compatibility Types
@@ -2406,6 +2399,14 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
     int bpp = SW_PIXELFORMAT_SIZE[format];
     int newSize = w*h*bpp;
 
+    if (texture->pixels == NULL)
+    {
+        texture->minFilter = SW_NEAREST;
+        texture->magFilter = SW_NEAREST;
+        texture->sWrap = SW_CLAMP;
+        texture->tWrap = SW_CLAMP;
+    }
+
     if (newSize > texture->allocSz)
     {
         void *ptr = SW_REALLOC(texture->pixels, newSize);
@@ -2470,38 +2471,25 @@ static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_
 {
     int x, y;
 
-#ifdef SW_TEXTURE_REPEAT_POT_FAST
-    if ((tex->sWrap == SW_REPEAT) && ((tex->width & tex->wMinus1) == 0))
-    {
-        x = (int)(u*tex->width) & tex->wMinus1;
-    }
-    else
-#endif
-    {
-        u = (tex->sWrap == SW_REPEAT)? sw_fract(u) : sw_saturate(u);
-        x = (int)(u*tex->width);
-    }
+#if SW_SUPPORT_NPOT_TEXTURE
+    if (tex->sWrap == SW_REPEAT) x = (int)(sw_fract(u)*tex->width);
+    else x = (int)(sw_saturate(u)*tex->width);
 
-#ifdef SW_TEXTURE_REPEAT_POT_FAST
-    if ((tex->tWrap == SW_REPEAT) && ((tex->height & tex->hMinus1) == 0))
-    {
-        y = (int)(v*tex->height) & tex->hMinus1;
-    }
-    else
+    if (tex->tWrap == SW_REPEAT) y = (int)(sw_fract(v)*tex->height);
+    else y = (int)(sw_saturate(v)*tex->height);
+#else
+    if (tex->sWrap == SW_REPEAT) x = (int)(u*tex->width) & tex->wMinus1;
+    else x = (int)(sw_saturate(u)*tex->width);
+
+    if (tex->tWrap == SW_REPEAT) y = (int)(v*tex->height) & tex->hMinus1;
+    else y = (int)(sw_saturate(v)*tex->height);
 #endif
-    {
-        v = (tex->tWrap == SW_REPEAT)? sw_fract(v) : sw_saturate(v);
-        y = (int)(v*tex->height);
-    }
 
     tex->readColor(color, tex->pixels, y*tex->width + x);
 }
 
 static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
 {
-    // TODO: With a bit more cleverness the number of operations can
-    // be clearly reduced, but for now it works fine
-
     float xf = (u*tex->width) - 0.5f;
     float yf = (v*tex->height) - 0.5f;
 
@@ -2514,41 +2502,36 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
     int x1 = x0 + 1;
     int y1 = y0 + 1;
 
-    if (tex->sWrap == SW_CLAMP)
+    if (tex->sWrap == SW_REPEAT)
     {
-        x0 = (x0 > tex->wMinus1)? tex->wMinus1 : x0;
-        x1 = (x1 > tex->wMinus1)? tex->wMinus1 : x1;
-    }
-#ifdef SW_TEXTURE_REPEAT_POT_FAST
-    else if ((tex->width & tex->wMinus1) == 0)
-    {
-        // POT fast path: bitmask wrap covers negative ints via two's complement
-        x0 = x0 & tex->wMinus1;
-        x1 = x1 & tex->wMinus1;
-    }
-#endif
-    else
-    {
+    #if SW_SUPPORT_NPOT_TEXTURE
         x0 = (x0%tex->width + tex->width)%tex->width;
         x1 = (x1%tex->width + tex->width)%tex->width;
+    #else
+        x0 = x0 & tex->wMinus1;
+        x1 = x1 & tex->wMinus1;
+    #endif
     }
-
-    if (tex->tWrap == SW_CLAMP)
-    {
-        y0 = (y0 > tex->hMinus1)? tex->hMinus1 : y0;
-        y1 = (y1 > tex->hMinus1)? tex->hMinus1 : y1;
-    }
-#ifdef SW_TEXTURE_REPEAT_POT_FAST
-    else if ((tex->height & tex->hMinus1) == 0)
-    {
-        y0 = y0 & tex->hMinus1;
-        y1 = y1 & tex->hMinus1;
-    }
-#endif
     else
     {
+        x0 = sw_clamp_int(x0, 0, tex->wMinus1);
+        x1 = sw_clamp_int(x1, 0, tex->wMinus1);
+    }
+
+    if (tex->tWrap == SW_REPEAT)
+    {
+    #if SW_SUPPORT_NPOT_TEXTURE
         y0 = (y0%tex->height + tex->height)%tex->height;
         y1 = (y1%tex->height + tex->height)%tex->height;
+    #else
+        y0 = y0 & tex->hMinus1;
+        y1 = y1 & tex->hMinus1;
+    #endif
+    }
+    else
+    {
+        y0 = sw_clamp_int(y0, 0, tex->hMinus1);
+        y1 = sw_clamp_int(y1, 0, tex->hMinus1);
     }
 
     float c00[4], c10[4], c01[4], c11[4];
@@ -5187,11 +5170,25 @@ void swTexParameteri(int param, int value)
         case SW_TEXTURE_WRAP_S:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+        #if !SW_SUPPORT_NPOT_TEXTURE
+            if (value == SW_REPEAT && (RLSW.boundTexture->width & RLSW.boundTexture->wMinus1) != 0)
+            {
+                RLSW.errCode = SW_INVALID_OPERATION;
+                return;
+            }
+        #endif
             RLSW.boundTexture->sWrap = (SWwrap)value;
         } break;
         case SW_TEXTURE_WRAP_T:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
+        #if !SW_SUPPORT_NPOT_TEXTURE
+            if (value == SW_REPEAT && (RLSW.boundTexture->height & RLSW.boundTexture->hMinus1) != 0)
+            {
+                RLSW.errCode = SW_INVALID_OPERATION;
+                return;
+            }
+        #endif
             RLSW.boundTexture->tWrap = (SWwrap)value;
         } break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
@@ -5574,8 +5571,7 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     if (v1->position[1] > v2->position[1]) { const sw_vertex_t *tmp = v1; v1 = v2; v2 = tmp; }
     if (v0->position[1] > v1->position[1]) { const sw_vertex_t *tmp = v0; v0 = v1; v1 = tmp; }
 
-    // Extracting coordinates from the sorted vertices
-    // Put x away for safe keeping; only y is used right now; silences warnings
+    // Extracting Y coordinates from the sorted vertices
     float y0 = v0->position[1];
     float y1 = v1->position[1];
     float y2 = v2->position[1];

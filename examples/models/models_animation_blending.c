@@ -53,13 +53,19 @@ int main(void)
     Model model = LoadModel("resources/models/gltf/robot.glb"); // Load character model
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model world position
 
+#if SUPPORT_GPU_SKINNING
+    // WARNING: SUPPORT_GPU_SKINNING is required to be enabled at raylib compile time (disabled by default)
+    // It will skip loading CPU required buffers to store animation updated data, so, both modes are exclusive
+     
     // Load skinning shader
-    // WARNING: It requires SUPPORT_GPU_SKINNING enabled on raylib (disabled by default)
+    // NOTE: It must be a valid shader, following raylib attribs/uniform conventions for GPU skinning
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
                                        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
 
-    // Assign skinning shader to all materials shaders
-    //for (int i = 0; i < model.materialCount; i++) model.materials[i].shader = skinningShader;
+    // Skinning shader could be required to be assigned to all materials shaders, just to make
+    // sure required uniforms are being updated for the mesh using that material (and shader)
+    for (int i = 0; i < model.materialCount; i++) model.materials[i].shader = skinningShader;
+#endif
 
     // Load model animations
     int animCount = 0;
@@ -244,6 +250,12 @@ int main(void)
             if (GuiDropdownBox((Rectangle){ GetScreenWidth() - 170.0f, 10, 160, 24 }, TextJoin(animNames, animCount, ";"),
                 &animIndex1, dropdownEditMode1)) dropdownEditMode1 = !dropdownEditMode1;
 
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*2);
+            GuiLabel((Rectangle){ 0, GetScreenHeight() - 100.0f, GetScreenWidth(), 40 }, "PRESS SPACE to START BLENDING");
+            GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
+            GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
+
             // Draw playing timeline with keyframes for anim0[]
             GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 0",
                 TextFormat("FRAME: %.2f / %i", animFrameProgress0, anims[animIndex0].keyframeCount),
@@ -269,7 +281,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModelAnimations(anims, animCount); // Unload model animation
     UnloadModel(model);             // Unload model and meshes/material
+#if SUPPORT_GPU_SKINNING
     UnloadShader(skinningShader);   // Unload GPU skinning shader
+#endif
 
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

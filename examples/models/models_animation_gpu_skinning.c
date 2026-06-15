@@ -52,12 +52,19 @@ int main(void)
     Model model = LoadModel("resources/models/gltf/greenman.glb"); // Load character model
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
 
+#if SUPPORT_GPU_SKINNING
+    // WARNING: SUPPORT_GPU_SKINNING is required to be enabled at raylib compile time (disabled by default)
+    // It will skip loading CPU required buffers to store animation updated data, so, both modes are exclusive
+
     // Load skinning shader
-    // WARNING: GPU skinning must be enabled in raylib with a compilation flag,
-    // if not enabled, CPU skinning will be used instead
+    // NOTE: It must be a valid shader, following raylib attribs/uniform conventions for GPU skinning
     Shader skinningShader = LoadShader(TextFormat("resources/shaders/glsl%i/skinning.vs", GLSL_VERSION),
-                                       TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
-    model.materials[1].shader = skinningShader;
+        TextFormat("resources/shaders/glsl%i/skinning.fs", GLSL_VERSION));
+
+    // Skinning shader could be required to be assigned to all materials shaders, just to make
+    // sure required uniforms are being updated for the mesh using that material (and shader)
+    model.materials[1].shader = skinningShader; // Just assigning to materials[1] for this model
+#endif
 
     // Load gltf model animations
     int animCount = 0;
@@ -111,7 +118,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadModelAnimations(anims, animCount); // Unload model animation
     UnloadModel(model);             // Unload model and meshes/material
+#if SUPPORT_GPU_SKINNING
     UnloadShader(skinningShader);   // Unload GPU skinning shader
+#endif
 
     CloseWindow();                  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
