@@ -580,7 +580,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
-    else 
+    else
     {
         TRACELOG(LOG_WARNING, "FONT: Font is not supported by LoadFontEx/LoadFontFromMemory or no glyphs found, reverted to default font");
         font = GetFontDefault();

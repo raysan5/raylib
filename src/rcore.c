@@ -2263,11 +2263,11 @@ int FileMove(const char *srcPath, const char *dstPath)
     if (FileExists(srcPath))
     {
         result = FileCopy(srcPath, dstPath);
-        
+
         if (result == 0)
         {
             // Make sure file has been correctly copied before removing
-            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) 
+            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath)))
             {
                 result = FileRemove(srcPath);
                 if (result != 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to remove source file after copy", srcPath);

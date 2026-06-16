@@ -471,7 +471,7 @@ static void RGFW_cb_mousenotifyfunc(const RGFW_event* e)
 // static void RGFW_cb_windowclosefunc(const RGFW_event* e)
 // {
 //     if (e->common.win != platform.window) return;
-    
+
 //     // we don't want to close here. raylib handles it
 //     // RGFW_window_setShouldClose(platform.window, true);
 // }
@@ -493,7 +493,7 @@ static void RGFW_cb_dropfunc(const RGFW_event* e)
         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
 
-        CORE.Window.dropFileCount++;   
+        CORE.Window.dropFileCount++;
     }
     else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
 }
@@ -594,7 +594,7 @@ static void RGFW_cb_windowmaximizefunc(const RGFW_event* e)
 static void RGFW_cb_windowminimizefunc(const RGFW_event* e)
 {
     if (e->common.win != platform.window) return;
-    
+
     FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
 }
 static void RGFW_cb_windowrestorefunc(const RGFW_event* e)
@@ -616,7 +616,7 @@ static void RGFW_cb_windowmovefunc(const RGFW_event* e)
 static void RGFW_cb_keycharfunc(const RGFW_event* e)
 {
     if (e->common.win != platform.window) return;
-    
+
     // NOTE: event.text.text data comes an UTF-8 text sequence but registering codepoints (int)
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -1145,7 +1145,7 @@ void *GetWindowHandle(void)
 #elif defined(__linux__)
     #if defined(RGFW_X11)
         platform.windowHandleX11 = platform.window->src.window; // Type: Window (unsigned long)
-        handle = &platform.window->src.window; 
+        handle = &platform.window->src.window;
     #elif defined(RGFW_WAYLAND)
         handle = (void *)platform.window->src.surface; // Type: struct wl_surface*
     #endif
