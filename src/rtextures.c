@@ -562,15 +562,18 @@ Image LoadImageFromTexture(Texture2D texture)
         {
             image.width = texture.width;
             image.height = texture.height;
-            image.format = texture.format;
-            image.mipmaps = 1;
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
-            // coming from FBO color buffer attachment, but it seems
-            // original texture format is retrieved on RPI...
+#if defined(FBO_READ_TEXTURE_AS_RGBA)
+            // WARNING: On OpenGL ES 2.0/WebGL 1.0, there is no glGetTexImage() so,
+            // texture data is retrieved by creating an RGBA fbo, binding the texture
+            // to the fbo color attachment, and reading it as RGBA data with glReadPixels()
+            // Returned data *should* be RGBA but it seems on some platforms (RPI, WASM)
+            // original texture format is retrieved, so adding a define for this patch
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+#else
+            image.format = texture.format;
 #endif
+            image.mipmaps = 1;
+                        
             TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
         }
         else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);

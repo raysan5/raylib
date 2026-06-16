@@ -3777,9 +3777,17 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // Attach our texture to FBO
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
 
+#if defined(FBO_READ_TEXTURE_AS_RGBA)
     // Reading data as RGBA because FBO texture is configured as RGBA, despite binding another texture format
     pixels = RL_CALLOC(rlGetPixelDataSize(width, height, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8), 1);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+#else
+    // Reading data as original texture format, in some platforms (RPI, Wasm) it works
+    pixels = (unsigned char *)RL_MALLOC(GetPixelDataSize(texture.width, texture.height, texture.format));
+    unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
+    rlGetGlTextureFormats(texture.format, &glInternalFormat, &glFormat, &glType);
+    glReadPixels(0, 0, texture.width, texture.height, glFormat, glType, pixels);
+#endif
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
