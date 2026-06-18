@@ -5020,16 +5020,16 @@ static void rlLoadShaderDefault(void)
     const char *defaultVShaderCode =
 #if defined(GRAPHICS_API_OPENGL_21)
     "#version 120                       \n"
-    "attribute vec3 vertexPosition;     \n"
-    "attribute vec2 vertexTexCoord;     \n"
-    "attribute vec4 vertexColor;        \n"
+    "attribute vec3 "RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION";       \n"
+    "attribute vec2 "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD";       \n"
+    "attribute vec4 "RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR";          \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
 #elif defined(GRAPHICS_API_OPENGL_33)
     "#version 330                       \n"
-    "in vec3 vertexPosition;            \n"
-    "in vec2 vertexTexCoord;            \n"
-    "in vec4 vertexColor;               \n"
+    "in vec3 "RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION";              \n"
+    "in vec2 "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD";              \n"
+    "in vec4 "RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR";                 \n"
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #endif
@@ -5037,27 +5037,27 @@ static void rlLoadShaderDefault(void)
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
-    "in vec3 vertexPosition;            \n"
-    "in vec2 vertexTexCoord;            \n"
-    "in vec4 vertexColor;               \n"
+    "in vec3 "RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION";              \n"
+    "in vec2 "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD";              \n"
+    "in vec4 "RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR";                 \n"
     "out vec2 fragTexCoord;             \n"
     "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
-    "attribute vec3 vertexPosition;     \n"
-    "attribute vec2 vertexTexCoord;     \n"
-    "attribute vec4 vertexColor;        \n"
+    "attribute vec3 "RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION";       \n"
+    "attribute vec2 "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD";       \n"
+    "attribute vec4 "RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR";          \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
 #endif
 
-    "uniform mat4 mvp;                  \n"
+    "uniform mat4 "RL_DEFAULT_SHADER_UNIFORM_NAME_MVP";             \n"
     "void main()                        \n"
     "{                                  \n"
-    "    fragTexCoord = vertexTexCoord; \n"
-    "    fragColor = vertexColor;       \n"
-    "    gl_Position = mvp*vec4(vertexPosition, 1.0); \n"
+    "    fragTexCoord = "RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD";   \n"
+    "    fragColor = "RL_DEFAULT_SHADER_ATTRIB_NAME_COLOR";         \n"
+    "    gl_Position = "RL_DEFAULT_SHADER_UNIFORM_NAME_MVP"*vec4("RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION", 1.0); \n"
     "}                                  \n";
 
     // Fragment shader directly defined, no external file required
@@ -5066,25 +5066,25 @@ static void rlLoadShaderDefault(void)
     "#version 120                       \n"
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-    "uniform sampler2D texture0;        \n"
-    "uniform vec4 colDiffuse;           \n"
+    "uniform sampler2D "RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0"; \n"
+    "uniform vec4 "RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR";           \n"
     "void main()                        \n"
     "{                                  \n"
-    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
-    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "    vec4 texelColor = texture2D("RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0", fragTexCoord); \n"
+    "    gl_FragColor = texelColor*"RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR"*fragColor;             \n"
     "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_33)
-    "#version 330       \n"
+    "#version 330                       \n"
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
-    "uniform sampler2D texture0;        \n"
-    "uniform vec4 colDiffuse;           \n"
+    "uniform sampler2D "RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0"; \n"
+    "uniform vec4 "RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR";           \n"
     "void main()                        \n"
     "{                                  \n"
-    "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
-    "    finalColor = texelColor*colDiffuse*fragColor;        \n"
-    "}                                  \n";
+    "    vec4 texelColor = texture("RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0", fragTexCoord); \n"
+    "    finalColor = texelColor*"RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR"*fragColor;             \n"
+    "}      \n";
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
@@ -5093,24 +5093,24 @@ static void rlLoadShaderDefault(void)
     "in vec2 fragTexCoord;              \n"
     "in vec4 fragColor;                 \n"
     "out vec4 finalColor;               \n"
-    "uniform sampler2D texture0;        \n"
-    "uniform vec4 colDiffuse;           \n"
+    "uniform sampler2D "RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0"; \n"
+    "uniform vec4 "RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR";           \n"
     "void main()                        \n"
     "{                                  \n"
-    "    vec4 texelColor = texture(texture0, fragTexCoord);   \n"
-    "    finalColor = texelColor*colDiffuse*fragColor;        \n"
+    "    vec4 texelColor = texture("RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0", fragTexCoord); \n"
+    "    finalColor = texelColor*"RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR"*fragColor;             \n"
     "}                                  \n";
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
     "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL)
     "varying vec2 fragTexCoord;         \n"
     "varying vec4 fragColor;            \n"
-    "uniform sampler2D texture0;        \n"
-    "uniform vec4 colDiffuse;           \n"
+    "uniform sampler2D "RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0";        \n"
+    "uniform vec4 "RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR";           \n"
     "void main()                        \n"
     "{                                  \n"
-    "    vec4 texelColor = texture2D(texture0, fragTexCoord); \n"
-    "    gl_FragColor = texelColor*colDiffuse*fragColor;      \n"
+    "    vec4 texelColor = texture2D("RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0", fragTexCoord); \n"
+    "    gl_FragColor = texelColor*"RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR"*fragColor;             \n"
     "}                                  \n";
 #endif
 
