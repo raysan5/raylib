@@ -947,8 +947,8 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                         // Security fix: check both lower and upper bounds
                         if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
                         {
-                            ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
-                                ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                            ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                                ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                         }
                     }
                 }

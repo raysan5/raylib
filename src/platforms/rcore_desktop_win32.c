@@ -566,100 +566,100 @@ static KeyboardKey GetKeyFromWparam(WPARAM wparam)
         case 'X': return KEY_X;
         case 'Y': return KEY_Y;
         case 'Z': return KEY_Z;
-        /* case VK_LWIN: return KEY_; */
-        /* case VK_RWIN: return KEY_; */
-        /* case VK_APPS: return KEY_; */
-        /* case VK_SLEEP: return KEY_; */
-        /* case VK_NUMPAD0: return KEY_; */
-        /* case VK_NUMPAD1: return KEY_; */
-        /* case VK_NUMPAD2: return KEY_; */
-        /* case VK_NUMPAD3: return KEY_; */
-        /* case VK_NUMPAD4: return KEY_; */
-        /* case VK_NUMPAD5: return KEY_; */
-        /* case VK_NUMPAD6: return KEY_; */
-        /* case VK_NUMPAD7: return KEY_; */
-        /* case VK_NUMPAD8: return KEY_; */
-        /* case VK_NUMPAD9: return KEY_; */
-        /* case VK_MULTIPLY: return KEY_; */
-        /* case VK_ADD: return KEY_; */
-        /* case VK_SEPARATOR: return KEY_; */
-        /* case VK_SUBTRACT: return KEY_; */
-        /* case VK_DECIMAL: return KEY_; */
-        /* case VK_DIVIDE: return KEY_; */
-        /* case VK_F1: return KEY_; */
-        /* case VK_F2: return KEY_; */
-        /* case VK_F3: return KEY_; */
-        /* case VK_F4: return KEY_; */
-        /* case VK_F5: return KEY_; */
-        /* case VK_F6: return KEY_; */
-        /* case VK_F7: return KEY_; */
-        /* case VK_F8: return KEY_; */
-        /* case VK_F9: return KEY_; */
-        /* case VK_F10: return KEY_; */
-        /* case VK_F11: return KEY_; */
-        /* case VK_F12: return KEY_; */
-        /* case VK_F13: return KEY_; */
-        /* case VK_F14: return KEY_; */
-        /* case VK_F15: return KEY_; */
-        /* case VK_F16: return KEY_; */
-        /* case VK_F17: return KEY_; */
-        /* case VK_F18: return KEY_; */
-        /* case VK_F19: return KEY_; */
-        /* case VK_F20: return KEY_; */
-        /* case VK_F21: return KEY_; */
-        /* case VK_F22: return KEY_; */
-        /* case VK_F23: return KEY_; */
-        /* case VK_F24: return KEY_; */
-        /* case VK_NUMLOCK: return KEY_; */
-        /* case VK_SCROLL: return KEY_; */
-        /* case VK_LSHIFT: return KEY_; */
-        /* case VK_RSHIFT: return KEY_; */
-        /* case VK_LCONTROL: return KEY_; */
-        /* case VK_RCONTROL: return KEY_; */
-        /* case VK_LMENU: return KEY_; */
-        /* case VK_RMENU: return KEY_; */
-        /* case VK_BROWSER_BACK: return KEY_; */
-        /* case VK_BROWSER_FORWARD: return KEY_; */
-        /* case VK_BROWSER_REFRESH: return KEY_; */
-        /* case VK_BROWSER_STOP: return KEY_; */
-        /* case VK_BROWSER_SEARCH: return KEY_; */
-        /* case VK_BROWSER_FAVORITES: return KEY_; */
-        /* case VK_BROWSER_HOME: return KEY_; */
-        /* case VK_VOLUME_MUTE: return KEY_; */
-        /* case VK_VOLUME_DOWN: return KEY_; */
-        /* case VK_VOLUME_UP: return KEY_; */
-        /* case VK_MEDIA_NEXT_TRACK: return KEY_; */
-        /* case VK_MEDIA_PREV_TRACK: return KEY_; */
-        /* case VK_MEDIA_STOP: return KEY_; */
-        /* case VK_MEDIA_PLAY_PAUSE: return KEY_; */
-        /* case VK_LAUNCH_MAIL: return KEY_; */
-        /* case VK_LAUNCH_MEDIA_SELECT: return KEY_; */
-        /* case VK_LAUNCH_APP1: return KEY_; */
-        /* case VK_LAUNCH_APP2: return KEY_; */
-        /* case VK_OEM_1: return KEY_; */
-        /* case VK_OEM_PLUS: return KEY_; */
-        /* case VK_OEM_COMMA: return KEY_; */
-        /* case VK_OEM_MINUS: return KEY_; */
-        /* case VK_OEM_PERIOD: return KEY_; */
-        /* case VK_OEM_2: return KEY_; */
-        /* case VK_OEM_3: return KEY_; */
-        /* case VK_OEM_4: return KEY_; */
-        /* case VK_OEM_5: return KEY_; */
-        /* case VK_OEM_6: return KEY_; */
-        /* case VK_OEM_7: return KEY_; */
-        /* case VK_OEM_8: return KEY_; */
-        /* case VK_OEM_102: return KEY_; */
-        /* case VK_PROCESSKEY: return KEY_; */
-        /* case VK_PACKET: return KEY_; */
-        /* case VK_ATTN: return KEY_; */
-        /* case VK_CRSEL: return KEY_; */
-        /* case VK_EXSEL: return KEY_; */
-        /* case VK_EREOF: return KEY_; */
-        /* case VK_PLAY: return KEY_; */
-        /* case VK_ZOOM: return KEY_; */
-        /* case VK_NONAME: return KEY_; */
-        /* case VK_PA1: return KEY_; */
-        /* case VK_OEM_CLEAR: return KEY_; */
+        //case VK_LWIN: return KEY_;
+        //case VK_RWIN: return KEY_;
+        //case VK_APPS: return KEY_;
+        //case VK_SLEEP: return KEY_;
+        //case VK_NUMPAD0: return KEY_;
+        //case VK_NUMPAD1: return KEY_;
+        //case VK_NUMPAD2: return KEY_;
+        //case VK_NUMPAD3: return KEY_;
+        //case VK_NUMPAD4: return KEY_;
+        //case VK_NUMPAD5: return KEY_;
+        //case VK_NUMPAD6: return KEY_;
+        //case VK_NUMPAD7: return KEY_;
+        //case VK_NUMPAD8: return KEY_;
+        //case VK_NUMPAD9: return KEY_;
+        //case VK_MULTIPLY: return KEY_;
+        //case VK_ADD: return KEY_;
+        //case VK_SEPARATOR: return KEY_;
+        //case VK_SUBTRACT: return KEY_;
+        //case VK_DECIMAL: return KEY_;
+        //case VK_DIVIDE: return KEY_;
+        //case VK_F1: return KEY_;
+        //case VK_F2: return KEY_;
+        //case VK_F3: return KEY_;
+        //case VK_F4: return KEY_;
+        //case VK_F5: return KEY_;
+        //case VK_F6: return KEY_;
+        //case VK_F7: return KEY_;
+        //case VK_F8: return KEY_;
+        //case VK_F9: return KEY_;
+        //case VK_F10: return KEY_;
+        //case VK_F11: return KEY_;
+        //case VK_F12: return KEY_;
+        //case VK_F13: return KEY_;
+        //case VK_F14: return KEY_;
+        //case VK_F15: return KEY_;
+        //case VK_F16: return KEY_;
+        //case VK_F17: return KEY_;
+        //case VK_F18: return KEY_;
+        //case VK_F19: return KEY_;
+        //case VK_F20: return KEY_;
+        //case VK_F21: return KEY_;
+        //case VK_F22: return KEY_;
+        //case VK_F23: return KEY_;
+        //case VK_F24: return KEY_;
+        //case VK_NUMLOCK: return KEY_;
+        //case VK_SCROLL: return KEY_;
+        //case VK_LSHIFT: return KEY_;
+        //case VK_RSHIFT: return KEY_;
+        //case VK_LCONTROL: return KEY_;
+        //case VK_RCONTROL: return KEY_;
+        //case VK_LMENU: return KEY_;
+        //case VK_RMENU: return KEY_;
+        //case VK_BROWSER_BACK: return KEY_;
+        //case VK_BROWSER_FORWARD: return KEY_;
+        //case VK_BROWSER_REFRESH: return KEY_;
+        //case VK_BROWSER_STOP: return KEY_;
+        //case VK_BROWSER_SEARCH: return KEY_;
+        //case VK_BROWSER_FAVORITES: return KEY_;
+        //case VK_BROWSER_HOME: return KEY_;
+        //case VK_VOLUME_MUTE: return KEY_;
+        //case VK_VOLUME_DOWN: return KEY_;
+        //case VK_VOLUME_UP: return KEY_;
+        //case VK_MEDIA_NEXT_TRACK: return KEY_;
+        //case VK_MEDIA_PREV_TRACK: return KEY_;
+        //case VK_MEDIA_STOP: return KEY_;
+        //case VK_MEDIA_PLAY_PAUSE: return KEY_;
+        //case VK_LAUNCH_MAIL: return KEY_;
+        //case VK_LAUNCH_MEDIA_SELECT: return KEY_;
+        //case VK_LAUNCH_APP1: return KEY_;
+        //case VK_LAUNCH_APP2: return KEY_;
+        //case VK_OEM_1: return KEY_;
+        //case VK_OEM_PLUS: return KEY_;
+        //case VK_OEM_COMMA: return KEY_;
+        //case VK_OEM_MINUS: return KEY_;
+        //case VK_OEM_PERIOD: return KEY_;
+        //case VK_OEM_2: return KEY_;
+        //case VK_OEM_3: return KEY_;
+        //case VK_OEM_4: return KEY_;
+        //case VK_OEM_5: return KEY_;
+        //case VK_OEM_6: return KEY_;
+        //case VK_OEM_7: return KEY_;
+        //case VK_OEM_8: return KEY_;
+        //case VK_OEM_102: return KEY_;
+        //case VK_PROCESSKEY: return KEY_;
+        //case VK_PACKET: return KEY_;
+        //case VK_ATTN: return KEY_;
+        //case VK_CRSEL: return KEY_;
+        //case VK_EXSEL: return KEY_;
+        //case VK_EREOF: return KEY_;
+        //case VK_PLAY: return KEY_;
+        //case VK_ZOOM: return KEY_;
+        //case VK_NONAME: return KEY_;
+        //case VK_PA1: return KEY_;
+        //case VK_OEM_CLEAR: return KEY_;
         default: return KEY_NULL;
     }
 }
