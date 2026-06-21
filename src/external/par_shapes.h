@@ -715,6 +715,12 @@ void par_shapes_merge(par_shapes_mesh* dst, par_shapes_mesh const* src)
 par_shapes_mesh* par_shapes_create_disk(float radius, int slices,
     float const* center, float const* normal)
 {
+    // Guard against degenerate and invalid tessellation counts
+    // fixes compiler warning -Walloc-size-larger-than
+    // and a heap-buffer-overflow
+    if (slices < 3) {
+        return 0;
+    }
     par_shapes_mesh* mesh = PAR_CALLOC(par_shapes_mesh, 1);
     mesh->npoints = slices + 1;
     mesh->points = PAR_MALLOC(float, 3 * mesh->npoints);
