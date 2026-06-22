@@ -573,7 +573,7 @@ Image LoadImageFromTexture(Texture2D texture)
             image.format = texture.format;
 #endif
             image.mipmaps = 1;
-                        
+
             TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
         }
         else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
@@ -1503,7 +1503,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
                 Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
-                ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height }, 
+                ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height },
                     rec, (Vector2){ 0 }, 0.0f, tint);
             }
 

@@ -580,7 +580,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
-    else 
+    else
     {
         TRACELOG(LOG_WARNING, "FONT: Font is not supported by LoadFontEx/LoadFontFromMemory or no glyphs found, reverted to default font");
         font = GetFontDefault();
@@ -947,8 +947,8 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                         // Security fix: check both lower and upper bounds
                         if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
                         {
-                            ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
-                                ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                            ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                                ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                         }
                     }
                 }

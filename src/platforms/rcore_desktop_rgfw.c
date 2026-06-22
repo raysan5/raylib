@@ -462,20 +462,22 @@ void RemapMouseToTouch(int touchAction);
 // ---------------------------------------------------------------------------------
 // RGFW Callbacks (instead of the older polling)
 // ---------------------------------------------------------------------------------
-static void RGFW_cb_mousenotifyfunc(const RGFW_event* e)
+static void RGFW_cb_mousenotifyfunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
     CORE.Input.Mouse.cursorOnScreen = e->mouse.inWindow;
 }
-// static void RGFW_cb_windowclosefunc(const RGFW_event* e)
-// {
-//     if (e->common.win != platform.window) return;
-    
-//     // we don't want to close here. raylib handles it
-//     // RGFW_window_setShouldClose(platform.window, true);
-// }
-static void RGFW_cb_dropfunc(const RGFW_event* e)
+/*
+static void RGFW_cb_windowclosefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    // Don't want to close here, raylib handles it
+    //RGFW_window_setShouldClose(platform.window, true);
+}
+*/
+static void RGFW_cb_dropfunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
@@ -493,11 +495,11 @@ static void RGFW_cb_dropfunc(const RGFW_event* e)
         CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
         strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
 
-        CORE.Window.dropFileCount++;   
+        CORE.Window.dropFileCount++;
     }
     else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
 }
-static void RGFW_cb_windowresizefunc(const RGFW_event* e)
+static void RGFW_cb_windowresizefunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
@@ -506,7 +508,7 @@ static void RGFW_cb_windowresizefunc(const RGFW_event* e)
     #if defined(__APPLE__)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
@@ -551,7 +553,7 @@ static void RGFW_cb_windowresizefunc(const RGFW_event* e)
 
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
             SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
 
@@ -585,19 +587,19 @@ static void RGFW_cb_windowresizefunc(const RGFW_event* e)
         }
     #endif
 }
-static void RGFW_cb_windowmaximizefunc(const RGFW_event* e)
+static void RGFW_cb_windowmaximizefunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
     FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
 }
-static void RGFW_cb_windowminimizefunc(const RGFW_event* e)
+static void RGFW_cb_windowminimizefunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
-    
+
     FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
 }
-static void RGFW_cb_windowrestorefunc(const RGFW_event* e)
+static void RGFW_cb_windowrestorefunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
@@ -606,17 +608,17 @@ static void RGFW_cb_windowrestorefunc(const RGFW_event* e)
     if (RGFW_window_isMinimized(platform.window))
         FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED); // The window was restored
 }
-static void RGFW_cb_windowmovefunc(const RGFW_event* e)
+static void RGFW_cb_windowmovefunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
     CORE.Window.position.x = platform.window->x;
     CORE.Window.position.y = platform.window->x;
 }
-static void RGFW_cb_keycharfunc(const RGFW_event* e)
+static void RGFW_cb_keycharfunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
-    
+
     // NOTE: event.text.text data comes an UTF-8 text sequence but registering codepoints (int)
     // Check if there is space available in the queue
     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
@@ -626,14 +628,14 @@ static void RGFW_cb_keycharfunc(const RGFW_event* e)
         CORE.Input.Keyboard.charPressedQueueCount++;
     }
 }
-static void RGFW_cb_scrollfunc(const RGFW_event* e)
+static void RGFW_cb_scrollfunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
     CORE.Input.Mouse.currentWheelMove.x += e->delta.x;
     CORE.Input.Mouse.currentWheelMove.y += e->delta.y;
 }
-static void RGFW_cb_mousebuttonfunc(const RGFW_event* e)
+static void RGFW_cb_mousebuttonfunc(const RGFW_event *e)
 {
     if (e->common.win != platform.window) return;
 
@@ -658,7 +660,7 @@ static void RGFW_cb_mousebuttonfunc(const RGFW_event* e)
         RemapMouseToTouch(0);
     }
 }
-static void RGFW_cb_mouserawmotionfunc(const RGFW_event* e)
+static void RGFW_cb_mouserawmotionfunc(const RGFW_event *e)
 {
     if (!RGFW_window_isRawMouseMode(platform.window))
     {
@@ -686,7 +688,7 @@ static void RGFW_cb_mouserawmotionfunc(const RGFW_event* e)
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     RemapMouseToTouch(2);
 }
-static void RGFW_cb_mousemotionfunc(const RGFW_event* e)
+static void RGFW_cb_mousemotionfunc(const RGFW_event *e)
 {
     if (RGFW_window_isRawMouseMode(platform.window))
     {
@@ -776,7 +778,7 @@ void ToggleFullscreen(void)
         CORE.Window.previousPosition.y = currentPosition.y;
         CORE.Window.previousScreen = CORE.Window.screen;
 
-        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+        RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
         RGFW_monitor_scaleToWindow(currentMonitor, platform.window);
         RGFW_window_setFullscreen(platform.window, 1);
     }
@@ -921,7 +923,7 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
-        RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+        RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
         hints->samples = 4;
         RGFW_setGlobalHints_OpenGL(hints);
     }
@@ -997,7 +999,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
-        RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+        RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
         hints->samples = 0;
         RGFW_setGlobalHints_OpenGL(hints);
     }
@@ -1092,7 +1094,7 @@ void SetWindowSize(int width, int height)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -1145,7 +1147,7 @@ void *GetWindowHandle(void)
 #elif defined(__linux__)
     #if defined(RGFW_X11)
         platform.windowHandleX11 = platform.window->src.window; // Type: Window (unsigned long)
-        handle = &platform.window->src.window; 
+        handle = &platform.window->src.window;
     #elif defined(RGFW_WAYLAND)
         handle = (void *)platform.window->src.surface; // Type: struct wl_surface*
     #endif
@@ -1643,7 +1645,7 @@ void PollInputEvents(void)
                         case GAMEPAD_AXIS_RIGHT_TRIGGER:
                                 CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
 
-                                /* trigger button press when axis is all the way */
+                                // Trigger button press when axis is all the way
                                 int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                                 int pressed = (platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value >= 1.0f);
 
@@ -1763,7 +1765,7 @@ int InitPlatform(void)
 
     // NOTE: Some OpenGL context attributes must be set before window creation
     // Check selection OpenGL version
-    RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+    RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
     if (rlGetVersion() == RL_OPENGL_21)
     {
         hints->major = 2;
@@ -1838,7 +1840,7 @@ int InitPlatform(void)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -1856,7 +1858,7 @@ int InitPlatform(void)
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
         // apple always scales for retina
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -2045,7 +2047,7 @@ void RemapMouseToTouch(int touchAction)
         gestureEvent.pointCount = 1;
 
         // Register touch points position, only one point registered
-        if (touchAction == 2 /* || realTouch */) gestureEvent.position[0] = CORE.Input.Touch.position[0];
+        if (touchAction == 2 /*|| realTouch*/) gestureEvent.position[0] = CORE.Input.Touch.position[0];
         else gestureEvent.position[0] = GetMousePosition();
 
         // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height

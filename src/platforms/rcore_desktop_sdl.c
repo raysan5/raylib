@@ -56,7 +56,7 @@
     #include "SDL3/SDL.h"
 #elif defined(USING_SDL2_PROJECT)
     #include "SDL2/SDL.h"
-    #include "SDL2/SDL_syswm.h"     // Required to get window handlers 
+    #include "SDL2/SDL_syswm.h"     // Required to get window handlers
 #else
     #include "SDL.h"
 #endif
