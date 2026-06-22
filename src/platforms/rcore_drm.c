@@ -1373,8 +1373,14 @@ int InitPlatform(void)
         return -1;
     }
 
+#if !defined(TEGRA_COMPATIBILITY)
     platform.gbmSurface = gbm_surface_create(platform.gbmDevice, platform.connector->modes[platform.modeIndex].hdisplay,
         platform.connector->modes[platform.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING);
+#else
+    uint64_t mod = DRM_FORMAT_MOD_LINEAR;
+    platform.gbmSurface = gbm_surface_create(platform.gbmDevice, platform.connector->modes[platform.modeIndex].hdisplay,
+        platform.connector->modes[platform.modeIndex].vdisplay, GBM_FORMAT_ARGB8888, &mod, 1);
+#endif
     if (!platform.gbmSurface)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create GBM surface");
@@ -1446,7 +1452,7 @@ int InitPlatform(void)
         return -1;
     }
 
-    if (!eglChooseConfig(platform.device, NULL, NULL, 0, &numConfigs))
+    if (!eglGetConfigs(platform.device, NULL, 0, &numConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
         return -1;
@@ -1650,6 +1656,7 @@ void ClosePlatform(void)
     }
 
 #if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
+#if !defined(TEGRA_COMPATIBILITY)
     if (platform.prevBO)
     {
         gbm_surface_release_buffer(platform.gbmSurface, platform.prevBO);
@@ -1667,6 +1674,7 @@ void ClosePlatform(void)
         gbm_device_destroy(platform.gbmDevice);
         platform.gbmDevice = NULL;
     }
+#endif
 #endif
 
     if (platform.crtc)
