@@ -1919,9 +1919,13 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
                 int replaceLen = (replacement == NULL)? 0 : TextLength(replacement);
                 //int toreplaceLen = endIndex - beginIndex - beginLen;
 
-                strncpy(buffer, text, beginIndex + beginLen); // Copy first text part
-                if (replacement != NULL) strncpy(buffer + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
-                strncpy(buffer + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+                if ((beginIndex + beginLen + replaceLen + (textLen - endIndex)) < (MAX_TEXT_BUFFER_LENGTH - 1))
+                {
+                    strncpy(buffer, text, beginIndex + beginLen); // Copy first text part
+                    if (replacement != NULL) strncpy(buffer + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
+                    strncpy(buffer + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+                }
+                else TRACELOG(LOG_WARNING, "TEXT: Text with replaced string is longer than internal buffer (MAX_TEXT_BUFFER_LENGTH)");
             }
         }
     }
