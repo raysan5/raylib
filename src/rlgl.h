@@ -1237,7 +1237,11 @@ void rlMatrixMode(int mode)
 // Push the current matrix into RLGL.State.stack
 void rlPushMatrix(void)
 {
-    if (RLGL.State.stackCounter >= RL_MAX_MATRIX_STACK_SIZE) TRACELOG(RL_LOG_ERROR, "RLGL: Matrix stack overflow (RL_MAX_MATRIX_STACK_SIZE)");
+    if (RLGL.State.stackCounter >= RL_MAX_MATRIX_STACK_SIZE)
+    {
+        TRACELOG(RL_LOG_ERROR, "RLGL: Matrix stack overflow (RL_MAX_MATRIX_STACK_SIZE)");
+        return;
+    }
 
     if (RLGL.State.currentMatrixMode == RL_MODELVIEW)
     {
