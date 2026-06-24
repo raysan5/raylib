@@ -3142,8 +3142,8 @@ Mesh GenMeshCone(float radius, float height, int slices)
 }
 
 // Generate torus mesh
-// The distance between the center of the hole and the center of the tube is half of size
-// The radius of the tube is (radius * size / 2)
+// NOTE: The distance between the center of the hole and the center of the
+// tube is half size of the radius of the tube (radius*size/2)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
