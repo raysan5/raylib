@@ -3934,6 +3934,8 @@ bool IsGamepadAvailable(int gamepad)
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
+    if ((gamepad < 0) || (gamepad >= MAX_GAMEPADS)) return NULL;
+
     return CORE.Input.Gamepad.name[gamepad];
 }
 
@@ -3999,6 +4001,8 @@ int GetGamepadButtonPressed(void)
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
+    if ((gamepad < 0) || (gamepad >= MAX_GAMEPADS)) return 0;
+
     return CORE.Input.Gamepad.axisCount[gamepad];
 }
 
