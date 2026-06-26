@@ -344,7 +344,7 @@ typedef enum {
 // Audio buffer struct
 struct rAudioBuffer {
     ma_data_converter converter;    // Audio data converter
-    unsigned char* converterResidual;       // Cached residual input frames for use by the converter
+    unsigned char *converterResidual;       // Cached residual input frames for use by the converter
     unsigned int converterResidualCount;    // The number of valid frames sitting in converterResidual
 
     AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads

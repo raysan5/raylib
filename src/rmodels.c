@@ -3142,6 +3142,8 @@ Mesh GenMeshCone(float radius, float height, int slices)
 }
 
 // Generate torus mesh
+// NOTE: The distance between the center of the hole and the center of the
+// tube is half size of the radius of the tube (radius*size/2)
 Mesh GenMeshTorus(float radius, float size, int radSeg, int sides)
 {
     Mesh mesh = { 0 };
@@ -7212,7 +7214,7 @@ static Model LoadM3D(const char *fileName)
     return model;
 }
 
-#define M3D_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666* ms)
+#define M3D_ANIMDELAY 17    // Animation frames delay, (~1000 ms/60 FPS = 16.666666 ms)
 
 // Load M3D animation data
 static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCount)

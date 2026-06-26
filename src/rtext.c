@@ -580,7 +580,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
-    else 
+    else
     {
         TRACELOG(LOG_WARNING, "FONT: Font is not supported by LoadFontEx/LoadFontFromMemory or no glyphs found, reverted to default font");
         font = GetFontDefault();
@@ -947,8 +947,8 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                         // Security fix: check both lower and upper bounds
                         if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
                         {
-                            ((unsigned char *)atlas.data)[destY * atlas.width + destX] =
-                                ((unsigned char *)glyphs[i].image.data)[y * glyphs[i].image.width + x];
+                            ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                                ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                         }
                     }
                 }
@@ -1919,9 +1919,13 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
                 int replaceLen = (replacement == NULL)? 0 : TextLength(replacement);
                 //int toreplaceLen = endIndex - beginIndex - beginLen;
 
-                strncpy(buffer, text, beginIndex + beginLen); // Copy first text part
-                if (replacement != NULL) strncpy(buffer + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
-                strncpy(buffer + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+                if ((beginIndex + beginLen + replaceLen + (textLen - endIndex)) < (MAX_TEXT_BUFFER_LENGTH - 1))
+                {
+                    strncpy(buffer, text, beginIndex + beginLen); // Copy first text part
+                    if (replacement != NULL) strncpy(buffer + beginIndex + beginLen, replacement, replaceLen); // Copy replacement (if provided)
+                    strncpy(buffer + beginIndex + beginLen + replaceLen, text + endIndex, textLen - endIndex); // Copy end text part
+                }
+                else TRACELOG(LOG_WARNING, "TEXT: Text with replaced string is longer than internal buffer (MAX_TEXT_BUFFER_LENGTH)");
             }
         }
     }

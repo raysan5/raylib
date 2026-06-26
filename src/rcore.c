@@ -2246,10 +2246,10 @@ int FileCopy(const char *srcPath, const char *dstPath)
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
     // Create required paths if they do not exist
-    if (!DirectoryExists(GetDirectoryPath(dstPath)))
-        result = MakeDirectory(GetDirectoryPath(dstPath));
+    if (DirectoryExists(GetDirectoryPath(dstPath))) result = 0; // Already exists
+    else result = MakeDirectory(GetDirectoryPath(dstPath));
 
-    if (result == 0) // Directory created successfully (or already exists)
+    if (result == 0) // Directory created successfully or already exists
     {
         if ((srcFileData != NULL) && (srcDataSize > 0))
         {
@@ -2272,11 +2272,11 @@ int FileMove(const char *srcPath, const char *dstPath)
     if (FileExists(srcPath))
     {
         result = FileCopy(srcPath, dstPath);
-        
+
         if (result == 0)
         {
             // Make sure file has been correctly copied before removing
-            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath))) 
+            if (FileExists(dstPath) && (GetFileLength(srcPath) == GetFileLength(dstPath)))
             {
                 result = FileRemove(srcPath);
                 if (result != 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to remove source file after copy", srcPath);
@@ -3943,7 +3943,11 @@ bool IsGamepadAvailable(int gamepad)
 // Get gamepad internal name id
 const char *GetGamepadName(int gamepad)
 {
-    return CORE.Input.Gamepad.name[gamepad];
+    const char *name = NULL;
+
+    if ((gamepad >= 0) && (gamepad < MAX_GAMEPADS)) name = CORE.Input.Gamepad.name[gamepad];
+
+    return name;
 }
 
 // Check if gamepad button has been pressed once
@@ -4008,7 +4012,11 @@ int GetGamepadButtonPressed(void)
 // Get gamepad axis count
 int GetGamepadAxisCount(int gamepad)
 {
-    return CORE.Input.Gamepad.axisCount[gamepad];
+    int result = 0;
+
+    if ((gamepad >= 0) && (gamepad < MAX_GAMEPADS)) result = CORE.Input.Gamepad.axisCount[gamepad];
+
+    return result;
 }
 
 // Get axis movement vector for a gamepad

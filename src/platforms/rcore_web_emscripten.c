@@ -633,7 +633,7 @@ void SetWindowSize(int width, int height)
     // When resizing the canvas, several elements must be considered:
     // - CSS canvas size: Web layout size, logical pixels
     // - Canvas contained framebuffer resolution
-    // * Browser monitor, device pixel ratio (HighDPI)
+    // - Browser monitor, device pixel ratio (HighDPI)
 
     double canvasCssWidth = 0.0;
     double canvasCssHeight = 0.0;

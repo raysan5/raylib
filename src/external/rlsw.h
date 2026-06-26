@@ -1249,8 +1249,8 @@ static inline float sw_fract(float x)
 
 // Xtensa architecture optimization
 // Fast reciprocal: 1-ULP accurate in ~7 instructions using the
-// hardware `recip0.s` seed + two Newton-Raphson refinement steps 
-// All work stays in FPU registers — no `__divsf3` software call 
+// hardware `recip0.s` seed + two Newton-Raphson refinement steps
+// All work stays in FPU registers — no `__divsf3` software call
 // Hot-path divisions in the rasterizer (span/triangle setup, perspective divide, etc.) call this
 // On non-Xtensa targets it transparently expands to `1.0f / x`, so generated code is identical to before
 #if defined(__XTENSA__)
@@ -5434,7 +5434,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     if (xLoopStart >= xLoopEnd) return; // Nothing to draw
 
     // Get the current row and skip if outside the framebuffer
-    // Maybe this check is better suited elsewhere? 
+    // Maybe this check is better suited elsewhere?
     int y = (int)start->position[1];
     if (y < 0 || y >= RLSW.colorBuffer->height) return;
 

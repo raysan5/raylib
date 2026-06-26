@@ -76,7 +76,7 @@
 
 void ShowCursor(void);
 void CloseWindow(void);
-double get_time_seconds(void);
+double GetTimeSeconds(void);
 
 #if defined(__unix__) || defined(__linux__)
     #define _XTYPEDEF_FONT
@@ -310,113 +310,113 @@ static PlatformData platform = { 0 };   // Platform specific
 
 static const unsigned short RGFW_keyConvertTable[] = {
     [RGFW_keyNULL] = KEY_NULL,
-    [RGFW_apostrophe] = KEY_APOSTROPHE,
-    [RGFW_comma] = KEY_COMMA,
-    [RGFW_minus] = KEY_MINUS,
-    [RGFW_period] = KEY_PERIOD,
-    [RGFW_slash] = KEY_SLASH,
-    [RGFW_0] = KEY_ZERO,
-    [RGFW_1] = KEY_ONE,
-    [RGFW_2] = KEY_TWO,
-    [RGFW_3] = KEY_THREE,
-    [RGFW_4] = KEY_FOUR,
-    [RGFW_5] = KEY_FIVE,
-    [RGFW_6] = KEY_SIX,
-    [RGFW_7] = KEY_SEVEN,
-    [RGFW_8] = KEY_EIGHT,
-    [RGFW_9] = KEY_NINE,
-    [RGFW_semicolon] = KEY_SEMICOLON,
-    [RGFW_equals] = KEY_EQUAL,
-    [RGFW_a] = KEY_A,
-    [RGFW_b] = KEY_B,
-    [RGFW_c] = KEY_C,
-    [RGFW_d] = KEY_D,
-    [RGFW_e] = KEY_E,
-    [RGFW_f] = KEY_F,
-    [RGFW_g] = KEY_G,
-    [RGFW_h] = KEY_H,
-    [RGFW_i] = KEY_I,
-    [RGFW_j] = KEY_J,
-    [RGFW_k] = KEY_K,
-    [RGFW_l] = KEY_L,
-    [RGFW_m] = KEY_M,
-    [RGFW_n] = KEY_N,
-    [RGFW_o] = KEY_O,
-    [RGFW_p] = KEY_P,
-    [RGFW_q] = KEY_Q,
-    [RGFW_r] = KEY_R,
-    [RGFW_s] = KEY_S,
-    [RGFW_t] = KEY_T,
-    [RGFW_u] = KEY_U,
-    [RGFW_v] = KEY_V,
-    [RGFW_w] = KEY_W,
-    [RGFW_x] = KEY_X,
-    [RGFW_y] = KEY_Y,
-    [RGFW_z] = KEY_Z,
-    [RGFW_bracket] = KEY_LEFT_BRACKET,
-    [RGFW_backSlash] = KEY_BACKSLASH,
-    [RGFW_closeBracket] = KEY_RIGHT_BRACKET,
-    [RGFW_backtick] = KEY_GRAVE,
-    [RGFW_space] = KEY_SPACE,
-    [RGFW_escape] = KEY_ESCAPE,
-    [RGFW_return] = KEY_ENTER,
-    [RGFW_tab] = KEY_TAB,
-    [RGFW_backSpace] = KEY_BACKSPACE,
-    [RGFW_insert] = KEY_INSERT,
-    [RGFW_delete] = KEY_DELETE,
-    [RGFW_right] = KEY_RIGHT,
-    [RGFW_left] = KEY_LEFT,
-    [RGFW_down] = KEY_DOWN,
-    [RGFW_up] = KEY_UP,
-    [RGFW_pageUp] = KEY_PAGE_UP,
-    [RGFW_pageDown] = KEY_PAGE_DOWN,
-    [RGFW_home] = KEY_HOME,
-    [RGFW_end] = KEY_END,
-    [RGFW_capsLock] = KEY_CAPS_LOCK,
-    [RGFW_scrollLock] = KEY_SCROLL_LOCK,
-    [RGFW_numLock] = KEY_NUM_LOCK,
-    [RGFW_printScreen] = KEY_PRINT_SCREEN,
-    [RGFW_pause] = KEY_PAUSE,
-    [RGFW_F1] = KEY_F1,
-    [RGFW_F2] = KEY_F2,
-    [RGFW_F3] = KEY_F3,
-    [RGFW_F4] = KEY_F4,
-    [RGFW_F5] = KEY_F5,
-    [RGFW_F6] = KEY_F6,
-    [RGFW_F7] = KEY_F7,
-    [RGFW_F8] = KEY_F8,
-    [RGFW_F9] = KEY_F9,
-    [RGFW_F10] = KEY_F10,
-    [RGFW_F11] = KEY_F11,
-    [RGFW_F12] = KEY_F12,
-    [RGFW_shiftL] = KEY_LEFT_SHIFT,
-    [RGFW_controlL] = KEY_LEFT_CONTROL,
-    [RGFW_altL] = KEY_LEFT_ALT,
-    [RGFW_superL] = KEY_LEFT_SUPER,
+    [RGFW_keyApostrophe] = KEY_APOSTROPHE,
+    [RGFW_keyComma] = KEY_COMMA,
+    [RGFW_keyMinus] = KEY_MINUS,
+    [RGFW_keyPeriod] = KEY_PERIOD,
+    [RGFW_keySlash] = KEY_SLASH,
+    [RGFW_key0] = KEY_ZERO,
+    [RGFW_key1] = KEY_ONE,
+    [RGFW_key2] = KEY_TWO,
+    [RGFW_key3] = KEY_THREE,
+    [RGFW_key4] = KEY_FOUR,
+    [RGFW_key5] = KEY_FIVE,
+    [RGFW_key6] = KEY_SIX,
+    [RGFW_key7] = KEY_SEVEN,
+    [RGFW_key8] = KEY_EIGHT,
+    [RGFW_key9] = KEY_NINE,
+    [RGFW_keySemicolon] = KEY_SEMICOLON,
+    [RGFW_keyEquals] = KEY_EQUAL,
+    [RGFW_keyA] = KEY_A,
+    [RGFW_keyB] = KEY_B,
+    [RGFW_keyC] = KEY_C,
+    [RGFW_keyD] = KEY_D,
+    [RGFW_keyE] = KEY_E,
+    [RGFW_keyF] = KEY_F,
+    [RGFW_keyG] = KEY_G,
+    [RGFW_keyH] = KEY_H,
+    [RGFW_keyI] = KEY_I,
+    [RGFW_keyJ] = KEY_J,
+    [RGFW_keyK] = KEY_K,
+    [RGFW_keyL] = KEY_L,
+    [RGFW_keyM] = KEY_M,
+    [RGFW_keyN] = KEY_N,
+    [RGFW_keyO] = KEY_O,
+    [RGFW_keyP] = KEY_P,
+    [RGFW_keyQ] = KEY_Q,
+    [RGFW_keyR] = KEY_R,
+    [RGFW_keyS] = KEY_S,
+    [RGFW_keyT] = KEY_T,
+    [RGFW_keyU] = KEY_U,
+    [RGFW_keyV] = KEY_V,
+    [RGFW_keyW] = KEY_W,
+    [RGFW_keyX] = KEY_X,
+    [RGFW_keyY] = KEY_Y,
+    [RGFW_keyZ] = KEY_Z,
+    [RGFW_keyBracket] = KEY_LEFT_BRACKET,
+    [RGFW_keyBackSlash] = KEY_BACKSLASH,
+    [RGFW_keyCloseBracket] = KEY_RIGHT_BRACKET,
+    [RGFW_keyBacktick] = KEY_GRAVE,
+    [RGFW_keySpace] = KEY_SPACE,
+    [RGFW_keyEscape] = KEY_ESCAPE,
+    [RGFW_keyReturn] = KEY_ENTER,
+    [RGFW_keyTab] = KEY_TAB,
+    [RGFW_keyBackSpace] = KEY_BACKSPACE,
+    [RGFW_keyInsert] = KEY_INSERT,
+    [RGFW_keyDelete] = KEY_DELETE,
+    [RGFW_keyRight] = KEY_RIGHT,
+    [RGFW_keyLeft] = KEY_LEFT,
+    [RGFW_keyDown] = KEY_DOWN,
+    [RGFW_keyUp] = KEY_UP,
+    [RGFW_keyPageUp] = KEY_PAGE_UP,
+    [RGFW_keyPageDown] = KEY_PAGE_DOWN,
+    [RGFW_keyHome] = KEY_HOME,
+    [RGFW_keyEnd] = KEY_END,
+    [RGFW_keyCapsLock] = KEY_CAPS_LOCK,
+    [RGFW_keyScrollLock] = KEY_SCROLL_LOCK,
+    [RGFW_keyNumLock] = KEY_NUM_LOCK,
+    [RGFW_keyPrintScreen] = KEY_PRINT_SCREEN,
+    [RGFW_keyPause] = KEY_PAUSE,
+    [RGFW_keyF1] = KEY_F1,
+    [RGFW_keyF2] = KEY_F2,
+    [RGFW_keyF3] = KEY_F3,
+    [RGFW_keyF4] = KEY_F4,
+    [RGFW_keyF5] = KEY_F5,
+    [RGFW_keyF6] = KEY_F6,
+    [RGFW_keyF7] = KEY_F7,
+    [RGFW_keyF8] = KEY_F8,
+    [RGFW_keyF9] = KEY_F9,
+    [RGFW_keyF10] = KEY_F10,
+    [RGFW_keyF11] = KEY_F11,
+    [RGFW_keyF12] = KEY_F12,
+    [RGFW_keyShiftL] = KEY_LEFT_SHIFT,
+    [RGFW_keyControlL] = KEY_LEFT_CONTROL,
+    [RGFW_keyAltL] = KEY_LEFT_ALT,
+    [RGFW_keySuperL] = KEY_LEFT_SUPER,
     // #ifndef RGFW_MACOS
-    [RGFW_shiftR] = KEY_RIGHT_SHIFT,
-    [RGFW_controlR] = KEY_RIGHT_CONTROL,
-    [RGFW_altR] = KEY_RIGHT_ALT,
-    [RGFW_superR] = KEY_RIGHT_SUPER,
+    [RGFW_keyShiftR] = KEY_RIGHT_SHIFT,
+    [RGFW_keyControlR] = KEY_RIGHT_CONTROL,
+    [RGFW_keyAltR] = KEY_RIGHT_ALT,
+    [RGFW_keySuperR] = KEY_RIGHT_SUPER,
     // #endif
-    [RGFW_menu] = KEY_KB_MENU,
-    [RGFW_kp0] = KEY_KP_0,
-    [RGFW_kp1] = KEY_KP_1,
-    [RGFW_kp2] = KEY_KP_2,
-    [RGFW_kp3] = KEY_KP_3,
-    [RGFW_kp4] = KEY_KP_4,
-    [RGFW_kp5] = KEY_KP_5,
-    [RGFW_kp6] = KEY_KP_6,
-    [RGFW_kp7] = KEY_KP_7,
-    [RGFW_kp8] = KEY_KP_8,
-    [RGFW_kp9] = KEY_KP_9,
-    [RGFW_kpPeriod] = KEY_KP_DECIMAL,
-    [RGFW_kpSlash] = KEY_KP_DIVIDE,
-    [RGFW_kpMultiply] = KEY_KP_MULTIPLY,
-    [RGFW_kpMinus] = KEY_KP_SUBTRACT,
-    [RGFW_kpPlus] = KEY_KP_ADD,
-    [RGFW_kpReturn] = KEY_KP_ENTER,
-    [RGFW_kpEqual] = KEY_KP_EQUAL,
+    [RGFW_keyMenu] = KEY_KB_MENU,
+    [RGFW_keyPad0] = KEY_KP_0,
+    [RGFW_keyPad1] = KEY_KP_1,
+    [RGFW_keyPad2] = KEY_KP_2,
+    [RGFW_keyPad3] = KEY_KP_3,
+    [RGFW_keyPad4] = KEY_KP_4,
+    [RGFW_keyPad5] = KEY_KP_5,
+    [RGFW_keyPad6] = KEY_KP_6,
+    [RGFW_keyPad7] = KEY_KP_7,
+    [RGFW_keyPad8] = KEY_KP_8,
+    [RGFW_keyPad9] = KEY_KP_9,
+    [RGFW_keyPadPeriod] = KEY_KP_DECIMAL,
+    [RGFW_keyPadSlash] = KEY_KP_DIVIDE,
+    [RGFW_keyPadMultiply] = KEY_KP_MULTIPLY,
+    [RGFW_keyPadMinus] = KEY_KP_SUBTRACT,
+    [RGFW_keyPadPlus] = KEY_KP_ADD,
+    [RGFW_keyPadReturn] = KEY_KP_ENTER,
+    [RGFW_keyPadEqual] = KEY_KP_EQUAL,
 };
 
 static int mg_buttonConvertTable[] = {
@@ -456,13 +456,298 @@ static int mg_axisConvertTable[] = {
     [MG_AXIS_HAT_DPAD_DOWN] = -1,
 };
 
+static KeyboardKey ConvertScancodeToKey(u32 keycode);
+void RemapMouseToTouch(int touchAction);
+
+// ---------------------------------------------------------------------------------
+// RGFW Callbacks (instead of the older polling)
+// ---------------------------------------------------------------------------------
+static void RGFW_cb_mousenotifyfunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    CORE.Input.Mouse.cursorOnScreen = e->mouse.inWindow;
+}
+/*
+static void RGFW_cb_windowclosefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    // Don't want to close here, raylib handles it
+    //RGFW_window_setShouldClose(platform.window, true);
+}
+*/
+static void RGFW_cb_dropfunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    if (CORE.Window.dropFileCount == 0)
+    {
+        CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+
+        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
+
+        CORE.Window.dropFileCount++;
+    }
+    else if (CORE.Window.dropFileCount < 1024)
+    {
+        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], e->drop.value->data);
+
+        CORE.Window.dropFileCount++;
+    }
+    else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
+}
+static void RGFW_cb_windowresizefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    CORE.Window.resizedLastFrame = true;
+
+    #if defined(__APPLE__)
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        {
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
+            SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
+            CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
+
+            CORE.Window.screen.width = platform.window->w;
+            CORE.Window.screen.height = platform.window->h;
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
+        }
+        else
+        {
+            SetupViewport(platform.window->w, platform.window->h);
+            CORE.Window.screen.width = platform.window->w;
+            CORE.Window.screen.height = platform.window->h;
+            CORE.Window.render.width = CORE.Window.screen.width;
+            CORE.Window.render.height = CORE.Window.screen.height;
+        }
+
+        CORE.Window.currentFbo.width = CORE.Window.render.width;
+        CORE.Window.currentFbo.height = CORE.Window.render.height;
+    #elif defined(PLATFORM_WEB_RGFW)
+        // do nothing but prevent other behavior
+    #else
+        SetupViewport(platform.window->w, platform.window->h);
+
+        // Consider content scaling if required
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        {
+            Vector2 scaleDpi = GetWindowScaleDPI();
+            CORE.Window.screen.width = (int)(platform.window->w/scaleDpi.x);
+            CORE.Window.screen.height = (int)(platform.window->h/scaleDpi.y);
+            CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+        }
+        else
+        {
+            CORE.Window.screen.width = platform.window->w;
+            CORE.Window.screen.height = platform.window->h;
+        }
+
+        CORE.Window.currentFbo.width = CORE.Window.screen.width;
+        CORE.Window.currentFbo.height = CORE.Window.screen.height;
+    #endif
+
+    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        #if defined(__APPLE__)
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
+            CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
+            SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
+
+            CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
+            CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
+            CORE.Window.currentFbo.width = CORE.Window.render.width;
+            CORE.Window.currentFbo.height = CORE.Window.render.height;
+        #endif
+        platform.surfaceWidth = CORE.Window.currentFbo.width;
+        platform.surfaceHeight = CORE.Window.currentFbo.height;
+
+        // in software mode we dont have the viewport so we need to reverse the highdpi changes
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+        {
+            Vector2 scaleDpi = GetWindowScaleDPI();
+            platform.surfaceWidth *= scaleDpi.x;
+            platform.surfaceHeight *= scaleDpi.y;
+        }
+
+        if (platform.surfacePixels != NULL)
+        {
+            RL_FREE(platform.surfacePixels);
+            platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
+        }
+
+        if (platform.surface != NULL)
+        {
+            RGFW_surface_free(platform.surface);
+            platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
+            swResize(platform.surfaceWidth, platform.surfaceHeight);
+        }
+    #endif
+}
+static void RGFW_cb_windowmaximizefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
+}
+static void RGFW_cb_windowminimizefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
+}
+static void RGFW_cb_windowrestorefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    if (RGFW_window_isMaximized(platform.window))
+        FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED); // The window was restored
+    if (RGFW_window_isMinimized(platform.window))
+        FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED); // The window was restored
+}
+static void RGFW_cb_windowmovefunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    CORE.Window.position.x = platform.window->x;
+    CORE.Window.position.y = platform.window->x;
+}
+static void RGFW_cb_keycharfunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    // NOTE: event.text.text data comes an UTF-8 text sequence but registering codepoints (int)
+    // Check if there is space available in the queue
+    if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+    {
+        // Add character (codepoint) to the queue
+        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = e->keyChar.value;
+        CORE.Input.Keyboard.charPressedQueueCount++;
+    }
+}
+static void RGFW_cb_scrollfunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    CORE.Input.Mouse.currentWheelMove.x += e->delta.x;
+    CORE.Input.Mouse.currentWheelMove.y += e->delta.y;
+}
+static void RGFW_cb_mousebuttonfunc(const RGFW_event *e)
+{
+    if (e->common.win != platform.window) return;
+
+    int btn = e->button.value;
+    if (btn == RGFW_mouseLeft) btn = 1;
+    else if (btn == RGFW_mouseRight) btn = 2;
+    else if (btn == RGFW_mouseMiddle) btn = 3;
+
+    // pressed or released
+    if (e->button.state){
+        CORE.Input.Mouse.currentButtonState[btn - 1] = 1;
+        CORE.Input.Touch.currentTouchState[btn - 1] = 1;
+
+        // simulate touch with the mouse
+        RemapMouseToTouch(1);
+    } else
+    {
+        CORE.Input.Mouse.currentButtonState[btn - 1] = 0;
+        CORE.Input.Touch.currentTouchState[btn - 1] = 0;
+
+        // simulate touch with the mouse
+        RemapMouseToTouch(0);
+    }
+}
+static void RGFW_cb_mouserawmotionfunc(const RGFW_event *e)
+{
+    if (!RGFW_window_isRawMouseMode(platform.window))
+    {
+        // if not raw, use non-raw motion. this prevents the doubled events
+        return;
+    }
+
+    float mouseX = 0.0f;
+    float mouseY = 0.0f;
+    mouseX = e->delta.x;
+    mouseY = e->delta.y;
+
+    #if defined(__EMSCRIPTEN__)
+        double canvasWidth = 0.0;
+        double canvasHeight = 0.0;
+        emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+        mouseX *= ((float)GetScreenWidth()/(float)canvasWidth);
+        mouseY *= ((float)GetScreenHeight()/(float)canvasHeight);
+    #endif
+
+    CORE.Input.Mouse.currentPosition.x += mouseX;
+    CORE.Input.Mouse.currentPosition.y += mouseY;
+
+    // simulate touch with the mouse
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    RemapMouseToTouch(2);
+}
+static void RGFW_cb_mousemotionfunc(const RGFW_event *e)
+{
+    if (RGFW_window_isRawMouseMode(platform.window))
+    {
+        // if raw, use raw motion. this prevents the doubled events
+        return;
+    }
+
+    float mouseX = 0.0f;
+    float mouseY = 0.0f;
+    mouseX = e->mouse.x;
+    mouseY = e->mouse.y;
+
+    #if defined(__EMSCRIPTEN__)
+        double canvasWidth = 0.0;
+        double canvasHeight = 0.0;
+        emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
+        mouseX *= ((float)GetScreenWidth()/(float)canvasWidth);
+        mouseY *= ((float)GetScreenHeight()/(float)canvasHeight);
+    #endif
+
+    CORE.Input.Mouse.currentPosition.x = mouseX;
+    CORE.Input.Mouse.currentPosition.y = mouseY;
+
+    // simulate touch with the mouse
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    RemapMouseToTouch(2);
+}
+static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
+{
+    if (e->win != platform.window) return;
+
+    KeyboardKey key = ConvertScancodeToKey(e->value);
+    if (key == KEY_NULL) return;
+
+    // pressed or released
+    if (e->state)
+    {
+        // If key was up, add it to the key pressed queue
+        if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
+        {
+            CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+            CORE.Input.Keyboard.keyPressedQueueCount++;
+        }
+
+        CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+        if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
+    }
+    else
+    {
+        CORE.Input.Keyboard.currentKeyState[key] = 0;
+    }
+}
+
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 bool InitGraphicsDevice(void);   // Initialize graphics device
-
-static KeyboardKey ConvertScancodeToKey(u32 keycode);
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -476,10 +761,9 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode);
 // Check if application should close
 bool WindowShouldClose(void)
 {
-    if (CORE.Window.shouldClose == false)
-        CORE.Window.shouldClose = RGFW_window_shouldClose(platform.window);
+    if (CORE.Window.shouldClose == false) CORE.Window.shouldClose = RGFW_window_shouldClose(platform.window);
     if (CORE.Window.ready) return CORE.Window.shouldClose;
-    else return true;
+    return true;
 }
 
 // Toggle fullscreen mode
@@ -494,7 +778,7 @@ void ToggleFullscreen(void)
         CORE.Window.previousPosition.y = currentPosition.y;
         CORE.Window.previousScreen = CORE.Window.screen;
 
-        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+        RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
         RGFW_monitor_scaleToWindow(currentMonitor, platform.window);
         RGFW_window_setFullscreen(platform.window, 1);
     }
@@ -639,7 +923,7 @@ void SetWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
-        RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+        RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
         hints->samples = 4;
         RGFW_setGlobalHints_OpenGL(hints);
     }
@@ -715,7 +999,7 @@ void ClearWindowState(unsigned int flags)
     }
     if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
     {
-        RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+        RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
         hints->samples = 0;
         RGFW_setGlobalHints_OpenGL(hints);
     }
@@ -810,7 +1094,7 @@ void SetWindowSize(int width, int height)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -863,7 +1147,7 @@ void *GetWindowHandle(void)
 #elif defined(__linux__)
     #if defined(RGFW_X11)
         platform.windowHandleX11 = platform.window->src.window; // Type: Window (unsigned long)
-        handle = &platform.window->src.window; 
+        handle = &platform.window->src.window;
     #elif defined(RGFW_WAYLAND)
         handle = (void *)platform.window->src.surface; // Type: struct wl_surface*
     #endif
@@ -1181,7 +1465,7 @@ double GetTime(void)
 {
     // CORE.Time.base is nanoseconds as integer
     double baseTime = (double)CORE.Time.base*1e-9;
-    double time = get_time_seconds() - baseTime;
+    double time = GetTimeSeconds() - baseTime;
 
     return time;
 }
@@ -1288,9 +1572,6 @@ void PollInputEvents(void)
     // Map touch position to mouse position for convenience
     CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-    int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
-    bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones
-
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -1322,291 +1603,9 @@ void PollInputEvents(void)
         CORE.Time.previous = GetTime();
     }
 
-    RGFW_event rgfw_event;
-    while (RGFW_window_checkEvent(platform.window, &rgfw_event))
-    {
-        // All input events can be processed after polling
-        switch (rgfw_event.type)
-        {
-            case RGFW_mouseEnter: CORE.Input.Mouse.cursorOnScreen = true; break;
-            case RGFW_mouseLeave: CORE.Input.Mouse.cursorOnScreen = false; break;
-            case RGFW_quit:
-                RGFW_window_setShouldClose(platform.window, true);
-                return;
-            case RGFW_dataDrop:      // Dropped file
-            {
-                for (int i = 0; i < rgfw_event.drop.count; i++)
-                {
-                    if (CORE.Window.dropFileCount == 0)
-                    {
-                        // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
-                        // at the moment limiting the number of drops at once to 1024 files but this behaviour should probably be reviewed
-                        // TODO: Pointers should probably be reallocated for any new file added...
-                        CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
-
-                        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], rgfw_event.drop.files[i]);
-
-                        CORE.Window.dropFileCount++;
-                    }
-                    else if (CORE.Window.dropFileCount < 1024)
-                    {
-                        CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-                        strcpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], rgfw_event.drop.files[i]);
-
-                        CORE.Window.dropFileCount++;
-                    }
-                    else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
-                }
-            } break;
-
-            // Window events are also polled (Minimized, maximized, close...)
-            case RGFW_windowResized:
-            {
-                // set flag that the window was resized
-                CORE.Window.resizedLastFrame = true;
-
-                #if defined(__APPLE__)
-                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-                    {
-                        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
-                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
-                        CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
-
-                        CORE.Window.screen.width = platform.window->w;
-                        CORE.Window.screen.height = platform.window->h;
-                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
-                    }
-                    else
-                    {
-                        SetupViewport(platform.window->w, platform.window->h);
-                        CORE.Window.screen.width = platform.window->w;
-                        CORE.Window.screen.height = platform.window->h;
-                        CORE.Window.render.width = CORE.Window.screen.width;
-                        CORE.Window.render.height = CORE.Window.screen.height;
-                    }
-
-                    CORE.Window.currentFbo.width = CORE.Window.render.width;
-                    CORE.Window.currentFbo.height = CORE.Window.render.height;
-                #elif defined(PLATFORM_WEB_RGFW)
-                    // do nothing but prevent other behavior
-                #else
-                    SetupViewport(platform.window->w, platform.window->h);
-
-                    // Consider content scaling if required
-                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-                    {
-                        Vector2 scaleDpi = GetWindowScaleDPI();
-                        CORE.Window.screen.width = (int)(platform.window->w/scaleDpi.x);
-                        CORE.Window.screen.height = (int)(platform.window->h/scaleDpi.y);
-                        CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
-
-                        // Mouse scale does not seem to be needed
-                        //SetMouseScale(1.0f/scaleDpi.x, 1.0f/scaleDpi.y);
-                    }
-                    else
-                    {
-                        CORE.Window.screen.width = platform.window->w;
-                        CORE.Window.screen.height = platform.window->h;
-                    }
-
-                    CORE.Window.currentFbo.width = CORE.Window.screen.width;
-                    CORE.Window.currentFbo.height = CORE.Window.screen.height;
-                #endif
-
-                #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-                    #if defined(__APPLE__)
-                        RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
-                        CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
-                        SetupViewport(platform.window->w*currentMonitor->pixelRatio, platform.window->h*currentMonitor->pixelRatio);
-
-                        CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
-                        CORE.Window.render.height = CORE.Window.screen.height*currentMonitor->pixelRatio;
-                        CORE.Window.currentFbo.width = CORE.Window.render.width;
-                        CORE.Window.currentFbo.height = CORE.Window.render.height;
-                    #endif
-                    platform.surfaceWidth = CORE.Window.currentFbo.width;
-                    platform.surfaceHeight = CORE.Window.currentFbo.height;
-
-                    // in software mode we dont have the viewport so we need to reverse the highdpi changes
-                    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-                    {
-                        Vector2 scaleDpi = GetWindowScaleDPI();
-                        platform.surfaceWidth *= scaleDpi.x;
-                        platform.surfaceHeight *= scaleDpi.y;
-                    }
-
-                    if (platform.surfacePixels != NULL)
-                    {
-                        RL_FREE(platform.surfacePixels);
-                        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
-                    }
-
-                    if (platform.surface != NULL)
-                    {
-                        RGFW_surface_free(platform.surface);
-                        platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
-                        swResize(platform.surfaceWidth, platform.surfaceHeight);
-                    }
-                #endif
-            } break;
-            case RGFW_windowMaximized:
-            {
-                FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
-            } break;
-            case RGFW_windowMinimized:
-            {
-                FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);  // The window was iconified
-            } break;
-            case RGFW_windowRestored:
-            {
-                if (RGFW_window_isMaximized(platform.window))
-                    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);           // The window was restored
-                if (RGFW_window_isMinimized(platform.window))
-                    FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MINIMIZED);           // The window was restored
-            } break;
-            case RGFW_windowMoved:
-            {
-                CORE.Window.position.x = platform.window->x;
-                CORE.Window.position.y = platform.window->x;
-            } break;
-
-            // Keyboard events
-            case RGFW_keyPressed:
-            {
-                KeyboardKey key = ConvertScancodeToKey(rgfw_event.key.value);
-                if (key != KEY_NULL)
-                {
-                    // If key was up, add it to the key pressed queue
-                    if ((CORE.Input.Keyboard.currentKeyState[key] == 0) && (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
-                    {
-                        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
-                        CORE.Input.Keyboard.keyPressedQueueCount++;
-                    }
-
-                    CORE.Input.Keyboard.currentKeyState[key] = 1;
-
-                    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
-                }
-            } break;
-            case RGFW_keyReleased:
-            {
-                KeyboardKey key = ConvertScancodeToKey(rgfw_event.key.value);
-                if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
-            } break;
-
-            case RGFW_keyChar:
-            {
-                // NOTE: event.text.text data comes an UTF-8 text sequence but registering codepoints (int)
-                // Check if there is space available in the queue
-                if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-                {
-                    // Add character (codepoint) to the queue
-                    CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = rgfw_event.keyChar.value;
-                    CORE.Input.Keyboard.charPressedQueueCount++;
-                }
-            } break;
-
-            // Check mouse events
-            case RGFW_mouseScroll:
-            {
-                CORE.Input.Mouse.currentWheelMove.x += rgfw_event.scroll.x;
-                CORE.Input.Mouse.currentWheelMove.y += rgfw_event.scroll.y;
-            } break;
-            case RGFW_mouseButtonPressed:
-            {
-                int btn = rgfw_event.button.value;
-                if (btn == RGFW_mouseLeft) btn = 1;
-                else if (btn == RGFW_mouseRight) btn = 2;
-                else if (btn == RGFW_mouseMiddle) btn = 3;
-
-                CORE.Input.Mouse.currentButtonState[btn - 1] = 1;
-                CORE.Input.Touch.currentTouchState[btn - 1] = 1;
-
-                touchAction = 1;
-            } break;
-            case RGFW_mouseButtonReleased:
-            {
-                int btn = rgfw_event.button.value;
-                if (btn == RGFW_mouseLeft) btn = 1;
-                else if (btn == RGFW_mouseRight) btn = 2;
-                else if (btn == RGFW_mouseMiddle) btn = 3;
-
-                CORE.Input.Mouse.currentButtonState[btn - 1] = 0;
-                CORE.Input.Touch.currentTouchState[btn - 1] = 0;
-
-                touchAction = 0;
-            } break;
-            case RGFW_mousePosChanged:
-            {
-                float mouseX = 0.0f;
-                float mouseY = 0.0f;
-                if (RGFW_window_isCaptured(platform.window))
-                {
-                    mouseX = (float)rgfw_event.mouse.vecX;
-                    mouseY = (float)rgfw_event.mouse.vecY;
-                }
-                else
-                {
-                    mouseX = (float)rgfw_event.mouse.x;
-                    mouseY = (float)rgfw_event.mouse.y;
-                }
-
-#if defined(__EMSCRIPTEN__)
-                double canvasWidth = 0.0;
-                double canvasHeight = 0.0;
-                emscripten_get_element_css_size("#canvas", &canvasWidth, &canvasHeight);
-                mouseX *= ((float)GetScreenWidth()/(float)canvasWidth);
-                mouseY *= ((float)GetScreenHeight()/(float)canvasHeight);
-#endif
-                if (RGFW_window_isCaptured(platform.window))
-                {
-                    CORE.Input.Mouse.currentPosition.x += mouseX;
-                    CORE.Input.Mouse.currentPosition.y += mouseY;
-                }
-                else
-                {
-                    CORE.Input.Mouse.currentPosition.x = mouseX;
-                    CORE.Input.Mouse.currentPosition.y = mouseY;
-                }
-
-                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
-                touchAction = 2;
-            } break;
-            default: break;
-        }
-
-#if SUPPORT_GESTURES_SYSTEM
-        if (touchAction > -1)
-        {
-            // Process mouse events as touches to be able to use mouse-gestures
-            GestureEvent gestureEvent = { 0 };
-
-            // Register touch actions
-            gestureEvent.touchAction = touchAction;
-
-            // Assign a pointer ID
-            gestureEvent.pointId[0] = 0;
-
-            // Register touch points count
-            gestureEvent.pointCount = 1;
-
-            // Register touch points position, only one point registered
-            if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
-            else gestureEvent.position[0] = GetMousePosition();
-
-            // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-            gestureEvent.position[0].x /= (float)GetScreenWidth();
-            gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-            // Gesture data is sent to gestures-system for processing
-            ProcessGestureEvent(gestureEvent);
-
-            touchAction = -1;
-        }
-#endif
-    }
+    //-----------------------------------------------------------------------------
+    // using RGFW callbacks instead of polling
+    RGFW_pollEvents();
     //-----------------------------------------------------------------------------
 
     mg_event gamepad_event;
@@ -1646,7 +1645,7 @@ void PollInputEvents(void)
                         case GAMEPAD_AXIS_RIGHT_TRIGGER:
                                 CORE.Input.Gamepad.axisState[gamepadIndex][axis] = platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value;
 
-                                /* trigger button press when axis is all the way */
+                                // Trigger button press when axis is all the way
                                 int button = (axis == GAMEPAD_AXIS_LEFT_TRIGGER) ? GAMEPAD_BUTTON_LEFT_TRIGGER_2 : GAMEPAD_BUTTON_RIGHT_TRIGGER_2;
                                 int pressed = (platform.minigamepad.gamepads[gamepadIndex].axes[gamepad_event.axis].value >= 1.0f);
 
@@ -1663,9 +1662,12 @@ void PollInputEvents(void)
 
                 int axisCount = 0;
                 for (int i = 0; i < MG_AXIS_COUNT; i += 1) {
-                    if (platform.minigamepad.gamepads[gamepadIndex].axes[i].supported) {
+                    if (platform.minigamepad.gamepads[gamepadIndex].axes[i].supported)
+                    {
                         axisCount += 1;
-                    } else {
+                    }
+                    else
+                    {
                         break;
                     }
                 }
@@ -1763,7 +1765,7 @@ int InitPlatform(void)
 
     // NOTE: Some OpenGL context attributes must be set before window creation
     // Check selection OpenGL version
-    RGFW_glHints* hints = RGFW_getGlobalHints_OpenGL();
+    RGFW_glHints *hints = RGFW_getGlobalHints_OpenGL();
     if (rlGetVersion() == RL_OPENGL_21)
     {
         hints->major = 2;
@@ -1838,7 +1840,7 @@ int InitPlatform(void)
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -1856,7 +1858,7 @@ int InitPlatform(void)
     #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
         // apple always scales for retina
         #if defined(__APPLE__)
-            RGFW_monitor* currentMonitor = RGFW_window_getMonitor(platform.window);
+            RGFW_monitor *currentMonitor = RGFW_window_getMonitor(platform.window);
             CORE.Window.screenScale = MatrixScale(currentMonitor->pixelRatio, currentMonitor->pixelRatio, 1.0f);
 
             CORE.Window.render.width = CORE.Window.screen.width*currentMonitor->pixelRatio;
@@ -1885,6 +1887,25 @@ int InitPlatform(void)
             return -1;
         }
     #endif
+
+    // Set callbacks
+    RGFW_setEventCallback(RGFW_mouseEnter, RGFW_cb_mousenotifyfunc);
+    RGFW_setEventCallback(RGFW_mouseLeave, RGFW_cb_mousenotifyfunc);
+    // RGFW_setEventCallback(RGFW_windowClose, RGFW_cb_windowclosefunc); // do not close here. let raylib handle it
+    RGFW_setEventCallback(RGFW_dataDrop, RGFW_cb_dropfunc);
+    RGFW_setEventCallback(RGFW_windowResized, RGFW_cb_windowresizefunc);
+    RGFW_setEventCallback(RGFW_windowMaximized, RGFW_cb_windowmaximizefunc);
+    RGFW_setEventCallback(RGFW_windowMinimized, RGFW_cb_windowminimizefunc);
+    RGFW_setEventCallback(RGFW_windowRestored, RGFW_cb_windowrestorefunc);
+    RGFW_setEventCallback(RGFW_windowMoved, RGFW_cb_windowmovefunc);
+    RGFW_setEventCallback(RGFW_keyChar, RGFW_cb_keycharfunc);
+    RGFW_setEventCallback(RGFW_mouseScroll, RGFW_cb_scrollfunc);
+    RGFW_setEventCallback(RGFW_mouseButtonPressed, RGFW_cb_mousebuttonfunc);
+    RGFW_setEventCallback(RGFW_mouseButtonReleased, RGFW_cb_mousebuttonfunc);
+    RGFW_setEventCallback(RGFW_mouseRawMotion, RGFW_cb_mouserawmotionfunc);
+    RGFW_setEventCallback(RGFW_mouseMotion, RGFW_cb_mousemotionfunc);
+    RGFW_setEventCallback(RGFW_keyPressed, (RGFW_genericFunc)RGFW_cb_keyfunc);
+    RGFW_setEventCallback(RGFW_keyReleased, (RGFW_genericFunc)RGFW_cb_keyfunc);
 
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
         FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
@@ -2007,8 +2028,39 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
     return (KeyboardKey)RGFW_keyConvertTable[keycode];
 }
 
+// assign mouse to touches
+// 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+void RemapMouseToTouch(int touchAction)
+{
+    #if SUPPORT_GESTURES_SYSTEM
+        if (touchAction < 0) return;
+
+        GestureEvent gestureEvent = { 0 };
+
+        // Register touch actions
+        gestureEvent.touchAction = touchAction;
+
+        // Assign a pointer ID
+        gestureEvent.pointId[0] = 0;
+
+        // Register touch points count
+        gestureEvent.pointCount = 1;
+
+        // Register touch points position, only one point registered
+        if (touchAction == 2 /*|| realTouch*/) gestureEvent.position[0] = CORE.Input.Touch.position[0];
+        else gestureEvent.position[0] = GetMousePosition();
+
+        // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+        gestureEvent.position[0].x /= (float)GetScreenWidth();
+        gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+        // Gesture data is sent to gestures-system for processing
+        ProcessGestureEvent(gestureEvent);
+    #endif
+}
+
 // Helper functions for Time
-double get_time_seconds(void)
+double GetTimeSeconds(void)
 {
     double currentTime = 0.0;
 

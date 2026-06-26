@@ -680,7 +680,7 @@ int main(int argc, char *argv[])
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", GetFileNameWithoutExt(inFileName));
 #endif
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-            
+
             // Update generated .html metadata
             LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
             UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -1886,9 +1886,11 @@ int main(int argc, char *argv[])
             printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
+
             printf("OPTIONS:\n\n");
             printf("    -h, --help                    : Show tool version and command line usage help\n");
             printf("    -v, --verbose                 : Verbose mode, show additional logs on processes\n");
+
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");
             printf("        Add and updates new example provided <shapes_custom_stars>\n\n");
