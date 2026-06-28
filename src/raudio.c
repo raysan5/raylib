@@ -2470,18 +2470,24 @@ bool IsAudioRecordingDeviceReady(void)
 // Get recording sample rate
 unsigned int GetAudioRecordingSampleRate(void)
 {
+    if (!AUDIO.RecordingSystem.isReady) return 0;
+
     return AUDIO.RecordingSystem.device.sampleRate;
 }
 
 // Get recording sample size in bits
 unsigned int GetAudioRecordingSampleSize(void)
 {
+    if (!AUDIO.RecordingSystem.isReady) return 0;
+
     return 8 * ma_get_bytes_per_sample(AUDIO.RecordingSystem.device.capture.format);
 }
 
 // Get recording channels
 unsigned int GetAudioRecordingChannels(void)
 {
+    if (!AUDIO.RecordingSystem.isReady) return 0;
+
     return AUDIO.RecordingSystem.device.capture.channels;
 }
 
@@ -2544,10 +2550,7 @@ void StopAudioRecording(void)
 // Check if device is recording
 bool IsAudioRecording(void)
 {
-    if (!AUDIO.RecordingSystem.isReady)
-    {
-        return false;
-    }
+    if (!AUDIO.RecordingSystem.isReady) return false;
 
     return ma_device_is_started(&AUDIO.RecordingSystem.device);
 }
