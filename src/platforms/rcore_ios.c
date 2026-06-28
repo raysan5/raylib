@@ -30,37 +30,37 @@
     #include <unistd.h>
 #endif
 
-// UIKit/OpenGL bridge functions implemented in rcore_ios_main.m
+// UIKit/OpenGL bridge functions implemented in [rcore_ios_main.m]
 RLAPI bool ios_initialize_window(int requestedWidth, int requestedHeight, int *screenWidth, int *screenHeight, int *renderWidth, int *renderHeight, float *scaleX, float *scaleY);
-RLAPI void ios_make_current_context(void);
 RLAPI void ios_close_platform(void);
+RLAPI void ios_make_current_context(void);
 RLAPI void ios_present_frame(void);
 RLAPI void *ios_get_window_handle(void);
 RLAPI void ios_get_window_metrics(int *screenWidth, int *screenHeight, int *renderWidth, int *renderHeight, float *scaleX, float *scaleY);
 RLAPI void *ios_get_proc_address(const char *name);
 RLAPI void ios_open_url(const char *url);
+RLAPI void ios_set_target_fps(float fps);
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 typedef struct {
     bool initialized;
+    struct {
+        // TODO: Use CORE.Input.Touch data... why is it required to duplicate this data?
+        int32_t pointCount;                     // Number of active touch points
+        int32_t pointId[MAX_TOUCH_POINTS];      // Touch point ids
+        Vector2 position[MAX_TOUCH_POINTS];     // Touch point positions
+        int32_t hoverPoints[MAX_TOUCH_POINTS];  // Hover point slots
+    } TouchRaw;
 } PlatformData;
-
-typedef struct {
-    int32_t pointCount;                     // Number of active touch points
-    int32_t pointId[MAX_TOUCH_POINTS];      // Touch point ids
-    Vector2 position[MAX_TOUCH_POINTS];     // Touch point positions
-    int32_t hoverPoints[MAX_TOUCH_POINTS];  // Hover point slots
-} TouchRaw;
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 extern CoreData CORE;                       // Global CORE state context
 
-static PlatformData platform = { 0 };      // Platform specific data
-static TouchRaw touchRaw = { 0 };          // Raw touch state
+static PlatformData platform = { 0 };       // Platform specific data
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -230,6 +230,7 @@ Vector2 GetWindowScaleDPI(void)
     float scaleX = 1.0f, scaleY = 1.0f;
 
     ios_get_window_metrics(&screenWidth, &screenHeight, &renderWidth, &renderHeight, &scaleX, &scaleY);
+    
     (void)screenWidth; (void)screenHeight;
     (void)renderWidth; (void)renderHeight;
 
@@ -280,6 +281,8 @@ void DisableCursor(void)
 // Swap back buffer with front buffer (screen drawing)
 void SwapScreenBuffer(void)
 {
+    if (CORE.Time.target > 0) ios_set_target_fps((float)(1.0/CORE.Time.target));
+    
     ios_present_frame();
 }
 
@@ -305,6 +308,7 @@ double GetTime(void)
 void OpenURL(const char *url)
 {
     // Security check to (partially) avoid malicious code
+    // TODO: Security concerns, this cod should b reviewed (not only for iOS)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else ios_open_url(url);
 }
@@ -395,7 +399,7 @@ int InitPlatform(void)
     float scaleX = 1.0f, scaleY = 1.0f;
 
     if (!ios_initialize_window(CORE.Window.screen.width, CORE.Window.screen.height,
-            &screenWidth, &screenHeight, &renderWidth, &renderHeight, &scaleX, &scaleY))
+        &screenWidth, &screenHeight, &renderWidth, &renderHeight, &scaleX, &scaleY))
     {
         TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize iOS window and graphics context");
         return -1;
@@ -403,19 +407,19 @@ int InitPlatform(void)
 
     ios_make_current_context();
 
-    CORE.Window.screen.width   = screenWidth;
-    CORE.Window.screen.height  = screenHeight;
-    CORE.Window.display.width  = (int)((float)screenWidth*scaleX);
+    CORE.Window.screen.width = screenWidth;
+    CORE.Window.screen.height = screenHeight;
+    CORE.Window.display.width = (int)((float)screenWidth*scaleX);
     CORE.Window.display.height = (int)((float)screenHeight*scaleY);
-    CORE.Window.render.width   = renderWidth;
-    CORE.Window.render.height  = renderHeight;
-    CORE.Window.currentFbo.width  = CORE.Window.render.width;
+    CORE.Window.render.width = renderWidth;
+    CORE.Window.render.height = renderHeight;
+    CORE.Window.currentFbo.width = CORE.Window.render.width;
     CORE.Window.currentFbo.height = CORE.Window.render.height;
     CORE.Window.screenScale = MatrixScale(scaleX, scaleY, 1.0f);
 
     rlLoadExtensions(ios_get_proc_address);
 
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) touchRaw.hoverPoints[i] = -1;
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) platform.TouchRaw.hoverPoints[i] = -1;
 
     platform.initialized = true;
     CORE.Window.ready = true;
@@ -437,19 +441,19 @@ void ClosePlatform(void)
 
     CORE = (CoreData){ 0 };
     platform = (PlatformData){ 0 };
-    touchRaw = (TouchRaw){ 0 };
+    platform.TouchRaw = (TouchRaw){ 0 };
 }
 
 // Find or allocate a touch slot for the given touchId
 static int FindTouchSlot(intptr_t touchId, bool allowAllocate)
 {
-    for (int i = 0; i < touchRaw.pointCount; i++)
+    for (int i = 0; i < platform.TouchRaw.pointCount; i++)
     {
-        if (touchRaw.pointId[i] == (int32_t)touchId) return i;
+        if (platform.TouchRaw.pointId[i] == (int32_t)touchId) return i;
     }
 
     if (!allowAllocate) return -1;
-    if (touchRaw.pointCount < MAX_TOUCH_POINTS) return touchRaw.pointCount;
+    if (platform.TouchRaw.pointCount < MAX_TOUCH_POINTS) return platform.TouchRaw.pointCount;
 
     return -1;
 }
@@ -457,10 +461,10 @@ static int FindTouchSlot(intptr_t touchId, bool allowAllocate)
 // Sync mouse position/state from primary touch point
 static void UpdateMouseFromTouches(void)
 {
-    if (touchRaw.pointCount > 0)
+    if (platform.TouchRaw.pointCount > 0)
     {
         CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-        CORE.Input.Mouse.currentPosition = touchRaw.position[0];
+        CORE.Input.Mouse.currentPosition = platform.TouchRaw.position[0];
         CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
     }
 }
@@ -474,19 +478,20 @@ void ios_handle_touch_began(intptr_t touchId, float x, float y)
     int index = FindTouchSlot(touchId, true);
     if (index < 0) return;
 
-    touchRaw.pointId[index]  = (int32_t)touchId;
-    touchRaw.position[index] = (Vector2){ x, y };
+    platform.TouchRaw.pointId[index] = (int32_t)touchId;
+    platform.TouchRaw.position[index] = (Vector2){ x, y };
 
-    CORE.Input.Touch.pointId[index]           = (int)touchId;
-    CORE.Input.Touch.position[index]          = (Vector2){ x, y };
+    CORE.Input.Touch.pointId[index] = (int)touchId;
+    CORE.Input.Touch.position[index] = (Vector2){ x, y };
     CORE.Input.Touch.currentTouchState[index] = 1;
     CORE.Input.Touch.previousTouchState[index] = 0;
 
-    CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT]  = 1;
+    CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 1;
     CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] = 0;
 
-    if (touchRaw.pointCount < MAX_TOUCH_POINTS) touchRaw.pointCount++;
-    CORE.Input.Touch.pointCount = touchRaw.pointCount;
+    if (platform.TouchRaw.pointCount < MAX_TOUCH_POINTS) platform.TouchRaw.pointCount++;
+
+    CORE.Input.Touch.pointCount = platform.TouchRaw.pointCount;
 
     UpdateMouseFromTouches();
 }
@@ -496,12 +501,12 @@ void ios_handle_touch_moved(intptr_t touchId, float x, float y)
     int index = FindTouchSlot(touchId, false);
     if (index < 0) return;
 
-    touchRaw.position[index]                  = (Vector2){ x, y };
+    platform.TouchRaw.position[index]                  = (Vector2){ x, y };
     CORE.Input.Touch.pointId[index]           = (int)touchId;
     CORE.Input.Touch.position[index]          = (Vector2){ x, y };
     CORE.Input.Touch.currentTouchState[index] = 1;
     CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 1;
-    CORE.Input.Touch.pointCount = touchRaw.pointCount;
+    CORE.Input.Touch.pointCount = platform.TouchRaw.pointCount;
 
     UpdateMouseFromTouches();
 }
@@ -511,28 +516,28 @@ void ios_handle_touch_ended(intptr_t touchId, float x, float y)
     int index = FindTouchSlot(touchId, false);
     if (index < 0) return;
 
-    touchRaw.position[index]                    = (Vector2){ x, y };
-    CORE.Input.Touch.position[index]            = (Vector2){ x, y };
-    CORE.Input.Touch.currentTouchState[index]   = 0;
-    CORE.Input.Touch.previousTouchState[index]  = 1;
-    CORE.Input.Touch.pointId[index]             = 0;
+    platform.TouchRaw.position[index] = (Vector2){ x, y };
+    CORE.Input.Touch.position[index] = (Vector2){ x, y };
+    CORE.Input.Touch.currentTouchState[index] = 0;
+    CORE.Input.Touch.previousTouchState[index] = 1;
+    CORE.Input.Touch.pointId[index] = 0;
 
     // Compact the touch arrays — shift remaining points down
-    for (int i = index; i < touchRaw.pointCount - 1; i++)
+    for (int i = index; i < platform.TouchRaw.pointCount - 1; i++)
     {
-        touchRaw.pointId[i]   = touchRaw.pointId[i + 1];
-        touchRaw.position[i]  = touchRaw.position[i + 1];
+        platform.TouchRaw.pointId[i] = platform.TouchRaw.pointId[i + 1];
+        platform.TouchRaw.position[i] = platform.TouchRaw.position[i + 1];
 
-        CORE.Input.Touch.pointId[i]            = CORE.Input.Touch.pointId[i + 1];
-        CORE.Input.Touch.position[i]           = CORE.Input.Touch.position[i + 1];
-        CORE.Input.Touch.currentTouchState[i]  = CORE.Input.Touch.currentTouchState[i + 1];
+        CORE.Input.Touch.pointId[i] = CORE.Input.Touch.pointId[i + 1];
+        CORE.Input.Touch.position[i] = CORE.Input.Touch.position[i + 1];
+        CORE.Input.Touch.currentTouchState[i] = CORE.Input.Touch.currentTouchState[i + 1];
         CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.previousTouchState[i + 1];
     }
 
-    if (touchRaw.pointCount > 0) touchRaw.pointCount--;
-    CORE.Input.Touch.pointCount = touchRaw.pointCount;
+    if (platform.TouchRaw.pointCount > 0) platform.TouchRaw.pointCount--;
+    CORE.Input.Touch.pointCount = platform.TouchRaw.pointCount;
 
-    CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT]  = (touchRaw.pointCount > 0)? 1 : 0;
+    CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = (platform.TouchRaw.pointCount > 0)? 1 : 0;
     CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] = 1;
 
     UpdateMouseFromTouches();

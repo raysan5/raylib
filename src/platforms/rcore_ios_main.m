@@ -1,3 +1,24 @@
+/**********************************************************************************************
+*
+*   rcore_ios_main.m - Functions required by iOS platform implementation
+*
+*   PLATFORM: IOS
+*       - iOS (arm64)
+*       - iOS Simulator
+*
+*   LIMITATIONS:
+*       - No keyboard input support
+*       - No gamepad input support
+*
+*   DEPENDENCIES:
+*       - UIKit/QuartzCore/OpenGLES (provided by iOS SDK)
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
+*
+**********************************************************************************************/
+
 #import <Foundation/Foundation.h>
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES3/gl.h>
@@ -53,6 +74,8 @@ static IOSBridgeState ios = {0};
 - (void)stopDisplayLink;
 
 - (void)waitForVSync;
+
+- (void)setTargetFPS:(float)fps;
 
 @end
 
@@ -127,8 +150,9 @@ static IOSBridgeState ios = {0};
   NSInteger maxFPS = [UIScreen mainScreen].maximumFramesPerSecond;
 
   // Use the display native refresh rate
-  _displayLink.preferredFrameRateRange =
-      CAFrameRateRangeMake(_minimumFPS, maxFPS, maxFPS);
+  // NOTE: Driven dynamically via setTargetFPS, no hardcoded maxFPS 
+  //_displayLink.preferredFrameRateRange =
+  //    CAFrameRateRangeMake(_minimumFPS, maxFPS, maxFPS);
 
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop]
                      forMode:NSRunLoopCommonModes];
@@ -168,6 +192,13 @@ static IOSBridgeState ios = {0};
   }
 
   _lastConsumedVsync = current;
+}
+
+- (void)setTargetFPS:(float)fps {
+    _minimumFPS = fps;
+    if (_displayLink != nil)
+        _displayLink.preferredFrameRateRange =
+            CAFrameRateRangeMake(fps, fps, fps);
 }
 
 @end
@@ -532,15 +563,13 @@ void ios_present_frame(void) {
   //   NSLog(@"[raylib][IOS] IOSPresentFrame: thread=%@, currentContext=%@",
   //   [NSThread currentThread], [EAGLContext currentContext]);
 
-  GLenum err = glGetError();
-  if (err != GL_NO_ERROR)
-    NSLog(@"[raylib][IOS] glGetError before present: 0x%04X", err);
-
   [ios.context presentRenderbuffer:GL_RENDERBUFFER];
 
-  err = glGetError();
-  if (err != GL_NO_ERROR)
-    NSLog(@"[raylib][IOS] glGetError after present: 0x%04X", err);
+#if RLGL_SHOW_GL_DETAILS_INFO
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+        NSLog(@"[raylib][IOS] glGetError after present: 0x%04X", err);
+#endif
 
   if (!ios.shuttingDown) {
     [[RaylibController sharedController] waitForVSync];
@@ -599,6 +628,10 @@ void ios_open_url(const char *url) {
                                completionHandler:nil];
     });
   }
+}
+
+void ios_set_target_fps(float fps) {
+    [[RaylibController sharedController] setTargetFPS:fps];
 }
 
 int main(int argc, char *argv[]) {

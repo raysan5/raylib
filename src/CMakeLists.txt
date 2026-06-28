@@ -37,7 +37,7 @@ set(raylib_sources
     )
 
 if (${PLATFORM} STREQUAL "iOS")
-    list(APPEND raylib_sources rcore_ios_main.m)
+    list(APPEND raylib_sources platforms/rcore_ios_main.m)
 endif()
 
 # Only build raudio if it's enabled
