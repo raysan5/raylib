@@ -2041,14 +2041,14 @@ static void ExportParsedData(const char *fileName, int format)
             for (int i = 0; i < structCount; i++)
             {
                 if(i != 0) fprintf(outFile, "\n\n");
-                fprintf(outFile, "    ((name \"%s\")\n", structs[i].name);
-                fprintf(outFile, "     (description \"%s\")\n", EscapeBackslashes(structs[i].desc));
-                fprintf(outFile, "     (fields ");
+                fprintf(outFile, "   ((name \"%s\")\n", structs[i].name);
+                fprintf(outFile, "    (description \"%s\")\n", EscapeBackslashes(structs[i].desc));
+                fprintf(outFile, "    (fields ");
                 for (int f = 0; f < structs[i].fieldCount; f++)
                 {
-                    fprintf(outFile, "\n       ((type \"%s\")\n", structs[i].fieldType[f]);
-                    fprintf(outFile, "        (name \"%s\")\n", structs[i].fieldName[f]);
-                    fprintf(outFile, "        (description \"%s\"))", EscapeBackslashes(structs[i].fieldDesc[f]));
+                    fprintf(outFile, "\n      ((type \"%s\")\n", structs[i].fieldType[f]);
+                    fprintf(outFile, "       (name \"%s\")\n", structs[i].fieldName[f]);
+                    fprintf(outFile, "       (description \"%s\"))", EscapeBackslashes(structs[i].fieldDesc[f]));
                 }
                 fprintf(outFile, "))");
             }
