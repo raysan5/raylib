@@ -2989,7 +2989,7 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 
         // NOTE: glMapBuffer() causes sync issue
         // If GPU is working with this buffer, glMapBuffer() will wait(stall) until GPU to finish its job
-        // To avoid waiting (idle), glBufferData() can bee called first with NULL pointer before glMapBuffer()
+        // To avoid waiting (idle), glBufferData() can be called first with NULL pointer before glMapBuffer()
         // Doing that, the previous data in PBO will be discarded and glMapBuffer() returns a new
         // allocated pointer immediately even if GPU is still working with the previous data
 

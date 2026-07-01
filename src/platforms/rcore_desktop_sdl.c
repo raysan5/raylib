@@ -863,7 +863,7 @@ void SetWindowMonitor(int monitor)
                 // ending up positioned partly outside the target display
                 // NOTE 2: The workaround for that is, previously to moving the window,
                 // setting the window size to the target display size, so they match
-                // NOTE 3: It wasn't done here because it can not bee assumed that changing
+                // NOTE 3: It wasn't done here because it can not be assumed that changing
                 // the window size automatically is acceptable behavior by the user
                 SDL_SetWindowPosition(platform.window, usableBounds.x, usableBounds.y);
                 CORE.Window.position.x = usableBounds.x;
