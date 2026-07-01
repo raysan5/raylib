@@ -144,6 +144,7 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified);           
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
 static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);      // GLFW3 Window Drop Callback, runs when drop files into window
+static void WindowRefreshCallback(GLFWwindow* window);                                  // GLFW3 Window Refresh Callback, runs when window content needs to be refreshed
 
 // Input callbacks events
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods); // GLFW3 Keyboard Callback, runs on key pressed
@@ -1438,16 +1439,22 @@ void WindowRefreshCallback(GLFWwindow* window)
     {
         return;
     }
+
+    CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
+    CORE.Time.update = CORE.Time.current - CORE.Time.previous;
+    CORE.Time.previous = CORE.Time.current;
+
+    rlLoadIdentity();                   // Reset current matrix (modelview)
+    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling
     
     CORE.Window.updateCallback();
 
     rlDrawRenderBatchActive();
+
     SwapScreenBuffer();
     CORE.Time.current = GetTime();
     CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
-
-    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
 
     // Frame time control system
     CORE.Time.current = GetTime();
@@ -1457,6 +1464,8 @@ void WindowRefreshCallback(GLFWwindow* window)
     CORE.Time.frame = CORE.Time.update + CORE.Time.draw;
 
     CORE.Time.frameCounter++;
+
+    CORE.Window.wasDirtyThisFrame = true;
 }
 
 // Initialize platform: graphics, inputs and more
@@ -2026,6 +2035,7 @@ static void WindowPosCallback(GLFWwindow *window, int x, int y)
     // Set current window position
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
+    WindowRefreshCallback(window);  // Force window refresh on position change
 }
 
 // GLFW3: Window iconify callback, runs when window is minimized/restored

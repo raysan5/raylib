@@ -319,7 +319,7 @@ typedef struct CoreData {
         unsigned int dropFileCount;         // Count dropped files strings
 
         bool(*updateCallback)(void);        // Optional user defined callback to draw a frame
-
+        bool wasDirtyThisFrame;
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
@@ -743,12 +743,19 @@ static bool RunLoop = false;
 
 void ProcessSingleFrame(void)
 {
+    // if the dirty callback rendered this frame, don't double render, skip it until the next frame
+    if (CORE.Window.wasDirtyThisFrame)
+    {
+        CORE.Window.wasDirtyThisFrame = false;
+        return;
+    }
+
     BeginDrawing();
     RunLoop = CORE.Window.updateCallback();
     EndDrawing();
 
-#if defined(SUPPORT_CUSTOM_FRAME_CONTROL)
-    SwapBuffers();
+#if SUPPORT_CUSTOM_FRAME_CONTROL
+    SwapScreenBuffer();
     PollInputEvents();
 #endif
 }

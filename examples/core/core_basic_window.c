@@ -27,16 +27,20 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include <math.h>
 
 bool RunFrame(void)
 {
     if (WindowShouldClose())
         return false;
 
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
 
-    DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+    float offset = cosf(GetTime() * 2.0f) *60.0f;
+    DrawTextEx(GetFontDefault(), "Congrats! You created your first window!", (Vector2) { 190, 200 + offset}, 20, 2, LIGHTGRAY);
 
+    DrawFPS(10, 10);
+    DrawText(TextFormat("FrameTime %0.3f", GetFrameTime()), 10, 30, 20, GRAY);
     return true;
 }
 
@@ -50,6 +54,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
