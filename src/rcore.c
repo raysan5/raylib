@@ -318,6 +318,8 @@ typedef struct CoreData {
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
 
+        bool(*updateCallback)(void);        // Optional user defined callback to draw a frame
+
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
@@ -735,6 +737,39 @@ void CloseWindow(void)
 
     CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
+}
+
+static bool RunLoop = false;
+
+void ProcessSingleFrame(void)
+{
+    BeginDrawing();
+    RunLoop = CORE.Window.updateCallback();
+    EndDrawing();
+
+#if defined(SUPPORT_CUSTOM_FRAME_CONTROL)
+    SwapBuffers();
+    PollInputEvents();
+#endif
+}
+
+#if defined(PLATFORM_WEB)
+#include <emscripten.h>
+#endif
+
+void RunGameLoop(bool(*processFrame)(void))
+{    
+    RunLoop = true;
+    CORE.Window.updateCallback = processFrame;
+
+#if defined(PLATFORM_WEB)
+    emscripten_set_main_loop(ProcessSingleFrame, 0, 1);
+#else
+    while (RunLoop)
+    {
+        ProcessSingleFrame();
+    }
+#endif
 }
 
 // Check if window has been initialized successfully

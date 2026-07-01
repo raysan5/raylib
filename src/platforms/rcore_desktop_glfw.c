@@ -1432,6 +1432,33 @@ static void DeallocateWrapper(void *block, void *user)
     RL_FREE(block);
 }
 
+void WindowRefreshCallback(GLFWwindow* window)
+{
+    if (window != platform.handle || CORE.Window.updateCallback == NULL)
+    {
+        return;
+    }
+    
+    CORE.Window.updateCallback();
+
+    rlDrawRenderBatchActive();
+    SwapScreenBuffer();
+    CORE.Time.current = GetTime();
+    CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
+    CORE.Time.previous = CORE.Time.current;
+
+    SwapScreenBuffer();                  // Copy back buffer to front buffer (screen)
+
+    // Frame time control system
+    CORE.Time.current = GetTime();
+    CORE.Time.draw = CORE.Time.current - CORE.Time.previous;
+    CORE.Time.previous = CORE.Time.current;
+
+    CORE.Time.frame = CORE.Time.update + CORE.Time.draw;
+
+    CORE.Time.frameCounter++;
+}
+
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
@@ -1808,6 +1835,7 @@ int InitPlatform(void)
     glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
     glfwSetDropCallback(platform.handle, WindowDropCallback);
+    glfwSetWindowRefreshCallback(platform.handle, WindowRefreshCallback);
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) glfwSetWindowContentScaleCallback(platform.handle, WindowContentScaleCallback);
 
     // Set input callback events
