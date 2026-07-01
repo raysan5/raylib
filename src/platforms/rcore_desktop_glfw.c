@@ -1433,6 +1433,8 @@ static void DeallocateWrapper(void *block, void *user)
     RL_FREE(block);
 }
 
+double LastRefreshTime = -100;
+
 void WindowRefreshCallback(GLFWwindow* window)
 {
     if (window != platform.handle || CORE.Window.updateCallback == NULL)
@@ -1440,7 +1442,20 @@ void WindowRefreshCallback(GLFWwindow* window)
         return;
     }
 
-    CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
+    double now = GetTime();
+
+    // if we have a FPS cap, try to clamp to it during refresh events
+    if (CORE.Time.target > 0)
+    {
+        double delta = now - LastRefreshTime;
+        if (delta < CORE.Time.target)
+        {
+            return;
+        }
+        LastRefreshTime = now;
+    }
+
+    CORE.Time.current = now;      // Number of elapsed seconds since InitTimer()
     CORE.Time.update = CORE.Time.current - CORE.Time.previous;
     CORE.Time.previous = CORE.Time.current;
 
