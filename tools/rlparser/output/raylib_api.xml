@@ -681,13 +681,16 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="607">
+    <Functions count="608">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
             <Param type="const char *" name="title" desc="" />
         </Function>
         <Function name="CloseWindow" retType="void" paramCount="0" desc="Close window and unload OpenGL context">
+        </Function>
+        <Function name="RunGameLoop" retType="void" paramCount="1" desc="(Optional), Run an automatic game loop using the defined callback, calls Begin/EndDrawing for you.">
+            <Param type="bool(*" name="processFrame" desc="" />
         </Function>
         <Function name="WindowShouldClose" retType="bool" paramCount="0" desc="Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)">
         </Function>

@@ -3191,6 +3191,17 @@
       "returnType": "void"
     },
     {
+      "name": "RunGameLoop",
+      "description": "(Optional), Run an automatic game loop using the defined callback, calls Begin/EndDrawing for you.",
+      "returnType": "void",
+      "params": [
+        {
+          "type": "bool(*",
+          "name": "processFrame"
+        }
+      ]
+    },
+    {
       "name": "WindowShouldClose",
       "description": "Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)",
       "returnType": "bool"
