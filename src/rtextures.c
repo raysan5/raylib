@@ -12,6 +12,7 @@
 *       #define SUPPORT_FILEFORMAT_JPG      0
 *       #define SUPPORT_FILEFORMAT_GIF      1
 *       #define SUPPORT_FILEFORMAT_QOI      1
+*       #define SUPPORT_FILEFORMAT_PEP      1
 *       #define SUPPORT_FILEFORMAT_PSD      0
 *       #define SUPPORT_FILEFORMAT_HDR      0
 *       #define SUPPORT_FILEFORMAT_PIC      0
@@ -188,7 +189,15 @@
     #if defined(_MSC_VER)
         #pragma warning(pop)            // Disable MSVC warning suppression
     #endif
+#endif
 
+#if SUPPORT_FILEFORMAT_PEP
+	#define PEP_MALLOC RL_MALLOC
+	#define PEP_REALLOC RL_REALLOC
+	#define PEP_FREE RL_FREE
+
+    #define PEP_IMPLEMENTATION
+    #include "external/pep.h"
 #endif
 
 #if SUPPORT_IMAGE_EXPORT
@@ -510,6 +519,31 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
         }
     }
 #endif
+#if SUPPORT_FILEFORMAT_PEP
+    else if ((strcmp(fileType, ".pep") == 0) || (strcmp(fileType, ".PEP") == 0))
+    {
+        if (fileData != NULL)
+        {
+            // Deserialize file data into pep structure
+            pep p = pep_deserialize(fileData, dataSize);
+
+            // Decompress pep data for image struct
+            // Decompression options:
+            //  - First color transparent, 3rd parameter: 1
+            //  - Premultiply alpha on loading, 4th parameter: 1
+            unsigned int *pepData = pep_decompress(&p, pep_rgba, 1, 1);
+
+            image.data = pepData;
+            image.width = p.width;
+            image.height = p.height;
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+            image.mipmaps = 1;
+
+            PEP_FREE(pepData);
+            pep_free(&p);
+        }
+    }
+#endif
 #if SUPPORT_FILEFORMAT_DDS
     else if ((strcmp(fileType, ".dds") == 0) || (strcmp(fileType, ".DDS") == 0))
     {
@@ -679,6 +713,25 @@ bool ExportImage(Image image, const char *fileName)
 
             result = qoi_write(fileName, imgData, &desc);
         }
+    }
+#endif
+#if SUPPORT_FILEFORMAT_PEP
+    else if (IsFileExtension(fileName, ".pep"))
+    {
+        if (image.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+        {
+            // NOTE: Only RGBA 32bit (8bit per channel) image format supported
+            pep p = pep_compress(image.data, image.width, image.height, pep_rgba, pep_8bit);
+
+            unsigned int pepDataSize = 0;
+            unsigned char *pepData = pep_serialize(&p, &pepDataSize);
+
+            result = SaveFileData(fileName, pepData, pepDataSize);
+
+            PEP_FREE(pepData);
+            pep_free(&p);
+        }
+        else TRACELOG(LOG_WARNING, "IMAGE: Image can not be exported, .pep requires RGBA 32bit input");
     }
 #endif
 #if SUPPORT_FILEFORMAT_KTX

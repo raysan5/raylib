@@ -244,6 +244,9 @@
 #ifndef SUPPORT_FILEFORMAT_QOI
     #define SUPPORT_FILEFORMAT_QOI      1
 #endif
+#ifndef SUPPORT_FILEFORMAT_PEP
+    #define SUPPORT_FILEFORMAT_PEP      0
+#endif
 #ifndef SUPPORT_FILEFORMAT_PSD
     #define SUPPORT_FILEFORMAT_PSD      0       // Disabled by default
 #endif
