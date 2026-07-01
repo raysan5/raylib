@@ -128,45 +128,10 @@ void DrawPixel(int posX, int posY, Color color)
 // Draw a pixel (Vector version)
 void DrawPixelV(Vector2 position, Color color)
 {
-#if SUPPORT_QUADS_DRAW_MODE
-    rlSetTexture(GetShapesTexture().id);
-    Rectangle shapeRect = GetShapesTextureRectangle();
-
-    rlBegin(RL_QUADS);
-
-        rlNormal3f(0.0f, 0.0f, 1.0f);
+    rlBegin(RL_POINTS);
         rlColor4ub(color.r, color.g, color.b, color.a);
-
-        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(position.x, position.y);
-
-        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
-        rlVertex2f(position.x, position.y + 1);
-
-        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
-        rlVertex2f(position.x + 1, position.y + 1);
-
-        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
-        rlVertex2f(position.x + 1, position.y);
-
     rlEnd();
-
-    rlSetTexture(0);
-#else
-    rlBegin(RL_TRIANGLES);
-
-        rlColor4ub(color.r, color.g, color.b, color.a);
-
-        rlVertex2f(position.x, position.y);
-        rlVertex2f(position.x, position.y + 1);
-        rlVertex2f(position.x + 1, position.y);
-
-        rlVertex2f(position.x + 1, position.y);
-        rlVertex2f(position.x, position.y + 1);
-        rlVertex2f(position.x + 1, position.y + 1);
-
-    rlEnd();
-#endif
 }
 
 // Draw a line (using gl lines)
