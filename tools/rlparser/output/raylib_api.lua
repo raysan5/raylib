@@ -6233,6 +6233,18 @@ return {
       }
     },
     {
+      name = "ImageDrawRectanglePro",
+      description = "Draw a color-filled rectangle with pro parameters within and image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "ImageDrawRectangleLines",
       description = "Draw rectangle lines within an image",
       returnType = "void",
@@ -6254,6 +6266,19 @@ return {
         {type = "Rectangle", name = "rec"},
         {type = "int", name = "thick"},
         {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleGradientEx",
+      description = "Draw rectangle with gradient colors within an image, counter-clockwise color order",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"},
+        {type = "Color", name = "col3"},
+        {type = "Color", name = "col4"}
       }
     },
     {
@@ -6327,6 +6352,19 @@ return {
       }
     },
     {
+      name = "ImageDrawImageEx",
+      description = "Draw an image with scaling and rotation within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "rotation"},
+        {type = "float", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
       name = "ImageDrawImageRec",
       description = "Draw a part of an image defined by a rectangle within an image",
       returnType = "void",
@@ -6374,6 +6412,22 @@ return {
         {type = "Font", name = "font"},
         {type = "const char *", name = "text"},
         {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawTextPro",
+      description = "Draw text using Font and pro parameters (rotation)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Font", name = "font"},
+        {type = "const char *", name = "text"},
+        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
         {type = "float", name = "fontSize"},
         {type = "float", name = "spacing"},
         {type = "Color", name = "tint"}
