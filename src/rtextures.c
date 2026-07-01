@@ -3918,6 +3918,12 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
     }
 }
 
+// Draw a color-filled rectangle with pro parameters within and image
+void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rotation, Color color)
+{
+    // TODO: NEW: Implement ImageDrawRectanglePro()
+}
+
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color)
 {
@@ -3932,6 +3938,12 @@ void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color
     ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
     ImageDrawRectangle(dst, (int)(rec.x + rec.width - thick), (int)(rec.y + thick), thick, (int)(rec.height - thick*2), color);
     ImageDrawRectangle(dst, (int)rec.x, (int)(rec.y + rec.height - thick), (int)rec.width, thick, color);
+}
+
+// Draw rectangle with gradient colors within an image, counter-clockwise color order
+void ImageDrawRectangleGradientEx(Image *dst, Rectangle rec, Color col1, Color col2, Color col3, Color col4)
+{
+    // TODO: NEW: Implement ImageDrawRectangleGradientEx()
 }
 
 // Draw circle within an image
@@ -4001,7 +4013,7 @@ void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
 // Draw a gradient-filled circle within an image
 void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inner, Color outer)
 {
-    // TODO: Implement gradient circle drawing
+    // TODO: NEW: Implement ImageDrawCircleGradient()
 }
 
 // Draw an image within an image
@@ -4012,6 +4024,12 @@ void ImageDrawImage(Image *dst, Image src, int posX, int posY, Color tint)
     ImageDrawImagePro(dst, src, srcRec, dstRec, (Vector2){ 0 }, 0.0f, tint);
 }
 
+// Draw an image with scaling and rotation within an image
+void ImageDrawImageEx(Image *dst, Image src, Vector2 position, float rotation, float scale, Color tint)
+{
+    // TODO: NEW: Implement ImageDrawImageEx()
+}
+
 // Draw a part of an image defined by a rectangle within an image
 void ImageDrawImageRec(Image *dst, Image src, Rectangle srcRec, Vector2 position, Color tint)
 {
@@ -4020,8 +4038,7 @@ void ImageDrawImageRec(Image *dst, Image src, Rectangle srcRec, Vector2 position
 }
 
 // Draw a part of an image defined by a rectangle into destination rectangle, with scaling and rotation, within an image
-// NOTE: Color tint is applied to source image
-// TODO: WARNING: origin and rotation are not implemented
+// TODO: REVIEW: ImageDrawImagePro(), implement origin and rotation for image drawing
 void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Vector2 origin, float rotation, Color tint)
 {
     // Security check to avoid program crash
@@ -4197,6 +4214,12 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
     ImageDrawImagePro(dst, imText, srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
 
     UnloadImage(imText);
+}
+
+// Draw text using Font and pro parameters (rotation)
+void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint)
+{
+    // TODO: NEW: Implement ImageDrawImageEx()
 }
 
 //------------------------------------------------------------------------------------
