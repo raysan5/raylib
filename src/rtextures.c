@@ -4219,7 +4219,7 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
 // Draw text using Font and pro parameters (rotation)
 void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint)
 {
-    // TODO: NEW: Implement ImageDrawImageEx()
+    // TODO: NEW: Implement ImageDrawTextPro()
 }
 
 //------------------------------------------------------------------------------------
