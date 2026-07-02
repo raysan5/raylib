@@ -963,6 +963,29 @@ typedef enum {
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
 } NPatchLayout;
 
+// Opaque structs declaration for Process
+// NOTE: actual definition in rcore.c
+typedef struct rProcessData rProcessData;
+
+// Process resources
+typedef struct Process {
+    int pid;                          // Process unique identifier
+    rProcessData *processData;        // Platform-specific process data
+} Process;
+
+// Process state
+typedef enum {
+    PROCESS_STATE_NONE = 0,         // No state information
+    PROCESS_STATE_RUNNING,          // Process is running
+    PROCESS_STATE_FINISHED          // Process has exited
+} ProcessState;
+
+// Process information for CheckProcess() function
+typedef struct ProcessInfo {
+    ProcessState state;             // Process state (PROCESS_STATE_*)
+    int exitCode;                   // Process exit code (if finished)
+} ProcessInfo;
+
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args); // Logging: Redirect trace log messages
@@ -1241,6 +1264,15 @@ RLAPI int GetTouchY(void);                                    // Get touch posit
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
 RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for given index
 RLAPI int GetTouchPointCount(void);                           // Get number of touch points
+
+// Process execution functions
+RLAPI Process InitProcess(const char *command, char *const args[]); // Initialize a new process, returns a Process struct
+RLAPI ProcessInfo CheckProcess(Process process);                    // Check if a process is still running
+RLAPI int WaitProcess(Process process);                             // Wait for process to finish, returns exit code, blocking
+RLAPI const char *ReadProcessOutput(Process process, int *length);  // Read process output as raw buffer (not null-terminated), returns pointer to a static buffer, so data must be copied before next call to ReadProcessOutput()
+RLAPI void PauseProcess(Process process);                           // Pause process execution
+RLAPI void ResumeProcess(Process process);                          // Resume paused process execution
+RLAPI void CloseProcess(Process process);                           // Close process and free resources
 
 //------------------------------------------------------------------------------------
 // Gestures and Touch Handling Functions (Module: rgestures)
