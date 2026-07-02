@@ -2825,10 +2825,24 @@ int ChangeDirectory(const char *dirPath)
 // Check if given path point to a file
 bool IsPathFile(const char *path)
 {
-    struct stat result = { 0 };
-    stat(path, &result);
+    bool result = false;
 
-    return S_ISREG(result.st_mode);
+    struct stat info = { 0 };
+    stat(path, &info);
+
+    if (S_ISREG(info.st_mode)) result = true;
+
+    return result;
+}
+
+// Check if given path point to a directory
+bool IsPathDirectory(const char *path)
+{
+    bool result = false;
+
+    if (!IsPathFile(path)) result = true;
+
+    return result;
 }
 
 // Check if fileName is valid for the platform/OS
