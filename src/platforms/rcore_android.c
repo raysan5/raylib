@@ -455,7 +455,20 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize() not available on target platform");
+	CORE.Window.display.width = width;
+    CORE.Window.display.height = height;
+
+    SetupViewport(width, height);
+    CORE.Window.currentFbo.width = width;
+    CORE.Window.currentFbo.height = height;
+
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
+
+    ANativeWindow_setBuffersGeometry(platform.app->window,
+        CORE.Window.render.width + CORE.Window.renderOffset.x,
+        CORE.Window.render.height + CORE.Window.renderOffset.y,
+        0);
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
