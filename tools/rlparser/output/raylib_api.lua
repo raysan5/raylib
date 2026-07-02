@@ -4177,7 +4177,15 @@ return {
     },
     {
       name = "IsPathFile",
-      description = "Check if given path is a file or a directory",
+      description = "Check if given path points to a file",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "path"}
+      }
+    },
+    {
+      name = "IsPathDirectory",
+      description = "Check if given path points to a directory",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}

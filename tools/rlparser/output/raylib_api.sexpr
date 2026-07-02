@@ -3033,7 +3033,13 @@
        ((type "const char *") (name "dirPath"))))
 
     ((name "IsPathFile")
-     (description "Check if given path is a file or a directory")
+     (description "Check if given path points to a file")
+     (return-type "bool")
+     (params
+       ((type "const char *") (name "path"))))
+
+    ((name "IsPathDirectory")
+     (description "Check if given path points to a directory")
      (return-type "bool")
      (params
        ((type "const char *") (name "path"))))
