@@ -441,7 +441,6 @@ void ClosePlatform(void)
 
     CORE = (CoreData){ 0 };
     platform = (PlatformData){ 0 };
-    platform.TouchRaw = (TouchRaw){ 0 };
 }
 
 // Find or allocate a touch slot for the given touchId
