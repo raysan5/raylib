@@ -1749,6 +1749,10 @@ RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processo
 RLAPI void AttachAudioMixedProcessor(AudioCallback processor); // Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)
 RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio stream processor from the entire audio pipeline
 
+// Capture streaming functions
+RLAPI void StartCaptureStream(void);                                  // Start streaming capture device (e.g. microphone) to speakers
+RLAPI void StopCaptureStream(void);                                   // Stop streaming caputre device (e.g. microphone) to speakers
+
 #if defined(__cplusplus)
 }
 #endif

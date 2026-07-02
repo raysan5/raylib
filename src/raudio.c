@@ -395,6 +395,9 @@ typedef struct AudioData {
         AudioBuffer *last;          // Pointer to last AudioBuffer in the list
         int defaultSize;            // Default audio buffer size for audio streams
     } Buffer;
+    struct {
+        bool isStreaming;
+    } Capture;
     rAudioProcessor *mixedProcessor;
 } AudioData;
 
@@ -408,7 +411,8 @@ static AudioData AUDIO = {          // Global AUDIO context
     // standard double-buffering system, a 4096 samples buffer has been chosen, it should be enough
     // In case of music-stalls, increase this number
     .Buffer.defaultSize = 0,
-    .mixedProcessor = NULL
+    .mixedProcessor = NULL,
+    .Capture.isStreaming = false
 };
 
 //----------------------------------------------------------------------------------
@@ -477,10 +481,13 @@ void InitAudioDevice(void)
 
     // Init audio device
     // NOTE: Using the default device. Format is floating point because it simplifies mixing
-    ma_device_config config = ma_device_config_init(ma_device_type_playback);
+    ma_device_config config = ma_device_config_init(ma_device_type_duplex);
     config.playback.pDeviceID = NULL;  // NULL for the default playback AUDIO.System.device
     config.playback.format = AUDIO_DEVICE_FORMAT;
     config.playback.channels = AUDIO_DEVICE_CHANNELS;
+    config.capture.pDeviceID = NULL;
+    config.capture.format = AUDIO_DEVICE_FORMAT;
+    config.capture.channels = AUDIO_DEVICE_CHANNELS;
     config.sampleRate = AUDIO_DEVICE_SAMPLE_RATE;
     config.periodSizeInFrames = AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES;
     config.dataCallback = OnSendAudioDataToDevice;
@@ -2370,6 +2377,21 @@ void DetachAudioMixedProcessor(AudioCallback process)
 }
 
 //----------------------------------------------------------------------------------
+// Module Functions Definition - Capture streaming
+//----------------------------------------------------------------------------------
+// Start streaming capture device (e.g. microphone) to speakers
+void StartCaptureStream(void)
+{
+    AUDIO.Capture.isStreaming = true;
+}
+
+// Stop streaming caputre device (e.g. microphone) to speakers
+void StopCaptureStream(void)
+{
+    AUDIO.Capture.isStreaming = false;
+}
+
+//----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Log callback function
@@ -2648,6 +2670,11 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     {
         processor->process(pFramesOut, frameCount);
         processor = processor->next;
+    }
+
+    if(AUDIO.Capture.isStreaming)
+    {
+        memcpy(pFramesOut, pFramesInput, frameCount * ma_get_bytes_per_frame(pDevice->capture.format, pDevice->capture.channels));
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
