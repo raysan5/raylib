@@ -2200,18 +2200,43 @@ char *TextToSnake(const char *text)
     if (text != NULL)
     {
         // Check for next separator to upper case another character
-        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); i++, j++)
+        for (int i = 0, j = 0; (i < MAX_TEXT_BUFFER_LENGTH - 1) && (text[j] != '\0'); j++)
         {
-            if ((text[j] >= 'A') && (text[j] <= 'Z'))
+            if (text[j] == ' ')
             {
-                if (i >= 1)
+                if ((i > 0) && (buffer[i - 1] != '_'))
                 {
                     buffer[i] = '_';
                     i++;
                 }
-                buffer[i] = text[j] + 32;
             }
-            else buffer[i] = text[j];
+            else if ((text[j] >= 'A') && (text[j] <= 'Z'))
+            {
+                if ((i > 0) && (buffer[i - 1] != '_'))
+                {
+                    char prev = text[j - 1];
+                    char next = text[j + 1];
+
+                    // Considering multiple cap leters to be on single word (HTTPRequest --> http_request)
+                    if (((prev >= 'a') && (prev <= 'z')) ||
+                        (((prev >= 'A') && (prev <= 'Z')) && ((next >= 'a') && (next <= 'z'))))
+                    {
+                        if (i < MAX_TEXT_BUFFER_LENGTH - 2)
+                        {
+                            buffer[i] = '_';
+                            i++;
+                        }
+                    }
+                }
+
+                buffer[i] = text[j] + 32;
+                i++;
+            }
+            else
+            {
+                buffer[i] = text[j];
+                i++;
+            }
         }
     }
 
