@@ -2197,17 +2197,6 @@ int InitPlatform(void)
         else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
     }
 
-    if (numJoysticks > 0) {
-        TRACELOG(LOG_INFO, "PLATFORM: Available joysticks:");
-    }
-
-    for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++) {
-        if (CORE.Input.Gamepad.ready[i] == false) {
-            continue;
-        }
-        TRACELOG(LOG_INFO, " - [ID %d] %s", i, CORE.Input.Gamepad.name[i]);
-    }
-
     // Disable mouse events being interpreted as touch events
     // NOTE: This is wanted because there are SDL_FINGER* events available which provide unique data
     // Due to the way PollInputEvents() and rgestures.h are currently implemented, setting this won't break SUPPORT_MOUSE_GESTURES
