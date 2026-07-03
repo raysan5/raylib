@@ -69,7 +69,7 @@ pub const emsdk = struct {
         raylib.root_module.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
         wasm.root_module.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
 
-        const emcc_step = zemscripten.emccStep(b, wasm, options);
+        const emcc_step = zemscripten.emccStep(b, &.{}, &.{wasm}, options);
         emcc_step.dependOn(activate_emsdk_step);
 
         return emcc_step;
@@ -77,7 +77,7 @@ pub const emsdk = struct {
 
     pub fn emrunStep(
         b: *std.Build,
-        html_path: []const u8,
+        html_path: std.Build.LazyPath,
         extra_args: []const []const u8,
     ) *std.Build.Step {
         return zemscripten.emrunStep(b, html_path, extra_args);
@@ -718,13 +718,16 @@ fn addExamples(
                 .preload_paths = emcc_examples_preloads_map.get(filename) orelse &.{},
                 .shell_file_path = b.path("src/shell.html"),
                 .install_dir = install_dir,
+                .out_file_name = wasm.name,
             });
             b.getInstallStep().dependOn(emcc_step);
 
-            const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
+            const install_file = b.addInstallFile(.{ .cwd_relative = b.fmt("{s}/{s}/{s}.html", .{ module, filename, wasm.name }) }, "web");
+            b.getInstallStep().dependOn(&install_file.step);
+
             const emrun_step = emsdk.emrunStep(
                 b,
-                b.getInstallPath(install_dir, html_filename),
+                install_file.source,
                 &.{},
             );
 
