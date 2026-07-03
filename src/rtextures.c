@@ -3927,7 +3927,7 @@ void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rota
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color)
 {
-    Rectangle rec = { posX, posY, width, height };
+    Rectangle rec = { (float)posX, (float)posY, (float)width, (float)height };
     ImageDrawRectangleLinesEx(dst, rec, 1, color);
 }
 
@@ -4019,8 +4019,8 @@ void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inn
 // Draw an image within an image
 void ImageDrawImage(Image *dst, Image src, int posX, int posY, Color tint)
 {
-    Rectangle srcRec = { 0, 0, src.width, src.height };
-    Rectangle dstRec = { posX, posY, srcRec.width, srcRec.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)src.width, (float)src.height };
+    Rectangle dstRec = { (float)posX, (float)posY, srcRec.width, srcRec.height };
     ImageDrawImagePro(dst, src, srcRec, dstRec, (Vector2){ 0 }, 0.0f, tint);
 }
 
