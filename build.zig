@@ -92,7 +92,7 @@ pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime shcore: bool) 
 }
 
 fn findWaylandScanner(b: *std.Build) void {
-    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+    _ = b.findProgram(.{ .names = &.{"wayland-scanner"} }) orelse {
         std.log.err(
             \\ `wayland-scanner` may not be installed on the system.
             \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
@@ -648,7 +648,7 @@ fn addExamples(
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
 
-    var dir = try b.build_root.handle.openDir(b.graph.io, module_subpath, .{ .iterate = true });
+    var dir = try b.root.openDir(b.graph.io, module_subpath, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
@@ -706,9 +706,10 @@ fn addExamples(
             const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
             const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
-            const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const emsdk.zemscripten.EmccFilePath);
-            const EmccExamplesPreloadKV = struct { []const u8, []const emsdk.zemscripten.EmccFilePath };
-            const emcc_examples_preloads: []const EmccExamplesPreloadKV = @import("examples/example_resources.zon");
+            const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const emsdk.zemscripten.ResourceFile);
+            const EmccExamplesPreloadKV = struct { []const u8, []const emsdk.zemscripten.ResourceFile };
+            const emcc_examples_preloads_ = @import("examples/example_resources.zon");
+            const emcc_examples_preloads: []const EmccExamplesPreloadKV = @ptrCast(@alignCast(&emcc_examples_preloads_));
             const emcc_examples_preloads_map = EmccExamplesPreloadMap.initComptime(emcc_examples_preloads);
 
             const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
@@ -762,7 +763,7 @@ fn waylandGenerate(
     comptime waylandDir: []const u8,
     comptime source: bool,
 ) !void {
-    const dir = try b.build_root.handle.openDir(b.graph.io, waylandDir, .{ .iterate = true });
+    const dir = try b.root.openDir(b.graph.io, waylandDir, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
