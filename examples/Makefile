@@ -660,6 +660,7 @@ TEXT = \
     text/text_font_loading \
     text/text_font_sdf \
     text/text_font_spritefont \
+    text/text_font_size_metric \
     text/text_format_text \
     text/text_inline_styling \
     text/text_input_box \
