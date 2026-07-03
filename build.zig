@@ -720,12 +720,9 @@ fn addExamples(
             });
             b.getInstallStep().dependOn(emcc_step);
 
-            const install_file = b.addInstallFile(.{ .cwd_relative = b.fmt("{s}/{s}/{s}.html", .{ module, filename, wasm.name }) }, "web");
-            b.getInstallStep().dependOn(&install_file.step);
-
             const emrun_step = emsdk.emrunStep(
                 b,
-                install_file.source,
+                b.graph.path(.install_prefix, b.fmt("{s}/{s}.html", .{ filename, wasm.name })),
                 &.{},
             );
 
