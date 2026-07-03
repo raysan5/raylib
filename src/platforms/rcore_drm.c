@@ -2732,4 +2732,15 @@ static void SetupFramebuffer(int width, int height)
     }
 }
 
+extern void ProcessSingleFrame();
+
+void PlatformRunGameLoop()
+{
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+}
+
+
 // EOF

@@ -2249,4 +2249,22 @@ static void JoystickCallback(int jid, int event)
 #   define WIN32_CLIPBOARD_IMPLEMENTATION
 #   include "../external/win32_clipboard.h"
 #endif
+
+extern void ProcessSingleFrame();
+#if defined(PLATFORM_WEB)
+#include <emscripten.h>
+#endif
+
+void PlatformRunGameLoop()
+{
+#if defined(PLATFORM_WEB)
+    emscripten_set_main_loop(ProcessSingleFrame, 0, 1);
+#else
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+#endif
+}
+
 // EOF

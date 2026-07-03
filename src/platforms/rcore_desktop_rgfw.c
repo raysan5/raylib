@@ -2100,3 +2100,14 @@ double GetTimeSeconds(void)
 
     return currentTime;
 }
+
+extern void ProcessSingleFrame();
+
+void PlatformRunGameLoop()
+{
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+}
+

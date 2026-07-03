@@ -2312,3 +2312,13 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
 
     for (int i = CORE.Input.Touch.pointCount; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentTouchState[i] = 0;
 }
+
+extern void ProcessSingleFrame();
+
+void PlatformRunGameLoop()
+{
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+}

@@ -532,4 +532,14 @@ void ClosePlatform(void)
     // TODO: De-initialize graphics, inputs and more
 }
 
+extern void ProcessSingleFrame();
+
+void PlatformRunGameLoop()
+{
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+}
+
 // EOF

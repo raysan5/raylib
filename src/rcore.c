@@ -739,8 +739,6 @@ void CloseWindow(void)
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
-static bool RunLoop = false;
-
 void ProcessSingleFrame(void)
 {
     // if the dirty callback rendered this frame, don't double render, skip it until the next frame
@@ -751,7 +749,7 @@ void ProcessSingleFrame(void)
     }
 
     BeginDrawing();
-    RunLoop = CORE.Window.updateCallback();
+    if (!CORE.Window.updateCallback()) CORE.Window.updateCallback = NULL;
     EndDrawing();
 
 #if SUPPORT_CUSTOM_FRAME_CONTROL
@@ -760,23 +758,12 @@ void ProcessSingleFrame(void)
 #endif
 }
 
-#if defined(PLATFORM_WEB)
-#include <emscripten.h>
-#endif
+void PlatformRunGameLoop();
 
 void RunGameLoop(bool(*processFrame)(void))
 {    
-    RunLoop = true;
     CORE.Window.updateCallback = processFrame;
-
-#if defined(PLATFORM_WEB)
-    emscripten_set_main_loop(ProcessSingleFrame, 0, 1);
-#else
-    while (RunLoop)
-    {
-        ProcessSingleFrame();
-    }
-#endif
+    PlatformRunGameLoop();
 }
 
 // Check if window has been initialized successfully

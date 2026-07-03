@@ -2275,3 +2275,14 @@ static bool IsWglExtensionAvailable(HDC hdc, const char *extension)
 
     return result;
 }
+
+extern void ProcessSingleFrame();
+
+void PlatformRunGameLoop()
+{
+    while (CORE.Window.updateCallback != NULL)
+    {
+        ProcessSingleFrame();
+    }
+}
+
