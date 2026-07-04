@@ -1949,7 +1949,7 @@ static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const Emscripte
 
 void ProcessSingleFrame();
 
-void RunGameLoop(bool(*processFrame)(void))
+void PlatformRunGameLoop()
 {
     emscripten_set_main_loop(ProcessSingleFrame, 0, 1);
 }
