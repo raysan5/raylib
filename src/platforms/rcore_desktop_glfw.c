@@ -334,11 +334,12 @@ void ToggleBorderlessWindowed(void)
 // Set window state: maximized, if resizable
 void MaximizeWindow(void)
 {
-    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) != GLFW_TRUE)
     {
-        glfwMaximizeWindow(platform.handle);
-        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
+        glfwSetWindowAttrib(platform.handle, GLFW_RESIZABLE, GLFW_TRUE);
     }
+    glfwMaximizeWindow(platform.handle);
+    FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);
 }
 
 // Set window state: minimized
@@ -2169,12 +2170,12 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 // GLFW3: Cursor ennter callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int entered)
 {
-    if (entered) 
+    if (entered)
     {
         // NOTE: Mouse position updated by MouseCursorPosCallback()
         CORE.Input.Mouse.cursorOnScreen = true;
     }
-    else 
+    else
     {
         CORE.Input.Mouse.cursorOnScreen = false;
         CORE.Input.Mouse.currentPosition = (Vector2){ 0 };
