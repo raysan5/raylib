@@ -3378,10 +3378,10 @@ unsigned int *ComputeSHA1(const unsigned char *data, int dataSize)
         unsigned int w[80] = { 0 };
         for (int i = 0; i < 16; i++)
         {
-            w[i] = (msg[offset + (i*4) + 0] << 24) |
-                   (msg[offset + (i*4) + 1] << 16) |
-                   (msg[offset + (i*4) + 2] << 8) |
-                   (msg[offset + (i*4) + 3]);
+            w[i] = ((unsigned int)msg[offset + (i*4) + 0] << 24) |
+                   ((unsigned int)msg[offset + (i*4) + 1] << 16) |
+                   ((unsigned int)msg[offset + (i*4) + 2] << 8) |
+                   ((unsigned int)msg[offset + (i*4) + 3]);
         }
 
         // Message schedule: extend the sixteen 32-bit words into eighty 32-bit words:

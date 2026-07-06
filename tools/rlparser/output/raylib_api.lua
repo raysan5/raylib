@@ -968,7 +968,7 @@ return {
       description = "Skeleton, animation bones hierarchy",
       fields = {
         {
-          type = "int",
+          type = "unsigned int",
           name = "boneCount",
           description = "Number of bones"
         },
@@ -1045,7 +1045,7 @@ return {
           description = "Animation name"
         },
         {
-          type = "int",
+          type = "unsigned int",
           name = "boneCount",
           description = "Number of bones (per pose)"
         },

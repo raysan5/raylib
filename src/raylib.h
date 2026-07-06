@@ -409,7 +409,7 @@ typedef struct BoneInfo {
 
 // Skeleton, animation bones hierarchy
 typedef struct ModelSkeleton {
-    int boneCount;          // Number of bones
+    unsigned int boneCount; // Number of bones
     BoneInfo *bones;        // Bones information (skeleton)
     ModelAnimPose bindPose; // Bones base transformation (Transform[])
 } ModelSkeleton;
@@ -436,7 +436,7 @@ typedef struct Model {
 typedef struct ModelAnimation {
     char name[32];          // Animation name
 
-    int boneCount;          // Number of bones (per pose)
+    unsigned int boneCount; // Number of bones (per pose)
     int keyframeCount;      // Number of animation key frames
     ModelAnimPose *keyframePoses; // Animation sequence keyframe poses [keyframe][pose]
 } ModelAnimation;
