@@ -448,7 +448,7 @@ Struct 20: BoneInfo (2 fields)
 Struct 21: ModelSkeleton (3 fields)
   Name: ModelSkeleton
   Description: Skeleton, animation bones hierarchy
-  Field[1]: int boneCount // Number of bones
+  Field[1]: unsigned int boneCount // Number of bones
   Field[2]: BoneInfo * bones // Bones information (skeleton)
   Field[3]: ModelAnimPose bindPose // Bones base transformation (Transform[])
 Struct 22: Model (9 fields)
@@ -467,7 +467,7 @@ Struct 23: ModelAnimation (4 fields)
   Name: ModelAnimation
   Description: ModelAnimation, contains a full animation sequence
   Field[1]: char[32] name // Animation name
-  Field[2]: int boneCount // Number of bones (per pose)
+  Field[2]: unsigned int boneCount // Number of bones (per pose)
   Field[3]: int keyframeCount // Number of animation key frames
   Field[4]: ModelAnimPose * keyframePoses // Animation sequence keyframe poses [keyframe][pose]
 Struct 24: Ray (2 fields)
