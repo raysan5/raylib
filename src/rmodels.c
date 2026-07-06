@@ -50,9 +50,9 @@
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 #include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
-#include <stdio.h>          // Required for: sprintf()
+#include <stdio.h>          // Required for: sprintf(), snprintf()
 #include <stdlib.h>         // Required for: malloc(), calloc(), free()
-#include <string.h>         // Required for: memcmp(), strlen(), strncpy()
+#include <string.h>         // Required for: strlen(), memcmp()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
 #if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
@@ -2073,7 +2073,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName)); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -4421,7 +4421,7 @@ static Model LoadOBJ(const char *fileName)
     }
 
     char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
-    strncpy(currentDir, GetWorkingDirectory(), MAX_FILEPATH_LENGTH - 1); // Save current working directory
+    snprintf(currentDir, MAX_FILEPATH_LENGTH, "%s", GetWorkingDirectory()); // Save current working directory
     const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
     if (CHDIR(workingDir) != 0) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
 
@@ -5377,7 +5377,7 @@ static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
     for (unsigned int i = 0; i < skin.joints_count; i++)
     {
         cgltf_node node = *skin.joints[i];
-        if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name) - 1);
+        if (node.name != NULL) snprintf(bones[i].name, sizeof(bones[i].name), "%s", node.name);
 
         // Find parent bone index by walking up the node tree past any
         // non-joint ancestors (intermediate transform nodes used by some
@@ -6660,7 +6660,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     animDuration = (time > animDuration)? time : animDuration;
                 }
 
-                if (animData.name != NULL) strncpy(animations[a].name, animData.name, sizeof(animations[a].name) - 1);
+                if (animData.name != NULL) snprintf(animations[a].name, sizeof(animations[a].name), "%s", animData.name);
 
                 animations[a].keyframeCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
                 animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
@@ -7150,7 +7150,7 @@ static Model LoadM3D(const char *fileName)
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 model.skeleton.bones[i].parent = m3d->bone[i].parent;
-                strncpy(model.skeleton.bones[i].name, m3d->bone[i].name, sizeof(model.skeleton.bones[i].name) - 1);
+                snprintf(model.skeleton.bones[i].name, sizeof(model.skeleton.bones[i].name), "%s", m3d->bone[i].name);
                 model.skeleton.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
                 model.skeleton.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
                 model.skeleton.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
@@ -7258,14 +7258,14 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
             animations[a].keyframeCount = m3d->action[a].durationmsec/M3D_ANIMDELAY;
             animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
-            strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name) - 1);
+            snprintf(animations[a].name, sizeof(animations[a].name), "%s", m3d->action[a].name);
 
             TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %fs", fileName, animations[a].name, animations[a].keyframeCount, m3d->action[a].durationmsec);
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 bones[i].parent = m3d->bone[i].parent;
-                strncpy(bones[i].name, m3d->bone[i].name, sizeof(bones[i].name) - 1);
+                snprintf(bones[i].name, sizeof(bones[i].name), "%s", m3d->bone[i].name);
             }
 
             // A special, never transformed "no bone" bone, used for boneless vertices

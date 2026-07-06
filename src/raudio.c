@@ -1154,7 +1154,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName)); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 
     // Add wave information
@@ -2827,7 +2827,7 @@ static const char *GetFileNameWithoutExt(const char *filePath)
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    if (filePath != NULL) strncpy(fileName, GetFileName(filePath), MAX_FILENAMEWITHOUTEXT_LENGTH - 1); // Get filename with extension
+    if (filePath != NULL) snprintf(fileName, MAX_FILENAMEWITHOUTEXT_LENGTH, "%s", GetFileName(filePath));
 
     int fileNameLength = (int)strlen(fileName); // Get size in bytes
 

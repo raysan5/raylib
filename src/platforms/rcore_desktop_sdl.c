@@ -1512,9 +1512,9 @@ void PollInputEvents(void)
                     // Event memory is now managed by SDL, so it should not be freed in SDL_EVENT_DROP_FILE,
                     // in case data needs to be hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
                     // a copy is required, SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
-                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
+                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
                 #else
-                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
+                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
                     SDL_free(event.drop.file);
                 #endif
 
@@ -1525,9 +1525,9 @@ void PollInputEvents(void)
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
                 #if defined(USING_VERSION_SDL3)
-                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.data, MAX_FILEPATH_LENGTH - 1);
+                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
                 #else
-                    strncpy(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], event.drop.file, MAX_FILEPATH_LENGTH - 1);
+                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
                     SDL_free(event.drop.file);
                 #endif
 
@@ -1812,8 +1812,8 @@ void PollInputEvents(void)
                         CORE.Input.Gamepad.axisState[nextAvailableSlot][GAMEPAD_AXIS_RIGHT_TRIGGER] = -1.0f;
                         memset(CORE.Input.Gamepad.name[nextAvailableSlot], 0, MAX_GAMEPAD_NAME_LENGTH);
                         const char *controllerName = SDL_GameControllerNameForIndex(nextAvailableSlot);
-                        if (controllerName != NULL) strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], controllerName, MAX_GAMEPAD_NAME_LENGTH - 1);
-                        else strncpy(CORE.Input.Gamepad.name[nextAvailableSlot], "noname", 6);
+                        if (controllerName != NULL) snprintf(CORE.Input.Gamepad.name[nextAvailableSlot], MAX_GAMEPAD_NAME_LENGTH, "%s", controllerName);
+                        else memcpy(CORE.Input.Gamepad.name[nextAvailableSlot], "noname", 6);
                     }
                     else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());
                 }
@@ -2191,7 +2191,7 @@ int InitPlatform(void)
 #else
             const char *joystickName = SDL_GameControllerNameForIndex(i);
 #endif
-            strncpy(CORE.Input.Gamepad.name[i], joystickName, MAX_GAMEPAD_NAME_LENGTH - 1);
+            snprintf(CORE.Input.Gamepad.name[i], MAX_GAMEPAD_NAME_LENGTH, "%s", joystickName);
             CORE.Input.Gamepad.name[i][MAX_GAMEPAD_NAME_LENGTH - 1] = '\0';
         }
         else TRACELOG(LOG_WARNING, "PLATFORM: Unable to open game controller [ERROR: %s]", SDL_GetError());

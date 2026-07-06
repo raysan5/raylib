@@ -1829,7 +1829,7 @@ int InitPlatform(void)
         {
           CORE.Input.Gamepad.ready[i] = true;
           CORE.Input.Gamepad.axisCount[i] = GLFW_GAMEPAD_AXIS_LAST + 1;
-          strncpy(CORE.Input.Gamepad.name[i], glfwGetJoystickName(i), MAX_GAMEPAD_NAME_LENGTH - 1);
+          snprintf(CORE.Input.Gamepad.name[i], MAX_GAMEPAD_NAME_LENGTH, "%s", glfwGetJoystickName(i));
         }
     }
     //----------------------------------------------------------------------------
@@ -2044,7 +2044,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
         for (unsigned int i = 0; i < CORE.Window.dropFileCount; i++)
         {
             CORE.Window.dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
-            strncpy(CORE.Window.dropFilepaths[i], paths[i], MAX_FILEPATH_LENGTH - 1);
+            snprintf(CORE.Window.dropFilepaths[i], MAX_FILEPATH_LENGTH, "%s", paths[i]);
         }
     }
 }
@@ -2191,7 +2191,7 @@ static void JoystickCallback(int jid, int event)
             // WARNING: If glfwGetJoystickName() is longer than MAX_GAMEPAD_NAME_LENGTH,
             // only copy up to (MAX_GAMEPAD_NAME_LENGTH -1) to destination string
             memset(CORE.Input.Gamepad.name[jid], 0, MAX_GAMEPAD_NAME_LENGTH);
-            strncpy(CORE.Input.Gamepad.name[jid], glfwGetJoystickName(jid), MAX_GAMEPAD_NAME_LENGTH - 1);
+            snprintf(CORE.Input.Gamepad.name[jid], MAX_GAMEPAD_NAME_LENGTH, "%s", glfwGetJoystickName(jid));
         }
         else if (event == GLFW_DISCONNECTED)
         {

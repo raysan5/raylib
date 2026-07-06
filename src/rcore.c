@@ -108,7 +108,7 @@
 
 #include <stdlib.h>                 // Required for: srand(), rand(), exit()
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
-#include <string.h>                 // Required for: strlen(), strncpy(), strcmp(), strrchr(), memset(), strcat()
+#include <string.h>                 // Required for: strlen(), strcmp(), strrchr(), memset(), memcpy(), strcat()
 #include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
@@ -1819,7 +1819,7 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[MAX_FILEPATH_LENGTH] = { 0 };
-    strncpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName), MAX_FILEPATH_LENGTH - 1);
+    snprintf(path, MAX_FILEPATH_LENGTH, "%s", TextFormat("%s/%s", CORE.Storage.basePath, fileName));
 
     ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
@@ -1885,12 +1885,12 @@ void TraceLog(int logType, const char *text, ...)
 
     switch (logType)
     {
-        case LOG_TRACE: strncpy(buffer, "TRACE: ", 8); break;
-        case LOG_DEBUG: strncpy(buffer, "DEBUG: ", 8); break;
-        case LOG_INFO: strncpy(buffer, "INFO: ", 7); break;
-        case LOG_WARNING: strncpy(buffer, "WARNING: ", 10); break;
-        case LOG_ERROR: strncpy(buffer, "ERROR: ", 8); break;
-        case LOG_FATAL: strncpy(buffer, "FATAL: ", 8); break;
+        case LOG_TRACE: memcpy(buffer, "TRACE: ", 7); break;
+        case LOG_DEBUG: memcpy(buffer, "DEBUG: ", 7); break;
+        case LOG_INFO: memcpy(buffer, "INFO: ", 6); break;
+        case LOG_WARNING: memcpy(buffer, "WARNING: ", 9); break;
+        case LOG_ERROR: memcpy(buffer, "ERROR: ", 7); break;
+        case LOG_FATAL: memcpy(buffer, "FATAL: ", 7); break;
         default: break;
     }
 
@@ -2063,7 +2063,7 @@ bool ExportDataAsCode(const unsigned char *data, int dataSize, const char *fileN
 
     // Get file name from path
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++)
     {
         // Convert variable name to uppercase
@@ -2507,7 +2507,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
 
     if (filePath != NULL)
     {
-        strncpy(fileName, GetFileName(filePath), MAX_FILENAME_LENGTH - 1); // Get filename.ext without path
+        snprintf(fileName, MAX_FILENAME_LENGTH, "%s", GetFileName(filePath)); // Get filename.ext without path
         int fileNameLength = (int)strlen(fileName); // Get size in bytes
 
         for (int i = fileNameLength; i > 0; i--) // Reverse search '.'
@@ -2561,7 +2561,6 @@ const char *GetDirectoryPath(const char *filePath)
         }
         else
         {
-            // NOTE: Be careful, strncpy() is not safe, it does not care about '\0'
             char *dirPathPtr = dirPath;
             if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/')) dirPathPtr += 2;     // Skip drive letter, "C:"
             memcpy(dirPathPtr, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
@@ -2579,7 +2578,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
     int dirPathLength = (int)strlen(dirPath);
 
-    if (dirPathLength <= 3) strncpy(prevDirPath, dirPath, MAX_FILEPATH_LENGTH  - 1);
+    if (dirPathLength <= 3) snprintf(prevDirPath, MAX_FILEPATH_LENGTH, "%s", dirPath);
 
     for (int i = (dirPathLength - 1); (i >= 0) && (dirPathLength > 3); i--)
     {
@@ -2588,7 +2587,7 @@ const char *GetPrevDirectoryPath(const char *dirPath)
             // Check for root: "C:\" or "/"
             if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
 
-            strncpy(prevDirPath, dirPath, i);
+            memcpy(prevDirPath, dirPath, i);
             break;
         }
     }
