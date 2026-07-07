@@ -52,7 +52,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [KaylibKit](https://codeberg.org/Kenta/KaylibKit)                                        | 4.5              | [Kotlin/native](https://kotlinlang.org)                              | Zlib                 |
 | [raylib-lua](https://github.com/TSnake41/raylib-lua)                                     | 5.5              | [Lua](http://www.lua.org)                                            | ISC                  |
 | [raylib-lua-bindings (WIP)](https://github.com/legendaryredfox/raylib-lua-bindings)      | 5.5              | [Lua](http://www.lua.org)                                            | ISC                  |
-| [ReiLua](https://github.com/nullstare/ReiLua)                                            | 5.5              | [Lua](http://www.lua.org)                                            | MIT                  |
+| [ReiLua](https://github.com/nullstare/ReiLua)                                            | 6.0              | [Lua](http://www.lua.org)                                            | MIT                  |
 | [raylib-lua-sol](https://github.com/RobLoach/raylib-lua-sol)                             | 5.5              | [Lua](http://www.lua.org)                                            | Zlib                 |
 | [raylib-luajit](https://github.com/homma/raylib-luajit)                                  | 5.5              | [Lua](http://www.lua.org)                                            | MIT                  |
 | [raylib-luajit-generated](https://github.com/james2doyle/raylib-luajit-generated)        | 5.5              | [Lua](http://www.lua.org)                                            | MIT                  |
