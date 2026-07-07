@@ -674,7 +674,7 @@ void OpenURL(const char *url)
         // Filter characters: ' and "
         TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
     }
-    else if ((strncmp(url, "http://", 7) != 0) && (strncmp(protocol, "https://", 8) != 0))
+    else if ((strncmp(url, "http://", 7) != 0) && (strncmp(url, "https://", 8) != 0))
     {
         // Only allow URL starting with "http://" or "https://" protocols
         TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
