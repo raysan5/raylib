@@ -11,8 +11,4 @@ Most considerations of errors and defects can be handled using the project Issue
 
 ## Reporting a Vulnerability
 
-Discovered vulnerability can be directly reported using the project Issues and/or Discussions.
-
-_TODO: Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc._
+Discovered vulnerability can be directly reported using the project Issues and/or Discussions. They will be reviewed as soon as possible.
