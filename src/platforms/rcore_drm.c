@@ -1445,7 +1445,8 @@ int InitPlatform(void)
         return -1;
     }
 
-    // Providing `framebufferAttribs` is not logically necessary, but it may prevent segfaults on some nvidia drivers
+    // WARNING: Providing framebufferAttribs is not logically necessary, 
+    // but it may prevent segfaults on some nvidia drivers
     if (!eglChooseConfig(platform.device, framebufferAttribs, NULL, 0, &numConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to get EGL config count: 0x%x", eglGetError());
