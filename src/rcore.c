@@ -1844,8 +1844,6 @@ void SetConfigFlags(unsigned int flags)
     FLAG_SET(CORE.Window.flags, flags);
 }
 
-// void OpenURL(const char *url);   // Defined per platform
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Logging system
 //----------------------------------------------------------------------------------
