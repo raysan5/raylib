@@ -847,11 +847,11 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
         #define SW_CALLOC(n,sz) RL_CALLOC(n, sz)
         #define SW_REALLOC(ptr, newSz) RL_REALLOC(ptr, newSz)
         #define SW_FREE(ptr) RL_FREE(ptr)
-        #include "external/rlsw.h"          // OpenGL 1.1 software implementation
+        #include "external/rlsw.h"      // OpenGL 1.1 software implementation
     #else
         #if defined(__APPLE__)
-            #include <OpenGL/gl.h>          // OpenGL 1.1 library for OSX
-            #include <OpenGL/glext.h>       // OpenGL extensions library
+            #include <OpenGL/gl.h>      // OpenGL 1.1 library for OSX
+            #include <OpenGL/glext.h>   // OpenGL extensions library
         #else
             // APIENTRY for OpenGL function pointer declarations is required
             #if !defined(APIENTRY)
@@ -866,7 +866,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
                 #define WINGDIAPI __declspec(dllimport)
             #endif
 
-            #include <GL/gl.h>              // OpenGL 1.1 library
+            #include <GL/gl.h>          // OpenGL 1.1 library
         #endif
     #endif
 #endif
@@ -907,9 +907,10 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
     #endif
 #endif
 
-#include <stdlib.h>                     // Required for: calloc(), free()
-#include <string.h>                     // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
-#include <math.h>                       // Required for: sqrtf(), sinf(), cosf(), floor(), log()
+#include <stdlib.h>             // Required for: calloc(), free()
+#include <string.h>             // Required for: strcmp(), strlen() [Used in rlglInit(), on extensions loading]
+#include <math.h>               // Required for: sqrtf(), sinf(), cosf(), floor(), log()
+#include <limits.h>             // Required for: INT_MAX
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

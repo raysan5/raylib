@@ -70,6 +70,7 @@
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()], strcmp() [Used in LoadImageFromMemory()/LoadImageAnimFromMemory()/ExportImageToMemory()]
 #include <math.h>               // Required for: fabsf() [Used in DrawTextureRec()]
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
+#include <limits.h>             // Required for: INT_MAX
 
 // Support only desired texture formats on stb_image
 #if !SUPPORT_FILEFORMAT_BMP
