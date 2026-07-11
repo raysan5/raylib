@@ -3273,7 +3273,7 @@ unsigned int *ComputeMD5(const unsigned char *data, int dataSize)
     memcpy(msg + newDataSize, &bitsLen, 4); // Append the len in bits at the end of the buffer
 
     // Process the message in successive 512-bit chunks for each 512-bit chunk of message
-    for (int offset = 0; offset < newDataSize; offset += (512/8))
+    for (int offset = 0; offset < newDataSize; offset += 64)  // 512/8
     {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
         unsigned int *w = (unsigned int *)(msg + offset);
@@ -3370,7 +3370,7 @@ unsigned int *ComputeSHA1(const unsigned char *data, int dataSize)
     msg[newDataSize - 8] = (unsigned char)(bitsLen >> 56);
 
     // Process the message in successive 512-bit chunks
-    for (int offset = 0; offset < newDataSize; offset += (512/8))
+    for (int offset = 0; offset < newDataSize; offset += 64)  // 512/8
     {
         // Break chunk into sixteen 32-bit words w[j], 0 <= j <= 15
         unsigned int w[80] = { 0 };
