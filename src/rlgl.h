@@ -5236,7 +5236,9 @@ static int rlGetPixelDataSize(int width, int height, int format)
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            dataSize = blockWidth*blockHeight*8;
+            unsigned long long dataSizeBytes = blockWidth*blockHeight*8;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+            
         } break;
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
@@ -5245,13 +5247,17 @@ static int rlGetPixelDataSize(int width, int height, int format)
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            dataSize = blockWidth*blockHeight*16;
+            unsigned long long dataSizeBytes = blockWidth*blockHeight*16;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+            
         } break;
         case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 4 bytes per each 4x4 block
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            dataSize = blockWidth*blockHeight*4;
+            unsigned long long dataSizeBytes = blockWidth*blockHeight*4;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+            
         } break;
         default: break;
     }
@@ -5260,9 +5266,11 @@ static int rlGetPixelDataSize(int width, int height, int format)
     if ((format >= RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
         (format <= RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        double bytesPerPixel = (double)bpp/8.0;
-        dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
+        unsigned long long dataSizeBytes = (width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
+        if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
     }
+    
+    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;
 }

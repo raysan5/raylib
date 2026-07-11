@@ -843,9 +843,10 @@ bool ExportImageAsCode(Image image, const char *fileName)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
-    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
+    int dataSize = GetPixelDataSize(width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color *pixels = (Color *)RL_CALLOC(dataSize, 1);
 
-    for (int i = 0; i < width*height; i++) pixels[i] = color;
+    for (int i = 0; (pixels != NULL) && (i < width*height); i++) pixels[i] = color;
 
     Image image = {
         .data = pixels,
@@ -2691,45 +2692,48 @@ void ImageRotate(Image *image, int degrees)
         int width = (int)(fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius));
         int height = (int)(fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius));
 
-        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(width*height, bytesPerPixel);
+        int bytesPerPixel = GetPixelDataSize(width, height, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(bytesPerPixel, 1);
 
-        for (int y = 0; y < height; y++)
+        if (rotatedData != NULL)
         {
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
-                float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
-
-                if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
+                for (int x = 0; x < width; x++)
                 {
-                    int x1 = (int)floorf(oldX);
-                    int y1 = (int)floorf(oldY);
-                    int x2 = MIN(x1 + 1, image->width - 1);
-                    int y2 = MIN(y1 + 1, image->height - 1);
+                    float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
+                    float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
 
-                    float px = oldX - x1;
-                    float py = oldY - y1;
-
-                    for (int i = 0; i < bytesPerPixel; i++)
+                    if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
                     {
-                        float f1 = ((unsigned char *)image->data)[(y1*image->width + x1)*bytesPerPixel + i];
-                        float f2 = ((unsigned char *)image->data)[(y1*image->width + x2)*bytesPerPixel + i];
-                        float f3 = ((unsigned char *)image->data)[(y2*image->width + x1)*bytesPerPixel + i];
-                        float f4 = ((unsigned char *)image->data)[(y2*image->width + x2)*bytesPerPixel + i];
+                        int x1 = (int)floorf(oldX);
+                        int y1 = (int)floorf(oldY);
+                        int x2 = MIN(x1 + 1, image->width - 1);
+                        int y2 = MIN(y1 + 1, image->height - 1);
 
-                        float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
+                        float px = oldX - x1;
+                        float py = oldY - y1;
 
-                        rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                        for (int i = 0; i < bytesPerPixel; i++)
+                        {
+                            float f1 = ((unsigned char *)image->data)[(y1*image->width + x1)*bytesPerPixel + i];
+                            float f2 = ((unsigned char *)image->data)[(y1*image->width + x2)*bytesPerPixel + i];
+                            float f3 = ((unsigned char *)image->data)[(y2*image->width + x1)*bytesPerPixel + i];
+                            float f4 = ((unsigned char *)image->data)[(y2*image->width + x2)*bytesPerPixel + i];
+
+                            float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
+
+                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                        }
                     }
                 }
             }
-        }
 
-        RL_FREE(image->data);
-        image->data = rotatedData;
-        image->width = width;
-        image->height = height;
+            RL_FREE(image->data);
+            image->data = rotatedData;
+            image->width = width;
+            image->height = height;
+        }
     }
 }
 
@@ -5508,17 +5512,24 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
+    
+    unsigned long long dataSizeBytes = (width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
 
-    double bytesPerPixel = (double)bpp/8.0;
-    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
-
-    // Most compressed formats works on 4x4 blocks,
-    // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width < 4) && (height < 4))
+    if (dataSizeBytes < INT_MAX)
     {
-        if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        dataSize = (int)dataSizeBytes;
+
+        // Most compressed formats works on 4x4 blocks,
+        // if texture is smaller, minimum dataSize is 8 or 16
+        if ((width < 4) && (height < 4))
+        {
+            if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
+            else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        }
     }
+    
+    // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
+    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;
 }
