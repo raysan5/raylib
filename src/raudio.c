@@ -822,7 +822,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleRate = wav.sampleRate;
             wave.sampleSize = 16;
             wave.channels = wav.channels;
-            wave.data = (short *)RL_MALLOC((size_t)wave.frameCount*wave.channels*sizeof(short));
+            wave.data = (short *)RL_CALLOC((size_t)wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Forcing conversion to 16bit sample size on reading
             drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
@@ -845,7 +845,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleSize = 16;       // By default, ogg data is 16 bit per sample (short)
             wave.channels = info.channels;
             wave.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
-            wave.data = (short *)RL_MALLOC(wave.frameCount*wave.channels*sizeof(short));
+            wave.data = (short *)RL_CALLOC(wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Get the number of samples to process (be careful! asking for number of shorts, not bytes!)
             stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.frameCount*wave.channels);
@@ -1258,7 +1258,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
         return;
     }
 
-    void *data = RL_MALLOC(frameCount*channels*(sampleSize/8));
+    void *data = RL_CALLOC(frameCount*channels*(sampleSize/8), 1);
 
     frameCount = (ma_uint32)ma_convert_frames(data, frameCount, formatOut, channels, sampleRate, wave->data, frameCountIn, formatIn, wave->channels, wave->sampleRate);
     if (frameCount == 0)
