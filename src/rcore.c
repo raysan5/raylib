@@ -3601,10 +3601,14 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
                     case 'c': sscanf(buffer, "c %i", &list.count); break;
                     case 'e':
                     {
-                        sscanf(buffer, "e %d %d %d %d %d %d %[^\n]s", &list.events[counter].frame, &list.events[counter].type,
-                               &list.events[counter].params[0], &list.events[counter].params[1], &list.events[counter].params[2], &list.events[counter].params[3], eventDesc);
+                        if (counter < list.capacity)
+                        {
+                            sscanf(buffer, "e %d %d %d %d %d %d %63[^\n]s", &list.events[counter].frame, &list.events[counter].type,
+                                   &list.events[counter].params[0], &list.events[counter].params[1], &list.events[counter].params[2], &list.events[counter].params[3], eventDesc);
 
-                        counter++;
+                            counter++;
+                        }
+                        else TRACELOG(LOG_WARNING, "AUTOMATION: Event goes beyond automated list capacity (MAX: %i): %s", buffer, list.capacity);
                     } break;
                     default: break;
                 }
