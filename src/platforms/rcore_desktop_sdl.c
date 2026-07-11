@@ -1261,6 +1261,9 @@ Image GetClipboardImage(void)
         if (fileData)
         {
             image = LoadImageFromMemory(imageExtensions[i], fileData, (int)dataSize);
+
+            SDL_free(fileData);
+
             if (IsImageValid(image))
             {
                 TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
