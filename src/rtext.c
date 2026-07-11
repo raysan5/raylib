@@ -1699,7 +1699,7 @@ const char *TextSubtext(const char *text, int position, int length)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    if (text != NULL)
+    if ((text != NULL) && (position > 0) && (length > 0))
     {
         int textLength = TextLength(text);
 
@@ -1975,10 +1975,11 @@ char *TextInsert(const char *text, const char *insert, int position)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
+    int textLen = TextLength(text);
 
-    if ((text != NULL) && (insert != NULL))
+    if ((text != NULL) && (insert != NULL) && (position >= 0))
     {
-        int textLen = TextLength(text);
+        if (position > textLen) position = textLen; // End of text string
         int insertLen = TextLength(insert);
 
         if ((textLen + insertLen) < (MAX_TEXT_BUFFER_LENGTH - 1))
@@ -1987,7 +1988,7 @@ char *TextInsert(const char *text, const char *insert, int position)
 
             for (int i = 0; i < position; i++) buffer[i] = text[i];
             for (int i = position; i < insertLen + position; i++) buffer[i] = insert[i - position];
-            for (int i = (insertLen + position); i < (textLen + insertLen); i++) buffer[i] = text[i];
+            for (int i = (insertLen + position); i < (textLen + insertLen); i++) buffer[i] = text[i - insertLen];
 
             buffer[textLen + insertLen] = '\0'; // Add EOL
         }
@@ -2002,17 +2003,18 @@ char *TextInsert(const char *text, const char *insert, int position)
 char *TextInsertAlloc(const char *text, const char *insert, int position)
 {
     char *result = NULL;
+    int textLen = TextLength(text);
 
-    if ((text != NULL) && (insert != NULL))
+    if ((text != NULL) && (insert != NULL) && (position >= 0))
     {
-        int textLen = TextLength(text);
+        if (position > textLen) position = textLen; // End of text string
         int insertLen = TextLength(insert);
 
         result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
         for (int i = 0; i < position; i++) result[i] = text[i];
-        for (int i = position; i < insertLen + position; i++) result[i] = insert[i - position];
-        for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i];
+        for (int i = position; i < (insertLen + position); i++) result[i] = insert[i - position];
+        for (int i = (insertLen + position); i < (textLen + insertLen + position); i++) result[i] = text[i - insertLen];
 
         result[textLen + insertLen] = '\0'; // Add EOL
     }
@@ -2036,7 +2038,7 @@ char *TextJoin(char **textList, int count, const char *delimiter)
         int textLength = TextLength(textList[i]);
 
         // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
-        if ((totalLength + textLength) < MAX_TEXT_BUFFER_LENGTH)
+        if ((totalLength + textLength + delimiterLen) < MAX_TEXT_BUFFER_LENGTH)
         {
             memcpy(textPtr, textList[i], textLength);
             totalLength += textLength;
