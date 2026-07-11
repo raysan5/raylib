@@ -1693,6 +1693,14 @@ int InitPlatform(void)
             return -1;
         }
 
+#if defined(__APPLE__)
+        // AppKit can constrain the requested window size to the visible work area during creation
+        int windowWidth = 0;
+        int windowHeight = 0;
+        glfwGetWindowSize(platform.handle, &windowWidth, &windowHeight);
+        if ((windowWidth > 0) && (windowHeight > 0)) CORE.Window.screen = (Size){ windowWidth, windowHeight };
+#endif
+
         // NOTE: Not considering scale factor now, considered below
         CORE.Window.render.width = CORE.Window.screen.width;
         CORE.Window.render.height = CORE.Window.screen.height;
