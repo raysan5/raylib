@@ -1255,7 +1255,6 @@ Image GetClipboardImage(void)
 
     for (int i = 0; i < SDL_arraysize(imageFormats); i++)
     {
-        // NOTE: This pointer should be free with SDL_free() at some point
         fileData = SDL_GetClipboardData(imageFormats[i], &dataSize);
 
         if (fileData)
