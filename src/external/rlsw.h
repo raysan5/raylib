@@ -4307,8 +4307,8 @@ void swScissor(int x, int y, int width, int height)
 
     RLSW.scClipMin[0] = (2.0f*(float)RLSW.scMin[0]/(float)RLSW.vpSize[0]) - 1.0f;
     RLSW.scClipMax[0] = (2.0f*(float)RLSW.scMax[0]/(float)RLSW.vpSize[0]) - 1.0f;
-    RLSW.scClipMax[1] = 1.0f - (2.0f*(float)RLSW.scMin[1]/(float)RLSW.vpSize[1]);
-    RLSW.scClipMin[1] = 1.0f - (2.0f*(float)RLSW.scMax[1]/(float)RLSW.vpSize[1]);
+    RLSW.scClipMin[1] = (2.0f*(float)RLSW.scMin[1]/(float)RLSW.vpSize[1]) - 1.0f;
+    RLSW.scClipMax[1] = (2.0f*(float)RLSW.scMax[1]/(float)RLSW.vpSize[1]) - 1.0f;
 }
 
 void swClearColor(float r, float g, float b, float a)
