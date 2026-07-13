@@ -1526,7 +1526,6 @@ void SetMousePosition(int x, int y)
 {
     RGFW_window_moveMouse(platform.window, x, y);
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
 // Set mouse cursor

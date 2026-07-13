@@ -1299,8 +1299,8 @@ void SetMousePosition(int x, int y)
     if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-        TRACELOG(LOG_WARNING, "SetMousePosition not implemented");
+        
+        TRACELOG(LOG_WARNING, "SetMousePosition not implemented at platform level");
     }
     else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Cursor not enabled");
 }

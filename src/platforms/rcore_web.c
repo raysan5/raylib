@@ -1047,7 +1047,6 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
 

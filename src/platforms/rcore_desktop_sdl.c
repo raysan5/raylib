@@ -1411,7 +1411,6 @@ void SetMousePosition(int x, int y)
     SDL_WarpMouseInWindow(platform.window, x, y);
 
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
 // Set mouse cursor
