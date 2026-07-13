@@ -1231,9 +1231,9 @@ Image ImageFromImage(Image image, Rectangle rec)
     Image result = { 0 };
 
     // Basic rectangle validation: size smaller than image size
-    if ((rec.x > 0) && (rec.y > 0) && (rec.width > 0) && (rec.height > 0) &&
-        (((int)rec.x + (int)rec.width) < image.width) &&
-        (((int)rec.y + (int)rec.height) < image.height))
+    if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
+        (((int)rec.x + (int)rec.width) <= image.width) &&
+        (((int)rec.y + (int)rec.height) <= image.height))
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
 

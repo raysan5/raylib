@@ -1699,7 +1699,7 @@ const char *TextSubtext(const char *text, int position, int length)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    if ((text != NULL) && (position > 0) && (length > 0))
+    if ((text != NULL) && (position >= 0) && (length > 0))
     {
         int textLength = TextLength(text);
 
