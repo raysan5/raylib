@@ -3092,59 +3092,51 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Specialization generation via self-inclusion
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE BASE
+    #define RLSW_RASTER_FLAGS (0)
     #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX
-    #define SW_ENABLE_TEXTURE
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D)
     #include __FILE__
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE BLEND
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_BLEND
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE DEPTH_BLEND
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     #define RLSW_TEMPLATE_RASTER_TRIANGLE TEX_DEPTH_BLEND
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_TRIANGLE
 
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
@@ -3191,59 +3183,51 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Specialization generation via self-inclusion
 
     #define RLSW_TEMPLATE_RASTER_QUAD BASE
+    #define RLSW_RASTER_FLAGS (0)
     #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD TEX
-    #define SW_ENABLE_TEXTURE
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D)
     #include __FILE__
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD DEPTH
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD BLEND
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_BLEND
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD DEPTH_BLEND
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     #define RLSW_TEMPLATE_RASTER_QUAD TEX_DEPTH_BLEND
-    #define SW_ENABLE_TEXTURE
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_TEXTURE_2D | SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
-    #undef SW_ENABLE_TEXTURE
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_QUAD
 
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
@@ -3287,27 +3271,27 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Specialization generation via self-inclusion
 
     #define RLSW_TEMPLATE_RASTER_LINE BASE
+    #define RLSW_RASTER_FLAGS (0)
     #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_LINE
 
     #define RLSW_TEMPLATE_RASTER_LINE DEPTH
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_LINE
 
     #define RLSW_TEMPLATE_RASTER_LINE BLEND
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_LINE
 
     #define RLSW_TEMPLATE_RASTER_LINE DEPTH_BLEND
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_LINE
 
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
@@ -3351,27 +3335,27 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     // Specialization generation via self-inclusion
 
     #define RLSW_TEMPLATE_RASTER_POINT BASE
+    #define RLSW_RASTER_FLAGS (0)
     #include __FILE__ // IWYU pragma: keep
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_POINT
 
     #define RLSW_TEMPLATE_RASTER_POINT DEPTH
-    #define SW_ENABLE_DEPTH_TEST
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST)
     #include __FILE__
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_POINT
 
     #define RLSW_TEMPLATE_RASTER_POINT BLEND
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_POINT
 
     #define RLSW_TEMPLATE_RASTER_POINT DEPTH_BLEND
-    #define SW_ENABLE_DEPTH_TEST
-    #define SW_ENABLE_BLEND
+    #define RLSW_RASTER_FLAGS (SW_STATE_DEPTH_TEST | SW_STATE_BLEND)
     #include __FILE__
-    #undef SW_ENABLE_BLEND
-    #undef SW_ENABLE_DEPTH_TEST
+    #undef RLSW_RASTER_FLAGS
     #undef RLSW_TEMPLATE_RASTER_POINT
 
     // Dispatch table (auto-generated from SW_RASTER_VARIANTS)
@@ -5363,16 +5347,10 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 //-------------------------------------------------------------------------------------------
 #ifdef RLSW_TEMPLATE_RASTER_TRIANGLE
 
-// Options:
-//  - RLSW_TEMPLATE_RASTER_TRIANGLE     -> Contains the suffix name
-//  - SW_ENABLE_DEPTH_TEST
-//  - SW_ENABLE_TEXTURE
-//  - SW_ENABLE_BLEND
-
 #define SW_RASTER_TRIANGLE_SPAN SW_CONCATX(sw_raster_triangle_span_, RLSW_TEMPLATE_RASTER_TRIANGLE)
 #define SW_RASTER_TRIANGLE      SW_CONCATX(sw_raster_triangle_, RLSW_TEMPLATE_RASTER_TRIANGLE)
 
-#ifdef SW_ENABLE_TEXTURE
+#if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
     #define SW_GET_GRAD         sw_get_vertex_grad_PCT
     #define SW_ADD_GRAD         sw_add_vertex_grad_PCT
     #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_PCT
@@ -5410,10 +5388,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         (end->color[2] - start->color[2])*dxRcp,
         (end->color[3] - start->color[3])*dxRcp
     };
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     float dZdx = (end->position[2] - start->position[2])*dxRcp;
 #endif
-#ifdef SW_ENABLE_TEXTURE
+#if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
     float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
     float dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;
 #endif
@@ -5432,10 +5410,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         start->color[2] + dCdx[2]*xOffset,
         start->color[3] + dCdx[3]*xOffset
     };
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     float z = start->position[2] + dZdx*xOffset;
 #endif
-#ifdef SW_ENABLE_TEXTURE
+#if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
     float u = start->texcoord[0] + dUdx*xOffset;
     float v = start->texcoord[1] + dVdx*xOffset;
 #endif
@@ -5443,7 +5421,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     // Pre-calculate the starting pointers for the framebuffer row
     int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
 #endif
 
@@ -5477,7 +5455,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             ((color[3] + dCdx[3]*blockLenF)*wRcpB - srcColor[3])*blockLenRcp
         };
 
-    #ifdef SW_ENABLE_TEXTURE
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
         // Perspective-correct UVs at both endpoints, then affine gradient
         float uAffine  = u*wRcpA;
         float vAffine  = v*wRcpA;
@@ -5488,7 +5466,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         // Inner span pixel loop
         for (; x < blockEnd; x++)
         {
-            #ifdef SW_ENABLE_DEPTH_TEST
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
             {
                 float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
                 if (z > depth) goto discard;
@@ -5496,7 +5474,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             }
             #endif
 
-            #ifdef SW_ENABLE_TEXTURE
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
             {
                 float texColor[4];
                 sw_texture_sample(texColor, RLSW.boundTexture, uAffine, vAffine, dUdx, dUdy, dVdx, dVdy);
@@ -5506,7 +5484,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
                     srcColor[2]*texColor[2],
                     srcColor[3]*texColor[3]
                 };
-                #ifdef SW_ENABLE_BLEND
+                #if (RLSW_RASTER_FLAGS) & SW_STATE_BLEND
                 {
                     float dstColor[4];
                     SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
@@ -5519,7 +5497,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             }
             #else
             {
-                #ifdef SW_ENABLE_BLEND
+                #if (RLSW_RASTER_FLAGS) & SW_STATE_BLEND
                 {
                     float dstColor[4];
                     SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
@@ -5532,7 +5510,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             }
             #endif
 
-        #ifdef SW_ENABLE_DEPTH_TEST
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         discard:
         #endif
             srcColor[0] += dSrcColordx[0];
@@ -5541,14 +5519,14 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             srcColor[3] += dSrcColordx[3];
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
 
-            #ifdef SW_ENABLE_DEPTH_TEST
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
             {
                 z += dZdx;
                 dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
             }
             #endif
 
-            #ifdef SW_ENABLE_TEXTURE
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
             {
                 uAffine += dUaffine;
                 vAffine += dVaffine;
@@ -5562,7 +5540,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         color[1] += dCdx[1]*blockLenF;
         color[2] += dCdx[2]*blockLenF;
         color[3] += dCdx[3]*blockLenF;
-        #ifdef SW_ENABLE_TEXTURE
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
         u += dUdx*blockLenF;
         v += dVdx*blockLenF;
         #endif
@@ -5655,12 +5633,6 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 //-------------------------------------------------------------------------------------------
 #ifdef RLSW_TEMPLATE_RASTER_QUAD
 
-// Options:
-//  - RLSW_TEMPLATE_RASTER_QUAD     -> Contains the suffix name
-//  - SW_ENABLE_DEPTH_TEST
-//  - SW_ENABLE_TEXTURE
-//  - SW_ENABLE_BLEND
-
 #define SW_RASTER_QUAD SW_CONCATX(sw_raster_quad_, RLSW_TEMPLATE_RASTER_QUAD)
 
 // NOTE: This function should only render affine axis-aligned quads
@@ -5721,13 +5693,13 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         (bl->color[3] - tl->color[3])*hRcp,
     };
 
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     float dZdx = (tr->position[2] - tl->position[2])*wRcp;
     float dZdy = (bl->position[2] - tl->position[2])*hRcp;
     float zRow = tl->position[2] + dZdx*xSubstep + dZdy*ySubstep;
 #endif
 
-#ifdef SW_ENABLE_TEXTURE
+#if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
     float dUdx = (tr->texcoord[0] - tl->texcoord[0])*wRcp;
     float dVdx = (tr->texcoord[1] - tl->texcoord[1])*wRcp;
     float dUdy = (bl->texcoord[0] - tl->texcoord[0])*hRcp;
@@ -5745,7 +5717,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 
     int stride = RLSW.colorBuffer->width;
     uint8_t *cPixels = RLSW.colorBuffer->pixels;
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
@@ -5758,10 +5730,10 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     cRow[1] += dCdx[1]*dxMin + dCdy[1]*dyMin;
     cRow[2] += dCdx[2]*dxMin + dCdy[2]*dyMin;
     cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
-    #ifdef SW_ENABLE_DEPTH_TEST
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     zRow += dZdy*dyMin + dZdx*dxMin;
     #endif
-    #ifdef SW_ENABLE_TEXTURE
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
     uRow += dUdy*dyMin + dUdx*dxMin;
     vRow += dVdy*dyMin + dVdx*dxMin;
     #endif
@@ -5770,12 +5742,12 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     {
         int baseOffset = y*stride + xLoopMin;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
-    #ifdef SW_ENABLE_DEPTH_TEST
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
         // Copy the cursors without destroying the offset maths
         float z = zRow;
     #endif
-    #ifdef SW_ENABLE_TEXTURE
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
         float u = uRow;
         float v = vRow;
     #endif
@@ -5790,7 +5762,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         {
             float srcColor[4] = { color[0], color[1], color[2], color[3] };
 
-            #ifdef SW_ENABLE_DEPTH_TEST
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
             {
                 float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
                 if (z > depth) goto discard;
@@ -5798,7 +5770,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             }
             #endif
 
-            #ifdef SW_ENABLE_TEXTURE
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
             {
                 float texColor[4];
                 sw_texture_sample(texColor, RLSW.boundTexture, u, v, dUdx, dUdy, dVdx, dVdy);
@@ -5809,7 +5781,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             }
             #endif
 
-            #ifdef SW_ENABLE_BLEND
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_BLEND
             {
                 float dstColor[4];
                 SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
@@ -5822,7 +5794,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             }
             #endif
 
-        #ifdef SW_ENABLE_DEPTH_TEST
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         discard:
         #endif
             // Move one pixel over without touching the original "start offset"
@@ -5831,14 +5803,14 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             color[2] += dCdx[2];
             color[3] += dCdx[3];
 
-            #ifdef SW_ENABLE_DEPTH_TEST
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
             {
                 z += dZdx;
                 dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
             }
             #endif
 
-            #ifdef SW_ENABLE_TEXTURE
+            #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
             {
                 u += dUdx;
                 v += dVdx;
@@ -5856,13 +5828,13 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         cRow[2] += dCdy[2];
         cRow[3] += dCdy[3];
 
-        #ifdef SW_ENABLE_DEPTH_TEST
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         {
             zRow += dZdy;
         }
         #endif
 
-        #ifdef SW_ENABLE_TEXTURE
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_TEXTURE_2D
         {
             uRow += dUdy;
             vRow += dVdy;
@@ -5877,11 +5849,6 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 // Quad rasterization functions
 //-------------------------------------------------------------------------------------------
 #ifdef RLSW_TEMPLATE_RASTER_LINE
-
-// Options:
-//  - RLSW_TEMPLATE_RASTER_LINE     -> Contains the suffix name
-//  - SW_ENABLE_DEPTH_TEST
-//  - SW_ENABLE_BLEND
 
 #define SW_RASTER_LINE       SW_CONCATX(sw_raster_line_, RLSW_TEMPLATE_RASTER_LINE)
 #define SW_RASTER_LINE_THICK SW_CONCATX(sw_raster_line_thick_, RLSW_TEMPLATE_RASTER_LINE)
@@ -5916,7 +5883,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     float xInc = dx/steps;
     float yInc = dy/steps;
     float stepRcp = sw_rcp(steps);
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     float zInc = (v1->position[2] - v0->position[2])*stepRcp;
 #endif
     float rInc = (v1->color[0] - v0->color[0])*stepRcp;
@@ -5927,7 +5894,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     // Initializing the interpolation starting values
     float x = x0 + xInc*substep;
     float y = y0 + yInc*substep;
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     float z = v0->position[2] + zInc*substep;
 #endif
     float r = v0->color[0] + rInc*substep;
@@ -5938,7 +5905,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     // Start line rasterization
     const int fbWidth = RLSW.colorBuffer->width;
     uint8_t *cPixels = RLSW.colorBuffer->pixels;
-#ifdef SW_ENABLE_DEPTH_TEST
+#if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
@@ -5951,11 +5918,11 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 
         int baseOffset = py*fbWidth + px;
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
-    #ifdef SW_ENABLE_DEPTH_TEST
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
     #endif
 
-        #ifdef SW_ENABLE_DEPTH_TEST
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         {
             // TODO: Implement different depth funcs?
             float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
@@ -5968,7 +5935,7 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 
         float srcColor[4] = {r, g, b, a};
 
-        #ifdef SW_ENABLE_BLEND
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_BLEND
         {
             float dstColor[4];
             SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
@@ -5981,12 +5948,12 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
         }
         #endif
 
-    #ifdef SW_ENABLE_DEPTH_TEST
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     discard:
     #endif
         x += xInc;
         y += yInc;
-        #ifdef SW_ENABLE_DEPTH_TEST
+        #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
         {
             z += zInc;
         }
@@ -6053,11 +6020,6 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
 //-------------------------------------------------------------------------------------------
 #ifdef RLSW_TEMPLATE_RASTER_POINT
 
-// Options:
-//  - RLSW_TEMPLATE_RASTER_POINT    -> Contains the suffix name
-//  - SW_ENABLE_DEPTH_TEST
-//  - SW_ENABLE_BLEND
-
 #define SW_RASTER_POINT_PIXEL SW_CONCATX(sw_raster_point_pixel_, RLSW_TEMPLATE_RASTER_POINT)
 #define SW_RASTER_POINT       SW_CONCATX(sw_raster_point_, RLSW_TEMPLATE_RASTER_POINT)
 
@@ -6065,7 +6027,7 @@ static void SW_RASTER_POINT_PIXEL(int x, int y, float z, const float color[4])
 {
     int offset = y*RLSW.colorBuffer->width + x;
 
-    #ifdef SW_ENABLE_DEPTH_TEST
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_DEPTH_TEST
     {
         uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + offset*SW_FRAMEBUFFER_DEPTH_SIZE;
 
@@ -6080,7 +6042,7 @@ static void SW_RASTER_POINT_PIXEL(int x, int y, float z, const float color[4])
 
     uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + offset*SW_FRAMEBUFFER_COLOR_SIZE;
 
-    #ifdef SW_ENABLE_BLEND
+    #if (RLSW_RASTER_FLAGS) & SW_STATE_BLEND
     {
         float dstColor[4];
         SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
