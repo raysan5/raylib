@@ -1507,8 +1507,16 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
 {
     switch (eventType)
     {
-        case EMSCRIPTEN_EVENT_MOUSEENTER: CORE.Input.Mouse.cursorOnScreen = true; break;
-        case EMSCRIPTEN_EVENT_MOUSELEAVE: CORE.Input.Mouse.cursorOnScreen = false; break;
+        case EMSCRIPTEN_EVENT_MOUSEENTER: {
+            // NOTE: Mouse position updated by EmscriptenMouseMoveCallback(),
+            // EmscriptenPointerlockCallback(), and EmscriptenTouchCallback()
+            CORE.Input.Mouse.cursorOnScreen = true;
+        } break;
+        case EMSCRIPTEN_EVENT_MOUSELEAVE:
+        {
+            CORE.Input.Mouse.cursorOnScreen = false;
+            CORE.Input.Mouse.currentPosition = (Vector2){ 0 };
+        } break;
         case EMSCRIPTEN_EVENT_MOUSEDOWN:
         {
             // NOTE: Emscripten and raylib buttons indices are not aligned
