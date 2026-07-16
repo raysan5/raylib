@@ -2693,8 +2693,9 @@ void ImageRotate(Image *image, int degrees)
         int width = (int)(fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius));
         int height = (int)(fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius));
 
-        int bytesPerPixel = GetPixelDataSize(width, height, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(bytesPerPixel, 1);
+        int dataSize = GetPixelDataSize(width, height, image->format);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(dataSize, 1);
 
         if (rotatedData != NULL)
         {
@@ -5514,7 +5515,7 @@ int GetPixelDataSize(int width, int height, int format)
         default: break;
     }
     
-    unsigned long long dataSizeBytes = (width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
+    unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
 
     if (dataSizeBytes < INT_MAX)
     {
