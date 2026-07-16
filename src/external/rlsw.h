@@ -93,34 +93,8 @@
 #include <stdint.h>
 
 //----------------------------------------------------------------------------------
-// Defines and Macros
+// RLSW Configuration
 //----------------------------------------------------------------------------------
-// Function specifiers definition
-#ifndef SWAPI
-    #define SWAPI       // Functions defined as 'extern' by default (implicit specifiers)
-#endif
-
-#ifndef SW_MALLOC
-    #define SW_MALLOC(sz) malloc(sz)
-#endif
-#ifndef SW_CALLOC
-    #define SW_CALLOC(n,sz) calloc(n,sz)
-#endif
-#ifndef SW_REALLOC
-    #define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
-#endif
-#ifndef SW_FREE
-    #define SW_FREE(ptr) free(ptr)
-#endif
-
-#ifndef SW_RESTRICT
-    #ifdef _MSC_VER
-        #define SW_RESTRICT __restrict
-    #else
-        #define SW_RESTRICT restrict
-    #endif
-#endif
-
 #ifndef SW_FRAMEBUFFER_OUTPUT_BGRA
     #define SW_FRAMEBUFFER_OUTPUT_BGRA      true
 #endif
@@ -167,7 +141,38 @@
 // Full NPOT texture support (enabled by default)
 // When disabled, SW_REPEAT requires POT on its axis (fast bitmask wrap)
 // SW_CLAMP remains supported for any dimension, per-axis
-#define SW_SUPPORT_NPOT_TEXTURE true
+#ifndef SW_SUPPORT_NPOT_TEXTURE
+#   define SW_SUPPORT_NPOT_TEXTURE true
+#endif
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+// Function specifiers definition
+#ifndef SWAPI
+    #define SWAPI       // Functions defined as 'extern' by default (implicit specifiers)
+#endif
+
+#ifndef SW_MALLOC
+    #define SW_MALLOC(sz) malloc(sz)
+#endif
+#ifndef SW_CALLOC
+    #define SW_CALLOC(n,sz) calloc(n,sz)
+#endif
+#ifndef SW_REALLOC
+    #define SW_REALLOC(ptr, newSz) realloc(ptr, newSz)
+#endif
+#ifndef SW_FREE
+    #define SW_FREE(ptr) free(ptr)
+#endif
+
+#ifndef SW_RESTRICT
+    #ifdef _MSC_VER
+        #define SW_RESTRICT __restrict
+    #else
+        #define SW_RESTRICT restrict
+    #endif
+#endif
 
 //----------------------------------------------------------------------------------
 // OpenGL Compatibility Types
