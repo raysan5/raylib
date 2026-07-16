@@ -5237,7 +5237,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            unsigned long long dataSizeBytes = blockWidth*blockHeight*8;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*8;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
             
         } break;
@@ -5248,7 +5248,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            unsigned long long dataSizeBytes = blockWidth*blockHeight*16;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*16;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
             
         } break;
@@ -5256,7 +5256,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
         {
             int blockWidth = (width + 3)/4;
             int blockHeight = (height + 3)/4;
-            unsigned long long dataSizeBytes = blockWidth*blockHeight*4;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*4;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
             
         } break;
@@ -5267,7 +5267,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
     if ((format >= RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
         (format <= RL_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        unsigned long long dataSizeBytes = (width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
+        unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
         if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
     }
     
