@@ -4,7 +4,6 @@ This folder contains raylib templates for some common IDEs.
 
 IDE | Platform(s) | Source | Example(s)
 ----| ------------| :-------: | :-----:
-[4coder](http://4coder.net/) | Windows | ❌ | ✔️
 [Builder](https://wiki.gnome.org/Apps/Builder) | Linux | ❌ | ✔️
 [CMake](https://cmake.org/) | Windows, Linux, macOS, Web | ✔️ | ✔️
 [CodeBlocks](http://www.codeblocks.org/) | Windows, Linux, macOS | ❌ | ✔️
