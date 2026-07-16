@@ -1,17 +1,17 @@
 ﻿/*
  * Copyright (C) 2010 The Android Open Source Project
  *
- * лицензировано по лицензии Apache License, версия 2.0 ( "Лицензия");
- *этот файл можно использовать только в соответствии с лицензией.
- *Копию лицензии можно получить на веб-сайте
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *Если только не требуется в соответствии с применимым законодательством или согласовано в письменном виде, программное обеспечение
- * распространяется в рамках лицензии на УСЛОВИЯХ "КАК ЕСТЬ",
- * БЕЗ ГАРАНТИЙ И УСЛОВИЙ ЛЮБОГО РОДА, явно выраженных и подразумеваемых.
- * См. лицензию для получения информации об определенных разрешениях по использованию языка и
- * ограничениях в рамках лицензии.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  */
 
@@ -29,7 +29,7 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "threaded_app", __VA_ARGS__))
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "threaded_app", __VA_ARGS__))
 
-/* Для отладочных построений необходимо всегда включать трассировку отладки в этой библиотеке*/
+/* For debug builds, always enable the debug traces in this library */
 #ifndef NDEBUG
 #  define LOGV(...)  ((void)__android_log_print(ANDROID_LOG_VERBOSE, "threaded_app", __VA_ARGS__))
 #else
@@ -178,7 +178,7 @@ static void android_app_destroy(struct android_app* android_app) {
     android_app->destroyed = 1;
     pthread_cond_broadcast(&android_app->cond);
     pthread_mutex_unlock(&android_app->mutex);
-    // После этого нельзя изменять объект android_app.
+    // Can't touch android_app object after this.
 }
 
 static void process_input(struct android_app* app, struct android_poll_source* source) {
@@ -233,7 +233,7 @@ static void* android_app_entry(void* param) {
 }
 
 // --------------------------------------------------------------------
-// Взаимодействие NativeАctivity (вызванное из основного потока)
+// Native activity interaction (called from main thread)
 // --------------------------------------------------------------------
 
 static struct android_app* android_app_create(ANativeActivity* activity,
@@ -264,7 +264,7 @@ static struct android_app* android_app_create(ANativeActivity* activity,
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_create(&android_app->thread, &attr, android_app_entry, android_app);
 
-    // Дождитесь запуска потока.
+    // Wait for thread to start.
     pthread_mutex_lock(&android_app->mutex);
     while (!android_app->running) {
         pthread_cond_wait(&android_app->cond, &android_app->mutex);
