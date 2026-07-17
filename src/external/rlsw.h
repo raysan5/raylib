@@ -791,6 +791,18 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
     #define SW_ALIGN(x) // Do nothing if not available
 #endif
 
+#if defined(NDEBUG)
+    #if defined(_MSC_VER)
+        #define SW_FORCE_INLINE __forceinline
+    #elif defined(__GNUC__) || defined(__clang__)
+        #define SW_FORCE_INLINE inline __attribute__((always_inline))
+    #else
+        #define SW_FORCE_INLINE inline
+    #endif
+#else
+    #define SW_FORCE_INLINE inline
+#endif
+
 #if defined(_M_X64) || defined(__x86_64__)
     #define SW_ARCH_X86_64
 #elif defined(_M_IX86) || defined(__i386__)
@@ -908,10 +920,11 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 
 #define SW_STATE_NONE                             0     /* Pseudo state used for the rasterizer variant with no pipeline state enabled */
 #define SW_STATE_SCISSOR_TEST               (1 << 0)
-#define SW_STATE_TEXTURE_2D                 (1 << 1)
-#define SW_STATE_DEPTH_TEST                 (1 << 2)
-#define SW_STATE_CULL_FACE                  (1 << 3)
-#define SW_STATE_BLEND                      (1 << 4)
+#define SW_STATE_COLOR_INTERP               (1 << 1)
+#define SW_STATE_TEXTURE_2D                 (1 << 2)
+#define SW_STATE_DEPTH_TEST                 (1 << 3)
+#define SW_STATE_CULL_FACE                  (1 << 4)
+#define SW_STATE_BLEND                      (1 << 5)
 
 #define SW_BLEND_FLAG_NOOP                  (1 << 0)
 #define SW_BLEND_FLAG_NEEDS_ALPHA           (1 << 1)
@@ -1244,16 +1257,15 @@ static inline float sw_fract(float x)
     return (x - floorf(x));
 }
 
-// Xtensa architecture optimization
-// Fast reciprocal: 1-ULP accurate in ~7 instructions using the
-// hardware `recip0.s` seed + two Newton-Raphson refinement steps
-// All work stays in FPU registers — no `__divsf3` software call
-// Hot-path divisions in the rasterizer (span/triangle setup, perspective divide, etc.) call this
-// On non-Xtensa targets it transparently expands to `1.0f / x`, so generated code is identical to before
-#if defined(__XTENSA__)
-__attribute__((always_inline))
-static inline float sw_rcp(float x)
+static SW_FORCE_INLINE float sw_rcp(float x)
 {
+#if defined(__XTENSA__)
+    // Xtensa architecture optimization
+    // Fast reciprocal: 1-ULP accurate in ~7 instructions using the
+    // hardware `recip0.s` seed + two Newton-Raphson refinement steps
+    // All work stays in FPU registers — no `__divsf3` software call
+    // Hot-path divisions in the rasterizer (span/triangle setup, perspective divide, etc.) call this
+    // On non-Xtensa targets it transparently expands to `1.0f / x`, so generated code is identical to before
     float result, temp;
     __asm__(
         "recip0.s %0, %2\n"
@@ -1266,10 +1278,10 @@ static inline float sw_rcp(float x)
         : "=&f"(result), "=&f"(temp) : "f"(x)
     );
     return result;
-}
 #else
-static inline float sw_rcp(float x) { return 1.0f/x; }
+    return 1.0f/x;
 #endif
+}
 
 static inline uint8_t sw_luminance8(const uint8_t *color)
 {
@@ -1300,108 +1312,6 @@ static inline void sw_lerp_vertex_PCT(sw_vertex_t *SW_RESTRICT out, const sw_ver
     // Texture coordinate interpolation (2 components)
     out->texcoord[0] = a->texcoord[0]*tInv + b->texcoord[0]*t;
     out->texcoord[1] = a->texcoord[1]*tInv + b->texcoord[1]*t;
-}
-
-static inline void sw_get_vertex_grad_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
-{
-    // Calculate gradients for Position
-    out->position[0] = (b->position[0] - a->position[0])*scale;
-    out->position[1] = (b->position[1] - a->position[1])*scale;
-    out->position[2] = (b->position[2] - a->position[2])*scale;
-    out->position[3] = (b->position[3] - a->position[3])*scale;
-
-    // Calculate gradients for Color
-    out->color[0] = (b->color[0] - a->color[0])*scale;
-    out->color[1] = (b->color[1] - a->color[1])*scale;
-    out->color[2] = (b->color[2] - a->color[2])*scale;
-    out->color[3] = (b->color[3] - a->color[3])*scale;
-
-    // Calculate gradients for Texture coordinates
-    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
-    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
-}
-
-static inline void sw_add_vertex_grad_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
-{
-    // Add gradients to Position
-    out->position[0] += gradients->position[0];
-    out->position[1] += gradients->position[1];
-    out->position[2] += gradients->position[2];
-    out->position[3] += gradients->position[3];
-
-    // Add gradients to Color
-    out->color[0] += gradients->color[0];
-    out->color[1] += gradients->color[1];
-    out->color[2] += gradients->color[2];
-    out->color[3] += gradients->color[3];
-
-    // Add gradients to Texture coordinates
-    out->texcoord[0] += gradients->texcoord[0];
-    out->texcoord[1] += gradients->texcoord[1];
-}
-
-static inline void sw_add_vertex_grad_scaled_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
-{
-    // Add gradients to Position
-    out->position[0] += gradients->position[0]*scale;
-    out->position[1] += gradients->position[1]*scale;
-    out->position[2] += gradients->position[2]*scale;
-    out->position[3] += gradients->position[3]*scale;
-
-    // Add gradients to Color
-    out->color[0] += gradients->color[0]*scale;
-    out->color[1] += gradients->color[1]*scale;
-    out->color[2] += gradients->color[2]*scale;
-    out->color[3] += gradients->color[3]*scale;
-
-    // Add gradients to Texture coordinates
-    out->texcoord[0] += gradients->texcoord[0]*scale;
-    out->texcoord[1] += gradients->texcoord[1]*scale;
-}
-
-static inline void sw_get_vertex_grad_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
-{
-    // Calculate gradients for Position
-    out->position[0] = (b->position[0] - a->position[0])*scale;
-    out->position[1] = (b->position[1] - a->position[1])*scale;
-    out->position[2] = (b->position[2] - a->position[2])*scale;
-    out->position[3] = (b->position[3] - a->position[3])*scale;
-
-    // Calculate gradients for Color
-    out->color[0] = (b->color[0] - a->color[0])*scale;
-    out->color[1] = (b->color[1] - a->color[1])*scale;
-    out->color[2] = (b->color[2] - a->color[2])*scale;
-    out->color[3] = (b->color[3] - a->color[3])*scale;
-}
-
-static inline void sw_add_vertex_grad_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
-{
-    // Add gradients to Position
-    out->position[0] += gradients->position[0];
-    out->position[1] += gradients->position[1];
-    out->position[2] += gradients->position[2];
-    out->position[3] += gradients->position[3];
-
-    // Add gradients to Color
-    out->color[0] += gradients->color[0];
-    out->color[1] += gradients->color[1];
-    out->color[2] += gradients->color[2];
-    out->color[3] += gradients->color[3];
-}
-
-static inline void sw_add_vertex_grad_scaled_PC(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
-{
-    // Add gradients to Position
-    out->position[0] += gradients->position[0]*scale;
-    out->position[1] += gradients->position[1]*scale;
-    out->position[2] += gradients->position[2]*scale;
-    out->position[3] += gradients->position[3]*scale;
-
-    // Add gradients to Color
-    out->color[0] += gradients->color[0]*scale;
-    out->color[1] += gradients->color[1]*scale;
-    out->color[2] += gradients->color[2]*scale;
-    out->color[3] += gradients->color[3]*scale;
 }
 
 // Half conversion functions
@@ -3093,18 +3003,38 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
     [SW_FLAGS(__VA_ARGS__)] = SW_CONCATX(PREFIX, SW_NAME(__VA_ARGS__)),
 
 // Variant lists: X(STATES...) invoked once per specialization
-// Triangle/quad: TEXTURE_2D, DEPTH_TEST, BLEND
+// Triangle/quad: COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND
+#define SW_RASTER_VARIANTS_4(X, ...)                            \
+    X(__VA_ARGS__, NONE)                                        \
+    X(__VA_ARGS__, COLOR_INTERP)                                \
+    X(__VA_ARGS__, TEXTURE_2D)                                  \
+    X(__VA_ARGS__, DEPTH_TEST)                                  \
+    X(__VA_ARGS__, BLEND)                                       \
+    X(__VA_ARGS__, COLOR_INTERP, TEXTURE_2D)                    \
+    X(__VA_ARGS__, COLOR_INTERP, DEPTH_TEST)                    \
+    X(__VA_ARGS__, COLOR_INTERP, BLEND)                         \
+    X(__VA_ARGS__, TEXTURE_2D, DEPTH_TEST)                      \
+    X(__VA_ARGS__, TEXTURE_2D, BLEND)                           \
+    X(__VA_ARGS__, DEPTH_TEST, BLEND)                           \
+    X(__VA_ARGS__, COLOR_INTERP, TEXTURE_2D, DEPTH_TEST)        \
+    X(__VA_ARGS__, COLOR_INTERP, TEXTURE_2D, BLEND)             \
+    X(__VA_ARGS__, COLOR_INTERP, DEPTH_TEST, BLEND)             \
+    X(__VA_ARGS__, TEXTURE_2D, DEPTH_TEST, BLEND)               \
+    X(__VA_ARGS__, COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND)
+
+// Variant lists: X(STATES...) invoked once per specialization
+// Line: COLOR_INTERP, DEPTH_TEST, BLEND
 #define SW_RASTER_VARIANTS_3(X, ...)                \
     X(__VA_ARGS__, NONE)                            \
-    X(__VA_ARGS__, TEXTURE_2D)                      \
+    X(__VA_ARGS__, COLOR_INTERP)                    \
     X(__VA_ARGS__, DEPTH_TEST)                      \
     X(__VA_ARGS__, BLEND)                           \
-    X(__VA_ARGS__, TEXTURE_2D, DEPTH_TEST)          \
-    X(__VA_ARGS__, TEXTURE_2D, BLEND)               \
+    X(__VA_ARGS__, COLOR_INTERP, DEPTH_TEST)        \
+    X(__VA_ARGS__, COLOR_INTERP, BLEND)             \
     X(__VA_ARGS__, DEPTH_TEST, BLEND)               \
-    X(__VA_ARGS__, TEXTURE_2D, DEPTH_TEST, BLEND)
+    X(__VA_ARGS__, COLOR_INTERP, DEPTH_TEST, BLEND)
 
-// Line/point: DEPTH_TEST, BLEND
+// Point: DEPTH_TEST, BLEND
 #define SW_RASTER_VARIANTS_2(X, ...)    \
     X(__VA_ARGS__, NONE)                \
     X(__VA_ARGS__, DEPTH_TEST)          \
@@ -3114,10 +3044,14 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
 
 // Triangle rasterizer variant dispatch
 //-------------------------------------------------------------------------------------------
-#define SW_RASTER_TRIANGLE_STATE_MASK SW_FLAGS(TEXTURE_2D, DEPTH_TEST, BLEND)
+#define SW_RASTER_TRIANGLE_STATE_MASK SW_FLAGS(COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND)
 
 #define SW_RASTER_TRIANGLE_STATES NONE
 #include __FILE__ // IWYU pragma: keep
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP
+#include __FILE__
 #undef SW_RASTER_TRIANGLE_STATES
 
 #define SW_RASTER_TRIANGLE_STATES TEXTURE_2D
@@ -3129,6 +3063,18 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
 #undef SW_RASTER_TRIANGLE_STATES
 
 #define SW_RASTER_TRIANGLE_STATES BLEND
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, TEXTURE_2D
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, DEPTH_TEST
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, BLEND
 #include __FILE__
 #undef SW_RASTER_TRIANGLE_STATES
 
@@ -3144,25 +3090,44 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
 #include __FILE__
 #undef SW_RASTER_TRIANGLE_STATES
 
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, TEXTURE_2D, DEPTH_TEST
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, DEPTH_TEST, BLEND
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, TEXTURE_2D, BLEND
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
 #define SW_RASTER_TRIANGLE_STATES TEXTURE_2D, DEPTH_TEST, BLEND
 #include __FILE__
 #undef SW_RASTER_TRIANGLE_STATES
 
-// Forward declarations because clangd does not follow #include __FILE__ to avoid infinite recursion
-// These declarations make all variants visible to static analysis tools without affecting compilation
-SW_RASTER_VARIANTS_3(SW_RASTER_FWD, sw_raster_triangle_, (const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
+#define SW_RASTER_TRIANGLE_STATES COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND
+#include __FILE__
+#undef SW_RASTER_TRIANGLE_STATES
+
+// Forward declarations for static analyzer like clangd that do not handle self-inclusion correctly
+SW_RASTER_VARIANTS_4(SW_RASTER_FWD, sw_raster_triangle_, (const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
 
 static const sw_raster_triangle_f SW_RASTER_TRIANGLE_TABLE[] = {
-    SW_RASTER_VARIANTS_3(SW_RASTER_ENTRY, sw_raster_triangle_)
+    SW_RASTER_VARIANTS_4(SW_RASTER_ENTRY, sw_raster_triangle_)
 };
 //-------------------------------------------------------------------------------------------
 
 // Quad rasterizer variant dispatch
 //-------------------------------------------------------------------------------------------
-#define SW_RASTER_QUAD_STATE_MASK SW_FLAGS(TEXTURE_2D, DEPTH_TEST, BLEND)
+#define SW_RASTER_QUAD_STATE_MASK SW_FLAGS(COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND)
 
 #define SW_RASTER_QUAD_STATES NONE
 #include __FILE__ // IWYU pragma: keep
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP
+#include __FILE__
 #undef SW_RASTER_QUAD_STATES
 
 #define SW_RASTER_QUAD_STATES TEXTURE_2D
@@ -3174,6 +3139,18 @@ static const sw_raster_triangle_f SW_RASTER_TRIANGLE_TABLE[] = {
 #undef SW_RASTER_QUAD_STATES
 
 #define SW_RASTER_QUAD_STATES BLEND
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, TEXTURE_2D
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, DEPTH_TEST
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, BLEND
 #include __FILE__
 #undef SW_RASTER_QUAD_STATES
 
@@ -3189,23 +3166,44 @@ static const sw_raster_triangle_f SW_RASTER_TRIANGLE_TABLE[] = {
 #include __FILE__
 #undef SW_RASTER_QUAD_STATES
 
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, TEXTURE_2D, DEPTH_TEST
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, TEXTURE_2D, BLEND
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, DEPTH_TEST, BLEND
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
 #define SW_RASTER_QUAD_STATES TEXTURE_2D, DEPTH_TEST, BLEND
 #include __FILE__
 #undef SW_RASTER_QUAD_STATES
 
-SW_RASTER_VARIANTS_3(SW_RASTER_FWD, sw_raster_quad_, (const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
+#define SW_RASTER_QUAD_STATES COLOR_INTERP, TEXTURE_2D, DEPTH_TEST, BLEND
+#include __FILE__
+#undef SW_RASTER_QUAD_STATES
+
+// Forward declarations for static analyzer like clangd that do not handle self-inclusion correctly
+SW_RASTER_VARIANTS_4(SW_RASTER_FWD, sw_raster_quad_, (const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
 
 static const sw_raster_quad_f SW_RASTER_QUAD_TABLE[] = {
-    SW_RASTER_VARIANTS_3(SW_RASTER_ENTRY, sw_raster_quad_)
+    SW_RASTER_VARIANTS_4(SW_RASTER_ENTRY, sw_raster_quad_)
 };
 //-------------------------------------------------------------------------------------------
 
 // Line rasterizer variant dispatch
 //-------------------------------------------------------------------------------------------
-#define SW_RASTER_LINE_STATE_MASK SW_FLAGS(DEPTH_TEST, BLEND)
+#define SW_RASTER_LINE_STATE_MASK SW_FLAGS(COLOR_INTERP, DEPTH_TEST, BLEND)
 
 #define SW_RASTER_LINE_STATES NONE
 #include __FILE__ // IWYU pragma: keep
+#undef SW_RASTER_LINE_STATES
+
+#define SW_RASTER_LINE_STATES COLOR_INTERP
+#include __FILE__
 #undef SW_RASTER_LINE_STATES
 
 #define SW_RASTER_LINE_STATES DEPTH_TEST
@@ -3216,14 +3214,27 @@ static const sw_raster_quad_f SW_RASTER_QUAD_TABLE[] = {
 #include __FILE__
 #undef SW_RASTER_LINE_STATES
 
+#define SW_RASTER_LINE_STATES COLOR_INTERP, DEPTH_TEST
+#include __FILE__
+#undef SW_RASTER_LINE_STATES
+
+#define SW_RASTER_LINE_STATES COLOR_INTERP, BLEND
+#include __FILE__
+#undef SW_RASTER_LINE_STATES
+
 #define SW_RASTER_LINE_STATES DEPTH_TEST, BLEND
 #include __FILE__
 #undef SW_RASTER_LINE_STATES
 
-SW_RASTER_VARIANTS_2(SW_RASTER_FWD, sw_raster_line_, (const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
+#define SW_RASTER_LINE_STATES COLOR_INTERP, DEPTH_TEST, BLEND
+#include __FILE__
+#undef SW_RASTER_LINE_STATES
+
+// Forward declarations for static analyzer like clangd that do not handle self-inclusion correctly
+SW_RASTER_VARIANTS_3(SW_RASTER_FWD, sw_raster_line_, (const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
 
 static const sw_raster_line_f SW_RASTER_LINE_TABLE[] = {
-    SW_RASTER_VARIANTS_2(SW_RASTER_ENTRY, sw_raster_line_)
+    SW_RASTER_VARIANTS_3(SW_RASTER_ENTRY, sw_raster_line_)
 };
 //-------------------------------------------------------------------------------------------
 
@@ -3247,6 +3258,7 @@ static const sw_raster_line_f SW_RASTER_LINE_TABLE[] = {
 #include __FILE__
 #undef SW_RASTER_POINT_STATES
 
+// Forward declarations for static analyzer like clangd that do not handle self-inclusion correctly
 SW_RASTER_VARIANTS_2(SW_RASTER_FWD, sw_raster_point_, (const sw_vertex_t*)) // NOLINT
 
 static const sw_raster_point_f SW_RASTER_POINT_TABLE[] = {
@@ -5225,17 +5237,80 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 #define SW_RASTER_TRIANGLE_SPAN  SW_CONCATX(sw_raster_triangle_span_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 #define SW_RASTER_TRIANGLE       SW_CONCATX(sw_raster_triangle_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    #define SW_GET_GRAD         sw_get_vertex_grad_PCT
-    #define SW_ADD_GRAD         sw_add_vertex_grad_PCT
-    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_PCT
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    #define SW_SPAN_FLAT_COLOR_PARAM
+    #define SW_SPAN_FLAT_COLOR_ARG
 #else
-    #define SW_GET_GRAD         sw_get_vertex_grad_PC
-    #define SW_ADD_GRAD         sw_add_vertex_grad_PC
-    #define SW_ADD_GRAD_SCALED  sw_add_vertex_grad_scaled_PC
+    #define SW_SPAN_FLAT_COLOR_PARAM , const float flatColor[4]
+    #define SW_SPAN_FLAT_COLOR_ARG   , flatColor
 #endif
 
-static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, float dUdy, float dVdy)
+#define SW_GRAD SW_CONCATX(sw_grad_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
+#define SW_VADD SW_CONCATX(sw_vadd_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
+#define SW_VFMA SW_CONCATX(sw_vfma_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
+
+static SW_FORCE_INLINE void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+{
+    out->position[0] = (b->position[0] - a->position[0])*scale;
+    out->position[1] = (b->position[1] - a->position[1])*scale;
+    out->position[2] = (b->position[2] - a->position[2])*scale;
+    out->position[3] = (b->position[3] - a->position[3])*scale;
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    out->color[0] = (b->color[0] - a->color[0])*scale;
+    out->color[1] = (b->color[1] - a->color[1])*scale;
+    out->color[2] = (b->color[2] - a->color[2])*scale;
+    out->color[3] = (b->color[3] - a->color[3])*scale;
+#endif
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
+    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
+#endif
+}
+
+static SW_FORCE_INLINE void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+{
+    out->position[0] += gradients->position[0];
+    out->position[1] += gradients->position[1];
+    out->position[2] += gradients->position[2];
+    out->position[3] += gradients->position[3];
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    out->color[0] += gradients->color[0];
+    out->color[1] += gradients->color[1];
+    out->color[2] += gradients->color[2];
+    out->color[3] += gradients->color[3];
+#endif
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+    out->texcoord[0] += gradients->texcoord[0];
+    out->texcoord[1] += gradients->texcoord[1];
+#endif
+}
+
+static SW_FORCE_INLINE void SW_VFMA(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+{
+    out->position[0] += gradients->position[0]*scale;
+    out->position[1] += gradients->position[1]*scale;
+    out->position[2] += gradients->position[2]*scale;
+    out->position[3] += gradients->position[3]*scale;
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    out->color[0] += gradients->color[0]*scale;
+    out->color[1] += gradients->color[1]*scale;
+    out->color[2] += gradients->color[2]*scale;
+    out->color[3] += gradients->color[3]*scale;
+#endif
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+    out->texcoord[0] += gradients->texcoord[0]*scale;
+    out->texcoord[1] += gradients->texcoord[1]*scale;
+#endif
+}
+
+static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end,
+                                    float dUdy, float dVdy SW_SPAN_FLAT_COLOR_PARAM)
 {
     // Gets the start/end coordinates and skip empty lines
     int xStart = (int)start->position[0];
@@ -5256,15 +5331,18 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     float dxRcp = sw_rcp(end->position[0] - start->position[0]);
 
     // Compute the interpolation steps along the X axis
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+    float dZdx = (end->position[2] - start->position[2])*dxRcp;
+#endif
     float dWdx = (end->position[3] - start->position[3])*dxRcp;
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
     float dCdx[4] = {
         (end->color[0] - start->color[0])*dxRcp,
         (end->color[1] - start->color[1])*dxRcp,
         (end->color[2] - start->color[2])*dxRcp,
         (end->color[3] - start->color[3])*dxRcp
     };
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-    float dZdx = (end->position[2] - start->position[2])*dxRcp;
 #endif
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
     float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
@@ -5278,15 +5356,18 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     float xOffset = xSubstep + dxStart;
 
     // Initializing the interpolation starting values
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+    float z = start->position[2] + dZdx*xOffset;
+#endif
     float w = start->position[3] + dWdx*xOffset;
+
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
     float color[4] = {
         start->color[0] + dCdx[0]*xOffset,
         start->color[1] + dCdx[1]*xOffset,
         start->color[2] + dCdx[2]*xOffset,
         start->color[3] + dCdx[3]*xOffset
     };
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-    float z = start->position[2] + dZdx*xOffset;
 #endif
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
     float u = start->texcoord[0] + dUdx*xOffset;
@@ -5316,12 +5397,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         float wB = w + dWdx*blockLenF;
         float wRcpB = sw_rcp(wB);
 
+    #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
         // Perspective-correct color at both block endpoints, then affine gradient
         float srcColor[4] = {
-            color[0]*wRcpA,
-            color[1]*wRcpA,
-            color[2]*wRcpA,
-            color[3]*wRcpA
+            color[0]*wRcpA, color[1]*wRcpA, color[2]*wRcpA, color[3]*wRcpA
         };
         float dSrcColordx[4] = {
             ((color[0] + dCdx[0]*blockLenF)*wRcpB - srcColor[0])*blockLenRcp,
@@ -5329,6 +5408,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
             ((color[2] + dCdx[2]*blockLenF)*wRcpB - srcColor[2])*blockLenRcp,
             ((color[3] + dCdx[3]*blockLenF)*wRcpB - srcColor[3])*blockLenRcp
         };
+    #else
+        // Flat: constant across the whole triangle, no perspective correction needed
+        const float *srcColor = flatColor;
+    #endif
 
     #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
         // Perspective-correct UVs at both endpoints, then affine gradient
@@ -5388,10 +5471,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
         discard:
         #endif
+        #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
             srcColor[0] += dSrcColordx[0];
             srcColor[1] += dSrcColordx[1];
             srcColor[2] += dSrcColordx[2];
             srcColor[3] += dSrcColordx[3];
+        #endif
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
 
             #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
@@ -5411,10 +5496,12 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
         // Advance perspective-space accumulators by the full block width
         w = wB;
+        #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
         color[0] += dCdx[0]*blockLenF;
         color[1] += dCdx[1]*blockLenF;
         color[2] += dCdx[2]*blockLenF;
         color[3] += dCdx[3]*blockLenF;
+        #endif
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
         u += dUdx*blockLenF;
         v += dVdx*blockLenF;
@@ -5450,9 +5537,9 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
     // Compute gradients for each side of the triangle
     sw_vertex_t dVXdy02, dVXdy01, dVXdy12;
-    SW_GET_GRAD(&dVXdy02, v0, v2, h02Rcp);
-    SW_GET_GRAD(&dVXdy01, v0, v1, h01Rcp);
-    SW_GET_GRAD(&dVXdy12, v1, v2, h12Rcp);
+    SW_GRAD(&dVXdy02, v0, v2, h02Rcp);
+    SW_GRAD(&dVXdy01, v0, v1, h01Rcp);
+    SW_GRAD(&dVXdy12, v1, v2, h12Rcp);
 
     // Y subpixel correction
     float y0Substep = 1.0f - sw_fract(y0);
@@ -5460,8 +5547,18 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
     // Get a copy of vertices for interpolation and apply substep correction
     sw_vertex_t lVert = *v0, rVert = *v0;
-    SW_ADD_GRAD_SCALED(&lVert, &dVXdy02, y0Substep);
-    SW_ADD_GRAD_SCALED(&rVert, &dVXdy01, y0Substep);
+    SW_VFMA(&lVert, &dVXdy02, y0Substep);
+    SW_VFMA(&rVert, &dVXdy01, y0Substep);
+
+#if !((SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP)
+    float invW = 1.0f / v0->position[3];
+    float flatColor[4] = {
+        v0->color[0]*invW,
+        v0->color[1]*invW,
+        v0->color[2]*invW,
+        v0->color[3]*invW
+    };
+#endif
 
     // Y bounds (vertical clipping)
     int yTop = (int)y0;
@@ -5475,14 +5572,14 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
         bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
-        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        SW_ADD_GRAD(&lVert, &dVXdy02);
-        SW_ADD_GRAD(&rVert, &dVXdy01);
+        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1] SW_SPAN_FLAT_COLOR_ARG);
+        SW_VADD(&lVert, &dVXdy02);
+        SW_VADD(&rVert, &dVXdy01);
     }
 
     // Get a copy of next right for interpolation and apply substep correction
     rVert = *v1;
-    SW_ADD_GRAD_SCALED(&rVert, &dVXdy12, y1Substep);
+    SW_VFMA(&rVert, &dVXdy12, y1Substep);
 
     // Scanline for the lower part of the triangle
     for (int y = yMid; y < yBot; y++)
@@ -5491,15 +5588,14 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
         bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
-        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1]);
-        SW_ADD_GRAD(&lVert, &dVXdy02);
-        SW_ADD_GRAD(&rVert, &dVXdy12);
+        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1] SW_SPAN_FLAT_COLOR_ARG);
+        SW_VADD(&lVert, &dVXdy02);
+        SW_VADD(&rVert, &dVXdy12);
     }
 }
 
-#undef SW_GET_GRAD
-#undef SW_ADD_GRAD
-#undef SW_ADD_GRAD_SCALED
+#undef SW_SPAN_FLAT_COLOR_PARAM
+#undef SW_SPAN_FLAT_COLOR_ARG
 
 #endif // SW_RASTER_TRIANGLE_STATES
 //-------------------------------------------------------------------------------------------
@@ -5555,6 +5651,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float xSubstep = 1.0f - sw_fract(tl->position[0]);
     float ySubstep = 1.0f - sw_fract(tl->position[1]);
 
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
     // Gradients along X (tl->tr) and Y (tl->bl)
     float dCdx[4] = {
         (tr->color[0] - tl->color[0])*wRcp,
@@ -5568,6 +5665,9 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         (bl->color[2] - tl->color[2])*hRcp,
         (bl->color[3] - tl->color[3])*hRcp,
     };
+#else
+    const float *flatColor = tl->color;
+#endif
 
 #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
     float dZdx = (tr->position[2] - tl->position[2])*wRcp;
@@ -5584,12 +5684,14 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float vRow = tl->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;
 #endif
 
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
     float cRow[4] = {
         tl->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,
         tl->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,
         tl->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,
         tl->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep,
     };
+#endif
 
     int stride = RLSW.colorBuffer->width;
     uint8_t *cPixels = RLSW.colorBuffer->pixels;
@@ -5602,10 +5704,12 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float dyMin = (float)(yLoopMin - yMin);
 
     // Correct our start by how far it's clipped outside the framebuffer
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
     cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
     cRow[1] += dCdx[1]*dxMin + dCdy[1]*dyMin;
     cRow[2] += dCdx[2]*dxMin + dCdy[2]*dyMin;
     cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
+#endif
     #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
     zRow += dZdy*dyMin + dZdx*dxMin;
     #endif
@@ -5627,16 +5731,17 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         float u = uRow;
         float v = vRow;
     #endif
-        float color[4] = {
-            cRow[0],
-            cRow[1],
-            cRow[2],
-            cRow[3]
-        };
+    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
+        float color[4] = { cRow[0], cRow[1], cRow[2], cRow[3] };
+    #endif
 
         for (int x = xLoopMin; x < xLoopMax; x++)
         {
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
             float srcColor[4] = { color[0], color[1], color[2], color[3] };
+        #else
+            float srcColor[4] = { flatColor[0], flatColor[1], flatColor[2], flatColor[3] };
+        #endif
 
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
             {
@@ -5674,10 +5779,12 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         discard:
         #endif
             // Move one pixel over without touching the original "start offset"
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
             color[0] += dCdx[0];
             color[1] += dCdx[1];
             color[2] += dCdx[2];
             color[3] += dCdx[3];
+        #endif
 
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
             {
@@ -5699,10 +5806,12 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         // The for loop is clamped to the right side of the screen
         // However, these cursor start vars are still on the left
         // That's fine, advancing to the next row
+    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
         cRow[0] += dCdy[0];
         cRow[1] += dCdy[1];
         cRow[2] += dCdy[2];
         cRow[3] += dCdy[3];
+    #endif
 
         #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
         {
@@ -5764,10 +5873,12 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
 #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
     float zInc = (v1->position[2] - v0->position[2])*stepRcp;
 #endif
+#if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
     float rInc = (v1->color[0] - v0->color[0])*stepRcp;
     float gInc = (v1->color[1] - v0->color[1])*stepRcp;
     float bInc = (v1->color[2] - v0->color[2])*stepRcp;
     float aInc = (v1->color[3] - v0->color[3])*stepRcp;
+#endif
 
     // Initializing the interpolation starting values
     float x = x0 + xInc*substep;
@@ -5775,10 +5886,12 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
 #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
     float z = v0->position[2] + zInc*substep;
 #endif
+#if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
     float r = v0->color[0] + rInc*substep;
     float g = v0->color[1] + gInc*substep;
     float b = v0->color[2] + bInc*substep;
     float a = v0->color[3] + aInc*substep;
+#endif
 
     // Start line rasterization
     const int fbWidth = RLSW.colorBuffer->width;
@@ -5811,7 +5924,11 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
         }
         #endif
 
+    #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
         float srcColor[4] = {r, g, b, a};
+    #else
+        const float *srcColor = v0->color;
+    #endif
 
         #if (SW_RASTER_LINE_FLAGS) & SW_STATE_BLEND
         {
@@ -5836,10 +5953,12 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
             z += zInc;
         }
         #endif
+        #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
         r += rInc;
         g += gInc;
         b += bInc;
         a += aInc;
+        #endif
     }
 }
 
