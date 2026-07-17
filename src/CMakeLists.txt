@@ -107,6 +107,20 @@ endif ()
 target_link_libraries(raylib PRIVATE $<BUILD_INTERFACE:${LIBS_PRIVATE}>)
 target_link_libraries(raylib PUBLIC ${LIBS_PUBLIC})
 
+# Static libraries must export their private link dependencies for installed consumers.
+# LINK_ONLY keeps those dependencies out of the compile interface.
+if (NOT BUILD_SHARED_LIBS)
+    set(raylib_install_private_libs ${LIBS_PRIVATE})
+
+    if (NOT glfw3_FOUND)
+        list(REMOVE_ITEM raylib_install_private_libs glfw)
+    endif()
+
+    foreach(lib IN LISTS raylib_install_private_libs)
+        target_link_libraries(raylib INTERFACE $<INSTALL_INTERFACE:$<LINK_ONLY:${lib}>>)
+    endforeach()
+endif()
+
 # Sets some compile time definitions for the pre-processor
 # If CUSTOMIZE_BUILD option is on you will not use config.h by default
 # and you will be able to select more build options
