@@ -3220,14 +3220,10 @@ static const sw_raster_quad_f SW_RASTER_QUAD_TABLE[] = {
 #include __FILE__
 #undef SW_RASTER_LINE_STATES
 
-SW_RASTER_VARIANTS_3(SW_RASTER_FWD, sw_raster_line_, (const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
-SW_RASTER_VARIANTS_3(SW_RASTER_FWD, sw_raster_line_thick_, (const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
+SW_RASTER_VARIANTS_2(SW_RASTER_FWD, sw_raster_line_, (const sw_vertex_t*, const sw_vertex_t*)) // NOLINT
 
 static const sw_raster_line_f SW_RASTER_LINE_TABLE[] = {
     SW_RASTER_VARIANTS_2(SW_RASTER_ENTRY, sw_raster_line_)
-};
-static const sw_raster_line_f SW_RASTER_LINE_THICK_TABLE[] = {
-    SW_RASTER_VARIANTS_2(SW_RASTER_ENTRY, sw_raster_line_thick_)
 };
 //-------------------------------------------------------------------------------------------
 
@@ -3638,17 +3634,8 @@ static bool sw_line_clip_and_project(sw_vertex_t *v0, sw_vertex_t *v1)
 static void sw_line_render(uint32_t state, sw_vertex_t *vertices)
 {
     if (!sw_line_clip_and_project(&vertices[0], &vertices[1])) return;
-
     state &= SW_RASTER_LINE_STATE_MASK;
-
-    if (RLSW.lineWidth >= 2.0f)
-    {
-        SW_RASTER_LINE_THICK_TABLE[state](&vertices[0], &vertices[1]);
-    }
-    else
-    {
-        SW_RASTER_LINE_TABLE[state](&vertices[0], &vertices[1]);
-    }
+    SW_RASTER_LINE_TABLE[state](&vertices[0], &vertices[1]);
 }
 //-------------------------------------------------------------------------------------------
 
@@ -5735,15 +5722,16 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
 #endif // SW_RASTER_QUAD_STATES
 //-------------------------------------------------------------------------------------------
 
-// Quad rasterization functions
+// Line rasterization functions
 //-------------------------------------------------------------------------------------------
 #ifdef SW_RASTER_LINE_STATES
 
 #define SW_RASTER_LINE_FLAGS SW_FLAGS(SW_RASTER_LINE_STATES)
+#define SW_RASTER_LINE_THIN  SW_CONCATX(sw_raster_line_thin_, SW_NAME(SW_RASTER_LINE_STATES))
 #define SW_RASTER_LINE       SW_CONCATX(sw_raster_line_, SW_NAME(SW_RASTER_LINE_STATES))
-#define SW_RASTER_LINE_THICK SW_CONCATX(sw_raster_line_thick_, SW_NAME(SW_RASTER_LINE_STATES))
 
-static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
+// Renders a single-pixel-wide line; internal building block for SW_RASTER_LINE
+static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
 {
     // Convert from pixel-center convention (n+0.5) to pixel-origin convention (n)
     float x0 = v0->position[0] - 0.5f;
@@ -5855,8 +5843,14 @@ static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
     }
 }
 
-static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
+static void SW_RASTER_LINE(const sw_vertex_t *v0, const sw_vertex_t *v1)
 {
+    if (RLSW.lineWidth < 2.0f)
+    {
+        SW_RASTER_LINE_THIN(v0, v1);
+        return;
+    }
+
     sw_vertex_t tv0, tv1;
 
     int x0 = (int)v0->position[0];
@@ -5867,7 +5861,7 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
     int dx = x1 - x0;
     int dy = y1 - y0;
 
-    SW_RASTER_LINE(v0, v1);
+    SW_RASTER_LINE_THIN(v0, v1);
 
     if ((dx != 0) && (abs(dy/dx) < 1))
     {
@@ -5878,11 +5872,11 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
             tv0 = *v0, tv1 = *v1;
             tv0.position[1] -= i;
             tv1.position[1] -= i;
-            SW_RASTER_LINE(&tv0, &tv1);
+            SW_RASTER_LINE_THIN(&tv0, &tv1);
             tv0 = *v0, tv1 = *v1;
             tv0.position[1] += i;
             tv1.position[1] += i;
-            SW_RASTER_LINE(&tv0, &tv1);
+            SW_RASTER_LINE_THIN(&tv0, &tv1);
         }
     }
     else if (dy != 0)
@@ -5894,11 +5888,11 @@ static void SW_RASTER_LINE_THICK(const sw_vertex_t *v0, const sw_vertex_t *v1)
             tv0 = *v0, tv1 = *v1;
             tv0.position[0] -= i;
             tv1.position[0] -= i;
-            SW_RASTER_LINE(&tv0, &tv1);
+            SW_RASTER_LINE_THIN(&tv0, &tv1);
             tv0 = *v0, tv1 = *v1;
             tv0.position[0] += i;
             tv1.position[0] += i;
-            SW_RASTER_LINE(&tv0, &tv1);
+            SW_RASTER_LINE_THIN(&tv0, &tv1);
         }
     }
 }
