@@ -21,7 +21,7 @@ permissions:
 jobs:
   build:
     permissions:
-      contents: write  # for actions/upload-release-asset to upload release asset
+      contents: write  # Required for actions/upload-release-asset to upload release asset
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -112,7 +112,7 @@ jobs:
         tar -czvf ${{ env.RELEASE_NAME }}.tar.gz ${{ env.RELEASE_NAME }}
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.RELEASE_NAME }}
         path: |
@@ -120,7 +120,7 @@ jobs:
           !./build/${{ env.RELEASE_NAME }}.tar.gz
 
     - name: Upload Artifact to Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         files: ./build/${{ env.RELEASE_NAME }}.tar.gz
       env:

@@ -201,7 +201,7 @@
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
         <Struct name="ModelSkeleton" fieldCount="3" desc="Skeleton, animation bones hierarchy">
-            <Field type="int" name="boneCount" desc="Number of bones" />
+            <Field type="unsigned int" name="boneCount" desc="Number of bones" />
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="ModelAnimPose" name="bindPose" desc="Bones base transformation (Transform[])" />
         </Struct>
@@ -218,7 +218,7 @@
         </Struct>
         <Struct name="ModelAnimation" fieldCount="4" desc="ModelAnimation, contains a full animation sequence">
             <Field type="char[32]" name="name" desc="Animation name" />
-            <Field type="int" name="boneCount" desc="Number of bones (per pose)" />
+            <Field type="unsigned int" name="boneCount" desc="Number of bones (per pose)" />
             <Field type="int" name="keyframeCount" desc="Number of animation key frames" />
             <Field type="ModelAnimPose *" name="keyframePoses" desc="Animation sequence keyframe poses [keyframe][pose]" />
         </Struct>

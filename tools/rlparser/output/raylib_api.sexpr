@@ -611,7 +611,7 @@
    ((name "ModelSkeleton")
     (description "Skeleton, animation bones hierarchy")
     (fields 
-      ((type "int")
+      ((type "unsigned int")
        (name "boneCount")
        (description "Number of bones"))
       ((type "BoneInfo *")
@@ -658,7 +658,7 @@
       ((type "char[32]")
        (name "name")
        (description "Animation name"))
-      ((type "int")
+      ((type "unsigned int")
        (name "boneCount")
        (description "Number of bones (per pose)"))
       ((type "int")

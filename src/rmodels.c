@@ -50,9 +50,9 @@
 #include "rlgl.h"           // OpenGL abstraction layer to OpenGL 1.1, 2.1, 3.3+ or ES2
 #include "raymath.h"        // Required for: Vector3, Quaternion and Matrix functionality
 
-#include <stdio.h>          // Required for: sprintf()
+#include <stdio.h>          // Required for: sprintf(), snprintf()
 #include <stdlib.h>         // Required for: malloc(), calloc(), free()
-#include <string.h>         // Required for: memcmp(), strlen(), strncpy()
+#include <string.h>         // Required for: strlen(), memcmp()
 #include <math.h>           // Required for: sinf(), cosf(), sqrtf(), fabsf()
 
 #if SUPPORT_FILEFORMAT_OBJ || SUPPORT_FILEFORMAT_MTL
@@ -2073,7 +2073,7 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName)); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -2320,7 +2320,7 @@ void UpdateModelAnimation(Model model, ModelAnimation anim, float frame)
         Matrix currentPoseMatrix = { 0 };
 
         // Update all bones and bone matrices of model
-        for (int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
+        for (unsigned int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
         {
             // Compute interpolated pose between current and next frame
             // NOTE: Storing animation frame data in model.currentPose
@@ -2390,7 +2390,7 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
         Matrix bindPoseMatrix = { 0 };
         Matrix currentPoseMatrix = { 0 };
 
-        for (int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
+        for (unsigned int boneIndex = 0; boneIndex < model.skeleton.boneCount; boneIndex++)
         {
             // Get frame-interpolation for first animation
             Vector3 frameATranslation = Vector3Lerp(
@@ -4421,7 +4421,7 @@ static Model LoadOBJ(const char *fileName)
     }
 
     char currentDir[MAX_FILEPATH_LENGTH] = { 0 };
-    strncpy(currentDir, GetWorkingDirectory(), MAX_FILEPATH_LENGTH - 1); // Save current working directory
+    snprintf(currentDir, MAX_FILEPATH_LENGTH, "%s", GetWorkingDirectory()); // Save current working directory
     const char *workingDir = GetDirectoryPath(fileName); // Switch to OBJ directory for material path correctness
     if (CHDIR(workingDir) != 0) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to change working directory", workingDir);
 
@@ -5013,7 +5013,7 @@ static Model LoadIQM(const char *fileName)
     // Initialize runtime animation data: current pose and bone matrices
     model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
     model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
-    for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
+    for (unsigned int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
 
     UnloadFileData(fileData);
 
@@ -5241,7 +5241,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         // Build frameposes
         for (unsigned int frame = 0; frame < anim[a].num_frames; frame++)
         {
-            for (int i = 0; i < animations[a].boneCount; i++)
+            for (unsigned int i = 0; i < animations[a].boneCount; i++)
             {
                 if (bones[i].parent >= 0)
                 {
@@ -5316,8 +5316,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             {
                 int base64Size = (int)strlen(cgltfImage->uri + i + 1);
                 while (cgltfImage->uri[i + base64Size] == '=') base64Size--;    // Ignore optional paddings
-                int numberOfEncodedBits = base64Size*6 - (base64Size*6) % 8 ;   // Encoded bits minus extra bits, so it becomes a multiple of 8 bits
-                int outSize = numberOfEncodedBits/8 ;                           // Actual encoded bytes
+                int numberOfEncodedBits = base64Size*6 - (base64Size*6)%8;      // Encoded bits minus extra bits, so it becomes a multiple of 8 bits
+                int outSize = numberOfEncodedBits >> 3;                         // Actual encoded bytes
                 void *data = NULL;
 
                 cgltf_options options = { 0 };
@@ -5369,15 +5369,15 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 }
 
 // Load bone info from GLTF skin data
-static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, int *boneCount)
+static BoneInfo *LoadBoneInfoGLTF(cgltf_skin skin, unsigned int *boneCount)
 {
-    *boneCount = (int)skin.joints_count;
+    *boneCount = (unsigned int)skin.joints_count;
     BoneInfo *bones = (BoneInfo *)RL_CALLOC(skin.joints_count, sizeof(BoneInfo));
 
     for (unsigned int i = 0; i < skin.joints_count; i++)
     {
         cgltf_node node = *skin.joints[i];
-        if (node.name != NULL) strncpy(bones[i].name, node.name, sizeof(bones[i].name) - 1);
+        if (node.name != NULL) snprintf(bones[i].name, sizeof(bones[i].name), "%s", node.name);
 
         // Find parent bone index by walking up the node tree past any
         // non-joint ancestors (intermediate transform nodes used by some
@@ -6144,7 +6144,7 @@ static Model LoadGLTF(const char *fileName)
             model.skeleton.bones = LoadBoneInfoGLTF(skin, &model.skeleton.boneCount);
             model.skeleton.bindPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
 
-            for (int i = 0; i < model.skeleton.boneCount; i++)
+            for (unsigned int i = 0; i < model.skeleton.boneCount; i++)
             {
                 Matrix bindMatrix = { 0 };
                 cgltf_float inverseBindTransform[16] = { 0 };
@@ -6309,7 +6309,7 @@ static Model LoadGLTF(const char *fileName)
                 if ((data->skins_count > 0) && !hasJoints && (node->parent != NULL) && (node->parent->mesh == NULL))
                 {
                     int parentBoneId = -1;
-                    for (int joint = 0; joint < model.skeleton.boneCount; joint++)
+                    for (unsigned int joint = 0; joint < model.skeleton.boneCount; joint++)
                     {
                         if (data->skins[0].joints[joint] == node->parent)
                         {
@@ -6347,7 +6347,7 @@ static Model LoadGLTF(const char *fileName)
         // Initialize runtime animation data: current pose and bone matrices
         model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
         model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
-        for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
+        for (unsigned int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         //----------------------------------------------------------------------------------------------------
 
         // Free unused allocated memory in case of no bones defined
@@ -6660,7 +6660,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     animDuration = (time > animDuration)? time : animDuration;
                 }
 
-                if (animData.name != NULL) strncpy(animations[a].name, animData.name, sizeof(animations[a].name) - 1);
+                if (animData.name != NULL) snprintf(animations[a].name, sizeof(animations[a].name), "%s", animData.name);
 
                 animations[a].keyframeCount = (int)(animDuration*GLTF_FRAMERATE) + 1;
                 animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
@@ -6670,7 +6670,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
                     animations[a].keyframePoses[j] = (Transform *)RL_CALLOC(animations[a].boneCount, sizeof(Transform));
                     float time = (float)j / GLTF_FRAMERATE;
 
-                    for (int k = 0; k < animations[a].boneCount; k++)
+                    for (unsigned int k = 0; k < animations[a].boneCount; k++)
                     {
                         Vector3 translation = {skin.joints[k]->translation[0], skin.joints[k]->translation[1], skin.joints[k]->translation[2]};
                         Quaternion rotation = {skin.joints[k]->rotation[0], skin.joints[k]->rotation[1], skin.joints[k]->rotation[2], skin.joints[k]->rotation[3]};
@@ -7150,7 +7150,7 @@ static Model LoadM3D(const char *fileName)
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 model.skeleton.bones[i].parent = m3d->bone[i].parent;
-                strncpy(model.skeleton.bones[i].name, m3d->bone[i].name, sizeof(model.skeleton.bones[i].name) - 1);
+                snprintf(model.skeleton.bones[i].name, sizeof(model.skeleton.bones[i].name), "%s", m3d->bone[i].name);
                 model.skeleton.bindPose[i].translation.x = m3d->vertex[m3d->bone[i].pos].x*m3d->scale;
                 model.skeleton.bindPose[i].translation.y = m3d->vertex[m3d->bone[i].pos].y*m3d->scale;
                 model.skeleton.bindPose[i].translation.z = m3d->vertex[m3d->bone[i].pos].z*m3d->scale;
@@ -7204,7 +7204,7 @@ static Model LoadM3D(const char *fileName)
             // Initialize runtime animation data: current pose and bone matrices
             model.currentPose = (Transform *)RL_CALLOC(model.skeleton.boneCount, sizeof(Transform));
             model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
-            for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
+            for (unsigned int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         }
 
         m3d_free(m3d);
@@ -7258,14 +7258,14 @@ static ModelAnimation *LoadModelAnimationsM3D(const char *fileName, int *animCou
 
             animations[a].keyframeCount = m3d->action[a].durationmsec/M3D_ANIMDELAY;
             animations[a].keyframePoses = (Transform **)RL_CALLOC(animations[a].keyframeCount, sizeof(Transform *));
-            strncpy(animations[a].name, m3d->action[a].name, sizeof(animations[a].name) - 1);
+            snprintf(animations[a].name, sizeof(animations[a].name), "%s", m3d->action[a].name);
 
             TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Duration: %fs", fileName, animations[a].name, animations[a].keyframeCount, m3d->action[a].durationmsec);
 
             for (i = 0; i < (int)m3d->numbone; i++)
             {
                 bones[i].parent = m3d->bone[i].parent;
-                strncpy(bones[i].name, m3d->bone[i].name, sizeof(bones[i].name) - 1);
+                snprintf(bones[i].name, sizeof(bones[i].name), "%s", m3d->bone[i].name);
             }
 
             // A special, never transformed "no bone" bone, used for boneless vertices

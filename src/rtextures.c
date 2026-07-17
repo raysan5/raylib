@@ -70,6 +70,7 @@
 #include <string.h>             // Required for: strlen() [Used in ImageTextEx()], strcmp() [Used in LoadImageFromMemory()/LoadImageAnimFromMemory()/ExportImageToMemory()]
 #include <math.h>               // Required for: fabsf() [Used in DrawTextureRec()]
 #include <stdio.h>              // Required for: sprintf() [Used in ExportImageAsCode()]
+#include <limits.h>             // Required for: INT_MAX
 
 // Support only desired texture formats on stb_image
 #if !SUPPORT_FILEFORMAT_BMP
@@ -813,7 +814,7 @@ bool ExportImageAsCode(Image image, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1); // NOTE: Using function provided by [rcore] module
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName)); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
@@ -843,9 +844,10 @@ bool ExportImageAsCode(Image image, const char *fileName)
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
-    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
+    int dataSize = GetPixelDataSize(width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color *pixels = (Color *)RL_CALLOC(dataSize, 1);
 
-    for (int i = 0; i < width*height; i++) pixels[i] = color;
+    for (int i = 0; (pixels != NULL) && (i < width*height); i++) pixels[i] = color;
 
     Image image = {
         .data = pixels,
@@ -1228,18 +1230,25 @@ Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = { 0 };
 
-    int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
-
-    result.width = (int)rec.width;
-    result.height = (int)rec.height;
-    result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
-    result.format = image.format;
-    result.mipmaps = 1;
-
-    for (int y = 0; y < (int)rec.height; y++)
+    // Basic rectangle validation: size smaller than image size
+    if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
+        (((int)rec.x + (int)rec.width) <= image.width) &&
+        (((int)rec.y + (int)rec.height) <= image.height))
     {
-        memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
+        int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
+
+        result.width = (int)rec.width;
+        result.height = (int)rec.height;
+        result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
+        result.format = image.format;
+        result.mipmaps = 1;
+
+        for (int y = 0; y < (int)rec.height; y++)
+        {
+            memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
+        }
     }
+    else TRACELOG(LOG_WARNING, "IMAGE: Rectangle provided for ImageToImage not valid");
 
     return result;
 }
@@ -2684,45 +2693,49 @@ void ImageRotate(Image *image, int degrees)
         int width = (int)(fabsf(image->width*cosRadius) + fabsf(image->height*sinRadius));
         int height = (int)(fabsf(image->height*cosRadius) + fabsf(image->width*sinRadius));
 
+        int dataSize = GetPixelDataSize(width, height, image->format);
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(width*height, bytesPerPixel);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(dataSize, 1);
 
-        for (int y = 0; y < height; y++)
+        if (rotatedData != NULL)
         {
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
-                float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
-
-                if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
+                for (int x = 0; x < width; x++)
                 {
-                    int x1 = (int)floorf(oldX);
-                    int y1 = (int)floorf(oldY);
-                    int x2 = MIN(x1 + 1, image->width - 1);
-                    int y2 = MIN(y1 + 1, image->height - 1);
+                    float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
+                    float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
 
-                    float px = oldX - x1;
-                    float py = oldY - y1;
-
-                    for (int i = 0; i < bytesPerPixel; i++)
+                    if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
                     {
-                        float f1 = ((unsigned char *)image->data)[(y1*image->width + x1)*bytesPerPixel + i];
-                        float f2 = ((unsigned char *)image->data)[(y1*image->width + x2)*bytesPerPixel + i];
-                        float f3 = ((unsigned char *)image->data)[(y2*image->width + x1)*bytesPerPixel + i];
-                        float f4 = ((unsigned char *)image->data)[(y2*image->width + x2)*bytesPerPixel + i];
+                        int x1 = (int)floorf(oldX);
+                        int y1 = (int)floorf(oldY);
+                        int x2 = MIN(x1 + 1, image->width - 1);
+                        int y2 = MIN(y1 + 1, image->height - 1);
 
-                        float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
+                        float px = oldX - x1;
+                        float py = oldY - y1;
 
-                        rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                        for (int i = 0; i < bytesPerPixel; i++)
+                        {
+                            float f1 = ((unsigned char *)image->data)[(y1*image->width + x1)*bytesPerPixel + i];
+                            float f2 = ((unsigned char *)image->data)[(y1*image->width + x2)*bytesPerPixel + i];
+                            float f3 = ((unsigned char *)image->data)[(y2*image->width + x1)*bytesPerPixel + i];
+                            float f4 = ((unsigned char *)image->data)[(y2*image->width + x2)*bytesPerPixel + i];
+
+                            float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
+
+                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                        }
                     }
                 }
             }
-        }
 
-        RL_FREE(image->data);
-        image->data = rotatedData;
-        image->width = width;
-        image->height = height;
+            RL_FREE(image->data);
+            image->data = rotatedData;
+            image->width = width;
+            image->height = height;
+        }
     }
 }
 
@@ -3927,7 +3940,7 @@ void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rota
 // Draw rectangle lines within an image
 void ImageDrawRectangleLines(Image *dst, int posX, int posY, int width, int height, Color color)
 {
-    Rectangle rec = { posX, posY, width, height };
+    Rectangle rec = { (float)posX, (float)posY, (float)width, (float)height };
     ImageDrawRectangleLinesEx(dst, rec, 1, color);
 }
 
@@ -4019,8 +4032,8 @@ void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inn
 // Draw an image within an image
 void ImageDrawImage(Image *dst, Image src, int posX, int posY, Color tint)
 {
-    Rectangle srcRec = { 0, 0, src.width, src.height };
-    Rectangle dstRec = { posX, posY, srcRec.width, srcRec.height };
+    Rectangle srcRec = { 0.0f, 0.0f, (float)src.width, (float)src.height };
+    Rectangle dstRec = { (float)posX, (float)posY, srcRec.width, srcRec.height };
     ImageDrawImagePro(dst, src, srcRec, dstRec, (Vector2){ 0 }, 0.0f, tint);
 }
 
@@ -5501,17 +5514,24 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
+    
+    unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
 
-    double bytesPerPixel = (double)bpp/8.0;
-    dataSize = (int)(bytesPerPixel*width*height); // Total data size in bytes
-
-    // Most compressed formats works on 4x4 blocks,
-    // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width < 4) && (height < 4))
+    if (dataSizeBytes < INT_MAX)
     {
-        if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
-        else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        dataSize = (int)dataSizeBytes;
+
+        // Most compressed formats works on 4x4 blocks,
+        // if texture is smaller, minimum dataSize is 8 or 16
+        if ((width < 4) && (height < 4))
+        {
+            if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
+            else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
+        }
     }
+    
+    // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
+    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;
 }
