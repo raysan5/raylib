@@ -3608,7 +3608,7 @@ AutomationEventList LoadAutomationEventList(const char *fileName)
 
                             counter++;
                         }
-                        else TRACELOG(LOG_WARNING, "AUTOMATION: Event goes beyond automated list capacity (MAX: %i): %s", buffer, list.capacity);
+                        else TRACELOG(LOG_WARNING, "AUTOMATION: Event goes beyond automated list capacity (MAX: %u): %s", list.capacity, buffer);
                     } break;
                     default: break;
                 }
