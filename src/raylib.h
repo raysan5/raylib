@@ -1162,6 +1162,7 @@ RLAPI int MakeDirectory(const char *dirPath);                       // Create di
 RLAPI int ChangeDirectory(const char *dirPath);                     // Change working directory, returns 0 on success
 RLAPI bool IsPathFile(const char *path);                            // Check if provided path points to a file
 RLAPI bool IsPathDirectory(const char *path);                       // Check if provided path points to a directory
+RLAPI bool IsPathAbsolute(const char *path);                        // Check if provided path is an absolute path
 RLAPI bool IsFileNameValid(const char *fileName);                   // Check if fileName is valid for the platform/OS
 RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths, files and directories, no subdirs scan
 RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and subdir scan; some filters available: '*.*','FILES*','DIRS*'

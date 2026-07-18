@@ -2842,6 +2842,28 @@ bool IsPathDirectory(const char *path)
     return result;
 }
 
+// Check if provided path is an absolute path
+static bool IsPathAbsolute(const char *path)
+{
+    int result = false;
+    
+    if ((path != NULL) && (path[0] != '\0'))
+    {
+#if defined(_WIN32)
+        // UNC path (\\server\share)
+        if ((path[0] == '\\') && (path[1] == '\\')) result = true;
+        // Drive letter (e.g. C:\ or D:/)
+        else if (isalpha((unsigned char)path[0]) && (path[1] == ':') &&
+            ((path[2] == '\\') || (path[2] == '/'))) result = true;
+#else
+        // POSIX: must start with /
+        if (path[0] == '/') result = true;
+#endif
+    }
+
+    return result;
+}
+
 // Check if fileName is valid for the platform/OS
 bool IsFileNameValid(const char *fileName)
 {
