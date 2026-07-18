@@ -2522,7 +2522,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     return fileName;
 }
 
-// Get directory for a given filePath
+// Get directory for a provided filePath
 const char *GetDirectoryPath(const char *filePath)
 {
     /*
@@ -2569,7 +2569,7 @@ const char *GetDirectoryPath(const char *filePath)
     return dirPath;
 }
 
-// Get previous directory path for a given path
+// Get previous directory path for a provided path
 const char *GetPrevDirectoryPath(const char *dirPath)
 {
     static char prevDirPath[MAX_FILEPATH_LENGTH] = { 0 };
@@ -2819,7 +2819,7 @@ int ChangeDirectory(const char *dirPath)
     return result;
 }
 
-// Check if given path point to a file
+// Check if provided path point to a file
 bool IsPathFile(const char *path)
 {
     bool result = false;
@@ -2832,7 +2832,7 @@ bool IsPathFile(const char *path)
     return result;
 }
 
-// Check if given path point to a directory
+// Check if provided path point to a directory
 bool IsPathDirectory(const char *path)
 {
     bool result = false;
@@ -4214,7 +4214,7 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
-// Get touch point identifier for given index
+// Get touch point identifier for provided index
 int GetTouchPointId(int index)
 {
     int id = -1;
