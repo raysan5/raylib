@@ -5341,6 +5341,13 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     float dxStart = (float)(xLoopStart - xStart);
     float xOffset = xSubstep + dxStart;
 
+    // Pre-calculate the starting pointers for the framebuffer row
+    int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
+    uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+    uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
+#endif
+
     // Initializing the interpolation starting values
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
     float z = start->position[2] + ctx->dZdx*xOffset;
@@ -5358,13 +5365,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
     float texcoord[2];
     SW_VEC_OP(texcoord[i] = start->texcoord[i] + ctx->dTdx[i]*xOffset, i, 2);
-#endif
-
-    // Pre-calculate the starting pointers for the framebuffer row
-    int baseOffset = y*RLSW.colorBuffer->width + xLoopStart;
-    uint8_t *cPtr = (uint8_t *)(RLSW.colorBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-    uint8_t *dPtr = (uint8_t *)(RLSW.depthBuffer->pixels) + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
 #endif
 
 #define SW_AFFINE_BLOCK 16
@@ -5603,14 +5603,18 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     // For axis-aligned quads x+y and x-y uniquely identify each corner
     const sw_vertex_t *verts[4] = { a, b, c, d };
     const sw_vertex_t *tl = verts[0], *tr = verts[0], *br = verts[0], *bl = verts[0];
+    float tlSum = tl->position[0] + tl->position[1];
+    float trDiff = tr->position[0] - tr->position[1];
+    float brSum = br->position[0] + br->position[1];
+    float blDiff = bl->position[0] - bl->position[1];
     for (int i = 1; i < 4; i++)
     {
         float sum  = verts[i]->position[0] + verts[i]->position[1];
         float diff = verts[i]->position[0] - verts[i]->position[1];
-        if (sum  < tl->position[0] + tl->position[1]) tl = verts[i];
-        if (diff > tr->position[0] - tr->position[1]) tr = verts[i];
-        if (sum  > br->position[0] + br->position[1]) br = verts[i];
-        if (diff < bl->position[0] - bl->position[1]) bl = verts[i];
+        if (sum  < tlSum)  { tl = verts[i]; tlSum = sum; }
+        if (diff > trDiff) { tr = verts[i]; trDiff = diff; }
+        if (sum  > brSum)  { br = verts[i]; brSum = sum; }
+        if (diff < blDiff) { bl = verts[i]; blDiff = diff; }
     }
 
     int xMin = (int)tl->position[0];
@@ -5630,18 +5634,27 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float h = (float)(yMax - yMin);
     if ((w <= 0) || (h <= 0)) return;
 
+    // Per-quad setup, independent of pipeline state
     float wRcp = sw_rcp(w);
     float hRcp = sw_rcp(h);
-
-    // Subpixel corrections
     float xSubstep = 1.0f - sw_fract(tl->position[0]);
     float ySubstep = 1.0f - sw_fract(tl->position[1]);
+    // Distance the in-bounds boundary is from the quad's edges, only on the left and top
+    float dxMin = (float)(xLoopMin - xMin);
+    float dyMin = (float)(yLoopMin - yMin);
+    int stride = RLSW.colorBuffer->width;
+    uint8_t *cPixels = RLSW.colorBuffer->pixels;
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+    uint8_t *dPixels = RLSW.depthBuffer->pixels;
+#endif
 
 #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
     // Gradients along X (tl->tr) and Y (tl->bl)
     float dZdx = (tr->position[2] - tl->position[2])*wRcp;
     float dZdy = (bl->position[2] - tl->position[2])*hRcp;
     float zRow = tl->position[2] + dZdx*xSubstep + dZdy*ySubstep;
+    // Correct start by how far it's clipped outside the framebuffer
+    zRow += dZdy*dyMin + dZdx*dxMin;
 #endif
 
 #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
@@ -5649,6 +5662,7 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     SW_VEC_OP(dCdx[i] = (tr->color[i] - tl->color[i])*wRcp, i, 4);
     SW_VEC_OP(dCdy[i] = (bl->color[i] - tl->color[i])*hRcp, i, 4);
     SW_VEC_OP(cRow[i] = tl->color[i] + dCdx[i]*xSubstep + dCdy[i]*ySubstep, i, 4);
+    SW_VEC_OP(cRow[i] += dCdx[i]*dxMin + dCdy[i]*dyMin, i, 4);
 #else
     const float *flatColor = tl->color;
 #endif
@@ -5658,30 +5672,10 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     SW_VEC_OP(dTdx[i] = (tr->texcoord[i] - tl->texcoord[i])*wRcp, i, 2);
     SW_VEC_OP(dTdy[i] = (bl->texcoord[i] - tl->texcoord[i])*hRcp, i, 2);
     SW_VEC_OP(tcRow[i] = tl->texcoord[i] + dTdx[i]*xSubstep + dTdy[i]*ySubstep, i, 2);
+    SW_VEC_OP(tcRow[i] += dTdy[i]*dyMin + dTdx[i]*dxMin, i, 2);
 
     // Constant across the whole quad: resolved once, called directly per pixel
     sw_texture_sampler_f sample = sw_texture_pick_sampler(RLSW.boundTexture, dTdx, dTdy);
-#endif
-
-    int stride = RLSW.colorBuffer->width;
-    uint8_t *cPixels = RLSW.colorBuffer->pixels;
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
-    uint8_t *dPixels = RLSW.depthBuffer->pixels;
-#endif
-
-    // Calculate the distance the in-bounds boundary is from the quad's edges, only on the left and top
-    float dxMin = (float)(xLoopMin - xMin);
-    float dyMin = (float)(yLoopMin - yMin);
-
-    // Correct our start by how far it's clipped outside the framebuffer
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
-    zRow += dZdy*dyMin + dZdx*dxMin;
-#endif
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-    SW_VEC_OP(cRow[i] += dCdx[i]*dxMin + dCdy[i]*dyMin, i, 4);
-#endif
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-    SW_VEC_OP(tcRow[i] += dTdy[i]*dyMin + dTdx[i]*dxMin, i, 2);
 #endif
 
     for (int y = yLoopMin; y < yLoopMax; y++)
