@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="612">
+    <Functions count="613">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1099,10 +1099,10 @@
         <Function name="GetFileNameWithoutExt" retType="const char *" paramCount="1" desc="Get filename string without extension (uses static string)">
             <Param type="const char *" name="filePath" desc="" />
         </Function>
-        <Function name="GetDirectoryPath" retType="const char *" paramCount="1" desc="Get full path for a given fileName with path (uses static string)">
+        <Function name="GetDirectoryPath" retType="const char *" paramCount="1" desc="Get full path for a provided fileName with path (uses static string)">
             <Param type="const char *" name="filePath" desc="" />
         </Function>
-        <Function name="GetPrevDirectoryPath" retType="const char *" paramCount="1" desc="Get previous directory path for a given path (uses static string)">
+        <Function name="GetPrevDirectoryPath" retType="const char *" paramCount="1" desc="Get previous directory path for a provided path (uses static string)">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="GetWorkingDirectory" retType="const char *" paramCount="0" desc="Get current working directory (uses static string)">
@@ -1115,10 +1115,13 @@
         <Function name="ChangeDirectory" retType="int" paramCount="1" desc="Change working directory, returns 0 on success">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if given path points to a file">
+        <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if provided path points to a file">
             <Param type="const char *" name="path" desc="" />
         </Function>
-        <Function name="IsPathDirectory" retType="bool" paramCount="1" desc="Check if given path points to a directory">
+        <Function name="IsPathDirectory" retType="bool" paramCount="1" desc="Check if provided path points to a directory">
+            <Param type="const char *" name="path" desc="" />
+        </Function>
+        <Function name="IsPathAbsolute" retType="bool" paramCount="1" desc="Check if provided path is an absolute path">
             <Param type="const char *" name="path" desc="" />
         </Function>
         <Function name="IsFileNameValid" retType="bool" paramCount="1" desc="Check if fileName is valid for the platform/OS">
@@ -1319,7 +1322,7 @@
         <Function name="GetTouchPosition" retType="Vector2" paramCount="1" desc="Get touch position XY for a touch point index (relative to screen size)">
             <Param type="int" name="index" desc="" />
         </Function>
-        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for given index">
+        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for provided index">
             <Param type="int" name="index" desc="" />
         </Function>
         <Function name="GetTouchPointCount" retType="int" paramCount="0" desc="Get number of touch points">
@@ -2039,7 +2042,7 @@
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
         </Function>
-        <Function name="ImageClearBackground" retType="void" paramCount="2" desc="Clear image background with given color">
+        <Function name="ImageClearBackground" retType="void" paramCount="2" desc="Clear image background with provided color">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>

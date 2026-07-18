@@ -4603,7 +4603,7 @@
     },
     {
       "name": "GetDirectoryPath",
-      "description": "Get full path for a given fileName with path (uses static string)",
+      "description": "Get full path for a provided fileName with path (uses static string)",
       "returnType": "const char *",
       "params": [
         {
@@ -4614,7 +4614,7 @@
     },
     {
       "name": "GetPrevDirectoryPath",
-      "description": "Get previous directory path for a given path (uses static string)",
+      "description": "Get previous directory path for a provided path (uses static string)",
       "returnType": "const char *",
       "params": [
         {
@@ -4657,7 +4657,7 @@
     },
     {
       "name": "IsPathFile",
-      "description": "Check if given path points to a file",
+      "description": "Check if provided path points to a file",
       "returnType": "bool",
       "params": [
         {
@@ -4668,7 +4668,18 @@
     },
     {
       "name": "IsPathDirectory",
-      "description": "Check if given path points to a directory",
+      "description": "Check if provided path points to a directory",
+      "returnType": "bool",
+      "params": [
+        {
+          "type": "const char *",
+          "name": "path"
+        }
+      ]
+    },
+    {
+      "name": "IsPathAbsolute",
+      "description": "Check if provided path is an absolute path",
       "returnType": "bool",
       "params": [
         {
@@ -5379,7 +5390,7 @@
     },
     {
       "name": "GetTouchPointId",
-      "description": "Get touch point identifier for given index",
+      "description": "Get touch point identifier for provided index",
       "returnType": "int",
       "params": [
         {
@@ -8099,7 +8110,7 @@
     },
     {
       "name": "ImageClearBackground",
-      "description": "Clear image background with given color",
+      "description": "Clear image background with provided color",
       "returnType": "void",
       "params": [
         {
