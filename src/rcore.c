@@ -2843,7 +2843,7 @@ bool IsPathDirectory(const char *path)
 }
 
 // Check if provided path is an absolute path
-static bool IsPathAbsolute(const char *path)
+bool IsPathAbsolute(const char *path)
 {
     int result = false;
     
