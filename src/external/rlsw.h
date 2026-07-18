@@ -3783,7 +3783,6 @@ static void sw_immediate_set_color(const float color[4])
     RLSW.primitive.color[1] = color[1];
     RLSW.primitive.color[2] = color[2];
     RLSW.primitive.color[3] = color[3];
-
 }
 
 static void sw_immediate_set_texcoord(const float texcoord[2])
@@ -3837,6 +3836,18 @@ static void sw_immediate_push_vertex(const float position[4])
             else if ((RLSW.blendFlags & SW_BLEND_FLAG_NEEDS_ALPHA) && (!RLSW.primitive.hasColorAlpha))
             {
                 if (!(state & SW_STATE_TEXTURE_2D) || (RLSW.boundTexture->alpha == SW_PIXEL_ALPHA_NONE)) state &= ~SW_STATE_BLEND;
+            }
+        }
+
+        // Determine whether colors should be interpolated
+        const float *ref = RLSW.primitive.buffer[0].color;
+        for (int i = 1; i < RLSW.primitive.vertexCount; ++i)
+        {
+            const float *c = RLSW.primitive.buffer[i].color;
+            if (c[0] != ref[0] || c[1] != ref[1] || c[2] != ref[2] || c[3] != ref[3])
+            {
+                state |= SW_STATE_COLOR_INTERP;
+                break;
             }
         }
 
