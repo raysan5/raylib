@@ -3793,6 +3793,10 @@ unsigned char *rlReadScreenPixels(int width, int height)
 {
     unsigned char *imgData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
 
+    // NOTE: Buffer retrieved is GL_FRONT in single-buffered configurations 
+    // and GL_BACK in double-buffered configurations, make sure to call it at the end of frame
+    //glReadBuffer(GL_BACK);
+
     // NOTE: glReadPixels() returns image flipped vertically -> (0,0) is the bottom left corner of the framebuffer
     // WARNING: Getting alpha channel! Be careful, it can be transparent if not cleared properly!
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
