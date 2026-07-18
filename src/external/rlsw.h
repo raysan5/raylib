@@ -793,14 +793,14 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 
 #if defined(NDEBUG)
     #if defined(_MSC_VER)
-        #define SW_FORCE_INLINE __forceinline
+        #define SW_INLINE __forceinline
     #elif defined(__GNUC__) || defined(__clang__)
-        #define SW_FORCE_INLINE inline __attribute__((always_inline))
+        #define SW_INLINE inline __attribute__((always_inline))
     #else
-        #define SW_FORCE_INLINE inline
+        #define SW_INLINE inline
     #endif
 #else
-    #define SW_FORCE_INLINE inline
+    #define SW_INLINE inline
 #endif
 
 #if defined(_M_X64) || defined(__x86_64__)
@@ -966,6 +966,7 @@ typedef enum {
 } sw_pixel_alpha_t;
 
 // Forward declarations
+typedef struct sw_texture sw_texture_t;
 typedef struct sw_vertex sw_vertex_t;
 
 // Pixel getter functions
@@ -975,6 +976,9 @@ typedef void (*sw_pixel_read_color_f)(float *SW_RESTRICT, const void *SW_RESTRIC
 // Pixel setter functions
 typedef void (*sw_pixel_write_color8_f)(void *SW_RESTRICT, const uint8_t *SW_RESTRICT, uint32_t);
 typedef void (*sw_pixel_write_color_f)(void *SW_RESTRICT, const float *SW_RESTRICT, uint32_t);
+
+// Texture sampler function
+typedef void (*sw_texture_sampler_f)(float *SW_RESTRICT, const sw_texture_t *SW_RESTRICT, float, float);
 
 // Color blending function
 typedef void (*sw_blend_f)(float *SW_RESTRICT, const float *SW_RESTRICT);
@@ -993,7 +997,7 @@ typedef struct sw_vertex {
     float texcoord[2];          // Texture coordinates
 } sw_vertex_t;
 
-typedef struct {
+typedef struct sw_texture {
     void *pixels;                       // Texture pixels
     sw_pixel_read_color8_f readColor8;  // Texel read RGBA8
     sw_pixel_read_color_f readColor;    // Texel read RGBA32F
@@ -1167,6 +1171,13 @@ static const int SW_PRIMITIVE_VERTEX_COUNT[] =
 // Internal Functions Definitions
 //----------------------------------------------------------------------------------
 
+// Common helper macros
+//----------------------------------------------------------------------------------
+#define SW_VEC_OP(expr, i_name, count) do {                 \
+    for (int i_name = 0; i_name < (count); i_name++) expr;  \
+} while (0)
+//----------------------------------------------------------------------------------
+
 // Math helper functions
 //----------------------------------------------------------------------------------
 static inline void sw_matrix_id(sw_matrix_t dst)
@@ -1257,7 +1268,7 @@ static inline float sw_fract(float x)
     return (x - floorf(x));
 }
 
-static SW_FORCE_INLINE float sw_rcp(float x)
+static SW_INLINE float sw_rcp(float x)
 {
 #if defined(__XTENSA__)
     // Xtensa architecture optimization
@@ -2464,8 +2475,8 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
     }
 }
 
-static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex,
-                                     float u, float v, float dUdx, float dUdy, float dVdx, float dVdy)
+// Resolves which sample function to use from the texel-to-pixel derivative magnitude
+static inline sw_texture_sampler_f sw_texture_pick_sampler(const sw_texture_t *tex, const float dTdx[2], const float dTdy[2])
 {
     // NOTE: Commented there is the previous method used
     // There was no need to compute the square root because
@@ -2474,19 +2485,12 @@ static inline void sw_texture_sample(float *SW_RESTRICT color, const sw_texture_
     //float dv = sqrtf(dVdx*dVdx + dVdy*dVdy);
     //float L = (du > dv)? du : dv;
 
-    // Calculate the derivatives for each axis
-    float dU2 = dUdx*dUdx + dUdy*dUdy;
-    float dV2 = dVdx*dVdx + dVdy*dVdy;
+    float dU2 = dTdx[0]*dTdx[0] + dTdy[0]*dTdy[0];
+    float dV2 = dTdx[1]*dTdx[1] + dTdy[1]*dTdy[1];
     float L2 = (dU2 > dV2)? dU2 : dV2;
 
     SWfilter filter = (L2 > 1.0f)? tex->minFilter : tex->magFilter;
-
-    switch (filter)
-    {
-        case SW_NEAREST: sw_texture_sample_nearest(color, tex, u, v); break;
-        case SW_LINEAR: sw_texture_sample_linear(color, tex, u, v); break;
-        default: break;
-    }
+    return (filter == SW_LINEAR)? sw_texture_sample_linear : sw_texture_sample_nearest;
 }
 //-------------------------------------------------------------------------------------------
 
@@ -5247,82 +5251,80 @@ void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWattachget 
 #define SW_RASTER_TRIANGLE_FLAGS SW_FLAGS(SW_RASTER_TRIANGLE_STATES)
 #define SW_RASTER_TRIANGLE_SPAN  SW_CONCATX(sw_raster_triangle_span_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 #define SW_RASTER_TRIANGLE       SW_CONCATX(sw_raster_triangle_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
+#define SW_SPAN_CTX              SW_CONCATX(sw_span_ctx_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    #define SW_SPAN_FLAT_COLOR_PARAM
-    #define SW_SPAN_FLAT_COLOR_ARG
-#else
-    #define SW_SPAN_FLAT_COLOR_PARAM , const float flatColor[4]
-    #define SW_SPAN_FLAT_COLOR_ARG   , flatColor
-#endif
+// True when a perspective-correct interpolation pass is needed (color or UVs);
+// lets SPAN skip all w-tracking and block subdivision otherwise
+#define SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE \
+    (((SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP) || ((SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D))
 
 #define SW_GRAD SW_CONCATX(sw_grad_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 #define SW_VADD SW_CONCATX(sw_vadd_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
-#define SW_VFMA SW_CONCATX(sw_vfma_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
+#define SW_VMAD SW_CONCATX(sw_vmad_, SW_NAME(SW_RASTER_TRIANGLE_STATES))
 
-static SW_FORCE_INLINE void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+// Per-triangle constants reused by every scanline: attribute x-derivatives
+// (constant across a planar triangle) plus whatever is fixed once and for
+// all when its interpolation is disabled (flat color, resolved sampler)
+typedef struct
 {
-    out->position[0] = (b->position[0] - a->position[0])*scale;
-    out->position[1] = (b->position[1] - a->position[1])*scale;
-    out->position[2] = (b->position[2] - a->position[2])*scale;
-    out->position[3] = (b->position[3] - a->position[3])*scale;
-
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    out->color[0] = (b->color[0] - a->color[0])*scale;
-    out->color[1] = (b->color[1] - a->color[1])*scale;
-    out->color[2] = (b->color[2] - a->color[2])*scale;
-    out->color[3] = (b->color[3] - a->color[3])*scale;
+#if SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE
+    float dWdx;
 #endif
-
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+    float dZdx;
+#endif
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    float dCdx[4];
+#else
+    float flatColor[4];
+#endif
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    out->texcoord[0] = (b->texcoord[0] - a->texcoord[0])*scale;
-    out->texcoord[1] = (b->texcoord[1] - a->texcoord[1])*scale;
+    float dTdx[2];
+    float dTdy[2];
+    sw_texture_sampler_f sample;
+#endif
+} SW_SPAN_CTX;
+
+static inline void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+{
+    SW_VEC_OP(out->position[i] = (b->position[i] - a->position[i])*scale, i, 4);
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    SW_VEC_OP(out->color[i] = (b->color[i] - a->color[i])*scale, i, 4);
+#endif
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+    SW_VEC_OP(out->texcoord[i] = (b->texcoord[i] - a->texcoord[i])*scale, i, 2);
 #endif
 }
 
-static SW_FORCE_INLINE void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients)
+static inline void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc)
 {
-    out->position[0] += gradients->position[0];
-    out->position[1] += gradients->position[1];
-    out->position[2] += gradients->position[2];
-    out->position[3] += gradients->position[3];
-
+    SW_VEC_OP(out->position[i] += inc->position[i], i, 4);
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    out->color[0] += gradients->color[0];
-    out->color[1] += gradients->color[1];
-    out->color[2] += gradients->color[2];
-    out->color[3] += gradients->color[3];
+    SW_VEC_OP(out->color[i] += inc->color[i], i, 4);
 #endif
-
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    out->texcoord[0] += gradients->texcoord[0];
-    out->texcoord[1] += gradients->texcoord[1];
+    SW_VEC_OP(out->texcoord[i] += inc->texcoord[i], i, 2);
 #endif
 }
 
-static SW_FORCE_INLINE void SW_VFMA(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT gradients, float scale)
+static inline void SW_VMAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc, float scale)
 {
-    out->position[0] += gradients->position[0]*scale;
-    out->position[1] += gradients->position[1]*scale;
-    out->position[2] += gradients->position[2]*scale;
-    out->position[3] += gradients->position[3]*scale;
-
+    SW_VEC_OP(out->position[i] += inc->position[i]*scale, i, 4);
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    out->color[0] += gradients->color[0]*scale;
-    out->color[1] += gradients->color[1]*scale;
-    out->color[2] += gradients->color[2]*scale;
-    out->color[3] += gradients->color[3]*scale;
+    SW_VEC_OP(out->color[i] += inc->color[i]*scale, i, 4);
 #endif
-
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    out->texcoord[0] += gradients->texcoord[0]*scale;
-    out->texcoord[1] += gradients->texcoord[1]*scale;
+    SW_VEC_OP(out->texcoord[i] += inc->texcoord[i]*scale, i, 2);
 #endif
 }
 
-static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end,
-                                    float dUdy, float dVdy SW_SPAN_FLAT_COLOR_PARAM)
+static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t *end, const SW_SPAN_CTX *ctx)
 {
+    // Skip rows outside the framebuffer; can only trigger on FP rounding at
+    // clip boundaries since triangles are already clipped to the viewport
+    int y = (int)start->position[1];
+    if (y < 0 || y >= RLSW.colorBuffer->height) return;
+
     // Gets the start/end coordinates and skip empty lines
     int xStart = (int)start->position[0];
     int xEnd = (int)end->position[0];
@@ -5333,33 +5335,6 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     int xLoopEnd = (xEnd <= RLSW.colorBuffer->width)? xEnd : RLSW.colorBuffer->width;
     if (xLoopStart >= xLoopEnd) return; // Nothing to draw
 
-    // Get the current row and skip if outside the framebuffer
-    // Maybe this check is better suited elsewhere?
-    int y = (int)start->position[1];
-    if (y < 0 || y >= RLSW.colorBuffer->height) return;
-
-    // Compute the inverse horizontal distance along the X axis
-    float dxRcp = sw_rcp(end->position[0] - start->position[0]);
-
-    // Compute the interpolation steps along the X axis
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-    float dZdx = (end->position[2] - start->position[2])*dxRcp;
-#endif
-    float dWdx = (end->position[3] - start->position[3])*dxRcp;
-
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    float dCdx[4] = {
-        (end->color[0] - start->color[0])*dxRcp,
-        (end->color[1] - start->color[1])*dxRcp,
-        (end->color[2] - start->color[2])*dxRcp,
-        (end->color[3] - start->color[3])*dxRcp
-    };
-#endif
-#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    float dUdx = (end->texcoord[0] - start->texcoord[0])*dxRcp;
-    float dVdx = (end->texcoord[1] - start->texcoord[1])*dxRcp;
-#endif
-
     // Compute the subpixel distance to traverse before the first pixel
     // Also step further into them to move away from the colorbuffer edge
     float xSubstep = 1.0f - sw_fract(start->position[0]);
@@ -5368,21 +5343,21 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
     // Initializing the interpolation starting values
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-    float z = start->position[2] + dZdx*xOffset;
+    float z = start->position[2] + ctx->dZdx*xOffset;
 #endif
-    float w = start->position[3] + dWdx*xOffset;
-
+#if SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE
+    float w = start->position[3] + ctx->dWdx*xOffset;
+#endif
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-    float color[4] = {
-        start->color[0] + dCdx[0]*xOffset,
-        start->color[1] + dCdx[1]*xOffset,
-        start->color[2] + dCdx[2]*xOffset,
-        start->color[3] + dCdx[3]*xOffset
-    };
+    float color[4];
+    SW_VEC_OP(color[i] = start->color[i] + ctx->dCdx[i]*xOffset, i, 4);
+#else
+    // Flat: constant across the whole triangle, computed once for the whole span
+    const float *srcColor = ctx->flatColor;
 #endif
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-    float u = start->texcoord[0] + dUdx*xOffset;
-    float v = start->texcoord[1] + dVdx*xOffset;
+    float texcoord[2];
+    SW_VEC_OP(texcoord[i] = start->texcoord[i] + ctx->dTdx[i]*xOffset, i, 2);
 #endif
 
     // Pre-calculate the starting pointers for the framebuffer row
@@ -5397,6 +5372,7 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
     int x = xLoopStart;
     while (x < xLoopEnd)
     {
+    #if SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE
         // Clamp last block to remaining pixels
         int blockEnd = x + SW_AFFINE_BLOCK;
         if (blockEnd > xLoopEnd) blockEnd = xLoopEnd;
@@ -5405,31 +5381,25 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
         // Only 2 '1/w' here; none inside the pixel loop
         float wRcpA = sw_rcp(w);
-        float wB = w + dWdx*blockLenF;
+        float wB = w + ctx->dWdx*blockLenF;
         float wRcpB = sw_rcp(wB);
+    #else
+        // Nothing perspective-correct to interpolate: one block covers the whole span
+        int blockEnd = xLoopEnd;
+    #endif
 
     #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
         // Perspective-correct color at both block endpoints, then affine gradient
-        float srcColor[4] = {
-            color[0]*wRcpA, color[1]*wRcpA, color[2]*wRcpA, color[3]*wRcpA
-        };
-        float dSrcColordx[4] = {
-            ((color[0] + dCdx[0]*blockLenF)*wRcpB - srcColor[0])*blockLenRcp,
-            ((color[1] + dCdx[1]*blockLenF)*wRcpB - srcColor[1])*blockLenRcp,
-            ((color[2] + dCdx[2]*blockLenF)*wRcpB - srcColor[2])*blockLenRcp,
-            ((color[3] + dCdx[3]*blockLenF)*wRcpB - srcColor[3])*blockLenRcp
-        };
-    #else
-        // Flat: constant across the whole triangle, no perspective correction needed
-        const float *srcColor = flatColor;
+        float srcColor[4], dSrcColor[4];
+        SW_VEC_OP(srcColor[i] = color[i]*wRcpA, i, 4);
+        SW_VEC_OP(dSrcColor[i] = ((color[i] + ctx->dCdx[i]*blockLenF)*wRcpB - srcColor[i])*blockLenRcp, i, 4);
     #endif
 
     #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
         // Perspective-correct UVs at both endpoints, then affine gradient
-        float uAffine  = u*wRcpA;
-        float vAffine  = v*wRcpA;
-        float dUaffine = ((u + dUdx*blockLenF)*wRcpB - uAffine)*blockLenRcp;
-        float dVaffine = ((v + dVdx*blockLenF)*wRcpB - vAffine)*blockLenRcp;
+        float tcAffine[2], dTcAffine[2];
+        SW_VEC_OP(tcAffine[i] = texcoord[i]*wRcpA, i, 2);
+        SW_VEC_OP(dTcAffine[i] = ((texcoord[i] + ctx->dTdx[i]*blockLenF)*wRcpB - tcAffine[i])*blockLenRcp, i, 2);
     #endif
 
         // Inner span pixel loop
@@ -5445,14 +5415,10 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
 
             #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
             {
-                float texColor[4];
-                sw_texture_sample(texColor, RLSW.boundTexture, uAffine, vAffine, dUdx, dUdy, dVdx, dVdy);
-                float finalColor[4] = {
-                    srcColor[0]*texColor[0],
-                    srcColor[1]*texColor[1],
-                    srcColor[2]*texColor[2],
-                    srcColor[3]*texColor[3]
-                };
+                float finalColor[4];
+                ctx->sample(finalColor, RLSW.boundTexture, tcAffine[0], tcAffine[1]);
+                SW_VEC_OP(finalColor[i] *= srcColor[i], i, 4);
+
                 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_BLEND
                 {
                     float dstColor[4];
@@ -5482,41 +5448,29 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
         discard:
         #endif
-        #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-            srcColor[0] += dSrcColordx[0];
-            srcColor[1] += dSrcColordx[1];
-            srcColor[2] += dSrcColordx[2];
-            srcColor[3] += dSrcColordx[3];
-        #endif
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
-
-            #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-            {
-                z += dZdx;
-                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
-            }
-            #endif
-
-            #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-            {
-                uAffine += dUaffine;
-                vAffine += dVaffine;
-            }
-            #endif
-        }
-
-        // Advance perspective-space accumulators by the full block width
-        w = wB;
+        #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+            z += ctx->dZdx;
+        #endif
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
-        color[0] += dCdx[0]*blockLenF;
-        color[1] += dCdx[1]*blockLenF;
-        color[2] += dCdx[2]*blockLenF;
-        color[3] += dCdx[3]*blockLenF;
+            SW_VEC_OP(srcColor[i] += dSrcColor[i], i, 4);
         #endif
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-        u += dUdx*blockLenF;
-        v += dVdx*blockLenF;
+            SW_VEC_OP(tcAffine[i] += dTcAffine[i], i, 2);
         #endif
+        }
+
+#if SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE
+        // Advance perspective-space accumulators by the full block width
+        w = wB;
+    #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+        SW_VEC_OP(color[i] += ctx->dCdx[i]*blockLenF, i, 4);
+    #endif
+    #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+        SW_VEC_OP(texcoord[i] += ctx->dTdx[i]*blockLenF, i, 2);
+    #endif
+#endif
     }
 
 #undef SW_AFFINE_BLOCK
@@ -5539,12 +5493,46 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
     float h01 = y1 - y0;
     float h12 = y2 - y1;
 
-    if (h02 < 1e-6f) return;
+    if (h02 < 1e-6f) return; // Degenerate (zero screen height): nothing to rasterize
 
     // Inverse edge dy for per-edge dV/dy (scanline interpolation)
     float h02Rcp = sw_rcp(h02);
     float h01Rcp = (h01 > 1e-6f)? sw_rcp(h01) : 0.0f;
     float h12Rcp = (h12 > 1e-6f)? sw_rcp(h12) : 0.0f;
+
+    // D = twice the signed screen area; also the shared denominator of the
+    // barycentric plane solve used below for whole-triangle x/y derivatives
+    float e1x = v1->position[0] - v0->position[0];
+    float e2x = v2->position[0] - v0->position[0];
+    float D = e1x*h02 - e2x*h01;
+    if (fabsf(D) < 1e-9f) return; // Degenerate (zero screen area): nothing to rasterize
+    float DRcp = sw_rcp(D);
+
+    // Whole-triangle xy-derivatives of an affine attribute (constant for every scanline)
+    #define SW_DADX(A0, A1, A2) ((((A1)-(A0))*h02 - ((A2)-(A0))*h01)*DRcp)
+    #define SW_DADY(A0, A1, A2) ((((A2)-(A0))*e1x - ((A1)-(A0))*e2x)*DRcp)
+
+    SW_SPAN_CTX ctx;
+#if SW_RASTER_TRIANGLE_NEEDS_PERSPECTIVE
+    ctx.dWdx = SW_DADX(v0->position[3], v1->position[3], v2->position[3]);
+#endif
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+    ctx.dZdx = SW_DADX(v0->position[2], v1->position[2], v2->position[2]);
+#endif
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
+    SW_VEC_OP(ctx.dCdx[i] = SW_DADX(v0->color[i], v1->color[i], v2->color[i]), i, 4);
+#else
+    float flatWRcp = sw_rcp(v0->position[3]);
+    SW_VEC_OP(ctx.flatColor[i] = v0->color[i]*flatWRcp, i, 4);
+#endif
+#if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
+    SW_VEC_OP(ctx.dTdx[i] = SW_DADX(v0->texcoord[i], v1->texcoord[i], v2->texcoord[i]), i, 2);
+    SW_VEC_OP(ctx.dTdy[i] = SW_DADY(v0->texcoord[i], v1->texcoord[i], v2->texcoord[i]), i, 2);
+    ctx.sample = sw_texture_pick_sampler(RLSW.boundTexture, ctx.dTdx, ctx.dTdy);
+#endif
+
+    #undef SW_DADX
+    #undef SW_DADY
 
     // Compute gradients for each side of the triangle
     sw_vertex_t dVXdy02, dVXdy01, dVXdy12;
@@ -5558,18 +5546,8 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
 
     // Get a copy of vertices for interpolation and apply substep correction
     sw_vertex_t lVert = *v0, rVert = *v0;
-    SW_VFMA(&lVert, &dVXdy02, y0Substep);
-    SW_VFMA(&rVert, &dVXdy01, y0Substep);
-
-#if !((SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP)
-    float invW = 1.0f / v0->position[3];
-    float flatColor[4] = {
-        v0->color[0]*invW,
-        v0->color[1]*invW,
-        v0->color[2]*invW,
-        v0->color[3]*invW
-    };
-#endif
+    SW_VMAD(&lVert, &dVXdy02, y0Substep);
+    SW_VMAD(&rVert, &dVXdy01, y0Substep);
 
     // Y bounds (vertical clipping)
     int yTop = (int)y0;
@@ -5583,14 +5561,14 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
         bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
-        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1] SW_SPAN_FLAT_COLOR_ARG);
+        SW_RASTER_TRIANGLE_SPAN(a, b, &ctx);
         SW_VADD(&lVert, &dVXdy02);
         SW_VADD(&rVert, &dVXdy01);
     }
 
     // Get a copy of next right for interpolation and apply substep correction
     rVert = *v1;
-    SW_VFMA(&rVert, &dVXdy12, y1Substep);
+    SW_VMAD(&rVert, &dVXdy12, y1Substep);
 
     // Scanline for the lower part of the triangle
     for (int y = yMid; y < yBot; y++)
@@ -5599,14 +5577,11 @@ static void SW_RASTER_TRIANGLE(const sw_vertex_t *v0, const sw_vertex_t *v1, con
         bool longSideIsLeft = (lVert.position[0] < rVert.position[0]);
         const sw_vertex_t *a = longSideIsLeft? &lVert : &rVert;
         const sw_vertex_t *b = longSideIsLeft? &rVert : &lVert;
-        SW_RASTER_TRIANGLE_SPAN(a, b, dVXdy02.texcoord[0], dVXdy02.texcoord[1] SW_SPAN_FLAT_COLOR_ARG);
+        SW_RASTER_TRIANGLE_SPAN(a, b, &ctx);
         SW_VADD(&lVert, &dVXdy02);
         SW_VADD(&rVert, &dVXdy12);
     }
 }
-
-#undef SW_SPAN_FLAT_COLOR_PARAM
-#undef SW_SPAN_FLAT_COLOR_ARG
 
 #endif // SW_RASTER_TRIANGLE_STATES
 //-------------------------------------------------------------------------------------------
@@ -5662,46 +5637,30 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float xSubstep = 1.0f - sw_fract(tl->position[0]);
     float ySubstep = 1.0f - sw_fract(tl->position[1]);
 
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-    // Gradients along X (tl->tr) and Y (tl->bl)
-    float dCdx[4] = {
-        (tr->color[0] - tl->color[0])*wRcp,
-        (tr->color[1] - tl->color[1])*wRcp,
-        (tr->color[2] - tl->color[2])*wRcp,
-        (tr->color[3] - tl->color[3])*wRcp,
-    };
-    float dCdy[4] = {
-        (bl->color[0] - tl->color[0])*hRcp,
-        (bl->color[1] - tl->color[1])*hRcp,
-        (bl->color[2] - tl->color[2])*hRcp,
-        (bl->color[3] - tl->color[3])*hRcp,
-    };
-#else
-    const float *flatColor = tl->color;
-#endif
-
 #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+    // Gradients along X (tl->tr) and Y (tl->bl)
     float dZdx = (tr->position[2] - tl->position[2])*wRcp;
     float dZdy = (bl->position[2] - tl->position[2])*hRcp;
     float zRow = tl->position[2] + dZdx*xSubstep + dZdy*ySubstep;
 #endif
 
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-    float dUdx = (tr->texcoord[0] - tl->texcoord[0])*wRcp;
-    float dVdx = (tr->texcoord[1] - tl->texcoord[1])*wRcp;
-    float dUdy = (bl->texcoord[0] - tl->texcoord[0])*hRcp;
-    float dVdy = (bl->texcoord[1] - tl->texcoord[1])*hRcp;
-    float uRow = tl->texcoord[0] + dUdx*xSubstep + dUdy*ySubstep;
-    float vRow = tl->texcoord[1] + dVdx*xSubstep + dVdy*ySubstep;
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
+    float dCdx[4], dCdy[4], cRow[4];
+    SW_VEC_OP(dCdx[i] = (tr->color[i] - tl->color[i])*wRcp, i, 4);
+    SW_VEC_OP(dCdy[i] = (bl->color[i] - tl->color[i])*hRcp, i, 4);
+    SW_VEC_OP(cRow[i] = tl->color[i] + dCdx[i]*xSubstep + dCdy[i]*ySubstep, i, 4);
+#else
+    const float *flatColor = tl->color;
 #endif
 
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-    float cRow[4] = {
-        tl->color[0] + dCdx[0]*xSubstep + dCdy[0]*ySubstep,
-        tl->color[1] + dCdx[1]*xSubstep + dCdy[1]*ySubstep,
-        tl->color[2] + dCdx[2]*xSubstep + dCdy[2]*ySubstep,
-        tl->color[3] + dCdx[3]*xSubstep + dCdy[3]*ySubstep,
-    };
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
+    float dTdx[2], dTdy[2], tcRow[2];
+    SW_VEC_OP(dTdx[i] = (tr->texcoord[i] - tl->texcoord[i])*wRcp, i, 2);
+    SW_VEC_OP(dTdy[i] = (bl->texcoord[i] - tl->texcoord[i])*hRcp, i, 2);
+    SW_VEC_OP(tcRow[i] = tl->texcoord[i] + dTdx[i]*xSubstep + dTdy[i]*ySubstep, i, 2);
+
+    // Constant across the whole quad: resolved once, called directly per pixel
+    sw_texture_sampler_f sample = sw_texture_pick_sampler(RLSW.boundTexture, dTdx, dTdy);
 #endif
 
     int stride = RLSW.colorBuffer->width;
@@ -5715,19 +5674,15 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
     float dyMin = (float)(yLoopMin - yMin);
 
     // Correct our start by how far it's clipped outside the framebuffer
-#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-    cRow[0] += dCdx[0]*dxMin + dCdy[0]*dyMin;
-    cRow[1] += dCdx[1]*dxMin + dCdy[1]*dyMin;
-    cRow[2] += dCdx[2]*dxMin + dCdy[2]*dyMin;
-    cRow[3] += dCdx[3]*dxMin + dCdy[3]*dyMin;
-#endif
-    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
     zRow += dZdy*dyMin + dZdx*dxMin;
-    #endif
-    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-    uRow += dUdy*dyMin + dUdx*dxMin;
-    vRow += dVdy*dyMin + dVdx*dxMin;
-    #endif
+#endif
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
+    SW_VEC_OP(cRow[i] += dCdx[i]*dxMin + dCdy[i]*dyMin, i, 4);
+#endif
+#if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
+    SW_VEC_OP(tcRow[i] += dTdy[i]*dyMin + dTdx[i]*dxMin, i, 2);
+#endif
 
     for (int y = yLoopMin; y < yLoopMax; y++)
     {
@@ -5735,12 +5690,10 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         uint8_t *cPtr = cPixels + baseOffset*SW_FRAMEBUFFER_COLOR_SIZE;
     #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
-        // Copy the cursors without destroying the offset maths
         float z = zRow;
     #endif
     #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-        float u = uRow;
-        float v = vRow;
+        float tc[2] = { tcRow[0], tcRow[1] };
     #endif
     #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
         float color[4] = { cRow[0], cRow[1], cRow[2], cRow[3] };
@@ -5749,9 +5702,18 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         for (int x = xLoopMin; x < xLoopMax; x++)
         {
         #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-            float srcColor[4] = { color[0], color[1], color[2], color[3] };
+            #define SW_QUAD_BASE_COLOR color
         #else
-            float srcColor[4] = { flatColor[0], flatColor[1], flatColor[2], flatColor[3] };
+            #define SW_QUAD_BASE_COLOR flatColor
+        #endif
+
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
+            // Mutable copy: about to be modulated by the sampled texel below
+            float srcColor[4];
+            SW_VEC_OP(srcColor[i] = SW_QUAD_BASE_COLOR[i], i, 4);
+        #else
+            // Never mutated past this point: alias directly, no copy needed
+            const float *srcColor = SW_QUAD_BASE_COLOR;
         #endif
 
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
@@ -5765,11 +5727,8 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
             {
                 float texColor[4];
-                sw_texture_sample(texColor, RLSW.boundTexture, u, v, dUdx, dUdy, dVdx, dVdy);
-                srcColor[0] *= texColor[0];
-                srcColor[1] *= texColor[1];
-                srcColor[2] *= texColor[2];
-                srcColor[3] *= texColor[3];
+                sample(texColor, RLSW.boundTexture, tc[0], tc[1]);
+                SW_VEC_OP(srcColor[i] *= texColor[i], i, 4);
             }
             #endif
 
@@ -5791,25 +5750,17 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         #endif
             // Move one pixel over without touching the original "start offset"
         #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-            color[0] += dCdx[0];
-            color[1] += dCdx[1];
-            color[2] += dCdx[2];
-            color[3] += dCdx[3];
+            SW_VEC_OP(color[i] += dCdx[i], i, 4);
         #endif
 
-            #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
-            {
-                z += dZdx;
-                dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
-            }
-            #endif
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+            z += dZdx;
+            dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
+        #endif
 
-            #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-            {
-                u += dUdx;
-                v += dVdx;
-            }
-            #endif
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
+            SW_VEC_OP(tc[i] += dTdx[i], i, 2);
+        #endif
 
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
         }
@@ -5817,26 +5768,18 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
         // The for loop is clamped to the right side of the screen
         // However, these cursor start vars are still on the left
         // That's fine, advancing to the next row
-    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
-        cRow[0] += dCdy[0];
-        cRow[1] += dCdy[1];
-        cRow[2] += dCdy[2];
-        cRow[3] += dCdy[3];
+    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+        zRow += dZdy;
     #endif
-
-        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
-        {
-            zRow += dZdy;
-        }
-        #endif
-
-        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-        {
-            uRow += dUdy;
-            vRow += dVdy;
-        }
-        #endif
+    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
+        SW_VEC_OP(cRow[i] += dCdy[i], i, 4);
+    #endif
+    #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
+        SW_VEC_OP(tcRow[i] += dTdy[i], i, 2);
+    #endif
     }
+
+#undef SW_QUAD_BASE_COLOR
 }
 
 #endif // SW_RASTER_QUAD_STATES
