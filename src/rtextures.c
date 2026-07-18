@@ -1233,15 +1233,13 @@ Image ImageFromImage(Image image, Rectangle rec)
     // Security check to avoid program crash
     if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
 
-    // Basic rectangle validation: size smaller than image size
-    if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
-        (((int)rec.x + (int)rec.width) <= image.width) &&
-        (((int)rec.y + (int)rec.height) <= image.height))
-    {
-
-	if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Image manipulation not supported for compressed formats");
-	else
+    if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
 	{
+        // Basic rectangle validation: size smaller than image size
+        if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
+            (((int)rec.x + (int)rec.width) <= image.width) &&
+            (((int)rec.y + (int)rec.height) <= image.height))
+        {
             int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
 
             result.width = (int)rec.width;
@@ -1252,11 +1250,14 @@ Image ImageFromImage(Image image, Rectangle rec)
 
             for (int y = 0; y < (int)rec.height; y++)
             {
-                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
+                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, 
+                    ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel,
+                    (int)rec.width*bytesPerPixel);
             }
+        }
+        else TRACELOG(LOG_WARNING, "IMAGE: ImageToImage(), rectangle provided not valid");
 	}
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Rectangle provided for ImageToImage not valid");
+    else TRACELOG(LOG_WARNING, "IMAGE: Image manipulation not supported for compressed formats");
 
     return result;
 }
