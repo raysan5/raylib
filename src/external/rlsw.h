@@ -4023,9 +4023,6 @@ bool swInit(int w, int h)
     }
 
     RLSW.colorBuffer = &RLSW.framebuffer.color;
-#ifdef RLSW_BACKBUFFER
-    RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
-#endif
     RLSW.depthBuffer = &RLSW.framebuffer.depth;
 
     swViewport(0, 0, w, h);
@@ -4186,8 +4183,8 @@ void swSwapColorBuffers(void)
     RLSW.framebuffer.color = RLSW.framebuffer.backColor;
     RLSW.framebuffer.backColor = tmp;
 
+    // Only needs to know about current colorBuffer.
     RLSW.colorBuffer = &RLSW.framebuffer.color;
-    RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
 #else
     TRACELOG(LOG_WARNING, "swSwapColorBuffers not enabled (#define RLSW_BACKBUFFER with a compiler option to enable).");
 #endif
@@ -5020,9 +5017,6 @@ void swDeleteTextures(int count, sw_handle_t *textures)
         if (!tex) { RLSW.errCode = SW_INVALID_VALUE; continue; }
         if (tex == RLSW.boundTexture) RLSW.boundTexture = NULL;
         if (tex == RLSW.colorBuffer) RLSW.colorBuffer = NULL;
-#ifdef RLSW_BACKBUFFER
-        if (tex == RLSW.colorBackBuffer) RLSW.colorBackBuffer = NULL;
-#endif
         if (tex == RLSW.depthBuffer) RLSW.depthBuffer = NULL;
 
         sw_texture_free(tex);
@@ -5273,9 +5267,6 @@ void swDeleteFramebuffers(int count, uint32_t *framebuffers)
         {
             RLSW.boundFramebufferId = SW_HANDLE_NULL;
             RLSW.colorBuffer = &RLSW.framebuffer.color;
-#ifdef RLSW_BACKBUFFER
-            RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
-#endif
             RLSW.depthBuffer = &RLSW.framebuffer.depth;
         }
 
@@ -5295,9 +5286,6 @@ void swBindFramebuffer(uint32_t id)
     {
         RLSW.boundFramebufferId = SW_HANDLE_NULL;
         RLSW.colorBuffer = &RLSW.framebuffer.color;
-#ifdef RLSW_BACKBUFFER
-        RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
-#endif
         RLSW.depthBuffer = &RLSW.framebuffer.depth;
         return;
     }
