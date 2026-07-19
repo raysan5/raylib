@@ -4186,7 +4186,7 @@ void swSwapColorBuffers(void)
     // Only needs to know about current colorBuffer.
     RLSW.colorBuffer = &RLSW.framebuffer.color;
 #else
-    TRACELOG(LOG_WARNING, "swSwapColorBuffers not enabled (#define RLSW_BACKBUFFER with a compiler option to enable).");
+    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define RLSW_BACKBUFFER with a compiler option to enable).");
 #endif
 }
 
