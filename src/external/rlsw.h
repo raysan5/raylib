@@ -5799,41 +5799,32 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
         substep = (dy >= 0.0f)? (1.0f - sw_fract(y0)) : sw_fract(y0);
     }
 
-    // Compute per pixel increments
-    float xInc = dx/steps;
-    float yInc = dy/steps;
+    // Line setup, independent of pipeline state
     float stepRcp = sw_rcp(steps);
-#if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
-    float zInc = (v1->position[2] - v0->position[2])*stepRcp;
-#endif
-#if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
-    float rInc = (v1->color[0] - v0->color[0])*stepRcp;
-    float gInc = (v1->color[1] - v0->color[1])*stepRcp;
-    float bInc = (v1->color[2] - v0->color[2])*stepRcp;
-    float aInc = (v1->color[3] - v0->color[3])*stepRcp;
-#endif
-
-    // Initializing the interpolation starting values
-    float x = x0 + xInc*substep;
-    float y = y0 + yInc*substep;
-#if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
-    float z = v0->position[2] + zInc*substep;
-#endif
-#if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
-    float r = v0->color[0] + rInc*substep;
-    float g = v0->color[1] + gInc*substep;
-    float b = v0->color[2] + bInc*substep;
-    float a = v0->color[3] + aInc*substep;
-#endif
-
-    // Start line rasterization
+    float xInc = dx*stepRcp;
+    float yInc = dy*stepRcp;
+    int numPixels = (int)(steps - substep) + 1;
     const int fbWidth = RLSW.colorBuffer->width;
     uint8_t *cPixels = RLSW.colorBuffer->pixels;
 #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
     uint8_t *dPixels = RLSW.depthBuffer->pixels;
 #endif
 
-    int numPixels = (int)(steps - substep) + 1;
+    // Initializing the interpolation starting values
+    float x = x0 + xInc*substep;
+    float y = y0 + yInc*substep;
+#if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
+    float zInc = (v1->position[2] - v0->position[2])*stepRcp;
+    float z = v0->position[2] + zInc*substep;
+#endif
+#if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
+    float cInc[4], color[4];
+    SW_VEC_OP(cInc[i] = (v1->color[i] - v0->color[i])*stepRcp, i, 4);
+    SW_VEC_OP(color[i] = v0->color[i] + cInc[i]*substep, i, 4);
+#else
+    // Flat: constant across the whole line, computed once for the whole loop
+    const float *srcColor = v0->color;
+#endif
 
     for (int i = 0; i < numPixels; i++)
     {
@@ -5846,52 +5837,41 @@ static void SW_RASTER_LINE_THIN(const sw_vertex_t *v0, const sw_vertex_t *v1)
         uint8_t *dPtr = dPixels + baseOffset*SW_FRAMEBUFFER_DEPTH_SIZE;
     #endif
 
-        #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
+    #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
+        // TODO: Implement different depth funcs?
+        float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+        if (z <= depth)
         {
-            // TODO: Implement different depth funcs?
-            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
-            if (z > depth) goto discard;
-
             // TODO: Implement depth mask
             SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
-        }
-        #endif
-
-    #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
-        float srcColor[4] = {r, g, b, a};
-    #else
-        const float *srcColor = v0->color;
     #endif
 
+        #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
+            const float *srcColor = color;
+        #endif
+
         #if (SW_RASTER_LINE_FLAGS) & SW_STATE_BLEND
-        {
             float dstColor[4];
             SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
             RLSW.blendFunc(dstColor, srcColor);
             SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
-        }
         #else
-        {
             SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
-        }
         #endif
 
     #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
-    discard:
+        }
     #endif
+
+        // Advance unconditionally: depth test only guards the write above
         x += xInc;
         y += yInc;
-        #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
-        {
-            z += zInc;
-        }
-        #endif
-        #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
-        r += rInc;
-        g += gInc;
-        b += bInc;
-        a += aInc;
-        #endif
+    #if (SW_RASTER_LINE_FLAGS) & SW_STATE_DEPTH_TEST
+        z += zInc;
+    #endif
+    #if (SW_RASTER_LINE_FLAGS) & SW_STATE_COLOR_INTERP
+        SW_VEC_OP(color[i] += cInc[i], i, 4);
+    #endif
     }
 }
 
