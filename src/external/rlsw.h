@@ -5405,49 +5405,40 @@ static void SW_RASTER_TRIANGLE_SPAN(const sw_vertex_t *start, const sw_vertex_t 
         // Inner span pixel loop
         for (; x < blockEnd; x++)
         {
-            #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+        #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
+            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+            if (z <= depth)
             {
-                float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
-                if (z > depth) goto discard;
                 SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
-            }
-            #endif
+        #endif
 
             #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_TEXTURE_2D
-            {
                 float finalColor[4];
                 ctx->sample(finalColor, RLSW.boundTexture, tcAffine[0], tcAffine[1]);
                 SW_VEC_OP(finalColor[i] *= srcColor[i], i, 4);
-
-                #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_BLEND
-                {
-                    float dstColor[4];
-                    SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-                    RLSW.blendFunc(dstColor, finalColor);
-                    SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
-                }
-                #else
-                    SW_FRAMEBUFFER_COLOR_SET(cPtr, finalColor, 0);
-                #endif
-            }
+                #define SW_FINAL_COLOR finalColor
             #else
-            {
-                #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_BLEND
-                {
-                    float dstColor[4];
-                    SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
-                    RLSW.blendFunc(dstColor, srcColor);
-                    SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
-                }
-                #else
-                    SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
-                #endif
-            }
+                #define SW_FINAL_COLOR srcColor
             #endif
 
+            #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_BLEND
+            {
+                float dstColor[4];
+                SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
+                RLSW.blendFunc(dstColor, SW_FINAL_COLOR);
+                SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
+            }
+            #else
+                SW_FRAMEBUFFER_COLOR_SET(cPtr, SW_FINAL_COLOR, 0);
+            #endif
+
+            #undef SW_FINAL_COLOR
+
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
-        discard:
+            }
         #endif
+
+            // Advance unconditionally: depth test only guards the write above
             cPtr += SW_FRAMEBUFFER_COLOR_SIZE;
         #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_DEPTH_TEST
             dPtr += SW_FRAMEBUFFER_DEPTH_SIZE;
@@ -5710,38 +5701,32 @@ static void SW_RASTER_QUAD(const sw_vertex_t *a, const sw_vertex_t *b,
             const float *srcColor = SW_QUAD_BASE_COLOR;
         #endif
 
-            #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+        #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
+            float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
+            if (z <= depth)
             {
-                float depth = SW_FRAMEBUFFER_DEPTH_GET(dPtr, 0);
-                if (z > depth) goto discard;
                 SW_FRAMEBUFFER_DEPTH_SET(dPtr, z, 0);
-            }
-            #endif
+        #endif
 
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_TEXTURE_2D
-            {
                 float texColor[4];
                 sample(texColor, RLSW.boundTexture, tc[0], tc[1]);
                 SW_VEC_OP(srcColor[i] *= texColor[i], i, 4);
-            }
             #endif
 
             #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_BLEND
-            {
                 float dstColor[4];
                 SW_FRAMEBUFFER_COLOR_GET(dstColor, cPtr, 0);
                 RLSW.blendFunc(dstColor, srcColor);
                 SW_FRAMEBUFFER_COLOR_SET(cPtr, dstColor, 0);
-            }
             #else
-            {
                 SW_FRAMEBUFFER_COLOR_SET(cPtr, srcColor, 0);
-            }
             #endif
 
         #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_DEPTH_TEST
-        discard:
+            }
         #endif
+
             // Move one pixel over without touching the original "start offset"
         #if (SW_RASTER_QUAD_FLAGS) & SW_STATE_COLOR_INTERP
             SW_VEC_OP(color[i] += dCdx[i], i, 4);
