@@ -677,9 +677,7 @@ SWAPI bool swResize(int w, int h);
 SWAPI void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
 SWAPI void *swGetColorBuffer(int *width, int *height); // Restored for ESP-IDF compatibility
-#ifdef RLSW_BACKBUFFER
 SWAPI void swSwapColorBuffers(void); // Swap software renderer color/back buffers by pointer only
-#endif
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -1067,9 +1065,7 @@ typedef struct {
 
     sw_handle_t boundFramebufferId;                             // Framebuffer currently bound
     sw_texture_t *colorBuffer;                                  // Color buffer currently bound
-#ifdef RLSW_BACKBUFFER
-    sw_texture_t *colorBackBuffer;
-#endif
+    // NOTE: don't need backBuffer because it's already in the sw_default_framebuffer_t struct.
     sw_texture_t *depthBuffer;                                  // Depth buffer currently bound
     sw_pool_t framebufferPool;                                  // Framebuffer object pool
 
@@ -4180,17 +4176,21 @@ void *swGetColorBuffer(int *width, int *height)
     return RLSW.framebuffer.color.pixels;
 }
 
-#ifdef RLSW_BACKBUFFER
+
 void swSwapColorBuffers(void)
 {
+#ifdef RLSW_BACKBUFFER
     sw_texture_t tmp = RLSW.framebuffer.color;
     RLSW.framebuffer.color = RLSW.framebuffer.backColor;
     RLSW.framebuffer.backColor = tmp;
 
     RLSW.colorBuffer = &RLSW.framebuffer.color;
     RLSW.colorBackBuffer = &RLSW.framebuffer.backColor;
-}
+#else
+    TRACELOG(LOG_WARNING, "swSwapColorBuffers not enabled (#define RLSW_BACKBUFFER with a compiler option to enable).");
 #endif
+}
+
 
 void swEnable(SWstate state)
 {
