@@ -974,7 +974,7 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, const char *text); //
 //------------------------------------------------------------------------------------
 // Global Variables Definition
 //------------------------------------------------------------------------------------
-// It's lonely here...
+// It's lonely here... but it's fun ;)
 
 //------------------------------------------------------------------------------------
 // Window and Graphics Device Functions (Module: core)
