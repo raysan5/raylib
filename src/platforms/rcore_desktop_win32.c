@@ -1247,19 +1247,28 @@ double GetTime(void)
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if the provided URL is safe
-// A user could craft a malicious string performing another action
-// Avoid calling this function with user input non-validated strings
-// REF: https://github.com/raysan5/raylib/issues/686
+// WARNING: This function is only safe to use if you control the URL given,
+// a user could craft a malicious string to perform and undesired action
+// NOTE: Some safety checks have been added to mitigate security issues
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code on target platform
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
-    else
+    // Security check to (partially) avoid malicious code
+    if ((strchr(url, '\'') != NULL) || (strchr(url, '\"') != NULL))
     {
-        int len = strlen(url) + 32;
+        // Filter characters: ' and "
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
+    }
+    else if ((strncmp(url, "http://", 7) != 0) && (strncmp(url, "https://", 8) != 0))
+    {
+        // Only allow URL starting with "http://" or "https://" protocols
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
+    }
+    else
+    {       
+        int len = strlen(url) + 16;
         char *cmd = (char *)RL_CALLOC(len, sizeof(char));
         snprintf(cmd, len, "explorer \"%s\"", url);
+        
         int result = system(cmd);
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
@@ -1290,8 +1299,8 @@ void SetMousePosition(int x, int y)
     if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-        TRACELOG(LOG_WARNING, "SetMousePosition not implemented");
+        
+        TRACELOG(LOG_WARNING, "SetMousePosition not implemented at platform level");
     }
     else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Cursor not enabled");
 }
@@ -2213,7 +2222,7 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
 //
 // This design takes care of many odd corner cases. For example, in case of restoring
 // a window that was previously maximized AND minimized and those two flags need to be removed,
-// ShowWindow with SW_RESTORE twice need to bee actually calleed. Another example is
+// ShowWindow with SW_RESTORE twice need to be actually calleed. Another example is
 // wheen having a maximized window, if the undecorated flag is modified then the window style
 // needs to be updated, but updating the style would mean the window size would change
 // causing the window to lose its Maximized state which would mean the window size

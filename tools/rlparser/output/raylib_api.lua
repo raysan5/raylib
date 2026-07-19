@@ -968,7 +968,7 @@ return {
       description = "Skeleton, animation bones hierarchy",
       fields = {
         {
-          type = "int",
+          type = "unsigned int",
           name = "boneCount",
           description = "Number of bones"
         },
@@ -1045,7 +1045,7 @@ return {
           description = "Animation name"
         },
         {
-          type = "int",
+          type = "unsigned int",
           name = "boneCount",
           description = "Number of bones (per pose)"
         },
@@ -4135,7 +4135,7 @@ return {
     },
     {
       name = "GetDirectoryPath",
-      description = "Get full path for a given fileName with path (uses static string)",
+      description = "Get full path for a provided fileName with path (uses static string)",
       returnType = "const char *",
       params = {
         {type = "const char *", name = "filePath"}
@@ -4143,7 +4143,7 @@ return {
     },
     {
       name = "GetPrevDirectoryPath",
-      description = "Get previous directory path for a given path (uses static string)",
+      description = "Get previous directory path for a provided path (uses static string)",
       returnType = "const char *",
       params = {
         {type = "const char *", name = "dirPath"}
@@ -4177,7 +4177,23 @@ return {
     },
     {
       name = "IsPathFile",
-      description = "Check if given path is a file or a directory",
+      description = "Check if provided path points to a file",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "path"}
+      }
+    },
+    {
+      name = "IsPathDirectory",
+      description = "Check if provided path points to a directory",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "path"}
+      }
+    },
+    {
+      name = "IsPathAbsolute",
+      description = "Check if provided path is an absolute path",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}
@@ -4663,7 +4679,7 @@ return {
     },
     {
       name = "GetTouchPointId",
-      description = "Get touch point identifier for given index",
+      description = "Get touch point identifier for provided index",
       returnType = "int",
       params = {
         {type = "int", name = "index"}
@@ -6063,7 +6079,7 @@ return {
     },
     {
       name = "ImageClearBackground",
-      description = "Clear image background with given color",
+      description = "Clear image background with provided color",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},
@@ -6233,6 +6249,18 @@ return {
       }
     },
     {
+      name = "ImageDrawRectanglePro",
+      description = "Draw a color-filled rectangle with pro parameters within and image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
+        {type = "Color", name = "color"}
+      }
+    },
+    {
       name = "ImageDrawRectangleLines",
       description = "Draw rectangle lines within an image",
       returnType = "void",
@@ -6254,6 +6282,19 @@ return {
         {type = "Rectangle", name = "rec"},
         {type = "int", name = "thick"},
         {type = "Color", name = "color"}
+      }
+    },
+    {
+      name = "ImageDrawRectangleGradientEx",
+      description = "Draw rectangle with gradient colors within an image, counter-clockwise color order",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Rectangle", name = "rec"},
+        {type = "Color", name = "col1"},
+        {type = "Color", name = "col2"},
+        {type = "Color", name = "col3"},
+        {type = "Color", name = "col4"}
       }
     },
     {
@@ -6327,6 +6368,19 @@ return {
       }
     },
     {
+      name = "ImageDrawImageEx",
+      description = "Draw an image with scaling and rotation within an image",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Image", name = "src"},
+        {type = "Vector2", name = "position"},
+        {type = "float", name = "rotation"},
+        {type = "float", name = "scale"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
       name = "ImageDrawImageRec",
       description = "Draw a part of an image defined by a rectangle within an image",
       returnType = "void",
@@ -6374,6 +6428,22 @@ return {
         {type = "Font", name = "font"},
         {type = "const char *", name = "text"},
         {type = "Vector2", name = "position"},
+        {type = "float", name = "fontSize"},
+        {type = "float", name = "spacing"},
+        {type = "Color", name = "tint"}
+      }
+    },
+    {
+      name = "ImageDrawTextPro",
+      description = "Draw text using Font and pro parameters (rotation)",
+      returnType = "void",
+      params = {
+        {type = "Image *", name = "dst"},
+        {type = "Font", name = "font"},
+        {type = "const char *", name = "text"},
+        {type = "Vector2", name = "position"},
+        {type = "Vector2", name = "origin"},
+        {type = "float", name = "rotation"},
         {type = "float", name = "fontSize"},
         {type = "float", name = "spacing"},
         {type = "Color", name = "tint"}

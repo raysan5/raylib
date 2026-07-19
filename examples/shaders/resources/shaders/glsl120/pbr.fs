@@ -97,7 +97,7 @@ vec3 ComputePBR()
     vec3 N = normalize(fragNormal);
     if (useTexNormal == 1)
     {
-        N = texture2D(normalMap, vec2(fragTexCoord.x*tiling.x + offset.y, fragTexCoord.y*tiling.y + offset.y)).rgb;
+        N = texture2D(normalMap, vec2(fragTexCoord.x*tiling.x + offset.x, fragTexCoord.y*tiling.y + offset.y)).rgb;
         N = normalize(N*2.0 - 1.0);
         N = normalize(N*TBN);
     }

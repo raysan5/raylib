@@ -3924,7 +3924,6 @@ static void sw_immediate_set_color(const float color[4])
     RLSW.primitive.color[2] = color[2];
     RLSW.primitive.color[3] = color[3];
 
-    RLSW.primitive.hasColorAlpha |= (color[3] < 1.0f);
 }
 
 static void sw_immediate_set_texcoord(const float texcoord[2])
@@ -3962,6 +3961,9 @@ static void sw_immediate_push_vertex(const float position[4])
     // Copy the attributes in the current vertex
     for (int i = 0; i < 4; i++) vertex->color[i] = RLSW.primitive.color[i];
     for (int i = 0; i < 2; i++) vertex->texcoord[i] = RLSW.primitive.texcoord[i];
+
+    // Track whether any vertex in this primitive has alpha < 1.0
+    RLSW.primitive.hasColorAlpha |= (vertex->color[3] < 1.0f);
 
     // Immediate rendering of the primitive if the required number is reached
     if (RLSW.primitive.vertexCount == SW_PRIMITIVE_VERTEX_COUNT[RLSW.drawMode])
@@ -4341,8 +4343,8 @@ void swScissor(int x, int y, int width, int height)
 
     RLSW.scClipMin[0] = (2.0f*(float)RLSW.scMin[0]/(float)RLSW.vpSize[0]) - 1.0f;
     RLSW.scClipMax[0] = (2.0f*(float)RLSW.scMax[0]/(float)RLSW.vpSize[0]) - 1.0f;
-    RLSW.scClipMax[1] = 1.0f - (2.0f*(float)RLSW.scMin[1]/(float)RLSW.vpSize[1]);
-    RLSW.scClipMin[1] = 1.0f - (2.0f*(float)RLSW.scMax[1]/(float)RLSW.vpSize[1]);
+    RLSW.scClipMin[1] = (2.0f*(float)RLSW.scMin[1]/(float)RLSW.vpSize[1]) - 1.0f;
+    RLSW.scClipMax[1] = (2.0f*(float)RLSW.scMax[1]/(float)RLSW.vpSize[1]) - 1.0f;
 }
 
 void swClearColor(float r, float g, float b, float a)

@@ -822,7 +822,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleRate = wav.sampleRate;
             wave.sampleSize = 16;
             wave.channels = wav.channels;
-            wave.data = (short *)RL_MALLOC((size_t)wave.frameCount*wave.channels*sizeof(short));
+            wave.data = (short *)RL_CALLOC((size_t)wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Forcing conversion to 16bit sample size on reading
             drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
@@ -845,7 +845,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleSize = 16;       // By default, ogg data is 16 bit per sample (short)
             wave.channels = info.channels;
             wave.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
-            wave.data = (short *)RL_MALLOC(wave.frameCount*wave.channels*sizeof(short));
+            wave.data = (short *)RL_CALLOC(wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Get the number of samples to process (be careful! asking for number of shorts, not bytes!)
             stb_vorbis_get_samples_short_interleaved(oggData, info.channels, (short *)wave.data, wave.frameCount*wave.channels);
@@ -1154,7 +1154,7 @@ bool ExportWaveAsCode(Wave wave, const char *fileName)
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strncpy(varFileName, GetFileNameWithoutExt(fileName), 256 - 1);
+    snprintf(varFileName, 256, "%s", GetFileNameWithoutExt(fileName)); // NOTE: Using function provided by [rcore] module
     for (int i = 0; varFileName[i] != '\0'; i++) if (varFileName[i] >= 'a' && varFileName[i] <= 'z') { varFileName[i] = varFileName[i] - 32; }
 
     // Add wave information
@@ -1258,7 +1258,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
         return;
     }
 
-    void *data = RL_MALLOC(frameCount*channels*(sampleSize/8));
+    void *data = RL_CALLOC(frameCount*channels*(sampleSize/8), 1);
 
     frameCount = (ma_uint32)ma_convert_frames(data, frameCount, formatOut, channels, sampleRate, wave->data, frameCountIn, formatIn, wave->channels, wave->sampleRate);
     if (frameCount == 0)
@@ -1772,7 +1772,7 @@ void UnloadMusicStream(Music music)
     {
         if (false) { }
 #if SUPPORT_FILEFORMAT_WAV
-        else if (music.ctxType == MUSIC_AUDIO_WAV) drwav_uninit((drwav *)music.ctxData);
+        else if (music.ctxType == MUSIC_AUDIO_WAV) { drwav_uninit((drwav *)music.ctxData); RL_FREE(music.ctxData); }
 #endif
 #if SUPPORT_FILEFORMAT_OGG
         else if (music.ctxType == MUSIC_AUDIO_OGG) stb_vorbis_close((stb_vorbis *)music.ctxData);
@@ -2827,7 +2827,7 @@ static const char *GetFileNameWithoutExt(const char *filePath)
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH] = { 0 };
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
 
-    if (filePath != NULL) strncpy(fileName, GetFileName(filePath), MAX_FILENAMEWITHOUTEXT_LENGTH - 1); // Get filename with extension
+    if (filePath != NULL) snprintf(fileName, MAX_FILENAMEWITHOUTEXT_LENGTH, "%s", GetFileName(filePath));
 
     int fileNameLength = (int)strlen(fileName); // Get size in bytes
 

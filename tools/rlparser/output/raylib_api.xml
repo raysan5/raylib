@@ -201,7 +201,7 @@
             <Field type="int" name="parent" desc="Bone parent" />
         </Struct>
         <Struct name="ModelSkeleton" fieldCount="3" desc="Skeleton, animation bones hierarchy">
-            <Field type="int" name="boneCount" desc="Number of bones" />
+            <Field type="unsigned int" name="boneCount" desc="Number of bones" />
             <Field type="BoneInfo *" name="bones" desc="Bones information (skeleton)" />
             <Field type="ModelAnimPose" name="bindPose" desc="Bones base transformation (Transform[])" />
         </Struct>
@@ -218,7 +218,7 @@
         </Struct>
         <Struct name="ModelAnimation" fieldCount="4" desc="ModelAnimation, contains a full animation sequence">
             <Field type="char[32]" name="name" desc="Animation name" />
-            <Field type="int" name="boneCount" desc="Number of bones (per pose)" />
+            <Field type="unsigned int" name="boneCount" desc="Number of bones (per pose)" />
             <Field type="int" name="keyframeCount" desc="Number of animation key frames" />
             <Field type="ModelAnimPose *" name="keyframePoses" desc="Animation sequence keyframe poses [keyframe][pose]" />
         </Struct>
@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="607">
+    <Functions count="613">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1099,10 +1099,10 @@
         <Function name="GetFileNameWithoutExt" retType="const char *" paramCount="1" desc="Get filename string without extension (uses static string)">
             <Param type="const char *" name="filePath" desc="" />
         </Function>
-        <Function name="GetDirectoryPath" retType="const char *" paramCount="1" desc="Get full path for a given fileName with path (uses static string)">
+        <Function name="GetDirectoryPath" retType="const char *" paramCount="1" desc="Get full path for a provided fileName with path (uses static string)">
             <Param type="const char *" name="filePath" desc="" />
         </Function>
-        <Function name="GetPrevDirectoryPath" retType="const char *" paramCount="1" desc="Get previous directory path for a given path (uses static string)">
+        <Function name="GetPrevDirectoryPath" retType="const char *" paramCount="1" desc="Get previous directory path for a provided path (uses static string)">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
         <Function name="GetWorkingDirectory" retType="const char *" paramCount="0" desc="Get current working directory (uses static string)">
@@ -1115,7 +1115,13 @@
         <Function name="ChangeDirectory" retType="int" paramCount="1" desc="Change working directory, returns 0 on success">
             <Param type="const char *" name="dirPath" desc="" />
         </Function>
-        <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if given path is a file or a directory">
+        <Function name="IsPathFile" retType="bool" paramCount="1" desc="Check if provided path points to a file">
+            <Param type="const char *" name="path" desc="" />
+        </Function>
+        <Function name="IsPathDirectory" retType="bool" paramCount="1" desc="Check if provided path points to a directory">
+            <Param type="const char *" name="path" desc="" />
+        </Function>
+        <Function name="IsPathAbsolute" retType="bool" paramCount="1" desc="Check if provided path is an absolute path">
             <Param type="const char *" name="path" desc="" />
         </Function>
         <Function name="IsFileNameValid" retType="bool" paramCount="1" desc="Check if fileName is valid for the platform/OS">
@@ -1316,7 +1322,7 @@
         <Function name="GetTouchPosition" retType="Vector2" paramCount="1" desc="Get touch position XY for a touch point index (relative to screen size)">
             <Param type="int" name="index" desc="" />
         </Function>
-        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for given index">
+        <Function name="GetTouchPointId" retType="int" paramCount="1" desc="Get touch point identifier for provided index">
             <Param type="int" name="index" desc="" />
         </Function>
         <Function name="GetTouchPointCount" retType="int" paramCount="0" desc="Get number of touch points">
@@ -2036,7 +2042,7 @@
             <Param type="int" name="x" desc="" />
             <Param type="int" name="y" desc="" />
         </Function>
-        <Function name="ImageClearBackground" retType="void" paramCount="2" desc="Clear image background with given color">
+        <Function name="ImageClearBackground" retType="void" paramCount="2" desc="Clear image background with provided color">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
@@ -2132,6 +2138,13 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="ImageDrawRectanglePro" retType="void" paramCount="5" desc="Draw a color-filled rectangle with pro parameters within and image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Vector2" name="origin" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="ImageDrawRectangleLines" retType="void" paramCount="6" desc="Draw rectangle lines within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="int" name="posX" desc="" />
@@ -2145,6 +2158,14 @@
             <Param type="Rectangle" name="rec" desc="" />
             <Param type="int" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="ImageDrawRectangleGradientEx" retType="void" paramCount="6" desc="Draw rectangle with gradient colors within an image, counter-clockwise color order">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Rectangle" name="rec" desc="" />
+            <Param type="Color" name="col1" desc="" />
+            <Param type="Color" name="col2" desc="" />
+            <Param type="Color" name="col3" desc="" />
+            <Param type="Color" name="col4" desc="" />
         </Function>
         <Function name="ImageDrawCircle" retType="void" paramCount="5" desc="Draw a filled circle within an image">
             <Param type="Image *" name="dst" desc="" />
@@ -2186,6 +2207,14 @@
             <Param type="int" name="posY" desc="" />
             <Param type="Color" name="tint" desc="" />
         </Function>
+        <Function name="ImageDrawImageEx" retType="void" paramCount="6" desc="Draw an image with scaling and rotation within an image">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Image" name="src" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="float" name="rotation" desc="" />
+            <Param type="float" name="scale" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
         <Function name="ImageDrawImageRec" retType="void" paramCount="5" desc="Draw a part of an image defined by a rectangle within an image">
             <Param type="Image *" name="dst" desc="" />
             <Param type="Image" name="src" desc="" />
@@ -2215,6 +2244,17 @@
             <Param type="Font" name="font" desc="" />
             <Param type="const char *" name="text" desc="" />
             <Param type="Vector2" name="position" desc="" />
+            <Param type="float" name="fontSize" desc="" />
+            <Param type="float" name="spacing" desc="" />
+            <Param type="Color" name="tint" desc="" />
+        </Function>
+        <Function name="ImageDrawTextPro" retType="void" paramCount="9" desc="Draw text using Font and pro parameters (rotation)">
+            <Param type="Image *" name="dst" desc="" />
+            <Param type="Font" name="font" desc="" />
+            <Param type="const char *" name="text" desc="" />
+            <Param type="Vector2" name="position" desc="" />
+            <Param type="Vector2" name="origin" desc="" />
+            <Param type="float" name="rotation" desc="" />
             <Param type="float" name="fontSize" desc="" />
             <Param type="float" name="spacing" desc="" />
             <Param type="Color" name="tint" desc="" />

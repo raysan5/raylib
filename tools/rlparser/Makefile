@@ -79,6 +79,7 @@ raylib_api: ../../src/raylib.h rlparser
 	FORMAT=JSON EXTENSION=json $(MAKE) raylib_api.json
 	FORMAT=XML EXTENSION=xml $(MAKE) raylib_api.xml
 	FORMAT=LUA EXTENSION=lua $(MAKE) raylib_api.lua
+	FORMAT=SEXPR EXTENSION=sexpr $(MAKE) raylib_api.sexpr
 
 # rlparser execution: [raylib.h] parse, generating some output files
 raylib_api.$(EXTENSION): ../../src/raylib.h rlparser
@@ -112,7 +113,8 @@ all: rlparser
 	FORMAT=JSON EXTENSION=json $(MAKE) parse
 	FORMAT=XML EXTENSION=xml $(MAKE) parse
 	FORMAT=LUA EXTENSION=lua $(MAKE) parse
+	FORMAT=SEXPR EXTENSION=sexpr $(MAKE) parse
 
 # Clean rlparser and generated output files 
 clean:
-	rm -f rlparser *.json *.txt *.xml *.lua
+	rm -f rlparser *.json *.txt *.xml *.lua *.sexpr
