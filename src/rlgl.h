@@ -3793,7 +3793,7 @@ unsigned char *rlReadScreenPixels(int width, int height)
 {
     unsigned char *imgData = (unsigned char *)RL_CALLOC(width*height*4, sizeof(unsigned char));
 
-    // NOTE: Buffer retrieved is GL_FRONT in single-buffered configurations 
+    // NOTE: Buffer retrieved is GL_FRONT in single-buffered configurations
     // and GL_BACK in double-buffered configurations, make sure to call it at the end of frame
     //glReadBuffer(GL_BACK);
 
@@ -5243,7 +5243,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
             int blockHeight = (height + 3)/4;
             unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*8;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
-            
+
         } break;
         case RL_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case RL_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
@@ -5254,7 +5254,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
             int blockHeight = (height + 3)/4;
             unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*16;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
-            
+
         } break;
         case RL_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 4 bytes per each 4x4 block
         {
@@ -5262,7 +5262,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
             int blockHeight = (height + 3)/4;
             unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*4;
             if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
-            
+
         } break;
         default: break;
     }
@@ -5274,7 +5274,7 @@ static int rlGetPixelDataSize(int width, int height, int format)
         unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
         if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
     }
-    
+
     if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;

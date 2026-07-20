@@ -1250,7 +1250,7 @@ Image ImageFromImage(Image image, Rectangle rec)
 
             for (int y = 0; y < (int)rec.height; y++)
             {
-                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, 
+                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel,
                     ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel,
                     (int)rec.width*bytesPerPixel);
             }
@@ -5523,7 +5523,7 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
-    
+
     unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
 
     if (dataSizeBytes < INT_MAX)
@@ -5538,7 +5538,7 @@ int GetPixelDataSize(int width, int height, int format)
             else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
         }
     }
-    
+
     // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
     if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 

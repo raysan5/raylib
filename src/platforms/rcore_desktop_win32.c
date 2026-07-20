@@ -1264,11 +1264,11 @@ void OpenURL(const char *url)
         TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
     }
     else
-    {       
+    {
         int len = strlen(url) + 16;
         char *cmd = (char *)RL_CALLOC(len, sizeof(char));
         snprintf(cmd, len, "explorer \"%s\"", url);
-        
+
         int result = system(cmd);
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
@@ -1299,7 +1299,7 @@ void SetMousePosition(int x, int y)
     if (!CORE.Input.Mouse.cursorLocked)
     {
         CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-        
+
         TRACELOG(LOG_WARNING, "SetMousePosition not implemented at platform level");
     }
     else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Cursor not enabled");

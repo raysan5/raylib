@@ -2846,7 +2846,7 @@ bool IsPathDirectory(const char *path)
 bool IsPathAbsolute(const char *path)
 {
     int result = false;
-    
+
     if ((path != NULL) && (path[0] != '\0'))
     {
 #if defined(_WIN32)
