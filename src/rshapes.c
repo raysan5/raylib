@@ -1690,6 +1690,76 @@ void DrawEllipseLinesV(Vector2 center, float radiusH, float radiusV, Color color
     rlEnd();
 }
 
+// Draw ellipse outline with thickness
+void DrawEllipseLinesEx(Vector2 center, float radiusH, float radiusV, float thick, Color color)
+{
+    float outerRadiusH = radiusH, innerRadiusH = radiusH - thick;
+    float outerRadiusV = radiusV, innerRadiusV = radiusV - thick;
+
+    if (thick >= 0.0f) {
+        // Just a filled-in ellipse
+        if (innerRadiusH <= 0.0f || innerRadiusV <= 0.0f)
+        {
+            DrawEllipseV(center, radiusH, radiusV, color);
+            return;
+        }
+    }
+    else
+    {
+        // The outline is growing outside of the ellipse, so swap the inner and outer radius
+        float tmp = outerRadiusH;
+        outerRadiusH = innerRadiusH;
+        innerRadiusH = tmp;
+
+        tmp = outerRadiusV;
+        outerRadiusV = innerRadiusV;
+        innerRadiusV = tmp;
+    }
+
+#if SUPPORT_QUADS_DRAW_MODE
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+
+    rlBegin(RL_QUADS);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*innerRadiusH, center.y + sinf(DEG2RAD*i)*innerRadiusV);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*innerRadiusH, center.y + sinf(DEG2RAD*(i + 10))*innerRadiusV);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*outerRadiusH, center.y + sinf(DEG2RAD*(i + 10))*outerRadiusV);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*outerRadiusH, center.y + sinf(DEG2RAD*i)*outerRadiusV);
+        }
+    rlEnd();
+
+    rlSetTexture(0);
+#else
+    rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < 360; i += 10)
+        {
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*innerRadiusH, center.y + sinf(DEG2RAD*i)*innerRadiusV);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*innerRadiusH, center.y + sinf(DEG2RAD*(i + 10))*innerRadiusV);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*outerRadiusH, center.y + sinf(DEG2RAD*(i + 10))*outerRadiusV);
+
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*innerRadiusH, center.y + sinf(DEG2RAD*i)*innerRadiusV);
+            rlVertex2f(center.x + cosf(DEG2RAD*(i + 10))*outerRadiusH, center.y + sinf(DEG2RAD*(i + 10))*outerRadiusV);
+            rlVertex2f(center.x + cosf(DEG2RAD*i)*outerRadiusH, center.y + sinf(DEG2RAD*i)*outerRadiusV);
+        }
+    rlEnd();
+#endif
+}
+
 // Draw ring
 void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color)
 {
