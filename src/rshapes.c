@@ -375,6 +375,166 @@ void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
     rlEnd();
 }
 
+// Draw a triangle using lines with thickness
+// NOTE: Vertex must be provided in counter-clockwise order
+void DrawTriangleLinesEx(Vector2 v1, Vector2 v2, Vector2 v3, float thick, Color color)
+{
+    /*
+    A sketch to make things simpler
+
+    The exterior points are v1-3, the interior points are v4-6, and the exterior edges are e1-3
+
+             v1
+             /\
+            /v4\
+           //  \\
+          //    \\
+      e3 //      \\ e2
+        //        \\
+       //          \\
+      //v5        v6\\
+     v2==============v3
+             e1
+    */
+
+    Vector2 e1 = {v2.x - v3.x, v2.y - v3.y};
+    Vector2 e2 = {v3.x - v1.x, v3.y - v1.y};
+    Vector2 e3 = {v1.x - v2.x, v1.y - v2.y};
+
+    float e1Length = sqrtf(e1.x*e1.x + e1.y*e1.y);
+    float e2Length = sqrtf(e2.x*e2.x + e2.y*e2.y);
+    float e3Length = sqrtf(e3.x*e3.x + e3.y*e3.y);
+
+    float perimeter = e1Length + e2Length + e3Length;
+    float semiperimeter = perimeter/2.0f;
+
+    // The incenter of a triangle is equidistant from each edge, which is useful for drawing a nice looking outline
+    Vector2 incenter = {
+        (e1Length*v1.x + e2Length*v2.x + e3Length*v3.x)/perimeter,
+        (e1Length*v1.y + e2Length*v2.y + e3Length*v3.y)/perimeter
+    };
+
+    // The inradius of a triangle is the radius of the biggest circle that can fit inside of said triangle
+    // That circle is also centered on the incenter
+    float inradius = sqrtf(((semiperimeter - e1Length)*(semiperimeter - e2Length)*(semiperimeter - e3Length))/semiperimeter);
+
+    // The triangle (v1, v2, v3) will be scaled by this to get (v4, v5, v6)
+    float scale = 1.0f - thick/inradius;
+
+    // Just a filled-in triangle
+    if (scale <= 0.0f)
+    {
+        DrawTriangle(v1, v2, v3, color);
+        return;
+    }
+
+    // In order for the scaling to be correct, the incenter has to be at the origin (0, 0) when scaling
+    Vector2 v4 = {incenter.x + (v1.x - incenter.x)*scale, incenter.y + (v1.y - incenter.y)*scale};
+    Vector2 v5 = {incenter.x + (v2.x - incenter.x)*scale, incenter.y + (v2.y - incenter.y)*scale};
+    Vector2 v6 = {incenter.x + (v3.x - incenter.x)*scale, incenter.y + (v3.y - incenter.y)*scale};
+
+    // Swap the vertices so the winding order is correct
+    if (thick < 0.0f)
+    {
+        Vector2 temp = v1;
+        v1 = v4;
+        v4 = temp;
+
+        temp = v2;
+        v2 = v5;
+        v5 = temp;
+
+        temp = v3;
+        v3 = v6;
+        v6 = temp;
+    }
+
+#if SUPPORT_QUADS_DRAW_MODE
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+
+    rlBegin(RL_QUADS);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        // Edge 3
+        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v1.x, v1.y);
+
+        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v2.x, v2.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v5.x, v5.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v4.x, v4.y);
+
+        // Edge 1
+        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v2.x, v2.y);
+
+        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v3.x, v3.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v6.x, v6.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v5.x, v5.y);
+
+        // Edge 2
+        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v3.x, v3.y);
+
+        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v1.x, v1.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+        rlVertex2f(v4.x, v4.y);
+
+        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+        rlVertex2f(v6.x, v6.y);
+
+    rlEnd();
+
+    rlSetTexture(0);
+#else
+    rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        // Edge 3
+        rlVertex2f(v1.x, v1.y);
+        rlVertex2f(v2.x, v2.y);
+        rlVertex2f(v4.x, v4.y);
+
+        rlVertex2f(v2.x, v2.y);
+        rlVertex2f(v5.x, v5.y);
+        rlVertex2f(v4.x, v4.y);
+
+        // Edge 1
+        rlVertex2f(v2.x, v2.y);
+        rlVertex2f(v3.x, v3.y);
+        rlVertex2f(v5.x, v5.y);
+
+        rlVertex2f(v3.x, v3.y);
+        rlVertex2f(v6.x, v6.y);
+        rlVertex2f(v5.x, v5.y);
+
+        // Edge 2
+        rlVertex2f(v3.x, v3.y);
+        rlVertex2f(v1.x, v1.y);
+        rlVertex2f(v4.x, v4.y);
+
+        rlVertex2f(v3.x, v3.y);
+        rlVertex2f(v4.x, v4.y);
+        rlVertex2f(v6.x, v6.y);
+
+    rlEnd();
+#endif
+}
+
 // Draw a triangle fan defined by points
 // NOTE: First vertex provided is the center, shared by all triangles
 // By default, following vertex should be provided in counter-clockwise order
