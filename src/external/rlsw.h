@@ -994,7 +994,7 @@ typedef struct {
 
 typedef struct {
     sw_texture_t color;         // Default framebuffer color texture
-#ifdef RLSW_BACKBUFFER
+#ifdef SW_DOUBLE_BUFFERING
     sw_texture_t backColor; // Back buffer for multicore.
 #endif
     sw_texture_t depth;         // Default framebuffer depth texture
@@ -2588,7 +2588,7 @@ static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, in
         return false;
     }
 
-#ifdef RLSW_BACKBUFFER
+#ifdef SW_DOUBLE_BUFFERING
     if (!sw_texture_alloc(&fb->backColor, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
         return false;
@@ -2607,7 +2607,7 @@ static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
-#ifdef RLSW_BACKBUFFER
+#ifdef SW_DOUBLE_BUFFERING
     sw_texture_free(&fb->backColor);
 #endif
 }
@@ -4178,7 +4178,7 @@ void *swGetColorBuffer(int *width, int *height)
 
 void swSwapColorBuffers(void)
 {
-#ifdef RLSW_BACKBUFFER
+#ifdef SW_DOUBLE_BUFFERING
     sw_texture_t tmp = RLSW.framebuffer.color;
     RLSW.framebuffer.color = RLSW.framebuffer.backColor;
     RLSW.framebuffer.backColor = tmp;
@@ -4186,7 +4186,7 @@ void swSwapColorBuffers(void)
     // Only needs to know about current colorBuffer.
     RLSW.colorBuffer = &RLSW.framebuffer.color;
 #else
-    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define RLSW_BACKBUFFER with a compiler option to enable).\n");
+    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define SW_DOUBLE_BUFFERING with a compiler option to enable).\n");
 #endif
 }
 
