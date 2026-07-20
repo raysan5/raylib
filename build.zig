@@ -695,7 +695,7 @@ fn addExamples(
             exe_mod.addCMacro("PLATFORM_WEB", "");
 
             const wasm = b.addLibrary(.{
-                .name = filename,
+                .name = b.fmt("{s}.html", .{filename}),
                 .root_module = exe_mod,
             });
 
