@@ -718,7 +718,6 @@ fn addExamples(
                 .install_dir = install_dir,
                 .out_file_name = wasm.name,
             });
-            b.getInstallStep().dependOn(emcc_step);
 
             const emrun_step = emsdk.emrunStep(
                 b,
