@@ -721,7 +721,7 @@ fn addExamples(
 
             const emrun_step = emsdk.emrunStep(
                 b,
-                b.graph.path(.install_prefix, b.fmt("{s}/{s}.html", .{ filename, wasm.name })),
+                b.graph.path(.install_prefix, b.fmt("web/{s}/{s}.html", .{ filename, wasm.name })),
                 &.{},
             );
 
