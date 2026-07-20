@@ -542,30 +542,31 @@ void DrawSphereWires(Vector3 centerPos, float radius, int rings, int slices, Col
         rlBegin(RL_LINES);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
-            for (int i = 0; i < (rings + 2); i++)
+            for (int i = 0; i < rings; i++)
             {
                 for (int j = 0; j < slices; j++)
                 {
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
-
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
-
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1))),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
-                    rlVertex3f(cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*sinf(DEG2RAD*(360.0f*j/slices)),
-                               sinf(DEG2RAD*(270 + (180.0f/(rings + 1))*i)),
-                               cosf(DEG2RAD*(270 + (180.0f/(rings + 1))*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    // Diagonal Lines
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*i)),
+                               sinf(DEG2RAD*((180.0f/rings)*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*(i + 1)))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*(i + 1))),
+                               sinf(DEG2RAD*((180.0f/rings)*(i + 1)))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
+                    // Latitude Lines
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*i))*sinf(DEG2RAD*(360.0f*(j + 1)/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*i)),
+                               sinf(DEG2RAD*((180.0f/rings)*i))*cosf(DEG2RAD*(360.0f*(j + 1)/slices)));
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*i)),
+                               sinf(DEG2RAD*((180.0f/rings)*i))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    // Longitude Lines
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*(i + 1)))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*(i + 1))),
+                               sinf(DEG2RAD*((180.0f/rings)*(i + 1)))*cosf(DEG2RAD*(360.0f*j/slices)));
+                    rlVertex3f(sinf(DEG2RAD*((180.0f/rings)*i))*sinf(DEG2RAD*(360.0f*j/slices)),
+                               cosf(DEG2RAD*((180.0f/rings)*i)),
+                               sinf(DEG2RAD*((180.0f/rings)*i))*cosf(DEG2RAD*(360.0f*j/slices)));
                 }
             }
         rlEnd();
