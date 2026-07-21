@@ -888,7 +888,90 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
 // Draw rectangle with rounded edges
 void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
 {
-    DrawRectangleRoundedLinesEx(rec, roundness, segments, 1.0f, color);
+    // Not a rounded rectangle
+    if (roundness <= 0.0f)
+    {
+        DrawRectangleLines((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, color);
+        return;
+    }
+
+    if (roundness >= 1.0f) roundness = 1.0f;
+
+    // Calculate corner radius
+    float radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
+    if (radius <= 0.0f) return;
+
+    // Calculate number of segments to use for the corners
+    if (segments < 4)
+    {
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (int)ceilf((2*PI/th)/4.0f);
+        if (segments <= 0) segments = 4;
+    }
+
+    float stepLength = 90.0f/(float)segments;
+
+    /*
+    Quick sketch to make sense of all of this,
+    marks the 8 + 4 (corner centers P8-11) points used
+
+           P0 ------------------ P1
+          /                        \
+         /                          \
+     P7 /                            \ P2
+       |    *P8               P9*     |
+       |                              |
+       |                              |
+     P6 \   *P11             P10*    / P3
+         \                          /
+          \                        /
+           P5 ------------------ P4
+    */
+    const Vector2 point[8] = {
+        {(float)rec.x + radius + 0.5f, rec.y + 0.5f},
+        {(float)(rec.x + rec.width) - radius - 0.5f, rec.y + 0.5f},
+        {rec.x + rec.width - 0.5f, (float)rec.y + radius + 0.5f}, // PO, P1, P2
+        {rec.x + rec.width - 0.5f, (float)(rec.y + rec.height) - radius - 0.5f},
+        {(float)(rec.x + rec.width) - radius - 0.5f, rec.y + rec.height - 0.5f}, // P3, P4
+        {(float)rec.x + radius + 0.5f, rec.y + rec.height - 0.5f},
+        {rec.x + 0.5f, (float)(rec.y + rec.height) - radius - 0.5f},
+        {rec.x + 0.5f, (float)rec.y + radius + 0.5f}, // P5, P6, P7
+    };
+
+    const Vector2 centers[4] = {
+        {(float)rec.x + radius + 0.5f, (float)rec.y + radius + 0.5f},
+        {(float)(rec.x + rec.width) - radius - 0.5f, (float)rec.y + radius + 0.5f}, // P16, P17
+        {(float)(rec.x + rec.width) - radius - 0.5f, (float)(rec.y + rec.height) - radius - 0.5f},
+        {(float)rec.x + radius + 0.5f, (float)(rec.y + rec.height) - radius - 0.5f} // P18, P19
+    };
+
+    const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
+
+    rlBegin(RL_LINES);
+        // Draw all the 4 corners first: Upper Left Corner, Upper Right Corner, Lower Right Corner, Lower Left Corner
+        for (int k = 0; k < 4; ++k) // Hope the compiler is smart enough to unroll this loop
+        {
+            float angle = angles[k];
+            const Vector2 center = centers[k];
+
+            for (int i = 0; i < segments; i++)
+            {
+                rlColor4ub(color.r, color.g, color.b, color.a);
+                rlVertex2f(center.x + cosf(DEG2RAD*angle)*radius, center.y + sinf(DEG2RAD*angle)*radius);
+                rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*radius, center.y + sinf(DEG2RAD*(angle + stepLength))*radius);
+                angle += stepLength;
+            }
+        }
+
+        // And now the remaining 4 lines
+        for (int i = 0; i < 8; i += 2)
+        {
+            rlColor4ub(color.r, color.g, color.b, color.a);
+            rlVertex2f(point[i].x, point[i].y);
+            rlVertex2f(point[i + 1].x, point[i + 1].y);
+        }
+    rlEnd();
 }
 
 // Draw rectangle with rounded edges outline with line thickness
