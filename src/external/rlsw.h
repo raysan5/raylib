@@ -677,6 +677,7 @@ SWAPI bool swResize(int w, int h);
 SWAPI void swReadPixels(int x, int y, int w, int h, SWformat format, SWtype type, void *pixels);
 SWAPI void swBlitPixels(int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, SWformat format, SWtype type, void *pixels);
 SWAPI void *swGetColorBuffer(int *width, int *height); // Restored for ESP-IDF compatibility
+SWAPI void swSwapColorBuffers(void); // Swap software renderer color/back buffers by pointer only
 
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
@@ -993,6 +994,9 @@ typedef struct {
 
 typedef struct {
     sw_texture_t color;         // Default framebuffer color texture
+#ifdef SW_DOUBLE_BUFFERING
+    sw_texture_t backColor; // Back buffer for multicore.
+#endif
     sw_texture_t depth;         // Default framebuffer depth texture
 } sw_default_framebuffer_t;
 
@@ -1061,6 +1065,7 @@ typedef struct {
 
     sw_handle_t boundFramebufferId;                             // Framebuffer currently bound
     sw_texture_t *colorBuffer;                                  // Color buffer currently bound
+    // NOTE: don't need backBuffer because it's already in the sw_default_framebuffer_t struct.
     sw_texture_t *depthBuffer;                                  // Depth buffer currently bound
     sw_pool_t framebufferPool;                                  // Framebuffer object pool
 
@@ -2583,6 +2588,13 @@ static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, in
         return false;
     }
 
+#ifdef SW_DOUBLE_BUFFERING
+    if (!sw_texture_alloc(&fb->backColor, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
+    {
+        return false;
+    }
+#endif
+
     if (!sw_texture_alloc(&fb->depth, NULL, w, h, SW_FRAMEBUFFER_DEPTH_FORMAT))
     {
         return false;
@@ -2595,6 +2607,9 @@ static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
+#ifdef SW_DOUBLE_BUFFERING
+    sw_texture_free(&fb->backColor);
+#endif
 }
 
 static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
@@ -4160,6 +4175,22 @@ void *swGetColorBuffer(int *width, int *height)
     return RLSW.framebuffer.color.pixels;
 }
 
+
+void swSwapColorBuffers(void)
+{
+#ifdef SW_DOUBLE_BUFFERING
+    sw_texture_t tmp = RLSW.framebuffer.color;
+    RLSW.framebuffer.color = RLSW.framebuffer.backColor;
+    RLSW.framebuffer.backColor = tmp;
+
+    // Only needs to know about current colorBuffer.
+    RLSW.colorBuffer = &RLSW.framebuffer.color;
+#else
+    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define SW_DOUBLE_BUFFERING with a compiler option to enable).\n");
+#endif
+}
+
+
 void swEnable(SWstate state)
 {
     switch (state)
@@ -4334,6 +4365,8 @@ void swClear(uint32_t bitmask)
     {
         sw_framebuffer_fill_color(RLSW.colorBuffer, RLSW.clearColor);
     }
+
+    // Don't clear back buffer, it might be locked by another core.
 
     if ((bitmask & (SW_DEPTH_BUFFER_BIT)) && (RLSW.depthBuffer != NULL) && (RLSW.depthBuffer->pixels != NULL))
     {
@@ -5266,6 +5299,7 @@ void swBindFramebuffer(uint32_t id)
 
     RLSW.boundFramebufferId = id;
     RLSW.colorBuffer = sw_pool_get(&RLSW.texturePool, fb->colorAttachment);
+    // No back buffer available for binding rendertextures.
     RLSW.depthBuffer = sw_pool_get(&RLSW.texturePool, fb->depthAttachment);
 }
 
