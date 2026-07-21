@@ -9,6 +9,7 @@ IDE | Platform(s) | Source | Example(s)
 [CodeBlocks](http://www.codeblocks.org/) | Windows, Linux, macOS | ❌ | ✔️
 [Geany](https://www.geany.org/) | Windows, Linux | ✔️ | ✔️
 [Notepad++](https://notepad-plus-plus.org/) | Windows, Web | ✔️ | ✔️
+[Pulsar](https://pulsar-edit.dev) | Windows, Linux, macOS | ✔️ | ✔️
 [SublimeText](https://www.sublimetext.com/) | Windows, Linux, macOS | ✔️ | ✔️
 [VS2022](https://www.visualstudio.com) | Windows | ✔️ | ✔️
 [VSCode](https://code.visualstudio.com/) | Windows, Linux, macOS | ❌ | ✔️
