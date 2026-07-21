@@ -1154,14 +1154,15 @@ RLAPI long GetFileModTime(const char *fileName);                    // Get file 
 RLAPI const char *GetFileExtension(const char *fileName);           // Get pointer to extension for a filename string (includes dot: '.png')
 RLAPI const char *GetFileName(const char *filePath);                // Get pointer to filename for a path string
 RLAPI const char *GetFileNameWithoutExt(const char *filePath);      // Get filename string without extension (uses static string)
-RLAPI const char *GetDirectoryPath(const char *filePath);           // Get full path for a given fileName with path (uses static string)
-RLAPI const char *GetPrevDirectoryPath(const char *dirPath);        // Get previous directory path for a given path (uses static string)
+RLAPI const char *GetDirectoryPath(const char *filePath);           // Get full path for a provided fileName with path (uses static string)
+RLAPI const char *GetPrevDirectoryPath(const char *dirPath);        // Get previous directory path for a provided path (uses static string)
 RLAPI const char *GetWorkingDirectory(void);                        // Get current working directory (uses static string)
 RLAPI const char *GetApplicationDirectory(void);                    // Get the directory of the running application (uses static string)
 RLAPI int MakeDirectory(const char *dirPath);                       // Create directories (including full path requested), returns 0 on success
 RLAPI int ChangeDirectory(const char *dirPath);                     // Change working directory, returns 0 on success
-RLAPI bool IsPathFile(const char *path);                            // Check if given path points to a file
-RLAPI bool IsPathDirectory(const char *path);                       // Check if given path points to a directory
+RLAPI bool IsPathFile(const char *path);                            // Check if provided path points to a file
+RLAPI bool IsPathDirectory(const char *path);                       // Check if provided path points to a directory
+RLAPI bool IsPathAbsolute(const char *path);                        // Check if provided path is an absolute path
 RLAPI bool IsFileNameValid(const char *fileName);                   // Check if fileName is valid for the platform/OS
 RLAPI FilePathList LoadDirectoryFiles(const char *dirPath);         // Load directory filepaths, files and directories, no subdirs scan
 RLAPI FilePathList LoadDirectoryFilesEx(const char *basePath, const char *filter, bool scanSubdirs); // Load directory filepaths with extension filtering and subdir scan; some filters available: '*.*','FILES*','DIRS*'
@@ -1240,7 +1241,7 @@ RLAPI void SetMouseCursor(int cursor);                        // Set mouse curso
 RLAPI int GetTouchX(void);                                    // Get touch position X for touch point 0 (relative to screen size)
 RLAPI int GetTouchY(void);                                    // Get touch position Y for touch point 0 (relative to screen size)
 RLAPI Vector2 GetTouchPosition(int index);                    // Get touch position XY for a touch point index (relative to screen size)
-RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for given index
+RLAPI int GetTouchPointId(int index);                         // Get touch point identifier for provided index
 RLAPI int GetTouchPointCount(void);                           // Get number of touch points
 
 //------------------------------------------------------------------------------------
@@ -1327,7 +1328,7 @@ RLAPI void DrawSplineSegmentCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vecto
 RLAPI void DrawSplineSegmentBezierQuadratic(Vector2 p1, Vector2 c2, Vector2 p3, float thick, Color color); // Draw spline segment: Quadratic Bezier, 2 points, 1 control point
 RLAPI void DrawSplineSegmentBezierCubic(Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float thick, Color color); // Draw spline segment: Cubic Bezier, 2 points, 2 control points
 
-// Spline segment point evaluation functions, for a given t [0.0f .. 1.0f]
+// Spline segment point evaluation functions, for a provided t [0.0f .. 1.0f]
 RLAPI Vector2 GetSplinePointLinear(Vector2 startPos, Vector2 endPos, float t);                           // Get (evaluate) spline point: Linear
 RLAPI Vector2 GetSplinePointBasis(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);              // Get (evaluate) spline point: B-Spline
 RLAPI Vector2 GetSplinePointCatmullRom(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t);         // Get (evaluate) spline point: Catmull-Rom
@@ -1417,7 +1418,7 @@ RLAPI Color GetImageColor(Image image, int x, int y);                           
 
 // Image drawing functions
 // NOTE: Image software-rendering functions (CPU)
-RLAPI void ImageClearBackground(Image *dst, Color color);                                                // Clear image background with given color
+RLAPI void ImageClearBackground(Image *dst, Color color);                                                // Clear image background with provided color
 RLAPI void ImageDrawPixel(Image *dst, int posX, int posY, Color color);                                  // Draw pixel within an image
 RLAPI void ImageDrawPixelV(Image *dst, Vector2 position, Color color);                                   // Draw pixel within an image (Vector version)
 RLAPI void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color); // Draw line within an image

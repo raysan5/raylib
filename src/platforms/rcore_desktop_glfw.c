@@ -1198,7 +1198,7 @@ void OpenURL(const char *url)
         TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
     }
     else
-    {       
+    {
         char *cmd = (char *)RL_CALLOC(strlen(url) + 16, sizeof(char));
 #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
@@ -1211,7 +1211,7 @@ void OpenURL(const char *url)
 #endif
         // TODO: Replace system() call by custom process
         int result = system(cmd);
-        
+
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
     }
@@ -2186,12 +2186,12 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 // GLFW3: Cursor ennter callback, when cursor enters the window
 static void CursorEnterCallback(GLFWwindow *window, int entered)
 {
-    if (entered) 
+    if (entered)
     {
         // NOTE: Mouse position updated by MouseCursorPosCallback()
         CORE.Input.Mouse.cursorOnScreen = true;
     }
-    else 
+    else
     {
         CORE.Input.Mouse.cursorOnScreen = false;
         CORE.Input.Mouse.currentPosition = (Vector2){ 0 };
