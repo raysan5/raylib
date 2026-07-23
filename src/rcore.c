@@ -531,6 +531,8 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_drm.c"
 #elif defined(PLATFORM_ANDROID)
     #include "platforms/rcore_android.c"
+#elif defined(PLATFORM_IOS)
+    #include "platforms/rcore_ios.c"
 #elif defined(PLATFORM_MEMORY)
     #include "platforms/rcore_memory.c"
 #else
@@ -609,6 +611,8 @@ void InitWindow(int width, int height, const char *title)
     TRACELOG(LOG_INFO, "Platform backend: ANDROID");
 #elif defined(PLATFORM_MEMORY)
     TRACELOG(LOG_INFO, "Platform backend: MEMORY (No OS)");
+#elif defined(PLATFORM_IOS)
+    TRACELOG(LOG_INFO, "Platform backend: iOS");
 #else
     // TODO: Include your custom platform backend!
     // i.e software rendering backend or console backend!
