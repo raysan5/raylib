@@ -31,6 +31,7 @@ pub fn main() void {
     // Initialization
     //--------------------------------------------------------------------------------------
     rl.InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    defer rl.CloseWindow(); // Close window and OpenGL context
 
     if (builtin.os.tag == .emscripten) {
         std.os.emscripten.emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
@@ -44,11 +45,6 @@ pub fn main() void {
             UpdateDrawFrame();
         }
     }
-
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    rl.CloseWindow(); // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
 }
 
 //----------------------------------------------------------------------------------
@@ -63,11 +59,10 @@ fn UpdateDrawFrame() callconv(.c) void {
     // Draw
     //----------------------------------------------------------------------------------
     rl.BeginDrawing();
+    defer rl.EndDrawing();
 
     rl.ClearBackground(rl.RAYWHITE);
 
     rl.DrawText("Congrats! You created your first window!", 190, 200, 20, rl.LIGHTGRAY);
-
-    rl.EndDrawing();
     //----------------------------------------------------------------------------------
 }
