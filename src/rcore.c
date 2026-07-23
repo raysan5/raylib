@@ -110,7 +110,12 @@
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strcmp(), strrchr(), memset(), memcpy(), strcat()
 #include <stdarg.h>                 // Required for: va_list, va_start(), va_end() [Used in TraceLog()]
+
+#ifndef PICO_RP2350
 #include <time.h>                   // Required for: time() [Used in InitTimer()]
+#else
+#include "pico/rand.h"              // Pico doesn't implement time, and will implement its own hardware timer elsewhere.  However, we need something to get a random seed from...
+#endif
 #include <math.h>                   // Required for: tan() [Used in BeginMode3D()], atan2f() [Used in LoadVrStereoConfig()]
 
 #if defined(PLATFORM_MEMORY) || defined(PLATFORM_WEB)
@@ -713,8 +718,12 @@ void InitWindow(int width, int height, const char *title)
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
 
-    // Initialize random seed
+    // Initialize random seed using available timer source instead of standard time() on embedded platforms
+    #ifndef PICO_RP2350
     SetRandomSeed((unsigned int)time(NULL));
+    #else
+    SetRandomSeed(get_rand_32());
+    #endif
 
     TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", GetWorkingDirectory());
 }
@@ -1804,7 +1813,6 @@ void UnloadRandomSequence(int *sequence)
 }
 
 // Takes a screenshot of current screen
-// NOTE: Provided fileName should not contain paths, saving to working directory
 void TakeScreenshot(const char *fileName)
 {
 #if SUPPORT_MODULE_RTEXTURES
@@ -1819,7 +1827,8 @@ void TakeScreenshot(const char *fileName)
     Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[MAX_FILEPATH_LENGTH] = { 0 };
-    snprintf(path, MAX_FILEPATH_LENGTH, "%s", TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+    if (!IsPathAbsolute(fileName)) snprintf(path, MAX_FILEPATH_LENGTH, "%s", TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+    else snprintf(path, MAX_FILEPATH_LENGTH, "%s", fileName);
 
     ExportImage(image, path); // WARNING: Module required: rtextures
     RL_FREE(imgData);
@@ -2522,7 +2531,7 @@ const char *GetFileNameWithoutExt(const char *filePath)
     return fileName;
 }
 
-// Get directory for a given filePath
+// Get directory for a provided filePath
 const char *GetDirectoryPath(const char *filePath)
 {
     /*
@@ -2569,7 +2578,7 @@ const char *GetDirectoryPath(const char *filePath)
     return dirPath;
 }
 
-// Get previous directory path for a given path
+// Get previous directory path for a provided path
 const char *GetPrevDirectoryPath(const char *dirPath)
 {
     static char prevDirPath[MAX_FILEPATH_LENGTH] = { 0 };
@@ -2819,7 +2828,7 @@ int ChangeDirectory(const char *dirPath)
     return result;
 }
 
-// Check if given path point to a file
+// Check if provided path point to a file
 bool IsPathFile(const char *path)
 {
     bool result = false;
@@ -2832,12 +2841,34 @@ bool IsPathFile(const char *path)
     return result;
 }
 
-// Check if given path point to a directory
+// Check if provided path point to a directory
 bool IsPathDirectory(const char *path)
 {
     bool result = false;
 
     if (!IsPathFile(path)) result = true;
+
+    return result;
+}
+
+// Check if provided path is an absolute path
+bool IsPathAbsolute(const char *path)
+{
+    int result = false;
+
+    if ((path != NULL) && (path[0] != '\0'))
+    {
+#if defined(_WIN32)
+        // UNC path (\\server\share)
+        if ((path[0] == '\\') && (path[1] == '\\')) result = true;
+        // Drive letter (e.g. C:\ or D:/)
+        else if (isalpha((unsigned char)path[0]) && (path[1] == ':') &&
+            ((path[2] == '\\') || (path[2] == '/'))) result = true;
+#else
+        // POSIX: must start with /
+        if (path[0] == '/') result = true;
+#endif
+    }
 
     return result;
 }
@@ -4214,7 +4245,7 @@ Vector2 GetTouchPosition(int index)
     return position;
 }
 
-// Get touch point identifier for given index
+// Get touch point identifier for provided index
 int GetTouchPointId(int index)
 {
     int id = -1;

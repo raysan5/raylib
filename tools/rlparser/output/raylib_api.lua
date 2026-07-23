@@ -4135,7 +4135,7 @@ return {
     },
     {
       name = "GetDirectoryPath",
-      description = "Get full path for a given fileName with path (uses static string)",
+      description = "Get full path for a provided fileName with path (uses static string)",
       returnType = "const char *",
       params = {
         {type = "const char *", name = "filePath"}
@@ -4143,7 +4143,7 @@ return {
     },
     {
       name = "GetPrevDirectoryPath",
-      description = "Get previous directory path for a given path (uses static string)",
+      description = "Get previous directory path for a provided path (uses static string)",
       returnType = "const char *",
       params = {
         {type = "const char *", name = "dirPath"}
@@ -4177,7 +4177,7 @@ return {
     },
     {
       name = "IsPathFile",
-      description = "Check if given path points to a file",
+      description = "Check if provided path points to a file",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}
@@ -4185,7 +4185,15 @@ return {
     },
     {
       name = "IsPathDirectory",
-      description = "Check if given path points to a directory",
+      description = "Check if provided path points to a directory",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "path"}
+      }
+    },
+    {
+      name = "IsPathAbsolute",
+      description = "Check if provided path is an absolute path",
       returnType = "bool",
       params = {
         {type = "const char *", name = "path"}
@@ -4671,7 +4679,7 @@ return {
     },
     {
       name = "GetTouchPointId",
-      description = "Get touch point identifier for given index",
+      description = "Get touch point identifier for provided index",
       returnType = "int",
       params = {
         {type = "int", name = "index"}
@@ -6071,7 +6079,7 @@ return {
     },
     {
       name = "ImageClearBackground",
-      description = "Clear image background with given color",
+      description = "Clear image background with provided color",
       returnType = "void",
       params = {
         {type = "Image *", name = "dst"},

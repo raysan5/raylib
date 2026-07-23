@@ -3001,13 +3001,13 @@
        ((type "const char *") (name "filePath"))))
 
     ((name "GetDirectoryPath")
-     (description "Get full path for a given fileName with path (uses static string)")
+     (description "Get full path for a provided fileName with path (uses static string)")
      (return-type "const char *")
      (params
        ((type "const char *") (name "filePath"))))
 
     ((name "GetPrevDirectoryPath")
-     (description "Get previous directory path for a given path (uses static string)")
+     (description "Get previous directory path for a provided path (uses static string)")
      (return-type "const char *")
      (params
        ((type "const char *") (name "dirPath"))))
@@ -3033,13 +3033,19 @@
        ((type "const char *") (name "dirPath"))))
 
     ((name "IsPathFile")
-     (description "Check if given path points to a file")
+     (description "Check if provided path points to a file")
      (return-type "bool")
      (params
        ((type "const char *") (name "path"))))
 
     ((name "IsPathDirectory")
-     (description "Check if given path points to a directory")
+     (description "Check if provided path points to a directory")
+     (return-type "bool")
+     (params
+       ((type "const char *") (name "path"))))
+
+    ((name "IsPathAbsolute")
+     (description "Check if provided path is an absolute path")
      (return-type "bool")
      (params
        ((type "const char *") (name "path"))))
@@ -3414,7 +3420,7 @@
        ((type "int") (name "index"))))
 
     ((name "GetTouchPointId")
-     (description "Get touch point identifier for given index")
+     (description "Get touch point identifier for provided index")
      (return-type "int")
      (params
        ((type "int") (name "index"))))
@@ -4544,7 +4550,7 @@
        ((type "int") (name "y"))))
 
     ((name "ImageClearBackground")
-     (description "Clear image background with given color")
+     (description "Clear image background with provided color")
      (return-type "void")
      (params
        ((type "Image *") (name "dst"))

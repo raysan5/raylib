@@ -1444,7 +1444,7 @@ int InitPlatform(void)
         return -1;
     }
 
-    // WARNING: Providing framebufferAttribs is not logically necessary, 
+    // WARNING: Providing framebufferAttribs is not logically necessary,
     // but it may prevent segfaults on some nvidia drivers
     if (!eglChooseConfig(platform.device, framebufferAttribs, NULL, 0, &numConfigs))
     {

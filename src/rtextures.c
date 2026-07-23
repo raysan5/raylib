@@ -1230,25 +1230,34 @@ Image ImageFromImage(Image image, Rectangle rec)
 {
     Image result = { 0 };
 
-    // Basic rectangle validation: size smaller than image size
-    if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
-        (((int)rec.x + (int)rec.width) <= image.width) &&
-        (((int)rec.y + (int)rec.height) <= image.height))
-    {
-        int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
+    // Security check to avoid program crash
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
 
-        result.width = (int)rec.width;
-        result.height = (int)rec.height;
-        result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
-        result.format = image.format;
-        result.mipmaps = 1;
-
-        for (int y = 0; y < (int)rec.height; y++)
+    if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
+	{
+        // Basic rectangle validation: size smaller than image size
+        if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
+            (((int)rec.x + (int)rec.width) <= image.width) &&
+            (((int)rec.y + (int)rec.height) <= image.height))
         {
-            memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel, ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel, (int)rec.width*bytesPerPixel);
+            int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
+
+            result.width = (int)rec.width;
+            result.height = (int)rec.height;
+            result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
+            result.format = image.format;
+            result.mipmaps = 1;
+
+            for (int y = 0; y < (int)rec.height; y++)
+            {
+                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel,
+                    ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel,
+                    (int)rec.width*bytesPerPixel);
+            }
         }
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Rectangle provided for ImageToImage not valid");
+        else TRACELOG(LOG_WARNING, "IMAGE: ImageToImage(), rectangle provided not valid");
+	}
+    else TRACELOG(LOG_WARNING, "IMAGE: Image manipulation not supported for compressed formats");
 
     return result;
 }
@@ -5514,7 +5523,7 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
         default: break;
     }
-    
+
     unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
 
     if (dataSizeBytes < INT_MAX)
@@ -5529,7 +5538,7 @@ int GetPixelDataSize(int width, int height, int format)
             else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
         }
     }
-    
+
     // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
     if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
