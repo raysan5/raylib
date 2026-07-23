@@ -719,7 +719,6 @@ fn addExamples(
                 .shell_file_path = b.path("src/shell.html"),
                 .install_dir = install_dir,
             });
-            b.getInstallStep().dependOn(emcc_step);
 
             const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
             const emrun_step = emsdk.emrunStep(
