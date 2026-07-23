@@ -1756,3 +1756,4 @@ RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio s
 #endif
 
 #endif // RAYLIB_H
+RLAPI void SetFontSizeMetric(int metric);
