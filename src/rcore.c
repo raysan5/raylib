@@ -106,6 +106,7 @@
 
 #include "config.h"                 // Defines module configuration flags
 
+#include <ctype.h>					// Required for: isalpha()
 #include <stdlib.h>                 // Required for: srand(), rand(), exit()
 #include <stdio.h>                  // Required for: FILE, fopen(), fseek(), ftell(), fread(), fwrite(), fprintf(), vprintf(), fclose(), sprintf() [Used in OpenURL()]
 #include <string.h>                 // Required for: strlen(), strcmp(), strrchr(), memset(), memcpy(), strcat()
