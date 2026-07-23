@@ -1540,6 +1540,7 @@ RLAPI int GetCodepoint(const char *text, int *codepointSize);                   
 RLAPI int GetCodepointNext(const char *text, int *codepointSize);                           // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
 RLAPI int GetCodepointPrevious(const char *text, int *codepointSize);                       // Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
 RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);                            // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
+RLAPI void SetFontSizeMetric(int metric);                                                   // Sets the global font size metric
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
 // WARNING 1: Most of these functions use internal static buffers[], it's recommended to store returned data on user-side for re-use
@@ -1756,4 +1757,3 @@ RLAPI void DetachAudioMixedProcessor(AudioCallback processor); // Detach audio s
 #endif
 
 #endif // RAYLIB_H
-RLAPI void SetFontSizeMetric(int metric);                                        // Sets the global font size metric
