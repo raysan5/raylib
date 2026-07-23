@@ -913,6 +913,12 @@ typedef enum {
     FONT_SDF                        // SDF font generation, requires external shader
 } FontType;
 
+// Font size metric types
+typedef enum {
+    FONT_SIZE_METRIC_EM_BOX = 0,
+    FONT_SIZE_METRIC_ASCENT
+} FontSizeMetric;
+
 // Color blending modes (pre-defined)
 typedef enum {
     BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
