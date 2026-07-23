@@ -130,6 +130,9 @@ static Font defaultFont = { 0 };
 // Text vertical line spacing in pixels (between lines)
 static int textLineSpacing = 2;
 
+// The desired font scaling metric to use for calculating the font's ascent height
+static int fontSizeMetric = FONT_SIZE_METRIC_ASCENT;
+
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
 //----------------------------------------------------------------------------------
@@ -639,8 +642,21 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 
         if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0)) // Initialize font for data reading
         {
-            // Calculate font scale factor
-            float scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
+            // Calculate font scale factor using desired font size metric
+            float scaleFactor = 0.0f;
+            if (fontSizeMetric == FONT_SIZE_METRIC_ASCENT)
+            {
+                scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
+            }
+            else if (fontSizeMetric == FONT_SIZE_METRIC_EM_BOX)
+            {
+                scaleFactor = stbtt_ScaleForMappingEmToPixels(&fontInfo, (float)fontSize);
+            }
+            else
+            {
+                TRACELOG(LOG_WARNING, "FONT: Invalid font size metric [%d], assuming FONT_METRIC_ASCENT", fontSizeMetric);
+                scaleFactor = stbtt_ScaleForPixelHeight(&fontInfo, (float)fontSize);
+            }
 
             // Calculate font basic metrics
             // NOTE: ascent is equivalent to font baseline
@@ -2407,6 +2423,18 @@ const char *CodepointToUTF8(int codepoint, int *utf8Size)
     *utf8Size = size;
 
     return utf8;
+}
+
+// Allows the user to choose which font size metric they want (either FONT_SIZE_METRIC_ASCENT or FONT_SIZE_METRIC_EM_BOX)
+void SetFontSizeMetric(int metric)
+{
+    if ((metric != FONT_SIZE_METRIC_ASCENT) && (metric != FONT_SIZE_METRIC_EM_BOX))
+    {
+        TRACELOG(LOG_WARNING, "TEXT: Attempting to set font size metric to invalid enum [%d]", metric);
+        return;
+    }
+
+    fontSizeMetric = metric;
 }
 
 // Get next codepoint in a UTF-8 encoded text, scanning until '\0' is found
