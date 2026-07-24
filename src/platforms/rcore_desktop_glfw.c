@@ -1791,12 +1791,28 @@ int InitPlatform(void)
 
         // Center window into current monitor
     #if defined(__APPLE__)
-        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+        const int windowWidthForCentering = CORE.Window.screen.width;
+        const int windowHeightForCentering = CORE.Window.screen.height;
     #else
-        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.render.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.render.height)/2;
+        const int windowWidthForCentering = CORE.Window.render.width;
+        const int windowHeightForCentering = CORE.Window.render.height;
     #endif
+
+        // NOTE: If the window is as large or larger than the monitor workarea on either axis
+        // (e.g. a landscape window on a portrait primary monitor), centering it can push part
+        // of it past the edge of the virtual desktop, which some window managers (Windows in
+        // particular) then mishandle, causing the window to disappear or get misplaced entirely.
+        // Anchor it to the workarea origin instead, same as done in SetWindowMonitor()
+        if ((windowWidthForCentering >= monitorWidth) || (windowHeightForCentering >= monitorHeight))
+        {
+            CORE.Window.position.x = monitorX;
+            CORE.Window.position.y = monitorY;
+        }
+        else
+        {
+            CORE.Window.position.x = monitorX + (monitorWidth - windowWidthForCentering)/2;
+            CORE.Window.position.y = monitorY + (monitorHeight - windowHeightForCentering)/2;
+        }
         SetWindowPosition(CORE.Window.position.x, CORE.Window.position.y);
 
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED)) MinimizeWindow();
