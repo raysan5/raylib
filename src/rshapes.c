@@ -1265,7 +1265,8 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
     if (sides < 3) sides = 3;
     float centralAngle = rotation*DEG2RAD;
     float exteriorAngle = 360.0f/(float)sides*DEG2RAD;
-    float innerRadius = fmaxf(0.0f, radius - (thick*cosf(DEG2RAD*exteriorAngle/2.0f)));
+    float apothem = radius*cosf(DEG2RAD*180.0f/(float)sides);
+    float innerRadius = fmaxf(0.0f, radius - thick*(radius/apothem));
 
 #if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
