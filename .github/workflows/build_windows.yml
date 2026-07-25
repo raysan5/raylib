@@ -21,7 +21,7 @@ permissions:
 jobs:
   build:
     permissions:
-      contents: write  # for actions/upload-release-asset to upload release asset
+      contents: write  # Required for actions/upload-release-asset to upload release asset
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -81,7 +81,7 @@ jobs:
 
     # Setup MSBuild.exe path if required
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
       if: matrix.compiler == 'msvc16'
 
     - name: Build Library (MinGW-w64 32bit)
@@ -140,7 +140,7 @@ jobs:
       shell: cmd
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ env.RELEASE_NAME }}
         path: |
@@ -148,7 +148,7 @@ jobs:
           !./build/${{ env.RELEASE_NAME }}.zip
 
     - name: Upload Artifact to Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         files: ./build/${{ env.RELEASE_NAME }}.zip
       env:

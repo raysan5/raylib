@@ -2714,13 +2714,13 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].y));
         stabilizer = fmaxf(stabilizer, fabsf(matColumns[i].z));
     }
-    matColumns[0] = Vector3Scale(matColumns[0], 1.0f / stabilizer);
-    matColumns[1] = Vector3Scale(matColumns[1], 1.0f / stabilizer);
-    matColumns[2] = Vector3Scale(matColumns[2], 1.0f / stabilizer);
+    matColumns[0] = Vector3Scale(matColumns[0], 1.0f/stabilizer);
+    matColumns[1] = Vector3Scale(matColumns[1], 1.0f/stabilizer);
+    matColumns[2] = Vector3Scale(matColumns[2], 1.0f/stabilizer);
 
     // X Scale
     scl.x = Vector3Length(matColumns[0]);
-    if (scl.x > eps) matColumns[0] = Vector3Scale(matColumns[0], 1.0f / scl.x);
+    if (scl.x > eps) matColumns[0] = Vector3Scale(matColumns[0], 1.0f/scl.x);
 
     // Compute XY shear and make col2 orthogonal
     shear[0] = Vector3DotProduct(matColumns[0], matColumns[1]);
@@ -2730,7 +2730,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     scl.y = Vector3Length(matColumns[1]);
     if (scl.y > eps)
     {
-        matColumns[1] = Vector3Scale(matColumns[1], 1.0f / scl.y);
+        matColumns[1] = Vector3Scale(matColumns[1], 1.0f/scl.y);
         shear[0] /= scl.y; // Correct XY shear
     }
 
@@ -2744,7 +2744,7 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     scl.z = Vector3Length(matColumns[2]);
     if (scl.z > eps)
     {
-        matColumns[2] = Vector3Scale(matColumns[2], 1.0f / scl.z);
+        matColumns[2] = Vector3Scale(matColumns[2], 1.0f/scl.z);
         shear[1] /= scl.z; // Correct XZ shear
         shear[2] /= scl.z; // Correct YZ shear
     }

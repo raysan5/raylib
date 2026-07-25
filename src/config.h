@@ -173,20 +173,22 @@
 //#define RL_CULL_DISTANCE_FAR                4000.0    // Default projection matrix far cull distance
 
 // Default shader vertex attribute locations
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION    0
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD    1
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL      2
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR       3
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT     4
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2   5
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES     6
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES 7
-//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS 8
+// NOTE: Locations can be redefined by user if required
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION        0
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD        1
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL          2
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_COLOR           3
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT         4
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2       5
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES         6
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES     7
+//#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS     8
 //#define RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM 9
 
 // Default shader vertex attribute/uniform names to set location points
 // NOTE: When a new shader is loaded, locations are tried to be set for convenience, looking for the names defined here
-// In case custom shader names are used, it's up to the user to set locations with GetShaderLocation*() functions
+// WARNING: Location pre-defined names can not be changed, they are used by default shaders and all raylib examples shaders, they are just listed here for reference
+// WARNING: In case custom shader names are used, it's up to the user to set locations with GetShaderLocation*() functions
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_POSITION       "vertexPosition"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_TEXCOORD       "vertexTexCoord"     // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_NORMAL         "vertexNormal"       // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL
@@ -196,6 +198,7 @@
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEINDICES    "vertexBoneIndices"  // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEINDICES
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_BONEWEIGHTS    "vertexBoneWeights"  // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_BONEWEIGHTS
 //#define RL_DEFAULT_SHADER_ATTRIB_NAME_INSTANCETRANSFORM "instanceTransform" // Bound by default to shader location: RL_DEFAULT_SHADER_ATTRIB_LOCATION_INSTANCETRANSFORM
+
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_MVP           "mvp"                // model-view-projection matrix
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_VIEW          "matView"            // view matrix
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_PROJECTION    "matProjection"      // projection matrix
@@ -203,6 +206,7 @@
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_NORMAL        "matNormal"          // normal matrix (transpose(inverse(matModelView))
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_COLOR         "colDiffuse"         // color diffuse (tint color, multiplied by texture color)
 //#define RL_DEFAULT_SHADER_UNIFORM_NAME_BONEMATRICES  "boneMatrices"       // bone matrices
+
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE0    "texture0"           // texture0 (texture slot active 0)
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE1    "texture1"           // texture1 (texture slot active 1)
 //#define RL_DEFAULT_SHADER_SAMPLER2D_NAME_TEXTURE2    "texture2"           // texture2 (texture slot active 2)
@@ -239,6 +243,9 @@
 #endif
 #ifndef SUPPORT_FILEFORMAT_QOI
     #define SUPPORT_FILEFORMAT_QOI      1
+#endif
+#ifndef SUPPORT_FILEFORMAT_PEP
+    #define SUPPORT_FILEFORMAT_PEP      0
 #endif
 #ifndef SUPPORT_FILEFORMAT_PSD
     #define SUPPORT_FILEFORMAT_PSD      0       // Disabled by default

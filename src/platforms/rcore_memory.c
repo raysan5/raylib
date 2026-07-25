@@ -366,7 +366,7 @@ double GetTime(void)
 #if defined(_WIN32)
     LARGE_INTEGER currentTicks = { 0 };
     QueryPerformanceCounter(&currentTicks);
-    
+
     time = (double)(currentTicks.QuadPart - CORE.Time.base)/(double)platform.timerFrequency.QuadPart;
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
     struct timespec ts = { 0 };
@@ -420,7 +420,6 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
 // Set mouse cursor
