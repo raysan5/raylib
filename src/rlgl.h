@@ -730,9 +730,13 @@ RLAPI int *rlGetShaderLocsDefault(void);                // Get default shader lo
 RLAPI rlRenderBatch rlLoadRenderBatch(int numBuffers, int bufferElements); // Load a render batch system
 RLAPI void rlUnloadRenderBatch(rlRenderBatch batch);    // Unload render batch system
 RLAPI void rlDrawRenderBatch(rlRenderBatch *batch);     // Draw render batch data (Update->Draw->Reset)
+RLAPI rlRenderBatch* rlGetRenderBatchActive(void);       // Get the active render batch
 RLAPI void rlSetRenderBatchActive(rlRenderBatch *batch); // Set the active render batch for rlgl (NULL for default internal)
 RLAPI void rlDrawRenderBatchActive(void);               // Update and draw internal render batch
 RLAPI bool rlCheckRenderBatchLimit(int vCount);         // Check internal buffer overflow for a given number of vertex
+
+RLAPI float rlGetRenderBatchDepth();                    // Get the depth for the active render batch
+RLAPI void rlSetRenderBatchDepth(float depth);          // Set the depth for the active render batch
 
 RLAPI void rlSetTexture(unsigned int id);               // Set current texture for render batch and check buffers limits
 
@@ -3179,6 +3183,12 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
 #endif
 }
 
+// Get the active render batch for rlgl
+rlRenderBatch* rlGetRenderBatchActive()
+{
+    return RLGL.currentBatch;
+}
+
 // Set the active render batch for rlgl
 void rlSetRenderBatchActive(rlRenderBatch *batch)
 {
@@ -3223,6 +3233,18 @@ bool rlCheckRenderBatchLimit(int vCount)
 #endif
 
     return overflow;
+}
+
+// Get the depth for the active render batch
+float rlGetRenderBatchDepth()
+{
+    return RLGL.currentBatch->currentDepth;
+}
+
+// Set the depth for the active render batch
+void rlSetRenderBatchDepth(float depth)
+{
+    RLGL.currentBatch->currentDepth = depth;
 }
 
 // Textures data management
