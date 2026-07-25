@@ -25,15 +25,15 @@ int main(void)
     // Loading pixel fonts with default metric can cause blurry rendering when drawn to render texture.
     SetFontSizeMetric(FONT_SIZE_METRIC_EM_BOX);
 
-    Font fontM5x7 = LoadFontEx("resources/m5x7.ttf", 16, NULL, 0);
-    Font fontM6x11 = LoadFontEx("resources/m6x11.ttf", 16, NULL, 0);
-    Font fontMonogram = LoadFontEx("resources/monogram.ttf", 16, NULL, 0);
+    Font fontPixantiquaEmBox = LoadFontEx("resources/pixantiqua.ttf", 16, NULL, 0);
+    Font fontAnonymousEmBox = LoadFontEx("resources/anonymous_pro_bold.ttf", 16, NULL, 0);
+    Font fontDotGothicEmBox = LoadFontEx("resources/DotGothic16-Regular.ttf", 16, NULL, 0);
 
     // Other fonts can use the default Ascent scaling metric.
     SetFontSizeMetric(FONT_SIZE_METRIC_ASCENT);
-    Font fontAutography = LoadFontEx("resources/autography.ttf", 64, NULL, 0);
-    Font fontCreatorGenius = LoadFontEx("resources/creator_genius.ttf", 32, NULL, 0);
-    Font fontPixelSimpel = LoadFontEx("resources/pixel_simpel.ttf", 32, NULL, 0);
+    Font fontPixantiquaAscent = LoadFontEx("resources/pixantiqua.ttf", 64, NULL, 0);
+    Font fontAnonymousAscent = LoadFontEx("resources/anonymous_pro_bold.ttf", 32, NULL, 0);
+    Font fontDotGothicAscent = LoadFontEx("resources/DotGothic16-Regular.ttf", 32, NULL, 0);
 
     // Set up Render Texture
     RenderTexture2D target = LoadRenderTexture(480, 270);
@@ -55,39 +55,45 @@ int main(void)
         BeginTextureMode(target);
             ClearBackground(BLACK);
 
-            // Render fonts with Em Box scaling metric
-            DrawTextEx(fontM5x7, "m5x7", (Vector2){ 50, 50 }, 32.0f, 2, WHITE);
-            DrawTextEx(fontM6x11, "m6x11", (Vector2){ 50, 100 }, 32.0f, 2, WHITE);
-            DrawTextEx(fontMonogram, "monogram", (Vector2){ 50, 150 }, 32.0f, 2, WHITE);
+            // Headers inside render texture
+            DrawText("Em Box", 30, 10, 20, LIGHTGRAY);
+            DrawText("Ascent", 270, 10, 20, LIGHTGRAY);
 
-            // Render fonts with Ascent scaling metric
-            DrawTextEx(fontAutography, "Autography", (Vector2){ 200, 50 }, 64.0f, 2, WHITE);
-            DrawTextEx(fontCreatorGenius, "Creator Genius", (Vector2){ 200, 100 }, 32.0f, 2, WHITE);
-            DrawTextEx(fontPixelSimpel, "Pixel Simpel", (Vector2){ 200, 150 }, 32.0f, 2, WHITE);
+            DrawLine(240, 0, 240, 270, GRAY);
+            DrawLine(10, 35, 470, 35, GRAY);
+
+            // Render fonts with Em Box scaling metric (Left column)
+            DrawTextEx(fontPixantiquaEmBox, "Pixantiqua 16px", (Vector2){ 30, 50 }, 16.0f, 1, WHITE);
+            DrawTextEx(fontAnonymousEmBox, "Anonymous Pro", (Vector2){ 30, 110 }, 16.0f, 1, WHITE);
+            DrawTextEx(fontDotGothicEmBox, "DotGothic16", (Vector2){ 30, 170 }, 16.0f, 1, WHITE);
+
+            // Render fonts with Ascent scaling metric (Right column)
+            DrawTextEx(fontPixantiquaAscent, "Pixantiqua 16px", (Vector2){ 270, 50 }, 16.0f, 1, WHITE);
+            DrawTextEx(fontAnonymousAscent, "Anonymous Pro", (Vector2){ 270, 110 }, 16.0f, 1, WHITE);
+            DrawTextEx(fontDotGothicAscent, "DotGothic16", (Vector2){ 270, 170 }, 16.0f, 1, WHITE);
         EndTextureMode();
 
+        // Render target texture stretched to the main window
+        //----------------------------------------------------------------------------------
         BeginDrawing();
             ClearBackground(BLACK);
-            DrawTextureRec(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, (Vector2){ 0, 0 }, WHITE);
-
-            DrawLine(180, 0, 180, 250, WHITE);
-            DrawLine(50, 30, 450, 30, WHITE);
-
-            DrawText("Em Box", 50, 0, 32, WHITE);
-            DrawText("Ascent", 200, 0, 32, WHITE);
+            DrawTexturePro(target.texture,
+                           (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height },
+                           (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)GetScreenHeight() },
+                           (Vector2){ 0, 0 }, 0.0f, WHITE);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadFont(fontM5x7);
-    UnloadFont(fontM6x11);
-    UnloadFont(fontMonogram);
+    UnloadFont(fontPixantiquaEmBox);
+    UnloadFont(fontAnonymousEmBox);
+    UnloadFont(fontDotGothicEmBox);
 
-    UnloadFont(fontAutography);
-    UnloadFont(fontCreatorGenius);
-    UnloadFont(fontPixelSimpel);
+    UnloadFont(fontPixantiquaAscent);
+    UnloadFont(fontAnonymousAscent);
+    UnloadFont(fontDotGothicAscent);
 
     UnloadRenderTexture(target);
 
