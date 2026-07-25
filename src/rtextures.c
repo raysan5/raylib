@@ -4470,11 +4470,7 @@ void UnloadRenderTexture(RenderTexture2D target)
 {
     if (target.id > 0)
     {
-        if (target.texture.id > 0)
-        {
-            // Color texture attached to FBO is deleted
-            rlUnloadTexture(target.texture.id);
-        }
+        UnloadTexture(target.texture);
 
         // NOTE: Depth texture/renderbuffer is automatically
         // queried and deleted before deleting framebuffer
