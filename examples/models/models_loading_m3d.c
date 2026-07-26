@@ -119,7 +119,7 @@ static void DrawModelSkeleton(ModelSkeleton skeleton, ModelAnimPose pose, float 
 {
     // Loop to (boneCount - 1) because the last one is a special "no bone" bone,
     // needed to workaround buggy models without a -1, a cube is always drawn at the origin
-    for (int i = 0; i < skeleton.boneCount - 1; i++)
+    for (unsigned int i = 0; i < skeleton.boneCount - 1; i++)
     {
         // Display the frame-pose skeleton
         DrawCube(pose[i].translation, scale*0.05f, scale*0.05f, scale*0.05f, color);

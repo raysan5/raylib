@@ -82,8 +82,8 @@ int main(void)
                 if (IsTextureValid(collection[i].texture))
                 {
                     DrawTexturePro(collection[i].texture,
-                        (Rectangle){0,0,collection[i].texture.width, collection[i].texture.height},
-                        (Rectangle){collection[i].position.x,collection[i].position.y,collection[i].texture.width, collection[i].texture.height},
+                        (Rectangle){0,0,(float)collection[i].texture.width, (float)collection[i].texture.height},
+                        (Rectangle){collection[i].position.x,collection[i].position.y, (float)collection[i].texture.width, (float)collection[i].texture.height},
                         (Vector2){collection[i].texture.width*0.5f, collection[i].texture.height*0.5f},
                         0.0f, WHITE);
                 }

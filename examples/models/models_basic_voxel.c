@@ -103,7 +103,7 @@ int main(void)
                         if (collision.hit && (collision.distance < closestDistance))
                         {
                             closestDistance = collision.distance;
-                            closestVoxelPosition = (Vector3){ x, y, z };
+                            closestVoxelPosition = (Vector3){ (float)x, (float)y, (float)z };
                             voxelFound = true;
                         }
                     }

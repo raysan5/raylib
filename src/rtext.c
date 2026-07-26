@@ -2013,8 +2013,8 @@ char *TextInsertAlloc(const char *text, const char *insert, int position)
         result = (char *)RL_MALLOC(textLen + insertLen + 1);
 
         for (int i = 0; i < position; i++) result[i] = text[i];
-        for (int i = position; i < (insertLen + position); i++) result[i] = insert[i - position];
-        for (int i = (insertLen + position); i < (textLen + insertLen); i++) result[i] = text[i - insertLen];
+        for (int i = 0; i < insertLen; i++) result[i+position] = insert[i];
+        for (int i = position; i < textLen; i++) result[i+insertLen] = text[i];
 
         result[textLen + insertLen] = '\0'; // Add EOL
     }
