@@ -212,12 +212,12 @@ static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int f
         if (frame1 < 0) frame1 = 0;
 
         // Get bone count (use minimum of all to be safe)
-        int boneCount = model->skeleton.boneCount;
+        unsigned int boneCount = model->skeleton.boneCount;
         if (anim0->boneCount < boneCount) boneCount = anim0->boneCount;
         if (anim1->boneCount < boneCount) boneCount = anim1->boneCount;
 
         // Blend each bone
-        for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+        for (unsigned int boneIndex = 0; boneIndex < boneCount; boneIndex++)
         {
             // Determine blend factor for this bone
             float boneBlendFactor = blend;
