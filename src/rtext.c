@@ -1987,8 +1987,8 @@ char *TextInsert(const char *text, const char *insert, int position)
             // TODO: Allow copying data inserted up to maximum buffer size and stop
 
             for (int i = 0; i < position; i++) buffer[i] = text[i];
-            for (int i = position; i < insertLen + position; i++) buffer[i] = insert[i - position];
-            for (int i = (insertLen + position); i < (textLen + insertLen); i++) buffer[i] = text[i - insertLen];
+            for (int i = 0; i < insertLen; i++) buffer[i+position] = insert[i];
+            for (int i = position; i < textLen; i++) buffer[i+insertLen] = text[i];
 
             buffer[textLen + insertLen] = '\0'; // Add EOL
         }
