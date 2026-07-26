@@ -110,7 +110,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0**          | [gclang](https://github.com/gnuchanos/gcLang_Compiler)                                 | AGPL-3.0             |
 
 
-### Utility Wrapers
+### Utility Wrappers
 
 These are utility wrappers for specific languages, they are not required to use raylib in the language but may adapt the raylib API to be more inline with the language's paradigm.
 | Name                                                 | raylib Version | Language                                     | License |
