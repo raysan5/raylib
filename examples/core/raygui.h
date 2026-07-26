@@ -4214,7 +4214,7 @@ int GuiColorPicker(Rectangle bounds, const char *text, Color *color)
     // NOTE: this conversion can cause low hue-resolution, if the r, g and b value are very similar, which causes the hue bar to shift around when only the GuiColorPanel is used
     Vector3 hsv = ConvertRGBtoHSV(RAYGUI_CLITERAL(Vector3){ (*color).r/255.0f, (*color).g/255.0f, (*color).b/255.0f });
 
-    if (result != RESULT_CHANGED) result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
+    result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
 
     //color.a = (unsigned char)(GuiColorBarAlpha(boundsAlpha, (float)color.a/255.0f)*255.0f);
     Vector3 rgb = ConvertHSVtoRGB(hsv);
