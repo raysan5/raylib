@@ -1853,6 +1853,33 @@ void SetConfigFlags(unsigned int flags)
     FLAG_SET(CORE.Window.flags, flags);
 }
 
+// Duplicates string into a new one (platform agnostic strdup)
+char *StringDuplicate(const char *string)
+{
+#if SUPPORT_POSIX_STRDUP
+    #if defined(_WIN32) || defined(_MSC_VER)
+    return _strdup(string);
+    #else
+    return strdup(string);
+    #endif
+#else
+    if (!string)
+        return NULL;
+
+    // NOTE: the final string (newString) should be stringLength + 1 (e.g. strlen("hello") + 1 = 6).
+    // one extra char is required for the null-terminator ('\0').
+
+    size_t stringLength = strlen(string);
+
+    char *newString = RL_CALLOC(stringLength + 1, sizeof(char));
+    strncpy(newString, string, stringLength);
+
+    newString[stringLength + 1] = '\0';
+
+    return newString;
+#endif
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Logging system
 //----------------------------------------------------------------------------------

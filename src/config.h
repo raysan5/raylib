@@ -123,6 +123,10 @@
     //  - SUPPORT_FILEFORMAT_JPG
     #define SUPPORT_CLIPBOARD_IMAGE         1
 #endif
+#ifndef SUPPORT_POSIX_STRDUP
+    // Use posix strdup or built-in one
+    #define SUPPORT_POSIX_STRDUP            1
+#endif
 
 // rcore: Configuration values
 // NOTE: Below values are already defined inside [rcore.c] so there is no need to be

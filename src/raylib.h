@@ -1113,6 +1113,7 @@ RLAPI void UnloadRandomSequence(int *sequence);         // Unload random values 
 RLAPI void TakeScreenshot(const char *fileName);                // Takes a screenshot of current screen (filename extension defines format)
 RLAPI void SetConfigFlags(unsigned int flags);                  // Set up init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                            // Open URL with default system browser (if available)
+RLAPI char *StringDuplicate(const char *string);                // Duplicates string into a new copy (platform agnostic strdup)
 
 // Logging system
 RLAPI void SetTraceLogLevel(int logLevel);                      // Set the current threshold (minimum) log level
