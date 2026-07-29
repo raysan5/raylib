@@ -631,8 +631,6 @@ void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 // Draw rectangle outline with line thickness
 void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
 {
-    if (thick <= 0.0f) return;
-
     if ((thick > rec.width/2) || (thick > rec.height/2))
     {
         if (rec.width >= rec.height) thick = rec.height/2;
@@ -649,16 +647,19 @@ void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
     //   BBBBBBBB
     //   BBBBBBBB
     //
+    
+    if (thick > 0.0f)
+    {
+        Rectangle top = { rec.x, rec.y, rec.width, thick };
+        Rectangle bottom = { rec.x, rec.y - thick + rec.height, rec.width, thick };
+        Rectangle left = { rec.x, rec.y + thick, thick, rec.height - thick*2.0f };
+        Rectangle right = { rec.x - thick + rec.width, rec.y + thick, thick, rec.height - thick*2.0f };
 
-    Rectangle top = { rec.x, rec.y, rec.width, thick };
-    Rectangle bottom = { rec.x, rec.y - thick + rec.height, rec.width, thick };
-    Rectangle left = { rec.x, rec.y + thick, thick, rec.height - thick*2.0f };
-    Rectangle right = { rec.x - thick + rec.width, rec.y + thick, thick, rec.height - thick*2.0f };
-
-    DrawRectangleRec(top, color);
-    DrawRectangleRec(bottom, color);
-    DrawRectangleRec(left, color);
-    DrawRectangleRec(right, color);
+        DrawRectangleRec(top, color);
+        DrawRectangleRec(bottom, color);
+        DrawRectangleRec(left, color);
+        DrawRectangleRec(right, color);
+    }
 }
 
 // Draw rectangle with rounded edges
