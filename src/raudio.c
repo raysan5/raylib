@@ -47,6 +47,9 @@
 *           - Mixing channels support
 *           - Raw audio context support
 *
+*       Levi Spencer (github: @AllMeatball) (July. 2026)
+*           - Audio device listing (playback and capture)
+*
 *
 *   LICENSE: zlib/libpng
 *
@@ -378,6 +381,12 @@ struct rAudioProcessor {
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
 
+// Audio device id abstraction struct
+// NOTE: This could do more in the future, other than storing ma_device_id.
+struct rAudioDeviceID {
+    ma_device_id id;
+};
+
 #define AudioBuffer rAudioBuffer    // WARNING: Renamed to avoid symbol collision with CoreAudio (macOS) AudioBuffer type
 
 // Audio data context
@@ -565,6 +574,95 @@ float GetMasterVolume(void)
     float volume = 0.0f;
     ma_device_get_master_volume(&AUDIO.System.device, &volume);
     return volume;
+}
+
+
+// Get list of all audio devices (playback and capture)
+bool GetAudioDeviceList(AudioDeviceList *devices)
+{
+    ma_device_info *playbackDevices = NULL;
+    ma_uint32       playbackDevicesCount = 0;
+
+    ma_device_info *captureDevices = NULL;
+    ma_uint32       captureDevicesCount = 0;
+
+    ma_result result = ma_context_get_devices(&AUDIO.System.context, &playbackDevices, &playbackDevicesCount, &captureDevices, &captureDevicesCount);
+
+    // ma_context_get_devices has failed, log that it did so and return false.
+    if (result != MA_SUCCESS) {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to get list of audio devices");
+        return false;
+    }
+
+    // Allocate list of devices.
+    devices->playbackDevices = RL_CALLOC( playbackDevicesCount, sizeof(AudioDevice) );
+    devices->captureDevices  = RL_CALLOC( captureDevicesCount, sizeof(AudioDevice) );
+
+    if (!devices->playbackDevices || !devices->captureDevices) {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to get list of audio devices");
+        return false;
+    }
+
+    devices->playbackDevicesCount = playbackDevicesCount;
+    devices->captureDevicesCount  = captureDevicesCount;
+
+    // Add playback devices.
+    for (unsigned int i = 0; i < playbackDevicesCount; i++)
+    {
+        ma_device_info device = playbackDevices[i];
+
+        rAudioDeviceID *id = RL_MALLOC(sizeof(rAudioDeviceID));
+        id->id = device.id;
+
+        devices->playbackDevices[i] = (AudioDevice){
+            .id = id,
+            .name = StringDuplicate(device.name),
+            .type = AUDIODEVICE_PLAYBACK,
+
+            .isDefault = device.isDefault == MA_TRUE,
+        };
+    }
+
+    // Add capture devices.
+    for (unsigned int i = 0; i < captureDevicesCount; i++)
+    {
+        ma_device_info device = captureDevices[i];
+
+        rAudioDeviceID *id = RL_MALLOC(sizeof(rAudioDeviceID));
+        id->id = device.id;
+
+        devices->playbackDevices[i] = (AudioDevice){
+            .id = id,
+            .name = StringDuplicate(device.name),
+            .type = AUDIODEVICE_CAPTURE,
+
+            .isDefault = device.isDefault == MA_TRUE,
+        };
+    }
+
+    return true;
+}
+
+// Unload audio device list
+void UnloadAudioDeviceList(AudioDeviceList devices)
+{
+    for (unsigned int i = 0; i < devices.playbackDevicesCount; i++)
+    {
+        AudioDevice device = devices.playbackDevices[i];
+        RL_FREE(device.id);
+        RL_FREE(device.name);
+    }
+
+    for (unsigned int i = 0; i < devices.captureDevicesCount; i++)
+    {
+        AudioDevice device = devices.captureDevices[i];
+        RL_FREE(device.id);
+        RL_FREE(device.name);
+    }
+
+
+    RL_FREE(devices.playbackDevices);
+    RL_FREE(devices.captureDevices);
 }
 
 //----------------------------------------------------------------------------------

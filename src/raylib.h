@@ -474,6 +474,26 @@ typedef struct Wave {
 // NOTE: Actual structs are defined internally in raudio module
 typedef struct rAudioBuffer rAudioBuffer;
 typedef struct rAudioProcessor rAudioProcessor;
+typedef struct rAudioDeviceID rAudioDeviceID;
+
+// Audio device, playback or capture
+typedef struct AudioDevice {
+    rAudioDeviceID *id;             // Pointer interal audio device id
+
+    char *name;                     // Audio device name (e.g. Ryzen HD Audio Controller)
+    unsigned int type;              // Audio device type (see AudioDeviceType)
+
+    bool isDefault;                 // If this audio device is default this should be set as true
+} AudioDevice;
+
+// Audio device list, contains both playback and capture devices (see AudioDevice)
+typedef struct AudioDeviceList {
+    unsigned int playbackDevicesCount;    // Playback device entries count
+    AudioDevice *playbackDevices;         // Playback device entries
+
+    unsigned int captureDevicesCount;     // Capture device entries count
+    AudioDevice *captureDevices;          // Capture device entries
+} AudioDeviceList;
 
 // AudioStream, custom audio stream
 typedef struct AudioStream {
@@ -962,6 +982,13 @@ typedef enum {
     NPATCH_THREE_PATCH_VERTICAL,    // Npatch layout: 1x3 tiles
     NPATCH_THREE_PATCH_HORIZONTAL   // Npatch layout: 3x1 tiles
 } NPatchLayout;
+
+// Audio device type
+typedef enum {
+    AUDIODEVICE_UNKNOWN = 0,        // Unknown or unspecified
+    AUDIODEVICE_PLAYBACK,           // Playback device (e.g. speakers, headphones etc.)
+    AUDIODEVICE_CAPTURE             // Capture device  (e.g. microphones, voice changers etc.)
+} AudioDeviceType;
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
@@ -1680,6 +1707,8 @@ RLAPI void CloseAudioDevice(void);                                    // Close t
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)
 RLAPI float GetMasterVolume(void);                                    // Get master volume (listener)
+RLAPI bool GetAudioDeviceList(AudioDeviceList *devices);              // Get list of all audio devices (playback and capture)
+RLAPI void UnloadAudioDeviceList(AudioDeviceList devices);            // Unload audio device list
 
 // Wave/Sound loading/unloading functions
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
