@@ -51,13 +51,13 @@
 *       rlsw capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
 *
-*           #define SW_FRAMEBUFFER_OUTPUT_BGRA      true
-*           #define SW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8
-*           #define SW_FRAMEBUFFER_DEPTH_TYPE       D32
-*           #define SW_MAX_PROJECTION_STACK_SIZE    2
-*           #define SW_MAX_MODELVIEW_STACK_SIZE     8
-*           #define SW_MAX_TEXTURE_STACK_SIZE       2
-*           #define SW_MAX_TEXTURES                 128
+*           #define RLSW_FRAMEBUFFER_OUTPUT_BGRA      true
+*           #define RLSW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8
+*           #define RLSW_FRAMEBUFFER_DEPTH_TYPE       D32
+*           #define RLSW_MAX_PROJECTION_STACK_SIZE    2
+*           #define RLSW_MAX_MODELVIEW_STACK_SIZE     8
+*           #define RLSW_MAX_TEXTURE_STACK_SIZE       2
+*           #define RLSW_MAX_TEXTURES                 128
 *
 *
 *   LICENSE: MIT
@@ -95,54 +95,54 @@
 //----------------------------------------------------------------------------------
 // RLSW Configuration
 //----------------------------------------------------------------------------------
-#ifndef SW_FRAMEBUFFER_OUTPUT_BGRA
-    #define SW_FRAMEBUFFER_OUTPUT_BGRA      true
+#ifndef RLSW_FRAMEBUFFER_OUTPUT_BGRA
+    #define RLSW_FRAMEBUFFER_OUTPUT_BGRA    true
 #endif
 
-#ifndef SW_FRAMEBUFFER_COLOR_TYPE
-    #define SW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8    // Or R5G6B5, R3G3B2, etc; see `sw_pixelformat_t`
+#ifndef RLSW_FRAMEBUFFER_COLOR_TYPE
+    #define RLSW_FRAMEBUFFER_COLOR_TYPE     R8G8B8A8    // Or R5G6B5, R3G3B2, etc; see `sw_pixelformat_t`
 #endif
 
-#ifndef SW_FRAMEBUFFER_DEPTH_TYPE
-    #define SW_FRAMEBUFFER_DEPTH_TYPE       D32         // Or D16, D8
+#ifndef RLSW_FRAMEBUFFER_DEPTH_TYPE
+    #define RLSW_FRAMEBUFFER_DEPTH_TYPE     D32         // Or D16, D8
 #endif
 
-#ifndef SW_MAX_PROJECTION_STACK_SIZE
-    #define SW_MAX_PROJECTION_STACK_SIZE    2
+#ifndef RLSW_MAX_PROJECTION_STACK_SIZE
+    #define RLSW_MAX_PROJECTION_STACK_SIZE  2
 #endif
 
-#ifndef SW_MAX_MODELVIEW_STACK_SIZE
-    #define SW_MAX_MODELVIEW_STACK_SIZE     8
+#ifndef RLSW_MAX_MODELVIEW_STACK_SIZE
+    #define RLSW_MAX_MODELVIEW_STACK_SIZE   8
 #endif
 
-#ifndef SW_MAX_TEXTURE_STACK_SIZE
-    #define SW_MAX_TEXTURE_STACK_SIZE       2
+#ifndef RLSW_MAX_TEXTURE_STACK_SIZE
+    #define RLSW_MAX_TEXTURE_STACK_SIZE     2
 #endif
 
-#ifndef SW_MAX_FRAMEBUFFERS
-    #define SW_MAX_FRAMEBUFFERS             8
+#ifndef RLSW_MAX_FRAMEBUFFERS
+    #define RLSW_MAX_FRAMEBUFFERS           8
 #endif
 
-#ifndef SW_MAX_TEXTURES
-    #define SW_MAX_TEXTURES                 128
+#ifndef RLSW_MAX_TEXTURES
+    #define RLSW_MAX_TEXTURES               128
 #endif
 
 // Enable the use of a lookup table for uint8_t to float conversion
 // Requires an additional 1KB of global memory
 // Disabled when SIMD intrinsics are enabled
-#ifndef SW_USE_COLOR_LUT
+#ifndef RLSW_USE_COLOR_LUT
     #if RLSW_USE_SIMD_INTRINSICS
-        #define SW_USE_COLOR_LUT            false
+        #define RLSW_USE_COLOR_LUT          false
     #else
-        #define SW_USE_COLOR_LUT            true
+        #define RLSW_USE_COLOR_LUT          true
     #endif
 #endif
 
 // Full NPOT texture support (enabled by default)
 // When disabled, SW_REPEAT requires POT on its axis (fast bitmask wrap)
 // SW_CLAMP remains supported for any dimension, per-axis
-#ifndef SW_SUPPORT_NPOT_TEXTURE
-#   define SW_SUPPORT_NPOT_TEXTURE true
+#ifndef RLSW_SUPPORT_NPOT_TEXTURE
+#   define RLSW_SUPPORT_NPOT_TEXTURE true
 #endif
 
 //----------------------------------------------------------------------------------
@@ -906,15 +906,15 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_CONCAT(a, b)                     a##b
 #define SW_CONCATX(a, b)                    SW_CONCAT(a, b)
 
-#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o)    SW_CONCATX(sw_pixel_read_color8_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_GET(c,p,o)     SW_CONCATX(sw_pixel_read_color_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_SET(p,c,o)     SW_CONCATX(sw_pixel_write_color_, SW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
+#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o)    SW_CONCATX(sw_pixel_read_color8_, RLSW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_GET(c,p,o)     SW_CONCATX(sw_pixel_read_color_, RLSW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_SET(p,c,o)     SW_CONCATX(sw_pixel_write_color_, RLSW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
 
-#define SW_FRAMEBUFFER_DEPTH_GET(p,o)       SW_CONCATX(sw_pixel_read_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
-#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o)     SW_CONCATX(sw_pixel_write_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
+#define SW_FRAMEBUFFER_DEPTH_GET(p,o)       SW_CONCATX(sw_pixel_read_depth_, RLSW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
+#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o)     SW_CONCATX(sw_pixel_write_depth_, RLSW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
 
-#define SW_FRAMEBUFFER_COLOR_FORMAT         SW_CONCATX(SW_PIXELFORMAT_COLOR_, SW_FRAMEBUFFER_COLOR_TYPE)
-#define SW_FRAMEBUFFER_DEPTH_FORMAT         SW_CONCATX(SW_PIXELFORMAT_DEPTH_, SW_FRAMEBUFFER_DEPTH_TYPE)
+#define SW_FRAMEBUFFER_COLOR_FORMAT         SW_CONCATX(SW_PIXELFORMAT_COLOR_, RLSW_FRAMEBUFFER_COLOR_TYPE)
+#define SW_FRAMEBUFFER_DEPTH_FORMAT         SW_CONCATX(SW_PIXELFORMAT_DEPTH_, RLSW_FRAMEBUFFER_DEPTH_TYPE)
 
 #define SW_FRAMEBUFFER_COLOR_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_COLOR_FORMAT]
 #define SW_FRAMEBUFFER_DEPTH_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_DEPTH_FORMAT]
@@ -1072,9 +1072,9 @@ typedef struct {
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
-    sw_matrix_t stackProjection[SW_MAX_PROJECTION_STACK_SIZE];  // Projection matrix stack for push/pop operations
-    sw_matrix_t stackModelview[SW_MAX_MODELVIEW_STACK_SIZE];    // Modelview matrix stack for push/pop operations
-    sw_matrix_t stackTexture[SW_MAX_TEXTURE_STACK_SIZE];        // Texture matrix stack for push/pop operations
+    sw_matrix_t stackProjection[RLSW_MAX_PROJECTION_STACK_SIZE];  // Projection matrix stack for push/pop operations
+    sw_matrix_t stackModelview[RLSW_MAX_MODELVIEW_STACK_SIZE];    // Modelview matrix stack for push/pop operations
+    sw_matrix_t stackTexture[RLSW_MAX_TEXTURE_STACK_SIZE];        // Texture matrix stack for push/pop operations
     uint32_t stackProjectionCounter;                            // Counter for matrix stack operations
     uint32_t stackModelviewCounter;                             // Counter for matrix stack operations
     uint32_t stackTextureCounter;                               // Counter for matrix stack operations
@@ -1112,7 +1112,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static sw_context_t RLSW = { 0 };
 
-#if SW_USE_COLOR_LUT
+#if RLSW_USE_COLOR_LUT
 static float SW_LUT_UINT8_TO_FLOAT[256] = { 0 };
 #endif
 
@@ -1428,7 +1428,7 @@ static SW_INLINE void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *
     vfloat32m1_t vnorm = __riscv_vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
     __riscv_vse32_v_f32m1(dst, vnorm, vl); // Store result
 
-#elif SW_USE_COLOR_LUT
+#elif RLSW_USE_COLOR_LUT
     dst[0] = SW_LUT_UINT8_TO_FLOAT[src[0]];
     dst[1] = SW_LUT_UINT8_TO_FLOAT[src[1]];
     dst[2] = SW_LUT_UINT8_TO_FLOAT[src[2]];
@@ -2403,7 +2403,7 @@ static void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_texture
 {
     int x, y;
 
-#if SW_SUPPORT_NPOT_TEXTURE
+#if RLSW_SUPPORT_NPOT_TEXTURE
     if (tex->sWrap == SW_REPEAT) x = (int)(sw_fract(u)*tex->width);
     else x = (int)(sw_saturate(u)*tex->width);
 
@@ -2436,7 +2436,7 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
 
     if (tex->sWrap == SW_REPEAT)
     {
-    #if SW_SUPPORT_NPOT_TEXTURE
+    #if RLSW_SUPPORT_NPOT_TEXTURE
         x0 = (x0%tex->width + tex->width)%tex->width;
         x1 = (x1%tex->width + tex->width)%tex->width;
     #else
@@ -2452,7 +2452,7 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
 
     if (tex->tWrap == SW_REPEAT)
     {
-    #if SW_SUPPORT_NPOT_TEXTURE
+    #if RLSW_SUPPORT_NPOT_TEXTURE
         y0 = (y0%tex->height + tex->height)%tex->height;
         y1 = (y1%tex->height + tex->height)%tex->height;
     #else
@@ -2617,7 +2617,7 @@ static void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buffer)
 
     uint8_t *d = (uint8_t *)dst;
 
-#if SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
+#if RLSW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
     for (int y = height - 1; y >= 0; y--)
     {
         const uint8_t *src = (uint8_t *)(buffer->pixels) + y*width*4;
@@ -2629,7 +2629,7 @@ static void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buffer)
             d[3] = src[3];
         }
     }
-#elif SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8)
+#elif RLSW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8)
     for (int y = height - 1; y >= 0; y--)
     {
         const uint8_t *src = (uint8_t *)(buffer->pixels) + y*width*3;
@@ -2670,7 +2670,7 @@ static void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buffer, in
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, line, 0);
 
-            #if SW_FRAMEBUFFER_OUTPUT_BGRA
+            #if RLSW_FRAMEBUFFER_OUTPUT_BGRA
             if (format == SW_PIXELFORMAT_COLOR_R8G8B8A8 || format == SW_PIXELFORMAT_COLOR_R8G8B8)
             {
                 uint8_t tmp = color[0]; color[0] = color[2]; color[2] = tmp;
@@ -2716,7 +2716,7 @@ static void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer,
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, pixel, 0);
 
-            #if SW_FRAMEBUFFER_OUTPUT_BGRA
+            #if RLSW_FRAMEBUFFER_OUTPUT_BGRA
             if (format == SW_PIXELFORMAT_COLOR_R8G8B8A8 || format == SW_PIXELFORMAT_COLOR_R8G8B8)
             {
                 uint8_t tmp = color[0]; color[0] = color[2]; color[2] = tmp;
@@ -3900,13 +3900,13 @@ bool swInit(int w, int h)
         return false;
     }
 
-    if (!sw_pool_init(&RLSW.framebufferPool, SW_MAX_FRAMEBUFFERS, sizeof(sw_framebuffer_t)))
+    if (!sw_pool_init(&RLSW.framebufferPool, RLSW_MAX_FRAMEBUFFERS, sizeof(sw_framebuffer_t)))
     {
         swClose();
         return false;
     }
 
-    if (!sw_pool_init(&RLSW.texturePool, SW_MAX_TEXTURES, sizeof(sw_texture_t)))
+    if (!sw_pool_init(&RLSW.texturePool, RLSW_MAX_TEXTURES, sizeof(sw_texture_t)))
     {
         swClose();
         return false;
@@ -3953,7 +3953,7 @@ bool swInit(int w, int h)
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
-#if SW_USE_COLOR_LUT
+#if RLSW_USE_COLOR_LUT
     for (int i = 0; i < 256; i++) SW_LUT_UINT8_TO_FLOAT[i] = (float)i*SW_INV_255;
 #endif
 
@@ -4329,7 +4329,7 @@ void swPushMatrix(void)
     {
         case SW_PROJECTION:
         {
-            if (RLSW.stackProjectionCounter >= SW_MAX_PROJECTION_STACK_SIZE)
+            if (RLSW.stackProjectionCounter >= RLSW_MAX_PROJECTION_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -4347,7 +4347,7 @@ void swPushMatrix(void)
         } break;
         case SW_MODELVIEW:
         {
-            if (RLSW.stackModelviewCounter >= SW_MAX_MODELVIEW_STACK_SIZE)
+            if (RLSW.stackModelviewCounter >= RLSW_MAX_MODELVIEW_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -4365,7 +4365,7 @@ void swPushMatrix(void)
         } break;
         case SW_TEXTURE:
         {
-            if (RLSW.stackTextureCounter >= SW_MAX_TEXTURE_STACK_SIZE)
+            if (RLSW.stackTextureCounter >= RLSW_MAX_TEXTURE_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -5095,7 +5095,7 @@ void swTexParameteri(int param, int value)
         case SW_TEXTURE_WRAP_S:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-        #if !SW_SUPPORT_NPOT_TEXTURE
+        #if !RLSW_SUPPORT_NPOT_TEXTURE
             if (value == SW_REPEAT && (RLSW.boundTexture->width & RLSW.boundTexture->wMinus1) != 0)
             {
                 RLSW.errCode = SW_INVALID_OPERATION;
@@ -5107,7 +5107,7 @@ void swTexParameteri(int param, int value)
         case SW_TEXTURE_WRAP_T:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-        #if !SW_SUPPORT_NPOT_TEXTURE
+        #if !RLSW_SUPPORT_NPOT_TEXTURE
             if (value == SW_REPEAT && (RLSW.boundTexture->height & RLSW.boundTexture->hMinus1) != 0)
             {
                 RLSW.errCode = SW_INVALID_OPERATION;
