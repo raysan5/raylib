@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlsw v1.5 - An OpenGL 1.1-style software renderer implementation
+*   rlsw v1.6 - An OpenGL 1.1-style software renderer implementation
 *
 *   DESCRIPTION:
 *       rlsw is a custom OpenGL 1.1-style implementation on software, intended to provide all
@@ -58,6 +58,7 @@
 *           #define RLSW_MAX_MODELVIEW_STACK_SIZE     8
 *           #define RLSW_MAX_TEXTURE_STACK_SIZE       2
 *           #define RLSW_MAX_TEXTURES                 128
+*           #define RLSW_DOUBLE_BUFFERING             0
 *
 *
 *   LICENSE: MIT
@@ -87,7 +88,7 @@
 #ifndef RLSW_H
 #define RLSW_H
 
-#define RLSW_VERSION  "1.5"
+#define RLSW_VERSION  "1.6"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -98,33 +99,29 @@
 #ifndef RLSW_FRAMEBUFFER_OUTPUT_BGRA
     #define RLSW_FRAMEBUFFER_OUTPUT_BGRA    true
 #endif
-
 #ifndef RLSW_FRAMEBUFFER_COLOR_TYPE
     #define RLSW_FRAMEBUFFER_COLOR_TYPE     R8G8B8A8    // Or R5G6B5, R3G3B2, etc; see `sw_pixelformat_t`
 #endif
-
 #ifndef RLSW_FRAMEBUFFER_DEPTH_TYPE
     #define RLSW_FRAMEBUFFER_DEPTH_TYPE     D32         // Or D16, D8
 #endif
-
 #ifndef RLSW_MAX_PROJECTION_STACK_SIZE
     #define RLSW_MAX_PROJECTION_STACK_SIZE  2
 #endif
-
 #ifndef RLSW_MAX_MODELVIEW_STACK_SIZE
     #define RLSW_MAX_MODELVIEW_STACK_SIZE   8
 #endif
-
 #ifndef RLSW_MAX_TEXTURE_STACK_SIZE
     #define RLSW_MAX_TEXTURE_STACK_SIZE     2
 #endif
-
 #ifndef RLSW_MAX_FRAMEBUFFERS
     #define RLSW_MAX_FRAMEBUFFERS           8
 #endif
-
 #ifndef RLSW_MAX_TEXTURES
     #define RLSW_MAX_TEXTURES               128
+#endif
+#ifndef RLSW_DOUBLE_BUFFERING
+    #define RLSW_DOUBLE_BUFFERING           0
 #endif
 
 // Enable the use of a lookup table for uint8_t to float conversion
@@ -776,8 +773,8 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 
 // Simple log system to avoid printf() calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
-#define SW_SUPPORT_LOG_INFO
-#if defined(SW_SUPPORT_LOG_INFO) //&& defined(_DEBUG)      // WARNING: LOG() output required for this tool
+#define RLSW_SUPPORT_LOG_INFO
+#if defined(RLSW_SUPPORT_LOG_INFO) //&& defined(_DEBUG)      // WARNING: LOG() output required for this tool
     #include <stdio.h>
     #define SW_LOG(...) printf(__VA_ARGS__)
 #else
@@ -1017,7 +1014,7 @@ typedef struct sw_texture {
 
 typedef struct {
     sw_texture_t color;         // Default framebuffer color texture
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_t backColor; // Back buffer for multicore.
 #endif
     sw_texture_t depth;         // Default framebuffer depth texture
@@ -2508,7 +2505,7 @@ static bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, int w, in
         return false;
     }
 
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     if (!sw_texture_alloc(&fb->backColor, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
         return false;
@@ -2527,7 +2524,7 @@ static void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
-#ifdef SW_DOUBLE_BUFFERING
+#ifdef RLSW_DOUBLE_BUFFERING
     sw_texture_free(&fb->backColor);
 #endif
 }
@@ -4068,7 +4065,7 @@ void *swGetColorBuffer(int *width, int *height)
 
 void swSwapColorBuffers(void)
 {
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_t tmp = RLSW.framebuffer.color;
     RLSW.framebuffer.color = RLSW.framebuffer.backColor;
     RLSW.framebuffer.backColor = tmp;
@@ -4076,7 +4073,7 @@ void swSwapColorBuffers(void)
     // Only needs to know about current colorBuffer.
     RLSW.colorBuffer = &RLSW.framebuffer.color;
 #else
-    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define SW_DOUBLE_BUFFERING with a compiler option to enable).\n");
+    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (Define RLSW_DOUBLE_BUFFERING=1)\n");
 #endif
 }
 
