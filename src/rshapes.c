@@ -1009,32 +1009,81 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
 // Draw rectangle with rounded edges outline with line thickness
 void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, float thick, Color color)
 {
-    if (thick <= 0) return;
-
     // Not a rounded rectangle
     if (roundness <= 0.0f)
     {
-        DrawRectangleLinesEx((Rectangle){rec.x - thick, rec.y - thick, rec.width + 2*thick, rec.height + 2*thick}, thick, color);
+        DrawRectangleLinesEx(rec, thick, color);
         return;
     }
 
     if (roundness >= 1.0f) roundness = 1.0f;
 
-    // Calculate corner radius
-    float radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
-    if (radius <= 0.0f) return;
-
-    // Calculate number of segments to use for the corners
-    if (segments < 4)
+    float radius = 0.0f;
+    float roundedOutlineThick = 0.0f;
+    float outerRadius = 0.0f;
+    float innerRadius = 0.0f;
+    if (thick >= 0.0f)
     {
-        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
-        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)ceilf((2*PI/th)/4.0f);
-        if (segments <= 0) segments = 4;
+        // Calculate corner radius
+        radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
+        if (radius <= 0.0f) return;
+
+        outerRadius = radius;
+        innerRadius = outerRadius - thick;
+
+        // The maximum thickness the outline can have and still be rounded on the interior edge is equal to the corner radius
+        // Put another way, when `innerRadius <= 0`, the interior of the outline is just a normal rectangle with no rounding
+        if (innerRadius <= 0.0f)
+        {
+            innerRadius = 0.0f;
+            roundedOutlineThick = outerRadius;
+
+            // Draw the not-rounded portion of the outline
+            DrawRectangleLinesEx((Rectangle){ rec.x + outerRadius, rec.y + outerRadius, rec.width - outerRadius*2.0f, rec.height - outerRadius*2.0f }, thick - outerRadius, color);
+        }
+        else
+        {
+            roundedOutlineThick = thick;
+        }
+
+        // Calculate number of segments to use for the corners
+        if (segments < 4)
+        {
+            // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+            float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+            segments = (int)ceilf((2*PI/th)/4.0f);
+            if (segments <= 0) segments = 4;
+        }
+    }
+    else
+    {
+        thick *= -1.0f;
+
+        // Calculate corner radius
+        radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
+        if (radius <= 0.0f) return; // Only possible if the rectangle has 0 width or height
+
+        // Expand the rectangle
+        rec.x -= thick;
+        rec.y -= thick;
+        rec.width += thick*2.0f;
+        rec.height += thick*2.0f;
+
+        innerRadius = radius;
+        outerRadius = innerRadius + thick;
+        roundedOutlineThick = thick;
+
+        // Calculate number of segments to use for the corners
+        if (segments < 4)
+        {
+            // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+            float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/innerRadius, 2) - 1);
+            segments = (int)ceilf((2*PI/th)/4.0f);
+            if (segments <= 0) segments = 4;
+        }
     }
 
     float stepLength = 90.0f/(float)segments;
-    const float outerRadius = radius + thick, innerRadius = radius;
 
     /*
     Quick sketch to make sense of all of this,
@@ -1054,20 +1103,20 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     */
 
     // The x-coordinates used for the outline
-    const float x0 = (float)rec.x + innerRadius + 0.5f;
-    const float x1 = (float)(rec.x + rec.width) - innerRadius - 0.5f;
-    const float x2 = rec.x + rec.width + thick - 0.5f;
-    const float x3 = rec.x - thick + 0.5f;
-    const float x4 = rec.x + rec.width - 0.5f;
-    const float x5 = rec.x + 0.5f;
+    const float x0 = rec.x + outerRadius;
+    const float x1 = (rec.x + rec.width) - outerRadius;
+    const float x2 = rec.x + rec.width;
+    const float x3 = rec.x;
+    const float x4 = rec.x + rec.width - roundedOutlineThick;
+    const float x5 = rec.x + roundedOutlineThick;
 
     // The y-coordinates used for the outline
-    const float y0 = rec.y - thick + 0.5f;
-    const float y1 = (float)rec.y + innerRadius + 0.5f;
-    const float y2 = (float)(rec.y + rec.height) - innerRadius - 0.5f;
-    const float y3 = rec.y + rec.height + thick - 0.5f;
-    const float y4 = rec.y + 0.5f;
-    const float y5 = rec.y + rec.height - 0.5f;
+    const float y0 = rec.y;
+    const float y1 = rec.y + outerRadius;
+    const float y2 = (rec.y + rec.height) - outerRadius;
+    const float y3 = rec.y + rec.height;
+    const float y4 = rec.y + roundedOutlineThick;
+    const float y5 = rec.y + rec.height - roundedOutlineThick;
 
     const Vector2 point[16] = {
         {x0, y0}, // P0
