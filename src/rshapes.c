@@ -1292,13 +1292,24 @@ void DrawPolyLines(Vector2 center, int sides, float radius, float rotation, Colo
 
 void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, float thick, Color color)
 {
-    if (thick <= 0.0f) return;
-
     if (sides < 3) sides = 3;
     float centralAngle = rotation*DEG2RAD;
     float exteriorAngle = 360.0f/(float)sides*DEG2RAD;
     float apothem = radius*cosf(DEG2RAD*180.0f/(float)sides);
-    float innerRadius = fmaxf(0.0f, radius - thick*(radius/apothem));
+
+    float outerRadius = 0.0f;
+    float innerRadius = 0.0f;
+    if (thick >= 0.0f)
+    {
+        outerRadius = radius;
+        innerRadius = fmaxf(0.0f, radius - thick*(radius/apothem));
+    }
+    else
+    {
+        thick *= -1.0f;
+        outerRadius = radius + thick*(radius/apothem);
+        innerRadius = radius;
+    }
 
 #if SUPPORT_QUADS_DRAW_MODE
     rlSetTexture(GetShapesTexture().id);
@@ -1311,7 +1322,7 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
             float nextAngle = centralAngle + exteriorAngle;
 
             rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
-            rlVertex2f(center.x + cosf(centralAngle)*radius, center.y + sinf(centralAngle)*radius);
+            rlVertex2f(center.x + cosf(centralAngle)*outerRadius, center.y + sinf(centralAngle)*outerRadius);
 
             rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
             rlVertex2f(center.x + cosf(centralAngle)*innerRadius, center.y + sinf(centralAngle)*innerRadius);
@@ -1320,7 +1331,7 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
             rlVertex2f(center.x + cosf(nextAngle)*innerRadius, center.y + sinf(nextAngle)*innerRadius);
 
             rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
-            rlVertex2f(center.x + cosf(nextAngle)*radius, center.y + sinf(nextAngle)*radius);
+            rlVertex2f(center.x + cosf(nextAngle)*outerRadius, center.y + sinf(nextAngle)*outerRadius);
 
             centralAngle = nextAngle;
         }
@@ -1333,13 +1344,13 @@ void DrawPolyLinesEx(Vector2 center, int sides, float radius, float rotation, fl
             rlColor4ub(color.r, color.g, color.b, color.a);
             float nextAngle = centralAngle + exteriorAngle;
 
-            rlVertex2f(center.x + cosf(nextAngle)*radius, center.y + sinf(nextAngle)*radius);
-            rlVertex2f(center.x + cosf(centralAngle)*radius, center.y + sinf(centralAngle)*radius);
+            rlVertex2f(center.x + cosf(nextAngle)*outerRadius, center.y + sinf(nextAngle)*outerRadius);
+            rlVertex2f(center.x + cosf(centralAngle)*outerRadius, center.y + sinf(centralAngle)*outerRadius);
             rlVertex2f(center.x + cosf(centralAngle)*innerRadius, center.y + sinf(centralAngle)*innerRadius);
 
             rlVertex2f(center.x + cosf(centralAngle)*innerRadius, center.y + sinf(centralAngle)*innerRadius);
             rlVertex2f(center.x + cosf(nextAngle)*innerRadius, center.y + sinf(nextAngle)*innerRadius);
-            rlVertex2f(center.x + cosf(nextAngle)*radius, center.y + sinf(nextAngle)*radius);
+            rlVertex2f(center.x + cosf(nextAngle)*outerRadius, center.y + sinf(nextAngle)*outerRadius);
 
             centralAngle = nextAngle;
         }
