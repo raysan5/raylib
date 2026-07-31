@@ -637,23 +637,52 @@ void DrawRectangleLinesEx(Rectangle rec, float thick, Color color)
         else if (rec.width <= rec.height) thick = rec.width/2;
     }
 
-    // When rec = { x, y, 8.0f, 6.0f } and thick = 2, the following
-    // four rectangles are drawn ([T]op, [B]ottom, [L]eft, [R]ight):
-    //
-    //   TTTTTTTT
-    //   TTTTTTTT
-    //   LL    RR
-    //   LL    RR
-    //   BBBBBBBB
-    //   BBBBBBBB
-    //
-    
     if (thick > 0.0f)
     {
+        // When rec = { x, y, 8.0f, 6.0f } and thick = 2, the following
+        // four rectangles are drawn ([T]op, [B]ottom, [L]eft, [R]ight):
+        //
+        //   TTTTTTTT
+        //   TTTTTTTT
+        //   LL    RR
+        //   LL    RR
+        //   BBBBBBBB
+        //   BBBBBBBB
+        //
+
         Rectangle top = { rec.x, rec.y, rec.width, thick };
         Rectangle bottom = { rec.x, rec.y - thick + rec.height, rec.width, thick };
         Rectangle left = { rec.x, rec.y + thick, thick, rec.height - thick*2.0f };
         Rectangle right = { rec.x - thick + rec.width, rec.y + thick, thick, rec.height - thick*2.0f };
+
+        DrawRectangleRec(top, color);
+        DrawRectangleRec(bottom, color);
+        DrawRectangleRec(left, color);
+        DrawRectangleRec(right, color);
+    }
+    else
+    {
+        // When rec = { x, y, 8.0f, 6.0f } and thick = -2, the following
+        // four rectangles are drawn ([T]op, [B]ottom, [L]eft, [R]ight):
+        //
+        //   TTTTTTTTTTTT
+        //   TTTTTTTTTTTT
+        //   LL        RR
+        //   LL        RR
+        //   LL        RR
+        //   LL        RR
+        //   LL        RR
+        //   LL        RR
+        //   BBBBBBBBBBBB
+        //   BBBBBBBBBBBB
+        //
+
+        thick *= -1.0f;
+
+        Rectangle top = { rec.x - thick, rec.y - thick, rec.width + thick*2.0f, thick };
+        Rectangle bottom = { rec.x - thick, rec.y + rec.height, rec.width + thick*2.0f, thick};
+        Rectangle left = { rec.x - thick, rec.y, thick, rec.height };
+        Rectangle right = { rec.x + rec.width, rec.y, thick, rec.height };
 
         DrawRectangleRec(top, color);
         DrawRectangleRec(bottom, color);
