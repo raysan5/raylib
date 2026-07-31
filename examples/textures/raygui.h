@@ -4449,11 +4449,11 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, ch
     Rectangle textBounds = { 0 };
     if (message != NULL)
     {
-        int textSize = GuiGetTextWidth(message) + 2;
+        int messageTextSize = GuiGetTextWidth(message) + 2;
 
-        textBounds.x = bounds.x + bounds.width/2 - textSize/2;
+        textBounds.x = bounds.x + bounds.width/2 - messageTextSize/2;
         textBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + messageInputHeight/4 - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
-        textBounds.width = (float)textSize;
+        textBounds.width = (float)messageTextSize;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
     }
 
@@ -4641,8 +4641,8 @@ void GuiLoadStyle(const char *fileName)
                 {
                     case 'v':
                     {
-                        sscanf(buffer, "v %d", &version);
-                    }
+                        sscanf(buffer, "v %u", &version);
+                    } break;
                     case 'p':
                     {
                         // Style property: p <control_id> <property_id> <property_value> <property_name>
