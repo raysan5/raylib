@@ -33,6 +33,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **6.0**          | [D](https://dlang.org)                                               | Zlib                 |
 | [Deno-Raylib](https://github.com/JJLDonley/Deno-Raylib)                                  | **6.0**          | [Deno / TS](https://deno.land)                                       | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
+| [raylib-elfscript](https://github.com/ohmtal/raylib-elfscript)             | 6.0          | [ElfScript](https://github.com/ohmtal/ElfScript)                           | MIT                  |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 5.5              | [Factor](https://factorcode.org)                                     | BSD                  |
 | [raylib4fb](https://github.com/mudhairless/raylib4fb)                                    | **6.0**          | [FreeBASIC](https://www.freebasic.net)                               | Zlib                 |
