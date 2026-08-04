@@ -1071,7 +1071,7 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
 
     // Register previous keys states
@@ -1118,7 +1118,7 @@ void PollInputEvents(void)
     // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
     // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-    // Handle the mouse/touch/gestures events:
+    // Handle the mouse/touch/gestures events
     PollMouseEvents();
 }
 
@@ -1821,7 +1821,7 @@ static void ProcessKeyboard(void)
             if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {
-                if (keysBuffer[i + 1] == 0x5b)    // Special function key
+                if (keysBuffer[i + 1] == 0x5b) // Special function key
                 {
                     if ((keysBuffer[i + 2] == 0x5b) || (keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32))
                     {
@@ -1938,7 +1938,8 @@ static void InitEvdevInput(void)
                 (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
                 snprintf(path, MAX_FILEPATH_LENGTH, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
-                ConfigureEvdevDevice(path);                                     // Configure the device if appropriate
+                
+                ConfigureEvdevDevice(path); // Configure the device if appropriate
             }
         }
 

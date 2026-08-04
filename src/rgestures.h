@@ -353,7 +353,7 @@ void ProcessGestureEvent(GestureEvent event)
             GESTURES.Drag.vector.y = GESTURES.Touch.moveDownPositionA.y - GESTURES.Touch.downDragPosition.y;
         }
     }
-    else if (GESTURES.Touch.pointCount == 2)    // Two touch points
+    else if (GESTURES.Touch.pointCount == 2)
     {
         if (event.touchAction == TOUCH_ACTION_DOWN)
         {

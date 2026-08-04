@@ -1613,11 +1613,11 @@ void PollInputEvents(void)
     }
 
     //-----------------------------------------------------------------------------
-    // using RGFW callbacks instead of polling
+    // Using RGFW callbacks instead of polling
     RGFW_pollEvents();
     //-----------------------------------------------------------------------------
 
-    mg_event gamepad_event;
+    mg_event gamepad_event = { 0 };
     while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event))
     {
         int gamepadIndex = gamepad_event.gamepad->index;
