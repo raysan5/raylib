@@ -39,104 +39,101 @@
 //--------------------------------------------------------------------------------------
 
 // Forward Vertex Shader
-static const char *multiLightVS = GLSL_VERSION R"(
-in vec3 vertexPosition;
-in vec2 vertexTexCoord;
-in vec3 vertexNormal;
-
-out vec3 fragPosition;
-out vec3 fragNormal;
-out vec2 fragTexCoord;
-
-uniform mat4 mvp;
-uniform mat4 matModel;
-
-void main() {
-    fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));
-    fragNormal = normalize(vec3(matModel * vec4(vertexNormal, 0.0)));
-    fragTexCoord = vertexTexCoord;
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
-}
-)";
+static const char *multiLightVS = GLSL_VERSION
+    "in vec3 vertexPosition;\n"
+    "in vec2 vertexTexCoord;\n"
+    "in vec3 vertexNormal;\n"
+    "\n"
+    "out vec3 fragPosition;\n"
+    "out vec3 fragNormal;\n"
+    "out vec2 fragTexCoord;\n"
+    "\n"
+    "uniform mat4 mvp;\n"
+    "uniform mat4 matModel;\n"
+    "\n"
+    "void main() {\n"
+    "    fragPosition = vec3(matModel * vec4(vertexPosition, 1.0));\n"
+    "    fragNormal = normalize(vec3(matModel * vec4(vertexNormal, 0.0)));\n"
+    "    fragTexCoord = vertexTexCoord;\n"
+    "    gl_Position = mvp * vec4(vertexPosition, 1.0);\n"
+    "}\n";
 
 // Forward Fragment Shader (Point Light Falloff & Blinn-Phong Specular)
-static const char *multiLightFS = GLSL_VERSION R"(
-in vec3 fragPosition;
-in vec3 fragNormal;
-in vec2 fragTexCoord;
-
-out vec4 finalColor;
-
-uniform sampler2D texture0;
-uniform vec3 viewPos;
-uniform vec3 lightPositions[8];
-uniform vec3 lightColors[8];
-
-void main() {
-    vec4 texColor = texture(texture0, fragTexCoord);
-    vec3 norm = normalize(fragNormal);
-    vec3 viewDir = normalize(viewPos - fragPosition);
-
-    // Dark ambient baseline
-    vec3 ambient = 0.05 * texColor.rgb;
-    vec3 totalDiffuse = vec3(0.0);
-    vec3 totalSpecular = vec3(0.0);
-
-    for (int i = 0; i < 8; i++) {
-        vec3 lightDir = normalize(lightPositions[i] - fragPosition);
-        float dist = length(lightPositions[i] - fragPosition);
-        
-        // Attenuation calculation
-        float attenuation = 1.0 / (1.0 + 0.8 * dist + 0.4 * dist * dist);
-
-        // Diffuse Shading
-        float diff = max(dot(norm, lightDir), 0.0);
-        totalDiffuse += diff * lightColors[i] * attenuation * 1.2;
-
-        // Blinn-Phong Specular
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
-        totalSpecular += spec * lightColors[i] * attenuation * 0.8;
-    }
-
-    vec3 result = ambient + (totalDiffuse * texColor.rgb) + totalSpecular;
-    finalColor = vec4(result, texColor.a);
-}
-)";
+static const char *multiLightFS = GLSL_VERSION
+    "in vec3 fragPosition;\n"
+    "in vec3 fragNormal;\n"
+    "in vec2 fragTexCoord;\n"
+    "\n"
+    "out vec4 finalColor;\n"
+    "\n"
+    "uniform sampler2D texture0;\n"
+    "uniform vec3 viewPos;\n"
+    "uniform vec3 lightPositions[8];\n"
+    "uniform vec3 lightColors[8];\n"
+    "\n"
+    "void main() {\n"
+    "    vec4 texColor = texture(texture0, fragTexCoord);\n"
+    "    vec3 norm = normalize(fragNormal);\n"
+    "    vec3 viewDir = normalize(viewPos - fragPosition);\n"
+    "\n"
+    "    // Dark ambient baseline\n"
+    "    vec3 ambient = 0.05 * texColor.rgb;\n"
+    "    vec3 totalDiffuse = vec3(0.0);\n"
+    "    vec3 totalSpecular = vec3(0.0);\n"
+    "\n"
+    "    for (int i = 0; i < 8; i++) {\n"
+    "        vec3 lightDir = normalize(lightPositions[i] - fragPosition);\n"
+    "        float dist = length(lightPositions[i] - fragPosition);\n"
+    "        \n"
+    "        // Attenuation calculation\n"
+    "        float attenuation = 1.0 / (1.0 + 0.8 * dist + 0.4 * dist * dist);\n"
+    "\n"
+    "        // Diffuse Shading\n"
+    "        float diff = max(dot(norm, lightDir), 0.0);\n"
+    "        totalDiffuse += diff * lightColors[i] * attenuation * 1.2;\n"
+    "\n"
+    "        // Blinn-Phong Specular\n"
+    "        vec3 halfwayDir = normalize(lightDir + viewDir);\n"
+    "        float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);\n"
+    "        totalSpecular += spec * lightColors[i] * attenuation * 0.8;\n"
+    "    }\n"
+    "\n"
+    "    vec3 result = ambient + (totalDiffuse * texColor.rgb) + totalSpecular;\n"
+    "    finalColor = vec4(result, texColor.a);\n"
+    "}\n";
 
 // Tone-Mapped Kawase Bloom Fragment Shader
-static const char *bloomFS = GLSL_VERSION R"(
-in vec2 fragTexCoord;
-out vec4 finalColor;
-
-uniform sampler2D texture0;
-
-void main() {
-    vec2 uv = fragTexCoord;
-    vec4 color = texture(texture0, uv);
-
-    // High-pass threshold check (pixels brighter than 0.75)
-    vec4 bloom = vec4(0.0);
-    vec2 texel = vec2(1.0 / 1280.0, 1.0 / 720.0) * 2.5;
-
-    for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-            vec4 smp = texture(texture0, uv + vec2(x, y) * texel);
-            float brightness = max(smp.r, max(smp.g, smp.b));
-            if (brightness > 0.75) bloom += smp;
-        }
-    }
-    bloom /= 25.0;
-
-    // Combine original with soft bloom glow
-    vec3 HDR = color.rgb + bloom.rgb * 1.2;
-
-    // Reinhard Tone Mapping
-    vec3 LDR = HDR / (HDR + vec3(1.0));
-
-    finalColor = vec4(LDR, color.a);
-}
-)";
+static const char *bloomFS = GLSL_VERSION
+    "in vec2 fragTexCoord;\n"
+    "out vec4 finalColor;\n"
+    "\n"
+    "uniform sampler2D texture0;\n"
+    "\n"
+    "void main() {\n"
+    "    vec2 uv = fragTexCoord;\n"
+    "    vec4 color = texture(texture0, uv);\n"
+    "\n"
+    "    // High-pass threshold check (pixels brighter than 0.75)\n"
+    "    vec4 bloom = vec4(0.0);\n"
+    "    vec2 texel = vec2(1.0 / 1280.0, 1.0 / 720.0) * 2.5;\n"
+    "\n"
+    "    for (int x = -2; x <= 2; x++) {\n"
+    "        for (int y = -2; y <= 2; y++) {\n"
+    "            vec4 smp = texture(texture0, uv + vec2(x, y) * texel);\n"
+    "            float brightness = max(smp.r, max(smp.g, smp.b));\n"
+    "            if (brightness > 0.75) bloom += smp;\n"
+    "        }\n"
+    "    }\n"
+    "    bloom /= 25.0;\n"
+    "\n"
+    "    // Combine original with soft bloom glow\n"
+    "    vec3 HDR = color.rgb + bloom.rgb * 1.2;\n"
+    "\n"
+    "    // Reinhard Tone Mapping\n"
+    "    vec3 LDR = HDR / (HDR + vec3(1.0));\n"
+    "\n"
+    "    finalColor = vec4(LDR, color.a);\n"
+    "}\n";
 
 //--------------------------------------------------------------------------------------
 // Types and Structures Definition
