@@ -2,15 +2,18 @@
 *
 *   raylib [textures] example - 3D dynamic UV mesh painter
 *
+*   Example demonstrates 3D dynamic UV mesh painting using raycasting.
+*
 *   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
-*   NOTE: Raycasts against 3D mesh geometry to interpolate UV coordinates using barycentric
-*   coordinates, then dynamically renders continuous paint strokes into an in-memory canvas
-*   texture mapped onto the model material.
+*   Example contributed by PanicTitan (@PanicTitan) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Example contributed by PanicTitan and reviewed by Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 PanicTitan (@PanicTitan)
 *
 ********************************************************************************************/
 

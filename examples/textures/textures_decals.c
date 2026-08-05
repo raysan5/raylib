@@ -2,13 +2,18 @@
 *
 *   raylib [textures] example - decals
 *
+*   Example demonstrates decal projection onto 3D mesh surface using geometry clipping.
+*
 *   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
-*   NOTE: Decal projection onto 3D mesh surface using geometry clipping.
+*   Example contributed by PanicTitan (@PanicTitan) and reviewed by Ramon Santamaria (@raysan5)
 *
-*   Example contributed by PanicTitan and reviewed by Ramon Santamaria (@raysan5)
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 PanicTitan (@PanicTitan)
 *
 ********************************************************************************************/
 

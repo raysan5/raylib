@@ -2,14 +2,18 @@
 *
 *   raylib [shaders] example - forward multi-lighting with bloom
 *
+*   Example demonstrates forward multi-point lighting with bloom post-processing.
+*
 *   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
-* 
-*   NOTE: Forward multi-point lighting combined with specular highlights and post-processing
-*   tone-mapped bloom shader pass using offscreen render textures.
 *
-*   Example contributed by PanicTitan and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by PanicTitan (@PanicTitan) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2025 PanicTitan (@PanicTitan)
 *
 ********************************************************************************************/
 
