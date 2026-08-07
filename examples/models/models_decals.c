@@ -249,7 +249,7 @@ int main(void)
             DrawText("(c) Character model and texture from kenney.nl", screenWidth - 260, screenHeight - 20, 10, GRAY);
 
             // UI elements
-            if (GuiButton((Rectangle){ 10, screenHeight - 1000.f, 100, 60 }, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
+            if (GuiButton((Rectangle){ 10, screenHeight - 100.0f, 100, 60 }, showModel ? "Hide Model" : "Show Model")) showModel = !showModel;
 
             if (GuiButton((Rectangle){ 10 + 110, screenHeight - 100.0f, 100, 60 }, "Clear Decals"))
             {
