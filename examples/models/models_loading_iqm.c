@@ -66,8 +66,8 @@ int main(void)
 
         // Play animation when spacebar is held down
         animCurrentFrame += 1.0f;
-        UpdateModelAnimation(model, anims[0], animCurrentFrame);
-        if (animCurrentFrame >= anims[0].keyframeCount) animCurrentFrame = 0;
+        UpdateModelAnimation(model, anims[animIndex], animCurrentFrame);
+        if (animCurrentFrame >= anims[animIndex].keyframeCount) animCurrentFrame = 0;
         //----------------------------------------------------------------------------------
 
         // Draw
