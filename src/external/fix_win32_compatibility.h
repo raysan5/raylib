@@ -32,7 +32,7 @@
 #pragma once
 
 // move the windows functions to new names
-// note that you can't call these functions or structures from your code, but you should not neeed to
+// note that you can't call these functions or structures from your code, but you should not need to
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
