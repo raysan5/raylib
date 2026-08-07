@@ -123,14 +123,7 @@ static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, flo
     if (dotProduct < 0.0f) attenuation *= (1.0f + dotProduct*0.5f);
 
     // Set stereo panning based on sound position relative to listener
-    float pan = 0;
-    if (RAYLIB_VERSION_MAJOR >= 6) {
-        // -1.0 - 1.0
-        pan = Vector3DotProduct(normalizedDirection, right);
-    } else {
-        // 0.0 - 1.0
-        pan = 0.5f + 0.5f*Vector3DotProduct(normalizedDirection, right);
-    }
+    float pan = Vector3DotProduct(normalizedDirection, right);
 
     // Apply final sound properties
     SetSoundVolume(sound, attenuation);
