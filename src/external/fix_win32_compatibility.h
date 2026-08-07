@@ -2,7 +2,7 @@
 *
 *   fix_win32_compatibility.h   Utility to help include windows.h with raylib projects
 *
-*   Useage: #include "fix_win32_compatibility.h" any library that uses windows.h
+*   Usage: #include "fix_win32_compatibility.h" any library that uses windows.h
 *                                     order is critical, this must be done before raylib
 *
 *   LICENSE: MIT
