@@ -47,7 +47,7 @@
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
 
-// remove all our redfintions so that raylib can define them properly
+// remove all our redefinitions so that raylib can define them properly
 #undef CloseWindow
 #undef Rectangle
 #undef ShowCursor
