@@ -126,7 +126,7 @@ static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, flo
     float pan = 0;
     if (RAYLIB_VERSION_MAJOR >= 6) {
         // -1.0 - 1.0
-        pan = Clamp(Vector3DotProduct(normalizedDirection, right), -1.0f, 1.0f);
+        pan = Vector3DotProduct(normalizedDirection, right);
     } else {
         // 0.0 - 1.0
         pan = 0.5f + 0.5f*Vector3DotProduct(normalizedDirection, right);
