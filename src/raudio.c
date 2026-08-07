@@ -533,8 +533,9 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
-        ma_mutex_uninit(&AUDIO.System.lock);
+        // Stop the device first (joins the callback thread) before destroying the mutex it locks
         ma_device_uninit(&AUDIO.System.device);
+        ma_mutex_uninit(&AUDIO.System.lock);
         ma_context_uninit(&AUDIO.System.context);
 
         AUDIO.System.isReady = false;
