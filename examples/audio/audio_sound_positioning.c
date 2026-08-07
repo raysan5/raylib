@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 5.5, last time updated with raylib 5.5
+*   Example originally created with raylib 5.5, last time updated with raylib 6.0
 *
 *   Example contributed by Le Juez Victor (@Bigfoot71) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -116,14 +116,14 @@ static void SetSoundPosition(Camera listener, Sound sound, Vector3 position, flo
     // Calculate normalized vectors for spatial positioning
     Vector3 normalizedDirection = Vector3Normalize(direction);
     Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(listener.up, forward));
+    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, listener.up));
 
     // Reduce volume for sounds behind the listener
     float dotProduct = Vector3DotProduct(forward, normalizedDirection);
     if (dotProduct < 0.0f) attenuation *= (1.0f + dotProduct*0.5f);
 
     // Set stereo panning based on sound position relative to listener
-    float pan = 0.5f + 0.5f*Vector3DotProduct(normalizedDirection, right);
+    float pan = Vector3DotProduct(normalizedDirection, right);
 
     // Apply final sound properties
     SetSoundVolume(sound, attenuation);
