@@ -195,18 +195,13 @@ void DrawLine3D(Vector3 startPos, Vector3 endPos, Color color)
     rlEnd();
 }
 
-// Draw a point in 3D space, actually a small line
-// WARNING: OpenGL ES 2.0 does not support point mode drawing
+// Draw a point in 3D space
 void DrawPoint3D(Vector3 position, Color color)
 {
-    rlPushMatrix();
-        rlTranslatef(position.x, position.y, position.z);
-        rlBegin(RL_LINES);
-            rlColor4ub(color.r, color.g, color.b, color.a);
-            rlVertex3f(0.0f, 0.0f, 0.0f);
-            rlVertex3f(0.0f, 0.0f, 0.1f);
-        rlEnd();
-    rlPopMatrix();
+    rlBegin(RL_POINTS);
+        rlColor4ub(color.r, color.g, color.b, color.a);
+        rlVertex3f(position.x, position.y, position.z);
+    rlEnd();
 }
 
 // Draw a circle in 3D world space
