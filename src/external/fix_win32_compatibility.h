@@ -2,7 +2,7 @@
 *
 *   fix_win32_compatibility.h   Utility to help include windows.h with raylib projects
 *
-*   Useage: #include "fix_win32_compatibility.h" any library that uses windows.h
+*   Usage: #include "fix_win32_compatibility.h" any library that uses windows.h
 *                                     order is critical, this must be done before raylib
 *
 *   LICENSE: MIT
@@ -32,7 +32,7 @@
 #pragma once
 
 // move the windows functions to new names
-// note that you can't call these functions or structures from your code, but you should not neeed to
+// note that you can't call these functions or structures from your code, but you should not need to
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
@@ -47,7 +47,7 @@
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
 
-// remove all our redfintions so that raylib can define them properly
+// remove all our redefinitions so that raylib can define them properly
 #undef CloseWindow
 #undef Rectangle
 #undef ShowCursor
