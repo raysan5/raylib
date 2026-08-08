@@ -215,6 +215,87 @@
     #define ACCESS(fn) access(fn, F_OK)
 #endif
 
+// Platform specific defines for process execution API
+#if defined(_WIN32)
+    struct _STARTUPINFOA {
+        unsigned long cb;
+        char *lpReserved;
+        char *lpDesktop;
+        char *lpTitle;
+        unsigned long dwX;
+        unsigned long dwY;
+        unsigned long dwXSize;
+        unsigned long dwYSize;
+        unsigned long dwXCountChars;
+        unsigned long dwYCountChars;
+        unsigned long dwFillAttribute;
+        unsigned long dwFlags;
+        unsigned short wShowWindow;
+        unsigned short cbReserved2;
+        unsigned char *lpReserved2;
+        void *hStdInput;
+        void *hStdOutput;
+        void *hStdError;
+    };
+
+    struct _SECURITY_ATTRIBUTES {
+        unsigned long nLength;
+        void *lpSecurityDescriptor;
+        int bInheritHandle;
+    };
+
+    struct _PROCESS_INFORMATION {
+        void *hProcess;
+        void *hThread;
+        unsigned long dwProcessId;
+        unsigned long dwThreadId;
+    };
+
+    __declspec(dllimport) void *__stdcall GetModuleHandleA(const char *lpModuleName);
+    __declspec(dllimport) void *__stdcall GetProcAddress(void *hModule, const char *lpProcName);
+    __declspec(dllimport) void *__stdcall OpenProcess(unsigned long dwDesiredAccess, int bInheritHandle, unsigned long dwProcessId);
+    __declspec(dllimport) int __stdcall CloseHandle(void *hObject);
+    __declspec(dllimport) int __stdcall GetExitCodeProcess(void *hProcess, unsigned long *lpExitCode);
+    __declspec(dllimport) int __stdcall TerminateProcess(void *hProcess, unsigned int uExitCode);
+    __declspec(dllimport) unsigned long __stdcall WaitForSingleObject(void *hHandle, unsigned long dwMilliseconds);
+    __declspec(dllimport) unsigned long __stdcall SuspendThread(void *hThread);
+    __declspec(dllimport) unsigned long __stdcall ResumeThread(void *hThread);
+    __declspec(dllimport) int __stdcall CreateProcessA(
+        const char *lpApplicationName,
+        char *lpCommandLine,
+        void *lpProcessAttributes,
+        void *lpThreadAttributes,
+        int bInheritHandles,
+        unsigned long dwCreationFlags,
+        void *lpEnvironment,
+        const char *lpCurrentDirectory,
+        struct _STARTUPINFOA *lpStartupInfo,
+        struct _PROCESS_INFORMATION *lpProcessInformation);
+    __declspec(dllimport) int __stdcall CreatePipe(
+        void **hReadPipe,
+        void **hWritePipe,
+        struct _SECURITY_ATTRIBUTES *lpPipeAttributes,
+        unsigned long nSize);
+    __declspec(dllimport) int __stdcall PeekNamedPipe(
+        void *hNamedPipe,
+        void *lpBuffer,
+        unsigned long nBufferSize,
+        unsigned long *lpBytesRead,
+        unsigned long *lpTotalBytesAvail,
+        unsigned long *lpBytesLeftThisMessage);
+    __declspec(dllimport) int __stdcall ReadFile(
+        void *hFile,
+        void *lpBuffer,
+        unsigned long nNumberOfBytesToRead,
+        unsigned long *lpNumberOfBytesRead,
+        void *lpOverlapped);
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    #include <sys/wait.h>           // Required for: waitpid() [Used in CheckProcess()]
+    #include <signal.h>             // Required for: kill() [Used in PauseProcess(), ResumeProcess(), CloseProcess()]
+    #include <sys/types.h>          // Required for: pid_t [Used as function local variable type and for Process PID type]
+    #include <poll.h>               // Required for: pollfd, poll() [Used in ReadProcessOutput()]
+#endif
+
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
@@ -4259,6 +4340,529 @@ int GetTouchPointId(int index)
 int GetTouchPointCount(void)
 {
     return CORE.Input.Touch.pointCount;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Process Execution
+//----------------------------------------------------------------------------------
+
+#if defined(_WIN32)
+struct rProcessData {
+    void *pipeStdoutRead;           // Process stdout and stderr read pipe
+    void *pipeStdinWrite;           // Process stdin write pipe
+};
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+struct rProcessData {
+    int pipefdStdout[2];           // Process stdout and stderr pipe file descriptors
+    int pipefdStdin[2];            // Process stdin pipe file descriptors
+};
+#endif
+
+// Initialize a new process, returns a Process struct
+RLAPI Process InitProcess(const char *command, char *const args[])
+{
+    // The last element of the args array must be NULL
+
+    Process process = { 0 };
+
+#if defined(_WIN32)
+    // Windows requires a single command line string
+    char cmdLine[MAX_PATH * 4] = { 0 };
+    int position = 0;
+
+    TextAppend(cmdLine, command, &position);
+
+    if (args != NULL)
+    {
+        for (int i = 1; args[i] != NULL; i++) 
+        {
+            // TODO: Maybe use dynamic allocation for command line instead of aborting?
+            if (position + TextLength(args[i]) + 1 >= sizeof(cmdLine))
+            {
+                TRACELOG(LOG_WARNING, "PROCESS: Command line too long, process will not be created");
+                return process;
+            }
+
+            TextAppend(cmdLine, " ", &position);
+            TextAppend(cmdLine, args[i], &position);
+        }
+    }
+
+    // For stdout/stderr, read handles reserved for Raylib side, write handles passed to child process
+    // For stdin, write handle reserved for Raylib side, read handle passed to child process
+    // NOTE: stdout and stderr are merged into a single pipe
+    void *pipeStdoutRead = NULL, *pipeStdoutWrite = NULL;
+    void *pipeStdinRead = NULL, *pipeStdinWrite = NULL;
+
+    struct _SECURITY_ATTRIBUTES sa = { 0 };
+    sa.nLength = sizeof(struct _SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = 1;
+    sa.lpSecurityDescriptor = NULL;
+
+    if ((!CreatePipe(&pipeStdoutRead, &pipeStdoutWrite, &sa, 0)) ||
+        (!CreatePipe(&pipeStdinRead, &pipeStdinWrite, &sa, 0)))
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes for process I/O redirection");
+        void *pipes[] = { pipeStdoutRead, pipeStdoutWrite, pipeStdinRead, pipeStdinWrite };
+        for (int i = 0; i < 4; i++) {
+            if (pipes[i] != NULL) CloseHandle(pipes[i]);
+        }
+        return process;
+    }
+
+    struct _STARTUPINFOA si = { 0 };
+    si.cb = sizeof(struct _STARTUPINFOA);
+    // STARTF_USESTDHANDLES
+    si.dwFlags = 0x00000100;
+    si.hStdError = pipeStdoutWrite;
+    si.hStdOutput = pipeStdoutWrite;
+    si.hStdInput = pipeStdinRead;
+    struct _PROCESS_INFORMATION pi = { 0 };
+
+    // Application name is specified as the first command line argument, so pass NULL to CreateProcessA here
+    // Flag bInheritHandles is set to TRUE, so child process will have access to the pipes
+    if (CreateProcessA(NULL, cmdLine, NULL, NULL, 1, 0, NULL, NULL, &si, &pi))
+    {
+        process.pid = (int)pi.dwProcessId;
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+
+        process.processData = (rProcessData *)RL_MALLOC(sizeof(rProcessData));
+        process.processData->pipeStdoutRead = pipeStdoutRead;
+        process.processData->pipeStdinWrite = pipeStdinWrite;
+
+        // Free parent process handles
+        CloseHandle(pipeStdoutWrite);
+        CloseHandle(pipeStdinRead);
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create process");
+    }
+
+    return process;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    // Initialize fd to -1 for error checking
+    int pipefd[4] = { -1, -1, -1, -1 };
+
+    if ((pipe(&pipefd[0]) == -1) || 
+        (pipe(&pipefd[2]) == -1))
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create pipes");
+        for (int i = 0; i < 4; i++) {
+            if (pipefd[i] != -1) close(pipefd[i]);
+        }
+        return process;
+    }
+
+    process.processData = (rProcessData *)RL_MALLOC(sizeof(rProcessData));
+    memcpy(process.processData->pipefdStdout, &pipefd[0], sizeof(int) * 2);
+    memcpy(process.processData->pipefdStdin, &pipefd[2], sizeof(int) * 2);
+
+    pid_t pid = fork();
+
+    if (pid < 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to create process");
+
+        for (int i = 0; i < 4; i++) close(pipefd[i]);
+        RL_FREE(process.processData);
+
+        return process;
+    }
+    else if (pid == 0)
+    {
+        // Child process
+
+        // Close pipe read end, redirect stdout and stderr to pipe write end
+        close(process.processData->pipefdStdout[0]);
+        dup2(process.processData->pipefdStdout[1], STDOUT_FILENO);
+        dup2(process.processData->pipefdStdout[1], STDERR_FILENO);
+        close(process.processData->pipefdStdout[1]);
+
+        // Close pipe write end, redirect stdin to pipe read end
+        close(process.processData->pipefdStdin[1]);
+        dup2(process.processData->pipefdStdin[0], STDIN_FILENO);
+        close(process.processData->pipefdStdin[0]);
+
+        // Execute command
+        execvp(command, args);
+
+        // If execvp returns, it must have failed
+        _exit(1);
+    }
+    else
+    {
+        // Parent process
+        process.pid = pid;
+
+        // Close stdout pipe write end and stdin pipe read end
+        close(process.processData->pipefdStdout[1]);
+        close(process.processData->pipefdStdin[0]);
+    }
+
+    return process;
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return process;
+#endif
+}
+
+// Check if a process is still running, updates Process struct
+RLAPI ProcessInfo CheckProcess(Process process)
+{
+    ProcessInfo info = { 0 };
+
+    if (process.pid <= 0)
+    {
+        info.state = PROCESS_STATE_NONE;
+        return info;
+    }
+
+#if defined(_WIN32)
+    // PROCESS_QUERY_INFORMATION
+    void *hProcess = OpenProcess(0x0400, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        // Process does not exist
+        info.state = PROCESS_STATE_NONE;
+        return info;
+    }
+
+    unsigned long exitCode = 0;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        CloseHandle(hProcess);
+        // STILL_ACTIVE (259) means the process is still running
+        if (exitCode == 259)
+        {
+            info.state = PROCESS_STATE_RUNNING;
+            return info;
+        }
+
+        info.state = PROCESS_STATE_FINISHED;
+        info.exitCode = (int)exitCode;
+
+        return info;
+    }
+
+    CloseHandle(hProcess);
+
+    // If GetExitCodeProcess fails, we consider the process state as unknown
+    info.state = PROCESS_STATE_NONE;
+    return info;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    int status = 0;
+    pid_t result = waitpid(process.pid, &status, WNOHANG);
+
+    if (result == 0)
+    {
+        // Still running
+        info.state = PROCESS_STATE_RUNNING;
+        return info;
+    }
+    else if (result == process.pid)
+    {
+        // Not running
+        if (WIFEXITED(status))
+        {
+            // Normal exit
+            info.state = PROCESS_STATE_FINISHED;
+            info.exitCode = WEXITSTATUS(status);
+        }
+        else if (WIFSIGNALED(status))
+        {
+            // Terminated by signal
+            info.state = PROCESS_STATE_FINISHED;
+            info.exitCode = -1;
+        }
+    
+        return info;
+    }
+    else
+    {
+        // Error occurred
+        info.state = PROCESS_STATE_NONE;
+        return info;
+    }
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+#endif
+
+    return info;
+}
+
+RLAPI int WaitProcess(Process process)
+{
+    if (process.pid <= 0)
+    {
+        return -1;
+    }
+
+#if defined(_WIN32)
+    // PROCESS_QUERY_INFORMATION | SYNCHRONIZE
+    // SYNCHRONIZE for WaitForSingleObject
+    void *hProcess = OpenProcess(0x0400 | 0x00100000, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return -1;
+    }
+
+    // Wait indefinitely for process termination
+    // NOTE: calling WaitProcess while trying to read process output may cause deadlock
+    // INFINITE
+    WaitForSingleObject(hProcess, 0xFFFFFFFF);
+
+    // Get exit code
+    unsigned long exitCode = 0;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        CloseHandle(hProcess);
+        return (int)exitCode;
+    }
+
+    CloseHandle(hProcess);
+    return -1;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    int status = 0;
+    pid_t result = waitpid(process.pid, &status, 0);
+
+    if (result == process.pid)
+    {
+        if (WIFEXITED(status))
+        {
+            // Normal exit
+            return WEXITSTATUS(status);
+        }
+
+        // Terminated by signal or other non-normal exit
+        return -1;
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to wait for process");
+        return -1;
+    }
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return -1;
+#endif
+}
+
+RLAPI const char *ReadProcessOutput(Process process, int *length)
+{
+    if (process.pid <= 0)
+    {
+        return NULL;
+    }
+
+#if defined(_WIN32)
+    static char output[4096] = { 0 };
+
+    // Read from output pipe
+
+    // ReadFile will block if there is no data, so call PeekNamedPipe to check for data before reading
+    unsigned long bytesAvail = 0;
+    if ((!PeekNamedPipe(process.processData->pipeStdoutRead, NULL, 0, NULL, &bytesAvail, NULL)) ||
+        (bytesAvail == 0))
+    {
+        *length = 0;
+        return NULL;
+    }
+
+    unsigned long bytesRead = 0;
+    if (!ReadFile(process.processData->pipeStdoutRead, output, sizeof(output), &bytesRead, NULL))
+    {
+        *length = 0;
+        return NULL;
+    }
+
+    *length = (int)bytesRead;
+    return output;
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    static char output[4096] = { 0 };
+
+    struct pollfd fds[1];
+    fds[0].fd = process.processData->pipefdStdout[0];
+    fds[0].events = POLLIN;
+
+    // No timeout, just check if there is data to read
+    int pollResult = poll(fds, 1, 0);
+    if ((pollResult > 0) && (fds[0].revents & POLLIN))
+    {
+        ssize_t bytesRead = read(process.processData->pipefdStdout[0], output, sizeof(output));
+        if (bytesRead > 0)
+        {
+            *length = (int)bytesRead;
+            return output;
+        }
+    }
+
+    *length = 0;
+    return NULL;
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+    return NULL;
+#endif
+}
+
+// Pause process execution
+RLAPI void PauseProcess(Process process)
+{
+    if (process.pid <= 0)
+    {
+        return;
+    }
+#if defined(_WIN32)
+    typedef long (*PFN_NtSuspendProcess)(void *handle);
+    static PFN_NtSuspendProcess NtSuspendProcess = NULL;
+
+    // Load NtSuspendProcess from ntdll.dll
+    if (NtSuspendProcess == NULL)
+    {
+        void *hNtDll = GetModuleHandleA("ntdll.dll");
+        if (hNtDll == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get handle for ntdll.dll");
+            return;
+        }
+
+        NtSuspendProcess = (PFN_NtSuspendProcess)GetProcAddress(hNtDll, "NtSuspendProcess");
+        if (NtSuspendProcess == NULL)    {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get address for NtSuspendProcess");
+            return;
+        }
+    }
+
+    // PROCESS_SUSPEND_RESUME
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
+
+    if (NtSuspendProcess(hProcess) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to pause process");
+    }
+    CloseHandle(hProcess);
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    if (kill(process.pid, SIGSTOP) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to pause process");
+    }
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+#endif
+}
+
+// Resume paused process execution
+RLAPI void ResumeProcess(Process process)
+{
+    if (process.pid <= 0)
+    {
+        return;
+    }
+#if defined(_WIN32)
+    typedef long (*PFN_NtResumeProcess)(void *handle);
+    static PFN_NtResumeProcess NtResumeProcess = NULL;
+
+    // Load NtResumeProcess from ntdll.dll
+    if (NtResumeProcess == NULL)
+    {
+        void *hNtDll = GetModuleHandleA("ntdll.dll");
+        if (hNtDll == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get handle for ntdll.dll");
+            return;
+        }
+
+        NtResumeProcess = (PFN_NtResumeProcess)GetProcAddress(hNtDll, "NtResumeProcess");
+        if (NtResumeProcess == NULL)
+        {
+            TRACELOG(LOG_WARNING, "PROCESS: Failed to get address for NtResumeProcess");
+            return;
+        }
+    }
+
+    // PROCESS_SUSPEND_RESUME
+    void *hProcess = OpenProcess(0x0800, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
+
+    if (NtResumeProcess(hProcess) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to resume process");
+    }
+    CloseHandle(hProcess);
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    if (kill(process.pid, SIGCONT) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to resume process");
+    }
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+#endif
+}
+
+// Close process and free resources
+RLAPI void CloseProcess(Process process)
+{
+    if (process.pid <= 0)
+    {
+        return;
+    }
+#if defined(_WIN32)
+    // PROCESS_TERMINATE
+    void *hProcess = OpenProcess(0x0001, 0, (unsigned long)process.pid);
+    if (hProcess == NULL)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to open process handle");
+        return;
+    }
+
+    TerminateProcess(hProcess, 0);
+    CloseHandle(hProcess);
+
+    // Clean up pipes
+    if (process.processData->pipeStdoutRead != NULL) CloseHandle(process.processData->pipeStdoutRead);
+    if (process.processData->pipeStdinWrite != NULL) CloseHandle(process.processData->pipeStdinWrite);
+
+    RL_FREE(process.processData);
+
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+    // If process is not running or not found, nothing to do
+    ProcessInfo info = CheckProcess(process);
+    if (info.state != PROCESS_STATE_RUNNING)
+    {
+        return;
+    }
+
+    // In case that the process is paused
+    kill(process.pid, SIGCONT);
+
+    if (kill(process.pid, SIGTERM) != 0)
+    {
+        TRACELOG(LOG_WARNING, "PROCESS: Failed to terminate process");
+
+        // Kill the process anyway
+        kill(process.pid, SIGKILL);
+    }
+
+    // Wait process termination
+    waitpid(process.pid, NULL, 0);
+
+    close(process.processData->pipefdStdout[0]);
+    close(process.processData->pipefdStdin[1]);
+
+    RL_FREE(process.processData);
+#else
+    TRACELOG(LOG_WARNING, "PROCESS: Process management not supported on this platform");
+#endif
 }
 
 //----------------------------------------------------------------------------------
