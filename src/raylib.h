@@ -913,6 +913,12 @@ typedef enum {
     FONT_SDF                        // SDF font generation, requires external shader
 } FontType;
 
+// Font size metric types
+typedef enum {
+    FONT_SIZE_METRIC_EM_BOX = 0,
+    FONT_SIZE_METRIC_ASCENT
+} FontSizeMetric;
+
 // Color blending modes (pre-defined)
 typedef enum {
     BLEND_ALPHA = 0,                // Blend textures considering alpha (default)
@@ -1540,6 +1546,7 @@ RLAPI int GetCodepoint(const char *text, int *codepointSize);                   
 RLAPI int GetCodepointNext(const char *text, int *codepointSize);                           // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
 RLAPI int GetCodepointPrevious(const char *text, int *codepointSize);                       // Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
 RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);                            // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
+RLAPI void SetFontSizeMetric(int metric);                                                   // Sets the global font size metric
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
 // WARNING 1: Most of these functions use internal static buffers[], it's recommended to store returned data on user-side for re-use
