@@ -21,9 +21,9 @@
 #include "rlgl.h"
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
+#define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+#define GLSL_VERSION            100
 #endif
 
 #define SHADOWMAP_RESOLUTION 1024
@@ -57,10 +57,10 @@ int main(void)
     camera.fovy = 45.0f;
 
     Shader shadowShader = LoadShader(TextFormat("resources/shaders/glsl%i/shadowmap.vs", GLSL_VERSION),
-                                     TextFormat("resources/shaders/glsl%i/shadowmap.fs", GLSL_VERSION));
+        TextFormat("resources/shaders/glsl%i/shadowmap.fs", GLSL_VERSION));
     shadowShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shadowShader, "viewPos");
 
-    Vector3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
+    Vector3 lightDir = Vector3Normalize((Vector3) { 0.35f, -1.0f, -0.35f });
     Color lightColor = WHITE;
     Vector4 lightColorNormalized = ColorNormalize(lightColor);
     int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
@@ -68,7 +68,7 @@ int main(void)
     SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
     SetShaderValue(shadowShader, lightColLoc, &lightColorNormalized, SHADER_UNIFORM_VEC4);
     int ambientLoc = GetShaderLocation(shadowShader, "ambient");
-    float ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+    float ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
     SetShaderValue(shadowShader, ambientLoc, ambient, SHADER_UNIFORM_VEC4);
     int lightVPLoc = GetShaderLocation(shadowShader, "lightVP");
     int shadowMapLoc = GetShaderLocation(shadowShader, "shadowMap");
@@ -81,7 +81,7 @@ int main(void)
     for (int i = 0; i < robot.materialCount; i++) robot.materials[i].shader = shadowShader;
 
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/robot.glb", &animCount);
+    ModelAnimation* anims = LoadModelAnimations("resources/models/robot.glb", &animCount);
 
     RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
 
@@ -111,9 +111,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
 
+        UpdateCamera(&camera, CAMERA_ORBITAL);
+
+        // send the updated camera position to the shader so that it can calculate the correct lighting for the scene
         Vector3 cameraPos = camera.position;
         SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
-        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         frameCounter++;
         frameCounter %= (anims[0].keyframeCount);
@@ -123,19 +125,19 @@ int main(void)
         const float cameraSpeed = 0.05f;
         if (IsKeyDown(KEY_LEFT))
         {
-            if (lightDir.x < 0.6f) lightDir.x += cameraSpeed*60.0f*deltaTime;
+            if (lightDir.x < 0.6f) lightDir.x += cameraSpeed * 60.0f * deltaTime;
         }
         if (IsKeyDown(KEY_RIGHT))
         {
-            if (lightDir.x > -0.6f) lightDir.x -= cameraSpeed*60.0f*deltaTime;
+            if (lightDir.x > -0.6f) lightDir.x -= cameraSpeed * 60.0f * deltaTime;
         }
         if (IsKeyDown(KEY_UP))
         {
-            if (lightDir.z < 0.6f) lightDir.z += cameraSpeed*60.0f*deltaTime;
+            if (lightDir.z < 0.6f) lightDir.z += cameraSpeed * 60.0f * deltaTime;
         }
         if (IsKeyDown(KEY_DOWN))
         {
-            if (lightDir.z > -0.6f) lightDir.z -= cameraSpeed*60.0f*deltaTime;
+            if (lightDir.z > -0.6f) lightDir.z -= cameraSpeed * 60.0f * deltaTime;
         }
 
         lightDir = Vector3Normalize(lightDir);
@@ -151,34 +153,34 @@ int main(void)
         // We can later use the depth buffer when rendering everything from the player's point of view
         // to determine whether a given point is "visible" to the light
         BeginTextureMode(shadowMap);
-            ClearBackground(WHITE);
+        ClearBackground(WHITE);
 
-            BeginMode3D(lightCamera);
-                lightView = rlGetMatrixModelview();
-                lightProj = rlGetMatrixProjection();
-                DrawScene(cube, robot);
-            EndMode3D();
+        BeginMode3D(lightCamera);
+        lightView = rlGetMatrixModelview();
+        lightProj = rlGetMatrixProjection();
+        DrawScene(cube, robot);
+        EndMode3D();
 
         EndTextureMode();
         lightViewProj = MatrixMultiply(lightView, lightProj);
 
         // PASS 02: Draw the scene into main framebuffer, using the generated shadowmap
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            SetShaderValueMatrix(shadowShader, lightVPLoc, lightViewProj);
-            rlEnableShader(shadowShader.id);
+        SetShaderValueMatrix(shadowShader, lightVPLoc, lightViewProj);
+        rlEnableShader(shadowShader.id);
 
-            rlActiveTextureSlot(textureActiveSlot);
-            rlEnableTexture(shadowMap.depth.id);
-            rlSetUniform(shadowMapLoc, &textureActiveSlot, SHADER_UNIFORM_INT, 1);
+        rlActiveTextureSlot(textureActiveSlot);
+        rlEnableTexture(shadowMap.depth.id);
+        rlSetUniform(shadowMapLoc, &textureActiveSlot, SHADER_UNIFORM_INT, 1);
 
-            BeginMode3D(camera);
-                DrawScene(cube, robot); // Draw the same exact things as we drew in the shadowmap!
-            EndMode3D();
+        BeginMode3D(camera);
+        DrawScene(cube, robot); // Draw the same exact things as we drew in the shadowmap!
+        EndMode3D();
 
-            DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
-            DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 280, screenHeight - 20, 10, GRAY);
+        DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
+        DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 280, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
 
