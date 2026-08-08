@@ -2029,6 +2029,8 @@ static void WindowMaximizeCallback(GLFWwindow *window, int maximized)
 {
     if (maximized) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);  // The window was maximized
     else FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_MAXIMIZED);          // The window was restored
+    // Update current window position 
+    glfwGetWindowPos(platform.handle, &CORE.Window.position.x, &CORE.Window.position.y);
 }
 
 // GLFW3: Window focus callback, runs when window get/lose focus
