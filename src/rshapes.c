@@ -1481,6 +1481,9 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
         endAngle = tmp;
     }
 
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f) endAngle = startAngle + 360.0f;
+
     int minSegments = (int)ceilf((endAngle - startAngle)/90);
 
     if (segments < minSegments)
@@ -1572,6 +1575,9 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
         startAngle = endAngle;
         endAngle = tmp;
     }
+
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f) endAngle = startAngle + 360.0f;
 
     int minSegments = (int)ceilf((endAngle - startAngle)/90);
 
@@ -1704,6 +1710,9 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
         endAngle = tmp;
     }
 
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f) endAngle = startAngle + 360.0f;
+
     int minSegments = (int)ceilf((endAngle - startAngle)/90);
 
     if (segments < minSegments)
@@ -1794,6 +1803,9 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
         startAngle = endAngle;
         endAngle = tmp;
     }
+
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f) endAngle = startAngle + 360.0f;
 
     int minSegments = (int)ceilf((endAngle - startAngle)/90);
 
