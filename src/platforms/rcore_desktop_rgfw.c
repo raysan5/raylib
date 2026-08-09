@@ -613,7 +613,7 @@ static void RGFW_cb_windowmovefunc(const RGFW_event *e)
     if (e->common.win != platform.window) return;
 
     CORE.Window.position.x = platform.window->x;
-    CORE.Window.position.y = platform.window->x;
+    CORE.Window.position.y = platform.window->y;
 }
 static void RGFW_cb_keycharfunc(const RGFW_event *e)
 {
