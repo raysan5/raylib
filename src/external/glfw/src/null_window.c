@@ -1,8 +1,9 @@
 //========================================================================
-// GLFW 3.5 - www.glfw.org
+// GLFW 3.5 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -60,12 +61,12 @@ static void fitToMonitor(_GLFWwindow* window)
     window->null.height = mode.height;
 }
 
-static void acquireMonitor(_GLFWwindow* window)
+static void acquireMonitorNull(_GLFWwindow* window)
 {
     _glfwInputMonitorWindow(window->monitor, window);
 }
 
-static void releaseMonitor(_GLFWwindow* window)
+static void releaseMonitorNull(_GLFWwindow* window)
 {
     if (window->monitor->window != window)
         return;
@@ -148,7 +149,7 @@ GLFWbool _glfwCreateWindowNull(_GLFWwindow* window,
     {
         _glfwShowWindowNull(window);
         _glfwFocusWindowNull(window);
-        acquireMonitor(window);
+        acquireMonitorNull(window);
 
         if (wndconfig->centerCursor)
             _glfwCenterCursorInContentArea(window);
@@ -169,7 +170,7 @@ GLFWbool _glfwCreateWindowNull(_GLFWwindow* window,
 void _glfwDestroyWindowNull(_GLFWwindow* window)
 {
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorNull(window);
 
     if (_glfw.null.focusedWindow == window)
         _glfw.null.focusedWindow = NULL;
@@ -204,14 +205,14 @@ void _glfwSetWindowMonitorNull(_GLFWwindow* window,
     }
 
     if (window->monitor)
-        releaseMonitor(window);
+        releaseMonitorNull(window);
 
     _glfwInputWindowMonitor(window, monitor);
 
     if (window->monitor)
     {
         window->null.visible = GLFW_TRUE;
-        acquireMonitor(window);
+        acquireMonitorNull(window);
         fitToMonitor(window);
     }
     else
@@ -341,7 +342,7 @@ void _glfwIconifyWindowNull(_GLFWwindow* window)
         _glfwInputWindowIconify(window, GLFW_TRUE);
 
         if (window->monitor)
-            releaseMonitor(window);
+            releaseMonitorNull(window);
     }
 }
 
@@ -353,7 +354,7 @@ void _glfwRestoreWindowNull(_GLFWwindow* window)
         _glfwInputWindowIconify(window, GLFW_FALSE);
 
         if (window->monitor)
-            acquireMonitor(window);
+            acquireMonitorNull(window);
     }
     else if (window->null.maximized)
     {
