@@ -1,8 +1,7 @@
 //========================================================================
-// GLFW 3.4 Wayland (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 Wayland - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
-// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -136,7 +135,7 @@ static void registryHandleGlobal(void* userData,
         {
             _glfw.wl.seat =
                 wl_registry_bind(registry, name, &wl_seat_interface,
-                                 _glfw_min(4, version));
+                                 _glfw_min(8, version));
             _glfwAddSeatListenerWayland(_glfw.wl.seat);
         }
     }
@@ -245,10 +244,7 @@ static void libdecorReadyCallback(void* userData,
                                   uint32_t time)
 {
     _glfw.wl.libdecor.ready = GLFW_TRUE;
-
-    assert(_glfw.wl.libdecor.callback == callback);
-    wl_callback_destroy(_glfw.wl.libdecor.callback);
-    _glfw.wl.libdecor.callback = NULL;
+    wl_callback_destroy(callback);
 }
 
 static const struct wl_callback_listener libdecorReadyListener =
@@ -258,7 +254,7 @@ static const struct wl_callback_listener libdecorReadyListener =
 
 // Create key code translation tables
 //
-static void createKeyTablesWayland(void)
+static void createKeyTables(void)
 {
     memset(_glfw.wl.keycodes, -1, sizeof(_glfw.wl.keycodes));
     memset(_glfw.wl.scancodes, -1, sizeof(_glfw.wl.scancodes));
@@ -579,6 +575,14 @@ int _glfwInitWayland(void)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_get_fd");
     _glfw.wl.client.display_prepare_read = (PFN_wl_display_prepare_read)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_prepare_read");
+    _glfw.wl.client.display_create_queue = (PFN_wl_display_create_queue)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_create_queue");
+    _glfw.wl.client.display_prepare_read_queue = (PFN_wl_display_prepare_read_queue)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_prepare_read_queue");
+    _glfw.wl.client.display_dispatch_queue_pending = (PFN_wl_display_dispatch_queue_pending)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_display_dispatch_queue_pending");
+    _glfw.wl.client.event_queue_destroy = (PFN_wl_event_queue_destroy)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_event_queue_destroy");
     _glfw.wl.client.proxy_marshal = (PFN_wl_proxy_marshal)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_marshal");
     _glfw.wl.client.proxy_add_listener = (PFN_wl_proxy_add_listener)
@@ -601,6 +605,12 @@ int _glfwInitWayland(void)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_get_version");
     _glfw.wl.client.proxy_marshal_flags = (PFN_wl_proxy_marshal_flags)
         _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_marshal_flags");
+    _glfw.wl.client.proxy_create_wrapper = (PFN_wl_proxy_create_wrapper)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_create_wrapper");
+    _glfw.wl.client.proxy_wrapper_destroy = (PFN_wl_proxy_wrapper_destroy)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_wrapper_destroy");
+    _glfw.wl.client.proxy_set_queue = (PFN_wl_proxy_set_queue)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.client.handle, "wl_proxy_set_queue");
 
     if (!_glfw.wl.client.display_flush ||
         !_glfw.wl.client.display_cancel_read ||
@@ -610,6 +620,10 @@ int _glfwInitWayland(void)
         !_glfw.wl.client.display_roundtrip ||
         !_glfw.wl.client.display_get_fd ||
         !_glfw.wl.client.display_prepare_read ||
+        !_glfw.wl.client.display_create_queue ||
+        !_glfw.wl.client.display_prepare_read_queue ||
+        !_glfw.wl.client.display_dispatch_queue_pending ||
+        !_glfw.wl.client.event_queue_destroy ||
         !_glfw.wl.client.proxy_marshal ||
         !_glfw.wl.client.proxy_add_listener ||
         !_glfw.wl.client.proxy_destroy ||
@@ -618,7 +632,10 @@ int _glfwInitWayland(void)
         !_glfw.wl.client.proxy_get_user_data ||
         !_glfw.wl.client.proxy_set_user_data ||
         !_glfw.wl.client.proxy_get_tag ||
-        !_glfw.wl.client.proxy_set_tag)
+        !_glfw.wl.client.proxy_set_tag ||
+        !_glfw.wl.client.proxy_create_wrapper ||
+        !_glfw.wl.client.proxy_wrapper_destroy ||
+        !_glfw.wl.client.proxy_set_queue)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
                         "Wayland: Failed to load libwayland-client entry point");
@@ -705,6 +722,10 @@ int _glfwInitWayland(void)
         _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_compose_state_get_status");
     _glfw.wl.xkb.compose_state_get_one_sym = (PFN_xkb_compose_state_get_one_sym)
         _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_compose_state_get_one_sym");
+    _glfw.wl.xkb.keysym_to_utf32 = (PFN_xkb_keysym_to_utf32)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_keysym_to_utf32");
+    _glfw.wl.xkb.keysym_to_utf8 = (PFN_xkb_keysym_to_utf8)
+        _glfwPlatformGetModuleSymbol(_glfw.wl.xkb.handle, "xkb_keysym_to_utf8");
 
     if (!_glfw.wl.xkb.context_new ||
         !_glfw.wl.xkb.context_unref ||
@@ -777,6 +798,8 @@ int _glfwInitWayland(void)
             _glfwPlatformGetModuleSymbol(_glfw.wl.libdecor.handle, "libdecor_frame_unset_capabilities");
         _glfw.wl.libdecor.libdecor_frame_set_visibility_ = (PFN_libdecor_frame_set_visibility)
             _glfwPlatformGetModuleSymbol(_glfw.wl.libdecor.handle, "libdecor_frame_set_visibility");
+        _glfw.wl.libdecor.libdecor_frame_is_visible_ = (PFN_libdecor_frame_is_visible)
+            _glfwPlatformGetModuleSymbol(_glfw.wl.libdecor.handle, "libdecor_frame_is_visible");
         _glfw.wl.libdecor.libdecor_frame_get_xdg_toplevel_ = (PFN_libdecor_frame_get_xdg_toplevel)
             _glfwPlatformGetModuleSymbol(_glfw.wl.libdecor.handle, "libdecor_frame_get_xdg_toplevel");
         _glfw.wl.libdecor.libdecor_configuration_get_content_size_ = (PFN_libdecor_configuration_get_content_size)
@@ -808,6 +831,7 @@ int _glfwInitWayland(void)
             !_glfw.wl.libdecor.libdecor_frame_set_capabilities_ ||
             !_glfw.wl.libdecor.libdecor_frame_unset_capabilities_ ||
             !_glfw.wl.libdecor.libdecor_frame_set_visibility_ ||
+            !_glfw.wl.libdecor.libdecor_frame_is_visible_ ||
             !_glfw.wl.libdecor.libdecor_frame_get_xdg_toplevel_ ||
             !_glfw.wl.libdecor.libdecor_configuration_get_content_size_ ||
             !_glfw.wl.libdecor.libdecor_configuration_get_window_state_ ||
@@ -822,9 +846,19 @@ int _glfwInitWayland(void)
     _glfw.wl.registry = wl_display_get_registry(_glfw.wl.display);
     wl_registry_add_listener(_glfw.wl.registry, &registryListener, NULL);
 
-    createKeyTablesWayland();
+    createKeyTables();
 
-    _glfw.wl.xkb.context = xkb_context_new(0);
+    _glfw.wl.keyRepeatTimerfd =
+        timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+    if (_glfw.wl.keyRepeatTimerfd == -1)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Wayland: Failed to create timerfd: %s",
+                        strerror(errno));
+        return GLFW_FALSE;
+    }
+
+    _glfw.wl.xkb.context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     if (!_glfw.wl.xkb.context)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
@@ -847,17 +881,9 @@ int _glfwInitWayland(void)
             libdecor_dispatch(_glfw.wl.libdecor.context, 0);
 
             // Create sync point to "know" when libdecor is ready for use
-            _glfw.wl.libdecor.callback = wl_display_sync(_glfw.wl.display);
-            wl_callback_add_listener(_glfw.wl.libdecor.callback,
-                                     &libdecorReadyListener,
-                                     NULL);
+            struct wl_callback* callback = wl_display_sync(_glfw.wl.display);
+            wl_callback_add_listener(callback, &libdecorReadyListener, NULL);
         }
-    }
-
-    if (wl_seat_get_version(_glfw.wl.seat) >= WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION)
-    {
-        _glfw.wl.keyRepeatTimerfd =
-            timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
     }
 
     if (!_glfw.wl.wmBase)
@@ -903,18 +929,6 @@ void _glfwTerminateWayland(void)
         libdecor_unref(_glfw.wl.libdecor.context);
     }
 
-    if (_glfw.wl.libdecor.handle)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.libdecor.handle);
-        _glfw.wl.libdecor.handle = NULL;
-    }
-
-    if (_glfw.wl.egl.handle)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.egl.handle);
-        _glfw.wl.egl.handle = NULL;
-    }
-
     if (_glfw.wl.xkb.composeState)
         xkb_compose_state_unref(_glfw.wl.xkb.composeState);
     if (_glfw.wl.xkb.keymap)
@@ -923,21 +937,11 @@ void _glfwTerminateWayland(void)
         xkb_state_unref(_glfw.wl.xkb.state);
     if (_glfw.wl.xkb.context)
         xkb_context_unref(_glfw.wl.xkb.context);
-    if (_glfw.wl.xkb.handle)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.xkb.handle);
-        _glfw.wl.xkb.handle = NULL;
-    }
 
     if (_glfw.wl.cursorTheme)
         wl_cursor_theme_destroy(_glfw.wl.cursorTheme);
     if (_glfw.wl.cursorThemeHiDPI)
         wl_cursor_theme_destroy(_glfw.wl.cursorThemeHiDPI);
-    if (_glfw.wl.cursor.handle)
-    {
-        _glfwPlatformFreeModule(_glfw.wl.cursor.handle);
-        _glfw.wl.cursor.handle = NULL;
-    }
 
     for (unsigned int i = 0; i < _glfw.wl.offerCount; i++)
         wl_data_offer_destroy(_glfw.wl.offers[i].offer);
@@ -997,7 +1001,18 @@ void _glfwTerminateWayland(void)
     if (_glfw.wl.cursorTimerfd >= 0)
         close(_glfw.wl.cursorTimerfd);
 
+    // Free modules only after all Wayland termination functions are called
+
+    _glfwPlatformFreeModule(_glfw.egl.handle);
+    _glfwPlatformFreeModule(_glfw.wl.libdecor.handle);
+    _glfwPlatformFreeModule(_glfw.wl.egl.handle);
+    _glfwPlatformFreeModule(_glfw.wl.xkb.handle);
+    _glfwPlatformFreeModule(_glfw.wl.cursor.handle);
+    _glfwPlatformFreeModule(_glfw.wl.client.handle);
+
     _glfw_free(_glfw.wl.clipboardString);
+
+    memset(&_glfw.wl, 0, sizeof(_glfw.wl));
 }
 
 #endif // _GLFW_WAYLAND

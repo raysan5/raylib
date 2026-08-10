@@ -1,14 +1,6 @@
-cmake_minimum_required(VERSION 3.4...3.28 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16...3.28 FATAL_ERROR)
 
-project(GLFW VERSION 3.4.0 LANGUAGES C)
-
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW)
-endif()
-
-if (POLICY CMP0077)
-    cmake_policy(SET CMP0077 NEW)
-endif()
+project(GLFW VERSION 3.5.1 LANGUAGES C HOMEPAGE_URL "https://www.glfw.org/")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -46,11 +38,7 @@ set(GLFW_LIBRARY_TYPE "${GLFW_LIBRARY_TYPE}" CACHE STRING
     "Library type override for GLFW (SHARED, STATIC, OBJECT, or empty to follow BUILD_SHARED_LIBS)")
 
 if (GLFW_LIBRARY_TYPE)
-    if (GLFW_LIBRARY_TYPE STREQUAL "SHARED")
-        set(GLFW_BUILD_SHARED_LIBRARY TRUE)
-    else()
-        set(GLFW_BUILD_SHARED_LIBRARY FALSE)
-    endif()
+    string(COMPARE EQUAL "${GLFW_LIBRARY_TYPE}" "SHARED" GLFW_BUILD_SHARED_LIBRARY)
 else()
     set(GLFW_BUILD_SHARED_LIBRARY ${BUILD_SHARED_LIBS})
 endif()
@@ -80,24 +68,7 @@ endif()
 # This is here because it also applies to tests and examples
 #--------------------------------------------------------------------
 if (MSVC AND NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
-    if (CMAKE_VERSION VERSION_LESS 3.15)
-        foreach (flag CMAKE_C_FLAGS
-                      CMAKE_C_FLAGS_DEBUG
-                      CMAKE_C_FLAGS_RELEASE
-                      CMAKE_C_FLAGS_MINSIZEREL
-                      CMAKE_C_FLAGS_RELWITHDEBINFO)
-
-            if (flag MATCHES "/MD")
-                string(REGEX REPLACE "/MD" "/MT" ${flag} "${${flag}}")
-            endif()
-            if (flag MATCHES "/MDd")
-                string(REGEX REPLACE "/MDd" "/MTd" ${flag} "${${flag}}")
-            endif()
-
-        endforeach()
-    else()
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    endif()
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 #--------------------------------------------------------------------

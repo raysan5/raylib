@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 X11 - www.glfw.org
+// GLFW 3.5 X11 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -27,7 +27,7 @@
 
 #include "internal.h"
 
-#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
+#if defined(_GLFW_X11)
 
 /*
  * Marcus: This code was originally written by Markus G. Kuhn.
@@ -906,7 +906,7 @@ static const struct codepair {
 
 // Convert XKB KeySym to Unicode
 //
-uint32_t _glfwKeySym2Unicode(unsigned int keysym)
+uint32_t _glfwKeySym2UnicodeX11(unsigned int keysym)
 {
     int min = 0;
     int max = sizeof(keysymtab) / sizeof(struct codepair) - 1;
@@ -939,5 +939,5 @@ uint32_t _glfwKeySym2Unicode(unsigned int keysym)
     return GLFW_INVALID_CODEPOINT;
 }
 
-#endif // _GLFW_WAYLAND or _GLFW_X11
+#endif // _GLFW_X11
 

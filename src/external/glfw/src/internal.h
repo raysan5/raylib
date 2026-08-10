@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -47,6 +47,8 @@
 
 #define GLFW_INCLUDE_NONE
 #include "../include/GLFW/glfw3.h"
+
+#include <stdbool.h>
 
 #define _GLFW_INSERT_FIRST      0
 #define _GLFW_INSERT_LAST       1
@@ -107,6 +109,7 @@ typedef void (APIENTRY * PFNGLCLEARPROC)(GLbitfield);
 typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGPROC)(GLenum);
 typedef void (APIENTRY * PFNGLGETINTEGERVPROC)(GLenum,GLint*);
 typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGIPROC)(GLenum,GLuint);
+typedef void (APIENTRY * PFNGLFLUSHPROC)(void);
 
 #define EGL_SUCCESS 0x3000
 #define EGL_NOT_INITIALIZED 0x3001
@@ -150,6 +153,9 @@ typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGIPROC)(GLenum,GLuint);
 #define EGL_NO_DISPLAY ((EGLDisplay) 0)
 #define EGL_NO_CONTEXT ((EGLContext) 0)
 #define EGL_DEFAULT_DISPLAY ((EGLNativeDisplayType) 0)
+#define EGL_PBUFFER_BIT 0x0001
+#define EGL_WIDTH 0x3057
+#define EGL_HEIGHT 0x3056
 
 #define EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE_BIT_KHR 0x00000002
 #define EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT_KHR 0x00000001
@@ -181,6 +187,7 @@ typedef const GLubyte* (APIENTRY * PFNGLGETSTRINGIPROC)(GLenum,GLuint);
 #define EGL_PLATFORM_ANGLE_TYPE_VULKAN_ANGLE 0x3450
 #define EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE 0x3489
 #define EGL_PLATFORM_ANGLE_NATIVE_PLATFORM_TYPE_ANGLE 0x348f
+#define EGL_PLATFORM_SURFACELESS_MESA 0x31dd
 
 typedef int EGLint;
 typedef unsigned int EGLBoolean;
@@ -205,6 +212,7 @@ typedef EGLContext (APIENTRY * PFN_eglCreateContext)(EGLDisplay,EGLConfig,EGLCon
 typedef EGLBoolean (APIENTRY * PFN_eglDestroySurface)(EGLDisplay,EGLSurface);
 typedef EGLBoolean (APIENTRY * PFN_eglDestroyContext)(EGLDisplay,EGLContext);
 typedef EGLSurface (APIENTRY * PFN_eglCreateWindowSurface)(EGLDisplay,EGLConfig,EGLNativeWindowType,const EGLint*);
+typedef EGLSurface (APIENTRY * PFN_eglCreatePbufferSurface)(EGLDisplay,EGLContext,const EGLint*);
 typedef EGLBoolean (APIENTRY * PFN_eglMakeCurrent)(EGLDisplay,EGLSurface,EGLSurface,EGLContext);
 typedef EGLBoolean (APIENTRY * PFN_eglSwapBuffers)(EGLDisplay,EGLSurface);
 typedef EGLBoolean (APIENTRY * PFN_eglSwapInterval)(EGLDisplay,EGLint);
@@ -221,6 +229,7 @@ typedef GLFWglproc (APIENTRY * PFN_eglGetProcAddress)(const char*);
 #define eglDestroySurface _glfw.egl.DestroySurface
 #define eglDestroyContext _glfw.egl.DestroyContext
 #define eglCreateWindowSurface _glfw.egl.CreateWindowSurface
+#define eglCreatePbufferSurface _glfw.egl.CreatePbufferSurface
 #define eglMakeCurrent _glfw.egl.MakeCurrent
 #define eglSwapBuffers _glfw.egl.SwapBuffers
 #define eglSwapInterval _glfw.egl.SwapInterval
@@ -277,6 +286,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR = 1000009000,
     VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK = 1000123000,
     VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT = 1000217000,
+    VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT = 1000256000,
     VK_STRUCTURE_TYPE_MAX_ENUM = 0x7FFFFFFF
 } VkStructureType;
 
@@ -365,16 +375,16 @@ struct _GLFWerror
 //
 struct _GLFWinitconfig
 {
-    GLFWbool      hatButtons;
+    bool          hatButtons;
     int           angleType;
     int           platformID;
     PFN_vkGetInstanceProcAddr vulkanLoader;
     struct {
-        GLFWbool  menubar;
-        GLFWbool  chdir;
+        bool      menubar;
+        bool      chdir;
     } ns;
     struct {
-        GLFWbool  xcbVulkanSurface;
+        bool      xcbVulkanSurface;
     } x11;
     struct {
         int       libdecorMode;
@@ -393,19 +403,18 @@ struct _GLFWwndconfig
     int           ypos;
     int           width;
     int           height;
-    const char*   title;
-    GLFWbool      resizable;
-    GLFWbool      visible;
-    GLFWbool      decorated;
-    GLFWbool      focused;
-    GLFWbool      autoIconify;
-    GLFWbool      floating;
-    GLFWbool      maximized;
-    GLFWbool      centerCursor;
-    GLFWbool      focusOnShow;
-    GLFWbool      mousePassthrough;
-    GLFWbool      scaleToMonitor;
-    GLFWbool      scaleFramebuffer;
+    bool          resizable;
+    bool          visible;
+    bool          decorated;
+    bool          focused;
+    bool          autoIconify;
+    bool          floating;
+    bool          maximized;
+    bool          centerCursor;
+    bool          focusOnShow;
+    bool          mousePassthrough;
+    bool          scaleToMonitor;
+    bool          scaleFramebuffer;
     struct {
         char      frameName[256];
     } ns;
@@ -414,8 +423,8 @@ struct _GLFWwndconfig
         char      instanceName[256];
     } x11;
     struct {
-        GLFWbool  keymenu;
-        GLFWbool  showDefault;
+        bool      keymenu;
+        bool      showDefault;
     } win32;
     struct {
         char      appId[256];
@@ -434,15 +443,15 @@ struct _GLFWctxconfig
     int           source;
     int           major;
     int           minor;
-    GLFWbool      forward;
-    GLFWbool      debug;
-    GLFWbool      noerror;
+    bool          forward;
+    bool          debug;
+    bool          noerror;
     int           profile;
     int           robustness;
     int           release;
     _GLFWwindow*  share;
     struct {
-        GLFWbool  offline;
+        bool      offline;
     } nsgl;
 };
 
@@ -467,11 +476,11 @@ struct _GLFWfbconfig
     int         accumBlueBits;
     int         accumAlphaBits;
     int         auxBuffers;
-    GLFWbool    stereo;
+    bool        stereo;
     int         samples;
-    GLFWbool    sRGB;
-    GLFWbool    doublebuffer;
-    GLFWbool    transparent;
+    bool        sRGB;
+    bool        doublebuffer;
+    bool        transparent;
     uintptr_t   handle;
 };
 
@@ -490,6 +499,7 @@ struct _GLFWcontext
     PFNGLGETSTRINGIPROC  GetStringi;
     PFNGLGETINTEGERVPROC GetIntegerv;
     PFNGLGETSTRINGPROC   GetString;
+    PFNGLFLUSHPROC       Flush;
 
     void (*makeCurrent)(_GLFWwindow*);
     void (*swapBuffers)(_GLFWwindow*);
@@ -544,6 +554,7 @@ struct _GLFWwindow
     GLFWbool            stickyKeys;
     GLFWbool            stickyMouseButtons;
     GLFWbool            lockKeyMods;
+    GLFWbool            disableMouseButtonLimit;
     int                 cursorMode;
     char                mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1];
     char                keys[GLFW_KEY_LAST + 1];
@@ -796,21 +807,22 @@ struct _GLFWlibrary
         EGLint          major, minor;
         GLFWbool        prefix;
 
-        GLFWbool        KHR_create_context;
-        GLFWbool        KHR_create_context_no_error;
-        GLFWbool        KHR_gl_colorspace;
-        GLFWbool        KHR_get_all_proc_addresses;
-        GLFWbool        KHR_context_flush_control;
-        GLFWbool        EXT_client_extensions;
-        GLFWbool        EXT_platform_base;
-        GLFWbool        EXT_platform_x11;
-        GLFWbool        EXT_platform_wayland;
-        GLFWbool        EXT_present_opaque;
-        GLFWbool        ANGLE_platform_angle;
-        GLFWbool        ANGLE_platform_angle_opengl;
-        GLFWbool        ANGLE_platform_angle_d3d;
-        GLFWbool        ANGLE_platform_angle_vulkan;
-        GLFWbool        ANGLE_platform_angle_metal;
+        bool            KHR_create_context;
+        bool            KHR_create_context_no_error;
+        bool            KHR_gl_colorspace;
+        bool            KHR_get_all_proc_addresses;
+        bool            KHR_context_flush_control;
+        bool            EXT_client_extensions;
+        bool            EXT_platform_base;
+        bool            EXT_platform_x11;
+        bool            EXT_platform_wayland;
+        bool            EXT_present_opaque;
+        bool            ANGLE_platform_angle;
+        bool            ANGLE_platform_angle_opengl;
+        bool            ANGLE_platform_angle_d3d;
+        bool            ANGLE_platform_angle_vulkan;
+        bool            ANGLE_platform_angle_metal;
+        bool            MESA_platform_surfaceless;
 
         void*           handle;
 
@@ -825,6 +837,7 @@ struct _GLFWlibrary
         PFN_eglDestroySurface       DestroySurface;
         PFN_eglDestroyContext       DestroyContext;
         PFN_eglCreateWindowSurface  CreateWindowSurface;
+        PFN_eglCreatePbufferSurface CreatePbufferSurface;
         PFN_eglMakeCurrent          MakeCurrent;
         PFN_eglSwapBuffers          SwapBuffers;
         PFN_eglSwapInterval         SwapInterval;
@@ -853,13 +866,14 @@ struct _GLFWlibrary
         void*           handle;
         char*           extensions[2];
         PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
-        GLFWbool        KHR_surface;
-        GLFWbool        KHR_win32_surface;
-        GLFWbool        MVK_macos_surface;
-        GLFWbool        EXT_metal_surface;
-        GLFWbool        KHR_xlib_surface;
-        GLFWbool        KHR_xcb_surface;
-        GLFWbool        KHR_wayland_surface;
+        bool            KHR_surface;
+        bool            KHR_win32_surface;
+        bool            MVK_macos_surface;
+        bool            EXT_metal_surface;
+        bool            KHR_xlib_surface;
+        bool            KHR_xcb_surface;
+        bool            KHR_wayland_surface;
+        bool            EXT_headless_surface;
     } vk;
 
     struct {
