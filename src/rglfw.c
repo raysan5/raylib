@@ -140,7 +140,6 @@
     #include "external/glfw/src/cocoa_joystick.m"
     #include "external/glfw/src/cocoa_monitor.m"
     #include "external/glfw/src/cocoa_window.m"
-    #include "external/glfw/src/cocoa_time.c"
     #include "external/glfw/src/nsgl_context.m"
 
     #include "external/glfw/src/egl_context.c"
