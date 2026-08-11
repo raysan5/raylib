@@ -2524,7 +2524,7 @@ static void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
-#ifdef RLSW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_free(&fb->backColor);
 #endif
 }
