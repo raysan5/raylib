@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - scissor shape
+*   raylib [others] example - scissor shapes
 *
-*   Example complexity rating: [★★★☆] 2/4
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 6.0
 *
@@ -102,7 +102,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - scissor shape");
+    InitWindow(screenWidth, screenHeight, "raylib [others] example - scissor shapes");
 
     Vector2 circleCenter = { screenWidth/2.0f - 120, screenHeight/2.0f };
     Vector2 hexCenter = { screenWidth/2.0f + 120, screenHeight/2.0f };
