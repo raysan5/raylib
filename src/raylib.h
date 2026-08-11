@@ -1307,6 +1307,7 @@ RLAPI void DrawCircleV(Vector2 center, float radius, Color color);              
 RLAPI void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer);                   // Draw a gradient-filled circle
 RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw a piece of a circle
 RLAPI void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw circle sector outline
+RLAPI void DrawCircleSectorLinesEx(Vector2 center, float radius, float startAngle, float endAngle, int segments, float thick, Color color); // Draw circle sector outline with thickness
 RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
 RLAPI void DrawCircleLinesV(Vector2 center, float radius, Color color);                                  // Draw circle outline (Vector version)
 RLAPI void DrawCircleLinesEx(Vector2 center, float radius, float thick, Color color);                    // Draw circle outline with line thickness

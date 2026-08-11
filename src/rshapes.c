@@ -1785,6 +1785,738 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
     rlEnd();
 }
 
+// Draw a piece of a circle outlines with thickness
+void DrawCircleSectorLinesEx(Vector2 center, float radius, float startAngle, float endAngle, int segments, float thick, Color color)
+{
+    if (startAngle == endAngle) return;
+    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
+
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle)
+    {
+        // Swap values
+        float tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+
+    bool showCapLines = true;
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f)
+    {
+        showCapLines = thick >= 0.0f;
+        endAngle = startAngle + 360.0f;
+    }
+
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
+    {
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
+
+        if (segments <= 0) segments = minSegments;
+    }
+
+    float stepLength = (endAngle - startAngle)/(float)segments;
+    float angle = startAngle;
+
+    /*
+    A sketch to help make things clearer
+
+    NOTE: Some considerations are different when `thick` is negative
+          The vertices used here are still relevant, but would instead be outside of the circle
+          S0 is always the center
+
+    The circle sector outline is drawn in 3 main pieces, the circle outline, cap 1, and cap 2
+    The circle outline is self explanatory
+    Cap 1 covers the `startAngle` edge and cap 2 covers the `endAngle` edge
+    S0 is the first shared point between the caps, and also the circle's center
+    S1 is the second shared point (sometimes not shared) between the caps
+      S1 is also C0 and C3 in this sketch. In certain cases, S1 goes outside of
+      the circle and C0 and C3 become different points
+    C1 is one of cap 1's vertices that is on the inside edge of the circle outline
+    C2 is like C1, but is also on the `startAngle` edge
+    C4 is cap 2's vertex that corresponds with C1
+    C5 is cap 2's vertex that corresponds with C2, except on the `endAngle` edge
+
+                   [][][][][]
+               [][]        []
+             []      []C4[]C5
+           []    [][]  {}  {}
+         []    []      {}  {}
+       []    []        {}C {} <- endAngle
+       []  []          {}a {}
+     []    []          {}p {}
+     []  []            {}2 {}
+     []  []            {}  {}
+     []  []            {}  {}     startAngle
+     []  []            {}  S0{}{}{}{}{}{}{}{}C2[][]
+     []  []            {}{}       Cap1       []  []
+     []  []            S1{}{}{}{}{}{}{}{}{}{}C1  []
+     []  []                                  []  []
+     []    []                              []    []
+       []  []       Not filled in          []  []
+       []    []                          []    []
+         []    []                      []    []
+           []    [][]              [][]    []
+             []      [][][][][][][]      []
+               [][]  Circle outline  [][]
+                   [][][][][][][][][]
+
+    [] = Circle outline edge pixel
+    {} = Cap outline edge pixel
+    */
+
+    // We are not drawing a circle, we are drawing an n-sided polygon
+    // So, we need to adjust the outline thickness of the "circle" for it to look correct with fewer segments
+    float apothem = radius*cosf(DEG2RAD*((endAngle - startAngle)/2.0f)/(float)segments);
+    float radiusThick = thick*(radius/apothem);
+
+    float outerRadius = radius;
+    float innerRadius = radius - radiusThick;
+
+    if (thick >= 0.0f)
+    {
+        if (thick >= innerRadius)
+        {
+            DrawCircleSector(center, radius, startAngle, endAngle, segments, color);
+            return;
+        }
+    }
+    else
+    {
+        float tmp = outerRadius;
+        outerRadius = innerRadius;
+        innerRadius = tmp;
+    }
+
+    // Cap 1 vertices
+    Vector2 c0 = { 0 };
+    Vector2 c1 = { 0 };
+    Vector2 c2 = { 0 };
+
+    // Cap 2 vertices
+    Vector2 c3 = { 0 };
+    Vector2 c4 = { 0 };
+    Vector2 c5 = { 0 };
+
+    // The number of angle steps that come before C1 (from `startAngle`, counter clockwise)
+    int stepsBeforeC1 = 0;
+    bool s1OutsideOfCircle = false;
+    // The number of angle steps that come before C0 (from `startAngle`, counter clockwise)
+    // Only used if S1 is outside of the circle
+    int stepsBeforeC0 = 0;
+
+    if (showCapLines)
+    {
+        if (thick >= 0.0f)
+        {
+            c2 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*innerRadius, center.y + sinf(DEG2RAD*startAngle)*innerRadius };
+            c5 = (Vector2){ center.x + cosf(DEG2RAD*endAngle)*innerRadius, center.y + sinf(DEG2RAD*endAngle)*innerRadius };
+
+            // For C1 and C4, we need to find the point that lies on the circle (n-sided polygon, actually)
+            // We want C1 and C4 to be `thick` pixels perpendicularly from the `startAngle` and `endAngle` edges
+            // and to be on the `innerRadius` edge
+
+            float c1Angle = RAD2DEG*asinf(thick/innerRadius);
+
+            // There are more segments before C1 than there are segments being drawn,
+            // so the whole circle sector must be covered
+            if (c1Angle/stepLength >= (float)segments)
+            {
+                DrawCircleSector(center, radius, startAngle, endAngle, segments, color);
+                return;
+            }
+
+            // Do this after the previous check just in case `stepLength` is really small and
+            // dividing by it produces a very large number
+            stepsBeforeC1 = (int)(c1Angle/stepLength);
+
+            // The angles of the vertices on the circle outline before and after C1
+            float vertexAngleBeforeC1 = stepLength*(float)stepsBeforeC1;
+            float vertexAngleAfterC1 = stepLength*((float)(stepsBeforeC1 + 1));
+
+            /*
+            Here is another sketch
+
+            We know which outline line segment C1 is on (`vertexAngleBeforeC1` and `vertexAngleAfterC1`)
+            Now we just need to know where on that line segment C1 is
+
+            We can change our frame of reference so that `startAngle` is 0 degrees and `center` is at the origin (0, 0)
+            This makes the math much simpler because now we can just go straight down by `thick` pixels and
+            use the horizontal line that passes through that point to determine where C1 is on our line segment
+
+            The line segment is defined by p1 and p2, we need C1, which is on that edge
+            The 'y' axis of C1 is equal to `thick` (within this modified frame of reference)
+
+                         p1
+                         /|
+                        / |
+                       /  |
+                      /   |
+                     /    |
+                    /     |
+                   /      |
+                  /       |
+                C1---------  <-- y axis = `thick`
+                /
+               /
+             p2
+            */
+
+            Vector2 p1 = { cosf(DEG2RAD*vertexAngleBeforeC1)*innerRadius, sinf(DEG2RAD*vertexAngleBeforeC1)*innerRadius };
+            Vector2 p2 = { cosf(DEG2RAD*vertexAngleAfterC1)*innerRadius, sinf(DEG2RAD*vertexAngleAfterC1)*innerRadius };
+
+            // Find the `t` of C1 between p1 and p2 ('t' as in `Lerp(start, end, t)`)
+            // This is used to lerp between the actual vertices (outside of our modified frame of reference)
+            // before and after C1
+            float t = (p1.y - thick)/(p1.y - p2.y);
+
+            Vector2 vertexBeforeCap1Vertex = { center.x + cosf(DEG2RAD*(startAngle + vertexAngleBeforeC1))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + vertexAngleBeforeC1))*innerRadius };
+            Vector2 vertexAfterCap1Vertex = { center.x + cosf(DEG2RAD*(startAngle + vertexAngleAfterC1))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + vertexAngleAfterC1))*innerRadius };
+
+            c1.x = vertexBeforeCap1Vertex.x + (vertexAfterCap1Vertex.x - vertexBeforeCap1Vertex.x)*t;
+            c1.y = vertexBeforeCap1Vertex.y + (vertexAfterCap1Vertex.y - vertexBeforeCap1Vertex.y)*t;
+
+            Vector2 vertexBeforeCap2Vertex = { center.x + cosf(DEG2RAD*(endAngle - vertexAngleBeforeC1))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - vertexAngleBeforeC1))*innerRadius };
+            Vector2 vertexAfterCap2Vertex = { center.x + cosf(DEG2RAD*(endAngle - vertexAngleAfterC1))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - vertexAngleAfterC1))*innerRadius };
+
+            c4.x = vertexBeforeCap2Vertex.x + (vertexAfterCap2Vertex.x - vertexBeforeCap2Vertex.x)*t;
+            c4.y = vertexBeforeCap2Vertex.y + (vertexAfterCap2Vertex.y - vertexBeforeCap2Vertex.y)*t;
+
+            /*
+            Another sketch couldn't hurt
+
+            This is a "zoomed in" view of the center of the circle sector
+            You can see where S0 is, and where we want S1 to be
+            `innerAngleBetweenCapEnds` is the angle of the diagonal line ('//') between the cap ends
+            `S1Length` is the length of that line
+
+            Since the caps are always parallel to `startAngle` and `endAngle`,
+            we always have a right triangle we can use to determine where S1 is
+
+             []      []
+             []      []
+             []  C   [] <- endAngle
+             []  a   []
+             []  p   []
+             []  2   []  startAngle
+             [][][][]S0[][][][][][]
+                   //[]
+                 //  [] Cap 1
+               //    []
+             S1      [][][][][][][]
+            */
+
+            float innerAngleBetweenCapEnds = ((endAngle - 90.0f) - (startAngle + 90.0f))/2.0f;
+            float s1Length = thick/cosf(DEG2RAD*innerAngleBetweenCapEnds);
+
+            // As `startAngle` and `endAngle` draw more of a circle, S1 goes further out from the center
+            // It can go so far that it is outside of the circle, by a lot
+            // This case needs to be detected and handled
+            // If S1 is within the circle, nothing special needs to happen
+            // But, if S1 is outside of the circle, we need to find the two points (C0 and C3) where
+            // the line segments C0->C1 and C0->C3 intersect the circle outline,
+            // using the same method we used to find C1 and C4
+            if ((innerAngleBetweenCapEnds < 90.0f) && (s1Length <= innerRadius))
+            {
+                // S1 is inside of the circle
+
+                float betweenStartAndEndAngle = (endAngle + startAngle)/2.0f;
+                c0 = (Vector2){ center.x + cosf(DEG2RAD*betweenStartAndEndAngle)*s1Length, center.y + sinf(DEG2RAD*betweenStartAndEndAngle)*s1Length };
+                c3 = c0;
+
+                p1 = (Vector2){ c1.x - center.x, c1.y - center.y };
+                p2 = (Vector2){ c0.x - center.x, c0.y - center.y };
+
+                // Copied from "raymath.h" Vector2Angle()
+                float dot = p1.x*p2.x + p1.y*p2.y;
+                float det = p1.x*p2.y - p1.y*p2.x;
+                float c1ToS1Angle = atan2f(det, dot);
+
+                // If C1 and C4 are on the wrong side of S1, the whole circle sector is covered
+                if (c1ToS1Angle < 0.0f)
+                {
+                    DrawCircleSector(center, radius, startAngle, endAngle, segments, color);
+                    return;
+                }
+            }
+            else
+            {
+                // S1 is outside of the circle
+
+                if (endAngle - startAngle <= 180.0f)
+                {
+                    DrawCircleSector(center, radius, startAngle, endAngle, segments, color);
+                    return;
+                }
+
+                s1OutsideOfCircle = true;
+
+                stepsBeforeC0 = (int)((180.0f + RAD2DEG*asinf(thick/-innerRadius))/stepLength);
+
+                // Reuse the code for finding C1 and C4 to find C0 and C3
+
+                float vertexAngleBeforeC0 = stepLength*(float)stepsBeforeC0;
+                float vertexAngleAfterC0 = stepLength*((float)(stepsBeforeC0 + 1));
+
+                p1 = (Vector2){ cosf(DEG2RAD*vertexAngleBeforeC0)*innerRadius, sinf(DEG2RAD*vertexAngleBeforeC0)*innerRadius };
+                p2 = (Vector2){ cosf(DEG2RAD*vertexAngleAfterC0)*innerRadius, sinf(DEG2RAD*vertexAngleAfterC0)*innerRadius };
+
+                t = (p1.y - thick)/(p1.y - p2.y);
+
+                vertexBeforeCap1Vertex = (Vector2){ center.x + cosf(DEG2RAD*(startAngle + vertexAngleBeforeC0))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + vertexAngleBeforeC0))*innerRadius };
+                vertexAfterCap1Vertex = (Vector2){ center.x + cosf(DEG2RAD*(startAngle + vertexAngleAfterC0))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + vertexAngleAfterC0))*innerRadius };
+
+                c0.x = vertexBeforeCap1Vertex.x + (vertexAfterCap1Vertex.x - vertexBeforeCap1Vertex.x)*t;
+                c0.y = vertexBeforeCap1Vertex.y + (vertexAfterCap1Vertex.y - vertexBeforeCap1Vertex.y)*t;
+
+                vertexBeforeCap2Vertex = (Vector2){ center.x + cosf(DEG2RAD*(endAngle - vertexAngleBeforeC0))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - vertexAngleBeforeC0))*innerRadius };
+                vertexAfterCap2Vertex = (Vector2){ center.x + cosf(DEG2RAD*(endAngle - vertexAngleAfterC0))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - vertexAngleAfterC0))*innerRadius };
+
+                c3.x = vertexBeforeCap2Vertex.x + (vertexAfterCap2Vertex.x - vertexBeforeCap2Vertex.x)*t;
+                c3.y = vertexBeforeCap2Vertex.y + (vertexAfterCap2Vertex.y - vertexBeforeCap2Vertex.y)*t;
+            }
+        }
+        else
+        {
+            float outerAngleBetweenCapEnds = ((endAngle + 90.0f) - (startAngle - 90.0f))/2.0f;
+            float s1Length = thick/cosf(DEG2RAD*outerAngleBetweenCapEnds);
+            float betweenStartAndEndAngle = 180.0f + (endAngle + startAngle)/2.0f;
+            c0 = (Vector2){ center.x + cosf(DEG2RAD*betweenStartAndEndAngle)*s1Length, center.y + sinf(DEG2RAD*betweenStartAndEndAngle)*s1Length };
+            c3 = c0;
+
+            c2 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*outerRadius, center.y + sinf(DEG2RAD*startAngle)*outerRadius };
+            c5 = (Vector2){ center.x + cosf(DEG2RAD*endAngle)*outerRadius, center.y + sinf(DEG2RAD*endAngle)*outerRadius };
+
+            // Change the frame of reference so that `center` is the origin and `startAngle` is 0 degrees
+
+            Vector2 c0Translated = { c0.x - center.x, c0.y - center.y };
+            Vector2 circleVertex1 = { c2.x - center.x, c2.y - center.y };
+            Vector2 circleVertex2 = { cosf(DEG2RAD*(startAngle + stepLength))*outerRadius, sinf(DEG2RAD*(startAngle + stepLength))*outerRadius };
+
+            // Copied from "raymath.h" Vector2Rotate()
+            float tempX = c0Translated.x;
+            c0Translated.x = cosf(-DEG2RAD*startAngle)*tempX - sinf(-DEG2RAD*startAngle)*c0Translated.y;
+            c0Translated.y = sinf(-DEG2RAD*startAngle)*tempX + cosf(-DEG2RAD*startAngle)*c0Translated.y;
+
+            tempX = circleVertex1.x;
+            circleVertex1.x = cosf(-DEG2RAD*startAngle)*tempX - sinf(-DEG2RAD*startAngle)*circleVertex1.y;
+            circleVertex1.y = sinf(-DEG2RAD*startAngle)*tempX + cosf(-DEG2RAD*startAngle)*circleVertex1.y;
+
+            tempX = circleVertex2.x;
+            circleVertex2.x = cosf(-DEG2RAD*startAngle)*tempX - sinf(-DEG2RAD*startAngle)*circleVertex2.y;
+            circleVertex2.y = sinf(-DEG2RAD*startAngle)*tempX + cosf(-DEG2RAD*startAngle)*circleVertex2.y;
+
+            // Figure out the line that `circleVertex1` and `circleVertex2` are on
+            float rise = circleVertex1.y - circleVertex2.y;
+            float run = circleVertex1.x - circleVertex2.x;
+            // Get where that line intersects the horizontal line that `c0Translated` is on
+            float c1Rise = c0Translated.y - circleVertex1.y;
+            float c1Run = (c1Rise/rise)*run;
+            float c1DistanceFromC0 = (circleVertex1.x + c1Run) - c0Translated.x;
+
+            c1 = (Vector2){ c0.x + cosf(DEG2RAD*startAngle)*c1DistanceFromC0, c0.y + sinf(DEG2RAD*startAngle)*c1DistanceFromC0 };
+            c4 = (Vector2){ c0.x + cosf(DEG2RAD*endAngle)*c1DistanceFromC0, c0.y + sinf(DEG2RAD*endAngle)*c1DistanceFromC0 };
+
+            if (c1DistanceFromC0 < 0.0f)
+            {
+                // The caps are intersecting each other
+
+                Vector2 circleVertex3 = { c5.x - center.x, c5.y - center.y };
+                Vector2 circleVertex4 = { cosf(DEG2RAD*(endAngle - stepLength))*outerRadius, sinf(DEG2RAD*(endAngle - stepLength))*outerRadius };
+
+                tempX = circleVertex3.x;
+                circleVertex3.x = cosf(-DEG2RAD*startAngle)*tempX - sinf(-DEG2RAD*startAngle)*circleVertex3.y;
+                circleVertex3.y = sinf(-DEG2RAD*startAngle)*tempX + cosf(-DEG2RAD*startAngle)*circleVertex3.y;
+
+                tempX = circleVertex4.x;
+                circleVertex4.x = cosf(-DEG2RAD*startAngle)*tempX - sinf(-DEG2RAD*startAngle)*circleVertex4.y;
+                circleVertex4.y = sinf(-DEG2RAD*startAngle)*tempX + cosf(-DEG2RAD*startAngle)*circleVertex4.y;
+
+                // `startAngle` is 0 degrees within this frame of reference,
+                // so C1 just goes horizontally out from C0
+                Vector2 c1Translated = { c0Translated.x + c1DistanceFromC0, c0Translated.y };
+
+                // Make `circleVertex2` the origin
+                circleVertex1.x -= circleVertex2.x;
+                circleVertex1.y -= circleVertex2.y;
+                circleVertex3.x -= circleVertex2.x;
+                circleVertex3.y -= circleVertex2.y;
+                circleVertex4.x -= circleVertex2.x;
+                circleVertex4.y -= circleVertex2.y;
+                c1Translated.x -= circleVertex2.x;
+                c1Translated.y -= circleVertex2.y;
+
+                // Make the line between `circleVertex1` and `circleVertex2` a horizontal line
+                float theta = atan2f(circleVertex1.y, circleVertex1.x);
+
+                // Copied from "raymath.h" Vector2Rotate()
+                tempX = circleVertex1.x;
+                circleVertex1.x = cosf(-theta)*tempX - sinf(-theta)*circleVertex1.y;
+                circleVertex1.y = sinf(-theta)*tempX + cosf(-theta)*circleVertex1.y;
+
+                tempX = circleVertex3.x;
+                circleVertex3.x = cosf(-theta)*tempX - sinf(-theta)*circleVertex3.y;
+                circleVertex3.y = sinf(-theta)*tempX + cosf(-theta)*circleVertex3.y;
+
+                tempX = circleVertex4.x;
+                circleVertex4.x = cosf(-theta)*tempX - sinf(-theta)*circleVertex4.y;
+                circleVertex4.y = sinf(-theta)*tempX + cosf(-theta)*circleVertex4.y;
+
+                tempX = c1Translated.x;
+                c1Translated.x = cosf(-theta)*tempX - sinf(-theta)*c1Translated.y;
+                c1Translated.y = sinf(-theta)*tempX + cosf(-theta)*c1Translated.y;
+
+                // Find where the line that `circleVertex3` and `circleVertex4` are on would intersect the
+                // line segment defined by `circleVertex1` and `c1Translated`
+                rise = circleVertex3.y - circleVertex4.y;
+                run = circleVertex3.x - circleVertex4.x;
+                float targetRise = -circleVertex3.y;
+                float targetX = circleVertex3.x + (targetRise/rise)*run;
+
+                float t = (c1Translated.x - targetX)/(c1Translated.x - circleVertex1.x);
+
+                c1 = (Vector2){ c1.x + (c2.x - c1.x)*t, c1.y + (c2.y - c1.y)*t };
+                c4 = c1;
+                c0 = c1;
+                c3 = c1;
+            }
+
+            // Swap vertices to correct the winding order
+            Vector2 temp = c0;
+            c0 = c2;
+            c2 = temp;
+
+            temp = c3;
+            c3 = c5;
+            c5 = temp;
+        }
+    }
+
+#if SUPPORT_QUADS_DRAW_MODE
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+
+    rlBegin(RL_QUADS);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        // Draw the circle outline
+        for (int i = 0; i < segments; i++)
+        {
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerRadius, center.y + sinf(DEG2RAD*angle)*outerRadius);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerRadius);
+
+            angle += stepLength;
+        }
+
+        // Draw the caps
+        if (showCapLines)
+        {
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(c0.x, c0.y);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(c1.x, c1.y);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(c2.x, c2.y);
+
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x, center.y);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(c5.x, c5.y);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(c4.x, c4.y);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(c3.x, c3.y);
+
+            // Some extra work may be needed when `thick` is positive
+            if (thick >= 0.0f)
+            {
+                // Fill in the gaps between cap 1 and the circle outline and cap 2 and the circle outline
+                if (stepsBeforeC1 > 0)
+                {
+                    // Draw quads using pairs of vertices on the circle outline
+                    angle = 0;
+                    for (int i = 0; i < stepsBeforeC1/2; i++)
+                    {
+                        // Cap1
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c1.x, c1.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + (angle + stepLength*2.0f)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + (angle + stepLength*2.0f)))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerRadius);
+
+                        // Cap2
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c4.x, c4.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - (angle + stepLength*2.0f)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - (angle + stepLength*2.0f)))*innerRadius);
+
+                        angle += stepLength*2.0f;
+                    }
+
+                    if (stepsBeforeC1%2 == 1)
+                    {
+                        // Cap1
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c1.x, c1.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(c1.x, c1.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerRadius);
+
+                        // Cap2
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c4.x, c4.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(c4.x, c4.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius);
+                    }
+                }
+
+                // Fill in the gap between C0, C3 and the circle outline
+                if (s1OutsideOfCircle)
+                {
+                    int verticesBetweenC0andC3 = (segments - stepsBeforeC0*2) - 1;
+
+                    // No gap to fill
+                    if (verticesBetweenC0andC3 == 0)
+                    {
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(c3.x, c3.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c0.x, c0.y);
+                    }
+                    // There's a gap to fill
+                    else
+                    {
+                        // Triangle touching C0
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(c0.x, c0.y);
+
+                        // Triangle touching C3
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(center.x, center.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(c3.x, c3.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius);
+
+                        // Triangles between the previous two
+                        verticesBetweenC0andC3 -= 1;
+                        angle = startAngle + stepLength*(stepsBeforeC0 + 1);
+                        for (int i = 0; i < verticesBetweenC0andC3/2; i++)
+                        {
+                            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                            rlVertex2f(center.x, center.y);
+
+                            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength*2.0f))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength*2.0f))*innerRadius);
+
+                            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+
+                            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
+
+                            angle += stepLength*2.0f;
+                        }
+
+                        if (verticesBetweenC0andC3%2 == 1)
+                        {
+                            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                            rlVertex2f(center.x, center.y);
+
+                            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                            rlVertex2f(center.x, center.y);
+
+                            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+
+                            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
+                        }
+                    }
+                }
+            }
+        }
+    rlEnd();
+
+    rlSetTexture(0);
+#else
+    rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        // Draw the circle outline
+        for (int i = 0; i < segments; i++)
+        {
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerRadius, center.y + sinf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerRadius, center.y + sinf(DEG2RAD*angle)*outerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerRadius);
+
+            angle += stepLength;
+        }
+
+        // Draw the caps
+        if (showCapLines)
+        {
+            // Cap 1
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(c0.x, c0.y);
+            rlVertex2f(c1.x, c1.y);
+
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(c1.x, c1.y);
+            rlVertex2f(c2.x, c2.y);
+
+            // Cap 2
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(c5.x, c5.y);
+            rlVertex2f(c4.x, c4.y);
+
+            rlVertex2f(center.x, center.y);
+            rlVertex2f(c4.x, c4.y);
+            rlVertex2f(c3.x, c3.y);
+
+            // Some extra work may be needed when `thick` is positive
+            if (thick >= 0.0f)
+            {
+                // Fill in the gaps between cap 1 and the circle outline and cap 2 and the circle outline
+                if (stepsBeforeC1 > 0)
+                {
+                    angle = 0;
+                    for (int i = 0; i < stepsBeforeC1; i++)
+                    {
+                        // Cap 1
+                        rlVertex2f(c1.x, c1.y);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + (angle + stepLength)))*innerRadius);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerRadius);
+
+                        // Cap 2
+                        rlVertex2f(c4.x, c4.y);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerRadius);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - (angle + stepLength)))*innerRadius);
+
+                        angle += stepLength;
+                    }
+                }
+
+                // Fill in the gap between C0, C3 and the circle outline
+                if (s1OutsideOfCircle)
+                {
+                    int verticesBetweenC0andC3 = (segments - stepsBeforeC0*2) - 1;
+
+                    // No gap to fill
+                    if (verticesBetweenC0andC3 == 0)
+                    {
+                        rlVertex2f(center.x, center.y);
+                        rlVertex2f(c3.x, c3.y);
+                        rlVertex2f(c0.x, c0.y);
+                    }
+                    // There's a gap to fill
+                    else
+                    {
+                        // Triangle touching C0
+                        rlVertex2f(center.x, center.y);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius, center.y + sinf(DEG2RAD*(startAngle + stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius);
+                        rlVertex2f(c0.x, c0.y);
+
+                        // Triangle touching C3
+                        rlVertex2f(center.x, center.y);
+                        rlVertex2f(c3.x, c3.y);
+                        rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius, center.y + sinf(DEG2RAD*(endAngle - stepLength*(float)(stepsBeforeC0 + 1)))*innerRadius);
+
+                        // Triangles between the previous two
+                        verticesBetweenC0andC3 -= 1;
+                        angle = startAngle + stepLength*(stepsBeforeC0 + 1);
+                        for (int i = 0; i < verticesBetweenC0andC3; i++)
+                        {
+                            rlVertex2f(center.x, center.y);
+                            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerRadius);
+                            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerRadius, center.y + sinf(DEG2RAD*angle)*innerRadius);
+
+                            angle += stepLength;
+                        }
+                    }
+                }
+            }
+        }
+
+    rlEnd();
+#endif
+}
+
 // Draw circle outline
 void DrawCircleLines(int centerX, int centerY, float radius, Color color)
 {
