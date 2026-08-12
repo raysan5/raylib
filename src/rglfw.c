@@ -80,6 +80,13 @@
 #include "external/glfw/src/egl_context.c"
 #include "external/glfw/src/osmesa_context.c"
 
+//We need to define this function because GLFW calls it even though raylib does
+//not use GLFW's Null platform
+GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
+{
+    return GLFW_FALSE;
+}
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #include "external/glfw/src/win32_init.c"
     #include "external/glfw/src/win32_module.c"
