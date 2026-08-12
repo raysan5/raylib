@@ -77,6 +77,8 @@
 #include "external/glfw/src/window.c"
 #include "external/glfw/src/input.c"
 #include "external/glfw/src/vulkan.c"
+#include "external/glfw/src/egl_context.c"
+#include "external/glfw/src/osmesa_context.c"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #include "external/glfw/src/win32_init.c"
@@ -87,9 +89,6 @@
     #include "external/glfw/src/win32_time.c"
     #include "external/glfw/src/win32_thread.c"
     #include "external/glfw/src/wgl_context.c"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif
 
 #if defined(__linux__)
@@ -99,9 +98,6 @@
     #include "external/glfw/src/posix_poll.c"
     #include "external/glfw/src/linux_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 
     #if defined(_GLFW_WAYLAND)
         //These functions need to be temporarily renamed because including
@@ -154,9 +150,6 @@
     #include "external/glfw/src/x11_monitor.c"
     #include "external/glfw/src/x11_window.c"
     #include "external/glfw/src/glx_context.c"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif
 
 #if defined(__APPLE__)
@@ -168,7 +161,4 @@
     #include "external/glfw/src/cocoa_window.m"
     #include "external/glfw/src/macos_time.c"
     #include "external/glfw/src/nsgl_context.m"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif
