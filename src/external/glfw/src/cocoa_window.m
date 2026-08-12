@@ -1,8 +1,7 @@
 //========================================================================
-// GLFW 3.5 Cocoa (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 Cocoa - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
-// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -115,7 +114,7 @@ static void updateCursorMode(_GLFWwindow* window)
 
 // Make the specified window and its video mode active on its monitor
 //
-static void acquireMonitorCocoa(_GLFWwindow* window)
+static void acquireMonitor(_GLFWwindow* window)
 {
     _glfwSetVideoModeCocoa(window->monitor, &window->videoMode);
     const CGRect bounds = CGDisplayBounds(window->monitor->ns.displayID);
@@ -131,7 +130,7 @@ static void acquireMonitorCocoa(_GLFWwindow* window)
 
 // Remove the window and restore the original video mode
 //
-static void releaseMonitorCocoa(_GLFWwindow* window)
+static void releaseMonitor(_GLFWwindow* window)
 {
     if (window->monitor->window != window)
         return;
@@ -162,7 +161,7 @@ static int translateFlags(NSUInteger flags)
 
 // Translates a macOS keycode to a GLFW keycode
 //
-static int translateKeyCocoa(unsigned int key)
+static int translateKey(unsigned int key)
 {
     if (key >= sizeof(_glfw.ns.keycodes) / sizeof(_glfw.ns.keycodes[0]))
         return GLFW_KEY_UNKNOWN;
@@ -281,7 +280,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)windowDidMiniaturize:(NSNotification *)notification
 {
     if (window->monitor)
-        releaseMonitorCocoa(window);
+        releaseMonitor(window);
 
     _glfwInputWindowIconify(window, GLFW_TRUE);
 }
@@ -289,7 +288,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)windowDidDeminiaturize:(NSNotification *)notification
 {
     if (window->monitor)
-        acquireMonitorCocoa(window);
+        acquireMonitor(window);
 
     _glfwInputWindowIconify(window, GLFW_FALSE);
 }
@@ -563,7 +562,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)keyDown:(NSEvent *)event
 {
-    const int key = translateKeyCocoa([event keyCode]);
+    const int key = translateKey([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
 
     _glfwInputKey(window, key, [event keyCode], GLFW_PRESS, mods);
@@ -576,7 +575,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     int action;
     const unsigned int modifierFlags =
         [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
-    const int key = translateKeyCocoa([event keyCode]);
+    const int key = translateKey([event keyCode]);
     const int mods = translateFlags(modifierFlags);
     const NSUInteger keyFlag = translateKeyToModifierFlag(key);
 
@@ -595,7 +594,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)keyUp:(NSEvent *)event
 {
-    const int key = translateKeyCocoa([event keyCode]);
+    const int key = translateKey([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
     _glfwInputKey(window, key, [event keyCode], GLFW_RELEASE, mods);
 }
@@ -604,7 +603,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 {
     // HACK: Some key combinations are consumed before reaching keyDown:
     //       so we claim those events and emit them here
-    const int key = translateKeyCocoa([event keyCode]);
+    const int key = translateKey([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
 
     if (mods & GLFW_MOD_CONTROL)
@@ -996,7 +995,7 @@ GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window,
     {
         _glfwShowWindowCocoa(window);
         _glfwFocusWindowCocoa(window);
-        acquireMonitorCocoa(window);
+        acquireMonitor(window);
 
         if (wndconfig->centerCursor)
             _glfwCenterCursorInContentArea(window);
@@ -1026,7 +1025,7 @@ void _glfwDestroyWindowCocoa(_GLFWwindow* window)
     [window->ns.object orderOut:nil];
 
     if (window->monitor)
-        releaseMonitorCocoa(window);
+        releaseMonitor(window);
 
     if (window->context.destroy)
         window->context.destroy(window);
@@ -1113,7 +1112,7 @@ void _glfwSetWindowSizeCocoa(_GLFWwindow* window, int width, int height)
     if (window->monitor)
     {
         if (window->monitor->window == window)
-            acquireMonitorCocoa(window);
+            acquireMonitor(window);
     }
     else
     {
@@ -1282,7 +1281,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
         if (monitor)
         {
             if (monitor->window == window)
-                acquireMonitorCocoa(window);
+                acquireMonitor(window);
         }
         else
         {
@@ -1300,7 +1299,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
     }
 
     if (window->monitor)
-        releaseMonitorCocoa(window);
+        releaseMonitor(window);
 
     _glfwInputWindowMonitor(window, monitor);
 
@@ -1338,7 +1337,7 @@ void _glfwSetWindowMonitorCocoa(_GLFWwindow* window,
         [window->ns.object setLevel:NSMainMenuWindowLevel + 1];
         [window->ns.object setHasShadow:NO];
 
-        acquireMonitorCocoa(window);
+        acquireMonitor(window);
     }
     else
     {

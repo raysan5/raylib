@@ -104,15 +104,41 @@
     #include "external/glfw/src/osmesa_context.c"
 
     #if defined(_GLFW_WAYLAND)
+        //These functions need to be temporarily renamed because including
+        //source files for both Wayland and X11 results in pairs of functions
+        //with the same name and thus a build error
+        #define  createKeyTables createKeyTablesWayland
+        #define  translateKey    translateKeyWayland
+        #define  acquireMonitor  acquireMonitorWayland
+        #define  releaseMonitor  releaseMonitorWayland
+
         #include "external/glfw/src/wl_init.c"
         #include "external/glfw/src/wl_monitor.c"
         #include "external/glfw/src/wl_window.c"
+
+        #undef   createKeyTables
+        #undef   translateKey
+        #undef   acquireMonitor
+        #undef   releaseMonitor
     #endif
     #if defined(_GLFW_X11)
+        //These functions need to be temporarily renamed because including
+        //source files for both Wayland and X11 results in pairs of functions
+        //with the same name and thus a build error
+        #define  createKeyTables createKeyTablesX11
+        #define  translateKey    translateKeyX11
+        #define  acquireMonitor  acquireMonitorX11
+        #define  releaseMonitor  releaseMonitorX11
+
         #include "external/glfw/src/x11_init.c"
         #include "external/glfw/src/x11_monitor.c"
         #include "external/glfw/src/x11_window.c"
         #include "external/glfw/src/glx_context.c"
+
+        #undef   createKeyTables
+        #undef   translateKey
+        #undef   acquireMonitor
+        #undef   releaseMonitor
     #endif
 #endif
 

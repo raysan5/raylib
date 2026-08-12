@@ -1,8 +1,7 @@
 //========================================================================
-// GLFW 3.5 Wayland (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 Wayland - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
-// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -663,7 +662,7 @@ static void setIdleInhibitor(_GLFWwindow* window, GLFWbool enable)
 
 // Make the specified window and its video mode active on its monitor
 //
-static void acquireMonitorWayland(_GLFWwindow* window)
+static void acquireMonitor(_GLFWwindow* window)
 {
     if (window->wl.libdecor.frame)
     {
@@ -684,7 +683,7 @@ static void acquireMonitorWayland(_GLFWwindow* window)
 
 // Remove the window and restore the original video mode
 //
-static void releaseMonitorWayland(_GLFWwindow* window)
+static void releaseMonitor(_GLFWwindow* window)
 {
     if (window->wl.libdecor.frame)
         libdecor_frame_unset_fullscreen(window->wl.libdecor.frame);
@@ -1329,7 +1328,7 @@ static GLFWbool flushDisplay(void)
     return GLFW_TRUE;
 }
 
-static int translateKeyWayland(uint32_t scancode)
+static int translateKey(uint32_t scancode)
 {
     if (scancode < sizeof(_glfw.wl.keycodes) / sizeof(_glfw.wl.keycodes[0]))
         return _glfw.wl.keycodes[scancode];
@@ -1453,7 +1452,7 @@ static void handleEvents(double* timeout)
                     for (uint64_t i = 0; i < repeats; i++)
                     {
                         _glfwInputKey(_glfw.wl.keyboardFocus,
-                                      translateKeyWayland(_glfw.wl.keyRepeatScancode),
+                                      translateKey(_glfw.wl.keyRepeatScancode),
                                       _glfw.wl.keyRepeatScancode,
                                       GLFW_PRESS,
                                       _glfw.wl.xkb.modifiers);
@@ -1963,7 +1962,7 @@ static void keyboardHandleKey(void* userData,
     if (!window)
         return;
 
-    const int key = translateKeyWayland(scancode);
+    const int key = translateKey(scancode);
     const int action =
         state == WL_KEYBOARD_KEY_STATE_PRESSED ? GLFW_PRESS : GLFW_RELEASE;
 
@@ -2810,12 +2809,12 @@ void _glfwSetWindowMonitorWayland(_GLFWwindow* window,
     }
 
     if (window->monitor)
-        releaseMonitorWayland(window);
+        releaseMonitor(window);
 
     _glfwInputWindowMonitor(window, monitor);
 
     if (window->monitor)
-        acquireMonitorWayland(window);
+        acquireMonitor(window);
     else
         _glfwSetWindowSizeWayland(window, width, height);
 }
