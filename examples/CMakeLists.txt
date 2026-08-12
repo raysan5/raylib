@@ -189,6 +189,7 @@ foreach (example_source ${example_sources})
             target_link_libraries(${example_name} "-framework IOKit")
             target_link_libraries(${example_name} "-framework Cocoa")
             target_link_libraries(${example_name} "-framework OpenGL")
+            target_link_libraries(${example_name} "-framework QuartzCore")
         endif()
 
     elseif (${PLATFORM} MATCHES "RGFW")

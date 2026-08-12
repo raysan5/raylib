@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 WGL - www.glfw.org
+// GLFW 3.5 WGL - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -186,28 +186,22 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             u->accumAlphaBits = FIND_ATTRIB_VALUE(WGL_ACCUM_ALPHA_BITS_ARB);
 
             u->auxBuffers = FIND_ATTRIB_VALUE(WGL_AUX_BUFFERS_ARB);
-
-            if (FIND_ATTRIB_VALUE(WGL_STEREO_ARB))
-                u->stereo = GLFW_TRUE;
+            u->stereo = FIND_ATTRIB_VALUE(WGL_STEREO_ARB);
 
             if (_glfw.wgl.ARB_multisample)
                 u->samples = FIND_ATTRIB_VALUE(WGL_SAMPLES_ARB);
 
             if (ctxconfig->client == GLFW_OPENGL_API)
             {
-                if (_glfw.wgl.ARB_framebuffer_sRGB ||
-                    _glfw.wgl.EXT_framebuffer_sRGB)
-                {
-                    if (FIND_ATTRIB_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB))
-                        u->sRGB = GLFW_TRUE;
-                }
+                if (_glfw.wgl.ARB_framebuffer_sRGB || _glfw.wgl.EXT_framebuffer_sRGB)
+                    u->sRGB = FIND_ATTRIB_VALUE(WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
             }
             else
             {
                 if (_glfw.wgl.EXT_colorspace)
                 {
                     if (FIND_ATTRIB_VALUE(WGL_COLORSPACE_EXT) == WGL_COLORSPACE_SRGB_EXT)
-                        u->sRGB = GLFW_TRUE;
+                        u->sRGB = true;
                 }
             }
         }
@@ -261,9 +255,7 @@ static int choosePixelFormatWGL(_GLFWwindow* window,
             u->accumAlphaBits = pfd.cAccumAlphaBits;
 
             u->auxBuffers = pfd.cAuxBuffers;
-
-            if (pfd.dwFlags & PFD_STEREO)
-                u->stereo = GLFW_TRUE;
+            u->stereo = (pfd.dwFlags & PFD_STEREO);
         }
 
         u->handle = pixelFormat;
@@ -327,8 +319,8 @@ static void swapBuffersWGL(_GLFWwindow* window)
 {
     if (!window->monitor)
     {
-        // HACK: Use DwmFlush when desktop composition is enabled on Windows Vista and 7
-        if (!IsWindows8OrGreater() && IsWindowsVistaOrGreater())
+        // HACK: Use DwmFlush when desktop composition is enabled on Windows 7
+        if (!IsWindows8OrGreater())
         {
             BOOL enabled = FALSE;
 
@@ -353,9 +345,9 @@ static void swapIntervalWGL(int interval)
 
     if (!window->monitor)
     {
-        // HACK: Disable WGL swap interval when desktop composition is enabled on Windows
-        //       Vista and 7 to avoid interfering with DWM vsync
-        if (!IsWindows8OrGreater() && IsWindowsVistaOrGreater())
+        // HACK: Disable WGL swap interval when desktop composition is enabled on
+        //       Windows 7 to avoid interfering with DWM vsync
+        if (!IsWindows8OrGreater())
         {
             BOOL enabled = FALSE;
 
@@ -401,8 +393,6 @@ static void destroyContextWGL(_GLFWwindow* window)
     }
 }
 
-// Initialize WGL
-//
 GLFWbool _glfwInitWGL(void)
 {
     PIXELFORMATDESCRIPTOR pfd;
@@ -521,12 +511,10 @@ GLFWbool _glfwInitWGL(void)
     return GLFW_TRUE;
 }
 
-// Terminate WGL
-//
 void _glfwTerminateWGL(void)
 {
-    if (_glfw.wgl.instance)
-        _glfwPlatformFreeModule(_glfw.wgl.instance);
+    _glfwPlatformFreeModule(_glfw.wgl.instance);
+    _glfw.wgl.instance = NULL;
 }
 
 #define SET_ATTRIB(a, v) \
@@ -536,8 +524,6 @@ void _glfwTerminateWGL(void)
     attribs[index++] = v; \
 }
 
-// Create the OpenGL or OpenGL ES context
-//
 GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
                                const _GLFWctxconfig* ctxconfig,
                                const _GLFWfbconfig* fbconfig)
@@ -670,7 +656,7 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         if (ctxconfig->noerror)
         {
             if (_glfw.wgl.ARB_create_context_no_error)
-                SET_ATTRIB(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, GLFW_TRUE);
+                SET_ATTRIB(WGL_CONTEXT_OPENGL_NO_ERROR_ARB, true);
         }
 
         // NOTE: Only request an explicitly versioned context when necessary, as
@@ -775,7 +761,6 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
 
 GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_WIN32)
@@ -784,6 +769,9 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
                         "WGL: Platform not initialized");
         return NULL;
     }
+
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
 
     if (window->context.source != GLFW_NATIVE_CONTEXT_API)
     {

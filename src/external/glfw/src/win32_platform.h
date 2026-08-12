@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.5 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -48,14 +48,14 @@
  #define UNICODE
 #endif
 
-// GLFW requires Windows XP or later
-#if WINVER < 0x0501
+// GLFW requires Windows 7 or later
+#if WINVER < 0x0601
  #undef WINVER
- #define WINVER 0x0501
+ #define WINVER 0x0601
 #endif
-#if _WIN32_WINNT < 0x0501
+#if _WIN32_WINNT < 0x0601
  #undef _WIN32_WINNT
- #define _WIN32_WINNT 0x0501
+ #define _WIN32_WINNT 0x0601
 #endif
 
 // GLFW uses DirectInput8 interfaces
@@ -66,40 +66,20 @@
 
 #include <wctype.h>
 #include <windows.h>
+#include <dwmapi.h>
 #include <dinput.h>
 #include <xinput.h>
 #include <dbt.h>
 
 // HACK: Define macros that some windows.h variants don't
-#ifndef WM_MOUSEHWHEEL
- #define WM_MOUSEHWHEEL 0x020E
-#endif
-#ifndef WM_DWMCOMPOSITIONCHANGED
- #define WM_DWMCOMPOSITIONCHANGED 0x031E
-#endif
-#ifndef WM_DWMCOLORIZATIONCOLORCHANGED
- #define WM_DWMCOLORIZATIONCOLORCHANGED 0x0320
-#endif
 #ifndef WM_COPYGLOBALDATA
  #define WM_COPYGLOBALDATA 0x0049
-#endif
-#ifndef WM_UNICHAR
- #define WM_UNICHAR 0x0109
-#endif
-#ifndef UNICODE_NOCHAR
- #define UNICODE_NOCHAR 0xFFFF
 #endif
 #ifndef WM_DPICHANGED
  #define WM_DPICHANGED 0x02E0
 #endif
-#ifndef GET_XBUTTON_WPARAM
- #define GET_XBUTTON_WPARAM(w) (HIWORD(w))
-#endif
 #ifndef EDS_ROTATEDMODE
  #define EDS_ROTATEDMODE 0x00000004
-#endif
-#ifndef DISPLAY_DEVICE_ACTIVE
- #define DISPLAY_DEVICE_ACTIVE 0x00000001
 #endif
 #ifndef _WIN32_WINNT_WINBLUE
  #define _WIN32_WINNT_WINBLUE 0x0603
@@ -113,34 +93,6 @@
 #ifndef USER_DEFAULT_SCREEN_DPI
  #define USER_DEFAULT_SCREEN_DPI 96
 #endif
-#ifndef OCR_HAND
- #define OCR_HAND 32649
-#endif
-
-#if WINVER < 0x0601
-typedef struct
-{
-    DWORD cbSize;
-    DWORD ExtStatus;
-} CHANGEFILTERSTRUCT;
-#ifndef MSGFLT_ALLOW
- #define MSGFLT_ALLOW 1
-#endif
-#endif /*Windows 7*/
-
-#if WINVER < 0x0600
-#define DWM_BB_ENABLE 0x00000001
-#define DWM_BB_BLURREGION 0x00000002
-typedef struct
-{
-    DWORD dwFlags;
-    BOOL fEnable;
-    HRGN hRgnBlur;
-    BOOL fTransitionOnMaximized;
-} DWM_BLURBEHIND;
-#else
- #include <dwmapi.h>
-#endif /*Windows Vista*/
 
 #ifndef DPI_ENUMS_DECLARED
 typedef enum
@@ -165,12 +117,6 @@ typedef enum
 // Replacement for versionhelpers.h macros, as we cannot rely on the
 // application having a correct embedded manifest
 //
-#define IsWindowsVistaOrGreater()                                     \
-    _glfwIsWindowsVersionOrGreaterWin32(HIBYTE(_WIN32_WINNT_VISTA),   \
-                                        LOBYTE(_WIN32_WINNT_VISTA), 0)
-#define IsWindows7OrGreater()                                         \
-    _glfwIsWindowsVersionOrGreaterWin32(HIBYTE(_WIN32_WINNT_WIN7),    \
-                                        LOBYTE(_WIN32_WINNT_WIN7), 0)
 #define IsWindows8OrGreater()                                         \
     _glfwIsWindowsVersionOrGreaterWin32(HIBYTE(_WIN32_WINNT_WIN8),    \
                                         LOBYTE(_WIN32_WINNT_WIN8), 0)
@@ -281,15 +227,11 @@ typedef HRESULT (WINAPI * PFN_DirectInput8Create)(HINSTANCE,DWORD,REFIID,LPVOID*
 #define DirectInput8Create _glfw.win32.dinput8.Create
 
 // user32.dll function pointer typedefs
-typedef BOOL (WINAPI * PFN_SetProcessDPIAware)(void);
-typedef BOOL (WINAPI * PFN_ChangeWindowMessageFilterEx)(HWND,UINT,DWORD,CHANGEFILTERSTRUCT*);
 typedef BOOL (WINAPI * PFN_EnableNonClientDpiScaling)(HWND);
 typedef BOOL (WINAPI * PFN_SetProcessDpiAwarenessContext)(HANDLE);
 typedef UINT (WINAPI * PFN_GetDpiForWindow)(HWND);
 typedef BOOL (WINAPI * PFN_AdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 typedef int (WINAPI * PFN_GetSystemMetricsForDpi)(int,UINT);
-#define SetProcessDPIAware _glfw.win32.user32.SetProcessDPIAware_
-#define ChangeWindowMessageFilterEx _glfw.win32.user32.ChangeWindowMessageFilterEx_
 #define EnableNonClientDpiScaling _glfw.win32.user32.EnableNonClientDpiScaling_
 #define SetProcessDpiAwarenessContext _glfw.win32.user32.SetProcessDpiAwarenessContext_
 #define GetDpiForWindow _glfw.win32.user32.GetDpiForWindow_
@@ -394,18 +336,18 @@ typedef struct _GLFWlibraryWGL
     PFNWGLGETEXTENSIONSSTRINGEXTPROC    GetExtensionsStringEXT;
     PFNWGLGETEXTENSIONSSTRINGARBPROC    GetExtensionsStringARB;
     PFNWGLCREATECONTEXTATTRIBSARBPROC   CreateContextAttribsARB;
-    GLFWbool                            EXT_swap_control;
-    GLFWbool                            EXT_colorspace;
-    GLFWbool                            ARB_multisample;
-    GLFWbool                            ARB_framebuffer_sRGB;
-    GLFWbool                            EXT_framebuffer_sRGB;
-    GLFWbool                            ARB_pixel_format;
-    GLFWbool                            ARB_create_context;
-    GLFWbool                            ARB_create_context_profile;
-    GLFWbool                            EXT_create_context_es2_profile;
-    GLFWbool                            ARB_create_context_robustness;
-    GLFWbool                            ARB_create_context_no_error;
-    GLFWbool                            ARB_context_flush_control;
+    bool                                EXT_swap_control;
+    bool                                EXT_colorspace;
+    bool                                ARB_multisample;
+    bool                                ARB_framebuffer_sRGB;
+    bool                                EXT_framebuffer_sRGB;
+    bool                                ARB_pixel_format;
+    bool                                ARB_create_context;
+    bool                                ARB_create_context_profile;
+    bool                                EXT_create_context_es2_profile;
+    bool                                ARB_create_context_robustness;
+    bool                                ARB_create_context_no_error;
+    bool                                ARB_context_flush_control;
 } _GLFWlibraryWGL;
 
 // Win32-specific per-window data
@@ -475,8 +417,6 @@ typedef struct _GLFWlibraryWin32
 
     struct {
         HINSTANCE                       instance;
-        PFN_SetProcessDPIAware          SetProcessDPIAware_;
-        PFN_ChangeWindowMessageFilterEx ChangeWindowMessageFilterEx_;
         PFN_EnableNonClientDpiScaling   EnableNonClientDpiScaling_;
         PFN_SetProcessDpiAwarenessContext SetProcessDpiAwarenessContext_;
         PFN_GetDpiForWindow             GetDpiForWindow_;

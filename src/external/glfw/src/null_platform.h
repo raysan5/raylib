@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -155,6 +155,17 @@
 #define GLFW_NULL_SC_RIGHT_SUPER    119
 #define GLFW_NULL_SC_MENU           120
 #define GLFW_NULL_SC_LAST           GLFW_NULL_SC_MENU
+
+typedef VkFlags VkHeadlessSurfaceCreateFlagsEXT;
+
+typedef struct VkHeadlessSurfaceCreateInfoEXT
+{
+    VkStructureType                 sType;
+    const void*                     pNext;
+    VkHeadlessSurfaceCreateFlagsEXT flags;
+} VkHeadlessSurfaceCreateInfoEXT;
+
+typedef VkResult (APIENTRY *PFN_vkCreateHeadlessSurfaceEXT)(VkInstance,const VkHeadlessSurfaceCreateInfoEXT*,const VkAllocationCallbacks*,VkSurfaceKHR*);
 
 // Null-specific per-window data
 //

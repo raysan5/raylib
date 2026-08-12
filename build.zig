@@ -139,6 +139,7 @@ pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) void {
     mod.linkFramework("CoreGraphics", .{});
     mod.linkFramework("AppKit", .{});
     mod.linkFramework("IOKit", .{});
+    mod.linkFramework("QuartzCore", .{});
 }
 
 fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, options: Options) !*std.Build.Step.Compile {

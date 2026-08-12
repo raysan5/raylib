@@ -1,7 +1,8 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.5 Cocoa (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -28,8 +29,11 @@
 
 #if defined(_GLFW_COCOA)
 
+#import <QuartzCore/CAMetalLayer.h>
+
 #include <float.h>
 #include <string.h>
+#include <assert.h>
 
 // HACK: This enum value is missing from framework headers on OS X 10.11 despite
 //       having been (according to documentation) added in Mac OS X 10.7
@@ -309,7 +313,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)windowDidChangeOcclusionState:(NSNotification* )notification
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
     if ([window->ns.object respondsToSelector:@selector(occlusionState)])
     {
         if ([window->ns.object occlusionState] & NSWindowOcclusionStateVisible)
@@ -317,7 +320,6 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
         else
             window->ns.occluded = GLFW_TRUE;
     }
-#endif
 }
 
 @end
@@ -596,6 +598,34 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     const int key = translateKeyCocoa([event keyCode]);
     const int mods = translateFlags([event modifierFlags]);
     _glfwInputKey(window, key, [event keyCode], GLFW_RELEASE, mods);
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)event
+{
+    // HACK: Some key combinations are consumed before reaching keyDown:
+    //       so we claim those events and emit them here
+    const int key = translateKeyCocoa([event keyCode]);
+    const int mods = translateFlags([event modifierFlags]);
+
+    if (mods & GLFW_MOD_CONTROL)
+    {
+        if (key == GLFW_KEY_TAB || key == GLFW_KEY_ESCAPE)
+        {
+            _glfwInputKey(window, key, [event keyCode], GLFW_PRESS, mods);
+            return YES;
+        }
+    }
+
+    if (mods & GLFW_MOD_SUPER)
+    {
+        if (key == GLFW_KEY_PERIOD)
+        {
+            _glfwInputKey(window, key, [event keyCode], GLFW_PRESS, mods);
+            return YES;
+        }
+    }
+
+    return [super performKeyEquivalent:event];
 }
 
 - (void)scrollWheel:(NSEvent *)event
@@ -883,7 +913,7 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
 
     [window->ns.object setContentView:window->ns.view];
     [window->ns.object makeFirstResponder:window->ns.view];
-    [window->ns.object setTitle:@(wndconfig->title)];
+    [window->ns.object setTitle:@(window->title)];
     [window->ns.object setDelegate:window->ns.delegate];
     [window->ns.object setAcceptsMouseMovedEvents:YES];
     [window->ns.object setRestorable:NO];
@@ -1949,19 +1979,8 @@ VkResult _glfwCreateWindowSurfaceCocoa(VkInstance instance,
 {
     @autoreleasepool {
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-    // HACK: Dynamically load Core Animation to avoid adding an extra
-    //       dependency for the majority who don't use MoltenVK
-    NSBundle* bundle = [NSBundle bundleWithPath:@"/System/Library/Frameworks/QuartzCore.framework"];
-    if (!bundle)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Cocoa: Failed to find QuartzCore.framework");
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
     // NOTE: Create the layer here as makeBackingLayer should not return nil
-    window->ns.layer = [[bundle classNamed:@"CAMetalLayer"] layer];
+    window->ns.layer = [CAMetalLayer layer];
     if (!window->ns.layer)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
@@ -2026,9 +2045,6 @@ VkResult _glfwCreateWindowSurfaceCocoa(VkInstance instance,
     }
 
     return err;
-#else
-    return VK_ERROR_EXTENSION_NOT_PRESENT;
-#endif
 
     } // autoreleasepool
 }
@@ -2040,7 +2056,6 @@ VkResult _glfwCreateWindowSurfaceCocoa(VkInstance instance,
 
 GLFWAPI id glfwGetCocoaWindow(GLFWwindow* handle)
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(nil);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_COCOA)
@@ -2049,13 +2064,15 @@ GLFWAPI id glfwGetCocoaWindow(GLFWwindow* handle)
                         "Cocoa: Platform not initialized");
         return nil;
     }
+
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
 
     return window->ns.object;
 }
 
 GLFWAPI id glfwGetCocoaView(GLFWwindow* handle)
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(nil);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_COCOA)
@@ -2064,6 +2081,9 @@ GLFWAPI id glfwGetCocoaView(GLFWwindow* handle)
                         "Cocoa: Platform not initialized");
         return nil;
     }
+
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
 
     return window->ns.view;
 }

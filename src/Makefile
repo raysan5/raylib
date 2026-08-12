@@ -655,7 +655,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         #LDLIBS += -latomic
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        LDLIBS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+        LDLIBS = -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo -framework QuartzCore
     endif
     ifeq ($(PLATFORM_OS),BSD)
         LDLIBS = -lGL -lpthread
@@ -707,7 +707,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for Debian MacOS desktop compiling
         # NOTE: Required packages: libegl1-mesa-dev
-        LDLIBS += -lm -framework Foundation -framework AppKit -framework IOKit  -framework OpenGL -framework CoreVideo
+        LDLIBS += -lm -framework Foundation -framework AppKit -framework IOKit  -framework OpenGL -framework CoreVideo -framework QuartzCore
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)

@@ -1,8 +1,8 @@
 //========================================================================
-// GLFW 3.4 macOS (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 Cocoa (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
-// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
+// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -451,41 +451,6 @@ static GLFWbool initializeTIS(void)
 
 @end // GLFWApplicationDelegate
 
-
-//////////////////////////////////////////////////////////////////////////
-//////                       GLFW internal API                      //////
-//////////////////////////////////////////////////////////////////////////
-
-void* _glfwLoadLocalVulkanLoaderCocoa(void)
-{
-    CFBundleRef bundle = CFBundleGetMainBundle();
-    if (!bundle)
-        return NULL;
-
-    CFURLRef frameworksUrl = CFBundleCopyPrivateFrameworksURL(bundle);
-    if (!frameworksUrl)
-        return NULL;
-
-    CFURLRef loaderUrl = CFURLCreateCopyAppendingPathComponent(
-        kCFAllocatorDefault, frameworksUrl, CFSTR("libvulkan.1.dylib"), false);
-    if (!loaderUrl)
-    {
-        CFRelease(frameworksUrl);
-        return NULL;
-    }
-
-    char path[PATH_MAX];
-    void* handle = NULL;
-
-    if (CFURLGetFileSystemRepresentation(loaderUrl, true, (UInt8*) path, sizeof(path) - 1))
-        handle = _glfwPlatformLoadModule(path);
-
-    CFRelease(loaderUrl);
-    CFRelease(frameworksUrl);
-    return handle;
-}
-
-
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
@@ -688,6 +653,8 @@ void _glfwTerminateCocoa(void)
     _glfwTerminateNSGL();
     _glfwTerminateEGL();
     _glfwTerminateOSMesa();
+
+    memset(&_glfw.ns, 0, sizeof(_glfw.ns));
 
     } // autoreleasepool
 }

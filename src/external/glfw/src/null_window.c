@@ -1,9 +1,9 @@
 //========================================================================
-// GLFW 3.4 (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 (modified for raylib) - www.glfw.org; www.raylib.com
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2019 Camilla Löwy <elmindreda@glfw.org>
-// Copyright (c) 2024 M374LX <wilsalx@gmail.com>
+// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -29,6 +29,7 @@
 #include "internal.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static void applySizeLimits(_GLFWwindow* window, int* width, int* height)
 {
@@ -553,12 +554,15 @@ const char* _glfwGetClipboardStringNull(void)
 
 EGLenum _glfwGetEGLPlatformNull(EGLint** attribs)
 {
-    return 0;
+    if (_glfw.egl.EXT_platform_base && _glfw.egl.MESA_platform_surfaceless)
+        return EGL_PLATFORM_SURFACELESS_MESA;
+    else
+        return 0;
 }
 
 EGLNativeDisplayType _glfwGetEGLNativeDisplayNull(void)
 {
-    return 0;
+    return EGL_DEFAULT_DISPLAY;
 }
 
 EGLNativeWindowType _glfwGetEGLNativeWindowNull(_GLFWwindow* window)
@@ -700,13 +704,18 @@ int _glfwGetKeyScancodeNull(int key)
 
 void _glfwGetRequiredInstanceExtensionsNull(char** extensions)
 {
+    if (!_glfw.vk.KHR_surface || !_glfw.vk.EXT_headless_surface)
+        return;
+
+    extensions[0] = "VK_KHR_surface";
+    extensions[1] = "VK_EXT_headless_surface";
 }
 
 GLFWbool _glfwGetPhysicalDevicePresentationSupportNull(VkInstance instance,
                                                        VkPhysicalDevice device,
                                                        uint32_t queuefamily)
 {
-    return GLFW_FALSE;
+    return GLFW_TRUE;
 }
 
 VkResult _glfwCreateWindowSurfaceNull(VkInstance instance,
@@ -714,7 +723,28 @@ VkResult _glfwCreateWindowSurfaceNull(VkInstance instance,
                                       const VkAllocationCallbacks* allocator,
                                       VkSurfaceKHR* surface)
 {
-    // This seems like the most appropriate error to return here
-    return VK_ERROR_EXTENSION_NOT_PRESENT;
+    PFN_vkCreateHeadlessSurfaceEXT vkCreateHeadlessSurfaceEXT =
+        (PFN_vkCreateHeadlessSurfaceEXT)
+        vkGetInstanceProcAddr(instance, "vkCreateHeadlessSurfaceEXT");
+    if (!vkCreateHeadlessSurfaceEXT)
+    {
+        _glfwInputError(GLFW_API_UNAVAILABLE,
+                        "Null: Vulkan instance missing VK_EXT_headless_surface extension");
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+
+    VkHeadlessSurfaceCreateInfoEXT sci;
+    memset(&sci, 0, sizeof(sci));
+    sci.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT;
+
+    const VkResult err = vkCreateHeadlessSurfaceEXT(instance, &sci, allocator, surface);
+    if (err)
+    {
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Null: Failed to create Vulkan surface: %s",
+                        _glfwGetVulkanResultString(err));
+    }
+
+    return err;
 }
 

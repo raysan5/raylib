@@ -9,10 +9,10 @@ platforms have been renamed so all of GLFW's source files can be combined into
 one (as done by ``rglfw.c``). Also, the Null platform, which is not used by
 raylib, has been disabled. The renamed functions are:
 
-``
+```
 createKeyTables()
 translateKey()
 acquireMonitor()
 releaseMonitor()
-``
+```
 

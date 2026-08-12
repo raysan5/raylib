@@ -1,5 +1,5 @@
 /*************************************************************************
- * GLFW 3.4 - www.glfw.org
+ * GLFW 3.5 - www.glfw.org
  * A library for OpenGL, window and input
  *------------------------------------------------------------------------
  * Copyright (c) 2002-2006 Marcus Geelnard
@@ -478,6 +478,29 @@ GLFWAPI GLXContext glfwGetGLXContext(GLFWwindow* window);
  *  @ingroup native
  */
 GLFWAPI GLXWindow glfwGetGLXWindow(GLFWwindow* window);
+
+/*! @brief Retrieves the `GLXFBConfig` of the specified window's `GLXWindow`.
+ *
+ *  @param[in] window The window whose `GLXWindow` to query.
+ *  @param[out] config The `GLXFBConfig` of the window `GLXWindow`, if available.
+ *  @return `GLFW_TRUE` if successful, or `GLFW_FALSE` if an
+ *  [error](@ref error_handling) occurred.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
+ *  GLFW_NO_WINDOW_CONTEXT and @ref GLFW_PLATFORM_UNAVAILABLE.
+ *
+ *  @remark `GLXFBConfig` is an opaque type.  Unlike other GLFW functions, the
+ *  @p config out parameter is not cleared on error, as core GLX does not define
+ *  any invalid value.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @since Added in version 3.5
+ *
+ *  @ingroup native
+ */
+GLFWAPI int glfwGetGLXFBConfig(GLFWwindow* window, GLXFBConfig* config);
 #endif
 
 #if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
@@ -586,6 +609,29 @@ GLFWAPI EGLContext glfwGetEGLContext(GLFWwindow* window);
  *  @ingroup native
  */
 GLFWAPI EGLSurface glfwGetEGLSurface(GLFWwindow* window);
+
+/*! @brief Retrieves the `EGLConfig` of the specified window's `EGLSurface`.
+ *
+ *  @param[in] window The window whose `EGLSurface` to query.
+ *  @param[out] config The `EGLConfig` of the window `EGLSurface`, if available.
+ *  @return `GLFW_TRUE` if successful, or `GLFW_FALSE` if an
+ *  [error](@ref error_handling) occurred.
+ *
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
+ *  GLFW_NO_WINDOW_CONTEXT.
+ *
+ *  @remark `EGLConfig` is an opaque type.  Unlike other GLFW functions, the @p
+ *  config out parameter is not cleared on error, as core EGL does not define
+ *  any invalid value.
+ *
+ *  @thread_safety This function may be called from any thread.  Access is not
+ *  synchronized.
+ *
+ *  @since Added in version 3.5.
+ *
+ *  @ingroup native
+ */
+GLFWAPI int glfwGetEGLConfig(GLFWwindow* window, EGLConfig* config);
 #endif
 
 #if defined(GLFW_EXPOSE_NATIVE_OSMESA)
