@@ -962,7 +962,7 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = emscripten_get_now()*1000.0;
+    double time = emscripten_get_now()/1000.0;
 
     return time;
 }
