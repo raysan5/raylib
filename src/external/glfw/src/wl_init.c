@@ -1,8 +1,7 @@
 //========================================================================
-// GLFW 3.5 Wayland (modified for raylib) - www.glfw.org; www.raylib.com
+// GLFW 3.5 Wayland - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
-// Copyright (c) 2024-2026 M374LX <wilsalx@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -255,7 +254,7 @@ static const struct wl_callback_listener libdecorReadyListener =
 
 // Create key code translation tables
 //
-static void createKeyTablesWayland(void)
+static void createKeyTables(void)
 {
     memset(_glfw.wl.keycodes, -1, sizeof(_glfw.wl.keycodes));
     memset(_glfw.wl.scancodes, -1, sizeof(_glfw.wl.scancodes));
@@ -847,7 +846,7 @@ int _glfwInitWayland(void)
     _glfw.wl.registry = wl_display_get_registry(_glfw.wl.display);
     wl_registry_add_listener(_glfw.wl.registry, &registryListener, NULL);
 
-    createKeyTablesWayland();
+    createKeyTables();
 
     _glfw.wl.keyRepeatTimerfd =
         timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
