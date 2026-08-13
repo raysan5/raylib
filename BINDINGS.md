@@ -7,12 +7,11 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | Name                                                                                     | raylib Version   | Language                                                             | License              |
 | :--------------------------------------------------------------------------------------- | :--------------: | :------------------------------------------------------------------: | :------------------: |
 | [raylib](https://github.com/raysan5/raylib)                                              | **6.0**          | [C/C++](https://en.wikipedia.org/wiki/C_(programming_language))      | Zlib                 |
-| [mach-raylib](https://github.com/angluca/mach-raylib)  | **6.0-dev** | [Mach](https://machlang.org/) | MIT |
-| [raylib-ada](https://github.com/Fabien-Chouteau/raylib-ada)                                              | **5.5**          | [Ada](https://en.wikipedia.org/wiki/Ada_(programming_language))      | MIT                 |
-|[raylib-asm](https://github.com/gAndy50/ASMRay)                                | **6.0**                | Assembly (x86)                                              | Zlib                                                    |      
+| [raylib-ada](https://github.com/Fabien-Chouteau/raylib-ada)                              | **5.5**          | [Ada](https://en.wikipedia.org/wiki/Ada_(programming_language))      | MIT                  |
+| [raylib-asm](https://github.com/gAndy50/ASMRay)                                          | **6.0**          | [Assembly (x86)](https://en.wikipedia.org/wiki/X86_assembly_language) | Zlib                |
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **5.5**          | [Beef](https://www.beeflang.org)                                     | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                 | MIT                  |
-| [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib6.c3l)           | **6**          | [C3](https://c3-lang.org)                                            | MIT                  |
+| [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib6.c3l)            | **6**            | [C3](https://c3-lang.org)                                            | MIT                  |
 | [raylib-cs](https://github.com/raylib-cs/raylib-cs)                                      | **6.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | Zlib                 |
 | [Raylib-CsLo](https://github.com/NotNotTech/Raylib-CsLo)                                 | 4.2              | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
 | [Raylib-CSharp-Vinculum](https://github.com/ZeroElectric/Raylib-CSharp-Vinculum)         | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))   | MPL-2.0              |
@@ -34,7 +33,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **6.0**          | [D](https://dlang.org)                                               | Zlib                 |
 | [Deno-Raylib](https://github.com/JJLDonley/Deno-Raylib)                                  | **6.0**          | [Deno / TS](https://deno.land)                                       | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 3.7              | [elixir](https://elixir-lang.org)                                    | Apache-2.0           |
-| [raylib-elfscript](https://github.com/ohmtal/raylib-elfscript)             | 6.0          | [ElfScript](https://github.com/ohmtal/ElfScript)                           | MIT                  |
+| [raylib-elfscript](https://github.com/ohmtal/raylib-elfscript)                           | 6.0              | [ElfScript](https://github.com/ohmtal/ElfScript)                     | MIT                  |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 5.5              | [Factor](https://factorcode.org)                                     | BSD                  |
 | [raylib4fb](https://github.com/mudhairless/raylib4fb)                                    | **6.0**          | [FreeBASIC](https://www.freebasic.net)                               | Zlib                 |
@@ -68,12 +67,12 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib_odin_bindings](https://github.com/Deathbat2190/raylib_odin_bindings)             | 4.0-dev          | [Odin](https://odin-lang.org)                                        | MIT                  |
 | [raylib-ocaml](https://github.com/tjammer/raylib-ocaml)                                  | **6.0**          | [OCaml](https://ocaml.org)                                           | MIT                  |
 | [TurboRaylib](https://github.com/turborium/TurboRaylib)                                  | 4.5              | [Object Pascal](https://en.wikipedia.org/wiki/Object_Pascal)         | MIT                  |
-| [Rayberon](https://github.com/RobertFlexx/Rayberon)                                  | **6.0**          | [Oberon-2](https://en.wikipedia.org/wiki/Oberon-2) / [Component Pascal](https://en.wikipedia.org/wiki/Component_Pascal) | MIT                  |
-|[EuRaylib](https://github.com/gAndy50/EuRaylib6)                                            | **6.0**        |[openEuphoria(https://openeuphoria.org/)                                      | Zlib                   |
-| [Ray4Laz](https://github.com/GuvaCode/Ray4Laz)                                           | **6.0**          | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)/[Delphi](https://en.wikipedia.org/wiki/Delphi_(software))             | Zlib                 |
+| [Rayberon](https://github.com/RobertFlexx/Rayberon)                                      | **6.0**          | [Oberon-2](https://en.wikipedia.org/wiki/Oberon-2)                   | MIT                  |
+| [EuRaylib](https://github.com/gAndy50/EuRaylib6)                                         | **6.0**          | [openEuphoria(https://openeuphoria.org/)                             | Zlib                 |
+| [Ray4Laz](https://github.com/GuvaCode/Ray4Laz)                                           | **6.0**          | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)             | Zlib                 |
 | [Raylib.4.0.Pascal](https://github.com/sysrpl/Raylib.4.0.Pascal)                         | 4.0              | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)             | Zlib                 |
 | [pyraylib](https://github.com/Ho011/pyraylib)                                            | 3.7              | [Python](https://www.python.org)                                     | Zlib                 |
-| [raylib-python-cffi](https://github.com/electronstudio/raylib-python-cffi)               | **5.5**              | [Python](https://www.python.org)                                     | EPL-2.0              |
+| [raylib-python-cffi](https://github.com/electronstudio/raylib-python-cffi)               | **5.5**          | [Python](https://www.python.org)                                     | EPL-2.0              |
 | [raylibpyctbg](https://github.com/overdev/raylibpyctbg)                                  | 5.5              | [Python](https://www.python.org)                                     | MIT                  |
 | [raylib-py](https://github.com/overdev/raylib-py)                                        | 5.5              | [Python](https://www.python.org)                                     | MIT                  |
 | [raylib-python-ctypes](https://github.com/sDos280/raylib-python-ctypes)                  | 4.6-dev          | [Python](https://www.python.org)                                     | MIT                  |
@@ -113,7 +112,8 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                   | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                        | **???**              | 
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/libs/raylib)                   | **5.5**          | [Dart](https://dart.dev/)                                            | Apache-2.0 license   | 
-| [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0**          | [gclang](https://github.com/gnuchanos/gcLang_Compiler)                                 | AGPL-3.0             |
+| [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0** | [gclang](https://github.com/gnuchanos/gcLang_Compiler)           | AGPL-3.0             |
+| [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.0-dev**      | [Mach](https://machlang.org/)                                        | MIT                  |
 
 
 ### Utility Wrappers
@@ -132,7 +132,7 @@ These are utility wrappers for specific languages, they are not required to use 
 These are older raylib bindings that are more than 2 versions old or have not been maintained.
 | Name                                                                               | raylib Version | Language                                                                |
 | ---------------------------------------------------------------------------------- | :------------: | :---------------------------------------------------------------------: |
-| [raylib-cppsharp](https://github.com/phxvyper/raylib-cppsharp)                     | 2.5            | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))    |
+| [raylib-cppsharp](https://github.com/phxvyper/raylib-cppsharp)                     | 2.5            | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))      |
 | [RaylibFS](https://github.com/dallinbeutler/RaylibFS)                              | 2.5            | [F#](https://fsharp.org)                                                |
 | [raylib\*d](https://github.com/Sepheus/raylib_d)                                   | 2.5            | [D](https://dlang.org)                                                  |
 | [bindbc-raylib](https://github.com/o3o/bindbc-raylib)                              | 3.0            | [D](https://dlang.org)                                                  |
@@ -149,18 +149,18 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [raylib-Nim](https://gitlab.com/define-private-public/raylib-Nim)                  | 1.7            | [Nim](https://nim-lang.org)                                             |
 | [nim-raylib](https://github.com/tomc1998/nim-raylib)                               | 3.1-dev        | [Nim](https://nim-lang.org)                                             |
 | [raylib-Forever](https://github.com/Guevara-chan/Raylib-Forever)                   | auto           | [Nim](https://nim-lang.org)                                             |
-| [NimraylibNow!](https://github.com/greenfork/nimraylib_now)                        | 4.2            | [Nim](https://nim-lang.org)                                            |
+| [NimraylibNow!](https://github.com/greenfork/nimraylib_now)                        | 4.2            | [Nim](https://nim-lang.org)                                             |
 | [raylib-haskell](https://github.com/DevJac/raylib-haskell)                         | 2.0            | [Haskell](https://www.haskell.org)                                      |
 | [raylib-cr](https://github.com/AregevDev/raylib-cr)                                | 2.5-dev        | [Crystal](https://crystal-lang.org)                                     |
 | [raylib.cr](https://github.com/sam0x17/raylib.cr)                                  | 2.0            | [Crystal](https://crystal-lang.org)                                     |
 | [cray](https://gitlab.com/Zatherz/cray)                                            | 1.8            | [Crystal](https://crystal-lang.org)                                     |
-| [raylib-pas](https://github.com/tazdij/raylib-pas)                                 | 3.0            | [Pascal](https://en.wikipedia.org/wiki/Pascal*(programming*language)) |
-| [raylib-pascal](https://github.com/drezgames/raylib-pascal)                        | 2.0            | [Pascal](https://en.wikipedia.org/wiki/Pascal*(programming*language)) |
+| [raylib-pas](https://github.com/tazdij/raylib-pas)                                 | 3.0            | [Pascal](https://en.wikipedia.org/wiki/Pascal*(programming*language))   |
+| [raylib-pascal](https://github.com/drezgames/raylib-pascal)                        | 2.0            | [Pascal](https://en.wikipedia.org/wiki/Pascal*(programming*language))   |
 | [Graphics-Raylib](https://github.com/athreef/Graphics-Raylib)                      | 1.4            | [Perl](https://www.perl.org)                                            |
 | [raylib-ruby](https://github.com/a0/raylib-ruby)                                   | 2.6            | [Ruby](https://www.ruby-lang.org/en)                                    |
 | [raylib-ruby-ffi](https://github.com/D3nX/raylib-ruby-ffi)                         | 2.0            | [Ruby](https://www.ruby-lang.org/en)                                    |
 | [raylib-mruby](https://github.com/lihaochen910/raylib-mruby)                       | 2.5-dev        | [mruby](https://github.com/mruby/mruby)                                 |
-| [raylib-java](https://github.com/XoanaIO/raylib-java)                              | 2.0            | [Java](https://en.wikipedia.org/wiki/Java*(programming_language))     |
+| [raylib-java](https://github.com/XoanaIO/raylib-java)                              | 2.0            | [Java](https://en.wikipedia.org/wiki/Java*(programming_language))       |
 | [clj-raylib](https://github.com/lsevero/clj-raylib)                                | 3.0            | [Clojure](https://clojure.org)                                          |
 | [QuickJS-raylib](https://github.com/sntg-p/QuickJS-raylib)                         | 3.0            | [QuickJS](https://bellard.org/quickjs)                                  |
 | [raylib-duktape](https://github.com/RobLoach/raylib-duktape)                       | 2.6            | [JavaScript (Duktape)](https://en.wikipedia.org/wiki/JavaScript)        |
