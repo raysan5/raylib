@@ -2613,6 +2613,32 @@ const char *GetWorkingDirectory(void)
     return path;
 }
 
+#if defined(_WIN32)
+    #define APPLICATON_DIRECTORY_PATH_SEPARATOR '\\'
+#else
+    #define APPLICATON_DIRECTORY_PATH_SEPARATOR '/'
+#endif
+
+static void SetExecutablePath(int len, char *appDir) {
+	
+    if (len > 0)
+    {
+        for (int i = len; i >= 0; i--)
+        {
+            if (appDir[i] == APPLICATON_DIRECTORY_PATH_SEPARATOR)
+            {
+                appDir[i + 1] = '\0';
+                break;
+            }
+        }
+    }
+    else
+    {
+        appDir[0] = '.';
+        appDir[1] = APPLICATON_DIRECTORY_PATH_SEPARATOR;
+    }
+}
+
 const char *GetApplicationDirectory(void)
 {
     static char appDir[MAX_FILEPATH_LENGTH] = { 0 };
@@ -2625,69 +2651,28 @@ const char *GetApplicationDirectory(void)
     unsigned short widePath[MAX_PATH];
     len = GetModuleFileNameW(NULL, (wchar_t *)widePath, MAX_PATH);
     len = WideCharToMultiByte(0, 0, (wchar_t *)widePath, len, appDir, MAX_PATH, NULL, NULL);
-    #else
+#else
     len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
-    #endif
+#endif
 
-    if (len > 0)
-    {
-        for (int i = len; i >= 0; i--)
-        {
-            if (appDir[i] == '\\')
-            {
-                appDir[i + 1] = '\0';
-                break;
-            }
-        }
-    }
-    else
-    {
-        appDir[0] = '.';
-        appDir[1] = '\\';
-    }
-
+    SetExecutablePath(len, appDir);
+    
 #elif defined(__linux__)
 
     unsigned int size = sizeof(appDir);
     ssize_t len = readlink("/proc/self/exe", appDir, size);
 
-    if (len > 0)
-    {
-        for (int i = len; i >= 0; i--)
-        {
-            if (appDir[i] == '/')
-            {
-                appDir[i + 1] = '\0';
-                break;
-            }
-        }
-    }
-    else
-    {
-        appDir[0] = '.';
-        appDir[1] = '/';
-    }
+	SetExecutablePath(len, appDir);
 
 #elif defined(__APPLE__)
 
     uint32_t size = sizeof(appDir);
 
+
     if (_NSGetExecutablePath(appDir, &size) == 0)
     {
-        int appDirLength = (int)strlen(appDir);
-        for (int i = appDirLength; i >= 0; i--)
-        {
-            if (appDir[i] == '/')
-            {
-                appDir[i + 1] = '\0';
-                break;
-            }
-        }
-    }
-    else
-    {
-        appDir[0] = '.';
-        appDir[1] = '/';
+		int appDirLength = (int)strlen(appDir);
+		SetExecutablePath(appDirLength, appDir);
     }
 
 #elif defined(__FreeBSD__)
@@ -2697,20 +2682,8 @@ const char *GetApplicationDirectory(void)
 
     if (sysctl(mib, 4, appDir, &size, NULL, 0) == 0)
     {
-        int appDirLength = (int)strlen(appDir);
-        for (int i = appDirLength; i >= 0; i--)
-        {
-            if (appDir[i] == '/')
-            {
-                appDir[i + 1] = '\0';
-                break;
-            }
-        }
-    }
-    else
-    {
-        appDir[0] = '.';
-        appDir[1] = '/';
+		int appDirLength = (int)strlen(appDir);
+		SetExecutablePath(appDirLength, appDir);
     }
 
 #elif defined(__wasm__)
