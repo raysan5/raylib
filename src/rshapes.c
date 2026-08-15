@@ -2828,6 +2828,886 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
     rlEnd();
 }
 
+// Draw ring outline with line thickness
+void DrawRingLinesEx(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, float thick, Color color)
+{
+    if (startAngle == endAngle) return;
+
+    // Function expects (outerRadius > innerRadius)
+    if (outerRadius < innerRadius)
+    {
+        float tmp = outerRadius;
+        outerRadius = innerRadius;
+        innerRadius = tmp;
+
+        if (outerRadius <= 0.0f) outerRadius = 0.1f;
+    }
+
+    // Function expects (endAngle > startAngle)
+    if (endAngle < startAngle)
+    {
+        // Swap values
+        float tmp = startAngle;
+        startAngle = endAngle;
+        endAngle = tmp;
+    }
+
+    bool showCapLines = true;
+    // Drawing a whole circle, things get weird without limiting the circle to 360 degrees
+    if (endAngle - startAngle >= 360.0f)
+    {
+        showCapLines = thick >= 0.0f;
+        endAngle = startAngle + 360.0f;
+    }
+
+    int minSegments = (int)ceilf((endAngle - startAngle)/90);
+
+    if (segments < minSegments)
+    {
+        // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
+        float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
+
+        if (segments <= 0) segments = minSegments;
+    }
+
+    float stepLength = (endAngle - startAngle)/(float)segments;
+
+    // We are not drawing a circle, we are drawing an n-sided polygon
+    // So, we need to adjust the outline thickness of the "circle" for it to look correct with fewer segments
+    float apothem = outerRadius*cosf(DEG2RAD*((endAngle - startAngle)/2.0f)/(float)segments);
+    float radiusThick = thick*(outerRadius/apothem);
+
+    // These names can be confusing, but they are useful
+    // Since 2 rings are being drawn, there are 4 radiuses (or radii)
+    // "Inner" means closer to the center, "outer" means farther from the center
+    // Sorted from farthest to closest you get:
+    //   1. outerOuterRadius (farthest)
+    //   2. innerOuterRadius
+    //   3. outerInnerRadius
+    //   4. innerInnerRadius (closest)
+    float innerOuterRadius = 0.0f;
+    float outerOuterRadius = 0.0f;
+    float innerInnerRadius = 0.0f;
+    float outerInnerRadius = 0.0f;
+
+    if (thick >= 0.0f)
+    {
+        innerRadius = fmaxf(0.0f, innerRadius);
+
+        // Just a filled-in ring
+        if (radiusThick > (outerRadius - innerRadius)/2.0f)
+        {
+            DrawRing(center, innerRadius, outerRadius, startAngle, endAngle, segments, color);
+            return;
+        }
+
+        innerInnerRadius = innerRadius;
+        outerInnerRadius = innerInnerRadius + radiusThick;
+
+        outerOuterRadius = outerRadius;
+        innerOuterRadius = outerOuterRadius - radiusThick;
+    }
+    else
+    {
+        // Just a circle sector outline
+        if (innerRadius <= 0.0f)
+        {
+            DrawCircleSectorLinesEx(center, outerRadius, startAngle, endAngle, segments, thick, color);
+            return;
+        }
+
+        outerInnerRadius = innerRadius;
+        innerInnerRadius = fmaxf(0.0f, outerInnerRadius + radiusThick);
+
+        innerOuterRadius = outerRadius;
+        outerOuterRadius = innerOuterRadius - radiusThick;
+    }
+
+    // For positive `thick` values
+    int stepsBeforeInner = 0;
+    int stepsBeforeOuter = 0;
+    float tInner = 0.0f;
+    float tOuter = 0.0f;
+    bool innerAnglesCrossEachOther = false;
+
+    // For negative `thick` values
+    Vector2 cap1SecondInnerVertex = { 0 };
+    Vector2 cap1SecondOuterVertex = { 0 };
+    Vector2 cap2SecondInnerVertex = { 0 };
+    Vector2 cap2SecondOuterVertex = { 0 };
+    bool capsIntersect = false;
+    Vector2 capIntersectionVertex = { 0 };
+
+    if (showCapLines)
+    {
+        if (thick >= 0.0f)
+        {
+            // Get the angle of the arc that has `thick` length along the inner and outer radii
+            float cap1InnerAngleEnd = RAD2DEG*(thick/outerInnerRadius);
+            float cap1OuterAngleEnd = RAD2DEG*(thick/innerOuterRadius);
+
+            // Just a filled-in ring
+            if (endAngle - startAngle < cap1OuterAngleEnd*2.0f)
+            {
+                DrawRing(center, innerRadius, outerRadius, startAngle, endAngle, segments, color);
+                return;
+            }
+
+            if (endAngle - startAngle < cap1InnerAngleEnd*2.0f) innerAnglesCrossEachOther = true;
+
+            stepsBeforeInner = (int)(cap1InnerAngleEnd/stepLength);
+            stepsBeforeOuter = (int)(cap1OuterAngleEnd/stepLength);
+
+            // We need to find where `cap1InnerAngleEnd` intersects the edge defined
+            // by `beforeInnerVertex` and `afterInnerVertex`
+            //
+            // We can make this easy by making `center` the origin (0, 0) and
+            // making `cap1InnerAngleEnd` 0 degrees (a horizontal line)
+            //
+            // With that, we know these lines intersect when 'y' equals 0,
+            // so we just need to solve for 't' (as in `Lerp(start, end, t)`)
+            Vector2 beforeInnerVertex = { cosf(DEG2RAD*((float)stepsBeforeInner*stepLength - cap1InnerAngleEnd))*outerInnerRadius, sinf(DEG2RAD*((float)stepsBeforeInner*stepLength - cap1InnerAngleEnd))*outerInnerRadius };
+            Vector2 afterInnerVertex = { cosf(DEG2RAD*((float)(stepsBeforeInner + 1)*stepLength - cap1InnerAngleEnd))*outerInnerRadius, sinf(DEG2RAD*((float)(stepsBeforeInner + 1)*stepLength - cap1InnerAngleEnd))*outerInnerRadius };
+            tInner = beforeInnerVertex.y/(beforeInnerVertex.y - afterInnerVertex.y);
+
+            // The same as above, but for the outer edge
+            Vector2 beforeOuterVertex = { cosf(DEG2RAD*((float)stepsBeforeOuter*stepLength - cap1OuterAngleEnd))*innerOuterRadius, sinf(DEG2RAD*((float)stepsBeforeOuter*stepLength - cap1OuterAngleEnd))*innerOuterRadius };
+            Vector2 afterOuterVertex = { cosf(DEG2RAD*((float)(stepsBeforeOuter + 1)*stepLength - cap1OuterAngleEnd))*innerOuterRadius, sinf(DEG2RAD*((float)(stepsBeforeOuter + 1)*stepLength - cap1OuterAngleEnd))*innerOuterRadius };
+            tOuter = beforeOuterVertex.y/(beforeOuterVertex.y - afterOuterVertex.y);
+        }
+        else
+        {
+            // "Cap 1" is the outline on `startAngle` and "Cap 2" is the outline on `endAngle`
+
+            /*
+            A sketch to help make all this a little more understandable
+            (This is an overly simplified representation of cap 1)
+
+             I2[][][][][]O2  <- y = thick
+             []          []
+             []          []
+             I0----------O0  <- angle = 0 degrees, y = 0
+             []          []
+             I1          O1  <- angle = stepLength
+
+            Cap 2 is a mirror copy of cap 1, the inside and outside vertices switch sides
+
+            We're using a frame of reference where `center` is (0, 0) and `startAngle` is 0 degrees
+
+            I0 is `innerInnerRadius` distance from `center` at `starAngle`
+            I1 is `innerInnerRadius` distance from `center` at `starAngle + stepLength`
+            I2 goes out from I0 perpendicular to `startAngle`
+            O0 is the same as I0, except using `outerOuterRadius` instead of `innerInnerRadius`
+            O1 is the same as I1, except using `outerOuterRadius` instead of `innerInnerRadius`
+            O2 is the same as I2, except goes out from O0
+
+            The intersection cases between the caps edges are:
+              1. No intersections, easy
+              2. The I0->I2 and I2->O2 edges intersect between the caps
+              3. The I0->I2 and O0->O2 edges intersect between the caps
+
+            Notice that cap 1 and 2's I2->O2 and O0->O2 edges can't intersect at the same time,
+            and, if there's any intersection, I0->I2 is one of the edges
+            */
+
+            Vector2 cap1O0 = { outerOuterRadius, 0.0f };
+            Vector2 cap1O1 = { cosf(DEG2RAD*stepLength)*outerOuterRadius, sinf(DEG2RAD*stepLength)*outerOuterRadius };
+
+            // Assuming a linear interpolation such as `value = Lerp(start, end, t)`
+            // We can find O2 by getting its 't' between O1.y and O0.y (which is always greater than 1)
+            // We can solve for `t` using `t = (start - value)/(start - end)`
+            // Since we know `end = 0` we can simplify it to `t = (start - value)/start`
+            float tOuter = (cap1O1.y - thick)/cap1O1.y;
+            Vector2 cap1O2 = { cap1O1.x + (cap1O0.x - cap1O1.x)*tOuter, thick };
+
+            Vector2 cap1I0 = { innerInnerRadius, 0.0f };
+
+            float capLongEdgeLength = outerOuterRadius - innerInnerRadius;
+            Vector2 cap1I2 = { cap1O2.x - capLongEdgeLength, thick };
+
+            Vector2 cap2O0 = { cosf(DEG2RAD*(endAngle - startAngle))*outerOuterRadius, sinf(DEG2RAD*(endAngle - startAngle))*outerOuterRadius };
+            Vector2 cap2O1 = { cosf(DEG2RAD*(endAngle - startAngle - stepLength))*outerOuterRadius, sinf(DEG2RAD*(endAngle - startAngle - stepLength))*outerOuterRadius };
+            Vector2 cap2O2 = { cap2O1.x + (cap2O0.x - cap2O1.x)*tOuter, cap2O1.y + (cap2O0.y - cap2O1.y)*tOuter };
+
+            Vector2 cap2I0 = { cosf(DEG2RAD*(endAngle - startAngle))*innerInnerRadius, sinf(DEG2RAD*(endAngle - startAngle))*innerInnerRadius };
+            Vector2 cap2I2 = { cap2O2.x - cosf(DEG2RAD*(endAngle - startAngle))*capLongEdgeLength, cap2O2.y - sinf(DEG2RAD*(endAngle - startAngle))*capLongEdgeLength};
+
+            // The 't' of the intersection between I2 and O2 (`Lerp(I2, O2, t)`)
+            float tCapLongEdgeCross = -1.0f;
+            // Avoid division by zero
+            if (cap2I2.y - cap2O2.y != 0.0f)
+            {
+                // Find where the long edge of cap 2 intersects the long edge of cap 1
+                tCapLongEdgeCross = (cap2I2.y - thick)/(cap2I2.y - cap2O2.y);
+                if ((tCapLongEdgeCross >= 0.0f) && (tCapLongEdgeCross <= 1.0f)) capsIntersect = true;
+            }
+
+            // Rotate the frame of reference so that cap 1's I0->I2 edge is a vertical line
+            float rotateBy = -DEG2RAD*stepLength/2.0f;
+
+            // Copied from "raymath.h" Vector2Rotate()
+            // Though we only use the x axis, so we ignore the y axis
+            float cosres = cosf(rotateBy);
+            float sinres = sinf(rotateBy);
+
+            cap1I2.x = cap1I2.x*cosres - cap1I2.y*sinres;
+            cap1O2.x = cap1O2.x*cosres - cap1O2.y*sinres;
+            cap2I0.x = cap2I0.x*cosres - cap2I0.y*sinres;
+            cap2I2.x = cap2I2.x*cosres - cap2I2.y*sinres;
+            cap2O0.x = cap2O0.x*cosres - cap2O0.y*sinres;
+            cap2O2.x = cap2O2.x*cosres - cap2O2.y*sinres;
+
+            // The 't' of the intersection between I0 and I2 (`Lerp(I0, I2, t)`)
+            float tCrossInner = -1.0f;
+            // Avoid division by zero
+            if (cap2I0.x - cap2I2.x != 0.0f) tCrossInner = (cap2I0.x - cap1I2.x)/(cap2I0.x - cap2I2.x);
+            // Make sure `tCrossInner` is 0 when it should be (mitigate floating-point rounding woes)
+            if (innerInnerRadius <= 0.0f) tCrossInner = 0.0f;
+
+            // The 't' of the intersection between O0 and O2 (`Lerp(O0, O2, t)`)
+            float tCrossOuter = -1.0f;
+            // Avoid division by zero
+            if (cap2O0.x - cap2O2.x != 0.0f) tCrossOuter = (cap2O0.x - cap1O2.x)/(cap2O0.x - cap2O2.x);
+
+            // With our additional information, calculate the vertices we need
+            // outside of our modified frame of reference
+
+            cap1O0 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*startAngle)*outerOuterRadius };
+            cap1O1 = (Vector2){ center.x + cosf(DEG2RAD*(startAngle + stepLength))*outerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + stepLength))*outerOuterRadius };
+            cap1O2 = (Vector2){ cap1O1.x + (cap1O0.x - cap1O1.x)*tOuter, cap1O1.y + (cap1O0.y - cap1O1.y)*tOuter };
+
+            cap2O0 = (Vector2){ center.x + cosf(DEG2RAD*endAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*endAngle)*outerOuterRadius };
+            cap2O1 = (Vector2){ center.x + cosf(DEG2RAD*(endAngle - stepLength))*outerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - stepLength))*outerOuterRadius };
+            cap2O2 = (Vector2){ cap2O1.x + (cap2O0.x - cap2O1.x)*tOuter, cap2O1.y + (cap2O0.y - cap2O1.y)*tOuter };
+
+            cap1I0 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*startAngle)*innerInnerRadius };
+            cap1I2 = (Vector2){ cap1O2.x - cosf(DEG2RAD*startAngle)*capLongEdgeLength, cap1O2.y - sinf(DEG2RAD*startAngle)*capLongEdgeLength };
+
+            cap2I0 = (Vector2){ center.x + cosf(DEG2RAD*endAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*endAngle)*innerInnerRadius };
+            cap2I2 = (Vector2){ cap2O2.x - cosf(DEG2RAD*endAngle)*capLongEdgeLength, cap2O2.y - sinf(DEG2RAD*endAngle)*capLongEdgeLength };
+
+            if (capsIntersect)
+            {
+                capIntersectionVertex = (Vector2){ cap2I2.x + (cap2O2.x - cap2I2.x)*tCapLongEdgeCross, cap2I2.y + (cap2O2.y - cap2I2.y)*tCapLongEdgeCross };
+
+                cap2I2 = (Vector2){ cap2I0.x + (cap2I2.x - cap2I0.x)*tCrossInner, cap2I0.y + (cap2I2.y - cap2I0.y)*tCrossInner };
+                cap1I2 = cap2I2;
+            }
+            else if ((tCrossOuter >= 0.0f) && (tCrossOuter <= 1.0f))
+            {
+                cap2O2 = (Vector2){ cap2O0.x + (cap2O2.x - cap2O0.x)*tCrossOuter, cap2O0.y + (cap2O2.y - cap2O0.y)*tCrossOuter };
+                cap1O2 = cap2O2;
+
+                cap2I2 = (Vector2){ cap2I0.x + (cap2I2.x - cap2I0.x)*tCrossInner, cap2I0.y + (cap2I2.y - cap2I0.y)*tCrossInner };
+                cap1I2 = cap2I2;
+            }
+
+            cap1SecondInnerVertex = cap1I2;
+            cap1SecondOuterVertex = cap1O2;
+            cap2SecondInnerVertex = cap2I2;
+            cap2SecondOuterVertex = cap2O2;
+        }
+    }
+
+    float angle = startAngle;
+
+#if SUPPORT_QUADS_DRAW_MODE
+    rlSetTexture(GetShapesTexture().id);
+    Rectangle shapeRect = GetShapesTextureRectangle();
+
+    rlBegin(RL_QUADS);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < segments; i++)
+        {
+            // `innerRadius` outline
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerInnerRadius, center.y + sinf(DEG2RAD*angle)*outerInnerRadius);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerInnerRadius, center.y + sinf(DEG2RAD*angle)*innerInnerRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerInnerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerInnerRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerInnerRadius);
+
+            // `outerRadius` outline
+            rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerOuterRadius, center.y + sinf(DEG2RAD*angle)*outerOuterRadius);
+
+            rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerOuterRadius, center.y + sinf(DEG2RAD*angle)*innerOuterRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerOuterRadius);
+
+            rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerOuterRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerOuterRadius);
+
+            angle += stepLength;
+        }
+
+        if (showCapLines)
+        {
+            if (thick >= 0.0f)
+            {
+                angle = 0.0f;
+
+                for (int i = 0; i < stepsBeforeOuter; i++)
+                {
+                    // Cap 1
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerOuterRadius);
+
+                    // Cap 2
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerOuterRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius);
+
+                    angle += stepLength;
+                }
+
+                // We've already moved `stepsBeforeOuter` steps from each end
+                int totalStepsLeft = segments - stepsBeforeOuter*2;
+                int innerStepsLeft = stepsBeforeInner - stepsBeforeOuter;
+
+                // Cap 1
+                Vector2 cap1OuterVertexBeforeEnd = { center.x + cosf(DEG2RAD*(startAngle + angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerOuterRadius };
+                Vector2 cap1OuterVertexAfterEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius };
+                Vector2 cap1InnerVertexBeforeEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + (float)innerStepsLeft*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + (float)innerStepsLeft*stepLength))*outerInnerRadius };
+                Vector2 cap1InnerVertexAfterEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius };
+                Vector2 cap1InnerVertexEnd = { cap1InnerVertexBeforeEnd.x + (cap1InnerVertexAfterEnd.x - cap1InnerVertexBeforeEnd.x)*tInner, cap1InnerVertexBeforeEnd.y + (cap1InnerVertexAfterEnd.y - cap1InnerVertexBeforeEnd.y)*tInner };
+                Vector2 cap1OuterVertexEnd = { cap1OuterVertexBeforeEnd.x + (cap1OuterVertexAfterEnd.x - cap1OuterVertexBeforeEnd.x)*tOuter, cap1OuterVertexBeforeEnd.y + (cap1OuterVertexAfterEnd.y - cap1OuterVertexBeforeEnd.y)*tOuter };
+
+                // Cap 2
+                Vector2 cap2OuterVertexBeforeEnd = { center.x + cosf(DEG2RAD*(endAngle - angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerOuterRadius };
+                Vector2 cap2OuterVertexAfterEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius };
+                Vector2 cap2InnerVertexBeforeEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - (float)innerStepsLeft*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - (float)innerStepsLeft*stepLength))*outerInnerRadius };
+                Vector2 cap2InnerVertexAfterEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius };
+                Vector2 cap2InnerVertexEnd = { cap2InnerVertexBeforeEnd.x + (cap2InnerVertexAfterEnd.x - cap2InnerVertexBeforeEnd.x)*tInner, cap2InnerVertexBeforeEnd.y + (cap2InnerVertexAfterEnd.y - cap2InnerVertexBeforeEnd.y)*tInner };
+                Vector2 cap2OuterVertexEnd = { cap2OuterVertexBeforeEnd.x + (cap2OuterVertexAfterEnd.x - cap2OuterVertexBeforeEnd.x)*tOuter, cap2OuterVertexBeforeEnd.y + (cap2OuterVertexAfterEnd.y - cap2OuterVertexBeforeEnd.y)*tOuter };
+
+                int stepsCount = (innerAnglesCrossEachOther)? totalStepsLeft/2 : innerStepsLeft;
+
+                // Iterate over pairs of steps
+                for (int i = 0; i < stepsCount/2; i++)
+                {
+                    // Cap 1
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength*2.0f))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength*2.0f))*outerInnerRadius);
+
+                    // Cap 2
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength*2.0f))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength*2.0f))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+
+                    angle += stepLength*2.0f;
+                }
+
+                // Handle the last step if there's an odd amount
+                if (stepsCount%2 == 1)
+                {
+                    // Cap 1
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius);
+
+                    // Cap 2
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+
+                    angle += stepLength;
+                }
+
+                // When the inner angles coming from `startAngle` and `endAngle` cross each other,
+                // the `*innerVertexEnd` vertices go past each other and cause the geometry to intersect itself
+                if (innerAnglesCrossEachOther)
+                {
+                    // We need to find where the line defined by `cap1InnerVertexEnd` and `cap1OuterVertexEnd` intersects
+                    // the line defined by `cap2InnerVertexEnd` and `cap2OuterVertexEnd`
+                    // That point is then used instead to prevent the outline from intersecting itself
+
+                    // Make `cap1InnerVertexEnd` the origin and the angle to `cap1OuterVertexEnd` 0 degrees
+                    Vector2 tempCap1OuterVertexEnd = { cap1OuterVertexEnd.x - cap1InnerVertexEnd.x, cap1OuterVertexEnd.y - cap1InnerVertexEnd.y };
+                    Vector2 tempCap2InnerVertexEnd = { cap2InnerVertexEnd.x - cap1InnerVertexEnd.x, cap2InnerVertexEnd.y - cap1InnerVertexEnd.y };
+                    Vector2 tempCap2OuterVertexEnd = { cap2OuterVertexEnd.x - cap1InnerVertexEnd.x, cap2OuterVertexEnd.y - cap1InnerVertexEnd.y };
+
+                    float rotateBy = -atan2f(tempCap1OuterVertexEnd.y, tempCap1OuterVertexEnd.x);
+                    // We only need the y coordinates, so only rotate the y coordinates
+                    float start = sinf(rotateBy)*tempCap2InnerVertexEnd.x + cosf(rotateBy)*tempCap2InnerVertexEnd.y;
+                    float end = sinf(rotateBy)*tempCap2OuterVertexEnd.x + cosf(rotateBy)*tempCap2OuterVertexEnd.y;
+                    float tCross = start/(start - end);
+
+                    Vector2 intersection = { cap2InnerVertexEnd.x + (cap2OuterVertexEnd.x - cap2InnerVertexEnd.x)*tCross, cap2InnerVertexEnd.y + (cap2OuterVertexEnd.y - cap2InnerVertexEnd.y)*tCross };
+
+                    if (segments%2 == 0)
+                    {
+                        // There are an even number of segments, so there's 1 vertex exactly in the middle
+
+                        Vector2 middleInnerVertex = { center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius };
+
+                        // Cap 1
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(middleInnerVertex.x, middleInnerVertex.y);
+
+                        // Cap 2
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(middleInnerVertex.x, middleInnerVertex.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+                    }
+                    else
+                    {
+                        // There are an odd number of segments, so there are 2 vertices in the middle
+
+                        Vector2 middleInnerVertex1 = { center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius };
+                        Vector2 middleInnerVertex2 = { center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius };
+
+                        // Cap 1
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(middleInnerVertex1.x, middleInnerVertex1.y);
+
+                        // Cap 2
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(middleInnerVertex2.x, middleInnerVertex2.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+
+                        // Triangle between the caps
+                        rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(intersection.x, intersection.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                        rlVertex2f(middleInnerVertex1.x, middleInnerVertex1.y);
+
+                        rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                        rlVertex2f(middleInnerVertex2.x, middleInnerVertex2.y);
+                    }
+                }
+                else
+                {
+                    // Cap 1
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap1InnerVertexBeforeEnd.x, cap1InnerVertexBeforeEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap1InnerVertexEnd.x, cap1InnerVertexEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+
+                    // Cap 2
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap2InnerVertexEnd.x, cap2InnerVertexEnd.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2InnerVertexBeforeEnd.x, cap2InnerVertexBeforeEnd.y);
+                }
+            }
+            else
+            {
+                // Cap 1
+                Vector2 cap1FirstInnerVertex = { center.x + cosf(DEG2RAD*startAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*startAngle)*innerInnerRadius };
+                Vector2 cap1FirstOuterVertex = { center.x + cosf(DEG2RAD*startAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*startAngle)*outerOuterRadius };
+
+                rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                rlVertex2f(cap1FirstInnerVertex.x, cap1FirstInnerVertex.y);
+
+                rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                rlVertex2f(cap1FirstOuterVertex.x, cap1FirstOuterVertex.y);
+
+                rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                rlVertex2f(cap1SecondOuterVertex.x, cap1SecondOuterVertex.y);
+
+                rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                rlVertex2f(cap1SecondInnerVertex.x, cap1SecondInnerVertex.y);
+
+                // Cap 2
+                Vector2 cap2FirstInnerVertex = { center.x + cosf(DEG2RAD*endAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*endAngle)*innerInnerRadius };
+                Vector2 cap2FirstOuterVertex = { center.x + cosf(DEG2RAD*endAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*endAngle)*outerOuterRadius };
+
+                rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                rlVertex2f(cap2FirstInnerVertex.x, cap2FirstInnerVertex.y);
+
+                rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                rlVertex2f(cap2SecondInnerVertex.x, cap2SecondInnerVertex.y);
+
+                rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                rlVertex2f(cap2SecondOuterVertex.x, cap2SecondOuterVertex.y);
+
+                rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                rlVertex2f(cap2FirstOuterVertex.x, cap2FirstOuterVertex.y);
+
+                if (capsIntersect)
+                {
+                    // Cap 1
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap1SecondInnerVertex.x, cap1SecondInnerVertex.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap1SecondInnerVertex.x, cap1SecondInnerVertex.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap1SecondOuterVertex.x, cap1SecondOuterVertex.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(capIntersectionVertex.x, capIntersectionVertex.y);
+
+                    // Cap 2
+                    rlTexCoord2f(shapeRect.x/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2SecondInnerVertex.x, cap2SecondInnerVertex.y);
+
+                    rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(capIntersectionVertex.x, capIntersectionVertex.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, shapeRect.y/texShapes.height);
+                    rlVertex2f(cap2SecondOuterVertex.x, cap2SecondOuterVertex.y);
+
+                    rlTexCoord2f((shapeRect.x + shapeRect.width)/texShapes.width, (shapeRect.y + shapeRect.height)/texShapes.height);
+                    rlVertex2f(cap2SecondInnerVertex.x, cap2SecondInnerVertex.y);
+                }
+            }
+        }
+    rlEnd();
+#else
+    rlBegin(RL_TRIANGLES);
+
+        rlColor4ub(color.r, color.g, color.b, color.a);
+
+        for (int i = 0; i < segments; i++)
+        {
+            // `innerRadius` outline
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerInnerRadius, center.y + sinf(DEG2RAD*angle)*outerInnerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerInnerRadius, center.y + sinf(DEG2RAD*angle)*innerInnerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerInnerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerInnerRadius);
+
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerInnerRadius, center.y + sinf(DEG2RAD*angle)*outerInnerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerInnerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerInnerRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerInnerRadius);
+
+            // `outerRadius` outline
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerOuterRadius, center.y + sinf(DEG2RAD*angle)*outerOuterRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*innerOuterRadius, center.y + sinf(DEG2RAD*angle)*innerOuterRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerOuterRadius);
+
+            rlVertex2f(center.x + cosf(DEG2RAD*angle)*outerOuterRadius, center.y + sinf(DEG2RAD*angle)*outerOuterRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*innerOuterRadius);
+            rlVertex2f(center.x + cosf(DEG2RAD*(angle + stepLength))*outerOuterRadius, center.y + sinf(DEG2RAD*(angle + stepLength))*outerOuterRadius);
+
+            angle += stepLength;
+        }
+
+        if (showCapLines)
+        {
+            if (thick >= 0.0f)
+            {
+                angle = 0.0f;
+
+                for (int i = 0; i < stepsBeforeOuter; i++)
+                {
+                    // Cap 1
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius);
+
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerOuterRadius);
+
+                    // Cap 2
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerOuterRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius);
+
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius);
+
+                    angle += stepLength;
+                }
+
+                // We've already moved `stepsBeforeOuter` steps from each end
+                int totalStepsLeft = segments - stepsBeforeOuter*2;
+                int innerStepsLeft = stepsBeforeInner - stepsBeforeOuter;
+
+                // Cap 1
+                Vector2 cap1OuterVertexBeforeEnd = { center.x + cosf(DEG2RAD*(startAngle + angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*innerOuterRadius };
+                Vector2 cap1OuterVertexAfterEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*innerOuterRadius };
+                Vector2 cap1InnerVertexBeforeEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + (float)innerStepsLeft*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + (float)innerStepsLeft*stepLength))*outerInnerRadius };
+                Vector2 cap1InnerVertexAfterEnd = { center.x + cosf(DEG2RAD*(startAngle + angle + (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius };
+                Vector2 cap1InnerVertexEnd = { cap1InnerVertexBeforeEnd.x + (cap1InnerVertexAfterEnd.x - cap1InnerVertexBeforeEnd.x)*tInner, cap1InnerVertexBeforeEnd.y + (cap1InnerVertexAfterEnd.y - cap1InnerVertexBeforeEnd.y)*tInner };
+                Vector2 cap1OuterVertexEnd = { cap1OuterVertexBeforeEnd.x + (cap1OuterVertexAfterEnd.x - cap1OuterVertexBeforeEnd.x)*tOuter, cap1OuterVertexBeforeEnd.y + (cap1OuterVertexAfterEnd.y - cap1OuterVertexBeforeEnd.y)*tOuter };
+
+                // Cap 2
+                Vector2 cap2OuterVertexBeforeEnd = { center.x + cosf(DEG2RAD*(endAngle - angle))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*innerOuterRadius };
+                Vector2 cap2OuterVertexAfterEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*innerOuterRadius };
+                Vector2 cap2InnerVertexBeforeEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - (float)innerStepsLeft*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - (float)innerStepsLeft*stepLength))*outerInnerRadius };
+                Vector2 cap2InnerVertexAfterEnd = { center.x + cosf(DEG2RAD*(endAngle - angle - (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - (float)(innerStepsLeft + 1)*stepLength))*outerInnerRadius };
+                Vector2 cap2InnerVertexEnd = { cap2InnerVertexBeforeEnd.x + (cap2InnerVertexAfterEnd.x - cap2InnerVertexBeforeEnd.x)*tInner, cap2InnerVertexBeforeEnd.y + (cap2InnerVertexAfterEnd.y - cap2InnerVertexBeforeEnd.y)*tInner };
+                Vector2 cap2OuterVertexEnd = { cap2OuterVertexBeforeEnd.x + (cap2OuterVertexAfterEnd.x - cap2OuterVertexBeforeEnd.x)*tOuter, cap2OuterVertexBeforeEnd.y + (cap2OuterVertexAfterEnd.y - cap2OuterVertexBeforeEnd.y)*tOuter };
+
+                int stepsCount = (innerAnglesCrossEachOther)? totalStepsLeft/2 : innerStepsLeft;
+
+                for (int i = 0; i < stepsCount; i++)
+                {
+                    // Cap 1
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle + stepLength))*outerInnerRadius);
+
+                    // Cap 2
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle - stepLength))*outerInnerRadius);
+                    rlVertex2f(center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius);
+
+                    angle += stepLength;
+                }
+
+                // When the inner angles coming from `startAngle` and `endAngle` cross each other,
+                // the `*innerVertexEnd` vertices go past each other and cause the geometry to intersect itself
+                if (innerAnglesCrossEachOther)
+                {
+                    // We need to find where the line defined by `cap1InnerVertexEnd` and `cap1OuterVertexEnd` intersects
+                    // the line defined by `cap2InnerVertexEnd` and `cap2OuterVertexEnd`
+                    // That point is then used instead to prevent the outline from intersecting itself
+
+                    // Make `cap1InnerVertexEnd` the origin and the angle to `cap1OuterVertexEnd` 0 degrees
+                    Vector2 tempCap1OuterVertexEnd = { cap1OuterVertexEnd.x - cap1InnerVertexEnd.x, cap1OuterVertexEnd.y - cap1InnerVertexEnd.y };
+                    Vector2 tempCap2InnerVertexEnd = { cap2InnerVertexEnd.x - cap1InnerVertexEnd.x, cap2InnerVertexEnd.y - cap1InnerVertexEnd.y };
+                    Vector2 tempCap2OuterVertexEnd = { cap2OuterVertexEnd.x - cap1InnerVertexEnd.x, cap2OuterVertexEnd.y - cap1InnerVertexEnd.y };
+
+                    float rotateBy = -atan2f(tempCap1OuterVertexEnd.y, tempCap1OuterVertexEnd.x);
+                    // We only need the y coordinates, so only rotate the y coordinates
+                    float start = sinf(rotateBy)*tempCap2InnerVertexEnd.x + cosf(rotateBy)*tempCap2InnerVertexEnd.y;
+                    float end = sinf(rotateBy)*tempCap2OuterVertexEnd.x + cosf(rotateBy)*tempCap2OuterVertexEnd.y;
+                    float tCross = start/(start - end);
+
+                    Vector2 intersection = { cap2InnerVertexEnd.x + (cap2OuterVertexEnd.x - cap2InnerVertexEnd.x)*tCross, cap2InnerVertexEnd.y + (cap2OuterVertexEnd.y - cap2InnerVertexEnd.y)*tCross };
+
+                    if (segments%2 == 0)
+                    {
+                        // There are an even number of segments, so there's 1 vertex exactly in the middle
+
+                        Vector2 middleInnerVertex = { center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius };
+
+                        // Cap 1
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+                        rlVertex2f(middleInnerVertex.x, middleInnerVertex.y);
+
+                        // Cap 2
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(middleInnerVertex.x, middleInnerVertex.y);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+                        rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+                    }
+                    else
+                    {
+                        // There are an odd number of segments, so there are 2 vertices in the middle
+
+                        Vector2 middleInnerVertex1 = { center.x + cosf(DEG2RAD*(startAngle + angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(startAngle + angle))*outerInnerRadius };
+                        Vector2 middleInnerVertex2 = { center.x + cosf(DEG2RAD*(endAngle - angle))*outerInnerRadius, center.y + sinf(DEG2RAD*(endAngle - angle))*outerInnerRadius };
+
+                        // Cap 1
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+                        rlVertex2f(middleInnerVertex1.x, middleInnerVertex1.y);
+
+                        // Cap 2
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(middleInnerVertex2.x, middleInnerVertex2.y);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+                        rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+
+                        // Triangle between the caps
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(middleInnerVertex1.x, middleInnerVertex1.y);
+
+                        rlVertex2f(intersection.x, intersection.y);
+                        rlVertex2f(middleInnerVertex1.x, middleInnerVertex1.y);
+                        rlVertex2f(middleInnerVertex2.x, middleInnerVertex2.y);
+                    }
+                }
+                else
+                {
+                    // Cap 1
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+                    rlVertex2f(cap1InnerVertexBeforeEnd.x, cap1InnerVertexBeforeEnd.y);
+                    rlVertex2f(cap1InnerVertexEnd.x, cap1InnerVertexEnd.y);
+
+                    rlVertex2f(cap1OuterVertexBeforeEnd.x, cap1OuterVertexBeforeEnd.y);
+                    rlVertex2f(cap1InnerVertexEnd.x, cap1InnerVertexEnd.y);
+                    rlVertex2f(cap1OuterVertexEnd.x, cap1OuterVertexEnd.y);
+
+                    // Cap 2
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+                    rlVertex2f(cap2OuterVertexEnd.x, cap2OuterVertexEnd.y);
+                    rlVertex2f(cap2InnerVertexEnd.x, cap2InnerVertexEnd.y);
+
+                    rlVertex2f(cap2OuterVertexBeforeEnd.x, cap2OuterVertexBeforeEnd.y);
+                    rlVertex2f(cap2InnerVertexEnd.x, cap2InnerVertexEnd.y);
+                    rlVertex2f(cap2InnerVertexBeforeEnd.x, cap2InnerVertexBeforeEnd.y);
+                }
+            }
+            else
+            {
+                // Cap 1
+                Vector2 cap1FirstInnerVertex = { center.x + cosf(DEG2RAD*startAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*startAngle)*innerInnerRadius };
+                Vector2 cap1FirstOuterVertex = { center.x + cosf(DEG2RAD*startAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*startAngle)*outerOuterRadius };
+
+                rlVertex2f(cap1FirstInnerVertex.x, cap1FirstInnerVertex.y);
+                rlVertex2f(cap1FirstOuterVertex.x, cap1FirstOuterVertex.y);
+                rlVertex2f(cap1SecondOuterVertex.x, cap1SecondOuterVertex.y);
+
+                rlVertex2f(cap1FirstInnerVertex.x, cap1FirstInnerVertex.y);
+                rlVertex2f(cap1SecondOuterVertex.x, cap1SecondOuterVertex.y);
+                rlVertex2f(cap1SecondInnerVertex.x, cap1SecondInnerVertex.y);
+
+                // Cap 2
+                Vector2 cap2FirstInnerVertex = { center.x + cosf(DEG2RAD*endAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*endAngle)*innerInnerRadius };
+                Vector2 cap2FirstOuterVertex = { center.x + cosf(DEG2RAD*endAngle)*outerOuterRadius, center.y + sinf(DEG2RAD*endAngle)*outerOuterRadius };
+
+                rlVertex2f(cap2FirstInnerVertex.x, cap2FirstInnerVertex.y);
+                rlVertex2f(cap2SecondInnerVertex.x, cap2SecondInnerVertex.y);
+                rlVertex2f(cap2SecondOuterVertex.x, cap2SecondOuterVertex.y);
+
+                rlVertex2f(cap2FirstInnerVertex.x, cap2FirstInnerVertex.y);
+                rlVertex2f(cap2SecondOuterVertex.x, cap2SecondOuterVertex.y);
+                rlVertex2f(cap2FirstOuterVertex.x, cap2FirstOuterVertex.y);
+
+                if (capsIntersect)
+                {
+                    // Cap 1
+                    rlVertex2f(cap1SecondInnerVertex.x, cap1SecondInnerVertex.y);
+                    rlVertex2f(cap1SecondOuterVertex.x, cap1SecondOuterVertex.y);
+                    rlVertex2f(capIntersectionVertex.x, capIntersectionVertex.y);
+
+                    // Cap 2
+                    rlVertex2f(cap2SecondInnerVertex.x, cap2SecondInnerVertex.y);
+                    rlVertex2f(capIntersectionVertex.x, capIntersectionVertex.y);
+                    rlVertex2f(cap2SecondOuterVertex.x, cap2SecondOuterVertex.y);
+                }
+            }
+        }
+
+    rlEnd();
+#endif
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - Splines functions
 //----------------------------------------------------------------------------------
