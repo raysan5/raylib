@@ -1509,7 +1509,11 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 
     switch (eventType)
     {
-        case EMSCRIPTEN_EVENT_BLUR: FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
+        case EMSCRIPTEN_EVENT_BLUR:
+        {
+            FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
+            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+        } break;
         case EMSCRIPTEN_EVENT_FOCUS: FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
         default: consumed = 0; break;
     }
