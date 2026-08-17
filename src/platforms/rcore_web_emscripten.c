@@ -1723,32 +1723,18 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
     else
     {
         // Get mouse position in canvas CSS pixels
-        float mouseCssX = (float)mouseEvent->canvasX;
-        float mouseCssY = (float)mouseEvent->canvasY;
+        float mouseCssX = (float)mouseEvent->targetX;
+        float mouseCssY = (float)mouseEvent->targetY;
 
         // Get canvas sizes
         double cssWidth = 0.0;
         double cssHeight = 0.0;
         emscripten_get_element_css_size(platform.canvasId, &cssWidth, &cssHeight);
 
-        int fbWidth = 0;
-        int fbHeight = 0;
-        emscripten_get_canvas_element_size(platform.canvasId, &fbWidth, &fbHeight);
-
-        // Convert CSS to framebuffer coordinates
-        float scaleX = (float)fbWidth/(float)cssWidth;
-        float scaleY = (float)fbHeight/(float)cssHeight;
-
-        int mouseX = (int)(mouseCssX*scaleX);
-        int mouseY = (int)(mouseCssY*scaleY);
-
-        CORE.Input.Mouse.currentPosition.x = mouseX;//(float)mouseEvent->canvasX;
-        CORE.Input.Mouse.currentPosition.y = mouseY;//(float)mouseEvent->canvasY;
-
-        // Shorter alternative:
-        //double dpr = emscripten_get_device_pixel_ratio();
-        //int mouseX = (int)(e->canvasX*dpr);
-        //int mouseY = (int)(e->canvasY*dpr);
+        float normalizedX = mouseCssX/(float)cssWidth;
+        float normalizedY = mouseCssY/(float)cssHeight;
+        CORE.Input.Mouse.currentPosition.x = normalizedX*(float)CORE.Window.screen.width;
+        CORE.Input.Mouse.currentPosition.y = normalizedY*(float)CORE.Window.screen.height;
 
         CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
     }
