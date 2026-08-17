@@ -3161,6 +3161,10 @@
         {
           "type": "unsigned int",
           "name": "frames"
+        },
+        {
+          "type": "void*",
+          "name": "userData"
         }
       ]
     }

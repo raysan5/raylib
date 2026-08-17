@@ -3122,7 +3122,8 @@ return {
       returnType = "void",
       params = {
         {type = "void *", name = "bufferData"},
-        {type = "unsigned int", name = "frames"}
+        {type = "unsigned int", name = "frames"},
+        {type = "void*", name = "userData"}
       }
     }
   },
