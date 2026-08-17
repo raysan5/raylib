@@ -42,6 +42,7 @@
 **********************************************************************************************/
 
 #include <emscripten/emscripten.h>      // Emscripten functionality for C
+#include <emscripten/dom_pk_codes.h>    // Emscripten physical keyboard codes
 #include <emscripten/html5.h>           // Emscripten HTML5 library
 
 #include <sys/time.h>   // Required for: timespec, nanosleep(), select() - POSIX
@@ -53,6 +54,9 @@
     #undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L     // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
+
+#define DOM_PK_CODE_MAPPED_NUM          128
+#define DOM_PK_CODE_EXTENDED_OFFSET     0xE000
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -70,9 +74,121 @@ extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
 
-//----------------------------------------------------------------------------------
-// Global Variables Definition
-//----------------------------------------------------------------------------------
+static const KeyboardKey mapDomCodeToKey[DOM_PK_CODE_MAPPED_NUM] = {
+    [DOM_PK_ESCAPE] = KEY_ESCAPE,
+    [DOM_PK_0] = KEY_ZERO,
+    [DOM_PK_1] = KEY_ONE,
+    [DOM_PK_2] = KEY_TWO,
+    [DOM_PK_3] = KEY_THREE,
+    [DOM_PK_4] = KEY_FOUR,
+    [DOM_PK_5] = KEY_FIVE,
+    [DOM_PK_6] = KEY_SIX,
+    [DOM_PK_7] = KEY_SEVEN,
+    [DOM_PK_8] = KEY_EIGHT,
+    [DOM_PK_9] = KEY_NINE,
+    [DOM_PK_MINUS] = KEY_MINUS,
+    [DOM_PK_EQUAL] = KEY_EQUAL,
+    [DOM_PK_BACKSPACE] = KEY_BACKSPACE,
+    [DOM_PK_TAB] = KEY_TAB,
+    [DOM_PK_Q] = KEY_Q,
+    [DOM_PK_W] = KEY_W,
+    [DOM_PK_E] = KEY_E,
+    [DOM_PK_R] = KEY_R,
+    [DOM_PK_T] = KEY_T,
+    [DOM_PK_Y] = KEY_Y,
+    [DOM_PK_U] = KEY_U,
+    [DOM_PK_I] = KEY_I,
+    [DOM_PK_O] = KEY_O,
+    [DOM_PK_P] = KEY_P,
+    [DOM_PK_BRACKET_LEFT] = KEY_LEFT_BRACKET,
+    [DOM_PK_BRACKET_RIGHT] = KEY_RIGHT_BRACKET,
+    [DOM_PK_ENTER] = KEY_ENTER,
+    [DOM_PK_CONTROL_LEFT] = KEY_LEFT_CONTROL,
+    [DOM_PK_A] = KEY_A,
+    [DOM_PK_S] = KEY_S,
+    [DOM_PK_D] = KEY_D,
+    [DOM_PK_F] = KEY_F,
+    [DOM_PK_G] = KEY_G,
+    [DOM_PK_H] = KEY_H,
+    [DOM_PK_J] = KEY_J,
+    [DOM_PK_K] = KEY_K,
+    [DOM_PK_L] = KEY_L,
+    [DOM_PK_SEMICOLON] = KEY_SEMICOLON,
+    [DOM_PK_QUOTE] = KEY_APOSTROPHE,
+    [DOM_PK_BACKQUOTE] = KEY_GRAVE,
+    [DOM_PK_SHIFT_LEFT] = KEY_LEFT_SHIFT,
+    [DOM_PK_BACKSLASH] = KEY_BACKSLASH,
+    [DOM_PK_Z] = KEY_Z,
+    [DOM_PK_X] = KEY_X,
+    [DOM_PK_C] = KEY_C,
+    [DOM_PK_V] = KEY_V,
+    [DOM_PK_B] = KEY_B,
+    [DOM_PK_N] = KEY_N,
+    [DOM_PK_M] = KEY_M,
+    [DOM_PK_COMMA] = KEY_COMMA,
+    [DOM_PK_PERIOD] = KEY_PERIOD,
+    [DOM_PK_SLASH] = KEY_SLASH,
+    [DOM_PK_SHIFT_RIGHT] = KEY_RIGHT_SHIFT,
+    [DOM_PK_NUMPAD_MULTIPLY] = KEY_KP_MULTIPLY,
+    [DOM_PK_ALT_LEFT] = KEY_LEFT_ALT,
+    [DOM_PK_SPACE] = KEY_SPACE,
+    [DOM_PK_CAPS_LOCK] = KEY_CAPS_LOCK,
+    [DOM_PK_F1] = KEY_F1,
+    [DOM_PK_F2] = KEY_F2,
+    [DOM_PK_F3] = KEY_F3,
+    [DOM_PK_F4] = KEY_F4,
+    [DOM_PK_F5] = KEY_F5,
+    [DOM_PK_F6] = KEY_F6,
+    [DOM_PK_F7] = KEY_F7,
+    [DOM_PK_F8] = KEY_F8,
+    [DOM_PK_F9] = KEY_F9,
+    [DOM_PK_F10] = KEY_F10,
+    [DOM_PK_PAUSE] = KEY_PAUSE,
+    [DOM_PK_SCROLL_LOCK] = KEY_SCROLL_LOCK,
+    [DOM_PK_NUMPAD_7] = KEY_KP_7,
+    [DOM_PK_NUMPAD_8] = KEY_KP_8,
+    [DOM_PK_NUMPAD_9] = KEY_KP_9,
+    [DOM_PK_NUMPAD_SUBTRACT] = KEY_KP_SUBTRACT,
+    [DOM_PK_NUMPAD_4] = KEY_KP_4,
+    [DOM_PK_NUMPAD_5] = KEY_KP_5,
+    [DOM_PK_NUMPAD_6] = KEY_KP_6,
+    [DOM_PK_NUMPAD_ADD] = KEY_KP_ADD,
+    [DOM_PK_NUMPAD_1] = KEY_KP_1,
+    [DOM_PK_NUMPAD_2] = KEY_KP_2,
+    [DOM_PK_NUMPAD_3] = KEY_KP_3,
+    [DOM_PK_NUMPAD_0] = KEY_KP_0,
+    [DOM_PK_NUMPAD_DECIMAL] = KEY_KP_DECIMAL,
+    [DOM_PK_PRINT_SCREEN] = KEY_PRINT_SCREEN,
+    [DOM_PK_F11] = KEY_F11,
+    [DOM_PK_F12] = KEY_F12,
+    [DOM_PK_NUMPAD_EQUAL] = KEY_KP_EQUAL,
+    [DOM_PK_NUMPAD_COMMA] = KEY_KP_DECIMAL
+};
+
+// Emscripten places keys with extended scan codes (right-side modifiers, navigation and some keypad keys) in the 0xE0xx range
+static const KeyboardKey mapDomCodeToKeyExtended[DOM_PK_CODE_MAPPED_NUM] = {
+    [DOM_PK_NUMPAD_ENTER - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KP_ENTER,
+    [DOM_PK_CONTROL_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_CONTROL,
+    [DOM_PK_AUDIO_VOLUME_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_VOLUME_DOWN,
+    [DOM_PK_AUDIO_VOLUME_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_VOLUME_UP,
+    [DOM_PK_NUMPAD_DIVIDE - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KP_DIVIDE,
+    [DOM_PK_ALT_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_ALT,
+    [DOM_PK_NUM_LOCK - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_NUM_LOCK,
+    [DOM_PK_HOME - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_HOME,
+    [DOM_PK_ARROW_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_UP,
+    [DOM_PK_PAGE_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_PAGE_UP,
+    [DOM_PK_ARROW_LEFT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_LEFT,
+    [DOM_PK_ARROW_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT,
+    [DOM_PK_END - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_END,
+    [DOM_PK_ARROW_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_DOWN,
+    [DOM_PK_PAGE_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_PAGE_DOWN,
+    [DOM_PK_INSERT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_INSERT,
+    [DOM_PK_DELETE - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_DELETE,
+    [DOM_PK_META_LEFT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_LEFT_SUPER,
+    [DOM_PK_META_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_SUPER,
+    [DOM_PK_CONTEXT_MENU - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KB_MENU
+};
+
 static const char cursorLUT[11][12] = {
     "default",     // 0  MOUSE_CURSOR_DEFAULT
     "default",     // 1  MOUSE_CURSOR_ARROW
@@ -109,6 +225,8 @@ static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheel
 static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
 static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
+
+static KeyboardKey ConvertKeyboardEventToKey(const EmscriptenKeyboardEvent *keyboardEvent);
 
 // JS: Set the canvas id provided by the module configuration
 EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
@@ -1391,7 +1509,11 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
 
     switch (eventType)
     {
-        case EMSCRIPTEN_EVENT_BLUR: FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
+        case EMSCRIPTEN_EVENT_BLUR:
+        {
+            FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
+            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+        } break;
         case EMSCRIPTEN_EVENT_FOCUS: FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
         default: consumed = 0; break;
     }
@@ -1454,52 +1576,75 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 }
 */
 
+// Emscripten keyboard event to raylib key mapping
+static KeyboardKey ConvertKeyboardEventToKey(const EmscriptenKeyboardEvent *keyboardEvent)
+{
+    DOM_PK_CODE_TYPE code = emscripten_compute_dom_pk_code(keyboardEvent->code);
+    KeyboardKey key = KEY_NULL;
+
+    if ((code > DOM_PK_UNKNOWN) && (code < DOM_PK_CODE_MAPPED_NUM)) key = mapDomCodeToKey[code];
+    else if ((code >= DOM_PK_CODE_EXTENDED_OFFSET) && (code < (DOM_PK_CODE_EXTENDED_OFFSET + DOM_PK_CODE_MAPPED_NUM)))
+    {
+        key = mapDomCodeToKeyExtended[code - DOM_PK_CODE_EXTENDED_OFFSET];
+    }
+
+    return key;
+}
+
 // Emscripten: Called on key events
-// TODO: keyCodes should be mapped to raylib/GLFW3 Key values
 static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
 {
+    KeyboardKey key = ConvertKeyboardEventToKey(keyboardEvent);
+    EM_BOOL preventDefault = 1;
+
     switch (eventType)
     {
-        case EMSCRIPTEN_EVENT_KEYPRESS:
-        {
-            if (keyboardEvent->repeat) CORE.Input.Keyboard.keyRepeatInFrame[keyboardEvent->keyCode] = 1;
-        } break;
         case EMSCRIPTEN_EVENT_KEYDOWN:
         {
-            CORE.Input.Keyboard.currentKeyState[keyboardEvent->keyCode] = 1;
+            if (key != KEY_NULL)
+            {
+                // Check if there is space available in the key queue
+                if ((!keyboardEvent->repeat) && (CORE.Input.Keyboard.currentKeyState[key] == 0) &&
+                    (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
+                {
+                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                    CORE.Input.Keyboard.keyPressedQueueCount++;
+                }
+
+                CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+                if (keyboardEvent->repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+
+                // Check the exit key to set close window
+                if ((key == CORE.Input.Keyboard.exitKey) && !keyboardEvent->repeat) CORE.Window.shouldClose = true;
+            }
+
+            // Allow printable keydown events so the browser can emit the keypress event used to collect characters
+            preventDefault = ((key == KEY_BACKSPACE) || (key == KEY_TAB) ||
+                (key == KEY_INSERT) || (key == KEY_DELETE) ||
+                (key == KEY_HOME) || (key == KEY_END) ||
+                (key == KEY_PAGE_UP) || (key == KEY_PAGE_DOWN) ||
+                (key == KEY_LEFT) || (key == KEY_RIGHT) ||
+                (key == KEY_UP) || (key == KEY_DOWN) ||
+                ((key >= KEY_F1) && (key <= KEY_F12)) || keyboardEvent->ctrlKey);
         } break;
         case EMSCRIPTEN_EVENT_KEYUP:
         {
-            CORE.Input.Keyboard.currentKeyState[keyboardEvent->keyCode] = 0;
+            if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
+        } break;
+        case EMSCRIPTEN_EVENT_KEYPRESS:
+        {
+            // Check if there is space available in the queue for characters to be added
+            if ((keyboardEvent->charCode > 0) && (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE))
+            {
+                CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = keyboardEvent->charCode;
+                CORE.Input.Keyboard.charPressedQueueCount++;
+            }
         } break;
         default: break;
     }
 
-    // TODO: Add char codes
-    //unsigned int charCode
-    // Check if there is space available in the queue for characters to be added
-    /*
-    if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
-    {
-        // Add character to the queue
-        CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = keyboardEvent->charCode;
-        CORE.Input.Keyboard.charPressedQueueCount++;
-    }
-    */
-    /*
-    // Check if there is space available in the key queue
-    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (eventType == EMSCRIPTEN_EVENT_KEYPRESS))
-    {
-        // Add character to the queue
-        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = keyboardEvent->keyCode;
-        CORE.Input.Keyboard.keyPressedQueueCount++;
-    }
-
-    // Check the exit key to set close window
-    //if ((keyboardEvent->keyCode == CORE.Input.Keyboard.exitKey) && (eventType == EMSCRIPTEN_EVENT_KEYPRESS)) CORE.Window.shouldClose = true;
-    */
-
-    return 1; // The event was consumed by the callback handler
+    return preventDefault;
 }
 
 // Emscripten: Called on mouse input events
@@ -1563,7 +1708,8 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
     if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
 #endif
 
-    return 1; // The event was consumed by the callback handler
+    // Don't prevent default to allow focusing on canvas
+    return 0;
 }
 
 // Emscripten: Called on mouse move events
