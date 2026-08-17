@@ -348,6 +348,7 @@ struct rAudioBuffer {
     unsigned int converterResidualCount;    // The number of valid frames sitting in converterResidual
 
     AudioCallback callback;         // Audio buffer callback for buffer filling on audio threads
+    void* userData;
     rAudioProcessor *processor;     // Audio processor
 
     float volume;                   // Audio buffer volume
@@ -374,6 +375,7 @@ struct rAudioBuffer {
 // NOTE: Useful to apply effects to an AudioBuffer
 struct rAudioProcessor {
     AudioCallback process;          // Processor callback function
+    void* userData;
     rAudioProcessor *next;          // Next audio processor on the list
     rAudioProcessor *prev;          // Previous audio processor on the list
 };
@@ -2256,10 +2258,16 @@ void SetAudioStreamBufferSizeDefault(int size)
 // Audio thread callback to request new data
 void SetAudioStreamCallback(AudioStream stream, AudioCallback callback)
 {
+    SetAudioStreamCallbackEX(stream, callback, NULL);
+}
+
+void SetAudioStreamCallbackEX(AudioStream stream, AudioCallback callback, void* userData)
+{
     if (stream.buffer != NULL)
     {
         ma_mutex_lock(&AUDIO.System.lock);
         stream.buffer->callback = callback;
+        stream.buffer->userData = userData;
         ma_mutex_unlock(&AUDIO.System.lock);
     }
 }
@@ -2273,6 +2281,7 @@ void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
+    processor->userData = stream.buffer->userData;
 
     rAudioProcessor *last = stream.buffer->processor;
 
@@ -2326,7 +2335,8 @@ void AttachAudioMixedProcessor(AudioCallback process)
 
     rAudioProcessor *processor = (rAudioProcessor *)RL_CALLOC(1, sizeof(rAudioProcessor));
     processor->process = process;
-
+    processor->userData = NULL;
+	
     rAudioProcessor *last = AUDIO.mixedProcessor;
 
     while (last && last->next)
@@ -2388,7 +2398,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
     // Using audio buffer callback
     if (audioBuffer->callback)
     {
-        audioBuffer->callback(framesOut, frameCount);
+        audioBuffer->callback(framesOut, frameCount, audioBuffer->userData);
         audioBuffer->framesProcessed += frameCount;
 
         return frameCount;
@@ -2603,7 +2613,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                         rAudioProcessor *processor = audioBuffer->processor;
                         while (processor)
                         {
-                            processor->process(framesIn, framesJustRead);
+                            processor->process(framesIn, framesJustRead, audioBuffer->userData);
                             processor = processor->next;
                         }
 
@@ -2647,7 +2657,7 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     rAudioProcessor *processor = AUDIO.mixedProcessor;
     while (processor)
     {
-        processor->process(pFramesOut, frameCount);
+        processor->process(pFramesOut, frameCount, processor->userData);
         processor = processor->next;
     }
 
