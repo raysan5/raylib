@@ -39,10 +39,10 @@ typedef enum {
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
-static void SineCallback(void *framesOut, unsigned int frameCount);
-static void SquareCallback(void *framesOut, unsigned int frameCount);
-static void TriangleCallback(void *framesOut, unsigned int frameCount);
-static void SawtoothCallback(void *framesOut, unsigned int frameCount);
+static void SineCallback(void *framesOut, unsigned int frameCount, void* userData);
+static void SquareCallback(void *framesOut, unsigned int frameCount, void* userData);
+static void TriangleCallback(void *framesOut, unsigned int frameCount, void* userData);
+static void SawtoothCallback(void *framesOut, unsigned int frameCount, void* userData);
 
 static int waveFrequency = 440;
 static int newWaveFrequency = 440;
@@ -156,7 +156,7 @@ int main(void)
 //------------------------------------------------------------------------------------
 // Module Functions Definition
 //------------------------------------------------------------------------------------
-static void SineCallback(void *framesOut, unsigned int frameCount)
+static void SineCallback(void *framesOut, unsigned int frameCount, void* userData)
 {
     int wavelength = SAMPLE_RATE/waveFrequency;
 
@@ -179,7 +179,7 @@ static void SineCallback(void *framesOut, unsigned int frameCount)
     for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
-static void SquareCallback(void *framesOut, unsigned int frameCount)
+static void SquareCallback(void *framesOut, unsigned int frameCount, void* userData)
 {
     int wavelength = SAMPLE_RATE/waveFrequency;
 
@@ -201,7 +201,7 @@ static void SquareCallback(void *framesOut, unsigned int frameCount)
     for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
-static void TriangleCallback(void *framesOut, unsigned int frameCount)
+static void TriangleCallback(void *framesOut, unsigned int frameCount, void* userData)
 {
     int wavelength = SAMPLE_RATE/waveFrequency;
 
@@ -223,7 +223,7 @@ static void TriangleCallback(void *framesOut, unsigned int frameCount)
     for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
-static void SawtoothCallback(void *framesOut, unsigned int frameCount)
+static void SawtoothCallback(void *framesOut, unsigned int frameCount, void* userData)
 {
     int wavelength = SAMPLE_RATE/waveFrequency;
 
