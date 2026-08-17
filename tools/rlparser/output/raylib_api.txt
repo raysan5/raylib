@@ -995,7 +995,7 @@ Callback 006: AudioCallback() (2 input parameters)
   Param[1]: bufferData (type: void *)
   Param[2]: frames (type: unsigned int)
 
-Functions found: 613
+Functions found: 614
 
 Function 001: InitWindow() (3 input parameters)
   Name: InitWindow
@@ -4897,24 +4897,31 @@ Function 609: SetAudioStreamCallback() (2 input parameters)
   Description: Audio thread callback to request new data
   Param[1]: stream (type: AudioStream)
   Param[2]: callback (type: AudioCallback)
-Function 610: AttachAudioStreamProcessor() (2 input parameters)
+Function 610: SetAudioStreamCallbackEX() (3 input parameters)
+  Name: SetAudioStreamCallbackEX
+  Return type: void
+  Description: Audio thread callback to request new data with user data
+  Param[1]: stream (type: AudioStream)
+  Param[2]: callback (type: AudioCallback)
+  Param[3]: userData (type: void*)
+Function 611: AttachAudioStreamProcessor() (2 input parameters)
   Name: AttachAudioStreamProcessor
   Return type: void
   Description: Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 611: DetachAudioStreamProcessor() (2 input parameters)
+Function 612: DetachAudioStreamProcessor() (2 input parameters)
   Name: DetachAudioStreamProcessor
   Return type: void
   Description: Detach audio stream processor from stream
   Param[1]: stream (type: AudioStream)
   Param[2]: processor (type: AudioCallback)
-Function 612: AttachAudioMixedProcessor() (1 input parameters)
+Function 613: AttachAudioMixedProcessor() (1 input parameters)
   Name: AttachAudioMixedProcessor
   Return type: void
   Description: Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)
   Param[1]: processor (type: AudioCallback)
-Function 613: DetachAudioMixedProcessor() (1 input parameters)
+Function 614: DetachAudioMixedProcessor() (1 input parameters)
   Name: DetachAudioMixedProcessor
   Return type: void
   Description: Detach audio stream processor from the entire audio pipeline

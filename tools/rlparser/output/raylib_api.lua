@@ -8612,6 +8612,16 @@ return {
       }
     },
     {
+      name = "SetAudioStreamCallbackEX",
+      description = "Audio thread callback to request new data with user data",
+      returnType = "void",
+      params = {
+        {type = "AudioStream", name = "stream"},
+        {type = "AudioCallback", name = "callback"},
+        {type = "void*", name = "userData"}
+      }
+    },
+    {
       name = "AttachAudioStreamProcessor",
       description = "Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)",
       returnType = "void",
