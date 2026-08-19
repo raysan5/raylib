@@ -54,6 +54,10 @@ features
   - Bindings to [+70 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**
 
+limitations
+-----------
+  - No support for rendering during resizing or window movement on windows platforms
+
 basic example
 --------------
 This is a basic raylib example, it creates a window and draws the text `"Congrats! You created your first window!"` in the middle of the screen. Check this example [running live on web here](https://www.raylib.com/examples/core/loader.html?name=core_basic_window).
