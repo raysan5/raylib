@@ -36,6 +36,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-elfscript](https://github.com/ohmtal/raylib-elfscript)                           | 6.0              | [ElfScript](https://github.com/ohmtal/ElfScript)                     | MIT                  |
 | [raylib-elle](https://github.com/acquitelol/elle/blob/rewrite/std/raylib.le)             | **5.5**          | [Elle](https://github.com/acquitelol/elle)                           | GPL-3.0              |
 | [raylib-factor](https://github.com/factor/factor/blob/master/extra/raylib/raylib.factor) | 5.5              | [Factor](https://factorcode.org)                                     | BSD                  |
+| [raystar](https://github.com/RobertFlexx/raystar)                                         | **6.0**          | [F*](https://www.fstar-lang.org/)                                     | EPL-2.0              |
 | [raylib4fb](https://github.com/mudhairless/raylib4fb)                                    | **6.0**          | [FreeBASIC](https://www.freebasic.net)                               | Zlib                 |
 | [raylib-freebasic](https://github.com/WIITD/raylib-freebasic)                            | **5.0**          | [FreeBASIC](https://www.freebasic.net)                               | MIT                  |
 | [raylib.f](https://github.com/cthulhuology/raylib.f)                                     | **5.5**          | [Forth](https://forth.com)                                           | Zlib                 |
