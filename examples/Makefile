@@ -18,7 +18,7 @@
 #     > PLATFORM_DESKTOP_RGFW (RGFW backend):
 #         - Windows (Win32, Win64)
 #         - Linux (X11 desktop mode)
-#         - macOS/OSX (x64, arm64 (not tested))
+#         - macOS/OSX (x64, arm64)
 #         - Others (not tested)
 #     > PLATFORM_DESKTOP_WIN32 (native Win32):
 #         - Windows (Win32, Win64)
@@ -418,7 +418,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo -framework QuartzCore
+        LDLIBS = -L/opt/homebrew/lib -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo -framework QuartzCore
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
