@@ -287,8 +287,14 @@ void ToggleBorderlessWindowed(void)
                 CORE.Window.screen.height = mode->height;
 
                 // Set screen position and size
+            #if defined(_WIN32)
+                // NOTE: To prevent the fullscreen window from always staying on top, don't pass a monitor at this point.
+                glfwSetWindowMonitor(platform.handle, NULL, CORE.Window.position.x, CORE.Window.position.y,
+                    CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+            #else
                 glfwSetWindowMonitor(platform.handle, monitors[monitor], CORE.Window.position.x, CORE.Window.position.y,
                     CORE.Window.screen.width, CORE.Window.screen.height, mode->refreshRate);
+            #endif
 
                 // Refocus window
                 glfwFocusWindow(platform.handle);
@@ -1024,6 +1030,8 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
+    glfwGetWindowPos(platform.handle, &CORE.Window.position.x, &CORE.Window.position.y);
+    
     return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 }
 
