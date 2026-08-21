@@ -61,7 +61,7 @@ raylib presents some limitation by design for code simplicity, some forks, alter
 
   - Single window with single OpenGL context by default, no multi-window support
   - Window resize and move stops the rendering loop on platforms supporting a window
-  - Font rasterization has lower qualityt than alternatives using Freetype2, HarfBuzz or Slug
+  - Font rasterization has lower quality than alternatives using `Freetype2`, `HarfBuzz` or `Slug`
   - Text drawing does not support RTL, ligatures or emojis
 
 basic example
