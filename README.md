@@ -57,7 +57,7 @@ features
 limitations
 -----------
 
-raylib presents some limitation by design for code simplicity, some forks, alternatives and samples are available to overcome most of them but it's up to the user with those specific needs.
+raylib presents some limitation by design for code simplicity, some forks, alternatives and samples are available to overcome most of them but it's up to the users to modify the library for their specific needs.
 
   - Single window with single OpenGL context by default, no multi-window support
   - Window resize and move stops the rendering loop on platforms supporting a window
