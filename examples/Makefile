@@ -18,7 +18,7 @@
 #     > PLATFORM_DESKTOP_RGFW (RGFW backend):
 #         - Windows (Win32, Win64)
 #         - Linux (X11 desktop mode)
-#         - macOS/OSX (x64, arm64 (not tested))
+#         - macOS/OSX (x64, arm64)
 #         - Others (not tested)
 #     > PLATFORM_DESKTOP_WIN32 (native Win32):
 #         - Windows (Win32, Win64)
@@ -314,6 +314,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
+	ifeq ($(PLATFORM_OS),OSX)
+		LDFLAGS += -L/opt/homebrew/lib -L$(RAYLIB_LIB_PATH)
+	endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     ifeq ($(PLATFORM_OS),WINDOWS)
