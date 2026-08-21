@@ -63,6 +63,7 @@ raylib presents some limitation by design for code simplicity, some forks, alter
   - Window resize and move stops the rendering loop on platforms supporting a window
   - Font rasterization has lower quality than alternatives using `Freetype2`, `HarfBuzz` or `Slug`
   - Text drawing does not support RTL, ligatures or emojis
+  - `RenderTextures` are flipped vertically, as provided by OpenGL, it's up to user to draw then flipped on screen
 
 basic example
 --------------
