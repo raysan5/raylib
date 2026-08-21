@@ -61,6 +61,8 @@
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+typedef void (*EmscriptenResizeObserverCallback)(void);
+
 typedef struct {
     char canvasId[64];                  // Current canvas id
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE glContext; // OpenGL context
@@ -214,6 +216,7 @@ static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *
 static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
 static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
+static EM_BOOL EmscriptenCanvasResizedCallback(int eventType, const void *reserved, void *userData);
 // TODO: Implement GLFW3 alternative for drop callback, runs when drop files into browser/canvas
 //static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);
 
@@ -227,11 +230,27 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
 
 static KeyboardKey ConvertKeyboardEventToKey(const EmscriptenKeyboardEvent *keyboardEvent);
+static void EmscriptenToggleFullscreen(bool resizeFramebuffer);
+static void EmscriptenSyncCanvasSize(bool initializing);
+static void EmscriptenCanvasResizeObserverCallback(void);
 
 // JS: Set the canvas id provided by the module configuration
 EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
     var canvasId = "#" + Module.canvas.id;
     stringToUTF8(canvasId, out, outSize);
+});
+
+EM_JS(void, RegisterCanvasResizeObserverJs, (EmscriptenResizeObserverCallback callback), {
+    var resizeCallback = getWasmTableEntry(callback);
+    Module.raylibCanvasResizeObserver = new ResizeObserver(resizeCallback);
+    Module.raylibCanvasResizeObserver.observe(Module.canvas);
+});
+
+EM_JS(void, UnregisterCanvasResizeObserverJs, (void), {
+    if (!Module.raylibCanvasResizeObserver) return;
+
+    Module.raylibCanvasResizeObserver.disconnect();
+    Module.raylibCanvasResizeObserver = null;
 });
 
 //----------------------------------------------------------------------------------
@@ -265,151 +284,13 @@ bool WindowShouldClose(void)
 // Toggle fullscreen mode
 void ToggleFullscreen(void)
 {
-    bool enterFullscreen = false;
-
-    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-    if (wasFullscreen)
-    {
-        if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) enterFullscreen = false;
-        else if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE)) enterFullscreen = true;
-        else
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
-            if (canvasStyleWidth > canvasWidth) enterFullscreen = false;
-            else enterFullscreen = true;
-        }
-
-        EM_ASM(document.exitFullscreen(););
-
-        FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-        FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
-    }
-    else enterFullscreen = true;
-
-    if (enterFullscreen)
-    {
-        // NOTE: The setTimeouts handle the browser mode change delay
-        EM_ASM
-        (
-            setTimeout(function()
-            {
-                Module.requestFullscreen(false, false);
-            }, 100);
-        );
-
-        FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-    }
-
-    // NOTE: Old notes below:
-    /*
-        EM_ASM
-        (
-            // This strategy works well while using raylib minimal web shell for emscripten,
-            // it re-scales the canvas to fullscreen using monitor resolution, for tools this
-            // is a good strategy but maybe games prefer to keep current canvas resolution and
-            // display it in fullscreen, adjusting monitor resolution if possible
-            if (document.fullscreenElement) document.exitFullscreen();
-            else Module.requestFullscreen(true, true); //false, true);
-        );
-    */
-    // EM_ASM(Module.requestFullscreen(false, false););
-    /*
-        if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-        {
-            // Option 1: Request fullscreen for the canvas element
-            // This option does not seem to work at all:
-            // emscripten_request_pointerlock() and emscripten_request_fullscreen() are affected by web security,
-            // the user must click once on the canvas to hide the pointer or transition to full screen
-            //emscripten_request_fullscreen("#canvas", false);
-
-            // Option 2: Request fullscreen for the canvas element with strategy
-            // This option does not seem to work at all
-            // REF: https://github.com/emscripten-core/emscripten/issues/5124
-            // EmscriptenFullscreenStrategy strategy = {
-                // .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH, //EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
-                // .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
-                // .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
-                // .canvasResizedCallback = EmscriptenWindowResizedCallback,
-                // .canvasResizedCallbackUserData = NULL
-            // };
-            //emscripten_request_fullscreen_strategy("#canvas", EM_FALSE, &strategy);
-
-            // Option 3: Request fullscreen for the canvas element with strategy
-            // It works as expected but only inside the browser (client area)
-            EmscriptenFullscreenStrategy strategy = {
-                .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_ASPECT,
-                .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF,
-                .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
-                .canvasResizedCallback = EmscriptenWindowResizedCallback,
-                .canvasResizedCallbackUserData = NULL
-            };
-            emscripten_enter_soft_fullscreen("#canvas", &strategy);
-
-            int width = 0;
-            int height = 0;
-            emscripten_get_canvas_element_size("#canvas", &width, &height);
-            TRACELOG(LOG_WARNING, "Emscripten: Enter fullscreen: Canvas size: %i x %i", width, height);
-
-            FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-        }
-        else
-        {
-            //emscripten_exit_fullscreen();
-            //emscripten_exit_soft_fullscreen();
-
-            int width, height;
-            emscripten_get_canvas_element_size("#canvas", &width, &height);
-            TRACELOG(LOG_WARNING, "Emscripten: Exit fullscreen: Canvas size: %i x %i", width, height);
-
-            FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-        }
-    */
+    EmscriptenToggleFullscreen(false);
 }
 
 // Toggle borderless windowed mode
 void ToggleBorderlessWindowed(void)
 {
-    bool enterBorderless = false;
-
-    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-    if (wasFullscreen)
-    {
-        if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE)) enterBorderless = false;
-        else if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) enterBorderless = true;
-        else
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
-            if (screenWidth == canvasWidth) enterBorderless = false;
-            else enterBorderless = true;
-        }
-
-        EM_ASM(document.exitFullscreen(););
-
-        FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
-        FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
-    }
-    else enterBorderless = true;
-
-    if (enterBorderless)
-    {
-        // 1. The setTimeouts handle the browser mode change delay
-        // 2. The style unset handles the possibility of a width="value%" like on the default shell.html file
-        EM_ASM
-        (
-            const canvasId = UTF8ToString($0);
-            setTimeout(function()
-            {
-                Module.requestFullscreen(false, true);
-                setTimeout(function()
-                {
-                    document.querySelector(canvasId).style.width="unset";
-                }, 100);
-            }, 100);
-        , platform.canvasId);
-        FLAG_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
-    }
+    EmscriptenToggleFullscreen(true);
 }
 
 // Set window state: maximized, if resizable
@@ -454,31 +335,17 @@ void SetWindowState(unsigned int flags)
     }
 
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE) &&
+        !FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        // NOTE: Window state flag updated inside ToggleBorderlessWindowed() function
-        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-        if (wasFullscreen)
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
-            if ((FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) || canvasStyleWidth > canvasWidth) ToggleBorderlessWindowed();
-        }
-        else ToggleBorderlessWindowed();
+        ToggleBorderlessWindowed();
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE) &&
+        !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        // NOTE: Window state flag updated inside ToggleFullscreen() function
-        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-        if (wasFullscreen)
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
-            if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) ToggleFullscreen();
-        }
-        else ToggleFullscreen();
+        ToggleFullscreen();
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -582,31 +449,17 @@ void ClearWindowState(unsigned int flags)
     }
 
     // State change: FLAG_BORDERLESS_WINDOWED_MODE
-    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE) &&
+        FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
-        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-        if (wasFullscreen)
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int screenWidth = EM_ASM_INT( { return screen.width; }, 0);
-            if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE) || (screenWidth == canvasWidth)) EM_ASM(document.exitFullscreen(););
-        }
-
-        FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
+        ToggleBorderlessWindowed();
     }
 
     // State change: FLAG_FULLSCREEN_MODE
-    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE) &&
+        FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-        if (wasFullscreen)
-        {
-            const int canvasWidth = EM_ASM_INT( { return Module.canvas.width; }, 0);
-            const int canvasStyleWidth = EM_ASM_INT( { return parseInt(Module.canvas.style.width); }, 0);
-            if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE) || (canvasStyleWidth > canvasWidth)) EM_ASM(document.exitFullscreen(););
-        }
-
-        FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
+        ToggleFullscreen();
     }
 
     // State change: FLAG_WINDOW_RESIZABLE
@@ -1069,7 +922,7 @@ void SwapScreenBuffer(void)
         Module.__img.data.set(src);
         ctx.putImageData(Module.__img, 0, 0);
 
-    }, CORE.Window.screen.width, CORE.Window.screen.height, platform.pixels);
+    }, CORE.Window.render.width, CORE.Window.render.height, platform.pixels);
 #endif
 }
 
@@ -1282,6 +1135,104 @@ void PollInputEvents(void)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 
+// Toggle browser fullscreen mode, optionally resizing the framebuffer
+static void EmscriptenToggleFullscreen(bool resizeFramebuffer)
+{
+    EmscriptenFullscreenChangeEvent fullscreenStatus = { 0 };
+    EMSCRIPTEN_RESULT result = emscripten_get_fullscreen_status(&fullscreenStatus);
+
+    if ((result == EMSCRIPTEN_RESULT_SUCCESS) && fullscreenStatus.isFullscreen)
+    {
+        if (strcmp(fullscreenStatus.id, platform.canvasId + 1) == 0) emscripten_exit_fullscreen();
+    }
+    else
+    {
+        if (!resizeFramebuffer && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) EmscriptenSyncCanvasSize(false);
+
+        EmscriptenFullscreenStrategy strategy = {
+            .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
+            .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_NONE,
+            .filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT,
+            .canvasResizedCallback = EmscriptenCanvasResizedCallback,
+            .canvasResizedCallbackUserData = NULL
+        };
+
+        unsigned int modeFlag = resizeFramebuffer? FLAG_BORDERLESS_WINDOWED_MODE : FLAG_FULLSCREEN_MODE;
+        unsigned int otherFlag = resizeFramebuffer? FLAG_FULLSCREEN_MODE : FLAG_BORDERLESS_WINDOWED_MODE;
+
+        FLAG_SET(CORE.Window.flags, modeFlag);
+        FLAG_CLEAR(CORE.Window.flags, otherFlag);
+        emscripten_request_fullscreen_strategy(platform.canvasId, true, &strategy);
+    }
+}
+
+// Synchronize canvas and framebuffer sizes
+static void EmscriptenSyncCanvasSize(bool initializing)
+{
+    double cssWidth = 0.0;
+    double cssHeight = 0.0;
+    EMSCRIPTEN_RESULT result = emscripten_get_element_css_size(platform.canvasId, &cssWidth, &cssHeight);
+
+    if ((result != EMSCRIPTEN_RESULT_SUCCESS) || (cssWidth <= 0.0) || (cssHeight <= 0.0)) return;
+
+    unsigned int screenWidth = (unsigned int)round(cssWidth);
+    unsigned int screenHeight = (unsigned int)round(cssHeight);
+    double dpiScale = FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? emscripten_get_device_pixel_ratio() : 1.0;
+    unsigned int renderWidth = (unsigned int)round(cssWidth*dpiScale);
+    unsigned int renderHeight = (unsigned int)round(cssHeight*dpiScale);
+
+    bool resized = (CORE.Window.screen.width != screenWidth) || (CORE.Window.screen.height != screenHeight) ||
+        (CORE.Window.render.width != renderWidth) || (CORE.Window.render.height != renderHeight);
+
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    bool renderResized = (CORE.Window.render.width != renderWidth) || (CORE.Window.render.height != renderHeight);
+
+    if ((platform.pixels != NULL) && renderResized)
+    {
+        platform.pixels = (unsigned int *)RL_REALLOC(platform.pixels,
+            (size_t)renderWidth*(size_t)renderHeight*sizeof(unsigned int));
+
+        if (!initializing) rlResizeFramebuffer(renderWidth, renderHeight);
+    }
+#endif
+
+    int canvasWidth = 0;
+    int canvasHeight = 0;
+    emscripten_get_canvas_element_size(platform.canvasId, &canvasWidth, &canvasHeight);
+
+    if (((unsigned int)canvasWidth != renderWidth) || ((unsigned int)canvasHeight != renderHeight))
+    {
+        emscripten_set_canvas_element_size(platform.canvasId, renderWidth, renderHeight);
+
+        // When canvas CSS size is auto or unset, changing the buffer size will also change the css size
+        // This restores the original css size to avoid a feedback loop
+        double resizedCssWidth = 0.0;
+        double resizedCssHeight = 0.0;
+        result = emscripten_get_element_css_size(platform.canvasId, &resizedCssWidth, &resizedCssHeight);
+
+        if ((result == EMSCRIPTEN_RESULT_SUCCESS) &&
+            ((fabs(resizedCssWidth - cssWidth) > 0.5) || (fabs(resizedCssHeight - cssHeight) > 0.5)))
+        {
+            emscripten_set_element_css_size(platform.canvasId, cssWidth, cssHeight);
+        }
+    }
+
+    CORE.Window.screen.width = screenWidth;
+    CORE.Window.screen.height = screenHeight;
+    SetupViewport(renderWidth, renderHeight);
+    CORE.Window.currentFbo.width = renderWidth;
+    CORE.Window.currentFbo.height = renderHeight;
+    CORE.Window.screenScale = MatrixScale((float)renderWidth/(float)screenWidth,
+        (float)renderHeight/(float)screenHeight, 1.0f);
+    if (resized) CORE.Window.resizedLastFrame = true;
+}
+
+static void EmscriptenCanvasResizeObserverCallback(void)
+{
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE) &&
+        !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) EmscriptenSyncCanvasSize(false);
+}
+
 // Initialize platform: graphics, inputs and more
 int InitPlatform(void)
 {
@@ -1319,10 +1270,6 @@ int InitPlatform(void)
     {
         // Avoid creating a WebGL canvas, create 2d canvas for software rendering
         emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
-        EM_ASM({
-            const canvas = document.getElementById(platform.canvasId);
-            Module.canvas = canvas;
-        });
 
         // Load memory framebuffer with desired screen size
         platform.pixels = (unsigned int *)RL_CALLOC(CORE.Window.screen.width*CORE.Window.screen.height, sizeof(unsigned int));
@@ -1421,8 +1368,8 @@ int InitPlatform(void)
     emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
     emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
 
-    // Trigger resize callback to force initial size
-    EmscriptenResizeCallback(EMSCRIPTEN_EVENT_RESIZE, NULL, NULL);
+    RegisterCanvasResizeObserverJs(EmscriptenCanvasResizeObserverCallback);
+    EmscriptenSyncCanvasSize(true);
     //----------------------------------------------------------------------------
 
     // Initialize timing system
@@ -1446,6 +1393,7 @@ int InitPlatform(void)
 // implementing some logic behaviour
 void ClosePlatform(void)
 {
+    UnregisterCanvasResizeObserverJs();
     if (platform.pixels != NULL) RL_FREE(platform.pixels);
     if (platform.glContext != 0) emscripten_webgl_destroy_context(platform.glContext);
 }
@@ -1455,49 +1403,19 @@ void ClosePlatform(void)
 // Emscripten: Called on resize event
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
 {
-    // Don't resize non-resizeable windows
-    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE)) return 1;
-/*
-    // Set current screen size
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
-    {
-        Vector2 windowScaleDPI = GetWindowScaleDPI();
+    // Don't resize fixed-size windows or regular fullscreen framebuffers
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_RESIZABLE) ||
+        FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) return 1;
 
-        CORE.Window.screen.width = (unsigned int)(width/windowScaleDPI.x);
-        CORE.Window.screen.height = (unsigned int)(height/windowScaleDPI.y);
-    }
-    else
-    {
-        CORE.Window.screen.width = width;
-        CORE.Window.screen.height = height;
-    }
-*/
-    // This event is called whenever the window changes sizes,
-    // so the size of the canvas object is explicitly retrieved below
-    int width = EM_ASM_INT( return window.innerWidth; );
-    int height = EM_ASM_INT( return window.innerHeight; );
+    EmscriptenSyncCanvasSize(false);
 
-    if (width < (int)CORE.Window.screenMin.width) width = CORE.Window.screenMin.width;
-    else if ((width > (int)CORE.Window.screenMax.width) && (CORE.Window.screenMax.width > 0)) width = CORE.Window.screenMax.width;
+    return 0;
+}
 
-    if (height < (int)CORE.Window.screenMin.height) height = CORE.Window.screenMin.height;
-    else if ((height > (int)CORE.Window.screenMax.height) && (CORE.Window.screenMax.height > 0)) height = CORE.Window.screenMax.height;
-
-    emscripten_set_canvas_element_size(platform.canvasId, width, height);
-
-    SetupViewport(width, height); // Reset viewport and projection matrix for new size
-
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
-    if (IsWindowFullscreen()) return 1;
-
-    // Set current screen size
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-
-    // NOTE: Postprocessing texture is not scaled to new size
+// Emscripten: Called after a fullscreen strategy resizes the canvas
+static EM_BOOL EmscriptenCanvasResizedCallback(int eventType, const void *reserved, void *userData)
+{
+    if (!FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) EmscriptenSyncCanvasSize(false);
 
     return 0;
 }
@@ -1531,18 +1449,26 @@ static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const Emscripte
 }
 
 // Emscripten: Called on fullscreen change events
-// TODO: Review fullscreen strategy
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // NOTE: Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
-    const bool wasFullscreen = EM_ASM_INT( { if (document.fullscreenElement) return 1; }, 0);
-    if (!wasFullscreen)
+    if (strcmp(event->id, platform.canvasId + 1) != 0) return 0;
+
+    if (event->isFullscreen)
+    {
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
+            FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
+        else FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
+    }
+    else
     {
         FLAG_CLEAR(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
         FLAG_CLEAR(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
+
+        // Prevent stuck key when exiting full screen
+        memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
     }
 
-    return 1; // The event was consumed by the callback handler
+    return 0;
 }
 
 /*
