@@ -1,5 +1,17 @@
 # Setup the project and settings
+cmake_minimum_required(VERSION 3.22)
 project(examples)
+
+# Include raylib's cmake helper functions, so the examples can also be
+# configured standalone (`cd examples && cmake .`) and not only as part
+# of the raylib project.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
+include(AddIfFlagCompiles)
+
+# Default to the Desktop platform when configured standalone.
+if (NOT DEFINED PLATFORM)
+    set(PLATFORM "Desktop" CACHE STRING "Platform to build examples for")
+endif ()
 
 # Directories that contain examples
 set(example_dirs
