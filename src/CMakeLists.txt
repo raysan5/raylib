@@ -114,6 +114,19 @@ if (NOT BUILD_SHARED_LIBS)
 
     if (NOT glfw3_FOUND)
         list(REMOVE_ITEM raylib_install_private_libs glfw)
+
+        # Bundled GLFW links its Cocoa backend frameworks privately, so they
+        # must be propagated to consumers of the static library, whose final
+        # link line would otherwise miss them.
+        if (APPLE)
+            find_library(COCOA_FRAMEWORK Cocoa)
+            find_library(IOKIT_FRAMEWORK IOKit)
+            find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+            list(APPEND raylib_install_private_libs
+                ${COCOA_FRAMEWORK}
+                ${IOKIT_FRAMEWORK}
+                ${QUARTZCORE_FRAMEWORK})
+        endif ()
     endif()
 
     foreach(lib IN LISTS raylib_install_private_libs)
