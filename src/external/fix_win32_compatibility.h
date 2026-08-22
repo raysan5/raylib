@@ -46,6 +46,7 @@
 // include windows
 #define WIN32_LEAN_AND_MEAN 
 #include <windows.h>
+#include <playsoundapi.h>
 
 // remove all our redefinitions so that raylib can define them properly
 #undef CloseWindow
