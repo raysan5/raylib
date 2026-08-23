@@ -24,6 +24,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 #include "raymath.h"
 
 #include <stddef.h>     // Required for: NULL
@@ -55,7 +57,6 @@ static void FreeMeshBuilder(MeshBuilder *mb);
 static Mesh BuildMesh(MeshBuilder *mb);
 static Vector3 ClipSegment(Vector3 v0, Vector3 v1, Vector3 p, float s);
 static Mesh GenMeshDecal(Model model, Matrix projection, float decalSize, float decalOffset);
-static bool GuiButton(Rectangle rec, const char *label);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -500,20 +501,4 @@ static Mesh GenMeshDecal(Model model, Matrix projection, float decalSize, float 
     FreeMeshBuilder(&meshBuilders[1]);
 
     return decalMesh;
-}
-
-// Minimal toggle-style GUI button
-static bool GuiButton(Rectangle rec, const char *label)
-{
-    bool hovered = CheckCollisionPointRec(GetMousePosition(), rec);
-    bool pressed = hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-
-    DrawRectangleRec(rec, hovered ? LIGHTGRAY : GRAY);
-    DrawRectangleLinesEx(rec, 2.0f, DARKGRAY);
-
-    int fontSize = 10;
-    int textWidth = MeasureText(label, fontSize);
-    DrawText(label, (int)(rec.x + rec.width*0.5f - textWidth*0.5f), (int)(rec.y + rec.height*0.5f - fontSize*0.5f), fontSize, DARKGRAY);
-
-    return pressed;
 }
