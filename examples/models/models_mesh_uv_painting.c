@@ -20,6 +20,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 #include "raymath.h"
 #include <math.h>       // Required for: fabsf(), floorf()
 #include <stddef.h>     // Required for: NULL
@@ -41,7 +43,6 @@ typedef enum { SHAPE_SPHERE = 0, SHAPE_CUBE, SHAPE_CYLINDER, SHAPE_TORUS } Shape
 //------------------------------------------------------------------------------------
 static void ChangeShape(Model *model, BoundingBox *bbox, ShapeType *currentShape, ShapeType newShape, Texture2D canvasTexture);
 static bool GetMeshHitUV(Ray ray, Model model, BoundingBox bbox, Vector2 *outUV);
-static bool GuiButton(Rectangle rec, const char *text, bool active);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -50,8 +51,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 960;
-    const int screenHeight = 580;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib [models] example - mesh uv painting");
 
@@ -155,23 +156,34 @@ int main(void)
             DrawRectangleLinesEx(uiPanelRec, 2.0f, DARKGRAY);
             DrawText("MESH UV PAINTER", 25, 22, 18, GOLD);
 
-            if (GuiButton((Rectangle){ 25, 55, 95, 32 }, "PAINT", currentTool == TOOL_PAINT)) currentTool = TOOL_PAINT;
-            if (GuiButton((Rectangle){ 125, 55, 95, 32 }, "PICKER", currentTool == TOOL_PICKER)) currentTool = TOOL_PICKER;
+            // Tool selection toggles
+            bool paintActive = (currentTool == TOOL_PAINT);
+            bool pickerActive = (currentTool == TOOL_PICKER);
+            if (GuiToggle((Rectangle){ 25, 55, 95, 32 }, "PAINT", &paintActive)) currentTool = TOOL_PAINT;
+            if (GuiToggle((Rectangle){ 125, 55, 95, 32 }, "PICKER", &pickerActive)) currentTool = TOOL_PICKER;
 
+            // Shape selection toggles
             DrawText("Mesh Shape:", 25, 100, 12, LIGHTGRAY);
-            if (GuiButton((Rectangle){ 25, 120, 95, 28 }, "SPHERE", currentShape == SHAPE_SPHERE))
+            bool sphereActive = (currentShape == SHAPE_SPHERE);
+            bool cubeActive = (currentShape == SHAPE_CUBE);
+            bool cylinderActive = (currentShape == SHAPE_CYLINDER);
+            bool torusActive = (currentShape == SHAPE_TORUS);
+
+            if (GuiToggle((Rectangle){ 25, 120, 95, 28 }, "SPHERE", &sphereActive))
                 ChangeShape(&model, &modelBBox, &currentShape, SHAPE_SPHERE, canvasTexture);
-            if (GuiButton((Rectangle){ 125, 120, 95, 28 }, "CUBE", currentShape == SHAPE_CUBE))
+            if (GuiToggle((Rectangle){ 125, 120, 95, 28 }, "CUBE", &cubeActive))
                 ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CUBE, canvasTexture);
-            if (GuiButton((Rectangle){ 25, 153, 95, 28 }, "CYLINDER", currentShape == SHAPE_CYLINDER))
+            if (GuiToggle((Rectangle){ 25, 153, 95, 28 }, "CYLINDER", &cylinderActive))
                 ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CYLINDER, canvasTexture);
-            if (GuiButton((Rectangle){ 125, 153, 95, 28 }, "TORUS", currentShape == SHAPE_TORUS))
+            if (GuiToggle((Rectangle){ 125, 153, 95, 28 }, "TORUS", &torusActive))
                 ChangeShape(&model, &modelBBox, &currentShape, SHAPE_TORUS, canvasTexture);
 
+            // Color display
             DrawText("Active Color:", 25, 195, 12, LIGHTGRAY);
             DrawRectangle(125, 193, 95, 20, activeColor);
             DrawRectangleLines(125, 193, 95, 20, WHITE);
 
+            // Color swatches
             DrawText("Palette Swatches:", 25, 225, 12, LIGHTGRAY);
             for (int i = 0; i < PALETTE_COUNT; i++)
             {
@@ -181,16 +193,18 @@ int main(void)
                 if (CheckCollisionPointRec(mousePos, swatchRec) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) activeColor = palette[i];
             }
 
+            // Brush size buttons
             DrawText(TextFormat("Brush Size: %dpx", brushRadius), 25, 345, 12, LIGHTGRAY);
-            if (GuiButton((Rectangle){ 25, 365, 95, 30 }, "SIZE -", false) && (brushRadius > 2)) brushRadius -= 2;
-            if (GuiButton((Rectangle){ 125, 365, 95, 30 }, "SIZE +", false) && (brushRadius < 64)) brushRadius += 2;
+            if (GuiButton((Rectangle){ 25, 365, 95, 30 }, "SIZE -") && (brushRadius > 2)) brushRadius -= 2;
+            if (GuiButton((Rectangle){ 125, 365, 95, 30 }, "SIZE +") && (brushRadius < 64)) brushRadius += 2;
 
-            if (GuiButton((Rectangle){ 25, 410, 95, 30 }, "CLEAR", false))
+            // Canvas action buttons
+            if (GuiButton((Rectangle){ 25, 410, 95, 30 }, "CLEAR"))
             {
                 ImageClearBackground(&canvasImage, RAYWHITE);
                 UpdateTexture(canvasTexture, canvasImage.data);
             }
-            if (GuiButton((Rectangle){ 125, 410, 95, 30 }, "FILL", false))
+            if (GuiButton((Rectangle){ 125, 410, 95, 30 }, "FILL"))
             {
                 ImageClearBackground(&canvasImage, activeColor);
                 UpdateTexture(canvasTexture, canvasImage.data);
@@ -303,20 +317,4 @@ static bool GetMeshHitUV(Ray ray, Model model, BoundingBox bbox, Vector2 *outUV)
     if (found && (outUV != NULL)) *outUV = hitUV;
 
     return found;
-}
-
-// Minimal toggle-style GUI button, used throughout the side panel
-static bool GuiButton(Rectangle rec, const char *text, bool active)
-{
-    bool hovered = CheckCollisionPointRec(GetMousePosition(), rec);
-    bool clicked = hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-
-    Color backColor = active ? GOLD : (hovered ? LIGHTGRAY : GRAY);
-    Color textColor = (active || hovered) ? BLACK : RAYWHITE;
-
-    DrawRectangleRec(rec, backColor);
-    DrawRectangleLinesEx(rec, 1.5f, DARKGRAY);
-    DrawText(text, (int)(rec.x + rec.width/2 - MeasureText(text, 10)/2), (int)(rec.y + rec.height/2 - 5), 10, textColor);
-
-    return clicked;
 }
