@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
                 else if (TextIsEqual(exCategory, "text")) nextCategoryIndex = 4;
                 else if (TextIsEqual(exCategory, "models")) nextCategoryIndex = 5;
                 else if (TextIsEqual(exCategory, "shaders")) nextCategoryIndex = 6;
-                else if (TextIsEqual(exCategory, "audio")) nextCategoryIndex = 7;
+                else if (TextIsEqual(exCategory, "audio")) nextCategoryIndex = -1; // EOF, "audio" is the last category, avoid out-of-bounds exCategories[7] access
 
                 // Get required example info from example file header (if provided)
 
@@ -621,7 +621,13 @@ int main(int argc, char *argv[])
                 else
                 {
                     // Add example to collection, at the end of the category list
-                    int categoryIndex = TextFindIndex(exCollectionList, exCategories[nextCategoryIndex]);
+                    // NOTE: Search is anchored to "\n<category>;" (not just "<category>") to avoid
+                    // false-positive matches when one category name is a text-prefix of another
+                    // (e.g. "text" is a prefix of "textures", so a bare search for "text" matches
+                    // inside "core_render_texture" or at the start of the "textures" block instead
+                    // of the actual "text" category boundary, corrupting the collection list)
+                    int categoryIndex = TextFindIndex(exCollectionList, TextFormat("\n%s;", exCategories[nextCategoryIndex])) + 1;
+                    if (categoryIndex == 0) categoryIndex = (int)strlen(exCollectionList); // Category not found, fallback to EOF
                     memcpy(exCollectionListUpdated, exCollectionList, categoryIndex);
                     int textWritenSize = sprintf(exCollectionListUpdated + categoryIndex, TextFormat("%s;%s;%s;%s;%s;%i;%i;\"%s\";@%s\n",
                         exInfo->category, exInfo->name, starsText, exInfo->verCreated, exInfo->verUpdated, exInfo->yearCreated, exInfo->yearReviewed, exInfo->author, exInfo->authorGitHub));
@@ -1030,8 +1036,16 @@ int main(int argc, char *argv[])
 
                         // Find position to add new example on list, just before the following category
                         // Category order: core, shapes, textures, text, models, shaders, audio
+                        // NOTE: Search is anchored to "\n<category>;" (not just "\n<category>") to avoid
+                        // false-positive matches when one category name is a text-prefix of another
+                        // (e.g. "text" is a prefix of "textures", so a bare "\ntext" search matches the
+                        // START of the "textures" block instead of the actual "text" category boundary).
                         int exListNextCatIndex = -1;
-                        if (nextCatIndex != -1) exListNextCatIndex = TextFindIndex(exList, TextFormat("\n%s", exCategories[nextCatIndex])) + 1;
+                        if (nextCatIndex != -1)
+                        {
+                            exListNextCatIndex = TextFindIndex(exList, TextFormat("\n%s;", exCategories[nextCatIndex])) + 1;
+                            if (exListNextCatIndex == 0) exListNextCatIndex = exListLen; // Category not found, fallback to EOF
+                        }
                         else exListNextCatIndex = exListLen; // EOF
 
                         strncpy(exListUpdated, exList, exListNextCatIndex);
