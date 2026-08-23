@@ -23,6 +23,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 #include "rlgl.h"
 
@@ -46,8 +47,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    const int screenWidth = 800;
+    const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - forward multi-lighting bloom");
@@ -67,23 +68,12 @@ int main(void)
     // raylib was built against, linking fails and silently falls back to the default
     // shader - so this retries once with the other version, and either way the result
     // is checked explicitly and reported on screen rather than staying silently wrong
-    int glslVersion = GLSL_VERSION;
-    Shader lightShader = LoadShader(TextFormat("resources/shaders/glsl%i/lights_bloom.vs", glslVersion),
-                                     TextFormat("resources/shaders/glsl%i/lights_bloom.fs", glslVersion));
-    Shader bloomShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/lights_bloom_post.fs", glslVersion));
+    Shader lightShader = LoadShader(TextFormat("resources/shaders/glsl%i/lights_bloom.vs", GLSL_VERSION),
+                                     TextFormat("resources/shaders/glsl%i/lights_bloom.fs", GLSL_VERSION));
+    Shader bloomShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/lights_bloom_post.fs", GLSL_VERSION));
 
-    if ((lightShader.id == rlGetShaderIdDefault()) || (bloomShader.id == rlGetShaderIdDefault()))
-    {
-        glslVersion = (glslVersion == 330)? 100 : 330;
-        UnloadShader(lightShader);
-        UnloadShader(bloomShader);
-        lightShader = LoadShader(TextFormat("resources/shaders/glsl%i/lights_bloom.vs", glslVersion),
-                                  TextFormat("resources/shaders/glsl%i/lights_bloom.fs", glslVersion));
-        bloomShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/lights_bloom_post.fs", glslVersion));
-    }
-
-    bool shadersLoaded = (lightShader.id != rlGetShaderIdDefault()) && (bloomShader.id != rlGetShaderIdDefault());
-
+    // Load models from generated cube mesh and plane
+    // NOTE: Meshes are automatically unloaded on UnloadModel()
     Model cube = LoadModelFromMesh(GenMeshCube(2.0f, 2.0f, 2.0f));
     Model floor = LoadModelFromMesh(GenMeshPlane(14.0f, 14.0f, 1, 1));
     cube.materials[0].shader = lightShader;
@@ -175,9 +165,6 @@ int main(void)
             EndShaderMode();
 
             DrawText("BALANCED MULTI-LIGHT + REINHARD TONE MAPPED BLOOM", 20, 20, 20, GREEN);
-            DrawFPS(10, 10);
-
-            if (!shadersLoaded) DrawText("WARNING: a custom shader failed to load, showing plain image", 20, screenHeight - 30, 10, RED);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
