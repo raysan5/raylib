@@ -117,8 +117,9 @@ if (NOT BUILD_SHARED_LIBS)
 
         # Bundled GLFW links its Cocoa backend frameworks privately, so they
         # must be propagated to consumers of the static library, whose final
-        # link line would otherwise miss them.
-        if (APPLE)
+        # link line would otherwise miss them. Only the Desktop platform uses
+        # bundled GLFW; other platforms (e.g. Memory) have no Cocoa/GLFW symbols.
+        if (APPLE AND PLATFORM STREQUAL "Desktop")
             find_library(COCOA_FRAMEWORK Cocoa)
             find_library(IOKIT_FRAMEWORK IOKit)
             find_library(QUARTZCORE_FRAMEWORK QuartzCore)
