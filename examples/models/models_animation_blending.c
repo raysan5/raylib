@@ -71,6 +71,16 @@ int main(void)
     int animCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
 
+    // WARNING: Exit if example resources could not be loaded
+    if ((model.meshCount == 0) || (animCount == 0))
+    {
+        TraceLog(LOG_WARNING, "MODEL: Example resources could not be loaded");
+        UnloadModelAnimations(anims, animCount);
+        UnloadModel(model);
+        CloseWindow();
+        return 1;
+    }
+
     // Animation playing variables
     // NOTE: Two animations are played with a smooth transition between them
     int currentAnimPlaying = 0;         // Current animation playing (0 o 1)

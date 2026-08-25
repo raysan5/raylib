@@ -81,6 +81,16 @@ int main(void)
     int animCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
 
+    // WARNING: Exit if example resources could not be loaded
+    if ((model.meshCount == 0) || (animCount == 0))
+    {
+        TraceLog(LOG_WARNING, "MODEL: Example resources could not be loaded");
+        UnloadModelAnimations(anims, animCount);
+        UnloadModel(model);
+        CloseWindow();
+        return 1;
+    }
+
     // Use specific animation indices: 2-walk/move, 3-attack
     int animIndex0 = 2; // Walk/Move animation (index 2)
     int animIndex1 = 3; // Attack animation (index 3)

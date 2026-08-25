@@ -70,6 +70,16 @@ int main(void)
     int animCount = 0;
     ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
 
+    // WARNING: Exit if example resources could not be loaded
+    if ((model.meshCount == 0) || (animCount == 0))
+    {
+        TraceLog(LOG_WARNING, "MODEL: Example resources could not be loaded");
+        UnloadModelAnimations(anims, animCount);
+        UnloadModel(model);
+        CloseWindow();
+        return 1;
+    }
+
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing
     unsigned int animCurrentFrame = 0;  // Current animation frame
