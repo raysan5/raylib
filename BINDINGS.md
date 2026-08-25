@@ -78,7 +78,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [pyraylib](https://github.com/Ho011/pyraylib)                                            | 3.7              | [Python](https://www.python.org)                                     | Zlib                 |
 | [raylib-python-cffi](https://github.com/electronstudio/raylib-python-cffi)               | **5.5**          | [Python](https://www.python.org)                                     | EPL-2.0              |
 | [raylibpyctbg](https://github.com/overdev/raylibpyctbg)                                  | 5.5              | [Python](https://www.python.org)                                     | MIT                  |
-| [raylib-py](https://github.com/overdev/raylib-py)                                        | 5.5              | [Python](https://www.python.org)                                     | MIT                  |
+| [raylib-py](https://github.com/overdev/raylib-py)                                        | **6.0**          | [Python](https://www.python.org)                                     | MIT                  |
 | [raylib-python-ctypes](https://github.com/sDos280/raylib-python-ctypes)                  | 4.6-dev          | [Python](https://www.python.org)                                     | MIT                  |
 | [raylib-pkpy-bindings](https://github.com/blueloveTH/pkpy-bindings)                      | 5.1-dev          | [pocketpy](https://pocketpy.dev)                                     | MIT                  |
 | [raylib-php](https://github.com/joseph-montanez/raylib-php)                              | 4.5              | [PHP](https://en.wikipedia.org/wiki/PHP)                             | Zlib                 |
