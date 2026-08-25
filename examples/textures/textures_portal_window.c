@@ -8,7 +8,7 @@
 *   viewer's actual position relative to the window, so the illusion holds up correctly
 *   as the player moves and looks around, rather than only looking right from one spot
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
@@ -22,14 +22,17 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #include "raymath.h"
 #include "rlgl.h"
-#include <math.h>
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
+// Begin portal mode 3D view
 static void BeginPortalMode3D(Vector3 eye, Vector3 bottomLeft, Vector3 bottomRight, Vector3 topLeft, float nearPlane, float farPlane);
+// End portal 3D mode and returns to default 2D orthographic mode
+static void EndPortalMode3D(void);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -115,13 +118,13 @@ int main(void)
                     DrawCubeWires(pos, 0.52f, 0.52f, 0.52f, DARKGREEN);
                 }
 
-            EndMode3D();
+            EndPortalMode3D();
 
         EndTextureMode();
 
         BeginDrawing();
 
-            ClearBackground((Color){ 15, 18, 26, 255 });
+            ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
 
@@ -138,7 +141,7 @@ int main(void)
                 DrawCube((Vector3){ 0.0f, 0.05f, 0.0f }, 3.4f, 0.1f, 0.6f, MAROON);
 
                 // Solid backing wall, only ever seen if looking at the archway from behind
-                DrawCube((Vector3){ 0.0f, 2.0f, -0.05f }, 3.1f, 4.1f, 0.05f, DARKBLUE);
+                DrawCube((Vector3){ 0.0f, 2.0f, -0.05f }, 3.1f, 4.1f, 0.05f, MAROON);
 
                 // The portal opening itself: a plain quad textured with the Dimension B
                 // render, filling the archway exactly, so nothing "leaks" outside its shape
@@ -156,11 +159,11 @@ int main(void)
             EndMode3D();
 
             // HUD overlay
-            DrawRectangle(15, 15, 400, 85, Fade(BLACK, 0.75f));
-            DrawRectangleLines(15, 15, 400, 85, GOLD);
+            DrawRectangle(15, 15, 520, 100, Fade(BLACK, 0.75f));
+            DrawRectangleLines(15, 15, 520, 100, GOLD);
             DrawText("PORTAL WINDOW", 28, 25, 20, GOLD);
-            DrawText("Look through the golden arch into Dimension B", 28, 52, 14, RAYWHITE);
-            DrawText("Controls: Mouse to look | WASD to move", 28, 72, 12, GRAY);
+            DrawText("Look through the golden arch into Dimension B", 28, 52, 20, RAYWHITE);
+            DrawText("Controls: Mouse to look | WASD to move", 28, 80, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -200,7 +203,7 @@ static void BeginPortalMode3D(Vector3 eye, Vector3 bottomLeft, Vector3 bottomRig
     Vector3 toTL = Vector3Subtract(topLeft, eye);
 
     float dist = -Vector3DotProduct(toBL, normal);
-    if (dist < 0.01f) dist = 0.01f;      // Keep the eye from crossing the window plane
+    if (dist < 0.01f) dist = 0.01f; // Keep the eye from crossing the window plane
 
     float scale = nearPlane/dist;
 
@@ -221,4 +224,19 @@ static void BeginPortalMode3D(Vector3 eye, Vector3 bottomLeft, Vector3 bottomRig
     rlMultMatrixf(MatrixToFloat(MatrixLookAt(eye, Vector3Subtract(eye, normal), up)));
 
     rlEnableDepthTest();
+}
+
+// End portal 3D mode and returns to default 2D orthographic mode
+// NOTE: Similar implementation to EndMode3D()
+static void EndPortalMode3D(void)
+{
+    rlDrawRenderBatchActive();      // Update and draw internal render batch
+
+    rlMatrixMode(RL_PROJECTION);    // Switch to projection matrix
+    rlPopMatrix();                  // Restore previous matrix (projection) from matrix stack
+
+    rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
+    rlLoadIdentity();               // Reset current matrix (modelview)
+    
+    rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
