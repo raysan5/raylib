@@ -20,9 +20,12 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#include "raymath.h"
+
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-#include "raymath.h"
+
 #include <math.h>       // Required for: fabsf(), floorf()
 #include <stddef.h>     // Required for: NULL
 
@@ -154,7 +157,7 @@ int main(void)
             // Side panel
             DrawRectangleRec(uiPanelRec, Fade(BLACK, 0.8f));
             DrawRectangleLinesEx(uiPanelRec, 2.0f, DARKGRAY);
-            DrawText("MESH UV PAINTER", 25, 22, 18, GOLD);
+            DrawText("MESH UV PAINTER", 25, 22, 20, GOLD);
 
             // Tool selection toggles
             bool paintActive = (currentTool == TOOL_PAINT);
@@ -163,7 +166,7 @@ int main(void)
             if (GuiToggle((Rectangle){ 125, 55, 95, 32 }, "PICKER", &pickerActive)) currentTool = TOOL_PICKER;
 
             // Shape selection toggles
-            DrawText("Mesh Shape:", 25, 100, 12, LIGHTGRAY);
+            DrawText("Mesh Shape:", 25, 100, 10, LIGHTGRAY);
             bool sphereActive = (currentShape == SHAPE_SPHERE);
             bool cubeActive = (currentShape == SHAPE_CUBE);
             bool cylinderActive = (currentShape == SHAPE_CYLINDER);
@@ -179,12 +182,12 @@ int main(void)
                 ChangeShape(&model, &modelBBox, &currentShape, SHAPE_TORUS, canvasTexture);
 
             // Color display
-            DrawText("Active Color:", 25, 195, 12, LIGHTGRAY);
+            DrawText("Active Color:", 25, 195, 10, LIGHTGRAY);
             DrawRectangle(125, 193, 95, 20, activeColor);
             DrawRectangleLines(125, 193, 95, 20, WHITE);
 
             // Color swatches
-            DrawText("Palette Swatches:", 25, 225, 12, LIGHTGRAY);
+            DrawText("Palette Swatches:", 25, 225, 10, LIGHTGRAY);
             for (int i = 0; i < PALETTE_COUNT; i++)
             {
                 Rectangle swatchRec = { 25.0f + (i%4)*48, 245.0f + (i/4)*45, 40.0f, 38.0f };
@@ -194,7 +197,7 @@ int main(void)
             }
 
             // Brush size buttons
-            DrawText(TextFormat("Brush Size: %dpx", brushRadius), 25, 345, 12, LIGHTGRAY);
+            DrawText(TextFormat("Brush Size: %dpx", brushRadius), 25, 345, 10, LIGHTGRAY);
             if (GuiButton((Rectangle){ 25, 365, 95, 30 }, "SIZE -") && (brushRadius > 2)) brushRadius -= 2;
             if (GuiButton((Rectangle){ 125, 365, 95, 30 }, "SIZE +") && (brushRadius < 64)) brushRadius += 2;
 
@@ -210,7 +213,7 @@ int main(void)
                 UpdateTexture(canvasTexture, canvasImage.data);
             }
 
-            DrawText("Left click: paint / pick color   |   Right drag: orbit camera", 260, screenHeight - 25, 12, RAYWHITE);
+            DrawText("Left click: paint / pick color   |   Right drag: orbit camera", 260, screenHeight - 25, 10, RAYWHITE);
             DrawFPS(screenWidth - 90, 15);
 
         EndDrawing();
@@ -247,7 +250,7 @@ static void ChangeShape(Model *model, BoundingBox *bbox, ShapeType *currentShape
         case SHAPE_CUBE:     mesh = GenMeshCube(2.2f, 2.2f, 2.2f); break;
         case SHAPE_CYLINDER: mesh = GenMeshCylinder(1.2f, 2.5f, 24); break;
         case SHAPE_TORUS:    mesh = GenMeshTorus(0.6f, 1.6f, 24, 36); break;
-        default:              mesh = GenMeshSphere(1.5f, 32, 32); break;
+        default:             mesh = GenMeshSphere(1.5f, 32, 32); break;
     }
 
     *model = LoadModelFromMesh(mesh);
@@ -269,7 +272,7 @@ static void ChangeShape(Model *model, BoundingBox *bbox, ShapeType *currentShape
 // closest hit, interpolated from the hit triangle's vertices with barycentric weights
 static bool GetMeshHitUV(Ray ray, Model model, BoundingBox bbox, Vector2 *outUV)
 {
-    if (!GetRayCollisionBox(ray, bbox).hit) return false;    // Fast reject
+    if (!GetRayCollisionBox(ray, bbox).hit) return false; // Fast reject
 
     Mesh mesh = model.meshes[0];
     float closestDistance = 1e9f;
