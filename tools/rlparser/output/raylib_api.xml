@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="613">
+    <Functions count="617">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1428,6 +1428,13 @@
             <Param type="Vector2" name="v3" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawTriangleLinesEx" retType="void" paramCount="5" desc="Draw triangle outline with line thickness, counter-clockwise vertex order">
+            <Param type="Vector2" name="v1" desc="" />
+            <Param type="Vector2" name="v2" desc="" />
+            <Param type="Vector2" name="v3" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawTriangleFan" retType="void" paramCount="3" desc="Draw a triangle fan defined by points (first vertex is the center)">
             <Param type="const Vector2 *" name="points" desc="" />
             <Param type="int" name="pointCount" desc="" />
@@ -1569,6 +1576,15 @@
             <Param type="int" name="segments" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawCircleSectorLinesEx" retType="void" paramCount="7" desc="Draw circle sector outline with thickness">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radius" desc="" />
+            <Param type="float" name="startAngle" desc="" />
+            <Param type="float" name="endAngle" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawCircleLines" retType="void" paramCount="4" desc="Draw circle outline">
             <Param type="int" name="centerX" desc="" />
             <Param type="int" name="centerY" desc="" />
@@ -1612,6 +1628,13 @@
             <Param type="float" name="radiusV" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
+        <Function name="DrawEllipseLinesEx" retType="void" paramCount="5" desc="Draw ellipse outline with line thickness">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="radiusH" desc="" />
+            <Param type="float" name="radiusV" desc="" />
+            <Param type="float" name="thick" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
         <Function name="DrawRing" retType="void" paramCount="7" desc="Draw ring">
             <Param type="Vector2" name="center" desc="" />
             <Param type="float" name="innerRadius" desc="" />
@@ -1628,6 +1651,16 @@
             <Param type="float" name="startAngle" desc="" />
             <Param type="float" name="endAngle" desc="" />
             <Param type="int" name="segments" desc="" />
+            <Param type="Color" name="color" desc="" />
+        </Function>
+        <Function name="DrawRingLinesEx" retType="void" paramCount="8" desc="Draw ring outline with line thickness">
+            <Param type="Vector2" name="center" desc="" />
+            <Param type="float" name="innerRadius" desc="" />
+            <Param type="float" name="outerRadius" desc="" />
+            <Param type="float" name="startAngle" desc="" />
+            <Param type="float" name="endAngle" desc="" />
+            <Param type="int" name="segments" desc="" />
+            <Param type="float" name="thick" desc="" />
             <Param type="Color" name="color" desc="" />
         </Function>
         <Function name="DrawSplineLinear" retType="void" paramCount="4" desc="Draw spline: Linear, minimum 2 points">
