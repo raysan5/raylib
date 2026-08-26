@@ -470,12 +470,11 @@ bool WindowShouldClose(void)
 void ToggleFullscreen(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
-    const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
@@ -496,12 +495,11 @@ void ToggleFullscreen(void)
 void ToggleBorderlessWindowed(void)
 {
     const int monitor = SDL_GetWindowDisplayIndex(platform.window);
-    const int monitorCount = SDL_GetNumVideoDisplays();
 
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE))
@@ -553,12 +551,11 @@ void SetWindowState(unsigned int flags)
     if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE))
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
-        const int monitorCount = SDL_GetNumVideoDisplays();
 
     #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
     #else
-        if ((monitor >= 0) && (monitor < monitorCount))
+        if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
     #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN);
@@ -615,12 +612,11 @@ void SetWindowState(unsigned int flags)
     if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE))
     {
         const int monitor = SDL_GetWindowDisplayIndex(platform.window);
-        const int monitorCount = SDL_GetNumVideoDisplays();
 
     #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
         if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
     #else
-        if ((monitor >= 0) && (monitor < monitorCount))
+        if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
     #endif
         {
             SDL_SetWindowFullscreen(platform.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -837,11 +833,10 @@ void SetWindowPosition(int x, int y)
 // Set monitor for the current window
 void SetWindowMonitor(int monitor)
 {
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         // NOTE 1: SDL started supporting moving exclusive fullscreen windows between displays on SDL3,
@@ -993,32 +988,23 @@ void *GetWindowHandle(void)
 // Get number of monitors
 int GetMonitorCount(void)
 {
-    int monitorCount = 0;
-
-    monitorCount = SDL_GetNumVideoDisplays();
-
-    return monitorCount;
+    return SDL_GetNumVideoDisplays();
 }
 
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    int currentMonitor = 0;
-
     // Be aware that this returns an ID in SDL3 and a Index in SDL2
-    currentMonitor = SDL_GetWindowDisplayIndex(platform.window);
-
-    return currentMonitor;
+    return SDL_GetWindowDisplayIndex(platform.window);
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         SDL_Rect displayBounds;
@@ -1042,11 +1028,10 @@ int GetMonitorWidth(int monitor)
 {
     int width = 0;
 
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         SDL_DisplayMode mode;
@@ -1063,11 +1048,10 @@ int GetMonitorHeight(int monitor)
 {
     int height = 0;
 
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         SDL_DisplayMode mode;
@@ -1084,11 +1068,10 @@ int GetMonitorPhysicalWidth(int monitor)
 {
     int width = 0;
 
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         float ddpi = 0.0f;
@@ -1108,11 +1091,10 @@ int GetMonitorPhysicalHeight(int monitor)
 {
     int height = 0;
 
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         float ddpi = 0.0f;
@@ -1132,11 +1114,10 @@ int GetMonitorRefreshRate(int monitor)
 {
     int refresh = 0;
 
-    const int monitorCount = SDL_GetNumVideoDisplays();
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         SDL_DisplayMode mode;
@@ -1151,12 +1132,10 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    const int monitorCount = SDL_GetNumVideoDisplays();
-
 #if defined(USING_VERSION_SDL3) // SDL3 Migration: Monitor is an id instead of index now, returns 0 on failure
     if (SDL_GetDisplayProperties(monitor) != 0) // Returns 0 on failure, so a value other than zero indicates that the monitor id is valid
 #else
-    if ((monitor >= 0) && (monitor < monitorCount))
+    if ((monitor >= 0) && (monitor < SDL_GetNumVideoDisplays()))
 #endif
     {
         return SDL_GetDisplayName(monitor);
