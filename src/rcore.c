@@ -2870,7 +2870,7 @@ bool IsPathAbsolute(const char *path)
         // Check UNC path (\\server\share)
         if ((path[0] == '\\') && (path[1] == '\\')) result = true;
         // Check path starts with a drive letter (e.g. C:\ or D:/)
-        else if ((((path[0] >= 'A') && (path[0] <= 'Z')) || ((path[0] >= 'a') && (path[0] <= 'z'))) && 
+        else if ((((path[0] >= 'A') && (path[0] <= 'Z')) || ((path[0] >= 'a') && (path[0] <= 'z'))) &&
                  (path[1] != '\0') && (path[1] == ':') && (path[2] != '\0') && ((path[2] == '\\') || (path[2] == '/'))) result = true;
 #else
         // Check POSIX path, must start with /

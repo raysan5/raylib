@@ -1938,7 +1938,7 @@ static void InitEvdevInput(void)
                 (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
                 snprintf(path, MAX_FILEPATH_LENGTH, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
-                
+
                 ConfigureEvdevDevice(path); // Configure the device if appropriate
             }
         }

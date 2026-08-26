@@ -1031,7 +1031,7 @@ const char *GetMonitorName(int monitor)
 Vector2 GetWindowPosition(void)
 {
     glfwGetWindowPos(platform.handle, &CORE.Window.position.x, &CORE.Window.position.y);
-    
+
     return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 }
 

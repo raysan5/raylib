@@ -237,6 +237,6 @@ static void EndPortalMode3D(void)
 
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
-    
+
     rlDisableDepthTest();           // Disable DEPTH_TEST for 2D
 }
