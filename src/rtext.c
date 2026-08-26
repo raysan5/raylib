@@ -438,7 +438,10 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
-    if ((x == 0) || (y == 0)) return font; // Security check
+    if ((x == 0) || (y == 0)) {
+        UnloadImageColors(pixels); // Unload pixel colors to prevent memory leak
+        return font; // Security check
+    }
 
     charSpacing = x;
     lineSpacing = y;
