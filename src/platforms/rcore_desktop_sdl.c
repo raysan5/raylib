@@ -56,12 +56,13 @@
     #include "SDL3/SDL.h"
 #elif defined(USING_SDL2_PROJECT)
     #include "SDL2/SDL.h"
-    #if !defined(__linux__)
-        // WARNING: On Linux this header includes Xlib.h that defines Font and
-        // conflicts with raylib Font, as it is only used on GetWindowHandle() and 
-        // most users do not need that function, just commenting for that case
-        #include "SDL2/SDL_syswm.h"     // Required to get window handlers
-    #endif
+
+    // WARNING: On Linux, this header includes Xlib.h, which defines Font
+    // To prevent a conflict with raylib's own Font type, we temporarily
+    // rename it to FontX11
+    #define Font FontX11
+    #include "SDL2/SDL_syswm.h"     // Required to get window handlers
+    #undef Font
 #else
     #include "SDL.h"
 #endif
@@ -960,17 +961,13 @@ void *GetWindowHandle(void)
     #elif defined(__APPLE__)
     handle = (void *)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL); // Type: NSWindow*
     #endif
-#elif defined(USING_SDL2_PROJECT) && !defined(__linux__)
-    // WARNING: On linux the inclusion of SDL_syswm.h also includes Xlib.h and 
-    // generates a symbol conflict with raylib due to Font, as this function is not
-    // required by most users, just avoiding that use case
+#elif defined(USING_SDL2_PROJECT)
     SDL_SysWMinfo wmInfo = { 0 };
     SDL_VERSION(&wmInfo.version);
     if (SDL_GetWindowWMInfo(platform.window, &wmInfo))
     {
     #if defined(_WIN32)
         handle = (void *)wmInfo.info.win.window; // Type: HWND
-    /*
     #elif defined(__linux__)
         if (wmInfo.subsystem == SDL_SYSWM_X11)
         {
@@ -984,7 +981,6 @@ void *GetWindowHandle(void)
             // NOTE: Alternative: wmInfo.info.wl.display
             handle = (void *)wmInfo.info.wl.surface; // Type: struct wl_surface*
         }
-    */
     #elif defined(__APPLE__)
         handle = (void *)wmInfo.info.cocoa.window; // Type: NSWindow*
     #endif
