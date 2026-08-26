@@ -438,8 +438,11 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         if (!COLOR_EQUAL(pixels[y*image.width + x], key)) break;
     }
 
-    if ((x == 0) || (y == 0)) return font; // Security check
-
+    if ((x == 0) || (y == 0)) {
+        UnloadImageColors(pixels); // Unload pixel colors to prevent memory leak
+        return font; // Security check
+    }
+    
     charSpacing = x;
     lineSpacing = y;
 
@@ -524,7 +527,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     }
 
     UnloadImage(fontClear);     // Unload processed image once converted to texture
-
+    UnloadImageColors(pixels);     // Unload pixel colors to prevent memory leak
+    
     font.baseSize = (int)font.recs[0].height;
 
     return font;
