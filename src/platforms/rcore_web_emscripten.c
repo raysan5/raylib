@@ -1771,7 +1771,7 @@ static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheel
     if (eventType == EMSCRIPTEN_EVENT_WHEEL)
     {
         CORE.Input.Mouse.currentWheelMove.x = (float)wheelEvent->deltaX;
-        CORE.Input.Mouse.currentWheelMove.y = (float)wheelEvent->deltaY;
+        CORE.Input.Mouse.currentWheelMove.y = -(float)wheelEvent->deltaY;
     }
 
     return 1; // The event was consumed by the callback handler
