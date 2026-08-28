@@ -2164,11 +2164,12 @@ bool ExportMeshAsCode(Mesh mesh, const char *fileName)
         byteCount += sprintf(txtData + byteCount, "0x%x };\n\n", mesh.colors[mesh.vertexCount*4 - 1]);
     }
 
-    if (mesh.indices != NULL)       // Vertex indices (3 index per triangle - unsigned short)
+    if (MeshHasIndices(&mesh))      // Vertex indices (3 indices per triangle)
     {
-        byteCount += sprintf(txtData + byteCount, "static unsigned short %s_INDEX_DATA[%i] = { ", varFileName, mesh.triangleCount*3);
-        for (int i = 0; i < mesh.triangleCount*3 - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "%i,\n" : "%i, "), mesh.indices[i]);
-        byteCount += sprintf(txtData + byteCount, "%i };\n", mesh.indices[mesh.triangleCount*3 - 1]);
+        const char *indexTypeName = (mesh.indexType == MESH_INDEX_UINT32)? "unsigned int" : "unsigned short";
+        byteCount += sprintf(txtData + byteCount, "static %s %s_INDEX_DATA[%i] = { ", indexTypeName, varFileName, mesh.triangleCount*3);
+        for (int i = 0; i < mesh.triangleCount*3 - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "%u,\n" : "%u, "), GetMeshIndex(&mesh, i));
+        byteCount += sprintf(txtData + byteCount, "%u };\n", GetMeshIndex(&mesh, mesh.triangleCount*3 - 1));
     }
     //-----------------------------------------------------------------------------------------
 
@@ -3819,12 +3820,12 @@ void GenMeshTangents(Mesh *mesh)
         // Get triangle vertex indices
         int i0 = 0, i1 = 0, i2 = 0;
 
-        if (mesh->indices != NULL)
+        if (MeshHasIndices(mesh))
         {
             // Use indices if available
-            i0 = mesh->indices[t*3 + 0];
-            i1 = mesh->indices[t*3 + 1];
-            i2 = mesh->indices[t*3 + 2];
+            i0 = (int)GetMeshIndex(mesh, t*3 + 0);
+            i1 = (int)GetMeshIndex(mesh, t*3 + 1);
+            i2 = (int)GetMeshIndex(mesh, t*3 + 2);
         }
         else
         {

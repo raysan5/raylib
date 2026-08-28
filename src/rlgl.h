@@ -1087,6 +1087,7 @@ typedef struct rlglData {
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
         bool instancing;                    // Instancing supported (GL_ANGLE_instanced_arrays, GL_EXT_draw_instanced + GL_EXT_instanced_arrays)
+        bool elementIndexUint;              // 32-bit element indices support (GL_OES_element_index_uint)
         bool texNPOT;                       // NPOT textures full support (GL_ARB_texture_non_power_of_two, GL_OES_texture_npot)
         bool texDepth;                      // Depth textures supported (GL_ARB_depth_texture, GL_OES_depth_texture)
         bool texDepthWebGL;                 // Depth textures supported WebGL specific (GL_WEBGL_depth_texture)
@@ -2403,6 +2404,7 @@ void rlLoadExtensions(void *loader)
     // Optional OpenGL 2.1 extensions
     RLGL.ExtSupported.vao = GLAD_GL_ARB_vertex_array_object;
     RLGL.ExtSupported.instancing = (GLAD_GL_EXT_draw_instanced && GLAD_GL_ARB_instanced_arrays);
+    RLGL.ExtSupported.elementIndexUint = true;
     RLGL.ExtSupported.texNPOT = GLAD_GL_ARB_texture_non_power_of_two;
     RLGL.ExtSupported.texFloat32 = GLAD_GL_ARB_texture_float;
     RLGL.ExtSupported.texFloat16 = GLAD_GL_ARB_texture_float;
@@ -2415,6 +2417,7 @@ void rlLoadExtensions(void *loader)
     // OpenGL 3.3 extensions supported by default (core)
     RLGL.ExtSupported.vao = true;
     RLGL.ExtSupported.instancing = true;
+    RLGL.ExtSupported.elementIndexUint = true;
     RLGL.ExtSupported.texNPOT = true;
     RLGL.ExtSupported.texFloat32 = true;
     RLGL.ExtSupported.texFloat16 = true;
@@ -2440,6 +2443,7 @@ void rlLoadExtensions(void *loader)
     // OpenGL ES 3.0 extensions supported by default (or it should be)
     RLGL.ExtSupported.vao = true;
     RLGL.ExtSupported.instancing = true;
+    RLGL.ExtSupported.elementIndexUint = true;
     RLGL.ExtSupported.texNPOT = true;
     RLGL.ExtSupported.texFloat32 = true;
     RLGL.ExtSupported.texFloat16 = true;
@@ -2510,6 +2514,10 @@ void rlLoadExtensions(void *loader)
 
             if ((glGenVertexArrays != NULL) && (glBindVertexArray != NULL) && (glDeleteVertexArrays != NULL)) RLGL.ExtSupported.vao = true;
         }
+
+        // Check 32-bit element index support (required by u32 mesh indices on OpenGL ES 2.0/WebGL 1.0)
+        if ((strcmp(extList[i], (const char *)"GL_OES_element_index_uint") == 0) ||
+            (strcmp(extList[i], (const char *)"OES_element_index_uint") == 0)) RLGL.ExtSupported.elementIndexUint = true;
 
         // Check instanced rendering support
         if (strstr(extList[i], (const char *)"instanced_arrays") != NULL) // Broad check for instanced_arrays
@@ -4089,7 +4097,7 @@ void rlDrawVertexArrayElementsEx(int offset, int count, const void *buffer, int 
 {
     unsigned int glIndexType = (indexType == RL_UNSIGNED_INT)? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    if (indexType == RL_UNSIGNED_INT)
+    if ((indexType == RL_UNSIGNED_INT) && !RLGL.ExtSupported.elementIndexUint)
     {
         TRACELOG(LOG_WARNING, "RLGL: 32-bit element indices require OpenGL ES 3.0 or OES_element_index_uint support");
         return;
@@ -4123,7 +4131,7 @@ void rlDrawVertexArrayElementsInstancedEx(int offset, int count, const void *buf
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
     unsigned int glIndexType = (indexType == RL_UNSIGNED_INT)? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
 #if defined(GRAPHICS_API_OPENGL_ES2)
-    if (indexType == RL_UNSIGNED_INT)
+    if ((indexType == RL_UNSIGNED_INT) && !RLGL.ExtSupported.elementIndexUint)
     {
         TRACELOG(LOG_WARNING, "RLGL: 32-bit element indices require OpenGL ES 3.0 or OES_element_index_uint support");
         return;
