@@ -716,7 +716,7 @@ int main(int argc, char *argv[])
 #else
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", GetFileNameWithoutExt(inFileName));
 #endif
-            system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 
             // Update generated .html metadata
             LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
@@ -812,7 +812,7 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 
             // Update generated .html metadata
             UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename),
@@ -957,14 +957,14 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
 
 #if !defined(PLATFORM_DRM)
@@ -974,7 +974,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
                 LOG("INFO: [%s] Building example for PLATFORM_WEB\n", exName);
-                system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 
                 // Update generated .html metadata
                 LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
@@ -1342,7 +1342,7 @@ int main(int argc, char *argv[])
                         #else
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
                         #endif
-                            system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
                             LOG("INFO: [%s.html] Updating HTML Metadata...\n", exInfo->name);
@@ -1603,11 +1603,11 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
-                system(TextFormat(make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
@@ -1651,15 +1651,15 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat(make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
