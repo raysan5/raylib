@@ -342,6 +342,12 @@ typedef struct Camera2D {
     float zoom;             // Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale
 } Camera2D;
 
+// Mesh index element type
+typedef enum MeshIndexType {
+    MESH_INDEX_UINT16 = 0,  // Indices are stored as unsigned short (legacy default)
+    MESH_INDEX_UINT32        // Indices are stored as unsigned int
+} MeshIndexType;
+
 // Mesh, vertex data and vao/vbo
 typedef struct Mesh {
     int vertexCount;        // Number of vertices stored in arrays
@@ -369,6 +375,10 @@ typedef struct Mesh {
     // OpenGL identifiers
     unsigned int vaoId;     // OpenGL Vertex Array Object id
     unsigned int *vboId;    // OpenGL Vertex Buffer Objects id (default vertex data)
+
+    // Extended index data (appended to preserve legacy Mesh field offsets)
+    unsigned int *indices32; // Vertex indices (u32, used when indexType is MESH_INDEX_UINT32)
+    MeshIndexType indexType; // Index data type (MESH_INDEX_UINT16 by default)
 } Mesh;
 
 // Shader

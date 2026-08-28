@@ -273,6 +273,8 @@
 
 // GL equivalent data types
 #define RL_UNSIGNED_BYTE                        0x1401      // GL_UNSIGNED_BYTE
+#define RL_UNSIGNED_SHORT                       0x1403      // GL_UNSIGNED_SHORT
+#define RL_UNSIGNED_INT                         0x1405      // GL_UNSIGNED_INT
 #define RL_FLOAT                                0x1406      // GL_FLOAT
 
 // GL buffer usage hint
@@ -751,8 +753,10 @@ RLAPI void rlSetVertexAttributeDivisor(unsigned int index, int divisor); // Set 
 RLAPI void rlSetVertexAttributeDefault(int locIndex, const void *value, int attribType, int count); // Set vertex attribute default value, when attribute to provided
 RLAPI void rlDrawVertexArray(int offset, int count);    // Draw vertex array (currently active vao)
 RLAPI void rlDrawVertexArrayElements(int offset, int count, const void *buffer); // Draw vertex array elements
+RLAPI void rlDrawVertexArrayElementsEx(int offset, int count, const void *buffer, int indexType); // Draw vertex array elements with the provided RL index type
 RLAPI void rlDrawVertexArrayInstanced(int offset, int count, int instances); // Draw vertex array (currently active vao) with instancing
 RLAPI void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances); // Draw vertex array elements with instancing
+RLAPI void rlDrawVertexArrayElementsInstancedEx(int offset, int count, const void *buffer, int instances, int indexType); // Draw vertex array elements with instancing and the provided RL index type
 
 // Textures management
 RLAPI unsigned int rlLoadTexture(const void *data, int width, int height, int format, int mipmapCount); // Load texture data
@@ -4077,11 +4081,26 @@ void rlDrawVertexArray(int offset, int count)
 // Draw vertex array elements
 void rlDrawVertexArrayElements(int offset, int count, const void *buffer)
 {
-    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
-    unsigned short *bufferPtr = (unsigned short *)buffer;
-    if (offset > 0) bufferPtr += offset;
+    rlDrawVertexArrayElementsEx(offset, count, buffer, RL_UNSIGNED_SHORT);
+}
 
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr);
+// Draw vertex array elements with a caller-provided index type
+void rlDrawVertexArrayElementsEx(int offset, int count, const void *buffer, int indexType)
+{
+    unsigned int glIndexType = (indexType == RL_UNSIGNED_INT)? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (indexType == RL_UNSIGNED_INT)
+    {
+        TRACELOG(LOG_WARNING, "RLGL: 32-bit element indices require OpenGL ES 3.0 or OES_element_index_uint support");
+        return;
+    }
+#endif
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    const int indexSize = (indexType == RL_UNSIGNED_INT)? (int)sizeof(unsigned int) : (int)sizeof(unsigned short);
+    const unsigned char *bufferPtr = (const unsigned char *)buffer;
+    if (offset > 0) bufferPtr += offset*indexSize;
+
+    glDrawElements(GL_TRIANGLES, count, glIndexType, bufferPtr);
 }
 
 // Draw vertex array instanced
@@ -4095,12 +4114,27 @@ void rlDrawVertexArrayInstanced(int offset, int count, int instances)
 // Draw vertex array elements instanced
 void rlDrawVertexArrayElementsInstanced(int offset, int count, const void *buffer, int instances)
 {
-#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
-    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
-    unsigned short *bufferPtr = (unsigned short *)buffer;
-    if (offset > 0) bufferPtr += offset;
+    rlDrawVertexArrayElementsInstancedEx(offset, count, buffer, instances, RL_UNSIGNED_SHORT);
+}
 
-    glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (const unsigned short *)bufferPtr, instances);
+// Draw vertex array elements with instancing and a caller-provided index type
+void rlDrawVertexArrayElementsInstancedEx(int offset, int count, const void *buffer, int instances, int indexType)
+{
+#if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
+    unsigned int glIndexType = (indexType == RL_UNSIGNED_INT)? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (indexType == RL_UNSIGNED_INT)
+    {
+        TRACELOG(LOG_WARNING, "RLGL: 32-bit element indices require OpenGL ES 3.0 or OES_element_index_uint support");
+        return;
+    }
+#endif
+    // NOTE: Added pointer math separately from function to avoid UBSAN complaining
+    const int indexSize = (indexType == RL_UNSIGNED_INT)? (int)sizeof(unsigned int) : (int)sizeof(unsigned short);
+    const unsigned char *bufferPtr = (const unsigned char *)buffer;
+    if (offset > 0) bufferPtr += offset*indexSize;
+
+    glDrawElementsInstanced(GL_TRIANGLES, count, glIndexType, bufferPtr, instances);
 #endif
 }
 

@@ -695,6 +695,7 @@ MODELS = \
     models/models_loading_m3d \
     models/models_loading_vox \
     models/models_mesh_generation \
+    models/models_mesh_u32_indices \
     models/models_mesh_picking \
     models/models_orthographic_projection \
     models/models_point_rendering \

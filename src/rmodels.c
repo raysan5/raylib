@@ -157,6 +157,10 @@
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
+static bool MeshHasIndices(const Mesh *mesh);            // Check whether a mesh has index data
+static const void *GetMeshIndexData(const Mesh *mesh);   // Get mesh index data pointer
+static unsigned int GetMeshIndex(const Mesh *mesh, int index); // Get one mesh index
+static unsigned int GetMeshIndexGLType(const Mesh *mesh); // Get RL element type for mesh indices
 #if SUPPORT_FILEFORMAT_OBJ
 static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #endif
@@ -1199,7 +1203,7 @@ bool IsModelValid(Model model)
         if ((model.meshes[i].colors != NULL) && (model.meshes[i].vboId[3] == 0)) { result = false; break; }     // Vertex colors buffer not uploaded to GPU
         if ((model.meshes[i].tangents != NULL) && (model.meshes[i].vboId[4] == 0)) { result = false; break; }   // Vertex tangents buffer not uploaded to GPU
         if ((model.meshes[i].texcoords2 != NULL) && (model.meshes[i].vboId[5] == 0)) { result = false; break; } // Vertex texcoords2 buffer not uploaded to GPU
-        if ((model.meshes[i].indices != NULL) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }    // Vertex indices buffer not uploaded to GPU
+        if (MeshHasIndices(&model.meshes[i]) && (model.meshes[i].vboId[6] == 0)) { result = false; break; }    // Vertex indices buffer not uploaded to GPU
 #if SUPPORT_GPU_SKINNING
         if ((model.meshes[i].boneIndices != NULL) && (model.meshes[i].vboId[7] == 0)) { result = false; break; } // Vertex boneIndices buffer not uploaded to GPU
         if ((model.meshes[i].boneWeights != NULL) && (model.meshes[i].vboId[8] == 0)) { result = false; break; } // Vertex boneWeights buffer not uploaded to GPU
@@ -1272,6 +1276,28 @@ BoundingBox GetModelBoundingBox(Model model)
     bounds.max = Vector3Transform(bounds.max, model.transform);
 
     return bounds;
+}
+
+// Check whether a mesh has index data in its selected format
+static bool MeshHasIndices(const Mesh *mesh)
+{
+    return ((mesh->indexType == MESH_INDEX_UINT32) && (mesh->indices32 != NULL)) ||
+           ((mesh->indexType != MESH_INDEX_UINT32) && (mesh->indices != NULL));
+}
+
+static const void *GetMeshIndexData(const Mesh *mesh)
+{
+    return (mesh->indexType == MESH_INDEX_UINT32)? (const void *)mesh->indices32 : (const void *)mesh->indices;
+}
+
+static unsigned int GetMeshIndex(const Mesh *mesh, int index)
+{
+    return (mesh->indexType == MESH_INDEX_UINT32)? mesh->indices32[index] : mesh->indices[index];
+}
+
+static unsigned int GetMeshIndexGLType(const Mesh *mesh)
+{
+    return (mesh->indexType == MESH_INDEX_UINT32)? RL_UNSIGNED_INT : RL_UNSIGNED_SHORT;
 }
 
 // Upload vertex data into a VAO (if supported) and VBO
@@ -1428,9 +1454,10 @@ void UploadMesh(Mesh *mesh, bool dynamic)
     }
 #endif
 
-    if (mesh->indices != NULL)
+    if (MeshHasIndices(mesh))
     {
-        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = rlLoadVertexBufferElement(mesh->indices, mesh->triangleCount*3*sizeof(unsigned short), dynamic);
+        int indexSize = (mesh->indexType == MESH_INDEX_UINT32)? (int)sizeof(unsigned int) : (int)sizeof(unsigned short);
+        mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES] = rlLoadVertexBufferElement(GetMeshIndexData(mesh), mesh->triangleCount*3*indexSize, dynamic);
     }
 
     if (mesh->vaoId > 0) TRACELOG(LOG_INFO, "VAO: [ID %i] Mesh uploaded successfully to VRAM (GPU)", mesh->vaoId);
@@ -1474,7 +1501,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
                    material.maps[MATERIAL_MAP_DIFFUSE].color.b,
                    material.maps[MATERIAL_MAP_DIFFUSE].color.a);
 
-        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, mesh.indices);
+        if (MeshHasIndices(&mesh)) rlDrawVertexArrayElementsEx(0, mesh.triangleCount*3, GetMeshIndexData(&mesh), GetMeshIndexGLType(&mesh));
         else rlDrawVertexArray(0, mesh.vertexCount);
     rlPopMatrix();
 
@@ -1644,7 +1671,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         }
 #endif
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
+        if (MeshHasIndices(&mesh)) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
     }
 
     int eyeCount = 1;
@@ -1666,7 +1693,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
         // Draw mesh
-        if (mesh.indices != NULL) rlDrawVertexArrayElements(0, mesh.triangleCount*3, 0);
+        if (MeshHasIndices(&mesh)) rlDrawVertexArrayElementsEx(0, mesh.triangleCount*3, 0, GetMeshIndexGLType(&mesh));
         else rlDrawVertexArray(0, mesh.vertexCount);
     }
 
@@ -1883,7 +1910,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         }
 #endif
 
-        if (mesh.indices != NULL) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
+        if (MeshHasIndices(&mesh)) rlEnableVertexBufferElement(mesh.vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES]);
     }
 
     int eyeCount = 1;
@@ -1905,7 +1932,7 @@ void DrawMeshInstanced(Mesh mesh, Material material, const Matrix *transforms, i
         rlSetUniformMatrix(material.shader.locs[SHADER_LOC_MATRIX_MVP], matModelViewProjection);
 
         // Draw mesh instanced
-        if (mesh.indices != NULL) rlDrawVertexArrayElementsInstanced(0, mesh.triangleCount*3, 0, instances);
+        if (MeshHasIndices(&mesh)) rlDrawVertexArrayElementsInstancedEx(0, mesh.triangleCount*3, 0, instances, GetMeshIndexGLType(&mesh));
         else rlDrawVertexArrayInstanced(0, mesh.vertexCount, instances);
     }
 
@@ -1956,6 +1983,7 @@ void UnloadMesh(Mesh mesh)
     RL_FREE(mesh.tangents);
     RL_FREE(mesh.texcoords2);
     RL_FREE(mesh.indices);
+    RL_FREE(mesh.indices32);
 
     // Unload mesh skin animation data
     RL_FREE(mesh.boneWeights);
@@ -2014,14 +2042,14 @@ bool ExportMesh(Mesh mesh, const char *fileName)
             byteCount += sprintf(txtData + byteCount, "vn %.4f %.4f %.4f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
-        if (mesh.indices != NULL)
+        if (MeshHasIndices(&mesh))
         {
             for (int i = 0, v = 0; i < mesh.triangleCount; i++, v += 3)
             {
                 byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n",
-                    mesh.indices[v] + 1, mesh.indices[v] + 1, mesh.indices[v] + 1,
-                    mesh.indices[v + 1] + 1, mesh.indices[v + 1] + 1, mesh.indices[v + 1] + 1,
-                    mesh.indices[v + 2] + 1, mesh.indices[v + 2] + 1, mesh.indices[v + 2] + 1);
+                    GetMeshIndex(&mesh, v) + 1, GetMeshIndex(&mesh, v) + 1, GetMeshIndex(&mesh, v) + 1,
+                    GetMeshIndex(&mesh, v + 1) + 1, GetMeshIndex(&mesh, v + 1) + 1, GetMeshIndex(&mesh, v + 1) + 1,
+                    GetMeshIndex(&mesh, v + 2) + 1, GetMeshIndex(&mesh, v + 2) + 1, GetMeshIndex(&mesh, v + 2) + 1);
             }
         }
         else
@@ -4273,11 +4301,11 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
             Vector3 c = { 0 };
             Vector3 *vertdata = (Vector3 *)mesh.vertices;
 
-            if (mesh.indices)
+            if (MeshHasIndices(&mesh))
             {
-                a = vertdata[mesh.indices[i*3 + 0]];
-                b = vertdata[mesh.indices[i*3 + 1]];
-                c = vertdata[mesh.indices[i*3 + 2]];
+                a = vertdata[GetMeshIndex(&mesh, i*3 + 0)];
+                b = vertdata[GetMeshIndex(&mesh, i*3 + 1)];
+                c = vertdata[GetMeshIndex(&mesh, i*3 + 2)];
             }
             else
             {
@@ -6089,7 +6117,7 @@ static Model LoadGLTF(const char *fileName)
 
                     model.meshes[meshIndex].triangleCount = (int)attribute->count/3;
 
-                    if (model.meshes[meshIndex].indices != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Indices attribute data already loaded", fileName);
+                    if (MeshHasIndices(&model.meshes[meshIndex])) TRACELOG(LOG_WARNING, "MODEL: [%s] Indices attribute data already loaded", fileName);
                     else
                     {
                         if (attribute->component_type == cgltf_component_type_r_16u)
@@ -6109,11 +6137,10 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else if (attribute->component_type == cgltf_component_type_r_32u)
                         {
-                            // Init raylib mesh indices to copy glTF attribute data
-                            model.meshes[meshIndex].indices = (unsigned short *)RL_MALLOC(attribute->count*sizeof(unsigned short));
-                            LOAD_ATTRIBUTE_CAST(attribute, 1, unsigned int, model.meshes[meshIndex].indices, unsigned short);
-
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data converted from u32 to u16, possible loss of data", fileName);
+                            // Preserve glTF u32 indices to avoid truncating meshes with more than 65535 vertices
+                            model.meshes[meshIndex].indices32 = (unsigned int *)RL_MALLOC(attribute->count*sizeof(unsigned int));
+                            model.meshes[meshIndex].indexType = MESH_INDEX_UINT32;
+                            LOAD_ATTRIBUTE(attribute, 1, unsigned int, model.meshes[meshIndex].indices32)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Indices data format not supported, use u16", fileName);
                     }
