@@ -7,7 +7,7 @@ rexm is a raylib support tool to help to manage the raylib examples collection.
 
 raylib has a big collection of examples to learn how to use the library. It started with just a few examples and it has grown to +160 in the last 12 years, with many of those examples contributed by the community (~50%).
 
-**Managing those examples has become a considerable amount of work.** Some years ago an [examples template](https://github.com/raysan5/raylib/blob/master/examples/examples_template.c) was created to standarize examples format and contents, it simplified the review process but implementing a new example is not enough; adding/modifying an new example from the collection implies a series of actions:
+**Managing those examples has become a considerable amount of work.** Some years ago an [examples template](https://github.com/raysan5/raylib/blob/master/examples/examples_template.c) was created to standardize examples format and contents, it simplified the review process but implementing a new example is not enough; adding/modifying a new example from the collection implies a series of actions:
 
  - Create the example `.c` code file, **following provided [examples template](https://github.com/raysan5/raylib/blob/master/examples/examples_template.c) guidelines**.
     - Make sure example header lists all required metadata information
@@ -18,11 +18,11 @@ raylib has a big collection of examples to learn how to use the library. It star
     - Examples `Makefile`: multi-platform build configuration
     - Examples `Makefile.Web`: specific Web building configuration
     - raylib Visual Studio 2022 solution: Include a separate project with example, in correct category
- - Add example to examples `README.md` table, in corerct category
+ - Add example to examples `README.md` table, in correct category
  - Compile example for Web and upload to `raylib.com` open-source repository
  - Update `raylib.com` webpage to include example running on real-time
- 
-All the following files need to be require to be review every time an examples is added or modified:
+
+All the following files are required to be reviewed every time an example is added or modified:
 
 ```
   - Add: raylib/examples/<category>/<category>_example_name.c
@@ -56,6 +56,8 @@ The following commands are supported by `rexm` to manage examples:
   rename <old_examples_name> <new_example_name> : Rename an existing example
   remove <example_name>         : Remove an existing example
   build <example_name>          : Build example for Desktop and Web platforms
+  test <example_name>           : Build and Test example for Desktop and Web platforms
+  testlog <example_name>        : Validate test logs, generates report
   validate                      : Validate examples collection, generates report
   update                        : Validate and update examples collection, generates report
 ```
@@ -68,11 +70,11 @@ As we were able to detect possible examples errors and inconsistencies, an addit
 
 ## `rexm` technology used
 
-Usually this kind of pipelines are implemented with high-level scripting languages like Python due to all the functionality already provided, specially useful for files/paths management or text files editing but those languages also require the interpreter available to run. I decided to follow a less common route, implementing the tool directly in C, the language I use for raylib and all my tools. 
+Usually these kinds of pipelines are implemented with high-level scripting languages like Python due to all the functionality already provided, specially useful for files/paths management or text files editing but those languages also require the interpreter available to run. I decided to follow a less common route, implementing the tool directly in C, the language I use for raylib and all my tools. 
 
-C standard library does not provide a lot of the high-level functionality required for files and text management but here is where raylib came to the rescue. raylib already contained some functions to work with the file system and to manage text, so I decided to implement the required additional ones to use raylib on pipelines building. 
+C standard library does not provide a lot of the high-level functionality required for files and text management but here is where raylib came to the rescue. raylib already contained some functions to work with the file system and to manage text, so I decided to implement the required additional ones to use raylib on pipelines building.
 
-The main benefit of using C and raylib is that the pipeline can be created in C and it can be build int an independent multi-platform dependency-free executable tool; it also open the door for a possible expansion into a UI interface, if required in the future.
+The main benefit of using C and raylib is that the pipeline can be created in C and it can be build int an independent multi-platform dependency-free executable tool; it also opens the door for a possible expansion into a UI interface, if required in the future.
 
 As mentioned, implementing the pipeline in C with raylib required some additional support functions to be added, to simplify some tasks and align with functionality provided by high-level languages; but it was not dramatic and the truth is that the development process just flowed smoothly.
 
@@ -97,6 +99,31 @@ char *TextReplaceBetween(const char *text, const char *begin, const char *end, c
 ```
 
 **These functions have been added to raylib main library.**
+
+## Environment Setup
+
+Programs that are expected when executing commands:
+
+  - `make`  : Required for most commands.
+  - `python`: Only used for `test` when `BUILD_TESTING_WEB` is defined (Python 3 specifically.)
+  - `git`   : Only used for `rename` when `RENAME_AUTO_COMMIT_CREATION` is defined.
+
+OS specific guidance:
+  - Linux: Everything should already be installed and available.
+  - Windows: Make sure the directories containing these programs are on your PATH.
+    - You can define `USE_MINGW_MAKE` to make rexm use `mingw32-make`.
+
+Environment variables that are expected when executing commands:
+
+  - `REXM_EXAMPLES_BASE_PATH`               : "path/to/raylib-repo/examples"
+  - `REXM_EXAMPLES_TEMPLATE_FILE_PATH`      : "path/to/raylib-repo/examples/examples_template.c"
+  - `REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH`: "path/to/raylib-repo/examples/examples_template.png"
+  - `REXM_EXAMPLES_COLLECTION_FILE_PATH`    : "path/to/raylib-repo/examples/examples_list.txt"
+  - `REXM_EXAMPLES_VS2022_SLN_FILE`         : "path/to/raylib-repo/projects/VS2022/raylib.sln"
+  - `REXM_EXAMPLES_WEB_PATH`                : "path/to/raylib.com-repo/examples"
+    - [raylib.com repo](https://github.com/raysan5/raylib.com)
+  - `EMSDK_PATH`                            : "path/to/emsdk"
+    - [Emscripten SDK](https://github.com/emscripten-core/emsdk)
 
 ## License
 

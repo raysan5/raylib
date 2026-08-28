@@ -70,6 +70,12 @@
 #define REXM_MAX_RESOURCE_PATHS         256
 #define REXM_MAX_RESOURCE_PATH_LENGTH   256
 
+#if defined(_WIN32) && defined(USE_MINGW_MAKE)
+    #define MAKE_COMMAND "mingw32-make"
+#else
+    #define MAKE_COMMAND "make"
+#endif
+
 // Create local commit with changes on example renaming
 //#define RENAME_AUTO_COMMIT_CREATION
 
@@ -242,6 +248,38 @@ int main(int argc, char *argv[])
     if (!exCollectionFilePath) exCollectionFilePath = "../../examples/examples_list.txt";
     if (!exVSProjectSolutionFile) exVSProjectSolutionFile = "../../projects/VS2022/raylib.sln";
 #endif
+
+    // Make sure required paths exist
+    if (!DirectoryExists(exBasePath))
+    {
+        LOG("ERROR: Could not find raylib examples directory (hint: environment variable 'REXM_EXAMPLES_BASE_PATH')\n");
+        return 1;
+    }
+    if (!DirectoryExists(exWebPath))
+    {
+        LOG("ERROR: Could not find raylib.com examples directory (hint: environment variable 'REXM_EXAMPLES_WEB_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exTemplateFilePath))
+    {
+        LOG("ERROR: Could not find examples template file (hint: environment variable 'REXM_EXAMPLES_TEMPLATE_FILE_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exTemplateScreenshot))
+    {
+        LOG("ERROR: Could not find examples template screenshot (hint: environment variable 'REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exCollectionFilePath))
+    {
+        LOG("ERROR: Could not find examples collection file (hint: environment variable 'REXM_EXAMPLES_COLLECTION_FILE_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exVSProjectSolutionFile))
+    {
+        LOG("ERROR: Could not find VS solution file (hint: environment variable 'REXM_EXAMPLES_VS2022_SLN_FILE')\n");
+        return 1;
+    }
 
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
@@ -671,7 +709,7 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
-            // NOTE: Tools requirements: emscripten, w64devkit
+            // NOTE: Tools requirements: emscripten, make
             // Compile to: raylib.com/examples/<category>/<category>_example_name.html
             // Compile to: raylib.com/examples/<category>/<category>_example_name.data
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
@@ -681,11 +719,10 @@ int main(int argc, char *argv[])
             // WARNING 2: raylib.a and raylib.web.a must be available when compiling locally
 #if defined(_WIN32)
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", GetFileNameWithoutExt(inFileName));
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
 #else
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", GetFileNameWithoutExt(inFileName));
 #endif
-            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 
             // Update generated .html metadata
             LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
@@ -781,10 +818,7 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-#if defined(_WIN32)
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-#endif
-            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+            system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 
             // Update generated .html metadata
             UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exRename),
@@ -802,14 +836,13 @@ int main(int argc, char *argv[])
 
 #if defined(RENAME_AUTO_COMMIT_CREATION)
             // Create GitHub commit with changes (local)
-            putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
-            ChangeDirectory("C:\\GitHub\\raylib");
+            ChangeDirectory(TextFormat("%s/..", exBasePath));
             system("git --version");
             system("git status");
             system("git add -A");
             int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-            ChangeDirectory("C:/GitHub/raylib.com");
+            ChangeDirectory(TextFormat("%s/..", exWebPath));
             system("git add -A");
             result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
@@ -917,13 +950,6 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: BUILD\n");
             LOG("INFO: Example(s) to be built: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-#if defined(_WIN32)
-            // Set required environment variables
-            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=make");
-            //ChangeDirectory(exBasePath);
-#endif
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -937,14 +963,14 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
 
 #if !defined(PLATFORM_DRM)
@@ -954,7 +980,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
                 LOG("INFO: [%s] Building example for PLATFORM_WEB\n", exName);
-                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+                system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
 
                 // Update generated .html metadata
                 LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
@@ -1319,11 +1345,10 @@ int main(int argc, char *argv[])
                             // Build example for PLATFORM_WEB
                         #if defined(_WIN32)
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exInfo->name);
-                            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                         #else
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
                         #endif
-                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                            system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
 
                             // Update generated .html metadata
                             LOG("INFO: [%s.html] Updating HTML Metadata...\n", exInfo->name);
@@ -1498,21 +1523,6 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: TEST\n");
             LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-#if defined(_WIN32)
-            // Set required environment variables
-            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-            //_putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=make");
-            //ChangeDirectory(exBasePath);
-            //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
-            //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
-            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.13.3_64bit");
-            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\22.16.0_64bit\\bin");
-            //_putenv("PATH=%PATH%;$(MAKE_PATH);$(EMSDK_PATH);$(NODE_PATH);$(PYTHON_PATH)");
-
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.13.3_64bit;C:\\raylib\\emsdk\\node\\22.16.0_64bit\\bin");
-#endif
-
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -1599,11 +1609,11 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+                system(TextFormat(MAKE_COMMAND" -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
@@ -1644,25 +1654,18 @@ int main(int argc, char *argv[])
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
                 // STEP 2: Build example for DESKTOP platform
-    #if defined(_WIN32)
-                // Set required environment variables
-                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=make");
-                //ChangeDirectory(exBasePath);
-    #endif
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                system(TextFormat(MAKE_COMMAND" -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
@@ -1898,6 +1901,7 @@ int main(int argc, char *argv[])
             printf("    remove <example_name>         : Remove an existing example\n");
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
             printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
+            printf("    testlog <example_name>        : Validate test logs, generates report\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
 
