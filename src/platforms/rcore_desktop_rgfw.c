@@ -1329,7 +1329,12 @@ Image GetClipboardImage(void)
     fileData = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
+    else
+    {
+        image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
+
+        RL_FREE(fileData);
+    }
 
 #elif defined(__linux__) && defined(DRGFW_X11)
 
