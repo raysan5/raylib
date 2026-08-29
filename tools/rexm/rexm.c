@@ -1517,6 +1517,9 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: TEST\n");
             LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
+            // Create directory for logs (build and run logs)
+            MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
+
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -1531,9 +1534,6 @@ int main(int argc, char *argv[])
                     (strcmp(exName, "core_custom_frame_control") == 0)) continue;
 
                 LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
-
-                // Create directory for logs (build and run logs)
-                MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
 
                 // Steps to follow
                 // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
@@ -1580,17 +1580,22 @@ int main(int argc, char *argv[])
                     "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 static const char *returnReplaceText =
-                    "    SaveFileText(\"outputLogFileName\", logText);\n"
-                    "    emscripten_run_script(\"saveFileFromMEMFSToDisk('outputLogFileName','outputLogFileName')\");\n\n"
+                    "    SaveFileText(\"memoryFsName\", logText);\n"
+                    "    emscripten_run_script(\"saveFileFromMEMFSToDisk('memoryFsName','localPath')\");\n\n"
                     "    return 0";
-                char *returnReplaceTextUpdated = TextReplaceAlloc(returnReplaceText, "outputLogFileName", TextFormat("%s.log", exName));
+                char *returnReplaceTextUpdated[2] = { 0 };
+                returnReplaceTextUpdated[0] = TextReplaceAlloc(returnReplaceText, "memoryFsName", TextFormat("%s.log", exName));
+                // The path we specify will be relative to the directory containing the example's javascript file
+                // The javascript files are already in `exBasePath/exCategory`, so we don't need to specify the category directory
+                returnReplaceTextUpdated[1] = TextReplaceAlloc(returnReplaceTextUpdated[0], "localPath", TextFormat("logs/%s.log", exName));
 
                 char *srcTextUpdated[4] = { 0 };
                 srcTextUpdated[0] = TextReplaceAlloc(srcText, "int main(void)\n{", mainReplaceText);
                 srcTextUpdated[1] = TextReplaceAlloc(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
                 srcTextUpdated[2] = TextReplaceAlloc(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
-                srcTextUpdated[3] = TextReplaceAlloc(srcTextUpdated[2], "    return 0", returnReplaceTextUpdated);
-                MemFree(returnReplaceTextUpdated);
+                srcTextUpdated[3] = TextReplaceAlloc(srcTextUpdated[2], "    return 0", returnReplaceTextUpdated[1]);
+
+                for (int i = 0; i < 2; i++) { MemFree(returnReplaceTextUpdated[i]); returnReplaceTextUpdated[i] = NULL; }
                 UnloadFileText(srcText);
 
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
@@ -1621,8 +1626,11 @@ int main(int argc, char *argv[])
                 {
                     // WARNING: Example download is asynchronous so reading fails on next step
                     // when looking for a file that could not have been downloaded yet
-                    ChangeDirectory(TextFormat("%s", exBasePath));
-                    if (i == 0) system("start python -m http.server 38080"); // Init localhost just once
+                    if (i == 0)
+                    {
+                        ChangeDirectory(TextFormat("%s", exBasePath));
+                        system("start python rexm_web_test_server.py"); // Init localhost just once
+                    }
                     system(TextFormat("start explorer \"http:\\localhost:38080/%s/%s.html", exCategory, exName));
                 }
 
