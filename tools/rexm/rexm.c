@@ -1622,8 +1622,8 @@ int main(int argc, char *argv[])
                     // WARNING: Example download is asynchronous so reading fails on next step
                     // when looking for a file that could not have been downloaded yet
                     ChangeDirectory(TextFormat("%s", exBasePath));
-                    if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
-                    system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
+                    if (i == 0) system("start python -m http.server 38080"); // Init localhost just once
+                    system(TextFormat("start explorer \"http:\\localhost:38080/%s/%s.html", exCategory, exName));
                 }
 
                 // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
