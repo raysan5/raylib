@@ -79,7 +79,11 @@
     #include <poll.h>       // Required for: drmHandleEvent() poll
     #include <errno.h>      // Required for: EBUSY, EAGAIN
 
-    #define MAX_DRM_CACHED_BUFFERS  3
+    // NOTE: Some drivers rotate more buffers than others, mesa uses 3 but the
+    // ARM Mali blob on RK3326 uses 4. A buffer beyond this count can not get a
+    // framebuffer and the display stops updating for good, so this must not be
+    // lower than any driver in use
+    #define MAX_DRM_CACHED_BUFFERS  4
 #endif
 
 #ifndef EGL_OPENGL_ES3_BIT
@@ -110,6 +114,9 @@ typedef struct {
     drmModeCrtc *crtc;                  // CRT Controller
     int modeIndex;                      // Index of the used mode of connector->modes
     uint32_t prevFB;                    // Previous DRM framebufer (during frame swapping)
+#if defined(SUPPORT_DRM_CACHE)
+    bool fbCacheFullReported;           // Framebuffer cache exhaustion already reported
+#endif
 
 #if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     struct gbm_device *gbmDevice;       // GBM device
@@ -624,7 +631,18 @@ static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
     }
 
     // Create new entry if cache not full
-    if (fbCacheCount >= MAX_DRM_CACHED_BUFFERS) return 0; // FB cache full
+    if (fbCacheCount >= MAX_DRM_CACHED_BUFFERS)
+    {
+        // NOTE: Once this happens no page flip is ever scheduled again and the
+        // screen freezes while the game keeps running, so say it out loud once
+        if (!platform.fbCacheFullReported)
+        {
+            platform.fbCacheFullReported = true;
+            TRACELOG(LOG_WARNING, "DISPLAY: DRM: Framebuffer cache full (%i buffers), display will stop updating", MAX_DRM_CACHED_BUFFERS);
+        }
+
+        return 0; // FB cache full
+    }
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
     uint32_t stride = gbm_bo_get_stride(bo);
