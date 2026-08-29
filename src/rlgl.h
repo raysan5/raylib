@@ -1452,7 +1452,8 @@ void rlBegin(int mode)
 {
     // Draw mode can be RL_LINES, RL_TRIANGLES and RL_QUADS
     // NOTE: In all three cases, vertex are accumulated over default internal vertex buffer
-    if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode)
+    if ((RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode != mode) ||
+        (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId != RLGL.State.currentTextureId))
     {
         if (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount > 0)
         {
@@ -1476,7 +1477,7 @@ void rlBegin(int mode)
 
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].mode = mode;
         RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].textureId = RLGL.State.currentTextureId;
-        RLGL.State.currentTextureId = RLGL.State.defaultTextureId;
+        RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount = 0;
     }
 }
 
