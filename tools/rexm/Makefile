@@ -345,6 +345,7 @@ $(PROJECT_NAME): $(OBJS)
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
+		SHELL=cmd
 		del *.o *.exe /s
     endif
     ifeq ($(PLATFORM_OS),LINUX)
