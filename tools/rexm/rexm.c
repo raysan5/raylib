@@ -1729,12 +1729,8 @@ int main(int argc, char *argv[])
                 UnloadTextLines(exTestBuildLogLines, exTestBuildLogLinesCount);
                 UnloadFileText(exTestBuildLog);
 
-#if defined(BUILD_TESTING_WEB)
-                // TODO: REVIEW: Hardcoded path where web logs are copied after automatic download
-                char *exTestLog = LoadFileText(TextFormat("D:/testing_logs_web/%s.log", exName));
-#else
                 char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
-#endif
+
                 if (exTestLog == NULL)
                 {
                     LOG("WARNING: [%s] Execution log could not be loaded\n", exName);
