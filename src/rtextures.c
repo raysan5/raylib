@@ -4396,11 +4396,11 @@ RenderTexture2D LoadRenderTexture(int width, int height)
 
 // Load texture for rendering (framebuffer), with specific format
 // NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
-RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int pixelFormat)
+RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int format)
 {
     RenderTexture2D target = { 0 };
 
-    if (pixelFormat >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    if (format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
         TRACELOG(LOG_WARNING, "FBO: Render texture format not supported");
         return target;
@@ -4413,10 +4413,10 @@ RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int pixelFormat
         rlEnableFramebuffer(target.id);
 
         // Create color texture (default to RGBA)
-        target.texture.id = rlLoadTexture(NULL, width, height, pixelFormat, 1);
+        target.texture.id = rlLoadTexture(NULL, width, height, format, 1);
         target.texture.width = width;
         target.texture.height = height;
-        target.texture.format = pixelFormat;
+        target.texture.format = format;
         target.texture.mipmaps = 1;
 
         // Create depth renderbuffer/texture
