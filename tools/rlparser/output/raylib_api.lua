@@ -6537,6 +6537,16 @@ return {
       }
     },
     {
+      name = "LoadRenderTextureEx",
+      description = "Load texture for rendering (framebuffer), with specific format",
+      returnType = "RenderTexture2D",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "int", name = "pixelFormat"}
+      }
+    },
+    {
       name = "IsTextureValid",
       description = "Check if texture is valid (loaded in GPU)",
       returnType = "bool",
