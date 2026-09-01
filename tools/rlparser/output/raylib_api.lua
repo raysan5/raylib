@@ -6543,7 +6543,7 @@ return {
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"},
-        {type = "int", name = "pixelFormat"}
+        {type = "int", name = "format"}
       }
     },
     {

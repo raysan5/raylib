@@ -2309,7 +2309,7 @@
         <Function name="LoadRenderTextureEx" retType="RenderTexture2D" paramCount="3" desc="Load texture for rendering (framebuffer), with specific format">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
-            <Param type="int" name="pixelFormat" desc="" />
+            <Param type="int" name="format" desc="" />
         </Function>
         <Function name="IsTextureValid" retType="bool" paramCount="1" desc="Check if texture is valid (loaded in GPU)">
             <Param type="Texture2D" name="texture" desc="" />

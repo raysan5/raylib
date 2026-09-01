@@ -9140,7 +9140,7 @@
         },
         {
           "type": "int",
-          "name": "pixelFormat"
+          "name": "format"
         }
       ]
     },

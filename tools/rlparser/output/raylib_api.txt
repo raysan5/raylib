@@ -3476,7 +3476,7 @@ Function 388: LoadRenderTextureEx() (3 input parameters)
   Description: Load texture for rendering (framebuffer), with specific format
   Param[1]: width (type: int)
   Param[2]: height (type: int)
-  Param[3]: pixelFormat (type: int)
+  Param[3]: format (type: int)
 Function 389: IsTextureValid() (1 input parameters)
   Name: IsTextureValid
   Return type: bool

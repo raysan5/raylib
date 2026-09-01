@@ -4936,7 +4936,7 @@
      (params
        ((type "int") (name "width"))
        ((type "int") (name "height"))
-       ((type "int") (name "pixelFormat"))))
+       ((type "int") (name "format"))))
 
     ((name "IsTextureValid")
      (description "Check if texture is valid (loaded in GPU)")
