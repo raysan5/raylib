@@ -3977,10 +3977,10 @@ void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color col
 
     while (y >= x)
     {
-        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2, 1, color);
-        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2, 1, color);
+        ImageDrawRectangle(dst, centerX - x, centerY + y, x*2 + 1, 1, color);
+        ImageDrawRectangle(dst, centerX - x, centerY - y, x*2 + 1, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY + x, y*2 + 1, 1, color);
+        ImageDrawRectangle(dst, centerX - y, centerY - x, y*2 + 1, 1, color);
         x++;
 
         if (decesionParameter > 0)
