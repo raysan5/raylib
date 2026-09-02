@@ -874,7 +874,11 @@ typedef enum {
     PIXELFORMAT_COMPRESSED_PVRT_RGB,        // 4 bpp
     PIXELFORMAT_COMPRESSED_PVRT_RGBA,       // 4 bpp
     PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA    // 2 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA,    // 2 bpp
+    PIXELFORMAT_UNCOMPRESSED_R32I,           // 32 bpp (1 channel - int)
+    PIXELFORMAT_UNCOMPRESSED_R32UI,           // 32 bpp (1 channel - uint)
+    PIXELFORMAT_UNCOMPRESSED_R16I,           // 16 bpp (1 channel - short)
+    PIXELFORMAT_UNCOMPRESSED_R16UI,           // 16 bpp (1 channel - ushort)
 } PixelFormat;
 
 // Texture parameters: filter mode
@@ -1284,7 +1288,6 @@ RLAPI void DrawLineDashed(Vector2 startPos, Vector2 endPos, int dashSize, int sp
 RLAPI void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                // Draw a color-filled triangle, counter-clockwise vertex order
 RLAPI void DrawTriangleGradient(Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2, Color c3);       // Draw triangle with interpolated colors, counter-clockwise vertex/color order
 RLAPI void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                           // Draw triangle outline, counter-clockwise vertex order
-RLAPI void DrawTriangleLinesEx(Vector2 v1, Vector2 v2, Vector2 v3, float thick, Color color);            // Draw triangle outline with line thickness, counter-clockwise vertex order
 RLAPI void DrawTriangleFan(const Vector2 *points, int pointCount, Color color);                          // Draw a triangle fan defined by points (first vertex is the center)
 RLAPI void DrawTriangleStrip(const Vector2 *points, int pointCount, Color color);                        // Draw a triangle strip defined by points
 RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
@@ -1307,7 +1310,6 @@ RLAPI void DrawCircleV(Vector2 center, float radius, Color color);              
 RLAPI void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer);                   // Draw a gradient-filled circle
 RLAPI void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw a piece of a circle
 RLAPI void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color); // Draw circle sector outline
-RLAPI void DrawCircleSectorLinesEx(Vector2 center, float radius, float startAngle, float endAngle, int segments, float thick, Color color); // Draw circle sector outline with thickness
 RLAPI void DrawCircleLines(int centerX, int centerY, float radius, Color color);                         // Draw circle outline
 RLAPI void DrawCircleLinesV(Vector2 center, float radius, Color color);                                  // Draw circle outline (Vector version)
 RLAPI void DrawCircleLinesEx(Vector2 center, float radius, float thick, Color color);                    // Draw circle outline with line thickness
@@ -1315,10 +1317,8 @@ RLAPI void DrawEllipse(int centerX, int centerY, float radiusH, float radiusV, C
 RLAPI void DrawEllipseV(Vector2 center, float radiusH, float radiusV, Color color);                      // Draw ellipse (Vector version)
 RLAPI void DrawEllipseLines(int centerX, int centerY, float radiusH, float radiusV, Color color);        // Draw ellipse outline
 RLAPI void DrawEllipseLinesV(Vector2 center, float radiusH, float radiusV, Color color);                 // Draw ellipse outline (Vector version)
-RLAPI void DrawEllipseLinesEx(Vector2 center, float radiusH, float radiusV, float thick, Color color);   // Draw ellipse outline with line thickness
 RLAPI void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color); // Draw ring
 RLAPI void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, Color color); // Draw ring outline
-RLAPI void DrawRingLinesEx(Vector2 center, float innerRadius, float outerRadius, float startAngle, float endAngle, int segments, float thick, Color color); // Draw ring outline with line thickness
 
 // Splines drawing functions
 RLAPI void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color color);            // Draw spline: Linear, minimum 2 points
@@ -1461,6 +1461,7 @@ RLAPI Texture2D LoadTexture(const char *fileName);                              
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                        // Load cubemap from image, multiple image cubemap layouts supported
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
+RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int format);                            // Load texture for rendering (framebuffer)
 RLAPI bool IsTextureValid(Texture2D texture);                                                            // Check if texture is valid (loaded in GPU)
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI bool IsRenderTextureValid(RenderTexture2D target);                                                 // Check if render texture is valid (loaded in GPU)

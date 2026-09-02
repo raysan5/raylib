@@ -315,7 +315,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
         unsigned char *dataPtr = fileData;
         int size = GetPixelDataSize(width, height, format);
 
-        if (size <= dataSize) // Security check
+        if (size <= dataSize)   // Security check
         {
             // Offset file data to expected raw image by header size
             if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
@@ -589,7 +589,7 @@ Image LoadImageFromTexture(Texture2D texture)
 {
     Image image = { 0 };
 
-    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB || texture.format >= PIXELFORMAT_UNCOMPRESSED_R32I)
     {
         image.data = rlReadTexturePixels(texture.id, texture.width, texture.height, texture.format);
 
@@ -1233,7 +1233,7 @@ Image ImageFromImage(Image image, Rectangle rec)
     // Security check to avoid program crash
     if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
 
-    if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB || image.format >= PIXELFORMAT_UNCOMPRESSED_R32I)
 	{
         // Basic rectangle validation: size smaller than image size
         if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
@@ -1281,7 +1281,7 @@ void ImageCrop(Image *image, Rectangle crop)
     }
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -1322,7 +1322,7 @@ void ImageFormat(Image *image, int newFormat)
 
     if ((newFormat != 0) && (image->format != newFormat))
     {
-        if ((image->format < PIXELFORMAT_COMPRESSED_DXT1_RGB) && (newFormat < PIXELFORMAT_COMPRESSED_DXT1_RGB))
+        if ((image->format < PIXELFORMAT_COMPRESSED_DXT1_RGB || image->format >= PIXELFORMAT_UNCOMPRESSED_R32I) && (newFormat < PIXELFORMAT_COMPRESSED_DXT1_RGB || newFormat >= PIXELFORMAT_UNCOMPRESSED_R32I))
         {
             Vector4 *pixels = LoadImageDataNormalized(*image);     // Supports 8 to 32 bit per channel
 
@@ -1445,6 +1445,28 @@ void ImageFormat(Image *image, int newFormat)
                         ((float *)image->data)[i] = (float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f);
                     }
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32I:
+                {
+                    // WARNING: Image is converted to GRAYSCALE equivalent 32bit
+
+                    image->data = (int *)RL_MALLOC(image->width*image->height*sizeof(int));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((int *)image->data)[i] = (int)((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f) * (float)0x7FFFFFFF);
+                    }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32UI:
+                {
+                    // WARNING: Image is converted to GRAYSCALE equivalent 32bit
+
+                    image->data = (unsigned int *)RL_MALLOC(image->width*image->height*sizeof(unsigned int));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((unsigned int *)image->data)[i] = (unsigned int)((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f) * (float)0xFFFFFFFF);
+                    }
+                } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     image->data = (float *)RL_MALLOC(image->width*image->height*3*sizeof(float));
@@ -1477,6 +1499,28 @@ void ImageFormat(Image *image, int newFormat)
                     for (int i = 0; i < image->width*image->height; i++)
                     {
                         ((unsigned short *)image->data)[i] = FloatToHalf((float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f));
+                    }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16UI:
+                {
+                    // WARNING: Image is converted to GRAYSCALE equivalent 16bit
+
+                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((unsigned short *)image->data)[i] = (unsigned short)((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f) * 0xFFFF);
+                    }
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16I:
+                {
+                    // WARNING: Image is converted to GRAYSCALE equivalent 16bit
+
+                    image->data = (short *)RL_MALLOC(image->width*image->height*sizeof(short));
+
+                    for (int i = 0; i < image->width*image->height; i++)
+                    {
+                        ((short *)image->data)[i] = (short)((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f) * 0x7FFF);
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
@@ -1619,7 +1663,11 @@ Image ImageFromChannel(Image image, int selectedChannel)
 
     if (image.format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE ||
         image.format == PIXELFORMAT_UNCOMPRESSED_R32 ||
-        image.format == PIXELFORMAT_UNCOMPRESSED_R16)
+        image.format == PIXELFORMAT_UNCOMPRESSED_R32I ||
+        image.format == PIXELFORMAT_UNCOMPRESSED_R32UI ||
+        image.format == PIXELFORMAT_UNCOMPRESSED_R16 || 
+        image.format == PIXELFORMAT_UNCOMPRESSED_R16I || 
+        image.format == PIXELFORMAT_UNCOMPRESSED_R16UI)
     {
         if (selectedChannel > 0)
         {
@@ -1662,7 +1710,7 @@ Image ImageFromChannel(Image image, int selectedChannel)
 
     unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width*image.height, sizeof(unsigned char)); // Values from 0 to 255
 
-    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image.format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         for (int i = 0, k = 0; i < image.width*image.height; i++)
@@ -1728,6 +1776,18 @@ Image ImageFromChannel(Image image, int selectedChannel)
                     k += 1;
 
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32I:
+                {
+                    pixelValue = ((int*)image.data)[k] / (double)0x7FFFFFFF;
+                    k += 1;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32UI:
+                {
+                    pixelValue = ((unsigned int*)image.data)[k] / (double)0xFFFFFFFF;
+                    k += 1;
+
+                } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     pixelValue = ((float *)image.data)[k + selectedChannel];
@@ -1743,6 +1803,18 @@ Image ImageFromChannel(Image image, int selectedChannel)
                 case PIXELFORMAT_UNCOMPRESSED_R16:
                 {
                     pixelValue = HalfToFloat(((unsigned short *)image.data)[k]);
+                    k += 1;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16I:
+                {
+                    pixelValue = ((short*)image.data)[k] / (double)0x7FFF;
+                    k += 1;
+
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16UI:
+                {
+                    pixelValue = ((unsigned short*)image.data)[k] / (double)0xFFFF;
                     k += 1;
 
                 } break;
@@ -1874,7 +1946,7 @@ void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, i
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else if ((newWidth != image->width) || (newHeight != image->height))
     {
         Rectangle srcRec = { 0, 0, (float)image->width, (float)image->height };
@@ -1970,7 +2042,7 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         switch (image->format)
@@ -2075,7 +2147,7 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Alpha mask must be same size as image");
     }
-    else if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    else if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Alpha mask can not be applied to compressed data formats");
     }
@@ -2507,7 +2579,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I)
     {
         TRACELOG(LOG_WARNING, "IMAGE: Compressed data formats can not be dithered");
         return;
@@ -2623,7 +2695,7 @@ void ImageFlipVertical(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -2647,7 +2719,7 @@ void ImageFlipHorizontal(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -2692,7 +2764,7 @@ void ImageRotate(Image *image, int degrees)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         float rad = degrees*PI/180.0f;
@@ -2755,7 +2827,7 @@ void ImageRotateCW(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -2787,7 +2859,7 @@ void ImageRotateCCW(Image *image)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
-    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
+    if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
@@ -3016,14 +3088,18 @@ Color *LoadImageColors(Image image)
 
     Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
 
-    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image.format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         if ((image.format == PIXELFORMAT_UNCOMPRESSED_R32) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R32I) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R32UI) ||
             (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
             (image.format == PIXELFORMAT_UNCOMPRESSED_R32G32B32A32)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 32bit to 8bit per channel");
 
         if ((image.format == PIXELFORMAT_UNCOMPRESSED_R16) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R16I) ||
+            (image.format == PIXELFORMAT_UNCOMPRESSED_R16UI) ||
             (image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16) ||
             (image.format == PIXELFORMAT_UNCOMPRESSED_R16G16B16A16)) TRACELOG(LOG_WARNING, "IMAGE: Pixel format converted from 16bit to 8bit per channel");
 
@@ -3105,6 +3181,24 @@ Color *LoadImageColors(Image image)
 
                     k += 1;
                 } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32UI:
+                {
+                    pixels[i].r = (unsigned char)(((unsigned int*)image.data)[k] / (double)0xFFFFFFFF* 255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32I:
+                {
+                    pixels[i].r = (unsigned char)(((int*)image.data)[k] / (double)0x7FFFFFFF* 255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                    k += 1;
+                } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
                     pixels[i].r = (unsigned char)(((float *)image.data)[k]*255.0f);
@@ -3126,6 +3220,24 @@ Color *LoadImageColors(Image image)
                 case PIXELFORMAT_UNCOMPRESSED_R16:
                 {
                     pixels[i].r = (unsigned char)(HalfToFloat(((unsigned short *)image.data)[k])*255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16UI:
+                {
+                    pixels[i].r = (unsigned char)(((unsigned short*)image.data)[k] / (double)0xFFFF* 255.0f);
+                    pixels[i].g = 0;
+                    pixels[i].b = 0;
+                    pixels[i].a = 255;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16I:
+                {
+                    pixels[i].r = (unsigned char)(((short*)image.data)[k] / (double)0x7FFF* 255.0f);
                     pixels[i].g = 0;
                     pixels[i].b = 0;
                     pixels[i].a = 255;
@@ -3346,6 +3458,20 @@ Color GetImageColor(Image image, int x, int y)
                 color.a = 255;
 
             } break;
+            case PIXELFORMAT_UNCOMPRESSED_R32UI:
+            {
+                color.r = (unsigned char)(((unsigned int*)image.data)[y * image.width + x] / (double)0xFFFFFFFF * 255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R32I:
+            {
+                color.r = (unsigned char)(((int*)image.data)[y * image.width + x] / (double)0x7FFFFFFF * 255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+            } break;
             case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
             {
                 color.r = (unsigned char)(((float *)image.data)[(y*image.width + x)*3]*255.0f);
@@ -3369,6 +3495,20 @@ Color GetImageColor(Image image, int x, int y)
                 color.b = 0;
                 color.a = 255;
 
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16UI:
+            {
+                color.r = (unsigned char)(((unsigned short*)image.data)[y * image.width + x] / (double)0xFFFF * 255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+            } break;
+            case PIXELFORMAT_UNCOMPRESSED_R16I:
+            {
+                color.r = (unsigned char)(((short*)image.data)[y * image.width + x] / (double)0x7FFF * 255.0f);
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
             } break;
             case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
             {
@@ -3508,6 +3648,18 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
             ((float *)dst->data)[y*dst->width + x] = coln.x*0.299f + coln.y*0.587f + coln.z*0.114f;
 
         } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32UI:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r / 255.0f, (float)color.g / 255.0f, (float)color.b / 255.0f };
+            ((unsigned int*)dst->data)[y * dst->width + x] = (unsigned int)((coln.x * 0.299f + coln.y * 0.587f + coln.z * 0.114f) * (double)0xFFFFFFFF);
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32I:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r / 255.0f, (float)color.g / 255.0f, (float)color.b / 255.0f };
+            ((int*)dst->data)[y * dst->width + x] = (int)((coln.x * 0.299f + coln.y * 0.587f + coln.z * 0.114f) * (double)0x7FFFFFFF);
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
         {
             // NOTE: Calculate R32G32B32 equivalent color (normalized to 32bit)
@@ -3535,6 +3687,18 @@ void ImageDrawPixel(Image *dst, int x, int y, Color color)
 
             ((unsigned short*)dst->data)[y*dst->width + x] = FloatToHalf(coln.x*0.299f + coln.y*0.587f + coln.z*0.114f);
 
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16UI:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r / 255.0f, (float)color.g / 255.0f, (float)color.b / 255.0f };
+            ((unsigned short*)dst->data)[y * dst->width + x] = (unsigned short)((coln.x * 0.299f + coln.y * 0.587f + coln.z * 0.114f) * (double)0xFFFF);
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16I:
+        {
+            // NOTE: Calculate grayscale equivalent color (normalized to 32bit)
+            Vector3 coln = { (float)color.r / 255.0f, (float)color.g / 255.0f, (float)color.b / 255.0f };
+            ((short*)dst->data)[y * dst->width + x] = (short)((coln.x * 0.299f + coln.y * 0.587f + coln.z * 0.114f) * (double)0x7FFF);
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         {
@@ -4067,7 +4231,7 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
         (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
 
-    if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
+    if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && dst->format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
     else
     {
         Image srcMod = { 0 };       // Source copy (in case it was required)
@@ -4135,8 +4299,12 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32) ||
+            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32I) ||
+            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32UI) ||
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16) ||
+            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16I) ||
+            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16UI) ||
             (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16G16B16)))
             blendRequired = false;
 
@@ -4288,7 +4456,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 {
     TextureCubemap cubemap = { 0 };
 
-    if (layout == CUBEMAP_LAYOUT_AUTO_DETECT) // Try to automatically guess layout type
+    if (layout == CUBEMAP_LAYOUT_AUTO_DETECT)      // Try to automatically guess layout type
     {
         // Check image width/height to determine the type of cubemap provided
         if (image.width > image.height)
@@ -4388,9 +4556,7 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
     return cubemap;
 }
 
-// Load texture for rendering (framebuffer)
-// NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
-RenderTexture2D LoadRenderTexture(int width, int height)
+RenderTexture2D LoadRenderTextureEx(int width, int height, int format)
 {
     RenderTexture2D target = { 0 };
 
@@ -4401,10 +4567,10 @@ RenderTexture2D LoadRenderTexture(int width, int height)
         rlEnableFramebuffer(target.id);
 
         // Create color texture (default to RGBA)
-        target.texture.id = rlLoadTexture(NULL, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
+        target.texture.id = rlLoadTexture(NULL, width, height, format, 1);
         target.texture.width = width;
         target.texture.height = height;
-        target.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+        target.texture.format = format;
         target.texture.mipmaps = 1;
 
         // Create depth renderbuffer/texture
@@ -4426,6 +4592,13 @@ RenderTexture2D LoadRenderTexture(int width, int height)
     else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
 
     return target;
+}
+
+// Load texture for rendering (framebuffer)
+// NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
+RenderTexture2D LoadRenderTexture(int width, int height)
+{
+  return LoadRenderTextureEx(width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 }
 
 // Check if texture is valid (loaded in GPU)
@@ -5356,6 +5529,22 @@ Color GetPixelColor(const void *srcPtr, int format)
             color.a = 255;
 
         } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32UI:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((unsigned int*)srcPtr)[0] / (double)0xFFFFFFFF * 255.0f);
+            color.g = color.r;
+            color.b = color.r;
+            color.a = 255;
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R32I:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((int*)srcPtr)[0] / (double)0x7FFFFFFF * 255.0f);
+            color.g = color.r;
+            color.b = color.r;
+            color.a = 255;
+        } break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
         {
             // NOTE: Pixel normalized float value is converted to [0..255]
@@ -5382,6 +5571,22 @@ Color GetPixelColor(const void *srcPtr, int format)
             color.b = (unsigned char)(HalfToFloat(((unsigned short *)srcPtr)[0])*255.0f);
             color.a = 255;
 
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16UI:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((unsigned short*)srcPtr)[0] / (double)0xFFFF * 255.0f);
+            color.g = color.r;
+            color.b = color.r;
+            color.a = 255;
+        } break;
+        case PIXELFORMAT_UNCOMPRESSED_R16I:
+        {
+            // NOTE: Pixel normalized float value is converted to [0..255]
+            color.r = (unsigned char)(((short*)srcPtr)[0] / (double)0x7FFF * 255.0f);
+            color.g = color.r;
+            color.b = color.r;
+            color.a = 255;
         } break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
         {
@@ -5504,9 +5709,13 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4: bpp = 16; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: bpp = 32; break;
         case PIXELFORMAT_UNCOMPRESSED_R8G8B8: bpp = 24; break;
+        case PIXELFORMAT_UNCOMPRESSED_R32I:
+        case PIXELFORMAT_UNCOMPRESSED_R32UI:
         case PIXELFORMAT_UNCOMPRESSED_R32: bpp = 32; break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32: bpp = 32*3; break;
         case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32: bpp = 32*4; break;
+        case PIXELFORMAT_UNCOMPRESSED_R16I:
+        case PIXELFORMAT_UNCOMPRESSED_R16UI:
         case PIXELFORMAT_UNCOMPRESSED_R16: bpp = 16; break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16: bpp = 16*3; break;
         case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16: bpp = 16*4; break;
@@ -5534,7 +5743,7 @@ int GetPixelDataSize(int width, int height, int format)
         // if texture is smaller, minimum dataSize is 8 or 16
         if ((width < 4) && (height < 4))
         {
-            if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
+            if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && format < PIXELFORMAT_UNCOMPRESSED_R32I) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
             else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
         }
     }
@@ -5595,7 +5804,7 @@ static Vector4 *LoadImageDataNormalized(Image image)
 {
     Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
 
-    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
+    if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB && image.format < PIXELFORMAT_UNCOMPRESSED_R32I) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
     {
         for (int i = 0, k = 0; i < image.width*image.height; i++)
@@ -5669,7 +5878,25 @@ static Vector4 *LoadImageDataNormalized(Image image)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32:
                 {
-                    pixels[i].x = ((float *)image.data)[k];
+                  pixels[i].x = ((float *)image.data)[k];
+                  pixels[i].y = 0.0f;
+                  pixels[i].z = 0.0f;
+                  pixels[i].w = 1.0f;
+
+                  k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32UI:
+                {
+                    pixels[i].x = ((unsigned int*)image.data)[k] / (float)0xFFFFFFFF;
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R32I:
+                {
+                    pixels[i].x = ((int*)image.data)[k] / (float)0x7FFFFFFF;
                     pixels[i].y = 0.0f;
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
@@ -5697,6 +5924,24 @@ static Vector4 *LoadImageDataNormalized(Image image)
                 case PIXELFORMAT_UNCOMPRESSED_R16:
                 {
                     pixels[i].x = HalfToFloat(((unsigned short *)image.data)[k]);
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16UI:
+                {
+                    pixels[i].x = ((unsigned short*)image.data)[k] / (float)0xFFFF;
+                    pixels[i].y = 0.0f;
+                    pixels[i].z = 0.0f;
+                    pixels[i].w = 1.0f;
+
+                    k += 1;
+                } break;
+                case PIXELFORMAT_UNCOMPRESSED_R16I:
+                {
+                    pixels[i].x = ((short*)image.data)[k] / (float)0x7FFF;
                     pixels[i].y = 0.0f;
                     pixels[i].z = 0.0f;
                     pixels[i].w = 1.0f;
