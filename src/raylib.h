@@ -1461,6 +1461,7 @@ RLAPI Texture2D LoadTexture(const char *fileName);                              
 RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
 RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                        // Load cubemap from image, multiple image cubemap layouts supported
 RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
+RLAPI RenderTexture2D LoadRenderTextureEx(int width, int height, int format);                            // Load texture for rendering (framebuffer), with specific format
 RLAPI bool IsTextureValid(Texture2D texture);                                                            // Check if texture is valid (loaded in GPU)
 RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
 RLAPI bool IsRenderTextureValid(RenderTexture2D target);                                                 // Check if render texture is valid (loaded in GPU)
