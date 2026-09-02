@@ -841,6 +841,22 @@ bool ExportImageAsCode(Image image, const char *fileName)
 //------------------------------------------------------------------------------------
 // Image generation functions
 //------------------------------------------------------------------------------------
+
+// Generate image: empty image of some format
+Image GenImageFormat(int width, int height, int format)
+{
+  int  imgSize = GetPixelDataSize(width, height, format);
+  void *pixels = RL_CALLOC(imgSize, 1);
+
+  Image image = {.data = pixels,
+              .width = width,
+              .height = height,
+              .mipmaps = 1,
+              .format = format};
+
+  return image;
+}
+
 // Generate image: plain color
 Image GenImageColor(int width, int height, Color color)
 {
