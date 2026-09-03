@@ -1510,7 +1510,7 @@ Function 095: GetTime() (0 input parameters)
 Function 096: GetFPS() (0 input parameters)
   Name: GetFPS
   Return type: int
-  Description: Get current FPS
+  Description: Get current FPS (averages the last 30 calls, so call it every frame)
   No input parameters
 Function 097: SwapScreenBuffer() (0 input parameters)
   Name: SwapScreenBuffer

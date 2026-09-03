@@ -2736,7 +2736,7 @@
      (return-type "double"))
 
     ((name "GetFPS")
-     (description "Get current FPS")
+     (description "Get current FPS (averages the last 30 calls, so call it every frame)")
      (return-type "int"))
 
     ((name "SwapScreenBuffer")

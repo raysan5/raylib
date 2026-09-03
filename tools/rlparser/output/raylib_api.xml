@@ -957,7 +957,7 @@
         </Function>
         <Function name="GetTime" retType="double" paramCount="0" desc="Get elapsed time in seconds since InitWindow()">
         </Function>
-        <Function name="GetFPS" retType="int" paramCount="0" desc="Get current FPS">
+        <Function name="GetFPS" retType="int" paramCount="0" desc="Get current FPS (averages the last 30 calls, so call it every frame)">
         </Function>
         <Function name="SwapScreenBuffer" retType="void" paramCount="0" desc="Swap back buffer with front buffer (screen drawing)">
         </Function>

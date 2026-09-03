@@ -3789,7 +3789,7 @@ return {
     },
     {
       name = "GetFPS",
-      description = "Get current FPS",
+      description = "Get current FPS (averages the last 30 calls, so call it every frame)",
       returnType = "int"
     },
     {
