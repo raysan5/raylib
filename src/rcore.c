@@ -2413,20 +2413,20 @@ bool IsFileExtension(const char *fileName, const char *ext)
     return result;
 }
 
-// Check if a provided file path (or directory) is hidden by OS
-bool IsFileHidden(const char *path)
+// Check if file path (file or directory) is hidden by OS
+bool IsFileHidden(const char *filePath)
 {
     bool result = false;
 #if defined(_WIN32)
-    unsigned long attribs = GetFileAttributesA(path);
+    unsigned long attribs = GetFileAttributesA(filePath);
 
     // Check !INVALID_FILE_ATTRIBUTES and FILE_ATTRIBUTE_HIDDEN
-    if ((attribs != -1) && ((attrs & 0x2UL) != 0)) result = true;
+    if ((attribs != -1) && ((attribs & 0x2UL) != 0)) result = true;
 #else
-    const char *base = strrchr(path, '/');
-    base = (base? base + 1 : path);
+    const char *basePath = strrchr(filePath, '/');
+    basePath = (basePath? basePath + 1 : filePath);
 
-    if ((base[0] == '.') && (strcmp(base, ".") != 0) && (strcmp(base, "..") != 0)) result = true;
+    if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
 #endif
     return result;
 }

@@ -1149,6 +1149,7 @@ RLAPI int FileTextFindIndex(const char *fileName, const char *search); // Find t
 RLAPI bool FileExists(const char *fileName);                        // Check if file exists
 RLAPI bool DirectoryExists(const char *dirPath);                    // Check if directory path exists
 RLAPI bool IsFileExtension(const char *fileName, const char *ext);  // Check file extension (recommended include point: .png, .wav)
+RLAPI bool IsFileHidden(const char *filePath);                      // Check if file path (file or directory) is hidden by OS
 RLAPI int GetFileLength(const char *fileName);                      // Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)
 RLAPI long GetFileModTime(const char *fileName);                    // Get file modification time (last write time)
 RLAPI const char *GetFileExtension(const char *fileName);           // Get pointer to extension for a filename string (includes dot: '.png')
