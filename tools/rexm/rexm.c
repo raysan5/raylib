@@ -133,7 +133,7 @@ typedef enum {
     TESTING_FAIL_ASSETS         = 1 << 2,   // Assets loading (WARNING: FILE:)  -> "WARNING: FILEIO:"
     TESTING_FAIL_RLGL           = 1 << 3,   // OpenGL-wrapped initialization    -> "INFO: RLGL: Default OpenGL state initialized successfully"
     TESTING_FAIL_PLATFORM       = 1 << 4,   // Platform initialization          -> "INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully"
-    TESTING_FAIL_FONT           = 1 << 5,   // Font deefault initialization     -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
+    TESTING_FAIL_FONT           = 1 << 5,   // Font default initialization      -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
     TESTING_FAIL_TIMER          = 1 << 6,   // Timer initialization             -> "INFO: TIMER: Target time per frame: 16.667 milliseconds"
     TESTING_FAIL_OTHER          = 1 << 7,   // Other types of warnings (WARNING:)
 } rlExampleTestingStatus;
@@ -150,6 +150,7 @@ typedef enum {
     OP_BUILD    = 7,        // Build example(s) for desktop and web, copy web output - Multiple examples supported
     OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiple examples supported
     OP_TESTLOG  = 9,        // Process available examples logs to generate report
+    OP_CLEAN    = 10,       // Delete files generated during other commands, excluding reports
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio" };
@@ -478,6 +479,12 @@ int main(int argc, char *argv[])
                     else if (strcmp(argv[1], "testlog") == 0) opCode = OP_TESTLOG;
                 }
             }
+        }
+        else if (strcmp(argv[1], "clean") == 0)
+        {
+            // Delete files generated during other commands, excluding reports
+
+            opCode = OP_CLEAN;
         }
 
         // Process command line options arguments
@@ -1864,6 +1871,56 @@ int main(int argc, char *argv[])
             //-----------------------------------------------------------------------------------------------------
 
         } break;
+        case OP_CLEAN:  // Clean
+        {
+            LOG("INFO: Command requested: CLEAN\n");
+
+            int filesDeleted = 0;
+
+            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+            {
+                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[i]));
+
+                for (int i = 0; i < pathList.count; i++)
+                {
+                    const char *path = pathList.paths[i];
+
+                    if (IsPathFile(path))
+                    {
+                        const char *extension = GetFileExtension(path);
+                        if ((strcmp(extension, ".exe") == 0) ||     // Windows executable
+                            (extension == NULL) ||                  // Executable for non-Windows platforms
+                            (strcmp(extension, ".html") == 0) ||    // Web build output
+                            (strcmp(extension, ".js") == 0) ||      // Web build output
+                            (strcmp(extension, ".wasm") == 0) ||    // Web build output
+                            (strcmp(extension, ".data") == 0))      // Web build output
+                        {
+                            LOG("INFO: Deleting file [%s]\n", path);
+                            FileRemove(path);
+                            filesDeleted += 1;
+                        }
+                    }
+                }
+
+                UnloadDirectoryFiles(pathList);
+
+                // OP_TEST creates a 'logs' directory inside of example category directories
+                // Raylib currently has no way of deleting directories...
+                // We can at least delete the files
+                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[i]));
+                for (int i = 0; i < logsPathList.count; i++)
+                {
+                    const char *logPath = logsPathList.paths[i];
+                    LOG("INFO: Deleting file [%s]\n", logPath);
+                    FileRemove(logPath);
+                    filesDeleted += 1;
+                }
+
+                UnloadDirectoryFiles(logsPathList);
+            }
+
+            LOG("INFO: Deleted %d files\n", filesDeleted);
+        } break;
         default:    // Help
         {
             // Supported commands:
@@ -1897,7 +1954,8 @@ int main(int argc, char *argv[])
             printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
             printf("    testlog <example_name>        : Validate test logs, generates report\n");
             printf("    validate                      : Validate examples collection, generates report\n");
-            printf("    update                        : Validate and update examples collection, generates report\n\n");
+            printf("    update                        : Validate and update examples collection, generates report\n");
+            printf("    clean                         : Delete files generated during other commands, excluding reports\n\n");
 
             printf("OPTIONS:\n\n");
             printf("    -h, --help                    : Show tool version and command line usage help\n");
