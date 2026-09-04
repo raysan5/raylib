@@ -1894,7 +1894,7 @@ int main(int argc, char *argv[])
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
             printf("    remove <example_name>         : Remove an existing example\n");
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
-            printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
+            printf("    test <example_name>           : Build and test example for Desktop and Web platforms\n");
             printf("    testlog <example_name>        : Validate test logs, generates report\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
