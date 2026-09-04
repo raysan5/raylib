@@ -4445,7 +4445,7 @@ bool IsTextureValid(Texture2D texture)
 {
     bool result = false;
 
-    if ((texture.id > 0) &&         // Validate OpenGL id (texture uplaoded to GPU)
+    if ((texture.id > 0) &&         // Validate OpenGL id (texture uploaded to GPU)
         (texture.width > 0) &&      // Validate texture width
         (texture.height > 0) &&     // Validate texture height
         (texture.format > 0) &&     // Validate texture pixel format
