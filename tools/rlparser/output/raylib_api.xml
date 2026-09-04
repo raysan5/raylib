@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="618">
+    <Functions count="619">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -1083,6 +1083,9 @@
         <Function name="IsFileExtension" retType="bool" paramCount="2" desc="Check file extension (recommended include point: .png, .wav)">
             <Param type="const char *" name="fileName" desc="" />
             <Param type="const char *" name="ext" desc="" />
+        </Function>
+        <Function name="IsFileHidden" retType="bool" paramCount="1" desc="Check if file path (file or directory) is hidden by OS">
+            <Param type="const char *" name="filePath" desc="" />
         </Function>
         <Function name="GetFileLength" retType="int" paramCount="1" desc="Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)">
             <Param type="const char *" name="fileName" desc="" />

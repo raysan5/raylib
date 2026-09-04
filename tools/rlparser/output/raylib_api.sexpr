@@ -2970,6 +2970,12 @@
        ((type "const char *") (name "fileName"))
        ((type "const char *") (name "ext"))))
 
+    ((name "IsFileHidden")
+     (description "Check if file path (file or directory) is hidden by OS")
+     (return-type "bool")
+     (params
+       ((type "const char *") (name "filePath"))))
+
     ((name "GetFileLength")
      (description "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)")
      (return-type "int")
