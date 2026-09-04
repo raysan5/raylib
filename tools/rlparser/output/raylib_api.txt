@@ -579,9 +579,9 @@ Alias 005: Camera
   Type: Camera3D
   Name: Camera
   Description: Camera type fallback, defaults to Camera3D
-Alias 006: *ModelAnimPose
-  Type: Transform
-  Name: *ModelAnimPose
+Alias 006: ModelAnimPose
+  Type: Transform *
+  Name: ModelAnimPose
   Description: Anim pose, an array of Transform[]
 
 Enums found: 21

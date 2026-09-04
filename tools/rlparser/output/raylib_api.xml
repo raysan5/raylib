@@ -303,7 +303,7 @@
         <Alias type="TextureCubemap" name="Texture" desc="TextureCubemap, same as Texture" />
         <Alias type="RenderTexture2D" name="RenderTexture" desc="RenderTexture2D, same as RenderTexture" />
         <Alias type="Camera" name="Camera3D" desc="Camera type fallback, defaults to Camera3D" />
-        <Alias type="*ModelAnimPose" name="Transform" desc="Anim pose, an array of Transform[]" />
+        <Alias type="ModelAnimPose" name="Transform *" desc="Anim pose, an array of Transform[]" />
     </Aliases>
     <Enums count="21">
         <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
