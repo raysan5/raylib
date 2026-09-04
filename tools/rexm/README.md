@@ -60,6 +60,7 @@ The following commands are supported by `rexm` to manage examples:
   testlog <example_name>        : Validate test logs, generates report
   validate                      : Validate examples collection, generates report
   update                        : Validate and update examples collection, generates report
+  clean                         : Delete files generated during other commands, excluding reports
 ```
 
 ## `rexm` examples **validation** and **update**
@@ -108,10 +109,7 @@ Programs that are expected when executing commands:
   - `python`: Only used for `test` when `BUILD_TESTING_WEB` is defined (Python 3 specifically.)
   - `git`   : Only used for `rename` when `RENAME_AUTO_COMMIT_CREATION` is defined.
 
-OS specific guidance:
-  - Linux: Everything should already be installed and available.
-  - Windows: Make sure the directories containing these programs are on your PATH.
-    - You can define `USE_MINGW_MAKE` to make rexm use `mingw32-make`.
+Make sure these programs are on your `PATH` environment variable or otherwise available on your system.
 
 Environment variables that are expected when executing commands:
 
