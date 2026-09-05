@@ -783,7 +783,8 @@ int main(int argc, char *argv[])
         c++; 
         
         // Maybe type pointer part
-        if (linePtr[c] == '*') {
+        if (linePtr[c] == '*') 
+        {
             while(linePtr[c] == '*') c++;
             typeLen = c - typeStart;
         }
