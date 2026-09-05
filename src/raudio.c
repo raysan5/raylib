@@ -717,6 +717,19 @@ void SetAudioBufferVolume(AudioBuffer *buffer, float volume)
     }
 }
 
+// Get volume of an audio buffer, returns -1 if invalid
+float GetAudioBufferVolume(AudioBuffer *buffer)
+{
+    float volume = -1.0f;
+    if (buffer != NULL)
+    {
+        ma_mutex_lock(&AUDIO.System.lock);
+        volume = buffer->volume;
+        ma_mutex_unlock(&AUDIO.System.lock);
+    }
+    return volume;
+}
+
 // Set pitch for an audio buffer
 void SetAudioBufferPitch(AudioBuffer *buffer, float pitch)
 {
@@ -1230,6 +1243,12 @@ bool IsSoundPlaying(Sound sound)
 void SetSoundVolume(Sound sound, float volume)
 {
     SetAudioBufferVolume(sound.stream.buffer, volume);
+}
+
+// Get volume of a sound, returns -1 if invalid
+float GetSoundVolume(Sound sound)
+{
+    return GetAudioBufferVolume(sound.stream.buffer);
 }
 
 // Set pitch for a sound
@@ -2063,6 +2082,12 @@ void SetMusicVolume(Music music, float volume)
     SetAudioStreamVolume(music.stream, volume);
 }
 
+// Get volume of music, returns -1 if invalid
+float GetMusicVolume(Music music)
+{
+    return GetAudioStreamVolume(music.stream);
+}
+
 // Set pitch for music
 void SetMusicPitch(Music music, float pitch)
 {
@@ -2233,6 +2258,12 @@ void StopAudioStream(AudioStream stream)
 void SetAudioStreamVolume(AudioStream stream, float volume)
 {
     SetAudioBufferVolume(stream.buffer, volume);
+}
+
+// Get volume for audio stream (1.0 is max level), returns -1 if invalid
+float GetAudioStreamVolume(AudioStream stream)
+{
+    return GetAudioBufferVolume(stream.buffer);
 }
 
 // Set pitch for audio stream (1.0 is base level)
