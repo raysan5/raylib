@@ -3021,7 +3021,7 @@ void DrawRingLinesEx(Vector2 center, float innerRadius, float outerRadius, float
             float tOuter = (cap1O1.y - thick)/cap1O1.y;
             Vector2 cap1O2 = { cap1O1.x + (cap1O0.x - cap1O1.x)*tOuter, thick };
 
-            Vector2 cap1I0 = { innerInnerRadius, 0.0f };
+            //Vector2 cap1I0 = { innerInnerRadius, 0.0f }; // Not used
 
             float capLongEdgeLength = outerOuterRadius - innerInnerRadius;
             Vector2 cap1I2 = { cap1O2.x - capLongEdgeLength, thick };
@@ -3081,7 +3081,7 @@ void DrawRingLinesEx(Vector2 center, float innerRadius, float outerRadius, float
             cap2O1 = (Vector2){ center.x + cosf(DEG2RAD*(endAngle - stepLength))*outerOuterRadius, center.y + sinf(DEG2RAD*(endAngle - stepLength))*outerOuterRadius };
             cap2O2 = (Vector2){ cap2O1.x + (cap2O0.x - cap2O1.x)*tOuter, cap2O1.y + (cap2O0.y - cap2O1.y)*tOuter };
 
-            cap1I0 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*startAngle)*innerInnerRadius };
+            //cap1I0 = (Vector2){ center.x + cosf(DEG2RAD*startAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*startAngle)*innerInnerRadius };
             cap1I2 = (Vector2){ cap1O2.x - cosf(DEG2RAD*startAngle)*capLongEdgeLength, cap1O2.y - sinf(DEG2RAD*startAngle)*capLongEdgeLength };
 
             cap2I0 = (Vector2){ center.x + cosf(DEG2RAD*endAngle)*innerInnerRadius, center.y + sinf(DEG2RAD*endAngle)*innerInnerRadius };
