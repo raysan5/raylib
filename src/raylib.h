@@ -1708,6 +1708,7 @@ RLAPI void PauseSound(Sound sound);                                   // Pause a
 RLAPI void ResumeSound(Sound sound);                                  // Resume a paused sound
 RLAPI bool IsSoundPlaying(Sound sound);                               // Check if sound is currently playing
 RLAPI void SetSoundVolume(Sound sound, float volume);                 // Set volume for a sound (1.0 is max level)
+RLAPI float GetSoundVolume(Sound sound);                              // Get volume of a sound (1.0 is max level), returns -1 if invalid
 RLAPI void SetSoundPitch(Sound sound, float pitch);                   // Set pitch for a sound (1.0 is base level)
 RLAPI void SetSoundPan(Sound sound, float pan);                       // Set pan for a sound (-1.0 left, 0.0 center, 1.0 right)
 RLAPI Wave WaveCopy(Wave wave);                                       // Copy a wave to a new wave
@@ -1729,6 +1730,7 @@ RLAPI void PauseMusicStream(Music music);                             // Pause m
 RLAPI void ResumeMusicStream(Music music);                            // Resume playing paused music
 RLAPI void SeekMusicStream(Music music, float position);              // Seek music to a position (in seconds)
 RLAPI void SetMusicVolume(Music music, float volume);                 // Set volume for music (1.0 is max level)
+RLAPI float GetMusicVolume(Music music);                              // Get volume of music (1.0 is max level), returns -1 if invalid
 RLAPI void SetMusicPitch(Music music, float pitch);                   // Set pitch for music (1.0 is base level)
 RLAPI void SetMusicPan(Music music, float pan);                       // Set pan for music (-1.0 left, 0.0 center, 1.0 right)
 RLAPI float GetMusicTimeLength(Music music);                          // Get music time length (in seconds)
@@ -1746,6 +1748,7 @@ RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume 
 RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
+RLAPI float GetAudioStreamVolume(AudioStream stream);                 // Get volume of an audio stream (1.0 is max level), returns -1 if invalid
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
 RLAPI void SetAudioStreamPan(AudioStream stream, float pan);          // Set pan for audio stream (-1.0 left, 0.0 center, 1.0 right)
 RLAPI void SetAudioStreamBufferSizeDefault(int size);                 // Default size for new audio streams
