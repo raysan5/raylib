@@ -774,14 +774,21 @@ int main(int argc, char *argv[])
         // Skip "typedef "
         int c = 8;
 
-        // Type
+        // Type word part
         int typeStart = c;
         while(linePtr[c] != ' ') c++;
         int typeLen = c - typeStart;
-        MemoryCopy(aliases[i].type, &linePtr[typeStart], typeLen);
-
+        
         // Skip space
-        c++;
+        c++; 
+        
+        // Maybe type pointer part
+        if (linePtr[c] == '*') {
+            while(linePtr[c] == '*') c++;
+            typeLen = c - typeStart;
+        }
+
+        MemoryCopy(aliases[i].type, &linePtr[typeStart], typeLen);
 
         // Name
         int nameStart = c;

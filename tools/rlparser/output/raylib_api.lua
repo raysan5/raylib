@@ -1411,8 +1411,8 @@ return {
       description = "Camera type fallback, defaults to Camera3D"
     },
     {
-      type = "Transform",
-      name = "*ModelAnimPose",
+      type = "Transform *",
+      name = "ModelAnimPose",
       description = "Anim pose, an array of Transform[]"
     }
   },
@@ -4091,6 +4091,14 @@ return {
       params = {
         {type = "const char *", name = "fileName"},
         {type = "const char *", name = "ext"}
+      }
+    },
+    {
+      name = "IsFileHidden",
+      description = "Check if file path (file or directory) is hidden by OS",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "filePath"}
       }
     },
     {
