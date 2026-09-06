@@ -116,7 +116,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib-jai](https://github.com/ahmedqarmout2/raylib-jai)                                | **6.0**          | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)  | MIT                  |
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                   | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                        | **???**              |
-| [Target](https://github.com/FinnDemonCat/Target/tree/main/libs/raylib)                   | **5.5**          | [Dart](https://dart.dev/)                                            | Apache-2.0 license   |
+| [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                   | **5.5**          | [Dart](https://dart.dev/)                                            | Apache-2.0 license   |
 | [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0** | [gclang](https://github.com/gnuchanos/gcLang_Compiler)           | AGPL-3.0             |
 | [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.0-dev**      | [Mach](https://machlang.org/)                                        | MIT                  |
 
