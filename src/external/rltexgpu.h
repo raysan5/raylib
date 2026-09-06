@@ -119,7 +119,9 @@ typedef enum {
     RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGB,            // 4 bpp
     RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGBA,           // 4 bpp
     RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,       // 8 bpp
-    RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA        // 2 bpp
+    RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA,       // 2 bpp
+    RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_RGBA,            // 8 bpp
+    RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_SRGB_RGBA        // 8 bpp (sRGB)
 } rlGpuTexPixelFormat;
 
 //----------------------------------------------------------------------------------
@@ -216,8 +218,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
     unsigned char *file_data_ptr = (unsigned char *)file_data;
 
-    // Required extension:
-    // GL_EXT_texture_compression_s3tc
+    // Required extensions:
+    // GL_EXT_texture_compression_s3tc (DXT)
+    // GL_ARB_texture_compression_bptc or GL_EXT_texture_compression_bptc (BC7)
 
     // Supported tokens (defined by extensions)
     // GL_COMPRESSED_RGB_S3TC_DXT1_EXT      0x83F0
@@ -228,6 +231,14 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
     #define FOURCC_DXT1 0x31545844  // Equivalent to "DXT1" in ASCII
     #define FOURCC_DXT3 0x33545844  // Equivalent to "DXT3" in ASCII
     #define FOURCC_DXT5 0x35545844  // Equivalent to "DXT5" in ASCII
+    #define FOURCC_DX10 0x30315844  // Equivalent to "DX10" in ASCII
+
+    #define RLTEXGPU_DXGI_FORMAT_BC7_TYPELESS    97
+    #define RLTEXGPU_DXGI_FORMAT_BC7_UNORM       98
+    #define RLTEXGPU_DXGI_FORMAT_BC7_UNORM_SRGB  99
+
+    #define RLTEXGPU_D3D10_RESOURCE_DIMENSION_TEXTURE2D 3
+    #define RLTEXGPU_DDS_RESOURCE_MISC_TEXTURECUBE      0x04
 
     // DDS Pixel Format
     typedef struct {
@@ -259,7 +270,16 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
         unsigned int reserved2;
     } dds_header;
 
-    if (file_data_ptr != RLTEXGPU_NULL)
+    // DDS DX10 Header (20 bytes), follows dds_header when ddspf.fourcc is "DX10"
+    typedef struct {
+        unsigned int dxgi_format;
+        unsigned int resource_dimension;
+        unsigned int misc_flag;
+        unsigned int array_size;
+        unsigned int misc_flags2;
+    } dds_header_dxt10;
+
+    if ((file_data_ptr != RLTEXGPU_NULL) && (file_size >= (4 + sizeof(dds_header))))
     {
         // Verify the type of file
         unsigned char *dds_header_id = file_data_ptr;
@@ -275,16 +295,21 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
             file_data_ptr += sizeof(dds_header);        // Skip header
 
-            *width = header->width;
-            *height = header->height;
+            if ((header->width == 0) || (header->height == 0) ||
+                (header->width >= 0x7fffffffU) || (header->height >= 0x7fffffffU) ||
+                (header->mipmap_count > 32))
+            {
+                RLTEXGPU_LOG("DDS file dimensions or mipmap count not valid");
+                return image_data;
+            }
 
-            if (*width % 4 != 0) RLTEXGPU_LOG("DDS file width must be multiple of 4. Image will not display correctly");
-            if (*height % 4 != 0) RLTEXGPU_LOG("DDS file height must be multiple of 4. Image will not display correctly");
+            *width = (int)header->width;
+            *height = (int)header->height;
 
             image_pixel_size = header->width*header->height;
 
             if (header->mipmap_count == 0) *mips = 1;   // Parameter not used
-            else *mips = header->mipmap_count;
+            else *mips = (int)header->mipmap_count;
 
             if (header->ddspf.rgb_bit_count == 16)      // 16bit mode, no compressed
             {
@@ -376,30 +401,78 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if (((header->ddspf.flags == 0x04) || (header->ddspf.flags == 0x05)) && (header->ddspf.fourcc > 0)) // Compressed
             {
-                int data_size = 0;
-
-                // Calculate data size, including all mipmaps
-                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
-                else data_size = header->pitch_or_linear_size;
-
-                image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
-
-                RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
+                int image_format = 0;
 
                 switch (header->ddspf.fourcc)
                 {
                     case FOURCC_DXT1:
                     {
-                        if (header->ddspf.flags == 0x04) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT1_RGB;
-                        else *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT1_RGBA;
+                        if (header->ddspf.flags == 0x04) image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT1_RGB;
+                        else image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT1_RGBA;
                     } break;
-                    case FOURCC_DXT3: *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT3_RGBA; break;
-                    case FOURCC_DXT5: *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT5_RGBA; break;
+                    case FOURCC_DXT3: image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT3_RGBA; break;
+                    case FOURCC_DXT5: image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT5_RGBA; break;
+                    case FOURCC_DX10:
+                    {
+                        if (file_size >= (4 + sizeof(dds_header) + sizeof(dds_header_dxt10)))
+                        {
+                            dds_header_dxt10 *header_dxt10 = (dds_header_dxt10 *)file_data_ptr;
+                            file_data_ptr += sizeof(dds_header_dxt10);
+
+                            // Only a single 2D texture is supported; arrays and cubemaps contain additional surfaces
+                            if ((header_dxt10->resource_dimension == RLTEXGPU_D3D10_RESOURCE_DIMENSION_TEXTURE2D) &&
+                                (header_dxt10->array_size == 1) &&
+                                ((header_dxt10->misc_flag & RLTEXGPU_DDS_RESOURCE_MISC_TEXTURECUBE) == 0))
+                            {
+                                if ((header_dxt10->dxgi_format == RLTEXGPU_DXGI_FORMAT_BC7_TYPELESS) ||
+                                    (header_dxt10->dxgi_format == RLTEXGPU_DXGI_FORMAT_BC7_UNORM)) image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_RGBA;
+                                else if (header_dxt10->dxgi_format == RLTEXGPU_DXGI_FORMAT_BC7_UNORM_SRGB) image_format = RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_SRGB_RGBA;
+                                else RLTEXGPU_LOG("DDS DXGI format not supported (%u)", header_dxt10->dxgi_format);
+                            }
+                            else RLTEXGPU_LOG("DDS DX10 resource type not supported");
+                        }
+                        else RLTEXGPU_LOG("DDS DX10 header data not valid");
+                    } break;
                     default: break;
                 }
+
+                if (image_format > 0)
+                {
+                    unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+                    unsigned int data_size = 0;
+                    int mip_width = *width;
+                    int mip_height = *height;
+                    int data_valid = (data_offset <= file_size);
+
+                    // Calculate and validate the exact data size, including all mipmaps
+                    for (int i = 0; data_valid && (i < *mips); i++)
+                    {
+                        int mip_size = get_pixel_data_size(mip_width, mip_height, image_format);
+                        unsigned int available_size = file_size - data_offset;
+
+                        if ((mip_size <= 0) || ((unsigned int)mip_size > (available_size - data_size))) data_valid = 0;
+                        else data_size += (unsigned int)mip_size;
+
+                        if (mip_width > 1) mip_width /= 2;
+                        if (mip_height > 1) mip_height /= 2;
+                    }
+
+                    if (data_valid && (data_size > 0))
+                    {
+                        image_data = RLTEXGPU_MALLOC(data_size);
+                        if (image_data != RLTEXGPU_NULL)
+                        {
+                            RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
+                            *format = image_format;
+                        }
+                    }
+                    else RLTEXGPU_LOG("DDS file does not contain enough texture data");
+                }
+                else if (header->ddspf.fourcc != FOURCC_DX10) RLTEXGPU_LOG("DDS compressed format not supported");
             }
         }
     }
+    else if (file_data_ptr != RLTEXGPU_NULL) RLTEXGPU_LOG("DDS file data not valid");
 
     return image_data;
 }
@@ -925,23 +998,41 @@ static int get_pixel_data_size(int width, int height, int format)
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC1_RGB:
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC2_RGB:
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGB:
-        case RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGBA: // 8 bytes per each 4x4 block
+        {
+            int block_width = (width + 3)/4;
+            int block_height = (height + 3)/4;
+            unsigned long long data_size_bytes = (unsigned long long)block_width*block_height*8;
+            if (data_size_bytes < 0x7fffffffULL) data_size = (int)data_size_bytes;
+        } break;
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT5_RGBA:
         case RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-        case RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:
+        case RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_RGBA:
+        case RLTEXGPU_PIXELFORMAT_COMPRESSED_BC7_SRGB_RGBA: // 16 bytes per each 4x4 block
+        {
+            int block_width = (width + 3)/4;
+            int block_height = (height + 3)/4;
+            unsigned long long data_size_bytes = (unsigned long long)block_width*block_height*16;
+            if (data_size_bytes < 0x7fffffffULL) data_size = (int)data_size_bytes;
+        } break;
+        case RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 16 bytes per each 8x8 block
+        {
+            int block_width = (width + 7)/8;
+            int block_height = (height + 7)/8;
+            unsigned long long data_size_bytes = (unsigned long long)block_width*block_height*16;
+            if (data_size_bytes < 0x7fffffffULL) data_size = (int)data_size_bytes;
+        } break;
         default: break;
     }
 
-    data_size = width*height*bpp/8;  // Total data size in bytes
-
-    // Most compressed formats works on 4x4 blocks,
-    // if texture is smaller, minimum dataSize is 8 or 16
-    if ((width < 4) && (height < 4))
+    // Compute data size for uncompressed texture data (no blocks)
+    if ((format >= RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
+        (format <= RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        if ((format >= RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT3_RGBA)) data_size = 8;
-        else if ((format >= RLTEXGPU_PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) data_size = 16;
+        unsigned long long data_size_bytes = ((unsigned long long)width*height*bpp) >> 3;
+        if (data_size_bytes < 0x7fffffffULL) data_size = (int)data_size_bytes;
     }
 
     return data_size;

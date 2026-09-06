@@ -5527,28 +5527,41 @@ int GetPixelDataSize(int width, int height, int format)
         case PIXELFORMAT_COMPRESSED_ETC1_RGB:
         case PIXELFORMAT_COMPRESSED_ETC2_RGB:
         case PIXELFORMAT_COMPRESSED_PVRT_RGB:
-        case PIXELFORMAT_COMPRESSED_PVRT_RGBA: bpp = 4; break;
+        case PIXELFORMAT_COMPRESSED_PVRT_RGBA: // 8 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*8;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+        } break;
         case PIXELFORMAT_COMPRESSED_DXT3_RGBA:
         case PIXELFORMAT_COMPRESSED_DXT5_RGBA:
         case PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA:
-        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA: bpp = 8; break;
-        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: bpp = 2; break;
+        case PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA:
+        case PIXELFORMAT_COMPRESSED_BC7_RGBA:
+        case PIXELFORMAT_COMPRESSED_BC7_SRGB_RGBA: // 16 bytes per each 4x4 block
+        {
+            int blockWidth = (width + 3)/4;
+            int blockHeight = (height + 3)/4;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*16;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+        } break;
+        case PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA: // 16 bytes per each 8x8 block
+        {
+            int blockWidth = (width + 7)/8;
+            int blockHeight = (height + 7)/8;
+            unsigned long long dataSizeBytes = (unsigned long long)blockWidth*blockHeight*16;
+            if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+        } break;
         default: break;
     }
 
-    unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
-
-    if (dataSizeBytes < INT_MAX)
+    // Compute dataSize for uncompressed texture data (no blocks)
+    if ((format >= PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) &&
+        (format <= PIXELFORMAT_UNCOMPRESSED_R16G16B16A16))
     {
-        dataSize = (int)dataSizeBytes;
-
-        // Most compressed formats works on 4x4 blocks,
-        // if texture is smaller, minimum dataSize is 8 or 16
-        if ((width < 4) && (height < 4))
-        {
-            if ((format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) && (format < PIXELFORMAT_COMPRESSED_DXT3_RGBA)) dataSize = 8;
-            else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
-        }
+        unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
+        if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
     }
 
     // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)

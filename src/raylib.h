@@ -874,7 +874,9 @@ typedef enum {
     PIXELFORMAT_COMPRESSED_PVRT_RGB,        // 4 bpp
     PIXELFORMAT_COMPRESSED_PVRT_RGBA,       // 4 bpp
     PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA    // 2 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA,   // 2 bpp
+    PIXELFORMAT_COMPRESSED_BC7_RGBA,        // 8 bpp
+    PIXELFORMAT_COMPRESSED_BC7_SRGB_RGBA    // 8 bpp (sRGB)
 } PixelFormat;
 
 // Texture parameters: filter mode
