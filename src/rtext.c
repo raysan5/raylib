@@ -2186,9 +2186,11 @@ char *TextToPascal(const char *text)
             if (text[j] != '_') buffer[i] = text[j];
             else
             {
-                j++;
+                while (text[j] == '_') j++;     // Skip one or more separators
+                if (text[j] == '\0') break;     // Text ends on a separator, nothing left to copy
+
                 if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
-                else if ((text[j] >= '0') && (text[j] <= '9')) buffer[i] = text[j];
+                else buffer[i] = text[j];       // Character can not be upper-cased, copy it as is
             }
         }
     }
@@ -2268,8 +2270,11 @@ char *TextToCamel(const char *text)
             if (text[j] != '_') buffer[i] = text[j];
             else
             {
-                j++;
+                while (text[j] == '_') j++;     // Skip one or more separators
+                if (text[j] == '\0') break;     // Text ends on a separator, nothing left to copy
+
                 if ((text[j] >= 'a') && (text[j] <= 'z')) buffer[i] = text[j] - 32;
+                else buffer[i] = text[j];       // Character can not be upper-cased, copy it as is
             }
         }
     }
