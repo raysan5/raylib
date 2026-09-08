@@ -140,6 +140,7 @@ static void WindowSizeCallback(GLFWwindow *window, int width, int height);      
 static void FramebufferSizeCallback(GLFWwindow *window, int width, int height);         // GLFW3 FramebufferSize Callback, runs when window is resized
 static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float scaley); // GLFW3 Window Content Scale Callback, runs when window changes scale
 static void WindowPosCallback(GLFWwindow *window, int x, int y);                        // GLFW3 WindowPos Callback, runs when window is moved
+static void MonitorCallback(GLFWmonitor *monitor, int event);                           // GLFW3 Monitor Callback, runs when monitor configuration changes
 static void WindowIconifyCallback(GLFWwindow *window, int iconified);                   // GLFW3 WindowIconify Callback, runs when window is minimized/restored
 static void WindowMaximizeCallback(GLFWwindow *window, int maximized);                  // GLFW3 Window Maximize Callback, runs when window is maximized
 static void WindowFocusCallback(GLFWwindow *window, int focused);                       // GLFW3 WindowFocus Callback, runs when window get/lose focus
@@ -1834,6 +1835,7 @@ int InitPlatform(void)
     glfwSetWindowSizeCallback(platform.handle, WindowSizeCallback); // NOTE: Resizing is not enabled by default
     glfwSetFramebufferSizeCallback(platform.handle, FramebufferSizeCallback);
     glfwSetWindowPosCallback(platform.handle, WindowPosCallback);
+    glfwSetMonitorCallback(MonitorCallback);
     glfwSetWindowMaximizeCallback(platform.handle, WindowMaximizeCallback);
     glfwSetWindowIconifyCallback(platform.handle, WindowIconifyCallback);
     glfwSetWindowFocusCallback(platform.handle, WindowFocusCallback);
@@ -2028,6 +2030,22 @@ static void WindowPosCallback(GLFWwindow *window, int x, int y)
     // Set current window position
     CORE.Window.position.x = x;
     CORE.Window.position.y = y;
+}
+
+// GLFW3: Monitor callback, runs when monitor configuration changes
+static void MonitorCallback(GLFWmonitor *monitor, int event)
+{
+    int xpos = 0;
+    int ypos = 0;
+
+    // Silence unused parametr warnings from compiler
+    (void)monitor;
+    (void)event;
+
+    glfwGetWindowPos(platform.handle, &xpos, &ypos);
+
+    CORE.Window.position.x = (float)xpos;
+    CORE.Window.position.y = (float)ypos;
 }
 
 // GLFW3: Window iconify callback, runs when window is minimized/restored
