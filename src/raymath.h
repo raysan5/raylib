@@ -2655,7 +2655,6 @@ RMAPI int QuaternionEquals(Quaternion p, Quaternion q)
 }
 
 // Compose a transformation matrix from rotational, translational and scaling components
-// TODO: This function is not following raymath conventions defined in header: NOT self-contained
 RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 scale)
 {
     // Initialize vectors
@@ -2664,14 +2663,30 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     Vector3 forward = { 0.0f, 0.0f, 1.0f };
 
     // Scale vectors
-    right = Vector3Scale(right, scale.x);
-    up = Vector3Scale(up, scale.y);
-    forward = Vector3Scale(forward , scale.z);
+    right.x *= scale.x;
+    right.y *= scale.x;
+    right.z *= scale.x;
+
+    up.x *= scale.y;
+    up.y *= scale.y;
+    up.z *= scale.y;
+
+    forward.x *= scale.z;
+    forward.y *= scale.z;
+    forward.z *= scale.z;
 
     // Rotate vectors
-    right = Vector3RotateByQuaternion(right, rotation);
-    up = Vector3RotateByQuaternion(up, rotation);
-    forward = Vector3RotateByQuaternion(forward, rotation);
+    right.x = right.x*(rotation.x*rotation.x + rotation.w*rotation.w - rotation.y*rotation.y - rotation.z*rotation.z) + right.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + right.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
+    right.y = right.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + right.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + right.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
+    right.z = right.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + right.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ right.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
+
+    up.x = up.x*(rotation.x*rotation.x + rotation.w*rotation.w -  rotation.y*rotation.y - rotation.z*rotation.z) + up.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + up.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
+    up.y = up.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + up.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + up.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
+    up.z = up.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + up.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ up.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
+
+    forward.x = forward.x*(rotation.x*rotation.x + rotation.w*rotation.w -  rotation.y*rotation.y - rotation.z*rotation.z) + forward.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + forward.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
+    forward.y = forward.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + forward.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + forward.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
+    forward.z = forward.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + forward.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ forward.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
 
     // Set result matrix output
     Matrix result = {
