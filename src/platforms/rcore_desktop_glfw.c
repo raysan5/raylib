@@ -2207,7 +2207,6 @@ static void CursorEnterCallback(GLFWwindow *window, int entered)
     else
     {
         CORE.Input.Mouse.cursorOnScreen = false;
-        CORE.Input.Mouse.currentPosition = (Vector2){ 0 };
     }
 }
 
