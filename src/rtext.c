@@ -2082,7 +2082,8 @@ char **TextSplit(const char *text, char delimiter, int *count)
         counter = 1;
 
         // Count how many substrings ar found on text and set pointers to every one
-        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH; i++)
+        // NOTE: Last buffer byte is reserved to terminate the last substring
+        for (int i = 0; i < MAX_TEXT_BUFFER_LENGTH - 1; i++)
         {
             buffer[i] = text[i];
             if (buffer[i] == '\0') break;
