@@ -35,7 +35,7 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 features
 --------
-  - **NO external dependencies**, all required libraries are [included into raylib](https://github.com/raysan5/raylib/tree/master/src/external)
+  - **NO external dependencies**, all required libraries are [included in raylib](https://github.com/raysan5/raylib/tree/master/src/external)
   - Multiple platforms supported: **Windows, Linux, MacOS, RPI, Android, HTML5... and more!**
   - Written in plain C code (C99) using PascalCase/camelCase notation
   - Hardware accelerated with OpenGL: **1.1, 2.1, 3.3, 4.3, ES 2.0, ES 3.0**
@@ -57,11 +57,11 @@ features
 limitations
 -----------
 
-raylib presents some limitation by design for code simplicity, some forks, alternatives and samples are available to overcome most of them but it's up to the users to modify the library for their specific needs.
+raylib presents some limitations by design for code simplicity. Some forks, alternatives, and samples are available to overcome most of them but it's up to the users to modify the library for their specific needs.
 
   - Single window with single OpenGL context by default, no multi-window support
   - Window resize and move stops the rendering loop on platforms supporting a window
-  - `RenderTextures` are flipped vertically, as provided by OpenGL, it's up to user to draw then flipped to screen
+  - `RenderTextures` are flipped vertically, as provided by OpenGL, it's up to the user to draw them flipped to the screen
   - Font rasterization has lower quality than alternatives using `Freetype2`, `HarfBuzz` or `Slug`
   - Text drawing does not support RTL, ligatures or emojis
 
@@ -110,11 +110,11 @@ raylib is also available via multiple package managers on multiple OS distributi
  - [Working for Web (HTML5)](https://github.com/raysan5/raylib/wiki/Working-for-Web-(HTML5))
  - [Working anywhere with CMake](https://github.com/raysan5/raylib/wiki/Working-with-CMake)
 
-*Note that the Wiki is open for edit, if you find some issues while building raylib for your target platform, feel free to edit the Wiki or open an issue related to it.*
+*Note that the Wiki is open to edits, if you find some issues while building raylib for your target platform, feel free to edit the Wiki or open an issue related to it.*
 
 #### Setup raylib with multiple IDEs
 
-raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and [MinGW GCC](https://www.mingw-w64.org/) compiler but it can be used with other IDEs on multiple platforms.
+raylib has been developed on Windows platform using [Notepad++](https://notepad-plus-plus.org/) and the [MinGW GCC](https://www.mingw-w64.org/) compiler but it can be used with other IDEs on multiple platforms.
 
 [Projects directory](https://github.com/raysan5/raylib/tree/master/projects) contains several ready-to-use **project templates** to build raylib and code examples with multiple IDEs.
 
@@ -123,7 +123,7 @@ raylib has been developed on Windows platform using [Notepad++](https://notepad-
 learning and docs
 ------------------
 
-raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available on the library a short description of each one of them, input parameters and result value names should be intuitive enough to understand how each function works.
+raylib is designed to be learned using [the examples](https://github.com/raysan5/raylib/tree/master/examples) as the main reference. There is no standard API documentation but there is a [**cheatsheet**](https://www.raylib.com/cheatsheet/cheatsheet.html) containing all the functions available in the library with a short description for each one. Input parameters and result value names should be intuitive enough to understand how each function works.
 
 Some additional documentation about raylib design can be found in [raylib GitHub Wiki](https://github.com/raysan5/raylib/wiki). Here are the relevant links:
 
@@ -160,4 +160,4 @@ license
 
 raylib is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
 
-raylib uses internally some libraries for window/graphics/inputs management and also to support different file formats loading, all those libraries are embedded with and are available in [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for details.
+raylib uses internally some libraries for window/graphics/inputs management and also to support different file formats loading, all those libraries are embedded with and are available in the [src/external](https://github.com/raysan5/raylib/tree/master/src/external) directory. Check [raylib dependencies LICENSES](https://github.com/raysan5/raylib/wiki/raylib-dependencies) on [raylib Wiki](https://github.com/raysan5/raylib/wiki) for details.
