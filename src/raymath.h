@@ -452,6 +452,22 @@ RMAPI Vector2 Vector2Normalize(Vector2 v)
     return result;
 }
 
+// Calculate the normalized direction from one vector to another
+RMAPI Vector2 Vector2DirectionNormalized(Vector2 start, Vector2 end)
+{
+    Vector2 result = { end.x - start.x, end.y - start.y };
+
+    float length = sqrtf(result.x * result.x + result.y * result.y);
+    if (length > 0.0f)
+    {
+        float ilength = 1.0f/length;
+        result.x *= ilength;
+        result.y *= ilength;
+    }
+
+    return result;
+}
+
 // Transforms a Vector2 by a given Matrix
 RMAPI Vector2 Vector2Transform(Vector2 v, Matrix mat)
 {
@@ -819,6 +835,27 @@ RMAPI Vector3 Vector3Normalize(Vector3 v)
     {
         float ilength = 1.0f/length;
 
+        result.x *= ilength;
+        result.y *= ilength;
+        result.z *= ilength;
+    }
+
+    return result;
+}
+
+// Calculate the normalized direction from one vector to another
+RMAPI Vector3 Vector3DirectionNormalized(Vector3 start, Vector3 end)
+{
+    Vector3 result = {
+        end.x - start.x,
+        end.y - start.y,
+        end.z - start.z
+    };
+
+    float length = sqrtf(result.x * result.x + result.y * result.y + result.z * result.z);
+    if (length > 0.0f)
+    {
+        float ilength = 1.0f/length;
         result.x *= ilength;
         result.y *= ilength;
         result.z *= ilength;
