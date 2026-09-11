@@ -231,6 +231,15 @@ RMAPI float Lerp(float start, float end, float amount)
     return result;
 }
 
+// Calculate linear interpolation between two angles along the shortest path
+RMAPI float LerpAngle(float start, float end, float amount)
+{
+    float delta = remainderf(end - start, 2.0f * PI);
+    float result = start + delta * amount;
+
+    return result;
+}
+
 // Normalize input value within input range
 RMAPI float Normalize(float value, float start, float end)
 {
