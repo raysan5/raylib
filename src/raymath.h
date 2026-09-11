@@ -2676,14 +2676,17 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
     forward.z *= scale.z;
 
     // Rotate vectors
+    //right = Vector3RotateByQuaternion(right, rotation);
     right.x = right.x*(rotation.x*rotation.x + rotation.w*rotation.w - rotation.y*rotation.y - rotation.z*rotation.z) + right.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + right.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
     right.y = right.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + right.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + right.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
     right.z = right.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + right.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ right.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
 
+    //up = Vector3RotateByQuaternion(up, rotation);
     up.x = up.x*(rotation.x*rotation.x + rotation.w*rotation.w -  rotation.y*rotation.y - rotation.z*rotation.z) + up.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + up.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
     up.y = up.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + up.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + up.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
     up.z = up.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + up.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ up.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
 
+    //forward = Vector3RotateByQuaternion(forward, rotation);
     forward.x = forward.x*(rotation.x*rotation.x + rotation.w*rotation.w -  rotation.y*rotation.y - rotation.z*rotation.z) + forward.y*(2*rotation.x*rotation.y - 2*rotation.w*rotation.z) + forward.z*(2*rotation.x*rotation.z + 2*rotation.w*rotation.y);
     forward.y = forward.x*(2*rotation.w*rotation.z + 2*rotation.x*rotation.y) + forward.y*(rotation.w*rotation.w - rotation.x*rotation.x + rotation.y*rotation.y - rotation.z*rotation.z) + forward.z*(-2*rotation.w*rotation.x + 2*rotation.y*rotation.z);
     forward.z = forward.x*(-2*rotation.w*rotation.y + 2*rotation.x*rotation.z) + forward.y*(2*rotation.w*rotation.x + 2*rotation.y*rotation.z)+ forward.z*(rotation.w*rotation.w - rotation.x*rotation.x - rotation.y*rotation.y + rotation.z*rotation.z);
