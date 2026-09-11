@@ -290,9 +290,8 @@ int main(int argc, char *argv[])
                     if (v == '{') validStruct = true;
                     if ((v == '{') || (v == ';') || (v == '\0')) break;
                 }
-
-                continue;
             }
+            if (!validStruct) continue;
 
             structLines[structCount] = i;
             while (lines[i][0] != '}') i++;
@@ -666,7 +665,7 @@ int main(int argc, char *argv[])
                     if (additionalFields > 0)
                     {
                         int originalLength = -1;
-                        int lastStart;
+                        int lastStart = 0;
                         for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
                         {
                             char v = structs[i].fieldName[originalIndex][c];
@@ -2127,8 +2126,7 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "     (description \"%s\")\n", EscapeBackslashes(funcs[i].desc));
                 fprintf(outFile, "     (return-type \"%s\")", funcs[i].retType);
 
-                if (funcs[i].paramCount == 0) fprintf(outFile, "");
-                else
+                if (funcs[i].paramCount != 0)
                 {
                     fprintf(outFile, "\n     (params\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)
