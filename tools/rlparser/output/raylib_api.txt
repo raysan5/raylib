@@ -282,8 +282,280 @@ Define 056: SHADER_LOC_MAP_SPECULAR
   Value: SHADER_LOC_MAP_METALNESS
   Description: 
 
-Structures found: 0
+Structures found: 35
 
+Struct 01: Vector2 (2 fields)
+  Name: Vector2
+  Description: Vector2, 2 components
+  Field[1]: float x // Vector x component
+  Field[2]: float y // Vector y component
+Struct 02: Vector3 (3 fields)
+  Name: Vector3
+  Description: Vector3, 3 components
+  Field[1]: float x // Vector x component
+  Field[2]: float y // Vector y component
+  Field[3]: float z // Vector z component
+Struct 03: Vector4 (4 fields)
+  Name: Vector4
+  Description: Vector4, 4 components
+  Field[1]: float x // Vector x component
+  Field[2]: float y // Vector y component
+  Field[3]: float z // Vector z component
+  Field[4]: float w // Vector w component
+Struct 04: Matrix (16 fields)
+  Name: Matrix
+  Description: Matrix, 4x4 components, column major, OpenGL style, right-handed
+  Field[1]: float m0 // Matrix first row (4 components)
+  Field[2]: float m4 // Matrix first row (4 components)
+  Field[3]: float m8 // Matrix first row (4 components)
+  Field[4]: float m12 // Matrix first row (4 components)
+  Field[5]: float m1 // Matrix second row (4 components)
+  Field[6]: float m5 // Matrix second row (4 components)
+  Field[7]: float m9 // Matrix second row (4 components)
+  Field[8]: float m13 // Matrix second row (4 components)
+  Field[9]: float m2 // Matrix third row (4 components)
+  Field[10]: float m6 // Matrix third row (4 components)
+  Field[11]: float m10 // Matrix third row (4 components)
+  Field[12]: float m14 // Matrix third row (4 components)
+  Field[13]: float m3 // Matrix fourth row (4 components)
+  Field[14]: float m7 // Matrix fourth row (4 components)
+  Field[15]: float m11 // Matrix fourth row (4 components)
+  Field[16]: float m15 // Matrix fourth row (4 components)
+Struct 05: Color (4 fields)
+  Name: Color
+  Description: Color, 4 components, R8G8B8A8 (32bit)
+  Field[1]: unsigned char r // Color red value
+  Field[2]: unsigned char g // Color green value
+  Field[3]: unsigned char b // Color blue value
+  Field[4]: unsigned char a // Color alpha value
+Struct 06: Rectangle (4 fields)
+  Name: Rectangle
+  Description: Rectangle, 4 components
+  Field[1]: float x // Rectangle top-left corner position x
+  Field[2]: float y // Rectangle top-left corner position y
+  Field[3]: float width // Rectangle width
+  Field[4]: float height // Rectangle height
+Struct 07: Image (5 fields)
+  Name: Image
+  Description: Image, pixel data stored in CPU memory (RAM)
+  Field[1]: void * data // Image raw data
+  Field[2]: int width // Image base width
+  Field[3]: int height // Image base height
+  Field[4]: int mipmaps // Mipmap levels, 1 by default
+  Field[5]: int format // Data format (PixelFormat type)
+Struct 08: Texture (5 fields)
+  Name: Texture
+  Description: Texture, tex data stored in GPU memory (VRAM)
+  Field[1]: unsigned int id // OpenGL texture id
+  Field[2]: int width // Texture base width
+  Field[3]: int height // Texture base height
+  Field[4]: int mipmaps // Mipmap levels, 1 by default
+  Field[5]: int format // Data format (PixelFormat type)
+Struct 09: RenderTexture (3 fields)
+  Name: RenderTexture
+  Description: RenderTexture, fbo for texture rendering
+  Field[1]: unsigned int id // OpenGL framebuffer object id
+  Field[2]: Texture texture // Color buffer attachment texture
+  Field[3]: Texture depth // Depth buffer attachment texture
+Struct 10: NPatchInfo (6 fields)
+  Name: NPatchInfo
+  Description: NPatchInfo, n-patch layout info
+  Field[1]: Rectangle source // Texture source rectangle
+  Field[2]: int left // Left border offset
+  Field[3]: int top // Top border offset
+  Field[4]: int right // Right border offset
+  Field[5]: int bottom // Bottom border offset
+  Field[6]: int layout // Layout of the n-patch: 3x3, 1x3 or 3x1
+Struct 11: GlyphInfo (5 fields)
+  Name: GlyphInfo
+  Description: GlyphInfo, font characters glyphs info
+  Field[1]: int value // Character value (Unicode)
+  Field[2]: int offsetX // Character offset X when drawing
+  Field[3]: int offsetY // Character offset Y when drawing
+  Field[4]: int advanceX // Character advance position X
+  Field[5]: Image image // Character image data
+Struct 12: Font (6 fields)
+  Name: Font
+  Description: Font, font texture and GlyphInfo array data
+  Field[1]: int baseSize // Base size (default chars height)
+  Field[2]: int glyphCount // Number of glyph characters
+  Field[3]: int glyphPadding // Padding around the glyph characters
+  Field[4]: Texture2D texture // Texture atlas containing the glyphs
+  Field[5]: Rectangle * recs // Rectangles in texture for the glyphs
+  Field[6]: GlyphInfo * glyphs // Glyphs info data
+Struct 13: Camera3D (5 fields)
+  Name: Camera3D
+  Description: Camera, defines position/orientation in 3d space
+  Field[1]: Vector3 position // Camera position
+  Field[2]: Vector3 target // Camera target it looks-at
+  Field[3]: Vector3 up // Camera up vector (rotation over its axis)
+  Field[4]: float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane height in world units in orthographic
+  Field[5]: int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+Struct 14: Camera2D (4 fields)
+  Name: Camera2D
+  Description: Camera2D, defines position/orientation in 2d space
+  Field[1]: Vector2 offset // Camera offset (screen space offset from window origin)
+  Field[2]: Vector2 target // Camera target (world space target point that is mapped to screen space offset)
+  Field[3]: float rotation // Camera rotation in degrees (pivots around target)
+  Field[4]: float zoom // Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale
+Struct 15: Mesh (16 fields)
+  Name: Mesh
+  Description: Mesh, vertex data and vao/vbo
+  Field[1]: int vertexCount // Number of vertices stored in arrays
+  Field[2]: int triangleCount // Number of triangles stored (indexed or not)
+  Field[3]: float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+  Field[4]: float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+  Field[5]: float * texcoords2 // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
+  Field[6]: float * normals // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+  Field[7]: float * tangents // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+  Field[8]: unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+  Field[9]: unsigned short * indices // Vertex indices (in case vertex data comes indexed)
+  Field[10]: int boneCount // Number of bones (MAX: 256 bones)
+  Field[11]: unsigned char * boneIndices // Vertex bone indices, up to 4 bones influence by vertex (skinning) (shader-location = 6)
+  Field[12]: float * boneWeights // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+  Field[13]: float * animVertices // Animated vertex positions (after bones transformations)
+  Field[14]: float * animNormals // Animated normals (after bones transformations)
+  Field[15]: unsigned int vaoId // OpenGL Vertex Array Object id
+  Field[16]: unsigned int * vboId // OpenGL Vertex Buffer Objects id (default vertex data)
+Struct 16: Shader (2 fields)
+  Name: Shader
+  Description: Shader
+  Field[1]: unsigned int id // Shader program id
+  Field[2]: int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)
+Struct 17: MaterialMap (3 fields)
+  Name: MaterialMap
+  Description: MaterialMap
+  Field[1]: Texture2D texture // Material map texture
+  Field[2]: Color color // Material map color
+  Field[3]: float value // Material map value
+Struct 18: Material (3 fields)
+  Name: Material
+  Description: Material, includes shader and maps
+  Field[1]: Shader shader // Material shader
+  Field[2]: MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
+  Field[3]: float[4] params // Material generic parameters (if required)
+Struct 19: Transform (3 fields)
+  Name: Transform
+  Description: Transform, vertex transformation data
+  Field[1]: Vector3 translation // Translation
+  Field[2]: Quaternion rotation // Rotation
+  Field[3]: Vector3 scale // Scale
+Struct 20: BoneInfo (2 fields)
+  Name: BoneInfo
+  Description: Bone, skeletal animation bone
+  Field[1]: char[32] name // Bone name
+  Field[2]: int parent // Bone parent
+Struct 21: ModelSkeleton (3 fields)
+  Name: ModelSkeleton
+  Description: Skeleton, animation bones hierarchy
+  Field[1]: unsigned int boneCount // Number of bones
+  Field[2]: BoneInfo * bones // Bones information (skeleton)
+  Field[3]: ModelAnimPose bindPose // Bones base transformation (Transform[])
+Struct 22: Model (9 fields)
+  Name: Model
+  Description: Model, meshes, materials and animation data
+  Field[1]: Matrix transform // Local transform matrix
+  Field[2]: int meshCount // Number of meshes
+  Field[3]: int materialCount // Number of materials
+  Field[4]: Mesh * meshes // Meshes array
+  Field[5]: Material * materials // Materials array
+  Field[6]: int * meshMaterial // Mesh material number
+  Field[7]: ModelSkeleton skeleton // Skeleton for animation
+  Field[8]: ModelAnimPose currentPose // Current animation pose (Transform[])
+  Field[9]: Matrix * boneMatrices // Bones animated transformation matrices
+Struct 23: ModelAnimation (4 fields)
+  Name: ModelAnimation
+  Description: ModelAnimation, contains a full animation sequence
+  Field[1]: char[32] name // Animation name
+  Field[2]: unsigned int boneCount // Number of bones (per pose)
+  Field[3]: int keyframeCount // Number of animation key frames
+  Field[4]: ModelAnimPose * keyframePoses // Animation sequence keyframe poses [keyframe][pose]
+Struct 24: Ray (2 fields)
+  Name: Ray
+  Description: Ray, ray for raycasting
+  Field[1]: Vector3 position // Ray position (origin)
+  Field[2]: Vector3 direction // Ray direction (normalized)
+Struct 25: RayCollision (4 fields)
+  Name: RayCollision
+  Description: RayCollision, ray hit information
+  Field[1]: bool hit // Did the ray hit something?
+  Field[2]: float distance // Distance to the nearest hit
+  Field[3]: Vector3 point // Point of the nearest hit
+  Field[4]: Vector3 normal // Surface normal of hit
+Struct 26: BoundingBox (2 fields)
+  Name: BoundingBox
+  Description: BoundingBox
+  Field[1]: Vector3 min // Minimum vertex box-corner
+  Field[2]: Vector3 max // Maximum vertex box-corner
+Struct 27: Wave (5 fields)
+  Name: Wave
+  Description: Wave, audio wave data
+  Field[1]: unsigned int frameCount // Total number of frames (considering channels)
+  Field[2]: unsigned int sampleRate // Frequency (samples per second)
+  Field[3]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+  Field[4]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
+  Field[5]: void * data // Buffer data pointer
+Struct 28: AudioStream (5 fields)
+  Name: AudioStream
+  Description: AudioStream, custom audio stream
+  Field[1]: rAudioBuffer * buffer // Pointer to internal data used by the audio system
+  Field[2]: rAudioProcessor * processor // Pointer to internal data processor, useful for audio effects
+  Field[3]: unsigned int sampleRate // Frequency (samples per second)
+  Field[4]: unsigned int sampleSize // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+  Field[5]: unsigned int channels // Number of channels (1-mono, 2-stereo, ...)
+Struct 29: Sound (2 fields)
+  Name: Sound
+  Description: Sound
+  Field[1]: AudioStream stream // Audio stream
+  Field[2]: unsigned int frameCount // Total number of frames (considering channels)
+Struct 30: Music (5 fields)
+  Name: Music
+  Description: Music, audio stream, anything longer than ~10 seconds should be streamed
+  Field[1]: AudioStream stream // Audio stream
+  Field[2]: unsigned int frameCount // Total number of frames (considering channels)
+  Field[3]: bool looping // Music looping enable
+  Field[4]: int ctxType // Type of music context (audio filetype)
+  Field[5]: void * ctxData // Audio context data, depends on type
+Struct 31: VrDeviceInfo (9 fields)
+  Name: VrDeviceInfo
+  Description: VrDeviceInfo, Head-Mounted-Display device parameters
+  Field[1]: int hResolution // Horizontal resolution in pixels
+  Field[2]: int vResolution // Vertical resolution in pixels
+  Field[3]: float hScreenSize // Horizontal size in meters
+  Field[4]: float vScreenSize // Vertical size in meters
+  Field[5]: float eyeToScreenDistance // Distance between eye and display in meters
+  Field[6]: float lensSeparationDistance // Lens separation distance in meters
+  Field[7]: float interpupillaryDistance // IPD (distance between pupils) in meters
+  Field[8]: float[4] lensDistortionValues // Lens distortion constant parameters
+  Field[9]: float[4] chromaAbCorrection // Chromatic aberration correction parameters
+Struct 32: VrStereoConfig (8 fields)
+  Name: VrStereoConfig
+  Description: VrStereoConfig, VR stereo rendering configuration for simulator
+  Field[1]: Matrix[2] projection // VR projection matrices (per eye)
+  Field[2]: Matrix[2] viewOffset // VR view offset matrices (per eye)
+  Field[3]: float[2] leftLensCenter // VR left lens center
+  Field[4]: float[2] rightLensCenter // VR right lens center
+  Field[5]: float[2] leftScreenCenter // VR left screen center
+  Field[6]: float[2] rightScreenCenter // VR right screen center
+  Field[7]: float[2] scale // VR distortion scale
+  Field[8]: float[2] scaleIn // VR distortion scale in
+Struct 33: FilePathList (2 fields)
+  Name: FilePathList
+  Description: File path list
+  Field[1]: unsigned int count // Filepaths entries count
+  Field[2]: char ** paths // Filepaths entries
+Struct 34: AutomationEvent (3 fields)
+  Name: AutomationEvent
+  Description: Automation event
+  Field[1]: unsigned int frame // Event frame
+  Field[2]: unsigned int type // Event type (AutomationEventType)
+  Field[3]: int[4] params // Event parameters (if required)
+Struct 35: AutomationEventList (3 fields)
+  Name: AutomationEventList
+  Description: Automation event list
+  Field[1]: unsigned int capacity // Events max entries (MAX_AUTOMATION_EVENTS)
+  Field[2]: unsigned int count // Events entries count
+  Field[3]: AutomationEvent * events // Events entries
 
 Aliases found: 6
 
