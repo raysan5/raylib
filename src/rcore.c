@@ -3535,7 +3535,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
     hash[7] = 0x5be0cd19;
 
     const unsigned long long bitLen = 8ULL*dataSize;
-    unsigned long long paddedSize = dataSize + sizeof(dataSize);
+    unsigned long long paddedSize = dataSize + sizeof(bitLen); // Reserve room for the 64 bit message length appended at the end
     paddedSize += (64 - (paddedSize%64));
     unsigned char *buffer = (unsigned char *)RL_CALLOC(paddedSize, sizeof(unsigned char));
 
