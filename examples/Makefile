@@ -122,6 +122,14 @@ BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
 BUILD_WEB_WEBGL2      ?= FALSE
 
+# Detect the shell used by make: cmd preserves quotes, while sh removes them.
+ifndef PLATFORM_SHELL
+    PLATFORM_SHELL = sh
+    ifeq ($(shell echo "test"),"test")
+        PLATFORM_SHELL = cmd
+    endif
+endif
+
 # Determine PLATFORM_OS when required
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB PLATFORM_WEB_RGFW))
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -784,7 +792,11 @@ endif
 clean:
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
+        ifeq ($(PLATFORM_SHELL),cmd)
 		del *.o *.exe /s
+        else
+		find . -type f '(' -name '*.o' -o -name '*.exe' ')' -exec rm -f {} +
+        endif
     endif
     ifeq ($(PLATFORM_OS),BSD)
 		find . -type f -perm -ugo+x -delete
@@ -801,19 +813,23 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        del *.o *.exe /s
+        ifeq ($(PLATFORM_SHELL),cmd)
+		del *.o *.exe /s
+        else
+		find . -type f '(' -name '*.o' -o -name '*.exe' ')' -exec rm -f {} +
+        endif
     endif
     ifeq ($(PLATFORM_OS),BSD)
-        find . -type f -perm -ugo+x -delete
-        rm -fv *.o
+		find . -type f -perm -ugo+x -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        find . -type f -executable -delete
-        rm -fv *.o
+		find . -type f -executable -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        find . -type f -perm +ugo+x -delete
-        rm -f *.o
+		find . -type f -perm +ugo+x -delete
+		rm -f *.o
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
@@ -821,7 +837,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 	rm -fv *.o
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    ifeq ($(PLATFORM_OS),WINDOWS)
+    ifeq ($(PLATFORM_SHELL),cmd)
 		del *.wasm *.html *.js *.data
     else
 		rm -f */*.wasm */*.html */*.js */*.data
