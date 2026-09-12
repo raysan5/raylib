@@ -117,11 +117,11 @@ parse: raylib_api.$(EXTENSION) raymath_api.$(EXTENSION) rlgl_api.$(EXTENSION) ra
 # API files for individual headers can be created likeso, provided the relevant header exists:
 # FORMAT=JSON EXTENSION=json make raygui_api.json
 all: rlparser
-	FORMAT=DEFAULT EXTENSION=txt $(MAKE) parse
-	FORMAT=JSON EXTENSION=json $(MAKE) parse
-	FORMAT=XML EXTENSION=xml $(MAKE) parse
-	FORMAT=LUA EXTENSION=lua $(MAKE) parse
-	FORMAT=SEXPR EXTENSION=sexpr $(MAKE) parse
+	$(MAKE) parse FORMAT=DEFAULT EXTENSION=txt
+	$(MAKE) parse FORMAT=JSON EXTENSION=json
+	$(MAKE) parse FORMAT=XML EXTENSION=xml
+	$(MAKE) parse FORMAT=LUA EXTENSION=lua
+	$(MAKE) parse FORMAT=SEXPR EXTENSION=sexpr
 
 # Clean rlparser and generated output files 
 clean:
