@@ -57,6 +57,14 @@ BUILD_WEB_ASYNCIFY_STACK_SIZE ?= 1048576
 BUILD_WEB_RESOURCES   ?= FALSE
 BUILD_WEB_RESOURCES_PATH  ?= resources
 
+# Detect the shell used by make: cmd preserves quotes, while sh removes them.
+ifndef PLATFORM_SHELL
+    PLATFORM_SHELL = sh
+    ifeq ($(shell echo "test"),"test")
+        PLATFORM_SHELL = cmd
+    endif
+endif
+
 # Determine PLATFORM_OS in case PLATFORM_DESKTOP selected
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
@@ -345,7 +353,11 @@ $(PROJECT_NAME): $(OBJS)
 clean:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),WINDOWS)
-		rm *.o *.exe
+        ifeq ($(PLATFORM_SHELL),cmd)
+		del /q *.o *.exe
+        else
+		rm -f *.o *.exe
+        endif
     endif
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
@@ -360,6 +372,10 @@ ifeq ($(PLATFORM),PLATFORM_DRM)
 	rm -fv *.o
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
+    ifeq ($(PLATFORM_SHELL),cmd)
 	del *.o *.html *.js
+    else
+	rm -f *.o *.html *.js
+    endif
 endif
 	@echo Cleaning done
