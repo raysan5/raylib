@@ -57,7 +57,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **6.0**          | [Fortran](https://fortran-lang.org)                                     | ISC                  |
 | [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **6.0**          | [Go](https://golang.org)                                                | Zlib                 |
 | [raylib-guile](https://github.com/petelliott/raylib-guile)                               | **auto**         | [Guile](https://www.gnu.org/software/guile)                             | Zlib                 |
-| [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **5.5-dev**      | [Haskell](https://haskell.org)                                          | Apache-2.0           |
+| [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **6.1-dev**      | [Haskell](https://haskell.org)                                          | Apache-2.0           |
 | [raylib-hx](https://github.com/foreignsasquatch/raylib-hx)                               | 5.5              | [Haxe](https://haxe.org)                                                | Zlib                 |
 | [jaylib](https://github.com/janet-lang/jaylib)                                           | **5.0**          | [Janet](https://janet-lang.org)                                         | MIT                  |
 | [jaylib](https://github.com/electronstudio/jaylib/)                                      | **6.0**          | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))       | GPLv3+CE             |
