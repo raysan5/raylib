@@ -22,6 +22,7 @@
 *       #define SUPPORT_FILEFORMAT_KTX      0
 *       #define SUPPORT_FILEFORMAT_PVR      0
 *       #define SUPPORT_FILEFORMAT_ASTC     0
+*       #define SUPPORT_FILEFORMAT_WEBP     0
 *           Selected desired fileformats to be supported for image data loading. Some of those formats are
 *           supported by default, to remove support, #define as 0 in this module or your build system
 *
@@ -35,6 +36,7 @@
 *       stb_image        - Multiple image formats loading (JPEG, PNG, BMP, TGA, PSD, GIF, PIC)
 *                          NOTE: stb_image has been slightly modified to support Android platform
 *       stb_image_resize - Multiple image resize algorithms
+*       simplewebp       - Webp image format loading
 *
 *
 *   LICENSE: zlib/libpng
@@ -199,6 +201,11 @@
 
     #define PEP_IMPLEMENTATION
     #include "external/pep.h"
+#endif
+
+#if SUPPORT_FILEFORMAT_WEBP
+    #define SIMPLEWEBP_IMPLEMENTATION
+    #include "external/simplewebp.h"
 #endif
 
 #if SUPPORT_IMAGE_EXPORT
@@ -573,6 +580,29 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     else if ((strcmp(fileType, ".astc") == 0) || (strcmp(fileType, ".ASTC") == 0))
     {
         image.data = rl_load_astc_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
+    }
+#endif
+#if SUPPORT_FILEFORMAT_WEBP
+    else if ((strcmp(fileType, ".webp") == 0) || (strcmp(fileType, ".WEBP") == 0))
+    {
+        if (fileData != NULL)
+        {
+            simplewebp* swebp;
+            size_t width;
+            size_t height;
+
+            simplewebp_load_from_memory((void*)fileData, dataSize, NULL, &swebp);
+            simplewebp_get_dimensions(swebp, &width, &height);
+
+            image.mipmaps = 1;
+            image.width = width;
+            image.height = height;
+            image.data = RL_MALLOC(image.width * image.height * 4);
+            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8; // simplewebp only supports 4 channels
+
+            simplewebp_decode(swebp, image.data, NULL);
+            simplewebp_unload(swebp);
+        }
     }
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
