@@ -9,12 +9,13 @@ Release:     raylib 6.2 (xx Aug? 2026)
 KEY CHANGES:
  - REDESIGNED: Image API for more alignment with Texture API
  - REDESIGNED: File API for more standard return result values
- - ...
+ - REVIEWED: Shapes lines drawing functions, added new ones and unify behaviour
 
-Detailed changes (until 21-Jul-2026):
+Detailed changes (until 12-Sept-2026):
 
 [rcore] ADDED: `IsPathDirectory()`, for convenience and more readability at user code by @raysan5
 [rcore] ADDED: `IsPathAbsolute()`, check absolute paths by @raysan5
+[rcore] ADDED: `IsFileHidden()`, check file hidden (OS-dependant) by @raysan5
 [rcore] REVIEWED: `File*()` functions for consistent return result value by @raysan5 -WARNING-
 [rcore] REVIEWED: Not updating mouse.previousPosition when `SeMousePosition()` #5962 by @raysan5 -WARNING-
 [rcore] REVIEWED: Use `rlgl` provided interface instead of `rlsw` direct access by @raysan5
@@ -28,23 +29,40 @@ Detailed changes (until 21-Jul-2026):
 [rcore] REVIEWED: `OpenURL()`, added some safety checks to mitigate malicious url inputs - ROS: `CLN-002 by @raysan5 -WARNING-
 [rcore] REVIEWED: `LoadAutomationEventList()` - ROS: `CLN-005`, `CLN-006` by @raysan5
 [rcore] REVIEWED: `GetWindowHandle()`, to be consistent between backends, fix #5885 by @raysan5
+[rcore] REVIEWED: `GetWindowPosition()` #5932 by @raysan5
 [rcore] REVIEWED: `GetTime()`, small addition for RPI Pico 2 by @raysan5
 [rcore] REVIEWED: `GetCurrentMonitor()`, fix for integer overflow in distance calculation (#5842) by @Vasilis-Narain
 [rcore] REVIEWED: `FileMove()`, additional security checks by @raysan5
 [rcore] REVIEWED: `FileCopy()`, create directory to copy if it does not exist (#5920) by @InviseDivine
 [rcore] REVIEWED: `FileMove()`, fix deleting files if `FileCopy()` fails (#5806) by @Lucrecious -WARNING-
+[rcore] REVIEWED: `IsPathAbsolute()`, remove `isalpha()` dependency by @raysan5
 [rcore] REVIEWED: `ComputeSHA1()`, fix undefined behaviour (#5957) by @TheFissk
+[rcore] REVIEWED: `ComputeSHA256()`, wrong hash when message length mod 64 is 56..59 (#6144) by @killerdevildog -WARNING-
+[rcore] REVIEWED: `GetPrevDirectoryPath()` behavior to better support side cases (#6073) by @luphi
 [rcore] REVIEWED: `GetGamepadAxisCount()`, `GetGamepadName()`, bounds-check gamepad index (#5937) by @szarta
 [rcore][GLFW] REVIEWED: `GetClipboardImage()`, fix creating new connection under X11 (#5871) by @steampuker
+[rcore][GLFW] REVIEWED: Borderless-windowed mode being always on top (#5868) by @auwsmit
+[rcore][GLFW] REVIEWED: Clipboard image memory leak (GLFW, RGFW) (#6103) by @omaribrahimsaad
+[rcore][GLFW] REVIEWED: Do not reset mouse position user when user is off window (#6134) by @jestarray
+[rcore][GLFW] REVIEWED: `Font` symbol conflict (#6094) by @M374LX
 [rcore][RGFW] REVIEWED: Add fullscreen behaviour on size 0 window creation (#5859) by @keks137
+[rcore][RGFW] REVIEWED: Fix window Y position reading X in RGFW move callback (#6044) by @latent-9
 [rcore][SDL] REVIEWED: Use precise mouse wheel values (#5830) by @Menduist
 [rcore][SDL] REVIEWED: Fix SDL3 wrong joystick functions usage (#5948) by @0xFishbyte
 [rcore][DRM] REVIEWED: Silence warnings when using GRAPHICS_API_OPENGL_SOFTWARE (#5839) by @NighthowlerStudios
 [rcore][DRM] REVIEWED: Segfault on some NVIDIA proprietary drivers (#5960) by @girvel
+[rcore][DRM] REVIEWED: Raise MAX_DRM_CACHED_BUFFERS to 4 and warn when the cache fills (#6107) by @jtakakura
 [rcore][Web] REVIEWED: Fix for stale mouse position (#5981) by @largenumberhere
+[rcore][Win32] ADDED: GetClipboardImage() (#6091) by @omaribrahimsaad
 [rcore][Win32] REVIEWED: Use `CORE.Input.Keyboard.exitKey` when handling window closing (#5911) by @aceinetx
 [rcore][Win32] REVIEWED: Security fixes (#5899) by @M374LX
+[rcore][Win32] REVIEWED: Handle conflict with `PlaySoundW()` for wide string builds (#6140) by @JeffM2501
 [rcore][Android] REVIEWED: Restore face-button input on Android gamepads (#5824) by @Tubbles
+[rcore][Android] REVIEWED: Relaunch hang after destroy while paused (#6040) by @get-charlie
+[rcore][Emscripten] REVIEWED: GetTime(), fix time calculation (#6061) by @andzdroid
+[rcore][Emscripten] REVIEWED: Handle emscripten keyboard events (#6067) by @andzdroid
+[rcore][Emscripten] REVIEWED: Invert emscripten scroll wheel direction (#6104) by @andzdroid
+[rcore][Emscripten] REVIEWED: Update emscripten mouse handling (#6070) by @andzdroid
 [rlsw] ADDED: Double buffering support and compiler requirements Pico 2 (#5994) by @NighthowlerStudios
 [rlsw] ADDED: `GL_SHADING_LANGUAGE_VERSION` for `swGetString()` by @raysan5
 [rlsw] REVIEWED: Variant dispatch refactor and render optimizations (#5996) by @Bigfoot71
@@ -53,11 +71,18 @@ Detailed changes (until 21-Jul-2026):
 [rlgl] REVIEWED: `rlLoadTexture()`, add power-of-two check for GL_REPEAT wrap mode (#5820) by @noinodev
 [rlgl] REVIEWED: Shader attribute/uniform default names can not be overriden #5925 by @raysan5
 [rlgl] REVIEWED: Fix DRM/EGL segfault on some NVIDIA proprietary drivers (#5960) by @girvel
+[rlgl] REVIEWED: Use `rlGetPixelDataSize()` instead of `GetPixelDataSize()` (#6024) by @leoagomes
+[rlgl] REVIEWED: `rlGetActiveFramebuffer()` supported on OpenGL ES 2.0 (#6115) by @JoeStrout
 [rlsw] REVIEWED: Replace `SW_TEXTURE_REPEAT_POT_FAST` with `SW_SUPPORT_NPOT_TEXTURE` (#5901) by @Bigfoot71
 [rlsw] REVIEWED: Fix triangle and quad spans applying pixels out of bounds (#5849) by @NighthowlerStudios
 [rlsw] REVIEWED: Fix swScissor() Y-axis clipping inversion in software renderer (#5976) by @thiagomucci
 [rlsw] REVIEWED: Fix persistent alpha blending state (#5964) by @iztanos
 [rlsw] REVIEWED: ESP32 optimizations (#5827) by @jensroth-git
+[rlsw] REVIEWED: Internal functions declarations (#6028) by @Bigfoot71
+[rlsw] REVIEWED: Optimizations for embedded and compiler requirements Pico 2 (#5994) by @NighthowlerStudios
+[rlsw] REVIEWED: Rename public compile-time option prefix to `RLSW_` (#6029) by @Bigfoot71
+[rlsw] REVIEWED: Variant dispatch refactor and other improvements (#5996) by @Bigfoot71
+[rshapes] ADDED: `Draw*LinesEx()` functions (#6072) by @MatthewRoush
 [rshapes] RENAMED: `GetSplinePointBezierQuad()` to `GetSplinePointBezierQuadratic()` by @raysan5 -WARNING-
 [rshapes] REVIEWED: Reorder drawing functions by number of vertices by @raysan5
 [rshapes] REVIEWED: Comments to be more descriptive by @raysan5
@@ -66,14 +91,24 @@ Detailed changes (until 21-Jul-2026):
 [rshapes] REVIEWED: `DrawRectangleRounded()`, automatic segments count (#5875) by @anstropleuton
 [rshapes] REVIEWED: `DrawRectangleRounded()`, `DrawRectangleRoundedLinesEx()`, fix auto segment rounded-corner math (#5883) by @ghera
 [rshapes] REVIEWED: `CheckCollisionLines()`, add NULL check (#5802) by @bielern
+[rshapes] REVIEWED: `Draw*LinesEx()`, inconsistencies handling of `thick` parameter (#6035) by @MatthewRoush
+[rshapes] REVIEWED: `DrawCircleSector()` (#6045) by @MatthewRoush
+[rshapes] REVIEWED: `DrawPolyLinesEx()` (#6004) by @MatthewRoush
+[rshapes] REVIEWED: `DrawPolyLinesEx()` line thickness (#6014) by @MatthewRoush
+[rshapes] REVIEWED: `DrawRectangleLinesEx()` (#6027) by @MatthewRoush
+[rshapes] REVIEWED: `DrawRectangleRoundedLines()` (#5992) by @MatthewRoush
+[rtextures] ADDED: `LoadRenderTextureEx()` with user defined pixel format (#6114) by @JeffM2501
 [rtextures] ADDED: `ImageDrawLineStrip()` by @raysan5
 [rtextures] ADDED: `DrawTriangleGradient()` by @raysan5
 [rtextures] ADDED: `DrawCircleLinesEx()`, simpler naming than `DrawRing()` by @raysan5
-[rtextures] ADDED: TODO: `ImageDrawCircleGradient()` by @raysan5
+[rtextures] ADDED: `ImageDrawCircleGradient()` by @raysan5
 [rtextures] ADDED: Support for .pep image fileformat, useful for pixel-art by @raysan5
 [rtextures] RENAMED: `ImageDrawTriangleEx()` to `ImageDrawTriangleGradient()` by @raysan5 -WARNING-
 [rtextures] REDESIGNED: `ImageDraw()`, align with `DrawTexture()` by @raysan5 -WARNING-
 [rtextures] REDESIGNED: `ImageDrawRectangleLines()`, consistency with `DrawRectangleLines()` by @raysan5 -WARNING-
+[rtextures] REVIEWED: `DrawRectangleLinesEx()`, avoid early-return by @raysan5
+[rtextures] REVIEWED: `GetPixelColor()` reading the wrong bits for R5G5B5A1 blue (#6113) by @dylanpulver
+[rtextures] REVIEWED: `ImageDrawCircle()`, asymmetry compared with `DrawCircle()` (#6118) by @Risu-swift
 [rtextures] REVIEWED: `LoadImageFromTexture()` for wasm by @raysan5
 [rtextures] REVIEWED: `ImageFromImage()` - ROS: `CLN-007` by @raysan5
 [rtextures] REVIEWED: `ImageFromImage()`, rectangle validation using strict comparisons (#5979) by @CommandPrompt-Wang
@@ -89,6 +124,10 @@ Detailed changes (until 21-Jul-2026):
 [rtext] REVIEWED: `TextReplaceBetween()`, fix buffer overflow (#5936) by @szarta
 [rtext] REVIEWED: `TextInsertAlloc()`, overflow by correcting loop bounds (#5982) by @GideonSerf
 [rtext] REVIEWED: `TextJoin()`, `TextSubtext()`, `TextInsert*()` - ROS: `CLN-018` by @raysan5
+[rtext] REVIEWED: `LoadFontFromImage()`, memory leak (#6100) by @ApexNadir
+[rtext] REVIEWED: `TextInsert()`/`TextInsertAlloc()` (#6021) by @SewerynKaminski
+[rtext] REVIEWED: `TextSplit()` reading past its buffer on text of 1024 bytes (#6136) by @MaxFreedomPollard
+[rtext] REVIEWED: `TextToPascal()`/`TextToCamel()` truncating text after a separator (#6132) by @MaxFreedomPollard
 [rmodels] REDESIGNED: `DrawCapsule()`, `DrawCapsuleWires()`, parameter order by @raysan5 -WARNING-
 [rmodels] REVIEWED: Fix glTF skinning when joints have non-joint parent nodes (#5876) by @cseelhoff
 [rmodels] REVIEWED: Change `boneCount` field type to `unsigned int` (#5955) by @lauchimoon
@@ -96,20 +135,28 @@ Detailed changes (until 21-Jul-2026):
 [rmodels] REVIEWED: `IsModelValid()` #5780 by @raysan5
 [rmodels] REVIEWED: `GenMeshTorus()`, improved comments (#5934) by @EugenioBarbieriViale
 [rmodels] REVIEWED: `DrawSphereWires()`, code optimization (#6000) by @oscujic
+[rmodels] REVIEWED: `DrawSphereWires()`, code optimization (#6000) by @oscujic
 [rmodels] REVIEWED: `DrawCapsule()`, `DrawCapsuleWires()`, validate minimum rings (#5909) by @LuisR385
 [rmodels] REVIEWED: `UnloadModel()`, fix memory leak (#5907) by @LuisR385
+[rmodels] REVIEWED: GLTF animation interpolation (#6007) by @lassade
+[rmodels] REVIEWED: glTF pose sampled at the end of an animation returning a pose from the start (#6048) by @LeFede
 [raudio] REVIEWED: `UpdateSound()`, missleading parameter name by @raysan5
 [raudio] REVIEWED: `UnloadSoundAlias()`, prevent leak (#5857) by @Peter0x44
 [raudio] REVIEWED: Remove extra `drflac_free()` call (#5916) by @CrackedPixel
 [raudio] REVIEWED: Fix memory leak when loading .wav files (#5963) by @LuisR385
 [raudio] REVIEWED: Define missing `UnloadFileData()` on standalone mode (#5787) by @rigidatoms
 [raudio] REVIEWED: Update to latest DR libs to fix some warnings in MSVC (#5808) by @JeffM2501
+[raudio] REVIEWED: `CloseAudioDevice()`, crash when uninit device before mutex (#6039) by @get-charlie
 [raymath] ADDED: Operator overload for (float * Vector) (#5815) by @alphahex99
+[raymath] REVIEWED: `MatrixCompose()` to follow raymath conventions (#6133) by @carlost0
 
 [build] REMOVED: Unmaintained project: 4coder by @raysan5
 [build] REMOVED: Unmaintained project: VS2019-Android by @raysan5
 [build][Make] REVIEWED: Add `ANDROID_ARCH` check (#5888) by @Fipaan
 [build][Make] REVIEWED: Re-enable `GLFW_LINUX_ENABLE_WAYLAND` flag by default #5816 by @raysan5
+[build][Make] REVIEWED: examples/Makefile after testing on OSX (#6077) by @WilliamIsMe1
+[build][Make] REVIEWED: Detect the recipe shell for proper clean (#6146) by @Peter0x44
+[build][VS2022] REVIEWED: x64 build compatibility support (#6052) (#6053) by @yoobezxc
 [build][CMake] ADDED: Support for Win32 platform + examples (#5855) by @CrackedPixel
 [build][CMake] REVIEWED: Fix config.h parsing into cmake options (#5844) by @Peter0x44
 [build][CMake] REVIEWED: Add configure-time test for libatomic requirement (#5847) by @Peter0x44
@@ -117,15 +164,29 @@ Detailed changes (until 21-Jul-2026):
 [build][CMake] REVIEWED: Remove GLFW_BUILD warnings for platform SDL (#5865) by @jestarray
 [build][CMake] REVIEWED: Reduce minimum CMake version from 3.25 to 3.22 (#5890) by @RobLoach
 [build][CMake] REVIEWED: Fix static link dependencies (#5990) by @meta-legend
+[build][CMake] REVIEWED: Fix standalone configuration of examples project (#6079) by @zaveshaa
+[build][CMake] REVIEWED: Propagate Cocoa backend frameworks to consumers of static raylib on macOS (#6086) by @zaveshaa
+[build][Zig] REVIEWED: Support wasm examples building (#5811) by @shadeops
 [build][Zig] REVIEWED: Avoid building examples all the time (#5869) by @jn-jairo
-[build][Zig] REVIEWED: `build.zig` to support wasm examples (#5811) by @shadeops
+[build][Zig] REVIEWED: Avoid building web examples all the time (#6006) by @jn-jairo
+[build][Zig] REVIEWED: Update to raygui 5.0 (#6005) by @jn-jairo
 [build][CI] REVIEWED: GitHub Actions update to latest actions versions by @raysan5
 [build][CI] REVIEWED: `build_examples_windows.yml`, use latest actions versions by @raysan5
 [build][CI] REVIEWED: `analyze_codeql.yml`, use latest actions versions by @raysan5
 [build][CI] REVIEWED: `setup-emsdk`, use latest actions version by @raysan5
 
+[bindings] ADDED: Recomendations for binding authors (#6141) by @JeffM2501
 [bindings] ADDED: sola-raylib (6.0) (#5790, #5795) by @brettchalupa
 [bindings] ADDED: gclang-raylib (6.0) (#5850) by @gnuchanos
+[bindings] ADDED: mach-raylib (#6059) by @Angluca
+[bindings] ADDED: solod (#6102) by @nalgeon
+[bindings] ADDED: raymojo (#6076) by @RobertFlexx
+[bindings] ADDED: raylib_mojo, for Mojo language (#6093) by @willGuimont
+[bindings] ADDED: rayscal, for Scala Native (#6019) by @RobertFlexx
+[bindings] ADDED: raylib-elfscript, for ElfScript (#6036) by @ohmtal
+[bindings] ADDED: raylib component pascal/oberon2 bindings (#6055) by @RobertFlexx
+[bindings] ADDED: raylib binding for modula 2 and 3 (#6068) by @RobertFlexx
+[bindings] ADDED: raystar (#6075) by @RobertFlexx
 [bindings] UPDATED: vala-vapi to raylib 6.0 (#5789) by @edwood-grant
 [bindings] UPDATED: raylib_dart to raylib 6.0 (#5917) by @dzylikecode
 [bindings] UPDATED: raylib4fb to raylib 6.0 (#5813) by @mudhairless
@@ -139,10 +200,27 @@ Detailed changes (until 21-Jul-2026):
 [bindings] UPDATED: ReiLua to raylib 6.0 (#5959) by @nullstare
 [bindings] UPDATED: Raylib-lua to raylib 5.5 (#5884) by @keyle
 [bindings] UPDATED: Ray4Laz to raylib 6.0 (#5784) by @GuvaCode
+[bindings] UPDATED: EuRaylib to raylib 6.0 (#6034) by @gAndy50
 [bindings] UPDATED: raylib-ocaml to raylib 6.0 (#5912) by @tjammer
 [bindings] UPDATED: raylib-jai to raylib 6.0 (#5928) by @ahmedqarmout2
 [bindings] UPDATED: raylib-c3 to raylib 6.0 (#5819) by @surrealism21
+[bindings] UPDATED: raylib-asm to raylib 6.0 (#6033) by @gAndy50
+[bindings] UPDATED: fortran-raylib to raylib 6.0 (#6060) by @interkosmos
+[bindings] UPDATED: raylib-py to raylib 6.0 (#6095) by @overdev
+[bindings] UPDATED: h-raylib to raylib 6.0 (#6142) by @Anut-py
 
+[examples] ADDED: `core_scissor_shape` (#6032) by @davidbuzatto
+[examples] ADDED: `models_mesh_uv_painting` (#6084) by @PanicTitan
+[examples] ADDED: `models_procedural_decals` (#6083) by @PanicTitan
+[examples] ADDED: `shaders_lights_bloom` (#6081) by @PanicTitan
+[examples] ADDED: `shapes_outlines_testbed` (#6072) by @MatthewRoush
+[examples] ADDED: `shapes_outlines_thickness` (#6037) by @MatthewRoush
+[examples] ADDED: `shapes_polygon_lines` (#6023) by @MatthewRoush
+[examples] ADDED: `textures_portal_window` (#6082) by @PanicTitan
+[examples] REVIEWED: `shaders_shadowmap_rendering` by @raysan5
+[examples] REVIEWED: `models_mesh_uv_painting` by @raysan5
+[examples] REVIEWED: `shaders_lights_bloom` by @raysan5
+[examples] REVIEWED: `textures_portal_window` by @raysan5
 [examples] REVIEWED: `core_smooth_pixelperfect` (#5803) by @rose-mtz
 [examples] REVIEWED: `core_directory_files` (#5823) by @MAXDVVV
 [examples] REVIEWED: `shapes_ball_physics`, move window for ball shake (#5791) by @Sebbl0508
@@ -153,6 +231,12 @@ Detailed changes (until 21-Jul-2026):
 
 [rlparser] ADDED: S-Expression output type (#5943) by @VisenDev
 [rlparser] REVIEWED: Path fixes (#5794) by @gigamonster256
+[rlparser] REVIEWED: Fix formatting to follow raylib conventions (#6127) by @Nomobyte
+[rlparser] REVIEWED: Fix type aliases,  added support to type pointers (#6126) by @Nomobyte
+[rexm] ADDED: New command: clean (#6124) by @MatthewRoush
+[rexm] REVIEWED: Crash when adding a new textures or audio examples (#6089) by @PanicTitan
+[rexm] REVIEWED: Leave environment setup up to the user (#6101) by @MatthewRoush
+[rexm] REVIEWED: Makefile and change web local testing port number (#6123) by @MatthewRoush
 [rexm] REVIEWED: Simplify code, latest w64devkit supports `make` directly, no need for `mingw32-make` by @raysan5
 [misc] ADDED: SECURITY.md document by @raysan5
 [misc] REVIEWED: Several functions `const` correctness by @raysan5
@@ -162,9 +246,13 @@ Detailed changes (until 21-Jul-2026):
 [misc] REVIEWED: Some Rectangle parameters with more descriptive names by @raysan5
 [misc] REVIEWED: Shift `__cplusplus` check to a higher level for `bool` type define (#5804) by @lamweilun
 [external] ADDED: `rprand_get_value_raw()` to `rprand` library by @raysan5
+[external] UPDATED: GLFW to 3.5.1 (#6051) by @M374LX
+[external] UPDATED: miniaudio to 0.11.25 (#6050) by @M374LX  
 [external] UPDATED: `raygui` to latest master (raygui 5.0) by @raysan5
 [external] REVIEWED: `jar_mod_load_file()`, check fread return value (#5840) by @fffaraz
 [external] REVIEWED: `tiny_obj_loader` Replace `assert()` by runtime checks - ROS: `CLN-012` by @raysan5
+[external] REVIEWED: `fix_win32_compatibility.h`, fix for newer windows SDK versions (#6088) by @JeffM2501
+
 
 
 -------------------------------------------------------------------------
