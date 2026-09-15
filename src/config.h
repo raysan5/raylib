@@ -274,6 +274,9 @@
 #ifndef SUPPORT_FILEFORMAT_PVR
     #define SUPPORT_FILEFORMAT_PVR      0       // Disabled by default
 #endif
+#ifndef SUPPORT_FILEFORMAT_WEBP
+    #define SUPPORT_FILEFORMAT_WEBP     0       // Disabled by default
+#endif
 
 #ifndef SUPPORT_IMAGE_EXPORT
     // Support image export functionality (.png, .bmp, .tga, .jpg, .qoi)
