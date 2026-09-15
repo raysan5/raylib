@@ -130,6 +130,21 @@ static Font defaultFont = { 0 };
 // Text vertical line spacing in pixels (between lines)
 static int textLineSpacing = 2;
 
+
+//----------------------------------------------------------------------------------
+// Helpers
+//----------------------------------------------------------------------------------
+static int CompareGlyphInfo(const void *a, const void *b)
+{
+    return (((const GlyphInfo *)a)->value - ((const GlyphInfo *)b)->value);
+}
+
+typedef struct GlyphSortItem { GlyphInfo glyph; Rectangle rec; } GlyphSortItem;
+
+static int CompareGlyphSortItem(const void *a, const void *b)
+{
+    return (((const GlyphSortItem *)a)->glyph.value - ((const GlyphSortItem *)b)->glyph.value);
+}
 //----------------------------------------------------------------------------------
 // Other Modules Functions Declaration (required by text)
 //----------------------------------------------------------------------------------
@@ -568,6 +583,7 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
 #if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     if (font.glyphs != NULL)
     {
+        qsort(font.glyphs, font.glyphCount, sizeof(GlyphInfo), CompareGlyphInfo);
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
 
         Image atlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount, font.baseSize, font.glyphPadding, 0);
@@ -1457,34 +1473,41 @@ Vector2 MeasureTextCodepoints(Font font, const int *codepoints, int length, floa
 }
 
 // Get index position for a unicode character on font
-// NOTE: If codepoint is not found in the font it fallbacks to '?'
+// NOTE: Attemps direct search then binary search, if codepoint is not found in the font it fallbacks to '?'
 int GetGlyphIndex(Font font, int codepoint)
 {
-    int index = 0;
-    if (!IsFontValid(font)) return index;
+    if (!IsFontValid(font)) return 0;
 
-#define SUPPORT_UNORDERED_CHARSET
-#if defined(SUPPORT_UNORDERED_CHARSET)
-    int fallbackIndex = 0;      // Get index of fallback glyph '?'
-
-    // Look for character index in the unordered charset
-    for (int i = 0; i < font.glyphCount; i++)
+    // Attempt direct lookup for continuous fonts
+    int directIndex = codepoint - font.glyphs[0].value;
+    if (directIndex >= 0 && directIndex < font.glyphCount && font.glyphs[directIndex].value == codepoint)
     {
-        if (font.glyphs[i].value == 63) fallbackIndex = i;
+        return directIndex;
+    }
+    // Binary search
+    int low = 0, high = font.glyphCount - 1;
+    while (low <= high)
+    {
+        int mid = low + (high - low) / 2;
+        int value = font.glyphs[mid].value;
 
-        if (font.glyphs[i].value == codepoint)
-        {
-            index = i;
-            break;
-        }
+        if (value == codepoint) return mid;
+        if (value < codepoint) low = mid + 1;
+        else high = mid - 1;
     }
 
-    if ((index == 0) && (font.glyphs[0].value != codepoint)) index = fallbackIndex;
-#else
-    index = codepoint - 32;
-#endif
+    // Fallback search for '?'
+    low = 0; high = font.glyphCount - 1;
+    while (low <= high)
+    {
+        int mid = low + (high - low) / 2;
+        int value = font.glyphs[mid].value;
 
-    return index;
+        if (value == 63) return mid;
+        if (value < 63) low = mid + 1;
+        else high = mid - 1;
+    }
+    return 0;
 }
 
 // Get glyph font info data for a codepoint (unicode character)
@@ -2766,7 +2789,20 @@ static Font LoadBMFont(const char *fileName)
             TRACELOG(LOG_WARNING, "FONT: [%s] Some characters data not correctly provided", fileName);
         }
     }
+    GlyphSortItem *sortItems = (GlyphSortItem *)RL_MALLOC(glyphCount*sizeof(GlyphSortItem));
+    for (int i = 0; i < glyphCount; i++)
+    {
+        sortItems[i].glyph = font.glyphs[i];
+        sortItems[i].rec = font.recs[i];
+    }
+    qsort(sortItems, glyphCount, sizeof(GlyphSortItem), CompareGlyphSortItem);
+    for (int i = 0; i < glyphCount; i++)
+    {
+        font.glyphs[i] = sortItems[i].glyph;
+        font.recs[i] = sortItems[i].rec;
+    }
 
+    RL_FREE(sortItems);
     UnloadImage(fullFont);
     UnloadFileText(fileText);
 
