@@ -1616,7 +1616,7 @@ int InitPlatform(void)
     if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0)) FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
     // NOTE: Fullscreen applications default to the primary monitor
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
     if (!monitor)
     {
         TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
