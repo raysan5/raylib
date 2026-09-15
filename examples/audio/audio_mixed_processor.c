@@ -113,6 +113,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadMusicStream(music);   // Unload music stream buffers from RAM
+    UnloadSound(sound);
 
     DetachAudioMixedProcessor(ProcessAudio);  // Disconnect audio processor
 
