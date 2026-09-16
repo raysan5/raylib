@@ -183,6 +183,7 @@ int main(void)
 
     UnloadModel(skybox);        // Unload skybox model
 
+    UnloadShader(shader);
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

@@ -752,9 +752,9 @@ int main(int argc, char *argv[])
             // exName, exCategory, exRename, exRecategory
             if (strcmp(exCategory, exRecategory) == 0)
             {
-                // Rename example on collection
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
-                    TextFormat("%s;%s", exRecategory, exRename));
+                // Rename example in collection
+                FileTextReplace(exCollectionFilePath, TextFormat("\n%s;%s;", exCategory, exName),
+                    TextFormat("\n%s;%s;", exRecategory, exRename));
 
                 // Edit: Rename example code and screenshot files .c and .png
                 FileRename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
@@ -792,8 +792,8 @@ int main(int argc, char *argv[])
             {
                 // WARNING: Rename with change of category
                 // TODO: Reorder collection to place renamed example at the end of category
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
-                    TextFormat("%s;%s", exRecategory, exRename));
+                FileTextReplace(exCollectionFilePath, TextFormat("\n%s;%s;", exCategory, exName),
+                    TextFormat("\n%s;%s;", exRecategory, exRename));
 
                 // TODO: Move example resources from <exCategory>/resources to <exRecategory>/resources
                 // WARNING: Resources can be shared with other examples in the category
@@ -861,9 +861,13 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
             LOG("INFO: [%s] Removing example from collection\n", exName);
             char *exCollectionList = LoadFileText(exCollectionFilePath);
-            int exIndex = TextFindIndex(exCollectionList, TextFormat("%s;%s", exCategory, exName));
+            // '\n' is used so that the search is anchored at the start of the line.
+            int exIndex = TextFindIndex(exCollectionList, TextFormat("\n%s;%s;", exCategory, exName));
             if (exIndex > 0) // Example found
             {
+                // The index we want is the index after the '\n' character.
+                exIndex += 1;
+
                 char *exCollectionListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated list copy, 2MB
 
                 memcpy(exCollectionListUpdated, exCollectionList, exIndex);

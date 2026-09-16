@@ -124,6 +124,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                           | **???**              |
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                    | **5.5**          | [Dart](https://dart.dev/)                                               | Apache-2.0 license   |
 | [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.x-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
+| [gcl native raylib module](https://github.com/gnuchanos/GnuchanOS/tree/main/language)    | **6.0**          | [gclang](https://github.com/gnuchanos/GnuchanOS/tree/main/language)     | GPLv3                |
 
 
 ### Utility Wrappers
@@ -211,7 +212,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [raylib-beef](https://github.com/M0n7y5/raylib-beef)                                     | 3.0              | [Beef](https://www.beeflang.org)                                        |
 | [raylib-never](https://github.com/never-lang/raylib-never)                               | 3.0              | [Never](https://github.com/never-lang/never)                            |
 | [raylib.cbl](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)       | 2.0              | [COBOL](https://en.wikipedia.org/wiki/COBOL)                            |
-| [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0** | [gclang](https://github.com/gnuchanos/gcLang_Compiler)              |
+
 
 Missing some language or wrapper? Feel free to create a new one! :)
 
