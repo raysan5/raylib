@@ -123,7 +123,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                      | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                           | **???**              |
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                    | **5.5**          | [Dart](https://dart.dev/)                                               | Apache-2.0 license   |
-| [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.0-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
+| [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.x-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
 
 
 ### Utility Wrappers
