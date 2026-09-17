@@ -1667,14 +1667,26 @@ void WaitTime(double seconds)
         double sleepSeconds = seconds;
     #endif
 
+    SleepTime(sleepSeconds);
+
+    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
+        while (GetTime() < destinationTime) { }
+    #endif
+#endif
+}
+
+void SleepTime(double seconds)
+{
+    if (seconds < 0) return;    // Security check
+
     // System halt functions
     #if defined(_WIN32)
-        Sleep((unsigned long)(sleepSeconds*1000.0));
+        Sleep((unsigned long)(seconds*1000.0));
     #endif
     #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
-        time_t sec = sleepSeconds;
-        long nsec = (sleepSeconds - sec)*1000000000L;
+        time_t sec = seconds;
+        long nsec = (seconds - sec)*1000000000L;
         req.tv_sec = sec;
         req.tv_nsec = nsec;
 
@@ -1682,13 +1694,8 @@ void WaitTime(double seconds)
         while (nanosleep(&req, &req) == -1) continue;
     #endif
     #if defined(__APPLE__)
-        usleep(sleepSeconds*1000000.0);
+        usleep(seconds*1000000.0);
     #endif
-
-    #if SUPPORT_PARTIALBUSY_WAIT_LOOP
-        while (GetTime() < destinationTime) { }
-    #endif
-#endif
 }
 
 //----------------------------------------------------------------------------------
