@@ -868,7 +868,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     if (radius <= 0.0f) return;
 
     // Calculate number of segments to use for the corners
-    if (segments < 4)
+    if (segments < 1)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
@@ -894,13 +894,32 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
           \|____________________|/
           P5                    P4
     */
-    // Coordinates of the 12 points that define the rounded rect
+
+    // The x-coordinates used for the rounded rect
+    const float x0 = rec.x + radius;
+    const float x1 = (rec.x + rec.width) - radius;
+    const float x2 = rec.x + rec.width;
+    const float x3 = rec.x;
+
+    // The y-coordinates used for the rounded rect
+    const float y0 = rec.y;
+    const float y1 = rec.y + radius;
+    const float y2 = (rec.y + rec.height) - radius;
+    const float y3 = rec.y + rec.height;
+
     const Vector2 point[12] = {
-        {(float)rec.x + radius, rec.y}, {(float)(rec.x + rec.width) - radius, rec.y}, { rec.x + rec.width, (float)rec.y + radius },     // PO, P1, P2
-        {rec.x + rec.width, (float)(rec.y + rec.height) - radius}, {(float)(rec.x + rec.width) - radius, rec.y + rec.height},           // P3, P4
-        {(float)rec.x + radius, rec.y + rec.height}, { rec.x, (float)(rec.y + rec.height) - radius}, {rec.x, (float)rec.y + radius},    // P5, P6, P7
-        {(float)rec.x + radius, (float)rec.y + radius}, {(float)(rec.x + rec.width) - radius, (float)rec.y + radius},                   // P8, P9
-        {(float)(rec.x + rec.width) - radius, (float)(rec.y + rec.height) - radius}, {(float)rec.x + radius, (float)(rec.y + rec.height) - radius} // P10, P11
+        { x0, y0 }, // P0
+        { x1, y0 }, // P1
+        { x2, y1 }, // P2
+        { x2, y2 }, // P3
+        { x1, y3 }, // P4
+        { x0, y3 }, // P5
+        { x3, y2 }, // P6
+        { x3, y1 }, // P7
+        { x0, y1 }, // P8
+        { x1, y1 }, // P9
+        { x1, y2 }, // P10
+        { x0, y2 }  // P11
     };
 
     const Vector2 centers[4] = { point[8], point[9], point[10], point[11] };
@@ -1094,7 +1113,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
     if (radius <= 0.0f) return;
 
     // Calculate number of segments to use for the corners
-    if (segments < 4)
+    if (segments < 1)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
@@ -1124,31 +1143,31 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
     // The x-coordinates used for the outline
     const float x0 = rec.x + radius + 0.5f;
     const float x1 = (rec.x + rec.width) - radius - 0.5f;
-    const float x2 = rec.x + rec.width - 0.5f;
+    const float x2 = (rec.x + rec.width) - 0.5f;
     const float x3 = rec.x + 0.5f;
 
     // The y-coordinates used for the outline
     const float y0 = rec.y + 0.5f;
     const float y1 = rec.y + radius + 0.5f;
     const float y2 = (rec.y + rec.height) - radius - 0.5f;
-    const float y3 = rec.y + rec.height - 0.5f;
+    const float y3 = (rec.y + rec.height) - 0.5f;
 
     const Vector2 point[8] = {
-        {x0, y0}, // P0
-        {x1, y0}, // P1
-        {x2, y1}, // P2
-        {x2, y2}, // P3
-        {x1, y3}, // P4
-        {x0, y3}, // P5
-        {x3, y2}, // P6
-        {x3, y1}, // P7
+        { x0, y0 }, // P0
+        { x1, y0 }, // P1
+        { x2, y1 }, // P2
+        { x2, y2 }, // P3
+        { x1, y3 }, // P4
+        { x0, y3 }, // P5
+        { x3, y2 }, // P6
+        { x3, y1 }, // P7
     };
 
     const Vector2 centers[4] = {
-        {x0, y1}, // P16
-        {x1, y1}, // P17
-        {x1, y2}, // P18
-        {x0, y2}  // P19
+        { x0, y1 }, // P8
+        { x1, y1 }, // P9
+        { x1, y2 }, // P10
+        { x0, y2 }  // P11
     };
 
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
@@ -1191,14 +1210,13 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 
     if (roundness >= 1.0f) roundness = 1.0f;
 
-    float radius = 0.0f;
     float roundedOutlineThick = 0.0f;
     float outerRadius = 0.0f;
     float innerRadius = 0.0f;
     if (thick >= 0.0f)
     {
         // Calculate corner radius
-        radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
+        const float radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
         if (radius <= 0.0f) return;
 
         outerRadius = radius;
@@ -1220,7 +1238,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
         }
 
         // Calculate number of segments to use for the corners
-        if (segments < 4)
+        if (segments < 1)
         {
             // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
             float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
@@ -1230,24 +1248,22 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     }
     else
     {
-        thick *= -1.0f;
-
         // Calculate corner radius
-        radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
+        const float radius = (rec.width > rec.height)? (rec.height*roundness)/2 : (rec.width*roundness)/2;
         if (radius <= 0.0f) return; // Only possible if the rectangle has 0 width or height
 
         // Expand the rectangle
-        rec.x -= thick;
-        rec.y -= thick;
-        rec.width += thick*2.0f;
-        rec.height += thick*2.0f;
+        rec.x += thick;
+        rec.y += thick;
+        rec.width -= thick*2.0f;
+        rec.height -= thick*2.0f;
 
         innerRadius = radius;
-        outerRadius = innerRadius + thick;
-        roundedOutlineThick = thick;
+        outerRadius = innerRadius - thick;
+        roundedOutlineThick = -thick;
 
         // Calculate number of segments to use for the corners
-        if (segments < 4)
+        if (segments < 1)
         {
             // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
             float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/innerRadius, 2) - 1);
@@ -1260,7 +1276,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
 
     /*
     Quick sketch to make sense of all of this,
-    marks the 16 + 4(corner centers P16-19) points used
+    marks the 16 + 4 (corner centers P16-19) points used
 
            P0 ================== P1
           // P8                P9 \\
@@ -1280,7 +1296,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     const float x1 = (rec.x + rec.width) - outerRadius;
     const float x2 = rec.x + rec.width;
     const float x3 = rec.x;
-    const float x4 = rec.x + rec.width - roundedOutlineThick;
+    const float x4 = (rec.x + rec.width) - roundedOutlineThick;
     const float x5 = rec.x + roundedOutlineThick;
 
     // The y-coordinates used for the outline
@@ -1289,32 +1305,32 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     const float y2 = (rec.y + rec.height) - outerRadius;
     const float y3 = rec.y + rec.height;
     const float y4 = rec.y + roundedOutlineThick;
-    const float y5 = rec.y + rec.height - roundedOutlineThick;
+    const float y5 = (rec.y + rec.height) - roundedOutlineThick;
 
     const Vector2 point[16] = {
-        {x0, y0}, // P0
-        {x1, y0}, // P1
-        {x2, y1}, // P2
-        {x2, y2}, // P3
-        {x1, y3}, // P4
-        {x0, y3}, // P5
-        {x3, y2}, // P6
-        {x3, y1}, // P7
-        {x0, y4}, // P8
-        {x1, y4}, // P9
-        {x4, y1}, // P10
-        {x4, y2}, // P11
-        {x1, y5}, // P12
-        {x0, y5}, // P13
-        {x5, y2}, // P14
-        {x5, y1}  // P15
+        { x0, y0 }, // P0
+        { x1, y0 }, // P1
+        { x2, y1 }, // P2
+        { x2, y2 }, // P3
+        { x1, y3 }, // P4
+        { x0, y3 }, // P5
+        { x3, y2 }, // P6
+        { x3, y1 }, // P7
+        { x0, y4 }, // P8
+        { x1, y4 }, // P9
+        { x4, y1 }, // P10
+        { x4, y2 }, // P11
+        { x1, y5 }, // P12
+        { x0, y5 }, // P13
+        { x5, y2 }, // P14
+        { x5, y1 }  // P15
     };
 
     const Vector2 centers[4] = {
-        {x0, y1}, // P16
-        {x1, y1}, // P17
-        {x1, y2}, // P18
-        {x0, y2}  // P19
+        { x0, y1 }, // P16
+        { x1, y1 }, // P17
+        { x1, y2 }, // P18
+        { x0, y2 }  // P19
     };
 
     const float angles[4] = { 180.0f, 270.0f, 0.0f, 90.0f };
