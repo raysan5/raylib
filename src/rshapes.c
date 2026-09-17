@@ -868,7 +868,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     if (radius <= 0.0f) return;
 
     // Calculate number of segments to use for the corners
-    if (segments < 4)
+    if (segments < 1)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
@@ -1094,7 +1094,7 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
     if (radius <= 0.0f) return;
 
     // Calculate number of segments to use for the corners
-    if (segments < 4)
+    if (segments < 1)
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
@@ -1220,7 +1220,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
         }
 
         // Calculate number of segments to use for the corners
-        if (segments < 4)
+        if (segments < 1)
         {
             // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
             float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
@@ -1247,7 +1247,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
         roundedOutlineThick = thick;
 
         // Calculate number of segments to use for the corners
-        if (segments < 4)
+        if (segments < 1)
         {
             // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
             float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/innerRadius, 2) - 1);
