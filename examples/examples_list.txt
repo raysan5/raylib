@@ -58,6 +58,7 @@ core;core_text_file_loading;★☆☆☆;5.5;5.6;0;0;"Aanjishnu Bhattacharyya";@
 core;core_compute_hash;★★☆☆;6.0;6.0;2025;2025;"Ramon Santamaria";@raysan5
 core;core_keyboard_testbed;★★☆☆;5.6;5.6;2026;2026;"Ramon Santamaria";@raysan5
 core;core_window_web;★☆☆☆;1.3;5.5;2015;2025;"Ramon Santamaria";@raysan5
+core;core_shapes_drag_puzzle;★☆☆☆;6.0;6.0;2026;2026;"Gabriel Piangers";@gabriel-piangers
 shapes;shapes_basic_shapes;★☆☆☆;1.0;4.2;2014;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bouncing_ball;★☆☆☆;2.5;2.5;2013;2025;"Ramon Santamaria";@raysan5
 shapes;shapes_bullet_hell;★☆☆☆;5.6;5.6;2025;2025;"Zero";@zerohorsepower
@@ -130,6 +131,7 @@ textures;textures_textured_curve;★★★☆;4.5;4.5;2022;2025;"Jeffery Myers";
 textures;textures_sprite_stacking;★★☆☆;6.0;6.0;2025;2025;"Robin";@RobinsAviary
 textures;textures_cellular_automata;★★☆☆;5.6;5.6;2025;2025;"Jordi Santonja";@JordSant
 textures;textures_framebuffer_rendering;★★☆☆;5.6;5.6;2026;2026;"Jack Boakes";@jackboakes
+textures;textures_portal_window;★★★★;6.0;6.0;2025;2025;"PanicTitan";@PanicTitan
 text;text_sprite_fonts;★☆☆☆;1.7;3.7;2017;2025;"Ramon Santamaria";@raysan5
 text;text_font_spritefont;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 text;text_font_filters;★★☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
@@ -221,3 +223,5 @@ audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM250
 audio;audio_sound_positioning;★★☆☆;5.5;5.5;2025;2025;"Le Juez Victor";@Bigfoot71
 audio;audio_spectrum_visualizer;★★★☆;6.0;6.0;2025;2025;"IANN";@meisei4
 audio;audio_stream_callback;★★★☆;6.0;6.0;2026;2026;"Dan Hoang";@dan-hoang
+
+oang

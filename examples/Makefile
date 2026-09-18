@@ -576,6 +576,7 @@ CORE = \
     core/core_render_texture \
     core/core_scissor_test \
     core/core_screen_recording \
+    core/core_shapes_drag_puzzle \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
     core/core_text_file_loading \
