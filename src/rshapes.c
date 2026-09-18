@@ -4554,8 +4554,8 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
 static float EaseCubicInOut(float t, float b, float c, float d)
 {
     float result = 0.0f;
-
-    if ((t /= 0.5f*d) < 1) result = 0.5f*c*t*t*t + b;
+    t /= 0.5f*d;
+    if (t < 1) result = 0.5f*c*t*t*t + b;
     else
     {
         t -= 2;
