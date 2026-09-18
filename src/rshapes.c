@@ -4,8 +4,8 @@
 *
 *   ADDITIONAL NOTES:
 *       Shapes can be draw using 3 types of primitives: LINES, TRIANGLES and QUADS
-*       Some functions implement two drawing options: TRIANGLES and QUADS, by default TRIANGLES
-*       are used but QUADS implementation can be selected with SUPPORT_QUADS_DRAW_MODE define
+*       Some functions implement two drawing options: TRIANGLES and QUADS, by default QUADS
+*       are used but TRIANGLES can be selected with by turning SUPPORT_QUADS_DRAW_MODE to 0
 *
 *       Some functions define texture coordinates (rlTexCoord2f()) for the shapes and use a
 *       user-provided texture with SetShapesTexture(), the purpose of this implementation
