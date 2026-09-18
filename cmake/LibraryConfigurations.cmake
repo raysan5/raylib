@@ -133,6 +133,24 @@ elseif (${PLATFORM} STREQUAL "Android")
     set(LIBS_PRIVATE log android EGL GLESv2 OpenSLES atomic c)
     set(LIBS_PUBLIC m)
 
+elseif (${PLATFORM} STREQUAL "iOS")
+    set(PLATFORM_CPP "PLATFORM_IOS")
+    set(GRAPHICS "GRAPHICS_API_OPENGL_ES3")
+
+    find_library(UIKIT_LIBRARY UIKit)
+    find_library(QUARTZCORE_LIBRARY QuartzCore)
+    find_library(OPENGL_ES_LIBRARY OpenGLES)
+    find_library(COREMOTION_LIBRARY CoreMotion)
+    find_library(FOUNDATION_LIBRARY Foundation)
+
+    set(LIBS_PRIVATE
+        ${UIKIT_LIBRARY}
+        ${QUARTZCORE_LIBRARY}
+        ${OPENGL_ES_LIBRARY}
+        ${COREMOTION_LIBRARY}
+        ${FOUNDATION_LIBRARY}
+    )
+
 elseif ("${PLATFORM}" STREQUAL "DRM")
     set(PLATFORM_CPP "PLATFORM_DRM")
 
