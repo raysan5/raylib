@@ -432,7 +432,7 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
 void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 {
-    TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text not available in SDL2");
+    TRACELOG(LOG_WARNING, "SDL: Getting clipboard data that is not text is not available in SDL2");
 
     // TODO: Implement getting clipboard data
 
