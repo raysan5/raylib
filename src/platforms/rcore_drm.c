@@ -197,7 +197,7 @@ static const int evkeyToUnicodeLUT[] = {
 // NOTE: Use short here to save a little memory
 static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     // Don't map with designated initialization,
-    // it will geenrate many naming conflicts
+    // it will generate many naming conflicts
     0,   256, 49,  50,  51,  52,  53,  54,
     55,  56,  57,  48,  45,  61,  259, 258,
     81,  87,  69,  82,  84,  89,  85,  73,
@@ -2210,7 +2210,7 @@ static void PollKeyboardEvents(void)
         // If the event was a key, assume a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
-        // Keyboard keys appear for codes 1 to 255, ignore everthing else
+        // Keyboard keys appear for codes 1 to 255, ignore everything else
         if ((event.code >= 1) && (event.code <= 255))
         {
             // Lookup the scancode in the keymap to get a keycode
