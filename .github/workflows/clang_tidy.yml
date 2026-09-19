@@ -1,10 +1,6 @@
 name: Clang Tidy Lints
 
 on:
-  pull_request:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 permissions:
