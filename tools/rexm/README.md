@@ -88,7 +88,7 @@ int FileRemove(const char *fileName); // Remove file (if exists)
 int FileCopy(const char *srcPath, const char *dstPath); // Copy file from one path to another, dstPath created if it doesn't exist
 int FileMove(const char *srcPath, const char *dstPath); // Move file from one directory to another, dstPath created if it doesn't exist
 int FileTextReplace(const char *fileName, const char *search, const char *replacement); // Replace text in an existing file
-iint FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file
+int FileTextFindIndex(const char *fileName, const char *search); // Find text in existing file
 
 // Text management functions
 char **LoadTextLines(const char *text, int *count);  // Load text lines from text block, separate by '\n'

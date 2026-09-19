@@ -359,7 +359,7 @@
 #endif
 
 // raudio: Configuration values
-// NOTE: Below values are already defined inside [rlgl.h] so there is no need to be
+// NOTE: Below values are already defined inside [raudio.c] so there is no need to be
 // redefined here, in case it must be done, uncomment the required line and update
 // the value; it can also be done on compilation with -DVALUE_TO_REDEFINE=128
 //------------------------------------------------------------------------------------
