@@ -623,8 +623,8 @@ Image LoadImageFromScreen(void)
 {
     Image image = { 0 };
 
-    image.width = (int)(GetRenderWidth());
-    image.height = (int)(GetRenderHeight());
+    image.width = GetRenderWidth();
+    image.height = GetRenderHeight();
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
@@ -1348,7 +1348,7 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0, k = 0; i < image->width*image->height*2; i += 2, k++)
                     {
-                        ((unsigned char *)image->data)[i] = (unsigned char)((pixels[k].x*0.299f + (float)pixels[k].y*0.587f + (float)pixels[k].z*0.114f)*255.0f);
+                        ((unsigned char *)image->data)[i] = (unsigned char)((pixels[k].x*0.299f + pixels[k].y*0.587f + pixels[k].z*0.114f)*255.0f);
                         ((unsigned char *)image->data)[i + 1] = (unsigned char)(pixels[k].w*255.0f);
                     }
 
@@ -1442,7 +1442,7 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        ((float *)image->data)[i] = (float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f);
+                        ((float *)image->data)[i] = (pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f);
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
@@ -1476,7 +1476,7 @@ void ImageFormat(Image *image, int newFormat)
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
-                        ((unsigned short *)image->data)[i] = FloatToHalf((float)(pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f));
+                        ((unsigned short *)image->data)[i] = FloatToHalf((pixels[i].x*0.299f + pixels[i].y*0.587f + pixels[i].z*0.114f));
                     }
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
@@ -1573,7 +1573,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         {
             if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), (float)font.recs[index].width, (float)font.recs[index].height };
+                Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), font.recs[index].width, font.recs[index].height };
                 ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height },
                     rec, (Vector2){ 0 }, 0.0f, tint);
             }
@@ -1780,8 +1780,8 @@ void ImageResizeNN(Image *image, int newWidth, int newHeight)
     Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
 
     // EDIT: added +1 to account for an early rounding problem
-    int xRatio = (int)((image->width << 16)/newWidth) + 1;
-    int yRatio = (int)((image->height << 16)/newHeight) + 1;
+    int xRatio = ((image->width << 16)/newWidth) + 1;
+    int yRatio = ((image->height << 16)/newHeight) + 1;
 
     int x2 = 0;
     int y2 = 0;
@@ -2277,10 +2277,10 @@ void ImageBlurGaussian(Image *image, int blurSize)
         }
         else if (pixelsCopy1[i].w <= 255.0f)
         {
-            float alpha = (float)pixelsCopy1[i].w/255.0f;
-            pixels[i].r = (unsigned char)fminf((float)pixelsCopy1[i].x/alpha, 255.0);
-            pixels[i].g = (unsigned char)fminf((float)pixelsCopy1[i].y/alpha, 255.0);
-            pixels[i].b = (unsigned char)fminf((float)pixelsCopy1[i].z/alpha, 255.0);
+            float alpha = pixelsCopy1[i].w/255.0f;
+            pixels[i].r = (unsigned char)fminf(pixelsCopy1[i].x/alpha, 255.0);
+            pixels[i].g = (unsigned char)fminf(pixelsCopy1[i].y/alpha, 255.0);
+            pixels[i].b = (unsigned char)fminf(pixelsCopy1[i].z/alpha, 255.0);
             pixels[i].a = (unsigned char) pixelsCopy1[i].w;
         }
     }
@@ -2408,7 +2408,7 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
 
     for (int i = 0; i < (image->width*image->height); i++)
     {
-        float alpha = (float)imageCopy2[i].w;
+        float alpha = imageCopy2[i].w;
 
         pixels[i].r = (unsigned char)((imageCopy2[i].x)*255.0f);
         pixels[i].g = (unsigned char)((imageCopy2[i].y)*255.0f);
@@ -3089,9 +3089,9 @@ Color *LoadImageColors(Image image)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
-                    pixels[i].r = (unsigned char)((unsigned char *)image.data)[k];
-                    pixels[i].g = (unsigned char)((unsigned char *)image.data)[k + 1];
-                    pixels[i].b = (unsigned char)((unsigned char *)image.data)[k + 2];
+                    pixels[i].r = ((unsigned char *)image.data)[k];
+                    pixels[i].g = ((unsigned char *)image.data)[k + 1];
+                    pixels[i].b = ((unsigned char *)image.data)[k + 2];
                     pixels[i].a = 255;
 
                     k += 3;
@@ -3332,9 +3332,9 @@ Color GetImageColor(Image image, int x, int y)
             } break;
             case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
             {
-                color.r = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3];
-                color.g = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3 + 1];
-                color.b = (unsigned char)((unsigned char *)image.data)[(y*image.width + x)*3 + 2];
+                color.r = ((unsigned char *)image.data)[(y*image.width + x)*3];
+                color.g = ((unsigned char *)image.data)[(y*image.width + x)*3 + 1];
+                color.b = ((unsigned char *)image.data)[(y*image.width + x)*3 + 2];
                 color.a = 255;
 
             } break;
@@ -5259,7 +5259,7 @@ Color ColorAlphaBlend(Color dst, Color src, Color tint)
     else
     {
         unsigned int alpha = (unsigned int)src.a + 1; // Shifting by 8 (dividing by 256), so need to take that excess into account
-        result.a = (unsigned char)(((unsigned int)alpha*256 + (unsigned int)dst.a*(256 - alpha)) >> 8);
+        result.a = (unsigned char)((alpha*256 + (unsigned int)dst.a*(256 - alpha)) >> 8);
 
         if (result.a > 0)
         {

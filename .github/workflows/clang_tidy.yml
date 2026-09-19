@@ -1,0 +1,85 @@
+name: Clang Tidy Lints
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clang-tidy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    name: C lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang-tidy-19
+
+      - name: Run clang-tidy
+        shell: bash
+        run: |
+          checks='-*,
+            bugprone-assignment-in-if-condition,
+            bugprone-infinite-loop,
+            bugprone-misplaced-widening-cast,
+            bugprone-multiple-statement-macro,
+            bugprone-suspicious-memory-comparison,
+            bugprone-suspicious-memset-usage,
+            readability-duplicate-include,
+            readability-redundant-casting,
+            readability-simplify-boolean-expr'
+
+          lint_log="$(mktemp)"
+          filtered_log="$(mktemp)"
+          lint_pattern='\[(bugprone|readability)-[^]]+\]'
+
+          echo "Using clang-tidy:"
+          clang-tidy-19 --version
+
+          echo
+          echo "Running clang-tidy..."
+
+          # Capture everything silently. Do not use tee here.
+          find src \
+            -path 'src/external' -prune \
+            -o -type f -name '*.c' -exec \
+              clang-tidy-19 \
+                --quiet \
+                --checks="$checks" \
+                --header-filter='.*' \
+                --exclude-header-filter='(^|.*/)external/.*' \
+                {} -- \
+                -std=c11 \
+                -Isrc \
+                -isystem src/external \
+                \; >"$lint_log" 2>&1 || true
+
+          # Retain only selected lint warnings, then remove any remaining
+          # diagnostics whose path passes through an external directory.
+          grep -E "$lint_pattern" "$lint_log" |
+            grep -Ev '(^|/)([^/]+/\.\./)*external/' \
+            >"$filtered_log" || true
+
+          if [[ -s "$filtered_log" ]]; then
+            echo "clang-tidy found the following lint violations:"
+            echo
+            cat "$filtered_log"
+            echo
+            echo "::error::clang-tidy found lint violations."
+            exit 1
+          fi
+
+          echo "clang-tidy found no selected lint violations."

@@ -1242,7 +1242,7 @@ void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, f
                 DrawTextCodepoint(font, codepoint, (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (font.recs[index].width*scaleFactor + spacing);
             else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
         }
 
@@ -1313,7 +1313,7 @@ void DrawTextCodepoints(Font font, const int *codepoints, int codepointCount, Ve
                 DrawTextCodepoint(font, codepoints[i], (Vector2){ position.x + textOffsetX, position.y + textOffsetY }, fontSize, tint);
             }
 
-            if (font.glyphs[index].advanceX == 0) textOffsetX += ((float)font.recs[index].width*scaleFactor + spacing);
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (font.recs[index].width*scaleFactor + spacing);
             else textOffsetX += ((float)font.glyphs[index].advanceX*scaleFactor + spacing);
         }
     }
@@ -1807,7 +1807,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
             //  - 'text' points to the remainder of text after "end of replace"
             while (count > 0)
             {
-                insertPoint = (char *)strstr(text, search);
+                insertPoint = strstr(text, search);
                 lastReplacePos = (int)(insertPoint - text);
 
                 memcpy(tempPtr, text, lastReplacePos);
@@ -1872,7 +1872,7 @@ char *TextReplaceAlloc(const char *text, const char *search, const char *replace
             //  - 'text' points to the remainder of text after "end of replace"
             while (count > 0)
             {
-                insertPoint = (char *)strstr(text, search);
+                insertPoint = strstr(text, search);
                 lastReplacePos = (int)(insertPoint - text);
 
                 memcpy(temp, text, lastReplacePos);
@@ -2121,7 +2121,7 @@ int TextFindIndex(const char *text, const char *search)
 
     if (text != NULL)
     {
-        char *ptr = (char *)strstr(text, search);
+        char *ptr = strstr(text, search);
 
         if (ptr != NULL) position = (int)(ptr - text);
     }
