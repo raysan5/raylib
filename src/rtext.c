@@ -1697,6 +1697,18 @@ bool TextIsEqual(const char *text1, const char *text2)
     return result;
 }
 
+// Compare two text strings, returns <0, 0 or >0 like strcmp()
+// NOTE: Comparison is byte-wise (not locale-aware), NULL is smaller than any string and NULL == NULL
+// REQUIRES: strcmp()
+int TextCompare(const char *text1, const char *text2)
+{
+    if (text1 == text2) return 0;   // Both NULL, or same pointer
+    if (text1 == NULL) return -1;
+    if (text2 == NULL) return 1;
+
+    return strcmp(text1, text2);
+}
+
 // Get a piece of a text string
 const char *TextSubtext(const char *text, int position, int length)
 {
