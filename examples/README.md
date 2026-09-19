@@ -19,7 +19,7 @@ You may find it easier to use than other toolchains, especially when it comes to
 
 ## EXAMPLES COLLECTION [TOTAL: 213]
 
-### category: core [50]
+### category: core [49]
 
 Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.
 
@@ -74,9 +74,8 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_compute_hash](core/core_compute_hash.c) | <img src="core/core_compute_hash.png" alt="core_compute_hash" width="80"> | ⭐⭐☆☆ | 6.0 | 6.0 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_window_web](core/core_window_web.c) | <img src="core/core_window_web.png" alt="core_window_web" width="80"> | ⭐☆☆☆ | 1.3 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
-| [core_shapes_drag_puzzle](core/core_shapes_drag_puzzle.c) | <img src="core/core_shapes_drag_puzzle.png" alt="core_shapes_drag_puzzle" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Gabriel Piangers](https://github.com/gabriel-piangers) |
 
-### category: shapes [40]
+### category: shapes [41]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -122,6 +121,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_penrose_tile](shapes/shapes_penrose_tile.c) | <img src="shapes/shapes_penrose_tile.png" alt="shapes_penrose_tile" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [David Buzatto](https://github.com/davidbuzatto) |
 | [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_easings_testbed](shapes/shapes_easings_testbed.c) | <img src="shapes/shapes_easings_testbed.png" alt="shapes_easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Juan Miguel López](https://github.com/flashback-fx) |
+| [shapes_drag_puzzle](shapes/shapes_drag_puzzle.c) | <img src="shapes/shapes_drag_puzzle.png" alt="shapes_drag_puzzle" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Gabriel Piangers](https://github.com/gabriel-piangers) |
 
 ### category: textures [32]
 

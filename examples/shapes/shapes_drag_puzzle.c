@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - shapes drag puzzle
+*   raylib [shapes] example - drag puzzle
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
@@ -42,7 +42,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - shapes drag puzzle");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - drag puzzle");
 
     // Rectangle 
     Rectangle rec = { screenWidth/2 - 250, screenHeight/2 + 50, 100.0f, 100.0f };
@@ -75,28 +75,30 @@ int main(void)
         bool triPlaced = false;
 
         // Detect object pickup input
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePosition, rec)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePosition, rec))
+        {
             recPickedUp = true;
             mouseOffset = (Vector2) { rec.x - mousePosition.x, rec.y - mousePosition.y };
-        } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointCircle(mousePosition, circ.center, circ.radius)) {
+        } 
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointCircle(mousePosition, circ.center, circ.radius))
+        {
             circPickedUp = true;
             mouseOffset = (Vector2) { circ.center.x - mousePosition.x, circ.center.y - mousePosition.y };
-        } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointTriangle(mousePosition, tri.v1, tri.v2, tri.v3)) {
+        } 
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointTriangle(mousePosition, tri.v1, tri.v2, tri.v3))
+        {
             triPickedUp = true;
             mouseOffset = (Vector2) { tri.v1.x - mousePosition.x, tri.v1.y - mousePosition.y }; // Uses v1 as the pivot point
         }
         
         // Detect object drop input
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && recPickedUp) {
-            recPickedUp = false;
-        } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && circPickedUp) {
-            circPickedUp = false;
-        } else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && triPickedUp) {
-            triPickedUp = false;
-        }
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && recPickedUp) recPickedUp = false; 
+        else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && circPickedUp) circPickedUp = false; 
+        else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && triPickedUp) triPickedUp = false;
 
         // Rectangle update
-        if (recPickedUp) {
+        if (recPickedUp)
+        {
             rec.x = mousePosition.x + mouseOffset.x;
             rec.y = mousePosition.y + mouseOffset.y;
         }
@@ -104,14 +106,16 @@ int main(void)
         if (RecCol.width == rec.width && RecCol.height == rec.height) recPlaced = true;        
 
         // Circle update
-        if (circPickedUp) {
+        if (circPickedUp)
+        {
             circ.center.x = mousePosition.x + mouseOffset.x;
             circ.center.y = mousePosition.y + mouseOffset.y;
         }
         if (Vector2Distance(circ.center, circArea.center) < circArea.radius - circ.radius) circPlaced = true;
 
         // Triangle update
-        if (triPickedUp) {
+        if (triPickedUp)
+        {
             Vector2 v2Offset = { tri.v2.x - tri.v1.x, tri.v2.y - tri.v1.y };
             Vector2 v3Offset = { tri.v3.x - tri.v1.x, tri.v3.y - tri.v1.y };
             
