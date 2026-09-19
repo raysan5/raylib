@@ -600,6 +600,7 @@ SHAPES = \
     shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
+    shapes/shapes_drag_puzzle \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
