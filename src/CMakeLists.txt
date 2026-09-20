@@ -112,6 +112,11 @@ target_link_libraries(raylib PUBLIC ${LIBS_PUBLIC})
 if (NOT BUILD_SHARED_LIBS)
     set(raylib_install_private_libs ${LIBS_PRIVATE})
 
+    # SDL from add_subdirectory() is not in raylib's export set, so it cannot
+    # be referenced from the install interface. SDL found via find_package()
+    # is in LIBS_PUBLIC and handled through find_dependency() instead.
+    list(REMOVE_ITEM raylib_install_private_libs SDL3::SDL3 SDL2::SDL2)
+
     if (NOT glfw3_FOUND)
         list(REMOVE_ITEM raylib_install_private_libs glfw)
 
