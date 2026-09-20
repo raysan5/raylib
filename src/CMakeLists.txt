@@ -112,6 +112,10 @@ target_link_libraries(raylib PUBLIC ${LIBS_PUBLIC})
 if (NOT BUILD_SHARED_LIBS)
     set(raylib_install_private_libs ${LIBS_PRIVATE})
 
+    # SDL is handled through LIBS_PUBLIC and find_dependencies(), so
+    # we avoid having them privately.
+    list(REMOVE_ITEM raylib_install_private_libs SDL3::SDL3 SDL2::SDL2)
+
     if (NOT glfw3_FOUND)
         list(REMOVE_ITEM raylib_install_private_libs glfw)
 
