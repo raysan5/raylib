@@ -19,7 +19,7 @@ Run the following commands from the repository root:
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 212]
+## EXAMPLES COLLECTION [TOTAL: 213]
 
 ### category: core [49]
 
@@ -77,7 +77,7 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_window_web](core/core_window_web.c) | <img src="core/core_window_web.png" alt="core_window_web" width="80"> | ⭐☆☆☆ | 1.3 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [40]
+### category: shapes [41]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -123,6 +123,7 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_penrose_tile](shapes/shapes_penrose_tile.c) | <img src="shapes/shapes_penrose_tile.png" alt="shapes_penrose_tile" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [David Buzatto](https://github.com/davidbuzatto) |
 | [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_easings_testbed](shapes/shapes_easings_testbed.c) | <img src="shapes/shapes_easings_testbed.png" alt="shapes_easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Juan Miguel López](https://github.com/flashback-fx) |
+| [shapes_drag_puzzle](shapes/shapes_drag_puzzle.c) | <img src="shapes/shapes_drag_puzzle.png" alt="shapes_drag_puzzle" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Gabriel Piangers](https://github.com/gabriel-piangers) |
 
 ### category: textures [32]
 

@@ -561,6 +561,7 @@ SHAPES = \
     shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
+    shapes/shapes_drag_puzzle \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
@@ -919,6 +920,9 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_drag_puzzle: shapes/shapes_drag_puzzle.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_ball: shapes/shapes_easings_ball.c
