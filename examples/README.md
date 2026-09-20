@@ -13,7 +13,9 @@ The examples assume you have already built the `raylib` library in `../src`.
 The [Zig](https://ziglang.org/) toolchain can compile `C` and `C++` in addition to `Zig`.
 You may find it easier to use than other toolchains, especially when it comes to cross-compiling.
 
-- `zig build` to compile all examples
+Run the following commands from the repository root:
+
+- `zig build examples` to compile all examples
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
