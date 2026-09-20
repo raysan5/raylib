@@ -1646,7 +1646,7 @@ void DrawCircleGradient(Vector2 center, float radius, Color inner, Color outer)
 void DrawCircleSector(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
-    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero
+    if (radius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
@@ -1741,7 +1741,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
 void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float endAngle, int segments, Color color)
 {
     if (startAngle == endAngle) return;
-    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
+    if (radius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
@@ -1805,7 +1805,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
 void DrawCircleSectorLinesEx(Vector2 center, float radius, float startAngle, float endAngle, int segments, float thick, Color color)
 {
     if (startAngle == endAngle) return;
-    if (radius <= 0.0f) radius = 0.1f;  // Avoid div by zero issue
+    if (radius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
@@ -2682,9 +2682,9 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
         float tmp = outerRadius;
         outerRadius = innerRadius;
         innerRadius = tmp;
-
-        if (outerRadius <= 0.0f) outerRadius = 0.1f;
     }
+
+    if (outerRadius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
@@ -2776,9 +2776,9 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
         float tmp = outerRadius;
         outerRadius = innerRadius;
         innerRadius = tmp;
-
-        if (outerRadius <= 0.0f) outerRadius = 0.1f;
     }
+
+    if (outerRadius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
@@ -2858,9 +2858,9 @@ void DrawRingLinesEx(Vector2 center, float innerRadius, float outerRadius, float
         float tmp = outerRadius;
         outerRadius = innerRadius;
         innerRadius = tmp;
-
-        if (outerRadius <= 0.0f) outerRadius = 0.1f;
     }
+
+    if (outerRadius <= 0.0f) return; // There's nothing to draw (also avoid div by zero)
 
     // Function expects (endAngle > startAngle)
     if (endAngle < startAngle)
