@@ -3965,7 +3965,51 @@ void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color
 // Draw rectangle with gradient colors within an image, counter-clockwise color order
 void ImageDrawRectangleGradientEx(Image *dst, Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
-    // TODO: NEW: Implement ImageDrawRectangleGradientEx()
+    if ((dst == NULL) || (rec.width <= 0) || (rec.height <= 0)) return;
+
+    int x0 = (int)floorf(rec.x);
+    int y0 = (int)floorf(rec.y);
+    int x1 = (int)ceilf(rec.x + rec.width);
+    int y1 = (int)ceilf(rec.y + rec.height);
+
+    // Limit draw to image bounds
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > dst->width) x1 = dst->width;
+    if (y1 > dst->height) y1 = dst->height;
+
+    // Safety check
+    if ((x0 >= x1) || (y0 >= y1)) return;
+
+    for (int y = y0; y < y1; y++)
+    {
+        float ty = (y - rec.y)/rec.height;
+        if (ty < 0.0f) ty = 0.0f;
+        if (ty > 1.0f) ty = 1.0f;
+
+        for (int x = x0; x < x1; x++)
+        {
+            float tx = (x - rec.x)/rec.width;
+            if (tx < 0.0f) tx = 0.0f;
+            if (tx > 1.0f) tx = 1.0f;
+
+            // Bilinear interpolation weights
+            float w1 = (1.0f - tx)*(1.0f - ty);
+            float w2 = (1.0f - tx)*ty;
+            float w3 = tx*ty;
+            float w4 = tx*(1.0f - ty);
+
+            Color color = {
+                (unsigned char)(col1.r*w1 + col2.r*w2 + col3.r*w3 + col4.r*w4),
+                (unsigned char)(col1.g*w1 + col2.g*w2 + col3.g*w3 + col4.g*w4),
+                (unsigned char)(col1.b*w1 + col2.b*w2 + col3.b*w3 + col4.b*w4),
+                (unsigned char)(col1.a*w1 + col2.a*w2 + col3.a*w3 + col4.a*w4)
+            };
+
+            // Using ImageDrawPixel() to let it manage color format conversion
+            ImageDrawPixel(dst, x, y, color);
+        }
+    }
 }
 
 // Draw circle within an image
