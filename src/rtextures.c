@@ -1654,7 +1654,7 @@ Image ImageFromChannel(Image image, int selectedChannel)
         selectedChannel = 3;
     }
 
-    // TODO: Consider other one-channel formats: R16, R32
+    // TODO: Support R16 and R32 channel sizes, not only 8-bit
     result.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
     result.height = image.height;
     result.width = image.width;

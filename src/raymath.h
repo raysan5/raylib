@@ -389,7 +389,6 @@ RMAPI float Vector2LineAngle(Vector2 start, Vector2 end)
 {
     float result = 0.0f;
 
-    // TODO(10/9/2023): Currently angles move clockwise, determine if this is wanted behavior
     result = -atan2f(end.y - start.y, end.x - start.x);
 
     return result;
@@ -2703,7 +2702,7 @@ RMAPI Matrix MatrixCompose(Vector3 translation, Quaternion rotation, Vector3 sca
 }
 
 // Decompose a transformation matrix into its rotational, translational and scaling components and remove shear
-// TODO: This function is not following raymath conventions defined in header: NOT self-contained
+// TODO: WARNING: Following raymath convention and make the function self-contained
 RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotation, Vector3 *scale)
 {
     float eps = (float)1e-9;

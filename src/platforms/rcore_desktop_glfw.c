@@ -1222,7 +1222,6 @@ void OpenURL(const char *url)
 #if defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
 #endif
-        // TODO: Replace system() call by custom process
         int result = system(cmd);
 
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");

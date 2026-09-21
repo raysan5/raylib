@@ -638,7 +638,6 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
     {
         bool genFontChars = false;
         stbtt_fontinfo fontInfo = { 0 };
-        // TODO: Should a shallow copy be created to avoid "dealing" with a const user array?
         int *requiredCodepoints = (int *)codepoints;
 
         if (stbtt_InitFont(&fontInfo, (unsigned char *)fileData, 0)) // Initialize font for data reading
@@ -1797,8 +1796,6 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
 
         if ((textLen + count*(replaceLen - searchLen)) < (MAX_TEXT_BUFFER_LENGTH - 1))
         {
-            // TODO: Allow copying data replaced up to maximum buffer size and stop
-
             tempPtr = buffer; // Point to result start
 
             // First time through the loop, all the variable are set correctly from here on,
@@ -1988,8 +1985,6 @@ char *TextInsert(const char *text, const char *insert, int position)
 
         if ((textLen + insertLen) < (MAX_TEXT_BUFFER_LENGTH - 1))
         {
-            // TODO: Allow copying data inserted up to maximum buffer size and stop
-
             for (int i = 0; i < position; i++) buffer[i] = text[i];
             for (int i = 0; i < insertLen; i++) buffer[i+position] = insert[i];
             for (int i = position; i < textLen; i++) buffer[i+insertLen] = text[i];
@@ -2131,7 +2126,7 @@ int TextFindIndex(const char *text, const char *search)
 
 // Get upper case version of provided string
 // WARNING: Limited functionality, only basic characters set
-// TODO: Support UTF-8 diacritics to upper-case, check codepoints
+// TODO: Support UTF-8 diacritics (á, ñ, ü...) to upper-case, check codepoints
 char *TextToUpper(const char *text)
 {
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };

@@ -3773,10 +3773,7 @@ void DrawSplineLinear(const Vector2 *points, int pointCount, float thick, Color 
                 normal.y = 0.0f;
             }
         }
-        else
-        {
-            normal = prevNormal;
-        }
+        else normal = prevNormal;
 
         Vector2 radius = { prevNormal.x + normal.x, prevNormal.y + normal.y };
         float radiusLength = sqrtf(radius.x*radius.x + radius.y*radius.y);

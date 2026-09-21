@@ -2041,12 +2041,12 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     {
         // TODO: Implement gltf/glb support
         /*
-        cgltf_size expected = cgltf_write(options, NULL, 0, data);
-        char *buffer = (char *)RL_CALLOC(expected, 0);
-        cgltf_size actual = cgltf_write(options, buffer, expected, data);
+        cgltf_size expectedSize = cgltf_write(options, NULL, 0, data);
+        char *buffer = (char *)RL_CALLOC(expectedSize, 0);
+        cgltf_size actualSize = cgltf_write(options, buffer, expectedSize, data);
 
         // NOTE: cgltf_write() includes a NULL terminator that should be ommited in case of a .glb
-        if (options->type == cgltf_file_type_glb) cgltf_write_glb(file, buffer, actual - 1, data->bin, data->bin_size);
+        if (options->type == cgltf_file_type_glb) cgltf_write_glb(fileName, buffer, actual - 1, data->bin, data->bin_size);
         else SaveFileText(fileName, buffer); // Write a plain JSON file
         */
     }
@@ -2196,8 +2196,6 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 {
     Material *materials = NULL;
     unsigned int count = 0;
-
-    // TODO: Support IQM and GLTF for materials parsing
 
 #if SUPPORT_FILEFORMAT_MTL
     if (IsFileExtension(fileName, ".mtl"))
@@ -5142,7 +5140,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].keyframeCount = anim[a].num_frames;
         animations[a].keyframePoses = (Transform **)RL_CALLOC(anim[a].num_frames, sizeof(Transform *));
         memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
-        // TODO: Use animation framerate data?
+        // TODO: Store animation framerate data?
         //animations[a].framerate = anim.framerate;
 
         TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Framerate: %f", fileName, animations[a].name, animations[a].keyframeCount, anim[a].framerate);
