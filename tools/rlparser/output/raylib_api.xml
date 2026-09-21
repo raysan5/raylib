@@ -307,21 +307,21 @@
     </Aliases>
     <Enums count="21">
         <Enum name="ConfigFlags" valueCount="16" desc="System/Window config flags">
-            <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
             <Value name="FLAG_FULLSCREEN_MODE" integer="2" desc="Set to run program in fullscreen" />
             <Value name="FLAG_WINDOW_RESIZABLE" integer="4" desc="Set to allow resizable window" />
             <Value name="FLAG_WINDOW_UNDECORATED" integer="8" desc="Set to disable window decoration (frame and buttons)" />
+            <Value name="FLAG_WINDOW_TRANSPARENT" integer="16" desc="Set to allow transparent framebuffer" />
+            <Value name="FLAG_MSAA_4X_HINT" integer="32" desc="Set to try enabling MSAA 4X" />
+            <Value name="FLAG_VSYNC_HINT" integer="64" desc="Set to try enabling V-Sync on GPU" />
             <Value name="FLAG_WINDOW_HIDDEN" integer="128" desc="Set to hide window" />
+            <Value name="FLAG_WINDOW_ALWAYS_RUN" integer="256" desc="Set to allow windows running while minimized" />
             <Value name="FLAG_WINDOW_MINIMIZED" integer="512" desc="Set to minimize window (iconify)" />
             <Value name="FLAG_WINDOW_MAXIMIZED" integer="1024" desc="Set to maximize window (expanded to monitor)" />
             <Value name="FLAG_WINDOW_UNFOCUSED" integer="2048" desc="Set to window non focused" />
             <Value name="FLAG_WINDOW_TOPMOST" integer="4096" desc="Set to window always on top" />
-            <Value name="FLAG_WINDOW_ALWAYS_RUN" integer="256" desc="Set to allow windows running while minimized" />
-            <Value name="FLAG_WINDOW_TRANSPARENT" integer="16" desc="Set to allow transparent framebuffer" />
             <Value name="FLAG_WINDOW_HIGHDPI" integer="8192" desc="Set to support HighDPI" />
             <Value name="FLAG_WINDOW_MOUSE_PASSTHROUGH" integer="16384" desc="Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED" />
             <Value name="FLAG_BORDERLESS_WINDOWED_MODE" integer="32768" desc="Set to run program in borderless windowed mode" />
-            <Value name="FLAG_MSAA_4X_HINT" integer="32" desc="Set to try enabling MSAA 4X" />
             <Value name="FLAG_INTERLACED_HINT" integer="65536" desc="Set to try enabling interlaced video format (for V3D)" />
         </Enum>
         <Enum name="TraceLogLevel" valueCount="8" desc="Trace log level">

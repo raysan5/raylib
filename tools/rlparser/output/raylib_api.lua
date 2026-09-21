@@ -1422,11 +1422,6 @@ return {
       description = "System/Window config flags",
       values = {
         {
-          name = "FLAG_VSYNC_HINT",
-          value = 64,
-          description = "Set to try enabling V-Sync on GPU"
-        },
-        {
           name = "FLAG_FULLSCREEN_MODE",
           value = 2,
           description = "Set to run program in fullscreen"
@@ -1442,9 +1437,29 @@ return {
           description = "Set to disable window decoration (frame and buttons)"
         },
         {
+          name = "FLAG_WINDOW_TRANSPARENT",
+          value = 16,
+          description = "Set to allow transparent framebuffer"
+        },
+        {
+          name = "FLAG_MSAA_4X_HINT",
+          value = 32,
+          description = "Set to try enabling MSAA 4X"
+        },
+        {
+          name = "FLAG_VSYNC_HINT",
+          value = 64,
+          description = "Set to try enabling V-Sync on GPU"
+        },
+        {
           name = "FLAG_WINDOW_HIDDEN",
           value = 128,
           description = "Set to hide window"
+        },
+        {
+          name = "FLAG_WINDOW_ALWAYS_RUN",
+          value = 256,
+          description = "Set to allow windows running while minimized"
         },
         {
           name = "FLAG_WINDOW_MINIMIZED",
@@ -1467,16 +1482,6 @@ return {
           description = "Set to window always on top"
         },
         {
-          name = "FLAG_WINDOW_ALWAYS_RUN",
-          value = 256,
-          description = "Set to allow windows running while minimized"
-        },
-        {
-          name = "FLAG_WINDOW_TRANSPARENT",
-          value = 16,
-          description = "Set to allow transparent framebuffer"
-        },
-        {
           name = "FLAG_WINDOW_HIGHDPI",
           value = 8192,
           description = "Set to support HighDPI"
@@ -1490,11 +1495,6 @@ return {
           name = "FLAG_BORDERLESS_WINDOWED_MODE",
           value = 32768,
           description = "Set to run program in borderless windowed mode"
-        },
-        {
-          name = "FLAG_MSAA_4X_HINT",
-          value = 32,
-          description = "Set to try enabling MSAA 4X"
         },
         {
           name = "FLAG_INTERLACED_HINT",
