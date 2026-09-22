@@ -8,7 +8,7 @@
 *   display of the font when scaling it to different sizes, that way, it's not required
 *   to generate multiple fonts at multiple sizes (as long as the scaling is not very different)
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 4.2
+*   Example originally created with raylib 1.3, last time updated with raylib 6.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -31,12 +31,18 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - font filters");
 
-    const char msg[50] = "Loaded Font";
+    const char *msg = "Loaded Font";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
+    // When no codepoints are provided, LoadFontEx() loads a default set of codepoints
+    // This set includes '@', which "KAISG.ttf" doesn't have a glyph for, causing a warning to be logged
+    // We avoid this by loading only the exact codepoints we need
+    int codepointCount = 0;
+    int *codepoints = LoadCodepoints("Loade Fnt", &codepointCount);
     // TTF Font loading with custom generation parameters
-    Font font = LoadFontEx("resources/KAISG.ttf", 96, 0, 0);
+    Font font = LoadFontEx("resources/KAISG.ttf", 96, codepoints, codepointCount);
+    UnloadCodepoints(codepoints);
 
     // Generate mipmap levels to use trilinear filtering
     // NOTE: On 2D drawing it won't be noticeable, it looks like FILTER_BILINEAR
