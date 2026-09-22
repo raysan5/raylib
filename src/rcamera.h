@@ -207,6 +207,10 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 // Camera orbital speed in CAMERA_ORBITAL mode
 #define CAMERA_ORBITAL_SPEED                        0.5f       // Radians per second
 
+// Standard deadzone threshold (between 0.1f and 0.25f)
+#define GAMEPAD_DEADZONE                            0.25f
+
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -501,14 +505,43 @@ void UpdateCamera(Camera *camera, int mode)
         // Gamepad movement
         if (IsGamepadAvailable(0))
         {
-            // Gamepad controller support
-            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*2)*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*2)*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            // Controller drift mitigation right axis
+            float rightMovementX = GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X);
+            float rightMovementY = GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y);
 
-            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.25f) CameraMoveForward(camera, cameraMoveSpeed, moveInWorldPlane);
-            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.25f) CameraMoveRight(camera, -cameraMoveSpeed, moveInWorldPlane);
-            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) >= 0.25f) CameraMoveForward(camera, -cameraMoveSpeed, moveInWorldPlane);
-            if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) >= 0.25f) CameraMoveRight(camera, cameraMoveSpeed, moveInWorldPlane);
+            if (fabsf(rightMovementX) > GAMEPAD_DEADZONE)
+            {
+                // Rescale the X axis value so it smoothly starts from 0 after the deadzone
+                float rightRescaledX = signbit(rightMovementX) * ((fabsf(rightMovementX) - GAMEPAD_DEADZONE) / (1.0f - GAMEPAD_DEADZONE));
+                if (fabsf(rightMovementX) >= rightRescaledX) CameraYaw(camera, -(rightMovementX * 2) * CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
+            }
+
+            if (fabsf(rightMovementY) > GAMEPAD_DEADZONE)
+            {
+                // Rescale the Y axis value so it smoothly starts from 0 after the deadzone
+                float rightRescaledY = signbit(rightMovementY) * ((fabsf(rightMovementY) - GAMEPAD_DEADZONE) / (1.0f - GAMEPAD_DEADZONE));
+                if (fabsf(rightMovementY) >= rightRescaledY) CameraPitch(camera, -(rightMovementY * 2) * CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            }
+
+            // Controller drift mitigation left axis
+            float leftMovementX = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
+            float leftMovementY = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);
+
+            if (fabsf(leftMovementX) > GAMEPAD_DEADZONE)
+            {
+                // Rescale the X axis value so it smoothly starts from 0 after the deadzone
+                float leftRescaledX = signbit(leftMovementX) * ((fabsf(leftMovementX) - GAMEPAD_DEADZONE) / (1.0f - GAMEPAD_DEADZONE));
+                if (leftMovementX <= -leftRescaledX) CameraMoveRight(camera, -cameraMoveSpeed, moveInWorldPlane);
+                if (leftMovementX >= leftRescaledX) CameraMoveRight(camera, cameraMoveSpeed, moveInWorldPlane);
+            }
+
+            if (fabsf(leftMovementY) > GAMEPAD_DEADZONE)
+            {
+                // Rescale the Y axis value so it smoothly starts from 0 after the deadzone
+                float leftRescaledY = signbit(leftMovementY) * ((fabsf(leftMovementY) - GAMEPAD_DEADZONE) / (1.0f - GAMEPAD_DEADZONE));
+                if (leftMovementY <= -leftRescaledY) CameraMoveForward(camera, cameraMoveSpeed, moveInWorldPlane);
+                if (leftMovementY >= leftRescaledY) CameraMoveForward(camera, -cameraMoveSpeed, moveInWorldPlane);
+            }
         }
 
         if (mode == CAMERA_FREE)
