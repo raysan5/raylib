@@ -1496,24 +1496,25 @@ void PollInputEvents(void)
                 {
                     int newCount = CORE.Window.dropFileCount + 1;
 
-                    // 1. Reallocate array to fit the new file path pointer
-                    char **tempPaths = (char **)RL_REALLOC(CORE.Window.dropFilepaths, newCount * sizeof(char *));
+                    // Reallocate array to fit the new file path pointer
+                    char **tempPaths = (char **)RL_REALLOC(CORE.Window.dropFilepaths, newCount*sizeof(char *));
                     CORE.Window.dropFilepaths = tempPaths;
-            
-                    // 2. Allocate memory for the file path string itself
+
+                    // Allocate memory for the file path string itself
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
                     if (CORE.Window.dropFilepaths[CORE.Window.dropFileCount] != NULL)
                     {
-                        // 3. Copy the path data from SDL to our internal list
+                        // Copy the path data from SDL to our internal list
                         snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", DROP_EVENT_DATA);
                         CORE.Window.dropFileCount++;
                     }
-            
-                    // 4. Free event memory only if running SDL2 because SDL3 will handle it internally
+
+                    // NOTE: SDL3 will handle path freeing internally
                     #ifndef USING_VERSION_SDL3
-                        SDL_free(event.drop.file);
+                    SDL_free(event.drop.file);
                     #endif
+                }
             } break;
 
             // Window events are also polled (minimized, maximized, close...)
