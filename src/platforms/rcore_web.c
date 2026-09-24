@@ -1405,9 +1405,9 @@ int InitPlatform(void)
     glfwSetCursorEnterCallback(platform.handle, MouseEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
-    
+
     // WARNING: result = glfwGetError(NULL), symbol can not be found in GLFW Web
-    result = true; 
+    result = true;
 
     // Check context activation
     if (result == true) //(result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))

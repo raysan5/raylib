@@ -247,7 +247,7 @@ Detailed changes (until 12-Sept-2026):
 [misc] REVIEWED: Shift `__cplusplus` check to a higher level for `bool` type define (#5804) by @lamweilun
 [external] ADDED: `rprand_get_value_raw()` to `rprand` library by @raysan5
 [external] UPDATED: GLFW to 3.5.1 (#6051) by @M374LX
-[external] UPDATED: miniaudio to 0.11.25 (#6050) by @M374LX  
+[external] UPDATED: miniaudio to 0.11.25 (#6050) by @M374LX
 [external] UPDATED: `raygui` to latest master (raygui 5.0) by @raysan5
 [external] REVIEWED: `jar_mod_load_file()`, check fread return value (#5840) by @fffaraz
 [external] REVIEWED: `tiny_obj_loader` Replace `assert()` by runtime checks - ROS: `CLN-012` by @raysan5
