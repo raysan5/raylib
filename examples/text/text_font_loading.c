@@ -13,7 +13,7 @@
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
 *                 Characters in image must follow some spacing and order rules
 *
-*   Example originally created with raylib 1.4, last time updated with raylib 3.0
+*   Example originally created with raylib 1.4, last time updated with raylib 6.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -38,7 +38,7 @@ int main(void)
 
     // Define characters to draw
     // NOTE: raylib supports UTF-8 encoding, following list is actually codified as UTF8 internally
-    const char msg[256] = "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmn\nopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓ\nÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷\nøùúûüýþÿ";
+    const char *msg = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklm\nnopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\nÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö\n÷øùúûüýþÿ";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
@@ -46,8 +46,11 @@ int main(void)
     Font fontBm = LoadFont("resources/pixantiqua.fnt"); // Requires "resources/pixantiqua.png"
 
     // TTF font : Font data and atlas are generated directly from TTF
-    // NOTE: We define a font base size of 32 pixels tall and up-to 250 characters
-    Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, 0, 250);
+    // NOTE: We define a font base size of 32 pixels tall and load only the characters we use
+    int codepointCount = 0;
+    int *codepoints = LoadCodepoints(TextReplace(msg, "\n", ""), &codepointCount);
+    Font fontTtf = LoadFontEx("resources/pixantiqua.ttf", 32, codepoints, codepointCount);
+    UnloadCodepoints(codepoints);
 
     SetTextLineSpacing(16);         // Set line spacing for multiline text (when line breaks are included '\n')
 

@@ -1234,7 +1234,7 @@ Image ImageFromImage(Image image, Rectangle rec)
     if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
 
     if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
-	{
+    {
         // Basic rectangle validation: size smaller than image size
         if ((rec.x >= 0) && (rec.y >= 0) && (rec.width > 0) && (rec.height > 0) &&
             (((int)rec.x + (int)rec.width) <= image.width) &&
@@ -1255,8 +1255,8 @@ Image ImageFromImage(Image image, Rectangle rec)
                     (int)rec.width*bytesPerPixel);
             }
         }
-        else TRACELOG(LOG_WARNING, "IMAGE: ImageToImage(), rectangle provided not valid");
-	}
+        else TRACELOG(LOG_WARNING, "IMAGE: ImageFromImage(), rectangle provided not valid");
+    }
     else TRACELOG(LOG_WARNING, "IMAGE: Image manipulation not supported for compressed formats");
 
     return result;

@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★☆] 3/4
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 4.2, last time updated with raylib 6.0
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -44,7 +44,8 @@ int main(void)
     // Convert each utf-8 character into its
     // corresponding codepoint in the font file
     int codepointCount = 0;
-    int *codepoints = LoadCodepoints(text, &codepointCount);
+    // NOTE: Exclude line breaks from the codepoints we try to load
+    int *codepoints = LoadCodepoints(TextReplace(text, "\n", ""), &codepointCount);
 
     // Removed duplicate codepoints to generate smaller font atlas
     int codepointsNoDupsCount = 0;
@@ -135,7 +136,7 @@ int main(void)
 // Module Functions Definition
 //------------------------------------------------------------------------------------
 // Remove codepoint duplicates if requested
-// WARNING: This process could be a bit slow if there text to process is very long
+// WARNING: This process could be a bit slow if the text to process is very long
 static int *CodepointRemoveDuplicates(int *codepoints, int codepointCount, int *codepointsResultCount)
 {
     int codepointsNoDupsCount = codepointCount;

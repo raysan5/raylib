@@ -1592,11 +1592,11 @@ int main(int argc, char *argv[])
                     "        default: break;\n    }\n"
                     "    logTextOffset += vsprintf(logText + logTextOffset, text, args);\n"
                     "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n}\n\n"
+                    "static int requestedTestFrames = 0;\n"
+                    "static int testFramesCount = 0;\n"
                     "int main(int argc, char *argv[])\n{\n"
                     "    SetTraceLogCallback(CustomTraceLog);\n"
-                    "    int requestedTestFrames = 0;\n"
-                    "    int testFramesCount = 0;\n"
-                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+                    "    if ((argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 static const char *returnReplaceText =
                     "    SaveFileText(\"outputLogFileName\", logText);\n"
@@ -1652,10 +1652,10 @@ int main(int argc, char *argv[])
                 static const char *mainReplaceText =
                     "#include <string.h>\n"
                     "#include <stdlib.h>\n"
+                    "static int requestedTestFrames = 0;\n"
+                    "static int testFramesCount = 0;\n"
                     "int main(int argc, char *argv[])\n{\n"
-                    "    int requestedTestFrames = 0;\n"
-                    "    int testFramesCount = 0;\n"
-                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+                    "    if ((argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 char *srcTextUpdated[3] = { 0 };
                 srcTextUpdated[0] = TextReplaceAlloc(srcText, "int main(void)\n{", mainReplaceText);
@@ -1666,20 +1666,24 @@ int main(int argc, char *argv[])
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
+                // Compiler flags for building the examples
+                //   -Wno-unused-function: Prevents a warning in raygui.h with GuiFontIconBaking()
+                const char *cFlags = "\"-Wno-unused-function\"";
+
                 // STEP 2: Build example for DESKTOP platform
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),

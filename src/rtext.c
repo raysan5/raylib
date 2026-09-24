@@ -734,9 +734,24 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                     }
                     //else TRACELOG(LOG_WARNING, "FONT: Glyph [0x%08x] has no image data available", cp); // Only reported for 0x20 and 0x3000
 
-                    // Create an empty image for Space character (0x20), useful for sprite font generation
-                    // NOTE: Another space to consider: 0x3000 (CJK - Ideographic Space)
-                    if ((cp == 0x20) || (cp == 0x3000))
+                    // Create an empty image for Unicode space characters, useful for sprite font generation
+                    if ((cp == 0x20) ||   // ASCII space
+                        (cp == 0xA0) ||   // No-break space
+                        (cp == 0x1680) || // Ogham Space Mark
+                        (cp == 0x2000) || // En Quad
+                        (cp == 0x2001) || // Em Quad
+                        (cp == 0x2002) || // En Space
+                        (cp == 0x2003) || // Em Space
+                        (cp == 0x2004) || // Three-per-em Space
+                        (cp == 0x2005) || // Four-per-em Space
+                        (cp == 0x2006) || // Six-per-em Space
+                        (cp == 0x2007) || // Figure Space
+                        (cp == 0x2008) || // Punctuation Space
+                        (cp == 0x2009) || // Thin Space
+                        (cp == 0x200A) || // Hair Space
+                        (cp == 0x202F) || // Narrow No-break Space
+                        (cp == 0x205F) || // Medium Mathematical Space
+                        (cp == 0x3000))   // Ideographic Space
                     {
                         stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
                         glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
@@ -812,11 +827,11 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
     // Calculate image size based on total glyph width and glyph row count
     int totalWidth = 0;
-    int maxGlyphWidth = 0;
+    // int maxGlyphWidth = 0; // Not currently used
 
     for (int i = 0; i < glyphCount; i++)
     {
-        if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
+        // if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
         totalWidth += glyphs[i].image.width + 2*padding;
     }
 
