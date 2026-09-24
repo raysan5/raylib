@@ -287,7 +287,6 @@ static const int CursorsLUT[] = {
 // SDL3 Migration: Renamed
 // IMPORTANT: Might need to call SDL_CleanupEvent somewhere see :https://github.com/libsdl-org/SDL/issues/3540#issuecomment-1793449852
 #define SDL_DROPFILE  SDL_EVENT_DROP_FILE
-#define DROP_EVENT_DATA event.drop.data
 
 // SDL2 implementation for SDL3 function
 const char *SDL_GameControllerNameForIndex(int joystickIndex)
@@ -428,8 +427,6 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 }
 
 #else // SDL2 fallback
-
-#define DROP_EVENT_DATA event.drop.file
 
 // Since SDL2 doesn't have this function, leaving a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
@@ -1509,14 +1506,14 @@ void PollInputEvents(void)
                     if (CORE.Window.dropFilepaths[CORE.Window.dropFileCount] != NULL)
                     {
                         // Copy the path data from SDL to our internal list
-                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", DROP_EVENT_DATA);
+                        #if defined(USING_VERSION_SDL3)
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
+                        #else
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
+                        SDL_free(event.drop.file); // Only SDL2 needs to free, SDL3 keeps track internally
+                        #endif
                         CORE.Window.dropFileCount++;
                     }
-
-                    // NOTE: SDL3 will handle path freeing internally
-                    #ifndef USING_VERSION_SDL3
-                    SDL_free(event.drop.file);
-                    #endif
                 }
             } break;
 
