@@ -99,6 +99,10 @@ shapes;shapes_penrose_tile;★★★★;5.5;6.0;2025;2025;"David Buzatto";@david
 shapes;shapes_hilbert_curve;★★★☆;5.6;5.6;2025;2025;"Hamza RAHAL";@hmz-rhl
 shapes;shapes_easings_testbed;★★★☆;2.5;2.5;2019;2025;"Juan Miguel López";@flashback-fx
 shapes;shapes_drag_puzzle;★☆☆☆;6.0;6.0;2026;2026;"Gabriel Piangers";@gabriel-piangers
+shapes;shapes_ellipse_collision;★★☆☆;5.5;5.5;2025;2025;"Ziya";@Monjaris
+shapes;shapes_outlines_testbed;★★★☆;6.1;6.1;2026;2026;"Matthew Roush";@MatthewRoush
+shapes;shapes_outlines_thickness;★☆☆☆;6.1;6.1;2026;2026;"Matthew Roush";@MatthewRoush
+shapes;shapes_polygon_lines;★★☆☆;6.1;6.1;2026;2026;"Matthew Roush";@MatthewRoush
 textures;textures_clipboard_image;★☆☆☆;6.0;6.0;2026;2026;"Maicon Santana";@maiconpintoabreu
 textures;textures_magnifying_glass;★★★☆;5.6;5.6;2026;2026;"Luke Vaughan";@badram
 textures;textures_logo_raylib;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
@@ -178,6 +182,8 @@ models;models_directional_billboard;★★☆☆;6.0;6.0;2025;2025;"Robin";@Robi
 models;models_animation_blend_custom;★★★★;5.5;6.0;2026;2026;"dmitrii-brand";@dmitrii-brand
 models;models_animation_blending;★★★★;5.5;6.0;2024;2026;"Kirandeep";@Kirandeep-Singh-Khehra
 models;models_animation_timing;★★★☆;6.0;6.0;2026;2026;"Ramon Santamaria";@raysan5
+models;models_mesh_uv_painting;★★★★;6.0;6.0;2025;2025;"PanicTitan";@PanicTitan
+models;models_procedural_decals;★★★★;6.0;6.0;2025;2025;"PanicTitan";@PanicTitan
 shaders;shaders_ascii_rendering;★★☆☆;5.5;6.0;2025;2025;"Maicon Santana";@maiconpintoabreu
 shaders;shaders_basic_lighting;★★★★;3.0;4.2;2019;2025;"Chris Camacho";@chriscamacho
 shaders;shaders_model_shader;★★☆☆;1.3;3.7;2014;2025;"Ramon Santamaria";@raysan5
@@ -213,6 +219,7 @@ shaders;shaders_depth_rendering;★★★☆;6.0;6.0;2025;2025;"Luís Almeida";@
 shaders;shaders_game_of_life;★★★☆;6.0;6.0;2025;2025;"Jordi Santonja";@JordSant
 shaders;shaders_rlgl_compute;★★★★;4.0;4.0;2021;2025;"Teddy Astie";@tsnake41
 shaders;shaders_cel_shading;★★★☆;6.0;6.0;2026;2026;"Gleb A";@ggrizzly
+shaders;shaders_lights_bloom;★★★☆;6.0;6.0;2025;2025;"PanicTitan";@PanicTitan
 audio;audio_module_playing;★☆☆☆;1.5;3.5;2016;2025;"Ramon Santamaria";@raysan5
 audio;audio_music_stream;★☆☆☆;1.3;4.2;2015;2025;"Ramon Santamaria";@raysan5
 audio;audio_raw_stream;★★★☆;1.6;6.0;2015;2026;"Ramon Santamaria";@raysan5
@@ -223,5 +230,4 @@ audio;audio_sound_multi;★★☆☆;5.0;5.0;2023;2025;"Jeffery Myers";@JeffM250
 audio;audio_sound_positioning;★★☆☆;5.5;6.0;2025;2025;"Le Juez Victor";@Bigfoot71
 audio;audio_spectrum_visualizer;★★★☆;6.0;6.0;2025;2025;"IANN";@meisei4
 audio;audio_stream_callback;★★★☆;6.0;6.0;2026;2026;"Dan Hoang";@dan-hoang
-
-oang
+audio;audio_amp_envelope;★☆☆☆;6.0;6.0;2026;2026;"Arbinda Rizki Muhammad";@arbipink
