@@ -1040,8 +1040,13 @@ int main(int argc, char *argv[])
             FilePathList clist = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
             // Load examples collection list file (raylib/examples/examples_list.txt)
-            char *exList = LoadFileText(exCollectionFilePath);
-            int exListLen = (int)strlen(exList);
+            char *exList = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+            int exListLen = 0;
+
+            char *exListFileData = LoadFileText(exCollectionFilePath);
+            exListLen = (int)strlen(exListFileData);
+            memcpy(exList, exListFileData, exListLen);
+            UnloadFileText(exListFileData);
 
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
@@ -1098,7 +1103,10 @@ int main(int argc, char *argv[])
                                 exInfo->author, exInfo->authorGitHub));
 
                         // Add the following examples to the end of collection list
-                        strncpy(exListUpdated + exListNextCatIndex + exListNewExLen, exList + exListNextCatIndex, exListLen - exListNextCatIndex);
+                        snprintf(exListUpdated + exListNextCatIndex + exListNewExLen, exListLen - exListNextCatIndex + 1, "%s", exList + exListNextCatIndex);
+
+                        exListLen = (int)strlen(exListUpdated);
+                        memcpy(exList, exListUpdated, exListLen + 1);
 
                         listUpdated = true;
                     }
@@ -1126,7 +1134,7 @@ int main(int argc, char *argv[])
 
             if (listUpdated) SaveFileText(exCollectionFilePath, exListUpdated);
 
-            UnloadFileText(exList);
+            RL_FREE(exList);
             RL_FREE(exListUpdated);
 
             UnloadDirectoryFiles(clist);
