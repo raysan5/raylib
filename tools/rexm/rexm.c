@@ -1043,12 +1043,10 @@ int main(int argc, char *argv[])
             char *exList = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             int exListLen = 0;
 
-            {
-                char *exListFileData = LoadFileText(exCollectionFilePath);
-                exListLen = (int)strlen(exListFileData);
-                memcpy(exList, exListFileData, exListLen);
-                UnloadFileText(exListFileData);
-            }
+            char *exListFileData = LoadFileText(exCollectionFilePath);
+            exListLen = (int)strlen(exListFileData);
+            memcpy(exList, exListFileData, exListLen);
+            UnloadFileText(exListFileData);
 
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
