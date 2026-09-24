@@ -287,6 +287,7 @@ static const int CursorsLUT[] = {
 // SDL3 Migration: Renamed
 // IMPORTANT: Might need to call SDL_CleanupEvent somewhere see :https://github.com/libsdl-org/SDL/issues/3540#issuecomment-1793449852
 #define SDL_DROPFILE  SDL_EVENT_DROP_FILE
+#define DROP_EVENT_DATA event.drop.data
 
 // SDL2 implementation for SDL3 function
 const char *SDL_GameControllerNameForIndex(int joystickIndex)
@@ -427,6 +428,8 @@ int SDL_GetNumTouchFingers(SDL_TouchID touchID)
 }
 
 #else // SDL2 fallback
+
+#define DROP_EVENT_DATA event.drop.file
 
 // Since SDL2 doesn't have this function, leaving a stub
 // SDL_GetClipboardData function is available since SDL 3.1.3. (e.g. SDL3)
