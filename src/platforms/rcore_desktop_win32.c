@@ -1383,6 +1383,8 @@ void PollInputEvents(void)
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
+    CORE.Window.resizedLastFrame = false;
+
     // Process windows messages
     MSG msg = { 0 };
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
@@ -1676,6 +1678,7 @@ int InitPlatform(void)
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
+    CORE.Window.resizedLastFrame = false;
     CORE.Window.render.width = CORE.Window.screen.width;
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
