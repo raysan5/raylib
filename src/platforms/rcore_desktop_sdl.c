@@ -1506,14 +1506,14 @@ void PollInputEvents(void)
                     if (CORE.Window.dropFilepaths[CORE.Window.dropFileCount] != NULL)
                     {
                         // Copy the path data from SDL to our internal list
-                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", DROP_EVENT_DATA);
+                        #if defined(USING_VERSION_SDL3)
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
+                        #else
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
+                        SDL_free(event.drop.file); // Only SDL2 needs to free, SDL3 keeps track internally
+                        #endif
                         CORE.Window.dropFileCount++;
                     }
-
-                    // NOTE: SDL3 will handle path freeing internally
-                    #ifndef USING_VERSION_SDL3
-                    SDL_free(event.drop.file);
-                    #endif
                 }
             } break;
 
