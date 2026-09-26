@@ -827,11 +827,11 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
     // Calculate image size based on total glyph width and glyph row count
     int totalWidth = 0;
-    // int maxGlyphWidth = 0; // Not currently used
+    //int maxGlyphWidth = 0; // Not currently used
 
     for (int i = 0; i < glyphCount; i++)
     {
-        // if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
+        //if (glyphs[i].image.width > maxGlyphWidth) maxGlyphWidth = glyphs[i].image.width;
         totalWidth += glyphs[i].image.width + 2*padding;
     }
 
