@@ -2838,13 +2838,14 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
     int charBByoff0 = 0;            // Character bounding box Y0 offset
     int charDWidthX = 0;            // Character advance X
     int charDWidthY = 0;            // Character advance Y (unused)
-
-    int *requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+    GlyphInfo *charGlyphInfo = NULL; // Pointer to output glyph info (NULL if not set)
 
     if (fileData == NULL) return glyphs;
 
     // In case no chars count provided, default to 95
     codepointCount = (codepointCount > 0)? codepointCount : 95;
+
+    int *requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
 
     if (codepoints == NULL)
     {
@@ -2880,11 +2881,11 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
 
             if (charBitmapStarted)
             {
-                if (glyphs != NULL)
+                if (charGlyphInfo != NULL)
                 {
                     int pixelY = charBitmapNextRow++;
 
-                    if (pixelY >= glyphs->image.height) break;
+                    if (pixelY >= charGlyphInfo->image.height) break;
 
                     for (int x = 0; x < readBytes; x++)
                     {
@@ -2894,9 +2895,9 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
                         {
                             int pixelX = ((x*4) + bitX);
 
-                            if (pixelX >= glyphs->image.width) break;
+                            if (pixelX >= charGlyphInfo->image.width) break;
 
-                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)glyphs->image.data)[(pixelY*glyphs->image.width) + pixelX] = 255;
+                            if ((byte & (8 >> bitX)) > 0) ((unsigned char *)charGlyphInfo->image.data)[(pixelY*charGlyphInfo->image.width) + pixelX] = 255;
                         }
                     }
                 }
@@ -2928,30 +2929,30 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
             if (strstr(buffer, "BITMAP") != NULL)
             {
                 // Search for glyph index in codepoints
-                glyphs = NULL;
+                charGlyphInfo = NULL;
 
                 for (int index = 0; index < codepointCount; index++)
                 {
                     if (requiredCodepoints[index] == charEncoding)
                     {
-                        glyphs = &glyphs[index];
+                        charGlyphInfo = &glyphs[index];
                         break;
                     }
                 }
 
                 // Init glyph info
-                if (glyphs != NULL)
+                if (charGlyphInfo != NULL)
                 {
-                    glyphs->value = charEncoding;
-                    glyphs->offsetX = charBBxoff0 + fontBByoff0;
-                    glyphs->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
-                    glyphs->advanceX = charDWidthX;
+                    charGlyphInfo->value = charEncoding;
+                    charGlyphInfo->offsetX = charBBxoff0 + fontBByoff0;
+                    charGlyphInfo->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
+                    charGlyphInfo->advanceX = charDWidthX;
 
-                    glyphs->image.data = RL_CALLOC(charBBw*charBBh, 1);
-                    glyphs->image.width = charBBw;
-                    glyphs->image.height = charBBh;
-                    glyphs->image.mipmaps = 1;
-                    glyphs->image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+                    charGlyphInfo->image.data = RL_CALLOC(charBBw*charBBh, 1);
+                    charGlyphInfo->image.width = charBBw;
+                    charGlyphInfo->image.height = charBBh;
+                    charGlyphInfo->image.mipmaps = 1;
+                    charGlyphInfo->image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
                 }
 
                 charBitmapStarted = true;
@@ -3002,14 +3003,14 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
             {
                 charStarted = true;
                 charEncoding = -1;
-                glyphs = NULL;
+                charGlyphInfo = NULL;
                 charBBw = 0;
                 charBBh = 0;
                 charBBxoff0 = 0;
                 charBByoff0 = 0;
                 charDWidthX = 0;
                 charDWidthY = 0;
-                glyphs = NULL;
+                charGlyphInfo = NULL;
                 charBitmapStarted = false;
                 charBitmapNextRow = 0;
                 continue;
