@@ -44,9 +44,9 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shapes] example - drag puzzle");
 
-    // Rectangle 
+    // Rectangle
     Rectangle rec = { screenWidth/2 - 250, screenHeight/2 + 50, 100.0f, 100.0f };
-    Rectangle recArea = { screenWidth/2 - 60, screenHeight/2 - 110, 110.0f, 110.0f };   
+    Rectangle recArea = { screenWidth/2 - 60, screenHeight/2 - 110, 110.0f, 110.0f };
     bool recPickedUp = false;
 
     // Circle
@@ -79,21 +79,21 @@ int main(void)
         {
             recPickedUp = true;
             mouseOffset = (Vector2) { rec.x - mousePosition.x, rec.y - mousePosition.y };
-        } 
+        }
         else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointCircle(mousePosition, circ.center, circ.radius))
         {
             circPickedUp = true;
             mouseOffset = (Vector2) { circ.center.x - mousePosition.x, circ.center.y - mousePosition.y };
-        } 
+        }
         else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointTriangle(mousePosition, tri.v1, tri.v2, tri.v3))
         {
             triPickedUp = true;
             mouseOffset = (Vector2) { tri.v1.x - mousePosition.x, tri.v1.y - mousePosition.y }; // Uses v1 as the pivot point
         }
-        
+
         // Detect object drop input
-        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && recPickedUp) recPickedUp = false; 
-        else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && circPickedUp) circPickedUp = false; 
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && recPickedUp) recPickedUp = false;
+        else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && circPickedUp) circPickedUp = false;
         else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && triPickedUp) triPickedUp = false;
 
         // Rectangle update
@@ -103,7 +103,7 @@ int main(void)
             rec.y = mousePosition.y + mouseOffset.y;
         }
         Rectangle RecCol = GetCollisionRec(recArea, rec);
-        if (RecCol.width == rec.width && RecCol.height == rec.height) recPlaced = true;        
+        if (RecCol.width == rec.width && RecCol.height == rec.height) recPlaced = true;
 
         // Circle update
         if (circPickedUp)
@@ -118,7 +118,7 @@ int main(void)
         {
             Vector2 v2Offset = { tri.v2.x - tri.v1.x, tri.v2.y - tri.v1.y };
             Vector2 v3Offset = { tri.v3.x - tri.v1.x, tri.v3.y - tri.v1.y };
-            
+
             tri.v1 = (Vector2) { mousePosition.x + mouseOffset.x, mousePosition.y + mouseOffset.y };
             tri.v2 = (Vector2) { tri.v1.x + v2Offset.x, tri.v1.y + v2Offset.y };
             tri.v3 = (Vector2) { tri.v1.x + v3Offset.x, tri.v1.y + v3Offset.y };

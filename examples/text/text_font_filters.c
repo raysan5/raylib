@@ -31,7 +31,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - font filters");
 
-    const char msg[50] = "Loaded Font";
+    const char *msg = "Loaded Font";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 

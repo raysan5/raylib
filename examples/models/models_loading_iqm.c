@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 3.5
+*   Example originally created with raylib 2.5, last time updated with raylib 6.0
 *
 *   Example contributed by Culacant (@culacant) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -20,6 +20,8 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
+#include <math.h>           // Required for: fmaxf(), fminf()
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -53,6 +55,7 @@ int main(void)
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing
     float animCurrentFrame = 0.0f;      // Current animation frame (supporting interpolated frames)
+    float animSpeed = 1.0f;             // How fast the animation plays
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -64,8 +67,21 @@ int main(void)
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
-        // Play animation when spacebar is held down
-        animCurrentFrame += 1.0f;
+        if (IsKeyPressed(KEY_RIGHT))
+        {
+            animIndex = (animIndex == animCount - 1)? 0 : animIndex + 1;
+            animCurrentFrame = 0.0f;
+        }
+        if (IsKeyPressed(KEY_LEFT))
+        {
+            animIndex = (animIndex == 0)? animCount - 1 : animIndex - 1;
+            animCurrentFrame = 0.0f;
+        }
+
+        if (IsKeyPressed(KEY_UP))   animSpeed = fminf(5.0f, animSpeed + 0.1f);
+        if (IsKeyPressed(KEY_DOWN)) animSpeed = fmaxf(0.0f, animSpeed - 0.1f);
+
+        animCurrentFrame += animSpeed;
         UpdateModelAnimation(model, anims[animIndex], animCurrentFrame);
         if (animCurrentFrame >= anims[animIndex].keyframeCount) animCurrentFrame = 0;
         //----------------------------------------------------------------------------------
@@ -85,6 +101,9 @@ int main(void)
             EndMode3D();
 
             DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 10, 20, MAROON);
+            DrawText(TextFormat("Animation speed: %.2f", animSpeed), 10, 40, 20, MAROON);
+            DrawText("Use left and right arrow keys to change current animation", 10, screenHeight - 34, 10, BLACK);
+            DrawText("Use up and down arrow keys to change animation speed", 10, screenHeight - 20, 10, BLACK);
             DrawText("(c) Guy IQM 3D model by @culacant", screenWidth - 200, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
