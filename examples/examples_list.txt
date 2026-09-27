@@ -9,7 +9,7 @@
 #
 # This list is used as the main reference by [rexm] tool for examples collection validation and management
 #
-core;core_basic_window;★☆☆☆;1.0;1.0;2013;2025;"Ramon Santamaria";@raysan5
+core;core_basic_window;★☆☆☆;1.0;1.0;2013;2026;"Ramon Santamaria";@raysan5
 core;core_delta_time;★☆☆☆;5.5;6.0;2025;2025;"Robin";@RobinsAviary
 core;core_input_keys;★☆☆☆;1.0;1.0;2014;2025;"Ramon Santamaria";@raysan5
 core;core_input_mouse;★☆☆☆;1.0;5.5;2014;2025;"Ramon Santamaria";@raysan5

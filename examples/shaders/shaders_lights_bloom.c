@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - forward multi-lighting with bloom
+*   raylib [shaders] example - lights bloom
 *
 *   Example demonstrates forward multi-point lighting (8 point lights, attenuation and
 *   Blinn-Phong specular) combined with a threshold-based bloom pass and Reinhard tone
@@ -51,7 +51,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - forward multi-lighting bloom");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - lights bloom");
 
     Camera3D camera = { 0 };
     camera.position = (Vector3){ 0.0f, 5.0f, 9.0f };
