@@ -2311,22 +2311,7 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
     }
 
     Color *pixels = LoadImageColors(*image);
-
-    Vector4 *imageCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *temp = (Vector4 *)RL_MALLOC(kernelSize*sizeof(Vector4));
-
-    for (int i = 0; i < kernelSize; i++)
-    {
-        temp[i].x = 0.0f;
-        temp[i].y = 0.0f;
-        temp[i].z = 0.0f;
-        temp[i].w = 0.0f;
-    }
-
-    float rRes = 0.0f;
-    float gRes = 0.0f;
-    float bRes = 0.0f;
-    float aRes = 0.0f;
+    Color *result = (Color *)RL_MALLOC((image->height)*(image->width)*sizeof(Color));
 
     int startRange = 0, endRange = 0;
 
@@ -2345,83 +2330,57 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
     {
         for (int y = 0; y < image->width; y++)
         {
+            float rRes = 0.0f;
+            float gRes = 0.0f;
+            float bRes = 0.0f;
+            float aRes = 0.0f;
+
             for (int xk = startRange; xk < endRange; xk++)
             {
+                // Clamp neighbour row and column to image bounds, edge pixels are repeated
+                int row = x + xk;
+                if (row < 0) row = 0;
+                if (row > (image->height - 1)) row = image->height - 1;
+
                 for (int yk = startRange; yk < endRange; yk++)
                 {
+                    int col = y + yk;
+                    if (col < 0) col = 0;
+                    if (col > (image->width - 1)) col = image->width - 1;
+
                     int xkabs = xk + kernelWidth/2;
                     int ykabs = yk + kernelWidth/2;
-                    unsigned int imgindex = image->width*(x + xk) + (y + yk);
+                    int imgindex = image->width*row + col;
 
-                    if (imgindex >= (unsigned int)(image->width*image->height))
-                    {
-                        temp[kernelWidth*xkabs + ykabs].x = 0.0f;
-                        temp[kernelWidth*xkabs + ykabs].y = 0.0f;
-                        temp[kernelWidth*xkabs + ykabs].z = 0.0f;
-                        temp[kernelWidth*xkabs + ykabs].w = 0.0f;
-                    }
-                    else
-                    {
-                        temp[kernelWidth*xkabs + ykabs].x = ((float)pixels[imgindex].r)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth*xkabs + ykabs].y = ((float)pixels[imgindex].g)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth*xkabs + ykabs].z = ((float)pixels[imgindex].b)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                        temp[kernelWidth*xkabs + ykabs].w = ((float)pixels[imgindex].a)/255.0f*kernel[kernelWidth*xkabs + ykabs];
-                    }
+                    rRes += ((float)pixels[imgindex].r)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                    gRes += ((float)pixels[imgindex].g)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                    bRes += ((float)pixels[imgindex].b)/255.0f*kernel[kernelWidth*xkabs + ykabs];
+                    aRes += ((float)pixels[imgindex].a)/255.0f*kernel[kernelWidth*xkabs + ykabs];
                 }
-            }
-
-            for (int i = 0; i < kernelSize; i++)
-            {
-                rRes += temp[i].x;
-                gRes += temp[i].y;
-                bRes += temp[i].z;
-                aRes += temp[i].w;
             }
 
             if (rRes < 0.0f) rRes = 0.0f;
             if (gRes < 0.0f) gRes = 0.0f;
             if (bRes < 0.0f) bRes = 0.0f;
+            if (aRes < 0.0f) aRes = 0.0f;
 
             if (rRes > 1.0f) rRes = 1.0f;
             if (gRes > 1.0f) gRes = 1.0f;
             if (bRes > 1.0f) bRes = 1.0f;
+            if (aRes > 1.0f) aRes = 1.0f;
 
-            imageCopy2[image->width*x + y].x = rRes;
-            imageCopy2[image->width*x + y].y = gRes;
-            imageCopy2[image->width*x + y].z = bRes;
-            imageCopy2[image->width*x + y].w = aRes;
-
-            rRes = 0.0f;
-            gRes = 0.0f;
-            bRes = 0.0f;
-            aRes = 0.0f;
-
-            for (int i = 0; i < kernelSize; i++)
-            {
-                temp[i].x = 0.0f;
-                temp[i].y = 0.0f;
-                temp[i].z = 0.0f;
-                temp[i].w = 0.0f;
-            }
+            result[image->width*x + y].r = (unsigned char)(rRes*255.0f);
+            result[image->width*x + y].g = (unsigned char)(gRes*255.0f);
+            result[image->width*x + y].b = (unsigned char)(bRes*255.0f);
+            result[image->width*x + y].a = (unsigned char)(aRes*255.0f);
         }
-    }
-
-    for (int i = 0; i < (image->width*image->height); i++)
-    {
-        float alpha = imageCopy2[i].w;
-
-        pixels[i].r = (unsigned char)((imageCopy2[i].x)*255.0f);
-        pixels[i].g = (unsigned char)((imageCopy2[i].y)*255.0f);
-        pixels[i].b = (unsigned char)((imageCopy2[i].z)*255.0f);
-        pixels[i].a = (unsigned char)((alpha)*255.0f);
     }
 
     int format = image->format;
     RL_FREE(image->data);
-    RL_FREE(imageCopy2);
-    RL_FREE(temp);
+    RL_FREE(pixels);
 
-    image->data = pixels;
+    image->data = result;
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     ImageFormat(image, format);
 }
