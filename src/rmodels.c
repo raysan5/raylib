@@ -2486,6 +2486,8 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
 // NOTE: Required for CPU skinning, uploads animated vertex buffers to GPU
 static void UpdateModelAnimationVertexBuffers(Model model)
 {
+    Matrix *boneNormalMatrices = NULL; // Normal matrix per bone, computed on first mesh with normals
+
     for (int m = 0; m < model.meshCount; m++)
     {
         Mesh mesh = model.meshes[m];
@@ -2501,6 +2503,13 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         // Skip if missing bone data or missing anim buffers initialization
         if ((mesh.boneWeights == NULL) || (mesh.boneIndices == NULL) ||
             (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
+
+        // Normal matrix only depends on the bone, compute it once per bone instead of per vertex
+        if ((mesh.normals != NULL) && (boneNormalMatrices == NULL))
+        {
+            boneNormalMatrices = (Matrix *)RL_MALLOC(model.skeleton.boneCount*sizeof(Matrix));
+            for (unsigned int b = 0; b < model.skeleton.boneCount; b++) boneNormalMatrices[b] = MatrixTranspose(MatrixInvert(model.boneMatrices[b]));
+        }
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
         {
@@ -2534,7 +2543,7 @@ static void UpdateModelAnimationVertexBuffers(Model model)
                 if ((mesh.normals != NULL) && (mesh.animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh.normals[vCounter], mesh.normals[vCounter + 1], mesh.normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.boneMatrices[boneIndex])));
+                    animNormal = Vector3Transform(animNormal, boneNormalMatrices[boneIndex]);
                     mesh.animNormals[vCounter] += animNormal.x*boneWeight;
                     mesh.animNormals[vCounter + 1] += animNormal.y*boneWeight;
                     mesh.animNormals[vCounter + 2] += animNormal.z*boneWeight;
@@ -2549,6 +2558,8 @@ static void UpdateModelAnimationVertexBuffers(Model model)
             if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[SHADER_LOC_VERTEX_NORMAL], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);
         }
     }
+
+    if (boneNormalMatrices != NULL) RL_FREE(boneNormalMatrices);
 }
 
 // Unload animation array data
