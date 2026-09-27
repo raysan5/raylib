@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
     bool showUsage = false;         // Flag to show usage help
-    bool verbose = false;           // Flag for verbose log info
+    //bool verbose = false;           // Flag for verbose log info
 
     // Command-line usage mode: command args processing
     //--------------------------------------------------------------------------------------
@@ -491,7 +491,6 @@ int main(int argc, char *argv[])
         for (int i = 1; i < argc; i++)
         {
             if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0)) showUsage = true;
-            else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0)) verbose = true;
         }
     }
 
@@ -1664,7 +1663,7 @@ int main(int argc, char *argv[])
                 UnloadFileText(srcText);
 
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
-                for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+                for (int j = 0; j < 3; j++) { MemFree(srcTextUpdated[j]); srcTextUpdated[j] = NULL; }
 
                 // Compiler flags for building the examples
                 //   -Wno-unused-function: Prevents a warning in raygui.h with GuiFontIconBaking()
@@ -1893,9 +1892,9 @@ int main(int argc, char *argv[])
 
             int filesDeleted = 0;
 
-            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+            for (int c = 0; c < REXM_MAX_EXAMPLE_CATEGORIES; c++)
             {
-                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[i]));
+                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[c]));
 
                 for (int i = 0; i < pathList.count; i++)
                 {
@@ -1923,7 +1922,7 @@ int main(int argc, char *argv[])
                 // OP_TEST creates a 'logs' directory inside of example category directories
                 // Raylib currently has no way of deleting directories...
                 // We can at least delete the files
-                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[i]));
+                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[c]));
                 for (int i = 0; i < logsPathList.count; i++)
                 {
                     const char *logPath = logsPathList.paths[i];
@@ -1975,7 +1974,6 @@ int main(int argc, char *argv[])
 
             printf("OPTIONS:\n\n");
             printf("    -h, --help                    : Show tool version and command line usage help\n");
-            printf("    -v, --verbose                 : Verbose mode, show additional logs on processes\n");
 
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");
