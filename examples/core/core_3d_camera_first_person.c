@@ -119,6 +119,10 @@ int main(void)
         // Some default standard keyboard/mouse inputs are hardcoded to simplify use
         // For advanced camera controls, it's recommended to compute camera movement manually
         UpdateCamera(&camera, cameraMode);                  // Update camera
+
+        // Camera EXTENDED usage example
+        // Allows customization of camera zoom and rotation sensitivity
+        // UpdateCameraEx(&camera, cameraMode, 1.0, 0.003f); // Update camera
 /*
         // Camera PRO usage example (EXPERIMENTAL)
         // This new camera function allows custom movement/rotation values to be directly provided
