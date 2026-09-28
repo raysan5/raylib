@@ -2291,6 +2291,7 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
         {
             TRACELOG(LOG_ERROR, "WIN32: WINDOW: UpdateFlags() failed after %u attempt(s) wanted 0x%x but is 0x%x (diff=0x%x)",
                 attempt, desiredFlags, CORE.Window.flags, desiredFlags ^ CORE.Window.flags);
+            break;
         }
 
         previousStyle = MakeWindowStyle(CORE.Window.flags);
