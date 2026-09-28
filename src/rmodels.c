@@ -485,7 +485,7 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
         rlTranslatef(centerPos.x, centerPos.y, centerPos.z);
         rlScalef(radius, radius, radius);
 
-        rlBegin(RL_TRIANGLES);
+        rlBegin(RL_TRIANGLE_STRIP);
             rlColor4ub(color.r, color.g, color.b, color.a);
 
             float ringangle = DEG2RAD*(180.0f/rings); // Angle between latitudinal parallels
@@ -502,26 +502,21 @@ void DrawSphereEx(Vector3 centerPos, float radius, int rings, int slices, Color 
 
             for (int i = 0; i < rings; i++)
             {
+                // Seam pair: stitch to previous ring (ring 0: pole pair)
+                rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
+                rlNormal3f(vertices[2].x, vertices[2].y, vertices[2].z);
+                rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
+
                 for (int j = 0; j < slices; j++)
                 {
-                    vertices[0] = vertices[2]; // Rotate around y axis to set up vertices for next face
-                    vertices[1] = vertices[3];
                     vertices[2] = (Vector3){ cosslice*vertices[2].x - sinslice*vertices[2].z, vertices[2].y, sinslice*vertices[2].x + cosslice*vertices[2].z }; // Rotation matrix around y axis
                     vertices[3] = (Vector3){ cosslice*vertices[3].x - sinslice*vertices[3].z, vertices[3].y, sinslice*vertices[3].x + cosslice*vertices[3].z };
 
-                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
-                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
                     rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
-                    rlNormal3f(vertices[1].x, vertices[1].y, vertices[1].z);
-                    rlVertex3f(vertices[1].x, vertices[1].y, vertices[1].z);
-
-                    rlNormal3f(vertices[0].x, vertices[0].y, vertices[0].z);
-                    rlVertex3f(vertices[0].x, vertices[0].y, vertices[0].z);
                     rlNormal3f(vertices[2].x, vertices[2].y, vertices[2].z);
                     rlVertex3f(vertices[2].x, vertices[2].y, vertices[2].z);
-                    rlNormal3f(vertices[3].x, vertices[3].y, vertices[3].z);
-                    rlVertex3f(vertices[3].x, vertices[3].y, vertices[3].z);
                 }
 
                 vertices[2] = vertices[3]; // Rotate around z axis to set up  starting vertices for next ring
@@ -600,16 +595,13 @@ void DrawCylinder(Vector3 position, float radiusTop, float radiusBottom, float h
             if (radiusTop > 0)
             {
                 // Draw Body -------------------------------------------------------------------------------------
-                for (int i = 0; i < sides; i++)
+                rlEnd(); rlBegin(RL_TRIANGLE_STRIP);
+                for (int i = 0; i <= sides; i++)
                 {
-                    rlVertex3f(sinf(DEG2RAD*i*angleStep)*radiusBottom, 0, cosf(DEG2RAD*i*angleStep)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i+1)*angleStep)*radiusBottom, 0, cosf(DEG2RAD*(i+1)*angleStep)*radiusBottom); //Bottom Right
-                    rlVertex3f(sinf(DEG2RAD*(i+1)*angleStep)*radiusTop, height, cosf(DEG2RAD*(i+1)*angleStep)*radiusTop); //Top Right
-
                     rlVertex3f(sinf(DEG2RAD*i*angleStep)*radiusTop, height, cosf(DEG2RAD*i*angleStep)*radiusTop); //Top Left
                     rlVertex3f(sinf(DEG2RAD*i*angleStep)*radiusBottom, 0, cosf(DEG2RAD*i*angleStep)*radiusBottom); //Bottom Left
-                    rlVertex3f(sinf(DEG2RAD*(i+1)*angleStep)*radiusTop, height, cosf(DEG2RAD*(i+1)*angleStep)*radiusTop); //Top Right
                 }
+                rlEnd(); rlBegin(RL_TRIANGLES);
 
                 // Draw Cap --------------------------------------------------------------------------------------
                 for (int i = 0; i < sides; i++)
@@ -871,9 +863,10 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int 
         // render middle
         if (!sphereCase)
         {
-            for (int j = 0; j < slices; j++)
+            rlEnd(); rlBegin(RL_TRIANGLE_STRIP);
+            for (int j = 0; j <= slices; j++)
             {
-                // compute the four vertices
+                // compute the two vertices
                 float ringSin1 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos1 = cosf(baseSliceAngle*(j + 0))*radius;
                 Vector3 w1 = {
@@ -881,14 +874,6 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int 
                     startPos.y + ringSin1*b1.y + ringCos1*b2.y,
                     startPos.z + ringSin1*b1.z + ringCos1*b2.z
                 };
-                float ringSin2 = sinf(baseSliceAngle*(j + 1))*radius;
-                float ringCos2 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w2 = {
-                    startPos.x + ringSin2*b1.x + ringCos2*b2.x,
-                    startPos.y + ringSin2*b1.y + ringCos2*b2.y,
-                    startPos.z + ringSin2*b1.z + ringCos2*b2.z
-                };
-
                 float ringSin3 = sinf(baseSliceAngle*(j + 0))*radius;
                 float ringCos3 = cosf(baseSliceAngle*(j + 0))*radius;
                 Vector3 w3 = {
@@ -896,24 +881,11 @@ void DrawCapsule(Vector3 startPos, Vector3 endPos, float radius, int rings, int 
                     endPos.y + ringSin3*b1.y + ringCos3*b2.y,
                     endPos.z + ringSin3*b1.z + ringCos3*b2.z
                 };
-                float ringSin4 = sinf(baseSliceAngle*(j + 1))*radius;
-                float ringCos4 = cosf(baseSliceAngle*(j + 1))*radius;
-                Vector3 w4 = {
-                    endPos.x + ringSin4*b1.x + ringCos4*b2.x,
-                    endPos.y + ringSin4*b1.y + ringCos4*b2.y,
-                    endPos.z + ringSin4*b1.z + ringCos4*b2.z
-                };
-                                                                        //          w2 x.-----------x startPos
-                rlVertex3f(w1.x, w1.y, w1.z);                         // |           |\'.  T0    /
-                rlVertex3f(w2.x, w2.y, w2.z);                         // T1          | \ '.     /
-                rlVertex3f(w3.x, w3.y, w3.z);                         // |           |T \  '.  /
-                                                                        //             | 2 \ T 'x w1
-                rlVertex3f(w2.x, w2.y, w2.z);                         // |        w4 x.---\-1-|---x endPos
-                rlVertex3f(w4.x, w4.y, w4.z);                         // T2            '.  \  |T3/
-                rlVertex3f(w3.x, w3.y, w3.z);                         // |               '. \ | /
-                                                                        //                   '.\|/
-                                                                        //                   'x w3
+
+                rlVertex3f(w3.x, w3.y, w3.z);
+                rlVertex3f(w1.x, w1.y, w1.z);
             }
+            rlEnd(); rlBegin(RL_TRIANGLES);
         }
     rlEnd();
 }
