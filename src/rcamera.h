@@ -65,7 +65,7 @@
 #endif
 
 #if defined(RCAMERA_STANDALONE)
-    #define CAMERA_CULL_DISTANCE_NEAR      0.05
+    #define CAMERA_CULL_DISTANCE_NEAR     0.05
     #define CAMERA_CULL_DISTANCE_FAR    4000.0
 #else
     #define CAMERA_CULL_DISTANCE_NEAR   RL_CULL_DISTANCE_NEAR
@@ -203,6 +203,9 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera *camera, float aspect);
 
 // Camera mouse movement sensitivity
 #define CAMERA_MOUSE_MOVE_SENSITIVITY               0.003f
+
+// Camera zoom sensitivity
+#define CAMERA_MOUSE_ZOOM_SENSITIVITY               1.0f
 
 // Camera orbital speed in CAMERA_ORBITAL mode
 #define CAMERA_ORBITAL_SPEED                        0.5f       // Radians per second
@@ -442,7 +445,8 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
 #if !defined(RCAMERA_STANDALONE)
 // Update camera position for selected mode
 // Camera mode: CAMERA_FREE, CAMERA_FIRST_PERSON, CAMERA_THIRD_PERSON, CAMERA_ORBITAL or CUSTOM
-void UpdateCamera(Camera *camera, int mode)
+
+void UpdateCameraEx(Camera *camera, int mode, float zoomSensitivity, float rotationSensitivity)
 {
     Vector2 mousePositionDelta = GetMouseDelta();
 
@@ -488,8 +492,8 @@ void UpdateCamera(Camera *camera, int mode)
         else
         {
             // Mouse support
-            CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            CameraYaw(camera, -mousePositionDelta.x*rotationSensitivity, rotateAroundTarget);
+            CameraPitch(camera, -mousePositionDelta.y*rotationSensitivity, lockView, rotateAroundTarget, rotateUp);
         }
 
         // Keyboard support
@@ -502,8 +506,8 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsGamepadAvailable(0))
         {
             // Gamepad controller support
-            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*2)*CAMERA_MOUSE_MOVE_SENSITIVITY, rotateAroundTarget);
-            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*2)*CAMERA_MOUSE_MOVE_SENSITIVITY, lockView, rotateAroundTarget, rotateUp);
+            CameraYaw(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X)*2)*rotationSensitivity, rotateAroundTarget);
+            CameraPitch(camera, -(GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y)*2)*rotationSensitivity, lockView, rotateAroundTarget, rotateUp);
 
             if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y) <= -0.25f) CameraMoveForward(camera, cameraMoveSpeed, moveInWorldPlane);
             if (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) <= -0.25f) CameraMoveRight(camera, -cameraMoveSpeed, moveInWorldPlane);
@@ -521,11 +525,17 @@ void UpdateCamera(Camera *camera, int mode)
     if ((mode == CAMERA_THIRD_PERSON) || (mode == CAMERA_ORBITAL) || (mode == CAMERA_FREE))
     {
         // Zoom target distance
-        CameraMoveToTarget(camera, -GetMouseWheelMove());
+        CameraMoveToTarget(camera, -GetMouseWheelMove()*zoomSensitivity);
         if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
         if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
     }
 }
+
+void UpdateCamera(Camera *camera, int mode)
+{
+	UpdateCameraEx(camera, mode, CAMERA_MOUSE_ZOOM_SENSITIVITY, CAMERA_MOUSE_MOVE_SENSITIVITY);
+}
+
 #endif // !RCAMERA_STANDALONE
 
 // Update camera movement, movement/rotation values should be provided by user

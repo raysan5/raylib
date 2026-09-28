@@ -1260,6 +1260,7 @@ RLAPI float GetGesturePinchAngle(void);                       // Get gesture pin
 //------------------------------------------------------------------------------------
 // Camera System Functions (Module: rcamera)
 //------------------------------------------------------------------------------------
+RLAPI void UpdateCameraEx(Camera *camera, int mode, float zoomSensitivity, float rotationSensitivity); // Update camera position for selected mode with custom zoom and rotation sensitivity
 RLAPI void UpdateCamera(Camera *camera, int mode);            // Update camera position for selected mode
 RLAPI void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom); // Update camera movement/rotation
 
