@@ -1505,6 +1505,13 @@ int InitPlatform(void)
 
         platform.handle = glfwCreateWindow(creationWidth, creationHeight, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
 
+        if (!platform.handle)
+        {
+            glfwTerminate();
+            TRACELOG(LOG_WARNING, "GLFW: Failed to initialize Window");
+            return -1;
+        }
+
         // After the window was created, determine the monitor that the window manager assigned.
         // Derive display sizes, and, if possible, window size in case it was zero at beginning.
 
