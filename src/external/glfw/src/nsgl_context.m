@@ -30,6 +30,7 @@
 
 #include <unistd.h>
 #include <math.h>
+#include <stdlib.h>
 
 static void makeContextCurrentNSGL(_GLFWwindow* window)
 {
@@ -204,7 +205,12 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
     NSOpenGLPixelFormatAttribute attribs[40];
     int index = 0;
 
-    ADD_ATTRIB(NSOpenGLPFAAccelerated);
+    // CARROM_CI_SCREENSHOT: some CI/VM environments have no hardware-accelerated
+    // OpenGL renderer available at all, and NSOpenGLPFAAccelerated makes pixel
+    // format negotiation fail outright rather than falling back to Apple's
+    // software renderer. Real players never set this env var, so this only
+    // affects CI screenshot capture, never normal play on any platform.
+    if (!getenv("CARROM_CI_SCREENSHOT")) ADD_ATTRIB(NSOpenGLPFAAccelerated);
     ADD_ATTRIB(NSOpenGLPFAClosestPolicy);
 
     if (ctxconfig->nsgl.offline)
