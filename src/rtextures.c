@@ -1592,7 +1592,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
-        // TODO: Support selection of preferred scaling mechanism, use flag?
+        // TODO: Support other scaling mechanism, use flag?
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
@@ -3923,10 +3923,10 @@ void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rota
     float cornersX[4] = { x1, x2, x2, x1 };
     float cornersY[4] = { y1, y1, y2, y2 };
 
-    float minX = INFINITY;
-    float minY = INFINITY;
-    float maxX = -INFINITY;
-    float maxY = -INFINITY;
+    float minX = 65536;
+    float minY = 65536;
+    float maxX = -65536;
+    float maxY = -65536;
 
     for (int i = 0; i < 4; i++)
     {
@@ -3973,6 +3973,7 @@ void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rota
             if ((localX >= -origin.x) && (localX < (rec.width - origin.x)) &&
                 (localY >= -origin.y) && (localY < (rec.height - origin.y)))
             {
+                // NOTE: Pixel format conversion processed by function
                 ImageDrawPixel(dst, x, y, color);
             }
         }
@@ -4154,7 +4155,7 @@ void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inn
                 (unsigned char)(inner.a + (outer.a - inner.a)*t)
             };
 
-            // NOTE: Pixel format conversion managed by ImageDrawPixel()
+            // NOTE: Pixel format conversion managed by function
             ImageDrawPixel(dst, x, y, color);
         }
     }
