@@ -4095,9 +4095,103 @@ void ImageDrawImage(Image *dst, Image src, int posX, int posY, Color tint)
 }
 
 // Draw an image with scaling and rotation within an image
+// NOTE: Rotation applied from top-left corner origin
 void ImageDrawImageEx(Image *dst, Image src, Vector2 position, float rotation, float scale, Color tint)
 {
-    // TODO: NEW: Implement ImageDrawImageEx()
+    // Security checks to avoid program crash
+    if ((dst == NULL) || (dst->data == NULL) || (dst->width <= 0) || (dst->height <= 0) || (src.width <= 0) || (src.height <= 0)) return;
+
+    float cosA = cosf(rotation*DEG2RAD);
+    float sinA = sinf(rotation*DEG2RAD);
+
+    // Rotate around the source image top-left corner
+    float cornersX[4] = { 0.0f, src.width*scale, src.width*scale, 0.0f };
+    float cornersY[4] = { 0.0f, 0.0f, src.height*scale, src.height*scale };
+
+    float minX = 65536;
+    float minY = 65536;
+    float maxX = -65536;
+    float maxY = -65536;
+
+    // Calculate the rotated bounding box
+    for (int i = 0; i < 4; i++)
+    {
+        float rx = cornersX[i]*cosA - cornersY[i]*sinA;
+        float ry = cornersX[i]*sinA + cornersY[i]*cosA;
+
+        rx += position.x;
+        ry += position.y;
+
+        if (rx < minX) minX = rx;
+        if (ry < minY) minY = ry;
+        if (rx > maxX) maxX = rx;
+        if (ry > maxY) maxY = ry;
+    }
+
+    int x0 = (int)floorf(minX);
+    int y0 = (int)floorf(minY);
+    int x1 = (int)ceilf(maxX);
+    int y1 = (int)ceilf(maxY);
+
+    // Limit drawing to destination bounds
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > dst->width) x1 = dst->width;
+    if (y1 > dst->height) y1 = dst->height;
+
+    // Safety check
+    if ((x0 >= x1) || (y0 >= y1)) return;
+
+    for (int y = y0; y < y1; y++)
+    {
+        for (int x = x0; x < x1; x++)
+        {
+            // Destination pixel center relative to image position
+            float dx = (x + 0.5f) - position.x;
+            float dy = (y + 0.5f) - position.y;
+
+            // Inverse-rotate into the scaled source space
+            float sx = dx*cosA + dy*sinA;
+            float sy = -dx*sinA + dy*cosA;
+
+            // Revert scaling
+            sx /= scale;
+            sy /= scale;
+
+            // Skip pixels outside the source image
+            if ((sx < 0.0f) || (sy < 0.0f) || (sx >= src.width) || (sy >= src.height)) continue;
+
+            // Nearest-neighbor source sampling
+            int srcX = (int)sx;
+            int srcY = (int)sy;
+
+            Color srcColor = GetImageColor(src, srcX, srcY);
+
+            // Apply tint
+            srcColor.r = (unsigned char)(srcColor.r*tint.r/255.0f);
+            srcColor.g = (unsigned char)(srcColor.g*tint.g/255.0f);
+            srcColor.b = (unsigned char)(srcColor.b*tint.b/255.0f);
+            srcColor.a = (unsigned char)(srcColor.a*tint.a/255.0f);
+
+            // Skip fully transparent pixels
+            if (srcColor.a == 0) continue;
+
+            // Read destination pixel for alpha blending
+            Color dstColor = GetImageColor(*dst, x, y);
+
+            unsigned int alpha = srcColor.a;
+            unsigned int invA = 255 - alpha;
+
+            Color out = {
+                (unsigned char)((srcColor.r*alpha + dstColor.r*invA)/255),  // red
+                (unsigned char)((srcColor.g*alpha + dstColor.g*invA)/255),  // green
+                (unsigned char)((srcColor.b*alpha + dstColor.b*invA)/255),  // blue
+                (unsigned char)(alpha + (dstColor.a*invA)/255)              // alpha
+            };
+
+            ImageDrawPixel(dst, x, y, out);
+        }
+    }
 }
 
 // Draw a part of an image defined by a rectangle within an image
