@@ -3973,7 +3973,7 @@ void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rota
             if ((localX >= -origin.x) && (localX < (rec.width - origin.x)) &&
                 (localY >= -origin.y) && (localY < (rec.height - origin.y)))
             {
-                // NOTE: Pixel format conversion processed by function
+                // NOTE: Pixel format conversion managed by function
                 ImageDrawPixel(dst, x, y, color);
             }
         }
