@@ -3902,7 +3902,81 @@ void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color)
 // Draw a color-filled rectangle with pro parameters within and image
 void ImageDrawRectanglePro(Image *dst, Rectangle rec, Vector2 origin, float rotation, Color color)
 {
-    // TODO: NEW: Implement ImageDrawRectanglePro()
+    // Security checks to avoid program crash
+    if ((dst == NULL) || (dst->data == NULL) || (rec.width <= 0) || (rec.height <= 0)) return;
+
+    float cosAngle = cosf(rotation*DEG2RAD);
+    float sinAngle = sinf(rotation*DEG2RAD);
+
+    // Rotation origin in world/image coordinates
+    float ox = rec.x + origin.x;
+    float oy = rec.y + origin.y;
+
+    // Rectangle corners relative to rotation origin
+    float x1 = -origin.x;
+    float y1 = -origin.y;
+
+    float x2 = rec.width - origin.x;
+    float y2 = rec.height - origin.y;
+
+    // Rotate the four corners to calculate the bounding box
+    float cornersX[4] = { x1, x2, x2, x1 };
+    float cornersY[4] = { y1, y1, y2, y2 };
+
+    float minX = INFINITY;
+    float minY = INFINITY;
+    float maxX = -INFINITY;
+    float maxY = -INFINITY;
+
+    for (int i = 0; i < 4; i++)
+    {
+        float rx = cornersX[i]*cosAngle - cornersY[i]*sinAngle;
+        float ry = cornersX[i]*sinAngle + cornersY[i]*cosAngle;
+
+        rx += ox;
+        ry += oy;
+
+        if (rx < minX) minX = rx;
+        if (ry < minY) minY = ry;
+        if (rx > maxX) maxX = rx;
+        if (ry > maxY) maxY = ry;
+    }
+
+    // Convert bounding box to integer pixel bounds
+    int x0 = (int)floorf(minX);
+    int y0 = (int)floorf(minY);
+    int xEnd = (int)ceilf(maxX);
+    int yEnd = (int)ceilf(maxY);
+
+    // Limit drawing to image bounds
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (xEnd > dst->width) xEnd = dst->width;
+    if (yEnd > dst->height) yEnd = dst->height;
+
+    // Safety check
+    if ((x0 >= xEnd) || (y0 >= yEnd)) return;
+
+    for (int y = y0; y < yEnd; y++)
+    {
+        for (int x = x0; x < xEnd; x++)
+        {
+            // Pixel center in world coordinates
+            float px = x + 0.5f - ox;
+            float py = y + 0.5f - oy;
+
+            // Inverse-rotate pixel into rectangle local space
+            float localX = px*cosAngle + py*sinAngle;
+            float localY = -px*sinAngle + py*cosAngle;
+
+            // Check whether pixel lies inside the rectangle
+            if ((localX >= -origin.x) && (localX < (rec.width - origin.x)) &&
+                (localY >= -origin.y) && (localY < (rec.height - origin.y)))
+            {
+                ImageDrawPixel(dst, x, y, color);
+            }
+        }
+    }
 }
 
 // Draw rectangle lines within an image
