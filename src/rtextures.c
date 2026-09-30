@@ -4682,6 +4682,7 @@ void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 }
 
 // Draw a texture with rotation and scale
+// NOTE: Rotation applied from top-left corner origin
 void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
 {
     Rectangle srcrec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
