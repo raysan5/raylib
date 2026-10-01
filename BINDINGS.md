@@ -2,6 +2,22 @@
 
 Some people ported raylib to other languages in the form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list or if it had been updated/archived.
 
+# Recommendations for binding authors.
+This is a set of recomendations and guidelines for binding authors, meant to help your binding be as useful as possible to your users.
+
+* Binding should be reasonably up to date with the last release, out of date bindings may be removed from bindings.md
+* Binding should expose all of raylib's API. This is to ensure compatibility with all raylib features, and allow your users to do everything in the target language they can do in C raylib.
+    * raylib.h
+    * raymath.h
+    * rcamera.h
+    * rlgl.h
+    * rgestures.h
+* Bindings should expose the base API in order to match the C examples when possible.
+* Bindings that expose additional 'high level' functions to make the binding more native to the host language, should also include the base C style API in addition to those other functions. This is requested in order to make it easier for people to understand the raylib API independent of the language being used.
+* Bindings should have clear usage and setup instructions. Examples in the host language are highly recommended. You want your users to be able to get started right away.
+* If a binding exists for a language, before making a new one, binding authors should try to work together on maintaining a single binding for a language, this is requested in order to prevent fragmentation and confusion for users.
+* Instructions on how to build for web are highly recomeneed if the langauge supports it. This allows your bindings to be used for game jams :)
+
 ### Language Bindings
 
 | Name                                                                                     | raylib Version   | Language                                                                | License              |
@@ -41,7 +57,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **6.0**          | [Fortran](https://fortran-lang.org)                                     | ISC                  |
 | [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **6.0**          | [Go](https://golang.org)                                                | Zlib                 |
 | [raylib-guile](https://github.com/petelliott/raylib-guile)                               | **auto**         | [Guile](https://www.gnu.org/software/guile)                             | Zlib                 |
-| [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **5.5-dev**      | [Haskell](https://haskell.org)                                          | Apache-2.0           |
+| [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **6.1-dev**      | [Haskell](https://haskell.org)                                          | Apache-2.0           |
 | [raylib-hx](https://github.com/foreignsasquatch/raylib-hx)                               | 5.5              | [Haxe](https://haxe.org)                                                | Zlib                 |
 | [jaylib](https://github.com/janet-lang/jaylib)                                           | **5.0**          | [Janet](https://janet-lang.org)                                         | MIT                  |
 | [jaylib](https://github.com/electronstudio/jaylib/)                                      | **6.0**          | [Java](https://en.wikipedia.org/wiki/Java_(programming_language))       | GPLv3+CE             |
@@ -58,7 +74,7 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [raylib_mojo](https://github.com/willGuimont/raylib_mojo)                                | **6.0**          | [Mojo](https://www.modular.com/mojo)                                    | ZLib                 |
 | [raymojo](https://github.com/RobertFlexx/raymojo)                                        | **6.0**          | [Mojo](https://www.modular.com/mojo)                                    | GPLv3                |
 | [raymod](https://github.com/RobertFlexx/raymod)                                          | **6.0**          | [Modula-2](https://en.wikipedia.org/wiki/Modula-2) / [Modula-3](https://en.wikipedia.org/wiki/Modula-3) | Apache-2.0 |
-| [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | **5.5**          | [nelua](https://nelua.io)                                               | Zlib                 |
+| [Raylib.nelua](https://github.com/AuzFox/Raylib.nelua)                                   | 6.1-dev          | [nelua](https://nelua.io)                                               | Zlib                 |
 | [raylib-bindings](https://github.com/vaiorabbit/raylib-bindings)                         | 6.1-dev          | [Ruby](https://www.ruby-lang.org/en)                                    | Zlib                 |
 | [node-raylib](https://github.com/RobLoach/node-raylib)                                   | 5.5              | [Node.js](https://nodejs.org/en)                                        | Zlib                 |
 | [raylib-odin](https://github.com/odin-lang/Odin/tree/master/vendor/raylib)               | **6.0**          | [Odin](https://odin-lang.org)                                           | Zlib                 |
@@ -107,7 +123,8 @@ Some people ported raylib to other languages in the form of bindings or wrappers
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                      | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                           | **???**              |
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                    | **5.5**          | [Dart](https://dart.dev/)                                               | Apache-2.0 license   |
-| [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.0-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
+| [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.x-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
+| [gcl native raylib module](https://github.com/gnuchanos/GnuchanOS/tree/main/language)    | **6.0**          | [gclang](https://github.com/gnuchanos/GnuchanOS/tree/main/language)     | GPLv3                |
 
 
 ### Utility Wrappers
@@ -195,7 +212,7 @@ These are older raylib bindings that are more than 2 versions old or have not be
 | [raylib-beef](https://github.com/M0n7y5/raylib-beef)                                     | 3.0              | [Beef](https://www.beeflang.org)                                        |
 | [raylib-never](https://github.com/never-lang/raylib-never)                               | 3.0              | [Never](https://github.com/never-lang/never)                            |
 | [raylib.cbl](https://github.com/Martinfx/Cobol/tree/master/OpenCobol/Games/raylib)       | 2.0              | [COBOL](https://en.wikipedia.org/wiki/COBOL)                            |
-| [gclang-raylib](https://github.com/gnuchanos/gcLang_Compiler/tree/main/windows_version/raylib_version)| **6.0** | [gclang](https://github.com/gnuchanos/gcLang_Compiler)              |
+
 
 Missing some language or wrapper? Feel free to create a new one! :)
 

@@ -180,6 +180,9 @@ int main(void)
                 DrawScene(cube, robot); // Draw the same exact things as we drew in the shadowmap!
             EndMode3D();
 
+            rlActiveTextureSlot(textureActiveSlot);
+            rlDisableTexture();
+
             DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
             DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 280, screenHeight - 20, 10, GRAY);
 

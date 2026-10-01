@@ -135,7 +135,7 @@ int main(void)
 // Module Functions Definition
 //------------------------------------------------------------------------------------
 // Remove codepoint duplicates if requested
-// WARNING: This process could be a bit slow if there text to process is very long
+// WARNING: This process could be a bit slow if the text to process is very long
 static int *CodepointRemoveDuplicates(int *codepoints, int codepointCount, int *codepointsResultCount)
 {
     int codepointsNoDupsCount = codepointCount;

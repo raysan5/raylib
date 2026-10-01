@@ -1358,6 +1358,9 @@ void PollInputEvents(void)
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
+    // Register previous mouse states
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
@@ -1379,6 +1382,8 @@ void PollInputEvents(void)
 
     // Register previous mouse position
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+    CORE.Window.resizedLastFrame = false;
 
     // Process windows messages
     MSG msg = { 0 };
@@ -1673,6 +1678,7 @@ int InitPlatform(void)
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
+    CORE.Window.resizedLastFrame = false;
     CORE.Window.render.width = CORE.Window.screen.width;
     CORE.Window.render.height = CORE.Window.screen.height;
     CORE.Window.currentFbo.width = CORE.Window.render.width;
@@ -2285,6 +2291,7 @@ static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height)
         {
             TRACELOG(LOG_ERROR, "WIN32: WINDOW: UpdateFlags() failed after %u attempt(s) wanted 0x%x but is 0x%x (diff=0x%x)",
                 attempt, desiredFlags, CORE.Window.flags, desiredFlags ^ CORE.Window.flags);
+            break;
         }
 
         previousStyle = MakeWindowStyle(CORE.Window.flags);

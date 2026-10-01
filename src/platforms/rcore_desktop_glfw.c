@@ -1222,7 +1222,6 @@ void OpenURL(const char *url)
 #if defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
 #endif
-        // TODO: Replace system() call by custom process
         int result = system(cmd);
 
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
@@ -1615,18 +1614,18 @@ int InitPlatform(void)
 
     if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0)) FLAG_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE);
 
+    // NOTE: Fullscreen applications default to the primary monitor
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+    {
+        TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
+        return -1;
+    }
+
     // Init window in fullscreen mode if requested
     // NOTE: Keeping original screen size for toggle
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
-        // NOTE: Fullscreen applications default to the primary monitor
-        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-        if (!monitor)
-        {
-            TRACELOG(LOG_WARNING, "GLFW: Failed to get primary monitor");
-            return -1;
-        }
-
         // Set dimensions from monitor
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
 
@@ -1666,6 +1665,18 @@ int InitPlatform(void)
         // Default to at least one pixel in size, as creation with a zero dimension is not allowed
         if (CORE.Window.screen.width == 0) CORE.Window.screen.width = 1;
         if (CORE.Window.screen.height == 0) CORE.Window.screen.height = 1;
+
+        int workX = 0;
+        int workY = 0;
+        int workWidth = 0;
+        int workHeight = 0;
+        glfwGetMonitorWorkarea(monitor, &workX, &workY, &workWidth, &workHeight);
+
+        // If the area requested by the user exceeds the maximum workable area, clamp it to that
+        // GLFW has a problem where if the window is greater than the workable area (this means
+        // the taskbar / dockable areas) it won't show up if the window isn't fullscreen
+        if (CORE.Window.screen.width > workWidth) CORE.Window.screen.width = workWidth;
+        if (CORE.Window.screen.height > workHeight) CORE.Window.screen.height = workHeight;
 
         platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
         if (!platform.handle)
@@ -1804,11 +1815,11 @@ int InitPlatform(void)
 
         // Center window into current monitor
     #if defined(__APPLE__)
-        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.screen.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.screen.height)/2;
+        CORE.Window.position.x = monitorX + (monitorWidth - (int)CORE.Window.screen.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - (int)CORE.Window.screen.height)/2;
     #else
-        CORE.Window.position.x = monitorX + (monitorWidth - CORE.Window.render.width)/2;
-        CORE.Window.position.y = monitorY + (monitorHeight - CORE.Window.render.height)/2;
+        CORE.Window.position.x = monitorX + (monitorWidth - (int)CORE.Window.render.width)/2;
+        CORE.Window.position.y = monitorY + (monitorHeight - (int)CORE.Window.render.height)/2;
     #endif
         SetWindowPosition(CORE.Window.position.x, CORE.Window.position.y);
 

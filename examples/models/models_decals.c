@@ -267,6 +267,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);
+    UnloadModel(placementCube);
     UnloadTexture(modelTexture);
 
     // Unload decal models

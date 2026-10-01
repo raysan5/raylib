@@ -561,10 +561,12 @@ SHAPES = \
     shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
+    shapes/shapes_drag_puzzle \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_easings_testbed \
+    shapes/shapes_ellipse_collision \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
@@ -575,8 +577,11 @@ SHAPES = \
     shapes/shapes_math_angle_rotation \
     shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
+    shapes/shapes_outlines_testbed \
+    shapes/shapes_outlines_thickness \
     shapes/shapes_penrose_tile \
     shapes/shapes_pie_chart \
+    shapes/shapes_polygon_lines \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_recursive_tree \
@@ -614,6 +619,7 @@ TEXTURES = \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
+    textures/textures_portal_window \
     textures/textures_raw_data \
     textures/textures_screen_buffer \
     textures/textures_sprite_animation \
@@ -665,8 +671,10 @@ MODELS = \
     models/models_loading_vox \
     models/models_mesh_generation \
     models/models_mesh_picking \
+    models/models_mesh_uv_painting \
     models/models_orthographic_projection \
     models/models_point_rendering \
+    models/models_procedural_decals \
     models/models_rlgl_solar_system \
     models/models_rotating_cube \
     models/models_skybox_rendering \
@@ -692,6 +700,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_lights_bloom \
     shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
@@ -713,6 +722,7 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
+    audio/audio_amp_envelope \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
@@ -921,6 +931,9 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_drag_puzzle: shapes/shapes_drag_puzzle.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_easings_ball: shapes/shapes_easings_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -931,6 +944,9 @@ shapes/shapes_easings_rectangles: shapes/shapes_easings_rectangles.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_testbed: shapes/shapes_easings_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_ellipse_collision: shapes/shapes_ellipse_collision.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
@@ -963,10 +979,19 @@ shapes/shapes_math_sine_cosine: shapes/shapes_math_sine_cosine.c
 shapes/shapes_mouse_trail: shapes/shapes_mouse_trail.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_outlines_testbed: shapes/shapes_outlines_testbed.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_outlines_thickness: shapes/shapes_outlines_thickness.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_penrose_tile: shapes/shapes_penrose_tile.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_pie_chart: shapes/shapes_pie_chart.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_polygon_lines: shapes/shapes_polygon_lines.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
@@ -1097,6 +1122,9 @@ textures/textures_particles_blending: textures/textures_particles_blending.c
 textures/textures_polygon_drawing: textures/textures_polygon_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/cat.png@resources/cat.png
+
+textures/textures_portal_window: textures/textures_portal_window.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1317,10 +1345,16 @@ models/models_mesh_picking: models/models_mesh_picking.c
     --preload-file models/resources/models/obj/turret.obj@resources/models/obj/turret.obj \
     --preload-file models/resources/models/obj/turret_diffuse.png@resources/models/obj/turret_diffuse.png
 
+models/models_mesh_uv_painting: models/models_mesh_uv_painting.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 models/models_orthographic_projection: models/models_orthographic_projection.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_point_rendering: models/models_point_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+models/models_procedural_decals: models/models_procedural_decals.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 models/models_rlgl_solar_system: models/models_rlgl_solar_system.c
@@ -1460,6 +1494,12 @@ shaders/shaders_lightmap_rendering: shaders/shaders_lightmap_rendering.c
     --preload-file shaders/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png \
     --preload-file shaders/resources/spark_flame.png@resources/spark_flame.png
 
+shaders/shaders_lights_bloom: shaders/shaders_lights_bloom.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/lights_bloom.vs@resources/shaders/glsl100/lights_bloom.vs \
+    --preload-file shaders/resources/shaders/glsl100/lights_bloom.fs@resources/shaders/glsl100/lights_bloom.fs \
+    --preload-file shaders/resources/shaders/glsl100/lights_bloom_post.fs@resources/shaders/glsl100/lights_bloom_post.fs
+
 shaders/shaders_mandelbrot_set: shaders/shaders_mandelbrot_set.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/mandelbrot_set.fs@resources/shaders/glsl100/mandelbrot_set.fs
@@ -1567,6 +1607,9 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
 
 # Compile AUDIO examples
+audio/audio_amp_envelope: audio/audio_amp_envelope.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 audio/audio_mixed_processor: audio/audio_mixed_processor.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file audio/resources/country.mp3@resources/country.mp3 \

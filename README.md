@@ -16,12 +16,11 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 [![GitHub Stars](https://img.shields.io/github/stars/raysan5/raylib?style=flat&label=stars)](https://github.com/raysan5/raylib/stargazers)
 [![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/6.0)](https://github.com/raysan5/raylib/commits/master)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/raysan5?label=sponsors)](https://github.com/sponsors/raysan5)
-[![Packaging Status](https://repology.org/badge/tiny-repos/raylib.svg)](https://repology.org/project/raylib/versions)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
 [![Discord Members](https://img.shields.io/discord/426912293134270465.svg?label=Discord&logo=discord)](https://discord.gg/raylib)
 [![Reddit Static Badge](https://img.shields.io/badge/-r%2Fraylib-red?style=flat&logo=reddit&label=reddit)](https://www.reddit.com/r/raylib/)
-[![Youtube Subscribers](https://img.shields.io/youtube/channel/subscribers/UC8WIBkhYb5sBNqXO1mZ7WSQ?style=flat&label=Youtube&logo=youtube)](https://www.youtube.com/c/raylib)
+[![Youtube Static Badge](https://img.shields.io/badge/YouTube-raylib-red?style=flat&logo=youtube&logoColor=red)](https://www.youtube.com/c/raylib)
 [![Twitch Status](https://img.shields.io/twitch/status/raysan5?style=flat&label=Twitch&logo=twitch)](https://www.twitch.tv/raysan5)
 
 [![Build Windows](https://github.com/raysan5/raylib/actions/workflows/build_windows.yml/badge.svg)](https://github.com/raysan5/raylib/actions/workflows/build_windows.yml)
@@ -50,7 +49,7 @@ features
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, QOA, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+140 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Huge examples collection with [+200 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
   - Bindings to [+70 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**
 

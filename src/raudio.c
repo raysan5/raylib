@@ -845,7 +845,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleRate = info.sample_rate;
             wave.sampleSize = 16;       // By default, ogg data is 16 bit per sample (short)
             wave.channels = info.channels;
-            wave.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
+            wave.frameCount = stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
             wave.data = (short *)RL_CALLOC(wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Get the number of samples to process (be careful! asking for number of shorts, not bytes!)
@@ -1394,7 +1394,7 @@ Music LoadMusicStream(const char *fileName)
             music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so multiply by channels
-            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
+            music.frameCount = stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
             music.looping = true; // Looping enabled by default
             musicLoaded = true;
         }
@@ -1576,7 +1576,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
         // Open ogg audio stream
-        stb_vorbis *ctxOgg = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
+        stb_vorbis *ctxOgg = stb_vorbis_open_memory(data, dataSize, NULL, NULL);
 
         if (ctxOgg != NULL)
         {
@@ -1588,7 +1588,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so multiply by channels
-            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
+            music.frameCount = stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }

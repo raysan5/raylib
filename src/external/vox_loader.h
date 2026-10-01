@@ -345,16 +345,19 @@ static void Vox_AllocArray(VoxArray3D* pvoxarray, int _sx, int _sy, int _sz)
 // Set voxel ID from its position into VoxArray3D
 static void Vox_SetVoxel(VoxArray3D* pvoxarray, int x, int y, int z, unsigned char id)
 {
+	// A .vox file can place voxels outside the volume its own SIZE chunk declares,
+	// and the offsets below are derived directly from those coordinates. Same range
+	// checks Vox_GetVoxel() already performs.
+	if (x < 0 || y < 0 || z < 0) return;
+	if (x >= pvoxarray->sizeX || y >= pvoxarray->sizeY || z >= pvoxarray->sizeZ) return;
+
 	// Get chunk from array pos
 	int chX = x >> CHUNKSIZE_OPSHIFT; //x / CHUNKSIZE;
 	int chY = y >> CHUNKSIZE_OPSHIFT; //y / CHUNKSIZE;
 	int chZ = z >> CHUNKSIZE_OPSHIFT; //z / CHUNKSIZE;
 	int offset = (chX * pvoxarray->ChunkFlattenOffset) + (chZ * pvoxarray->chunksSizeY) + chY;
 
-	//if (offset > voxarray->arrayChunksSize)
-	//{
-	//	TraceLog(LOG_ERROR, "Out of array");
-	//}
+	if (offset < 0 || offset >= pvoxarray->chunksTotal) return;
 
 	CubeChunk3D* chunk = &pvoxarray->m_arrayChunks[offset];
 
@@ -375,10 +378,7 @@ static void Vox_SetVoxel(VoxArray3D* pvoxarray, int x, int y, int z, unsigned ch
 
 	offset = (chX << CHUNK_FLATTENOFFSET_OPSHIFT) + (chZ << CHUNKSIZE_OPSHIFT) + chY;
 
-	//if (offset > chunk->arraySize)
-	//{
-	//	TraceLog(LOG_ERROR, "Out of array");
-	//}
+	if (offset < 0 || offset >= chunk->arraySize) return;
 
 	chunk->m_array[offset] = id;
 }
@@ -594,6 +594,9 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 	while (fileDataPtr < endfileDataPtr)
 	{
+		// A chunk header is 12 bytes: id + content size + children size
+		if ((endfileDataPtr - fileDataPtr) < 12) break;
+
 		char szChunkName[5];
 		memcpy(szChunkName, fileDataPtr, 4);
 		szChunkName[4] = 0;
@@ -607,6 +610,8 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 		if (strcmp(szChunkName, "SIZE") == 0)
 		{
+			if ((endfileDataPtr - fileDataPtr) < 12) break;
+
 			//(4 bytes x 3 : x, y, z ) 
 			sizeX = *((unsigned int*)fileDataPtr);
 			fileDataPtr += sizeof(unsigned int);
@@ -626,8 +631,13 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 
 			//(numVoxels : 4 bytes )
 			//(each voxel: 1 byte x 4 : x, y, z, colorIndex ) x numVoxels
+			if ((endfileDataPtr - fileDataPtr) < 4) break;
+
 			numVoxels = *((unsigned int*)fileDataPtr);
 			fileDataPtr += sizeof(unsigned int);
+
+			if (numVoxels > (unsigned int)(endfileDataPtr - fileDataPtr) / 4)
+				numVoxels = (unsigned int)(endfileDataPtr - fileDataPtr) / 4;
 
 			while (numVoxels > 0)
 			{
@@ -645,6 +655,8 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 		{
 			VoxColor col;
 
+			if ((endfileDataPtr - fileDataPtr) < (256 - 1) * 4) break;
+
 			//(each pixel: 1 byte x 4 : r, g, b, a ) x 256
 			for (int i = 0; i < 256 - 1; i++)
 			{
@@ -659,6 +671,7 @@ int Vox_LoadFromMemory(unsigned char* pvoxData, unsigned int voxDataSize, VoxArr
 		}
 		else
 		{
+			if (chunkSize > (unsigned int)(endfileDataPtr - fileDataPtr)) break;
 			fileDataPtr += chunkSize;
 		}
 	}
