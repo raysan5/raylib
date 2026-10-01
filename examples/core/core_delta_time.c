@@ -92,7 +92,7 @@ int main(void)
             if (currentFps <= 0) fpsText = TextFormat("FPS: unlimited (%i)", GetFPS());
             else fpsText = TextFormat("FPS: %i (target: %i)", GetFPS(), currentFps);
             DrawText(fpsText, 10, 10, 20, DARKGRAY);
-            DrawText(TextFormat("Frame time: %02.02f ms", GetFrameTime()), 10, 30, 20, DARKGRAY);
+            DrawText(TextFormat("Frame time: %02.02f ms", GetFrameTime()*1000.0f), 10, 30, 20, DARKGRAY);
             DrawText("Use the scroll wheel to change the fps limit, r to reset", 10, 50, 20, DARKGRAY);
 
             // Draw the text above the circles
