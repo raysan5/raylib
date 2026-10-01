@@ -28,7 +28,6 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera");
 
     Rectangle player = { 400, 280, 40, 40 };
