@@ -2943,8 +2943,10 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
                 if (outGlyphPtr != NULL)
                 {
                     outGlyphPtr->value = charEncoding;
-                    outGlyphPtr->offsetX = charBBxoff0 + fontBByoff0;
-                    outGlyphPtr->offsetY = fontBBh - (charBBh + charBByoff0 + fontBByoff0 + fontAscent);
+                    // BBX offsets place the glyph bitmap relative to the pen position on the baseline,
+                    // raylib offsets are measured from the top of the line, fontAscent above the baseline
+                    outGlyphPtr->offsetX = charBBxoff0;
+                    outGlyphPtr->offsetY = fontAscent - (charBBh + charBByoff0);
                     outGlyphPtr->advanceX = charDWidthX;
 
                     outGlyphPtr->image.data = RL_CALLOC(charBBw*charBBh, 1);
@@ -2987,6 +2989,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
             if (strstr(buffer, "FONTBOUNDINGBOX") != NULL)
             {
                 readVars = sscanf(buffer, "FONTBOUNDINGBOX %i %i %i %i", &fontBBw, &fontBBh, &fontBBxoff0, &fontBByoff0);
+                fontAscent = fontBBh + fontBByoff0; // Default if FONT_ASCENT property is not provided
                 continue;
             }
 
