@@ -22,6 +22,8 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
+#include "rayguiStyle.h"
+
 #define MAX_PIE_SLICES  10       // Max pie slices
 
 //------------------------------------------------------------------------------------
@@ -81,6 +83,8 @@ int main(void)
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
+    GuiLoadStyleCyber();
+
     // Main game loop
     while (!WindowShouldClose())
     {
@@ -124,7 +128,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+            ClearBackground(GRAY);
 
             // Draw the pie chart on the canvas
             float startAngle = 0.0f;

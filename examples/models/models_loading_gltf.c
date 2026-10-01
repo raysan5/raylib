@@ -43,12 +43,12 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load model
-    Model model = LoadModel("resources/models/gltf/robot.glb");
+    Model model = LoadModel("resources/models/gltf/test.glb");
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model world position
 
     // Load model animations
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/test.glb", &animCount);
 
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing

@@ -49,7 +49,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
 
     // Load gltf model
-    Model model = LoadModel("resources/models/gltf/greenman.glb"); // Load character model
+    Model model = LoadModel("resources/models/gltf/test.glb"); // Load character model
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
 
 #if SUPPORT_GPU_SKINNING
@@ -63,12 +63,13 @@ int main(void)
 
     // Skinning shader could be required to be assigned to all materials shaders, just to make
     // sure required uniforms are being updated for the mesh using that material (and shader)
-    model.materials[1].shader = skinningShader; // Just assigning to materials[1] for this model
+    for (int i = 0; i < model.materialCount; i++) 
+        model.materials[i].shader = skinningShader;
 #endif
 
     // Load gltf model animations
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
+    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/test.glb", &animCount);
 
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing
