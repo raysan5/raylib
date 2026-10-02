@@ -2486,7 +2486,8 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
 // NOTE: Required for CPU skinning, uploads animated vertex buffers to GPU
 static void UpdateModelAnimationVertexBuffers(Model model)
 {
-    Matrix *boneNormalMatrices = NULL; // Normal matrix per bone, computed on first mesh with normals
+    static Matrix boneNormalMatrices[256] = { 0 }; // Normal matrix per bone, bone indices are unsigned char
+    bool boneNormalsReady = false;
 
     for (int m = 0; m < model.meshCount; m++)
     {
@@ -2505,10 +2506,11 @@ static void UpdateModelAnimationVertexBuffers(Model model)
             (mesh.animVertices == NULL) || (mesh.animNormals == NULL)) continue;
 
         // Normal matrix only depends on the bone, compute it once per bone instead of per vertex
-        if ((mesh.normals != NULL) && (boneNormalMatrices == NULL))
+        if ((mesh.normals != NULL) && !boneNormalsReady)
         {
-            boneNormalMatrices = (Matrix *)RL_MALLOC(model.skeleton.boneCount*sizeof(Matrix));
-            for (unsigned int b = 0; b < model.skeleton.boneCount; b++) boneNormalMatrices[b] = MatrixTranspose(MatrixInvert(model.boneMatrices[b]));
+            memset(boneNormalMatrices, 0, 256*sizeof(Matrix));
+            for (unsigned int b = 0; (b < model.skeleton.boneCount) && (b < 256); b++) boneNormalMatrices[b] = MatrixTranspose(MatrixInvert(model.boneMatrices[b]));
+            boneNormalsReady = true;
         }
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
@@ -2558,8 +2560,6 @@ static void UpdateModelAnimationVertexBuffers(Model model)
             if (mesh.normals != NULL) rlUpdateVertexBuffer(mesh.vboId[SHADER_LOC_VERTEX_NORMAL], mesh.animNormals, mesh.vertexCount*3*sizeof(float), 0);
         }
     }
-
-    if (boneNormalMatrices != NULL) RL_FREE(boneNormalMatrices);
 }
 
 // Unload animation array data
