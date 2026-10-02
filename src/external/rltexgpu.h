@@ -200,7 +200,6 @@ RLGPUTEXAPI int rl_save_ktx_to_memory(const char *fileName, void *data, int widt
 //----------------------------------------------------------------------------------
 // Get pixel data size in bytes for certain pixel format
 static int get_pixel_data_size(int width, int height, int format);
-static void copy_file_data(unsigned char *dst, const unsigned char *src, unsigned int size, unsigned int available);
 
 // Get OpenGL internal formats and data type from rlGpuTexPixelFormat
 void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsigned int *gl_format, unsigned int *gl_type);
@@ -296,7 +295,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                     image_data = RLTEXGPU_MALLOC(data_size);
 
-                    copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                    unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                    RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                    for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                     *format = RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_R5G6B5;
                 }
@@ -308,7 +309,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
-                        copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                        unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                        for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                         unsigned char alpha = 0;
 
@@ -328,7 +331,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
-                        copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                        unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                        for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                         unsigned char alpha = 0;
 
@@ -350,7 +355,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
-                copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                 *format = RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_R8G8B8;
             }
@@ -360,7 +367,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
-                copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                 unsigned char blue = 0;
 
@@ -386,7 +395,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
-                copy_file_data((unsigned char *)image_data, file_data_ptr, data_size, data_available);
+                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
+                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
 
                 switch (header->ddspf.fourcc)
                 {
@@ -947,16 +958,6 @@ static int get_pixel_data_size(int width, int height, int format)
     }
 
     return data_size;
-}
-
-// Copy image data from the file data, never reading past its end
-// NOTE: Bytes the file does not contain are set to zero
-static void copy_file_data(unsigned char *dst, const unsigned char *src, unsigned int size, unsigned int available)
-{
-    unsigned int copy_size = (size < available)? size : available;
-
-    RLTEXGPU_MEMCPY(dst, src, copy_size);
-    for (unsigned int i = copy_size; i < size; i++) dst[i] = 0;
 }
 
 // Get OpenGL internal formats and data type from rlGpuTexPixelFormat
