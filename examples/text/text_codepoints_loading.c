@@ -149,7 +149,7 @@ static int *CodepointRemoveDuplicates(int *codepoints, int codepointCount, int *
         {
             if (codepointsNoDups[i] == codepointsNoDups[j])
             {
-                for (int k = j; k < codepointsNoDupsCount; k++) codepointsNoDups[k] = codepointsNoDups[k + 1];
+                for (int k = j; k < codepointsNoDupsCount - 1; k++) codepointsNoDups[k] = codepointsNoDups[k + 1];
 
                 codepointsNoDupsCount--;
                 j--;
