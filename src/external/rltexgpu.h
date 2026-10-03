@@ -152,6 +152,8 @@ RLGPUTEXAPI int rl_save_ktx_to_memory(const char *fileName, void *data, int widt
 
 #if defined(RLTEXGPU_IMPLEMENTATION)
 
+#include <limits.h>             // Required for: INT_MAX
+
 #if defined(RLTEXGPU_SHOW_LOG_INFO) && !defined(RLTEXGPU_LOG)
     #include <stdio.h>          // Required for: printf()
 #endif
@@ -212,7 +214,6 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
 void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_size, int *width, int *height, int *format, int *mips)
 {
     void *image_data = RLTEXGPU_NULL;  // Image data pointer
-    int image_pixel_size = 0;           // Image pixel size
 
     unsigned char *file_data_ptr = (unsigned char *)file_data;
 
@@ -273,6 +274,10 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
         {
             dds_header *header = (dds_header *)file_data_ptr;
 
+            if ((header->size != sizeof(dds_header)) || (header->ddspf.size != sizeof(dds_pixel_format))) return image_data;
+            if ((header->width == 0) || (header->height == 0) ||
+                (header->width > INT_MAX) || (header->height > INT_MAX) || (header->mipmap_count > INT_MAX)) return image_data;
+
             file_data_ptr += sizeof(dds_header);        // Skip header
             unsigned int data_available = file_size - 4 - sizeof(dds_header);
 
@@ -282,22 +287,49 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             if (*width % 4 != 0) RLTEXGPU_LOG("DDS file width must be multiple of 4. Image will not display correctly");
             if (*height % 4 != 0) RLTEXGPU_LOG("DDS file height must be multiple of 4. Image will not display correctly");
 
-            image_pixel_size = header->width*header->height;
-
             if (header->mipmap_count == 0) *mips = 1;   // Parameter not used
             else *mips = header->mipmap_count;
+
+            // Calculate the exact data size of the requested mip levels
+            int data_size = 0;
+            for (unsigned int i = 0, w = *width, h = *height; i < (unsigned int)*mips; i++)
+            {
+                unsigned long long mip_size = 0;
+                if ((header->ddspf.flags == 0x04) || (header->ddspf.flags == 0x05)) // Compressed
+                {
+                    // Every mip level uses whole 4x4 blocks, including levels smaller than 4x4
+                    int block_size = 0;
+                    if (header->ddspf.fourcc == FOURCC_DXT1) block_size = 8;
+                    else if ((header->ddspf.fourcc == FOURCC_DXT3) || (header->ddspf.fourcc == FOURCC_DXT5)) block_size = 16;
+                    else return image_data;
+
+                    mip_size = (unsigned long long)((w + 3)/4)*((h + 3)/4)*block_size;
+                }
+                else if ((header->ddspf.rgb_bit_count == 16) || (header->ddspf.rgb_bit_count == 24) || (header->ddspf.rgb_bit_count == 32))
+                {
+                    mip_size = (unsigned long long)w*h*(header->ddspf.rgb_bit_count/8);
+                }
+                else return image_data;
+
+                if ((mip_size > (unsigned int)(INT_MAX - data_size)) || (mip_size > data_available - data_size))
+                {
+                    RLTEXGPU_LOG("DDS file data size not valid");
+                    return image_data;
+                }
+                data_size += (int)mip_size;
+
+                if ((w == 1) && (h == 1) && (i + 1 < (unsigned int)*mips)) return image_data;
+                if (w > 1) w /= 2;
+                if (h > 1) h /= 2;
+            }
 
             if (header->ddspf.rgb_bit_count == 16)      // 16bit mode, no compressed
             {
                 if (header->ddspf.flags == 0x40)        // No alpha channel
                 {
-                    int data_size = image_pixel_size*sizeof(unsigned short);
-                    if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                     image_data = RLTEXGPU_MALLOC(data_size);
-
-                    unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                    RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                    for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                    if (image_data == RLTEXGPU_NULL) return image_data;
+                    RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                     *format = RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_R5G6B5;
                 }
@@ -305,13 +337,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 {
                     if (header->ddspf.a_bit_mask == 0x8000)     // 1bit alpha
                     {
-                        int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RLTEXGPU_MALLOC(data_size);
-
-                        unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                        for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                        if (image_data == RLTEXGPU_NULL) return image_data;
+                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                         unsigned char alpha = 0;
 
@@ -327,13 +355,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     }
                     else if (header->ddspf.a_bit_mask == 0xf000)   // 4bit alpha
                     {
-                        int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                         image_data = RLTEXGPU_MALLOC(data_size);
-
-                        unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                        for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                        if (image_data == RLTEXGPU_NULL) return image_data;
+                        RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                         unsigned char alpha = 0;
 
@@ -351,32 +375,24 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24)) // DDS_RGB, no compressed
             {
-                int data_size = image_pixel_size*3*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RLTEXGPU_MALLOC(data_size);
-
-                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                if (image_data == RLTEXGPU_NULL) return image_data;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                 *format = RLTEXGPU_PIXELFORMAT_UNCOMPRESSED_R8G8B8;
             }
             else if ((header->ddspf.flags == 0x41) && (header->ddspf.rgb_bit_count == 32)) // DDS_RGBA, no compressed
             {
-                int data_size = image_pixel_size*4*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
                 image_data = RLTEXGPU_MALLOC(data_size);
-
-                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                if (image_data == RLTEXGPU_NULL) return image_data;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                 unsigned char blue = 0;
 
                 // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
                 // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
                 // So, we must realign B8G8R8A8 to R8G8B8A8
-                for (int i = 0; i + 3 < data_size; i += 4)
+                for (int i = 0; i < data_size; i += 4)
                 {
                     blue = ((unsigned char *)image_data)[i];
                     ((unsigned char *)image_data)[i] = ((unsigned char *)image_data)[i + 2];
@@ -387,17 +403,9 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if (((header->ddspf.flags == 0x04) || (header->ddspf.flags == 0x05)) && (header->ddspf.fourcc > 0)) // Compressed
             {
-                int data_size = 0;
-
-                // Calculate data size, including all mipmaps
-                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
-                else data_size = header->pitch_or_linear_size;
-
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
-
-                unsigned int copy_size = ((unsigned int)data_size < data_available)? (unsigned int)data_size : data_available;
-                RLTEXGPU_MEMCPY(image_data, file_data_ptr, copy_size);
-                for (unsigned int i = copy_size; i < (unsigned int)data_size; i++) ((unsigned char *)image_data)[i] = 0;
+                if (image_data == RLTEXGPU_NULL) return image_data;
+                RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
 
                 switch (header->ddspf.fourcc)
                 {
