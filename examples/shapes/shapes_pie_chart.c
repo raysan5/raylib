@@ -22,8 +22,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-#include "rayguiStyle.h"
-
 #define MAX_PIE_SLICES  10       // Max pie slices
 
 //------------------------------------------------------------------------------------
@@ -61,7 +59,7 @@ int main(void)
 
     // UI Panel top-left anchor
     const Vector2 panelPos = {
-        (float)screenWidth  - panelMargin - panelWidth,
+        (float)screenWidth - panelMargin - panelWidth,
         (float)panelMargin
     };
 
@@ -69,12 +67,12 @@ int main(void)
     const Rectangle panelRect = {
         panelPos.x, panelPos.y,
         (float)panelWidth,
-        (float)screenHeight - 2.0f*panelMargin
+        (float)screenHeight - 2.0f * panelMargin
     };
 
     // Pie chart geometry
     const Rectangle canvas = { 0, 0, panelPos.x, (float)screenHeight };
-    const Vector2 center = { canvas.width/2.0f, canvas.height/2.0f};
+    const Vector2 center = { canvas.width / 2.0f, canvas.height / 2.0f };
     const float radius = 205.0f;
 
     // Total value for percentage calculations
@@ -82,8 +80,6 @@ int main(void)
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
-
-    GuiLoadStyleCyber();
 
     // Main game loop
     while (!WindowShouldClose())
@@ -101,17 +97,17 @@ int main(void)
         {
             float dx = mousePos.x - center.x;
             float dy = mousePos.y - center.y;
-            float distance = sqrtf(dx*dx + dy*dy);
+            float distance = sqrtf(dx * dx + dy * dy);
 
             if (distance <= radius) // Inside the pie radius
             {
-                float angle = atan2f(dy, dx)*RAD2DEG;
+                float angle = atan2f(dy, dx) * RAD2DEG;
                 if (angle < 0) angle += 360;
 
                 float currentAngle = 0.0f;
                 for (int i = 0; i < sliceCount; i++)
                 {
-                    float sweep = (totalValue > 0)? (values[i]/totalValue)*360.0f : 0.0f;
+                    float sweep = (totalValue > 0) ? (values[i] / totalValue) * 360.0f : 0.0f;
 
                     if ((angle >= currentAngle) && (angle < (currentAngle + sweep)))
                     {
@@ -128,96 +124,98 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
-            ClearBackground(GRAY);
+        ClearBackground(RAYWHITE);
 
-            // Draw the pie chart on the canvas
-            float startAngle = 0.0f;
-            for (int i = 0; i < sliceCount; i++)
+        // Draw the pie chart on the canvas
+        float startAngle = 0.0f;
+        for (int i = 0; i < sliceCount; i++)
+        {
+            float sweepAngle = (totalValue > 0) ? (values[i] / totalValue) * 360.0f : 0.0f;
+            float midAngle = startAngle + sweepAngle / 2.0f; // Middle angle for label positioning
+
+            Color color = ColorFromHSV((float)i / sliceCount * 360.0f, 0.75f, 0.9f);
+            float currentRadius = radius;
+
+            // Make the hovered slice pop out by adding 5 pixels to its radius
+            if (i == hoveredSlice) currentRadius += 20.0f;
+
+            // Draw the pie slice using raylib's DrawCircleSector function
+            DrawCircleSector(center, currentRadius, startAngle, startAngle + sweepAngle, 120, color);
+
+            // Draw the label for the current slice
+            if (values[i] > 0)
             {
-                float sweepAngle = (totalValue > 0)? (values[i]/totalValue)*360.0f : 0.0f;
-                float midAngle = startAngle + sweepAngle/2.0f; // Middle angle for label positioning
+                char labelText[64] = { 0 };
+                if (showValues && showPercentages) snprintf(labelText, 64, "%.1f (%.0f%%)", values[i], (values[i] / totalValue) * 100.0f);
+                else if (showValues) snprintf(labelText, 64, "%.1f", values[i]);
+                else if (showPercentages) snprintf(labelText, 64, "%.0f%%", (values[i] / totalValue) * 100.0f);
+                else labelText[0] = '\0';
 
-                Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
-                float currentRadius = radius;
-
-                // Make the hovered slice pop out by adding 5 pixels to its radius
-                if (i == hoveredSlice) currentRadius += 20.0f;
-
-                // Draw the pie slice using raylib's DrawCircleSector function
-                DrawCircleSector(center, currentRadius, startAngle, startAngle + sweepAngle, 120, color);
-
-                // Draw the label for the current slice
-                if (values[i] > 0)
-                {
-                    char labelText[64] = { 0 };
-                    if (showValues && showPercentages) snprintf(labelText, 64, "%.1f (%.0f%%)", values[i], (values[i]/totalValue)*100.0f);
-                    else if (showValues) snprintf(labelText, 64, "%.1f", values[i]);
-                    else if (showPercentages) snprintf(labelText, 64, "%.0f%%", (values[i]/totalValue)*100.0f);
-                    else labelText[0] = '\0';
-
-                    Vector2 textSize = MeasureTextEx(GetFontDefault(), labelText, 20, 1);
-                    float labelRadius = radius*0.7f;
-                    Vector2 labelPos = { center.x + cosf(midAngle*DEG2RAD)*labelRadius - textSize.x/2.0f,
-                        center.y + sinf(midAngle*DEG2RAD)*labelRadius - textSize.y/2.0f };
-                    DrawText(labelText, (int)labelPos.x, (int)labelPos.y, 20, WHITE);
-                }
-
-                // Draw inner circle to create donut effect
-                // TODO: This is a hacky solution, better use DrawRing()
-                if (showDonut) DrawCircleV(center, donutInnerRadius, RAYWHITE);
-
-                startAngle += sweepAngle;
+                Vector2 textSize = MeasureTextEx(GetFontDefault(), labelText, 20, 1);
+                float labelRadius = radius * 0.7f;
+                Vector2 labelPos = { center.x + cosf(midAngle * DEG2RAD) * labelRadius - textSize.x / 2.0f,
+                    center.y + sinf(midAngle * DEG2RAD) * labelRadius - textSize.y / 2.0f };
+                DrawText(labelText, (int)labelPos.x, (int)labelPos.y, 20, WHITE);
             }
 
-            // UI control panel
-            DrawRectangleRec(panelRect, Fade(LIGHTGRAY, 0.5f));
-            DrawRectangleLinesEx(panelRect, 1.0f, GRAY);
+            // Draw inner circle to create donut effect
+            // TODO: This is a hacky solution, better use DrawRing()
+            if (showDonut) DrawCircleV(center, donutInnerRadius, RAYWHITE);
 
-            GuiSpinner((Rectangle){ panelPos.x + 95, (float)panelPos.y + 12, 125, 25 }, "Slices ", &sliceCount, 1, MAX_PIE_SLICES, false);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 40, 20, 20 }, "Show Values", &showValues);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 70, 20, 20 }, "Show Percentages", &showPercentages);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 100, 20, 20 }, "Make Donut", &showDonut);
+            startAngle += sweepAngle;
+        }
 
-            if (showDonut) GuiDisable();
-            GuiSliderBar((Rectangle){ panelPos.x + 80, (float)panelPos.y + 12 + 130, panelRect.width - 100, 30 },
-                            "Inner Radius", NULL, &donutInnerRadius, 5.0f, radius - 10.0f);
-            GuiEnable();
+        // UI control panel
+        DrawRectangleRec(panelRect, Fade(LIGHTGRAY, 0.5f));
+        DrawRectangleLinesEx(panelRect, 1.0f, GRAY);
 
-            GuiLine((Rectangle){ panelPos.x + 10, (float)panelPos.y + 12 + 170, panelRect.width - 20, 1 }, NULL);
+        GuiSpinner((Rectangle) { panelPos.x + 95, (float)panelPos.y + 12, 125, 25 }, "Slices ", & sliceCount, 1, MAX_PIE_SLICES, false);
+        GuiCheckBox((Rectangle) { panelPos.x + 20, (float)panelPos.y + 12 + 40, 20, 20 }, "Show Values", & showValues);
+        GuiCheckBox((Rectangle) { panelPos.x + 20, (float)panelPos.y + 12 + 70, 20, 20 }, "Show Percentages", & showPercentages);
+        GuiCheckBox((Rectangle) { panelPos.x + 20, (float)panelPos.y + 12 + 100, 20, 20 }, "Make Donut", & showDonut);
 
-            // Scrollable area for slice editors
-            scrollPanelBounds = (Rectangle){
-                panelPos.x + panelMargin,
-                (float)panelPos.y + 12 + 190,
-                panelRect.width - panelMargin*2,
-                panelRect.y + panelRect.height - panelPos.y + 12 + 190 - panelMargin
-            };
-            int contentHeight = sliceCount*35;
+        if (showDonut) GuiDisable();
+        GuiSliderBar((Rectangle) { panelPos.x + 80, (float)panelPos.y + 12 + 130, panelRect.width - 100, 30 },
+            "Inner Radius", NULL, & donutInnerRadius, 5.0f, radius - 10.0f);
+        GuiEnable();
 
-            GuiScrollPanel(scrollPanelBounds, NULL,
-                (Rectangle){ 0, 0, panelRect.width - 25, (float)contentHeight },
-                &scrollContentOffset, &view);
+        GuiLine((Rectangle) { panelPos.x + 10, (float)panelPos.y + 12 + 170, panelRect.width - 20, 1 }, NULL);
 
-            const float contentX = view.x + scrollContentOffset.x; // Left of content
-            const float contentY = view.y + scrollContentOffset.y; // Top of content
+        // Scrollable area for slice editors
+        scrollPanelBounds = (Rectangle){
+            panelPos.x + panelMargin,
+            (float)panelPos.y + 12 + 190,
+            panelRect.width - panelMargin * 2,
+            panelRect.y + panelRect.height - panelPos.y + 12 + 190 - panelMargin
+        };
+        int contentHeight = sliceCount * 35;
 
-            BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
+        GuiScrollPanel(scrollPanelBounds, NULL,
+            (Rectangle) {
+            0, 0, panelRect.width - 25, (float)contentHeight
+        },
+            & scrollContentOffset, & view);
 
-                for (int i = 0; i < sliceCount; i++)
-                {
-                    const int rowY = (int)(contentY + 5 + i*35);
+        const float contentX = view.x + scrollContentOffset.x; // Left of content
+        const float contentY = view.y + scrollContentOffset.y; // Top of content
 
-                    // Color indicator
-                    Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
-                    DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
+        BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
 
-                    // Label textbox
-                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
+        for (int i = 0; i < sliceCount; i++)
+        {
+            const int rowY = (int)(contentY + 5 + i * 35);
 
-                    GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, &values[i], 0.0f, 1000.0f);
-                }
+            // Color indicator
+            Color color = ColorFromHSV((float)i / sliceCount * 360.0f, 0.75f, 0.9f);
+            DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
 
-            EndScissorMode();
+            // Label textbox
+            if (GuiTextBox((Rectangle) { contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
+
+            GuiSliderBar((Rectangle) { contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, & values[i], 0.0f, 1000.0f);
+        }
+
+        EndScissorMode();
 
         EndDrawing();
         //----------------------------------------------------------------------------------

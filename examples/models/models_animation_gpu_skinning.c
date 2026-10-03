@@ -23,9 +23,9 @@
 #include "raymath.h"
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLSL_VERSION            330
+#define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-    #define GLSL_VERSION            100
+#define GLSL_VERSION            100
 #endif
 
 //------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
 
     // Load gltf model
-    Model model = LoadModel("resources/models/gltf/test.glb"); // Load character model
+    Model model = LoadModel("resources/models/gltf/greenman.glb"); // Load character model
     Vector3 position = { 0.0f, 0.0f, 0.0f }; // Set model position
 
 #if SUPPORT_GPU_SKINNING
@@ -63,13 +63,12 @@ int main(void)
 
     // Skinning shader could be required to be assigned to all materials shaders, just to make
     // sure required uniforms are being updated for the mesh using that material (and shader)
-    for (int i = 0; i < model.materialCount; i++) 
-        model.materials[i].shader = skinningShader;
+    model.materials[1].shader = skinningShader; // Just assigning to materials[1] for this model
 #endif
 
     // Load gltf model animations
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/test.glb", &animCount);
+    ModelAnimation* anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
 
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing
@@ -86,11 +85,11 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Select current animation
-        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1)%animCount;
-        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1)%animCount;
+        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1) % animCount;
+        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1) % animCount;
 
         // Update model animation
-        animCurrentFrame = (animCurrentFrame + 1)%anims[animIndex].keyframeCount;
+        animCurrentFrame = (animCurrentFrame + 1) % anims[animIndex].keyframeCount;
         UpdateModelAnimation(model, anims[animIndex], (float)animCurrentFrame);
         //----------------------------------------------------------------------------------
 
@@ -98,18 +97,18 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            BeginMode3D(camera);
+        BeginMode3D(camera);
 
-                DrawModel(model, position, 1.0f, WHITE);
+        DrawModel(model, position, 1.0f, WHITE);
 
-                DrawGrid(10, 1.0f);
+        DrawGrid(10, 1.0f);
 
-            EndMode3D();
+        EndMode3D();
 
-            DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 40, 20, MAROON);
-            DrawText("Use the LEFT/RIGHT keys to switch animation", 10, 10, 20, GRAY);
+        DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 40, 20, MAROON);
+        DrawText("Use the LEFT/RIGHT keys to switch animation", 10, 10, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
