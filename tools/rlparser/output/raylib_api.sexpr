@@ -486,7 +486,7 @@
     (fields 
       ((type "Vector2")
        (name "offset")
-       (description "Camera offset (screen space offset from window origin)"))
+       (description "Camera offset (screen space offset from window origin, unscaled by DPI, real pixel size)"))
       ((type "Vector2")
        (name "target")
        (description "Camera target (world space target point that is mapped to screen space offset)"))

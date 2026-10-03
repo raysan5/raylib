@@ -48,7 +48,7 @@ int main(void)
 
     // Load model animations
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
+    ModelAnimation* anims = LoadModelAnimations("resources/models/gltf/robot.glb", &animCount);
 
     // Animation playing variables
     unsigned int animIndex = 0;         // Current animation playing
@@ -65,11 +65,11 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Select current animation
-        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1)%animCount;
-        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1)%animCount;
+        if (IsKeyPressed(KEY_RIGHT)) animIndex = (animIndex + 1) % animCount;
+        else if (IsKeyPressed(KEY_LEFT)) animIndex = (animIndex + animCount - 1) % animCount;
 
         // Update model animation
-        animCurrentFrame = (animCurrentFrame + 1)%anims[animIndex].keyframeCount;
+        animCurrentFrame = (animCurrentFrame + 1) % anims[animIndex].keyframeCount;
         UpdateModelAnimation(model, anims[animIndex], (float)animCurrentFrame);
         //----------------------------------------------------------------------------------
 
@@ -77,18 +77,18 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-            BeginMode3D(camera);
+        BeginMode3D(camera);
 
-                DrawModel(model, position, 1.0f, WHITE);
+        DrawModel(model, position, 1.0f, WHITE);
 
-                DrawGrid(10, 1.0f);
+        DrawGrid(10, 1.0f);
 
-            EndMode3D();
+        EndMode3D();
 
-            DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 40, 20, MAROON);
-            DrawText("Use the LEFT/RIGHT keys to switch animation", 10, 10, 20, GRAY);
+        DrawText(TextFormat("Current animation: %s", anims[animIndex].name), 10, 40, 20, MAROON);
+        DrawText("Use the LEFT/RIGHT keys to switch animation", 10, 10, 20, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -104,6 +104,5 @@ int main(void)
 
     return 0;
 }
-
 
 

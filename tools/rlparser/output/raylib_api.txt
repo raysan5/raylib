@@ -394,7 +394,7 @@ Struct 13: Camera3D (5 fields)
 Struct 14: Camera2D (4 fields)
   Name: Camera2D
   Description: Camera2D, defines position/orientation in 2d space
-  Field[1]: Vector2 offset // Camera offset (screen space offset from window origin)
+  Field[1]: Vector2 offset // Camera offset (screen space offset from window origin, unscaled by DPI, real pixel size)
   Field[2]: Vector2 target // Camera target (world space target point that is mapped to screen space offset)
   Field[3]: float rotation // Camera rotation in degrees (pivots around target)
   Field[4]: float zoom // Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale

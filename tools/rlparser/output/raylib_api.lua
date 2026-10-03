@@ -763,7 +763,7 @@ return {
         {
           type = "Vector2",
           name = "offset",
-          description = "Camera offset (screen space offset from window origin)"
+          description = "Camera offset (screen space offset from window origin, unscaled by DPI, real pixel size)"
         },
         {
           type = "Vector2",
