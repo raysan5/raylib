@@ -24,7 +24,7 @@
 *
 *   APPLE COMPILATION:
 *       gcc -o rlgl_standalone rlgl_standalone.c -I../../src -Iexternal/include -Lexternal/lib \
-*           -lglfw3 -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa
+*           -lglfw3 -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework QuartzCore
 *           -Wno-deprecated-declarations -std=c99 -DGRAPHICS_API_OPENGL_33
 *
 *

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2018 Camilla Löwy <elmindreda@glfw.org>
@@ -34,6 +34,40 @@
 #define _GLFW_FIND_LOADER    1
 #define _GLFW_REQUIRE_LOADER 2
 
+#if defined(__APPLE__)
+
+#include <CoreFoundation/CoreFoundation.h>
+
+static void* loadLocalVulkanLoaderMacOS(void)
+{
+    CFBundleRef bundle = CFBundleGetMainBundle();
+    if (!bundle)
+        return NULL;
+
+    CFURLRef frameworksUrl = CFBundleCopyPrivateFrameworksURL(bundle);
+    if (!frameworksUrl)
+        return NULL;
+
+    CFURLRef loaderUrl = CFURLCreateCopyAppendingPathComponent(
+        kCFAllocatorDefault, frameworksUrl, CFSTR("libvulkan.1.dylib"), false);
+    if (!loaderUrl)
+    {
+        CFRelease(frameworksUrl);
+        return NULL;
+    }
+
+    char path[PATH_MAX];
+    void* handle = NULL;
+
+    if (CFURLGetFileSystemRepresentation(loaderUrl, true, (UInt8*) path, sizeof(path) - 1))
+        handle = _glfwPlatformLoadModule(path);
+
+    CFRelease(loaderUrl);
+    CFRelease(frameworksUrl);
+    return handle;
+}
+
+#endif // __APPLE__
 
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW internal API                      //////
@@ -55,12 +89,12 @@ GLFWbool _glfwInitVulkan(int mode)
     {
 #if defined(_GLFW_VULKAN_LIBRARY)
         _glfw.vk.handle = _glfwPlatformLoadModule(_GLFW_VULKAN_LIBRARY);
-#elif defined(_GLFW_WIN32)
+#elif defined(_WIN32)
         _glfw.vk.handle = _glfwPlatformLoadModule("vulkan-1.dll");
-#elif defined(_GLFW_COCOA)
+#elif defined(__APPLE__)
         _glfw.vk.handle = _glfwPlatformLoadModule("libvulkan.1.dylib");
         if (!_glfw.vk.handle)
-            _glfw.vk.handle = _glfwLoadLocalVulkanLoaderCocoa();
+            _glfw.vk.handle = loadLocalVulkanLoaderMacOS();
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
         _glfw.vk.handle = _glfwPlatformLoadModule("libvulkan.so");
 #else
@@ -129,19 +163,21 @@ GLFWbool _glfwInitVulkan(int mode)
     for (i = 0;  i < count;  i++)
     {
         if (strcmp(ep[i].extensionName, "VK_KHR_surface") == 0)
-            _glfw.vk.KHR_surface = GLFW_TRUE;
+            _glfw.vk.KHR_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_KHR_win32_surface") == 0)
-            _glfw.vk.KHR_win32_surface = GLFW_TRUE;
+            _glfw.vk.KHR_win32_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_MVK_macos_surface") == 0)
-            _glfw.vk.MVK_macos_surface = GLFW_TRUE;
+            _glfw.vk.MVK_macos_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_EXT_metal_surface") == 0)
-            _glfw.vk.EXT_metal_surface = GLFW_TRUE;
+            _glfw.vk.EXT_metal_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_KHR_xlib_surface") == 0)
-            _glfw.vk.KHR_xlib_surface = GLFW_TRUE;
+            _glfw.vk.KHR_xlib_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_KHR_xcb_surface") == 0)
-            _glfw.vk.KHR_xcb_surface = GLFW_TRUE;
+            _glfw.vk.KHR_xcb_surface = true;
         else if (strcmp(ep[i].extensionName, "VK_KHR_wayland_surface") == 0)
-            _glfw.vk.KHR_wayland_surface = GLFW_TRUE;
+            _glfw.vk.KHR_wayland_surface = true;
+        else if (strcmp(ep[i].extensionName, "VK_EXT_headless_surface") == 0)
+            _glfw.vk.EXT_headless_surface = true;
     }
 
     _glfw_free(ep);
@@ -155,8 +191,8 @@ GLFWbool _glfwInitVulkan(int mode)
 
 void _glfwTerminateVulkan(void)
 {
-    if (_glfw.vk.handle)
-        _glfwPlatformFreeModule(_glfw.vk.handle);
+    _glfwPlatformFreeModule(_glfw.vk.handle);
+    _glfw.vk.handle = NULL;
 }
 
 const char* _glfwGetVulkanResultString(VkResult result)
@@ -272,10 +308,10 @@ GLFWAPI int glfwGetPhysicalDevicePresentationSupport(VkInstance instance,
                                                      VkPhysicalDevice device,
                                                      uint32_t queuefamily)
 {
+    _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
+
     assert(instance != VK_NULL_HANDLE);
     assert(device != VK_NULL_HANDLE);
-
-    _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
 
     if (!_glfwInitVulkan(_GLFW_REQUIRE_LOADER))
         return GLFW_FALSE;
@@ -297,14 +333,15 @@ GLFWAPI VkResult glfwCreateWindowSurface(VkInstance instance,
                                          const VkAllocationCallbacks* allocator,
                                          VkSurfaceKHR* surface)
 {
-    _GLFWwindow* window = (_GLFWwindow*) handle;
-    assert(instance != VK_NULL_HANDLE);
-    assert(window != NULL);
     assert(surface != NULL);
 
     *surface = VK_NULL_HANDLE;
 
     _GLFW_REQUIRE_INIT_OR_RETURN(VK_ERROR_INITIALIZATION_FAILED);
+
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
+    assert(instance != VK_NULL_HANDLE);
 
     if (!_glfwInitVulkan(_GLFW_REQUIRE_LOADER))
         return VK_ERROR_INITIALIZATION_FAILED;

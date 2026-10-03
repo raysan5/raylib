@@ -77,6 +77,15 @@
 #include "external/glfw/src/window.c"
 #include "external/glfw/src/input.c"
 #include "external/glfw/src/vulkan.c"
+#include "external/glfw/src/egl_context.c"
+#include "external/glfw/src/osmesa_context.c"
+
+//We need to define this function because GLFW calls it even though raylib does
+//not use GLFW's Null platform
+GLFWbool _glfwConnectNull(int platformID, _GLFWplatform* platform)
+{
+    return GLFW_FALSE;
+}
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #include "external/glfw/src/win32_init.c"
@@ -87,9 +96,6 @@
     #include "external/glfw/src/win32_time.c"
     #include "external/glfw/src/win32_thread.c"
     #include "external/glfw/src/wgl_context.c"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif
 
 #if defined(__linux__)
@@ -100,19 +106,42 @@
     #include "external/glfw/src/linux_joystick.c"
     #include "external/glfw/src/xkb_unicode.c"
 
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
-
     #if defined(_GLFW_WAYLAND)
+        //These functions need to be temporarily renamed because including
+        //source files for both Wayland and X11 results in pairs of functions
+        //with the same name and thus a build error
+        #define  createKeyTables createKeyTablesWayland
+        #define  translateKey    translateKeyWayland
+        #define  acquireMonitor  acquireMonitorWayland
+        #define  releaseMonitor  releaseMonitorWayland
+
         #include "external/glfw/src/wl_init.c"
         #include "external/glfw/src/wl_monitor.c"
         #include "external/glfw/src/wl_window.c"
+
+        #undef   createKeyTables
+        #undef   translateKey
+        #undef   acquireMonitor
+        #undef   releaseMonitor
     #endif
     #if defined(_GLFW_X11)
+        //These functions need to be temporarily renamed because including
+        //source files for both Wayland and X11 results in pairs of functions
+        //with the same name and thus a build error
+        #define  createKeyTables createKeyTablesX11
+        #define  translateKey    translateKeyX11
+        #define  acquireMonitor  acquireMonitorX11
+        #define  releaseMonitor  releaseMonitorX11
+
         #include "external/glfw/src/x11_init.c"
         #include "external/glfw/src/x11_monitor.c"
         #include "external/glfw/src/x11_window.c"
         #include "external/glfw/src/glx_context.c"
+
+        #undef   createKeyTables
+        #undef   translateKey
+        #undef   acquireMonitor
+        #undef   releaseMonitor
     #endif
 #endif
 
@@ -128,9 +157,6 @@
     #include "external/glfw/src/x11_monitor.c"
     #include "external/glfw/src/x11_window.c"
     #include "external/glfw/src/glx_context.c"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif
 
 #if defined(__APPLE__)
@@ -140,9 +166,6 @@
     #include "external/glfw/src/cocoa_joystick.m"
     #include "external/glfw/src/cocoa_monitor.m"
     #include "external/glfw/src/cocoa_window.m"
-    #include "external/glfw/src/cocoa_time.c"
+    #include "external/glfw/src/macos_time.c"
     #include "external/glfw/src/nsgl_context.m"
-
-    #include "external/glfw/src/egl_context.c"
-    #include "external/glfw/src/osmesa_context.c"
 #endif

@@ -68,7 +68,7 @@ int main(void)
     SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
     SetShaderValue(shadowShader, lightColLoc, &lightColorNormalized, SHADER_UNIFORM_VEC4);
     int ambientLoc = GetShaderLocation(shadowShader, "ambient");
-    float ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+    float ambient[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
     SetShaderValue(shadowShader, ambientLoc, ambient, SHADER_UNIFORM_VEC4);
     int lightVPLoc = GetShaderLocation(shadowShader, "lightVP");
     int shadowMapLoc = GetShaderLocation(shadowShader, "shadowMap");
@@ -81,7 +81,7 @@ int main(void)
     for (int i = 0; i < robot.materialCount; i++) robot.materials[i].shader = shadowShader;
 
     int animCount = 0;
-    ModelAnimation *anims = LoadModelAnimations("resources/models/robot.glb", &animCount);
+    ModelAnimation* anims = LoadModelAnimations("resources/models/robot.glb", &animCount);
 
     RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
 
@@ -111,9 +111,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
 
+        UpdateCamera(&camera, CAMERA_ORBITAL);
+
+        // send the updated camera position to the shader so that it can calculate the correct lighting for the scene
         Vector3 cameraPos = camera.position;
         SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
-        UpdateCamera(&camera, CAMERA_ORBITAL);
 
         frameCounter++;
         frameCounter %= (anims[0].keyframeCount);
@@ -160,6 +162,7 @@ int main(void)
             EndMode3D();
 
         EndTextureMode();
+
         lightViewProj = MatrixMultiply(lightView, lightProj);
 
         // PASS 02: Draw the scene into main framebuffer, using the generated shadowmap
@@ -176,6 +179,9 @@ int main(void)
             BeginMode3D(camera);
                 DrawScene(cube, robot); // Draw the same exact things as we drew in the shadowmap!
             EndMode3D();
+
+            rlActiveTextureSlot(textureActiveSlot);
+            rlDisableTexture();
 
             DrawText("Use the arrow keys to rotate the light!", 10, 10, 30, RED);
             DrawText("Shadows in raylib using the shadowmapping algorithm!", screenWidth - 280, screenHeight - 20, 10, GRAY);

@@ -59,7 +59,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - collision ellipses");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - ellipse collision");
     SetTargetFPS(60);
 
     Vector2 ellipseACenter = { (float)screenWidth/4, (float)screenHeight/2 };

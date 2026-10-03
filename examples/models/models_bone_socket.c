@@ -64,7 +64,7 @@ int main(void)
     int boneSocketIndex[BONE_SOCKETS] = { -1, -1, -1 };
 
     // Search bones for sockets
-    for (int i = 0; i < characterModel.skeleton.boneCount; i++)
+    for (unsigned int i = 0; i < characterModel.skeleton.boneCount; i++)
     {
         if (TextIsEqual(characterModel.skeleton.bones[i].name, "socket_hat"))
         {

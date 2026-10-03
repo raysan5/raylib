@@ -260,8 +260,9 @@ int main(int argc, char *argv[])
     for (int i = 0; i < lineCount; i++)
     {
         int j = 0;
-        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // skip spaces and tabs in the beginning
-        // Read define line
+        while ((lines[i][j] == ' ') || (lines[i][j] == '\t')) j++; // Skip spaces and tabs in the beginning
+
+        // Read one define line
         if (IsTextEqual(lines[i]+j, "#define ", 8))
         {
             // Keep the line position in the array of lines,
@@ -291,6 +292,7 @@ int main(int argc, char *argv[])
                 }
             }
             if (!validStruct) continue;
+
             structLines[structCount] = i;
             while (lines[i][0] != '}') i++;
             while (lines[i][0] != '\0') i++;
@@ -314,7 +316,9 @@ int main(int argc, char *argv[])
                 if ((v == ';') && (spaceCount == 2)) validAlias = true;
                 if ((v == ';') || (v == '(') || (v == '\0')) break;
             }
+
             if (!validAlias) continue;
+
             aliasLines[aliasCount] = i;
             aliasCount++;
         }
@@ -444,6 +448,7 @@ int main(int argc, char *argv[])
                       (ch == '-'))) isNumber = false;
                 j++;
             }
+
             if (isNumber)
             {
                 if (isFloat)
@@ -600,6 +605,7 @@ int main(int argc, char *argv[])
 
         defineIndex++;
     }
+
     defineCount = defineIndex;
     free(defineLines);
 
@@ -614,7 +620,7 @@ int main(int argc, char *argv[])
         GetDescription(linesPtr[-1], structs[i].desc);
 
         // Get struct name: typedef struct name {
-        const int TDS_LEN = 15; // length of "typedef struct "
+        const int TDS_LEN = 15; // Length of "typedef struct "
         for (int c = TDS_LEN; c < 64 + TDS_LEN; c++)
         {
             if ((linesPtr[0][c] == '{') || (linesPtr[0][c] == ' '))
@@ -640,8 +646,6 @@ int main(int argc, char *argv[])
 
                 if ((fieldLine[0] != '/') && !IsTextEqual(fieldLine, "struct", 6)) // Field line is not a comment and not a struct declaration
                 {
-                    //printf("Struct field: %s_\n", fieldLine);     // OK!
-
                     // Get struct field type and name
                     GetDataTypeAndName(fieldLine, fieldEndPos, structs[i].fieldType[structs[i].fieldCount], structs[i].fieldName[structs[i].fieldCount]);
 
@@ -661,7 +665,7 @@ int main(int argc, char *argv[])
                     if (additionalFields > 0)
                     {
                         int originalLength = -1;
-                        int lastStart;
+                        int lastStart = 0;
                         for (unsigned int c = 0; c < TextLength(structs[i].fieldName[originalIndex]) + 1; c++)
                         {
                             char v = structs[i].fieldName[originalIndex][c];
@@ -774,14 +778,22 @@ int main(int argc, char *argv[])
         // Skip "typedef "
         int c = 8;
 
-        // Type
+        // Type word part
         int typeStart = c;
         while(linePtr[c] != ' ') c++;
         int typeLen = c - typeStart;
-        MemoryCopy(aliases[i].type, &linePtr[typeStart], typeLen);
 
         // Skip space
         c++;
+
+        // Maybe type pointer part
+        if (linePtr[c] == '*')
+        {
+            while(linePtr[c] == '*') c++;
+            typeLen = c - typeStart;
+        }
+
+        MemoryCopy(aliases[i].type, &linePtr[typeStart], typeLen);
 
         // Name
         int nameStart = c;
@@ -1012,10 +1024,7 @@ int main(int argc, char *argv[])
                     ((linePtr[c - 4] == 'v') &&
                      (linePtr[c - 3] == 'o') &&
                      (linePtr[c - 2] == 'i') &&
-                     (linePtr[c - 1] == 'd')))
-                {
-                  break;
-                }
+                     (linePtr[c - 1] == 'd'))) break;
 
                 // Get parameter type + name, extract info
                 char funcParamTypeName[128] = { 0 };
@@ -2117,8 +2126,7 @@ static void ExportParsedData(const char *fileName, int format)
                 fprintf(outFile, "     (description \"%s\")\n", EscapeBackslashes(funcs[i].desc));
                 fprintf(outFile, "     (return-type \"%s\")", funcs[i].retType);
 
-                if (funcs[i].paramCount == 0) fprintf(outFile, "");
-                else
+                if (funcs[i].paramCount != 0)
                 {
                     fprintf(outFile, "\n     (params\n");
                     for (int p = 0; p < funcs[i].paramCount; p++)

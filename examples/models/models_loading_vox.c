@@ -185,6 +185,9 @@ int main(void)
     // Unload models data (GPU VRAM)
     for (int i = 0; i < MAX_VOX_FILES; i++) UnloadModel(models[i]);
 
+    // Unload shader data
+    UnloadShader(shader);
+
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 

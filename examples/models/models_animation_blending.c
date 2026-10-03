@@ -252,7 +252,7 @@ int main(void)
 
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
             GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize*2);
-            GuiLabel((Rectangle){ 0, GetScreenHeight() - 100.0f, GetScreenWidth(), 40 }, "PRESS SPACE to START BLENDING");
+            GuiLabel((Rectangle){ 0, GetScreenHeight() - 100.0f, (float)GetScreenWidth(), 40 }, "PRESS SPACE to START BLENDING");
             GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
 

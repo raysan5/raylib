@@ -90,7 +90,7 @@ int main(void)
             for (int i = 0; i < BUFFER_SIZE; i++)
             {
                 int wavelength = SAMPLE_RATE/sineFrequency;
-                buffer[i] = sin(2*PI*sineIndex/wavelength);
+                buffer[i] = sinf(2*PI*sineIndex/wavelength);
                 sineIndex++;
 
                 if (sineIndex >= wavelength)
@@ -116,8 +116,8 @@ int main(void)
             DrawText("Up/down to change frequency", 10, 10, 20, DARKGRAY);
             DrawText("Left/right to pan", 10, 30, 20, DARKGRAY);
 
-            int windowStart = (GetTime() - sineStartTime)*SAMPLE_RATE;
-            int windowSize = 0.1f*SAMPLE_RATE;
+            int windowStart = (int)((GetTime() - sineStartTime)*SAMPLE_RATE);
+            int windowSize = SAMPLE_RATE/10;
             int wavelength = SAMPLE_RATE/sineFrequency;
 
             // Draw a sine wave with the same frequency as the one being sent to the audio stream
@@ -125,8 +125,8 @@ int main(void)
             {
                 int t0 = windowStart + i*windowSize/screenWidth;
                 int t1 = windowStart + (i + 1)*windowSize/screenWidth;
-                Vector2 startPos = { i, 250 + 50*sin(2*PI*t0/wavelength) };
-                Vector2 endPos = { i + 1, 250 + 50*sin(2*PI*t1/wavelength) };
+                Vector2 startPos = { (float)i, 250 + 50*sinf(2*PI*t0/wavelength) };
+                Vector2 endPos = { (float)i + 1, 250 + 50*sinf(2*PI*t1/wavelength) };
                 DrawLineV(startPos, endPos, RED);
             }
 

@@ -12,8 +12,8 @@
             .lazy = true,
         },
         .raygui = .{
-            .url = "git+https://github.com/raysan5/raygui#3b2855842ab578a034f827c38cf8f62c042fc983",
-            .hash = "N-V-__8AAHvybwBw1kyBGn0BW_s1RqIpycNjLf_XbE-fpLUF",
+            .url = "git+https://github.com/raysan5/raygui#3f81e2bd02bf08dcd9d350e8e8b3cf58044d6877",
+            .hash = "N-V-__8AAPPCmABYkTrLoRGTR6whFQP1bvg7p5vpLsKIcn4G",
             .lazy = true,
         },
         .emsdk = .{

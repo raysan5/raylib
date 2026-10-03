@@ -54,8 +54,8 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-// TODO: HACK: Added flag if not provided by GLFW when using external library
-// Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
+// NOTE: Added flag if not provided by GLFW when using external library
+// WARNING: Latest GLFW release (GLFW 3.3.8) does not implement this flag, it was added for 3.4.0-dev
 #if !defined(GLFW_MOUSE_PASSTHROUGH)
     #define GLFW_MOUSE_PASSTHROUGH      0x0002000D
 #endif
@@ -1086,7 +1086,7 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
 
     // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
@@ -1128,7 +1128,7 @@ void PollInputEvents(void)
         // Register previous gamepad button states
         for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
 
-        EmscriptenGamepadEvent gamepadState;
+        EmscriptenGamepadEvent gamepadState = { 0 };
 
         int result = emscripten_get_gamepad_status(i, &gamepadState);
 
@@ -1161,7 +1161,7 @@ void PollInputEvents(void)
                     default: break;
                 }
 
-                if (button + 1 != 0)   // Check for valid button
+                if (button + 1 != 0) // Check for valid button
                 {
                     if (gamepadState.digitalButton[j] == 1)
                     {
@@ -1313,9 +1313,8 @@ int InitPlatform(void)
     }, platform.canvasId);
 
     // Load memory framebuffer with desired screen size
-    // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
+    // WARNING: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
     // but it is not being used, on SwapScreenBuffer() the pure software renderer is used
-    // TODO: Consider requesting another type of canvas, not a WebGL one --> Replace GLFW-web by Emscripten?
     platform.pixels = (unsigned int *)RL_CALLOC(CORE.Window.screen.width*CORE.Window.screen.height, sizeof(unsigned int));
 #else
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
@@ -1406,7 +1405,9 @@ int InitPlatform(void)
     glfwSetCursorEnterCallback(platform.handle, MouseEnterCallback);
 
     glfwMakeContextCurrent(platform.handle);
-    result = true; // TODO: WARNING: glfwGetError(NULL); symbol can not be found in Web
+
+    // WARNING: result = glfwGetError(NULL), symbol can not be found in GLFW Web
+    result = true;
 
     // Check context activation
     if (result == true) //(result != GLFW_NO_WINDOW_CONTEXT) && (result != GLFW_PLATFORM_ERROR))

@@ -533,8 +533,9 @@ void CloseAudioDevice(void)
 {
     if (AUDIO.System.isReady)
     {
-        ma_mutex_uninit(&AUDIO.System.lock);
+        // Stop the device first (joins the callback thread) before destroying the mutex it locks
         ma_device_uninit(&AUDIO.System.device);
+        ma_mutex_uninit(&AUDIO.System.lock);
         ma_context_uninit(&AUDIO.System.context);
 
         AUDIO.System.isReady = false;
@@ -844,7 +845,7 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
             wave.sampleRate = info.sample_rate;
             wave.sampleSize = 16;       // By default, ogg data is 16 bit per sample (short)
             wave.channels = info.channels;
-            wave.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
+            wave.frameCount = stb_vorbis_stream_length_in_samples(oggData);  // NOTE: It returns frames!
             wave.data = (short *)RL_CALLOC(wave.frameCount*wave.channels, sizeof(short));
 
             // NOTE: Get the number of samples to process (be careful! asking for number of shorts, not bytes!)
@@ -1393,7 +1394,7 @@ Music LoadMusicStream(const char *fileName)
             music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so multiply by channels
-            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
+            music.frameCount = stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
             music.looping = true; // Looping enabled by default
             musicLoaded = true;
         }
@@ -1575,7 +1576,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if ((strcmp(fileType, ".ogg") == 0) || (strcmp(fileType, ".OGG") == 0))
     {
         // Open ogg audio stream
-        stb_vorbis *ctxOgg = stb_vorbis_open_memory((const unsigned char *)data, dataSize, NULL, NULL);
+        stb_vorbis *ctxOgg = stb_vorbis_open_memory(data, dataSize, NULL, NULL);
 
         if (ctxOgg != NULL)
         {
@@ -1587,7 +1588,7 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
             music.stream = LoadAudioStream(info.sample_rate, 16, info.channels);
 
             // WARNING: It seems this function returns length in frames, not samples, so multiply by channels
-            music.frameCount = (unsigned int)stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
+            music.frameCount = stb_vorbis_stream_length_in_samples((stb_vorbis *)music.ctxData);
             music.looping = true;   // Looping enabled by default
             musicLoaded = true;
         }
@@ -2660,7 +2661,7 @@ static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 fr
     const float localVolume = buffer->volume;
     const ma_uint32 channels = AUDIO.System.device.playback.channels;
 
-    if (channels == 2)  // Consider panning
+    if (channels == 2) // Consider panning
     {
         const float right = (buffer->pan + 1.0f)/2.0f; // Normalize: [-1..1] -> [0..1]
         const float left = 1.0f - right;

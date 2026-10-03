@@ -18,7 +18,7 @@
 #     > PLATFORM_DESKTOP_RGFW (RGFW backend):
 #         - Windows (Win32, Win64)
 #         - Linux (X11 desktop mode)
-#         - macOS/OSX (x64, arm64 (not tested))
+#         - macOS/OSX (x64, arm64)
 #         - Others (not tested)
 #     > PLATFORM_DESKTOP_WIN32 (native Win32):
 #         - Windows (Win32, Win64)
@@ -121,6 +121,14 @@ BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 # Use WebGL2 backend (OpenGL 3.0)
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
 BUILD_WEB_WEBGL2      ?= FALSE
+
+# Detect the shell used by make: cmd preserves quotes, while sh removes them.
+ifndef PLATFORM_SHELL
+    PLATFORM_SHELL = sh
+    ifeq ($(shell echo "test"),"test")
+        PLATFORM_SHELL = cmd
+    endif
+endif
 
 # Determine PLATFORM_OS when required
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW PLATFORM_DESKTOP_SDL PLATFORM_DESKTOP_RGFW PLATFORM_WEB PLATFORM_WEB_RGFW))
@@ -314,6 +322,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),BSD)
         LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
+	ifeq ($(PLATFORM_OS),OSX)
+		LDFLAGS += -L/opt/homebrew/lib -L$(RAYLIB_LIB_PATH)
+	endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)
     ifeq ($(PLATFORM_OS),WINDOWS)
@@ -418,7 +429,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),OSX)
         # Libraries for OSX 10.9 desktop compiling
         # NOTE: Required packages: libopenal-dev libegl1-mesa-dev
-        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo
+        LDLIBS = -lraylib -framework OpenGL -framework Cocoa -framework IOKit -framework CoreAudio -framework CoreVideo -framework QuartzCore
     endif
     ifeq ($(PLATFORM_OS),BSD)
         # Libraries for FreeBSD, OpenBSD, NetBSD, DragonFly desktop compiling
@@ -496,7 +507,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
         # NOTE: Required packages: libegl1-mesa-dev
         LDFLAGS += -L../src
         LDLIBS = -lraylib -lm
-        LDLIBS += -framework Foundation -framework AppKit -framework IOKit -framework OpenGL -framework CoreVideo
+        LDLIBS += -framework Foundation -framework AppKit -framework IOKit -framework OpenGL -framework CoreVideo -framework QuartzCore
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
@@ -589,10 +600,12 @@ SHAPES = \
     shapes/shapes_dashed_line \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
+    shapes/shapes_drag_puzzle \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
     shapes/shapes_easings_testbed \
+    shapes/shapes_ellipse_collision \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
@@ -603,8 +616,11 @@ SHAPES = \
     shapes/shapes_math_angle_rotation \
     shapes/shapes_math_sine_cosine \
     shapes/shapes_mouse_trail \
+    shapes/shapes_outlines_testbed \
+    shapes/shapes_outlines_thickness \
     shapes/shapes_penrose_tile \
     shapes/shapes_pie_chart \
+    shapes/shapes_polygon_lines \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_recursive_tree \
@@ -642,6 +658,7 @@ TEXTURES = \
     textures/textures_npatch_drawing \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
+    textures/textures_portal_window \
     textures/textures_raw_data \
     textures/textures_screen_buffer \
     textures/textures_sprite_animation \
@@ -693,8 +710,10 @@ MODELS = \
     models/models_loading_vox \
     models/models_mesh_generation \
     models/models_mesh_picking \
+    models/models_mesh_uv_painting \
     models/models_orthographic_projection \
     models/models_point_rendering \
+    models/models_procedural_decals \
     models/models_rlgl_solar_system \
     models/models_rotating_cube \
     models/models_skybox_rendering \
@@ -720,6 +739,7 @@ SHADERS = \
     shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
     shaders/shaders_lightmap_rendering \
+    shaders/shaders_lights_bloom \
     shaders/shaders_mandelbrot_set \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
@@ -741,6 +761,7 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
+    audio/audio_amp_envelope \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
@@ -781,7 +802,11 @@ endif
 clean:
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
     ifeq ($(PLATFORM_OS),WINDOWS)
+        ifeq ($(PLATFORM_SHELL),cmd)
 		del *.o *.exe /s
+        else
+		find . -type f '(' -name '*.o' -o -name '*.exe' ')' -exec rm -f {} +
+        endif
     endif
     ifeq ($(PLATFORM_OS),BSD)
 		find . -type f -perm -ugo+x -delete
@@ -798,19 +823,23 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_WIN32)
     ifeq ($(PLATFORM_OS),WINDOWS)
-        del *.o *.exe /s
+        ifeq ($(PLATFORM_SHELL),cmd)
+		del *.o *.exe /s
+        else
+		find . -type f '(' -name '*.o' -o -name '*.exe' ')' -exec rm -f {} +
+        endif
     endif
     ifeq ($(PLATFORM_OS),BSD)
-        find . -type f -perm -ugo+x -delete
-        rm -fv *.o
+		find . -type f -perm -ugo+x -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),LINUX)
-        find . -type f -executable -delete
-        rm -fv *.o
+		find . -type f -executable -delete
+		rm -fv *.o
     endif
     ifeq ($(PLATFORM_OS),OSX)
-        find . -type f -perm +ugo+x -delete
-        rm -f *.o
+		find . -type f -perm +ugo+x -delete
+		rm -f *.o
     endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
@@ -818,7 +847,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
 	rm -fv *.o
 endif
 ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW))
-    ifeq ($(PLATFORM_OS),WINDOWS)
+    ifeq ($(PLATFORM_SHELL),cmd)
 		del *.wasm *.html *.js *.data
     else
 		rm -f */*.wasm */*.html */*.js */*.data
