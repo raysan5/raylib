@@ -733,6 +733,7 @@ void Vox_FreeArrays(VoxArray3D* voxarray)
 
 	// Free arrays
 	freeArrayVector3(&voxarray->vertices);
+	freeArrayVector3(&voxarray->normals);
 	freeArrayUShort(&voxarray->indices);
 	freeArrayColor(&voxarray->colors);
 }
