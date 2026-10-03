@@ -1,12 +1,12 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-const emscripten = struct {
+pub const emsdk = struct {
     const emsdk_version = "4.0.19"; // inline constant used only in activate
 
     // ---------- core types ----------
-    const EmccFlags = std.StringHashMap(void);
-    const EmccSettings = std.StringHashMap([]const u8);
+    pub const EmccFlags = std.StringHashMap(void);
+    pub const EmccSettings = std.StringHashMap([]const u8);
     const EmsdkAllocator = enum {
         none,
         dlmalloc,
@@ -17,7 +17,7 @@ const emscripten = struct {
         mimalloc,
     };
 
-    const ResourceFile = struct {
+    pub const ResourceFile = struct {
         src_path: std.Build.LazyPath,
         virtual_path: ?[]const u8 = null,
 
@@ -29,7 +29,7 @@ const emscripten = struct {
         }
     };
 
-    const EmccStepOptions = struct {
+    pub const EmccStepOptions = struct {
         optimize: std.builtin.OptimizeMode,
         flags: EmccFlags,
         settings: EmccSettings,
@@ -43,18 +43,18 @@ const emscripten = struct {
     };
 
     // ---------- helpers ----------
-    fn emccPath(b: *std.Build) std.Build.LazyPath {
+    pub fn emccPath(b: *std.Build) std.Build.LazyPath {
         return b.dependency("emsdk", .{}).path("upstream/emscripten/emcc.py");
     }
 
-    fn emrunPath(b: *std.Build) std.Build.LazyPath {
+    pub fn emrunPath(b: *std.Build) std.Build.LazyPath {
         return switch (builtin.target.os.tag) {
             .windows => b.dependency("emsdk", .{}).path("upstream/emscripten/emrun.bat"),
             else => b.dependency("emsdk", .{}).path("upstream/emscripten/emrun"),
         };
     }
 
-    fn emccDefaultFlags(allocator: std.mem.Allocator, options: struct {
+    pub fn emccDefaultFlags(allocator: std.mem.Allocator, options: struct {
         optimize: std.builtin.OptimizeMode,
         asyncify: bool = true,
         fsanitize: bool = true,
@@ -82,7 +82,7 @@ const emscripten = struct {
         return flags;
     }
 
-    fn emccDefaultSettings(allocator: std.mem.Allocator, options: struct {
+    pub fn emccDefaultSettings(allocator: std.mem.Allocator, options: struct {
         optimize: std.builtin.OptimizeMode,
         es3: bool = false,
         glfw3: bool = true,
@@ -122,7 +122,7 @@ const emscripten = struct {
     }
 
     // ---------- step builders ----------
-    fn emccStep(b: *std.Build, src_paths: []const std.Build.LazyPath, compile_steps: []const *std.Build.Step.Compile, options: EmccStepOptions) *std.Build.Step {
+    pub fn emccStep(b: *std.Build, src_paths: []const std.Build.LazyPath, compile_steps: []const *std.Build.Step.Compile, options: EmccStepOptions) *std.Build.Step {
         var emcc = b.addRunFile(emccPath(b));
 
         // flags
@@ -184,14 +184,14 @@ const emscripten = struct {
         return &install.step;
     }
 
-    fn emrunStep(b: *std.Build, html_path: std.Build.LazyPath, extra_args: []const []const u8) *std.Build.Step {
+    pub fn emrunStep(b: *std.Build, html_path: std.Build.LazyPath, extra_args: []const []const u8) *std.Build.Step {
         var emrun = b.addRunFile(emrunPath(b));
         emrun.addArgs(extra_args);
         emrun.addFileArg(html_path);
         return &emrun.step;
     }
 
-    fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
+    pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
         const user = b.step("Activate EMSDK", "Install/Update and prepare emscripten sdk");
         const script = switch (builtin.target.os.tag) {
             .windows => b.dependency("emsdk", .{}).path("emsdk.bat"),
@@ -434,7 +434,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     const emsdk_dep = b.dependency("emsdk", .{});
                     raylib_mod.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
 
-                    const activate_emsdk_step = emscripten.activateEmsdkStep(b);
+                    const activate_emsdk_step = emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -496,7 +496,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     const emsdk_dep = b.dependency("emsdk", .{});
                     raylib_mod.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
 
-                    const activate_emsdk_step = emscripten.activateEmsdkStep(b);
+                    const activate_emsdk_step = emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -869,17 +869,17 @@ fn addExamples(
             });
 
             const install_dir: std.Build.InstallDir = .{ .custom = b.fmt("web/{s}/{s}", .{ module, filename }) };
-            const emcc_flags = emscripten.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
-            const emcc_settings = emscripten.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
+            const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
+            const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
             const SerialResourceFile = struct { src_path: []const u8, virtual_path: []const u8 };
             const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const SerialResourceFile);
             const EmccExamplesPreloadSerial = struct { []const u8, []const SerialResourceFile };
             const emcc_examples_preloads_serial: []const EmccExamplesPreloadSerial = @import("examples/example_resources.zon");
             const emcc_examples_preloads_map = EmccExamplesPreloadMap.initComptime(emcc_examples_preloads_serial);
-            const preload_paths: ?[]emscripten.ResourceFile = blk: {
+            const preload_paths: ?[]emsdk.ResourceFile = blk: {
                 if (emcc_examples_preloads_map.get(filename)) |resource_files| {
-                    var rfs = try b.allocator.alloc(emscripten.ResourceFile, resource_files.len);
+                    var rfs = try b.allocator.alloc(emsdk.ResourceFile, resource_files.len);
                     for (resource_files, 0..) |resource_file, rfidx| {
                         rfs[rfidx] = .{
                             .src_path = b.path(resource_file.src_path),
@@ -890,7 +890,7 @@ fn addExamples(
                 } else break :blk null;
             };
 
-            const emcc_step = emscripten.emccStep(b, &.{}, &.{ raylib, wasm }, .{
+            const emcc_step = emsdk.emccStep(b, &.{}, &.{ raylib, wasm }, .{
                 .optimize = optimize,
                 .flags = emcc_flags,
                 .settings = emcc_settings,
@@ -900,7 +900,7 @@ fn addExamples(
                 .out_file_name = wasm.name,
             });
 
-            const emrun_step = emscripten.emrunStep(
+            const emrun_step = emsdk.emrunStep(
                 b,
                 b.graph.path(.install_prefix, b.fmt(
                     "web/{s}/{s}/{s}",
