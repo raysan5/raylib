@@ -298,13 +298,13 @@ pub fn linkBSD(_: *std.Build, mod: *std.Build.Module) void {
     mod.linkSystemLibrary("GL", .{});
 }
 
-pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) void {
+pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) !void {
     // Include xcode_frameworks for cross compilation
-    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
-        mod.addSystemFrameworkPath(dep.path("Frameworks"));
-        mod.addSystemIncludePath(dep.path("include"));
-        mod.addLibraryPath(dep.path("lib"));
-    }
+    const dep = try b.dependencyLazy("xcode_frameworks", .{});
+
+    mod.addSystemFrameworkPath(dep.path("Frameworks"));
+    mod.addSystemIncludePath(dep.path("include"));
+    mod.addLibraryPath(dep.path("lib"));
 
     mod.linkFramework("Foundation", .{});
     mod.linkFramework("CoreServices", .{});
@@ -434,7 +434,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     });
                     _ = raylib_flags_arr.pop();
 
-                    linkMacOS(b, raylib_mod);
+                    try linkMacOS(b, raylib_mod);
                 },
                 .emscripten => {
                     switch (opengl_version) {
@@ -496,7 +496,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     }
                 },
                 .freebsd, .openbsd, .netbsd, .dragonfly => linkBSD(b, raylib_mod),
-                .macos => linkMacOS(b, raylib_mod),
+                .macos => try linkMacOS(b, raylib_mod),
                 .emscripten => {
                     switch (opengl_version) {
                         .auto => opengl_version = OpenglVersion.gles_2,
@@ -654,33 +654,33 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-fn addRaygui(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, raylib: *std.Build.Step.Compile) void {
-    if (b.lazyDependency("raygui", .{
+fn addRaygui(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, raylib: *std.Build.Step.Compile) !void {
+    const raygui_dep = try b.dependencyLazy("raygui", .{
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-    })) |raygui_dep| {
-        var gen_step = b.addWriteFiles();
-        raylib.step.dependOn(&gen_step.step);
+    });
 
-        const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-        raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
-        raylib.root_module.addIncludePath(raygui_dep.path("src"));
-        raylib.root_module.addIncludePath(b.path("src"));
+    var gen_step = b.addWriteFiles();
+    raylib.step.dependOn(&gen_step.step);
 
-        raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+    const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+    raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
+    raylib.root_module.addIncludePath(raygui_dep.path("src"));
+    raylib.root_module.addIncludePath(b.path("src"));
 
-        const c = b.addTranslateC(.{
-            .root_source_file = raygui_dep.path("src/raygui.h"),
-            .target = target,
-            .optimize = optimize,
-            .link_libc = true,
-        });
-        c.addIncludePath(b.path("src"));
-        const c_mod = c.createModule();
-        c_mod.linkLibrary(raylib);
-        b.modules.put(b.graph.arena, "raygui", c_mod) catch @panic("OOM");
-    }
+    raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+
+    const c = b.addTranslateC(.{
+        .root_source_file = raygui_dep.path("src/raygui.h"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    c.addIncludePath(b.path("src"));
+    const c_mod = c.createModule();
+    c_mod.linkLibrary(raylib);
+    b.modules.put(b.graph.arena, "raygui", c_mod) catch @panic("OOM");
 }
 
 pub const Options = struct {
@@ -801,7 +801,7 @@ pub fn build(b: *std.Build) !void {
     translateCMod("rlgl", b, target, optimize, lib);
 
     if (options.raygui) {
-        addRaygui(b, target, optimize, lib);
+        try addRaygui(b, target, optimize, lib);
     }
 
     const examples = b.step("examples", "build/install all examples");
