@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 
 pub const emsdk = struct {
     const emsdk_version = "4.0.19"; // inline constant used only in activate
+    var emsdk_dep: ?*std.Build.Dependency = null;
 
     // ---------- core types ----------
     pub const EmccFlags = std.StringHashMap(void);
@@ -43,14 +44,26 @@ pub const emsdk = struct {
     };
 
     // ---------- helpers ----------
-    pub fn emccPath(b: *std.Build) std.Build.LazyPath {
-        return b.dependency("emsdk", .{}).path("upstream/emscripten/emcc.py");
+    pub fn emsdkDep(b: *std.Build) !*std.Build.Dependency {
+        if (emsdk_dep == null) {
+            emsdk_dep = try b.dependencyLazy("emsdk", .{});
+        }
+
+        return emsdk_dep.?;
     }
 
-    pub fn emrunPath(b: *std.Build) std.Build.LazyPath {
+    pub fn path(b: *std.Build, sub_path: []const u8) !std.Build.LazyPath {
+        return (try emsdkDep(b)).path(sub_path);
+    }
+
+    pub fn emccPath(b: *std.Build) !std.Build.LazyPath {
+        return try emsdk.path(b, "upstream/emscripten/emcc.py");
+    }
+
+    pub fn emrunPath(b: *std.Build) !std.Build.LazyPath {
         return switch (builtin.target.os.tag) {
-            .windows => b.dependency("emsdk", .{}).path("upstream/emscripten/emrun.bat"),
-            else => b.dependency("emsdk", .{}).path("upstream/emscripten/emrun"),
+            .windows => try emsdk.path(b, "upstream/emscripten/emrun.bat"),
+            else => try emsdk.path(b, "upstream/emscripten/emrun"),
         };
     }
 
@@ -122,8 +135,8 @@ pub const emsdk = struct {
     }
 
     // ---------- step builders ----------
-    pub fn emccStep(b: *std.Build, src_paths: []const std.Build.LazyPath, compile_steps: []const *std.Build.Step.Compile, options: EmccStepOptions) *std.Build.Step {
-        var emcc = b.addRunFile(emccPath(b));
+    pub fn emccStep(b: *std.Build, src_paths: []const std.Build.LazyPath, compile_steps: []const *std.Build.Step.Compile, options: EmccStepOptions) !*std.Build.Step {
+        var emcc = b.addRunFile(try emccPath(b));
 
         // flags
         {
@@ -143,6 +156,7 @@ pub const emsdk = struct {
         for (src_paths) |sp| emcc.addFileArg(sp);
         for (compile_steps) |cs| {
             emcc.addArtifactArg(cs);
+            cs.root_module.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
             for (cs.root_module.getGraph().modules) |mod| {
                 for (mod.link_objects.items) |lo| {
                     if (lo == .other_step) {
@@ -184,18 +198,18 @@ pub const emsdk = struct {
         return &install.step;
     }
 
-    pub fn emrunStep(b: *std.Build, html_path: std.Build.LazyPath, extra_args: []const []const u8) *std.Build.Step {
-        var emrun = b.addRunFile(emrunPath(b));
+    pub fn emrunStep(b: *std.Build, html_path: std.Build.LazyPath, extra_args: []const []const u8) !*std.Build.Step {
+        var emrun = b.addRunFile(try emrunPath(b));
         emrun.addArgs(extra_args);
         emrun.addFileArg(html_path);
         return &emrun.step;
     }
 
-    pub fn activateEmsdkStep(b: *std.Build) *std.Build.Step {
+    pub fn activateEmsdkStep(b: *std.Build) !*std.Build.Step {
         const user = b.step("Activate EMSDK", "Install/Update and prepare emscripten sdk");
         const script = switch (builtin.target.os.tag) {
-            .windows => b.dependency("emsdk", .{}).path("emsdk.bat"),
-            else => b.dependency("emsdk", .{}).path("emsdk"),
+            .windows => try emsdk.path(b, "emsdk.bat"),
+            else => try emsdk.path(b, "emsdk"),
         };
 
         var update = b.addRunFile(script);
@@ -230,7 +244,7 @@ pub const emsdk = struct {
 
         // also ensure emcc/emrun are executable on Unix
         if (builtin.target.os.tag == .linux or builtin.target.os.tag == .macos) {
-            for ([_]std.Build.LazyPath{ emccPath(b), emrunPath(b) }) |p| {
+            for ([_]std.Build.LazyPath{ try emccPath(b), try emrunPath(b) }) |p| {
                 var cmd = b.addSystemCommand(&.{ "chmod", "a+x" });
                 cmd.addFileArg(p);
                 cmd.step.dependOn(&install.step);
@@ -431,10 +445,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                     raylib_mod.addCMacro("PLATFORM_WEB", "");
 
-                    const emsdk_dep = b.dependency("emsdk", .{});
-                    raylib_mod.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+                    raylib_mod.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
 
-                    const activate_emsdk_step = emsdk.activateEmsdkStep(b);
+                    const activate_emsdk_step = try emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -493,10 +506,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                     raylib_mod.addCMacro("PLATFORM_WEB_RGFW", "");
 
-                    const emsdk_dep = b.dependency("emsdk", .{});
-                    raylib_mod.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+                    raylib_mod.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
 
-                    const activate_emsdk_step = emsdk.activateEmsdkStep(b);
+                    const activate_emsdk_step = try emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -890,7 +902,7 @@ fn addExamples(
                 } else break :blk null;
             };
 
-            const emcc_step = emsdk.emccStep(b, &.{}, &.{ raylib, wasm }, .{
+            const emcc_step = try emsdk.emccStep(b, &.{}, &.{ raylib, wasm }, .{
                 .optimize = optimize,
                 .flags = emcc_flags,
                 .settings = emcc_settings,
@@ -900,7 +912,7 @@ fn addExamples(
                 .out_file_name = wasm.name,
             });
 
-            const emrun_step = emsdk.emrunStep(
+            const emrun_step = try emsdk.emrunStep(
                 b,
                 b.graph.path(.install_prefix, b.fmt(
                     "web/{s}/{s}/{s}",
