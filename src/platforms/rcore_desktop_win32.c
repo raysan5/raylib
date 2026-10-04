@@ -1374,7 +1374,6 @@ void PollInputEvents(void)
     //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
 
     memcpy(CORE.Input.Keyboard.previousKeyState, CORE.Input.Keyboard.currentKeyState, sizeof(CORE.Input.Keyboard.previousKeyState));
-    memset(CORE.Input.Keyboard.keyRepeatInFrame, 0, sizeof(CORE.Input.Keyboard.keyRepeatInFrame));
 
     // Register previous mouse wheel state
     CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
@@ -2074,6 +2073,7 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
     {
         CORE.Input.Keyboard.currentKeyState[key] = state;
 
+        if (((HIWORD(lparam) & KF_REPEAT) != 0) && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
         if ((key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
     }
     else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
