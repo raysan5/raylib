@@ -155,7 +155,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .root_module = raylib_mod,
     });
 
-    raylib_mod.addCMacro("_GNU_SOURCE", "");
+    // On Linux (glibc) avoid _GNU_SOURCE, on glibc >= 2.38 it redirects sscanf(), strtol()...
+    // to __isoc23_*() symbols, so the generated library fails to link with older glibc versions
+    if (target.result.os.tag == .linux and !target.result.abi.isAndroid()) {
+        raylib_mod.addCMacro("_DEFAULT_SOURCE", "");
+    } else {
+        raylib_mod.addCMacro("_GNU_SOURCE", "");
+    }
     raylib_mod.addCMacro("GL_SILENCE_DEPRECATION", "199309L");
 
     var arena: std.heap.ArenaAllocator = .init(b.allocator);
