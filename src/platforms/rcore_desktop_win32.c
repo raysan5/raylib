@@ -92,8 +92,8 @@ typedef struct {
     HBITMAP hbitmap;        // GDI bitmap handler
     unsigned int *pixels;   // Pointer to pixel data buffer (BGRA format)
 
-    unsigned int appScreenWidth;
-    unsigned int appScreenHeight;
+    int appScreenWidth;
+    int appScreenHeight;
     unsigned int desiredFlags;
 
     LARGE_INTEGER timerFrequency;
@@ -1957,8 +1957,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         case WM_DPICHANGED:
         {
             // Get current dpi scale factor
-            float scalex = HIWORD(wparam)/96.0f;
-            float scaley = LOWORD(wparam)/96.0f;
+            //float scalex = HIWORD(wparam)/96.0f;
+            //float scaley = LOWORD(wparam)/96.0f;
 
             RECT *suggestedRect = (RECT *)lparam;
 
