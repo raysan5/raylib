@@ -1426,6 +1426,7 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
         .cColorBits = 32,
         .cAlphaBits = 8,
         .cDepthBits = 24,
+        .cStencilBits = 8,
         .iLayerType = PFD_MAIN_PLANE
     };
 
@@ -1472,8 +1473,8 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
         {
             PIXELFORMATDESCRIPTOR newPixelFormatDescriptor = { 0 };
             DescribePixelFormat(hdc, format, sizeof(newPixelFormatDescriptor), &newPixelFormatDescriptor);
-            SetPixelFormat(hdc, format, &newPixelFormatDescriptor);
-            selectedModernPixelFormat = true;
+            BOOL success = SetPixelFormat(hdc, format, &newPixelFormatDescriptor);
+            selectedModernPixelFormat = (success == TRUE);
         }
     }
 
