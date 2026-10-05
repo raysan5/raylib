@@ -59,7 +59,7 @@ int main(void)
 
     // UI Panel top-left anchor
     const Vector2 panelPos = {
-        (float)screenWidth  - panelMargin - panelWidth,
+        (float)screenWidth - panelMargin - panelWidth,
         (float)panelMargin
     };
 
@@ -72,7 +72,7 @@ int main(void)
 
     // Pie chart geometry
     const Rectangle canvas = { 0, 0, panelPos.x, (float)screenHeight };
-    const Vector2 center = { canvas.width/2.0f, canvas.height/2.0f};
+    const Vector2 center = { canvas.width/2.0f, canvas.height/2.0f };
     const float radius = 205.0f;
 
     // Total value for percentage calculations
@@ -107,7 +107,7 @@ int main(void)
                 float currentAngle = 0.0f;
                 for (int i = 0; i < sliceCount; i++)
                 {
-                    float sweep = (totalValue > 0)? (values[i]/totalValue)*360.0f : 0.0f;
+                    float sweep = (totalValue > 0)?(values[i]/totalValue)*360.0f : 0.0f;
 
                     if ((angle >= currentAngle) && (angle < (currentAngle + sweep)))
                     {
@@ -130,7 +130,7 @@ int main(void)
             float startAngle = 0.0f;
             for (int i = 0; i < sliceCount; i++)
             {
-                float sweepAngle = (totalValue > 0)? (values[i]/totalValue)*360.0f : 0.0f;
+                float sweepAngle = (totalValue > 0)?(values[i]/totalValue)*360.0f : 0.0f;
                 float midAngle = startAngle + sweepAngle/2.0f; // Middle angle for label positioning
 
                 Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
@@ -161,7 +161,7 @@ int main(void)
                 // Draw inner circle to create donut effect
                 // TODO: This is a hacky solution, better use DrawRing()
                 if (showDonut) DrawCircleV(center, donutInnerRadius, RAYWHITE);
-
+ 
                 startAngle += sweepAngle;
             }
 
@@ -169,14 +169,14 @@ int main(void)
             DrawRectangleRec(panelRect, Fade(LIGHTGRAY, 0.5f));
             DrawRectangleLinesEx(panelRect, 1.0f, GRAY);
 
-            GuiSpinner((Rectangle){ panelPos.x + 95, (float)panelPos.y + 12, 125, 25 }, "Slices ", &sliceCount, 1, MAX_PIE_SLICES, false);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 40, 20, 20 }, "Show Values", &showValues);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 70, 20, 20 }, "Show Percentages", &showPercentages);
-            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 100, 20, 20 }, "Make Donut", &showDonut);
+            GuiSpinner((Rectangle){ panelPos.x + 95, (float)panelPos.y + 12, 125, 25 }, "Slices ", & sliceCount, 1, MAX_PIE_SLICES, false);
+            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 40, 20, 20 }, "Show Values", & showValues);
+            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 70, 20, 20 }, "Show Percentages", & showPercentages);
+            GuiCheckBox((Rectangle){ panelPos.x + 20, (float)panelPos.y + 12 + 100, 20, 20 }, "Make Donut", & showDonut);
 
             if (showDonut) GuiDisable();
             GuiSliderBar((Rectangle){ panelPos.x + 80, (float)panelPos.y + 12 + 130, panelRect.width - 100, 30 },
-                            "Inner Radius", NULL, &donutInnerRadius, 5.0f, radius - 10.0f);
+                "Inner Radius", NULL, & donutInnerRadius, 5.0f, radius - 10.0f);
             GuiEnable();
 
             GuiLine((Rectangle){ panelPos.x + 10, (float)panelPos.y + 12 + 170, panelRect.width - 20, 1 }, NULL);
@@ -191,27 +191,29 @@ int main(void)
             int contentHeight = sliceCount*35;
 
             GuiScrollPanel(scrollPanelBounds, NULL,
-                (Rectangle){ 0, 0, panelRect.width - 25, (float)contentHeight },
-                &scrollContentOffset, &view);
+                (Rectangle){
+                0, 0, panelRect.width - 25, (float)contentHeight
+            },
+                & scrollContentOffset, & view);
 
             const float contentX = view.x + scrollContentOffset.x; // Left of content
             const float contentY = view.y + scrollContentOffset.y; // Top of content
 
             BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
 
-                for (int i = 0; i < sliceCount; i++)
-                {
-                    const int rowY = (int)(contentY + 5 + i*35);
+            for (int i = 0; i < sliceCount; i++)
+            {
+                const int rowY = (int)(contentY + 5 + i*35);
 
-                    // Color indicator
-                    Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
-                    DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
+                // Color indicator
+                Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
+                DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
 
-                    // Label textbox
-                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
+                // Label textbox
+                if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
 
-                    GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, &values[i], 0.0f, 1000.0f);
-                }
+                GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, & values[i], 0.0f, 1000.0f);
+            }
 
             EndScissorMode();
 
