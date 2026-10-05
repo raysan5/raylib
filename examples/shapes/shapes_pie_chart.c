@@ -198,23 +198,23 @@ int main(void)
 
             const float contentX = view.x + scrollContentOffset.x; // Left of content
             const float contentY = view.y + scrollContentOffset.y; // Top of content
-            
+
             BeginScissorMode((int)view.x, (int)view.y, (int)view.width, (int)view.height);
-            
+
             for (int i = 0; i < sliceCount; i++)
             {
                 const int rowY = (int)(contentY + 5 + i*35);
-            
+
                 // Color indicator
                 Color color = ColorFromHSV((float)i/sliceCount*360.0f, 0.75f, 0.9f);
                 DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
-            
+
                 // Label textbox
                 if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
-            
+
                 GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, & values[i], 0.0f, 1000.0f);
             }
-            
+
             EndScissorMode();
 
         EndDrawing();
