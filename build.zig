@@ -696,6 +696,7 @@ pub const Options = struct {
     rtext: bool = true,
     rtextures: bool = true,
     raygui: bool = false,
+    examples: bool = false,
     platform: PlatformBackend = .glfw,
     linkage: std.builtin.LinkMode = .static,
     linux_display_backend: LinuxDisplayBackend = .X11,
@@ -716,6 +717,7 @@ pub const Options = struct {
             .rtextures = b.option(bool, "rtextures", "Compile with textures support") orelse defaults.rtextures,
             .rshapes = b.option(bool, "rshapes", "Compile with shapes support") orelse defaults.rshapes,
             .raygui = b.option(bool, "raygui", "Include raygui") orelse defaults.raygui,
+            .examples = b.option(bool, "examples", "Include examples") orelse defaults.examples,
             .linkage = b.option(std.builtin.LinkMode, "linkage", "Compile as shared or static library") orelse defaults.linkage,
             .linux_display_backend = b.option(LinuxDisplayBackend, "linux_display_backend", "Linux display backend to use") orelse defaults.linux_display_backend,
             .opengl_version = b.option(OpenglVersion, "opengl_version", "OpenGL version to use") orelse defaults.opengl_version,
@@ -810,15 +812,17 @@ pub fn build(b: *std.Build) !void {
         try addRaygui(b, target, optimize, lib);
     }
 
-    const examples = b.step("examples", "build/install all examples");
-    examples.dependOn(try addExamples("core", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("audio", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("models", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("shaders", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("shapes", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("text", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("textures", b, target, optimize, lib, options.platform));
-    examples.dependOn(try addExamples("others", b, target, optimize, lib, options.platform));
+    if (options.examples) {
+        const examples = b.step("examples", "build/install all examples");
+        examples.dependOn(try addExamples("core", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("audio", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("models", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("shaders", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("shapes", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("text", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("textures", b, target, optimize, lib, options.platform));
+        examples.dependOn(try addExamples("others", b, target, optimize, lib, options.platform));
+    }
 }
 
 fn addExamples(
