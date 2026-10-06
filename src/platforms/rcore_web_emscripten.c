@@ -209,6 +209,9 @@ static const char cursorLUT[11][12] = {
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
 
+// OpenGL extensions loader
+static void *WebGLGetProcAddress(const char *procName); // Get WebGL extension procedure address, used by rlLoadExtensions()
+
 // Emscripten window callback events
 static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
 static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
@@ -1387,7 +1390,7 @@ int InitPlatform(void)
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
-    if (platform.glContext != 0) rlLoadExtensions(emscripten_webgl_get_proc_address);
+    if (platform.glContext != 0) rlLoadExtensions(WebGLGetProcAddress);
     //----------------------------------------------------------------------------
 
     // Initialize events callbacks
@@ -1448,6 +1451,24 @@ void ClosePlatform(void)
 {
     if (platform.pixels != NULL) RL_FREE(platform.pixels);
     if (platform.glContext != 0) emscripten_webgl_destroy_context(platform.glContext);
+}
+
+// Get WebGL extension procedure address
+// WARNING: rlGetProcAddress() uses this loader, so it only returns the functions listed below
+static void *WebGLGetProcAddress(const char *procName)
+{
+    void *proc = NULL;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (strcmp(procName, "glGenVertexArraysOES") == 0) proc = (void *)glGenVertexArraysOES;
+    else if (strcmp(procName, "glBindVertexArrayOES") == 0) proc = (void *)glBindVertexArrayOES;
+    else if (strcmp(procName, "glDeleteVertexArraysOES") == 0) proc = (void *)glDeleteVertexArraysOES;
+    else if (strcmp(procName, "glDrawArraysInstancedANGLE") == 0) proc = (void *)glDrawArraysInstancedANGLE;
+    else if (strcmp(procName, "glDrawElementsInstancedANGLE") == 0) proc = (void *)glDrawElementsInstancedANGLE;
+    else if (strcmp(procName, "glVertexAttribDivisorANGLE") == 0) proc = (void *)glVertexAttribDivisorANGLE;
+#endif
+
+    return proc;
 }
 
 // Emscripten callback functions, called on specific browser events
