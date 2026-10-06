@@ -2093,7 +2093,7 @@ static void WindowDropCallback(GLFWwindow *window, int count, const char **paths
 // GLFW3: Keyboard callback, runs on key pressed
 static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return;    // Security check, macOS fn key generates -1
+    if ((key < 0) || (key >= MAX_KEYBOARD_KEYS)) return; // Security check, macOS fn key generates -1
 
     // WARNING: GLFW could return GLFW_REPEAT, it needs to be considered as 1
     // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
