@@ -4242,29 +4242,15 @@ void ImageDrawImageEx(Image *dst, Image src, Vector2 position, float rotation, f
 
             Color srcColor = GetImageColor(src, srcX, srcY);
 
-            // Apply tint
-            srcColor.r = (unsigned char)(srcColor.r*tint.r/255.0f);
-            srcColor.g = (unsigned char)(srcColor.g*tint.g/255.0f);
-            srcColor.b = (unsigned char)(srcColor.b*tint.b/255.0f);
-            srcColor.a = (unsigned char)(srcColor.a*tint.a/255.0f);
-
             // Skip fully transparent pixels
             if (srcColor.a == 0) continue;
 
-            // Read destination pixel for alpha blending
+            // Read destination pixel and blend source over it, applying tint
+            // NOTE: ColorAlphaBlend() takes destination alpha into account,
+            // same as ImageDrawImagePro(), required to draw on transparent images
             Color dstColor = GetImageColor(*dst, x, y);
 
-            unsigned int alpha = srcColor.a;
-            unsigned int invA = 255 - alpha;
-
-            Color out = {
-                (unsigned char)((srcColor.r*alpha + dstColor.r*invA)/255),  // red
-                (unsigned char)((srcColor.g*alpha + dstColor.g*invA)/255),  // green
-                (unsigned char)((srcColor.b*alpha + dstColor.b*invA)/255),  // blue
-                (unsigned char)(alpha + (dstColor.a*invA)/255)              // alpha
-            };
-
-            ImageDrawPixel(dst, x, y, out);
+            ImageDrawPixel(dst, x, y, ColorAlphaBlend(dstColor, srcColor, tint));
         }
     }
 }
