@@ -771,7 +771,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 
     /* new mtl */
     if ((0 == strncmp(token, "newmtl", 6)) && IS_SPACE((token[6]))) {
-      char namebuf[4096];
+      char namebuf[4096] = {0};
 
       /* flush previous material. */
       if (has_previous_material) {
@@ -789,9 +789,9 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t **materials_out,
 #ifdef _MSC_VER
       sscanf_s(token, "%s", namebuf, (unsigned)_countof(namebuf));
 #else
-      sscanf(token, "%s", namebuf);
+      sscanf(token, "%4095s", namebuf);
 #endif
-      material.name = my_strdup(namebuf, (unsigned int) (line_end - token));
+      material.name = my_strdup(namebuf, (unsigned int)strlen(namebuf));
 
       /* Add material to material table */
       if (material_table)
@@ -1093,6 +1093,7 @@ static int parseLine(Command *command, const char *p, unsigned int p_len,
       tinyobj_vertex_index_t vi = parseRawTriple(&token);
       skip_space_and_cr(&token);
 
+      if (num_f >= TINYOBJ_MAX_FACES_PER_F_LINE) return 0;
       f[num_f] = vi;
       num_f++;
     }
