@@ -1448,9 +1448,11 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
     wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
 
     // Setup modern pixel format if extension is available
-    bool selectedModernPixelFormat = false;
+    BOOL setPixelFormatSucceeded = FALSE;
     if (wglChoosePixelFormatARB)
     {
+        bool useMSAA = FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT);
+
         int pixelFormatAttribs[] = {
             WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
             WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
@@ -1464,6 +1466,8 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
             WGL_ALPHA_BITS_ARB, 8,
             WGL_DEPTH_BITS_ARB, 24,
             WGL_STENCIL_BITS_ARB, 8,
+            WGL_SAMPLES_ARB, (useMSAA)? 4 : 0,
+            WGL_SAMPLE_BUFFERS_ARB, (int)useMSAA,
             0 // Terminator
         };
 
@@ -1473,16 +1477,24 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
         {
             PIXELFORMATDESCRIPTOR newPixelFormatDescriptor = { 0 };
             DescribePixelFormat(hdc, format, sizeof(newPixelFormatDescriptor), &newPixelFormatDescriptor);
-            BOOL success = SetPixelFormat(hdc, format, &newPixelFormatDescriptor);
-            selectedModernPixelFormat = (success == TRUE);
+            setPixelFormatSucceeded = SetPixelFormat(hdc, format, &newPixelFormatDescriptor);
         }
     }
 
-    if (!selectedModernPixelFormat)
+    if (!setPixelFormatSucceeded)
     {
         // If modern pixel format selection failed, fall back to old SetPixelFormat
         int pixelFormat = ChoosePixelFormat(hdc, &pixelFormatDesc);
-        SetPixelFormat(hdc, pixelFormat, &pixelFormatDesc);
+        setPixelFormatSucceeded = SetPixelFormat(hdc, pixelFormat, &pixelFormatDesc);
+
+        if (setPixelFormatSucceeded)
+        {
+            TRACELOG(LOG_WARNING, "WGL: Using legacy pixel format, MSAA not available");
+        }
+        else
+        {
+            TRACELOG(LOG_ERROR, "WGL: Unable to find a suitable pixel format with this graphics driver");
+        }
     }
 
     // Create real modern OpenGL context (3.3 core)
