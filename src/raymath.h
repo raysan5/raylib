@@ -2717,9 +2717,9 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     translation->z = mat.m14;
 
     // Matrix Columns - Rotation will be extracted into here
-    Vector3 matColumns[3] = {{ mat.m0, mat.m4, mat.m8 },
-                             { mat.m1, mat.m5, mat.m9 },
-                             { mat.m2, mat.m6, mat.m10 }};
+    Vector3 matColumns[3] = {{ mat.m0, mat.m1, mat.m2 },
+                             { mat.m4, mat.m5, mat.m6 },
+                             { mat.m8, mat.m9, mat.m10 }};
 
     // Shear Parameters XY, XZ, and YZ (extract and ignored)
     float shear[3] = { 0 };
@@ -2783,10 +2783,10 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     *scale = Vector3Scale(scl, stabilizer);
 
     // Extract Rotation
-    Matrix rotationMatrix = { matColumns[0].x, matColumns[0].y, matColumns[0].z, 0,
-                             matColumns[1].x, matColumns[1].y, matColumns[1].z, 0,
-                             matColumns[2].x, matColumns[2].y, matColumns[2].z, 0,
-                             0, 0, 0, 1 };
+    Matrix rotationMatrix = { matColumns[0].x, matColumns[1].x, matColumns[2].x, 0,
+                              matColumns[0].y, matColumns[1].y, matColumns[2].y, 0,
+                              matColumns[0].z, matColumns[1].z, matColumns[2].z, 0,
+                              0, 0, 0, 1 };
     *rotation = QuaternionFromMatrix(rotationMatrix);
 }
 
