@@ -4177,8 +4177,6 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
     float distance = Vector3Length(raySpherePos);
     float d = radius*radius - (distance*distance - vector*vector);
 
-    collision.hit = d >= 0.0f;
-
     // Check if ray origin is inside the sphere to calculate the correct collision point
     if (distance < radius)
     {
@@ -4200,6 +4198,8 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
         // Calculate collision normal (pointing inwards)
         collision.normal = Vector3Normalize(Vector3Subtract(collision.point, center));
     }
+
+    collision.hit = (d >= 0.0f) && (collision.distance >= 0.0f);
 
     return collision;
 }
