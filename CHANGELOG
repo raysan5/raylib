@@ -17,7 +17,7 @@ Detailed changes (until 12-Sept-2026):
 [rcore] ADDED: `IsPathAbsolute()`, check absolute paths by @raysan5
 [rcore] ADDED: `IsFileHidden()`, check file hidden (OS-dependant) by @raysan5
 [rcore] REVIEWED: `File*()` functions for consistent return result value by @raysan5 -WARNING-
-[rcore] REVIEWED: Not updating mouse.previousPosition when `SeMousePosition()` #5962 by @raysan5 -WARNING-
+[rcore] REVIEWED: Not updating mouse.previousPosition when `SetMousePosition()` #5962 by @raysan5 -WARNING-
 [rcore] REVIEWED: Use `rlgl` provided interface instead of `rlsw` direct access by @raysan5
 [rcore] REVIEWED: Set mouse position to (0,0) when mouse leaves window area #5945 by @raysan5
 [rcore] REVIEWED: Multiple string boundary handling (#5812) by @zhaob1n
@@ -26,7 +26,7 @@ Detailed changes (until 12-Sept-2026):
 [rcore] REVIEWED: Fix initial macOS window size (#5967) by @loukamb
 [rcore] REVIEWED: Fix clipboard image memory leak (#5968) by @LuisR385
 [rcore] REVIEWED: `TakeScreenshot()`, support absolute paths by @raysan5
-[rcore] REVIEWED: `OpenURL()`, added some safety checks to mitigate malicious url inputs - ROS: `CLN-002 by @raysan5 -WARNING-
+[rcore] REVIEWED: `OpenURL()`, added some safety checks to mitigate malicious url inputs - ROS: `CLN-002` by @raysan5 -WARNING-
 [rcore] REVIEWED: `LoadAutomationEventList()` - ROS: `CLN-005`, `CLN-006` by @raysan5
 [rcore] REVIEWED: `GetWindowHandle()`, to be consistent between backends, fix #5885 by @raysan5
 [rcore] REVIEWED: `GetWindowPosition()` #5932 by @raysan5
