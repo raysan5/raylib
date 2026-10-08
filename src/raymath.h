@@ -2381,10 +2381,31 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z); // Vector3DotProduct(from, to)
     Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
 
+    float lengths = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta); // |from|*|to|
+
     result.x = cross.x;
     result.y = cross.y;
     result.z = cross.z;
-    result.w = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta) + cos2Theta;
+    result.w = lengths + cos2Theta;
+
+    // Opposite vectors: cross product is zero, rotate 180 degrees around any axis perpendicular to 'from'
+    if ((lengths > 0.0f) && (result.w <= lengths*EPSILON))
+    {
+        if (fabsf(from.x) > fabsf(from.z))
+        {
+            result.x = -from.y;
+            result.y = from.x;
+            result.z = 0.0f;
+        }
+        else
+        {
+            result.x = 0.0f;
+            result.y = -from.z;
+            result.z = from.y;
+        }
+
+        result.w = 0.0f;
+    }
 
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
