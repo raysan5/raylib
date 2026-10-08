@@ -4174,31 +4174,45 @@ RayCollision GetRayCollisionSphere(Ray ray, Vector3 center, float radius)
 
     Vector3 raySpherePos = Vector3Subtract(center, ray.position);
     float vector = Vector3DotProduct(raySpherePos, ray.direction);
-    float distance = Vector3Length(raySpherePos);
-    float d = radius*radius - (distance*distance - vector*vector);
+    float distanceToCenter = Vector3Length(raySpherePos);
+    float d = radius*radius - (distanceToCenter*distanceToCenter - vector*vector);
 
-    collision.hit = d >= 0.0f;
-
-    // Check if ray origin is inside the sphere to calculate the correct collision point
-    if (distance < radius)
+    // Check if the ray's line intersects with the sphere
+    if (d >= 0.0f)
     {
-        collision.distance = vector + sqrtf(d);
+        Vector3 point = { 0 };
+        Vector3 normal = { 0 };
+        float hitDistance = 0.0f;
 
-        // Calculate collision point
-        collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
+        // Check if ray origin is inside the sphere to calculate the correct collision point
+        if (distanceToCenter < radius)
+        {
+            hitDistance = vector + sqrtf(d);
 
-        // Calculate collision normal (pointing outwards)
-        collision.normal = Vector3Negate(Vector3Normalize(Vector3Subtract(collision.point, center)));
-    }
-    else
-    {
-        collision.distance = vector - sqrtf(d);
+            // Calculate collision point
+            point = Vector3Add(ray.position, Vector3Scale(ray.direction, hitDistance));
 
-        // Calculate collision point
-        collision.point = Vector3Add(ray.position, Vector3Scale(ray.direction, collision.distance));
+            // Calculate collision normal (pointing outwards)
+            normal = Vector3Negate(Vector3Normalize(Vector3Subtract(point, center)));
+        }
+        else
+        {
+            hitDistance = vector - sqrtf(d);
 
-        // Calculate collision normal (pointing inwards)
-        collision.normal = Vector3Normalize(Vector3Subtract(collision.point, center));
+            // Calculate collision point
+            point = Vector3Add(ray.position, Vector3Scale(ray.direction, hitDistance));
+
+            // Calculate collision normal (pointing inwards)
+            normal = Vector3Normalize(Vector3Subtract(point, center));
+        }
+
+        if (hitDistance >= 0.0f)
+        {
+            collision.hit = true;
+            collision.point = point;
+            collision.normal = normal;
+            collision.distance = hitDistance;
+        }
     }
 
     return collision;
