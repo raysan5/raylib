@@ -988,7 +988,7 @@ Sound LoadSoundAlias(Sound source)
 {
     Sound sound = { 0 };
 
-    if (source.stream.buffer->data != NULL)
+    if ((source.stream.buffer != NULL) && (source.stream.buffer->data != NULL))
     {
         AudioBuffer *audioBuffer = LoadAudioBuffer(AUDIO_DEVICE_FORMAT, AUDIO_DEVICE_CHANNELS, AUDIO.System.device.sampleRate, 0, AUDIO_BUFFER_USAGE_STATIC);
 
