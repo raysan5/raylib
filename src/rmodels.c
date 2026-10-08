@@ -182,21 +182,6 @@ static void ProcessMaterialsOBJ(Material *rayMaterials, tinyobj_material_t *mate
 // Update model vertex data (positions and normals)
 static void UpdateModelAnimationVertexBuffers(Model model);
 
-// Lazy allocation of CPU animation buffers for vertex positions and normals, used for software skinning
-static void AllocateMeshCPUAnimBuffers(Mesh* mesh)
-{
-    if (mesh == NULL || mesh->animVertices != NULL || mesh->animNormals != NULL) return; // Buffers already allocated
-
-    mesh->animVertices = (float*)RL_CALLOC(mesh->vertexCount * 3, sizeof(float));
-    memcpy(mesh->animVertices, mesh->vertices, mesh->vertexCount * 3 * sizeof(float));
-   
-    if (mesh->normals != NULL)
-    {
-        mesh->animNormals = (float*)RL_CALLOC(mesh->vertexCount * 3, sizeof(float));
-        memcpy(mesh->animNormals, mesh->normals, mesh->vertexCount * 3 * sizeof(float));
-    }
-}
-
 //----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
@@ -2337,8 +2322,8 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, float frame)
         int nextFrame = currentFrame + 1;
         float blend = frame - currentFrame;
         blend = Clamp(blend, 0.0f, 1.0f);
-        if (currentFrame >= anim.keyframeCount) currentFrame = currentFrame % anim.keyframeCount;
-        if (nextFrame >= anim.keyframeCount) nextFrame = nextFrame % anim.keyframeCount;
+        if (currentFrame >= anim.keyframeCount) currentFrame = currentFrame%anim.keyframeCount;
+        if (nextFrame >= anim.keyframeCount) nextFrame = nextFrame%anim.keyframeCount;
 
         Matrix bindPoseMatrix = { 0 };
         Matrix currentPoseMatrix = { 0 };
@@ -2360,13 +2345,13 @@ void UpdateModelAnimationBones(Model model, ModelAnimation anim, float frame)
 
             // Compute runtime bone matrix from model current pose
             //-----------------------------------------------------------------------------------
-            Transform* bindPoseTransform = &model.skeleton.bindPose[boneIndex];
+            Transform *bindPoseTransform = &model.skeleton.bindPose[boneIndex];
             bindPoseMatrix = MatrixMultiply(
                 MatrixMultiply(MatrixScale(bindPoseTransform->scale.x, bindPoseTransform->scale.y, bindPoseTransform->scale.z),
                     QuaternionToMatrix(bindPoseTransform->rotation)),
                 MatrixTranslate(bindPoseTransform->translation.x, bindPoseTransform->translation.y, bindPoseTransform->translation.z));
 
-            Transform* currentPoseTransform = &model.currentPose[boneIndex];
+            Transform *currentPoseTransform = &model.currentPose[boneIndex];
             currentPoseMatrix = MatrixMultiply(
                 MatrixMultiply(MatrixScale(currentPoseTransform->scale.x, currentPoseTransform->scale.y, currentPoseTransform->scale.z),
                     QuaternionToMatrix(currentPoseTransform->rotation)),
@@ -2406,20 +2391,20 @@ void UpdateModelAnimationBonesEx(Model model, ModelAnimation animA, float frameA
         (blend >= 0.0f) && (blend <= 1.0f))
     {
         // Inter-frame interpolation values for first animation
-        int currentFrameA = (int)frameA % animA.keyframeCount;
+        int currentFrameA = (int)frameA%animA.keyframeCount;
         int nextFrameA = currentFrameA + 1;
         float blendA = frameA - currentFrameA;
         blendA = Clamp(blendA, 0.0f, 1.0f);
-        if (currentFrameA >= animA.keyframeCount) currentFrameA = currentFrameA % animA.keyframeCount;
-        if (nextFrameA >= animA.keyframeCount) nextFrameA = nextFrameA % animA.keyframeCount;
+        if (currentFrameA >= animA.keyframeCount) currentFrameA = currentFrameA%animA.keyframeCount;
+        if (nextFrameA >= animA.keyframeCount) nextFrameA = nextFrameA%animA.keyframeCount;
 
         // Inter-frame interpolation values for second animation
-        int currentFrameB = (int)frameB % animB.keyframeCount;
+        int currentFrameB = (int)frameB%animB.keyframeCount;
         int nextFrameB = currentFrameB + 1;
         float blendB = frameB - currentFrameB;
         blendB = Clamp(blendB, 0.0f, 1.0f);
-        if (currentFrameB >= animB.keyframeCount) currentFrameB = currentFrameB % animB.keyframeCount;
-        if (nextFrameB >= animB.keyframeCount) nextFrameB = nextFrameB % animB.keyframeCount;
+        if (currentFrameB >= animB.keyframeCount) currentFrameB = currentFrameB%animB.keyframeCount;
+        if (nextFrameB >= animB.keyframeCount) nextFrameB = nextFrameB%animB.keyframeCount;
 
         Matrix bindPoseMatrix = { 0 };
         Matrix currentPoseMatrix = { 0 };
@@ -2456,13 +2441,13 @@ void UpdateModelAnimationBonesEx(Model model, ModelAnimation animA, float frameA
 
             // Compute runtime bone matrix from model current pose
             //-----------------------------------------------------------------------------------
-            Transform* bindPoseTransform = &model.skeleton.bindPose[boneIndex];
+            Transform *bindPoseTransform = &model.skeleton.bindPose[boneIndex];
             bindPoseMatrix = MatrixMultiply(
                 MatrixMultiply(MatrixScale(bindPoseTransform->scale.x, bindPoseTransform->scale.y, bindPoseTransform->scale.z),
                     QuaternionToMatrix(bindPoseTransform->rotation)),
                 MatrixTranslate(bindPoseTransform->translation.x, bindPoseTransform->translation.y, bindPoseTransform->translation.z));
 
-            Transform* currentPoseTransform = &model.currentPose[boneIndex];
+            Transform *currentPoseTransform = &model.currentPose[boneIndex];
             currentPoseMatrix = MatrixMultiply(
                 MatrixMultiply(MatrixScale(currentPoseTransform->scale.x, currentPoseTransform->scale.y, currentPoseTransform->scale.z),
                     QuaternionToMatrix(currentPoseTransform->rotation)),
@@ -2530,7 +2515,7 @@ static void UpdateModelAnimationVertexBuffers(Model model)
 {
     for (int m = 0; m < model.meshCount; m++)
     {
-        Mesh* mesh = model.meshes + m; // don't copy the mesh, we may need to allocate buffers
+        Mesh *mesh = model.meshes + m; // don't copy the mesh, we may need to allocate buffers
         Vector3 animVertex = { 0 };
         Vector3 animNormal = { 0 };
         const int vertexValuesCount = mesh->vertexCount*3;
@@ -2549,7 +2534,18 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         if ((material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1) ) continue;
 #endif
 
-        if (mesh->animVertices == NULL) AllocateMeshCPUAnimBuffers(mesh);
+        // Lazy allocation of CPU animation buffers for vertex positions and normals, 
+        // to be used on CPU software skinning
+        if (mesh->animVertices == NULL)
+        {
+            mesh->animVertices = (float *)RL_CALLOC(mesh->vertexCount*3, sizeof(float));
+            memcpy(mesh->animVertices, mesh->vertices, mesh->vertexCount*3*sizeof(float));
+        }
+        if ((mesh->normals != NULL) && (mesh->animNormals == NULL))
+        {
+            mesh->animNormals = (float *)RL_CALLOC(mesh->vertexCount*3, sizeof(float));
+            memcpy(mesh->animNormals, mesh->normals, mesh->vertexCount*3*sizeof(float));
+        }
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
         {
