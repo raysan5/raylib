@@ -114,7 +114,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_P)) animPause = !animPause;
 
-        if (!animPause)
+        if (!animPause && (animCount > 0)) // Animations could fail to load
         {
             // Start transition from anim0[] to anim1[]
             if (IsKeyPressed(KEY_SPACE) && !animTransition)
@@ -256,21 +256,24 @@ int main(void)
             GuiSetStyle(DEFAULT, TEXT_SIZE, GuiGetFont().baseSize);
             GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
 
-            // Draw playing timeline with keyframes for anim0[]
-            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 0",
-                TextFormat("FRAME: %.2f / %i", animFrameProgress0, anims[animIndex0].keyframeCount),
-                &animFrameProgress0, 0.0f, (float)anims[animIndex0].keyframeCount);
-            for (int i = 0; i < anims[animIndex0].keyframeCount; i++)
-                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i),
-                    GetScreenHeight() - 60, 1, 20, BLUE);
+            if (animCount > 0)
+            {
+                // Draw playing timeline with keyframes for anim0[]
+                GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 0",
+                    TextFormat("FRAME: %.2f / %i", animFrameProgress0, anims[animIndex0].keyframeCount),
+                    &animFrameProgress0, 0.0f, (float)anims[animIndex0].keyframeCount);
+                for (int i = 0; i < anims[animIndex0].keyframeCount; i++)
+                    DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i),
+                        GetScreenHeight() - 60, 1, 20, BLUE);
 
-            // Draw playing timeline with keyframes for anim1[]
-            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 30.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 1",
-                TextFormat("FRAME: %.2f / %i", animFrameProgress1, anims[animIndex1].keyframeCount),
-                &animFrameProgress1, 0.0f, (float)anims[animIndex1].keyframeCount);
-            for (int i = 0; i < anims[animIndex1].keyframeCount; i++)
-                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i),
-                    GetScreenHeight() - 30, 1, 20, BLUE);
+                // Draw playing timeline with keyframes for anim1[]
+                GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 30.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 1",
+                    TextFormat("FRAME: %.2f / %i", animFrameProgress1, anims[animIndex1].keyframeCount),
+                    &animFrameProgress1, 0.0f, (float)anims[animIndex1].keyframeCount);
+                for (int i = 0; i < anims[animIndex1].keyframeCount; i++)
+                    DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i),
+                        GetScreenHeight() - 30, 1, 20, BLUE);
+            }
             //---------------------------------------------------------------------------------------------
 
         EndDrawing();
