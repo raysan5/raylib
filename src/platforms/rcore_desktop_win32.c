@@ -1767,12 +1767,31 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+    // Undo disable cursor if it's locked and unregister raw input devices
+    EnableCursor();
+
+    // Calling DestroyWindow invokes a WindowProc event that sets the FLAG_WINDOW_HIDDEN flag to true
+    // If InitWindow is called again, the hidden flag will be interpreted as something the user requested
+    // Save the current flags and restore them after
+    unsigned int savedFlags = CORE.Window.flags;
+
     if (platform.hwnd)
     {
-        int result = DestroyWindow(platform.hwnd);
-        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
+        BOOL result = DestroyWindow(platform.hwnd);
+        if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
+
+        HINSTANCE hInstance = GetModuleHandleW(0);
+        result = UnregisterClassW(CLASS_NAME, hInstance);
+        if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to unregister window class [ERROR: %u]", GetLastError());
+
         platform.hwnd = NULL;
     }
+
+    CORE.Window.flags = savedFlags;
+
+#if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
+    timeEndPeriod(1);           // Restore time period
+#endif
 }
 
 // Window procedure, message processing callback
