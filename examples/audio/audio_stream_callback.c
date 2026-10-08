@@ -133,8 +133,8 @@ int main(void)
             // Draw the last 10 ms of uploaded audio
             for (int i = 0; i < screenWidth; i++)
             {
-                Vector2 startPos = { i, 250 - 50*buffer[SAMPLE_RATE - SAMPLE_RATE/100 + i*SAMPLE_RATE/100/screenWidth] };
-                Vector2 endPos = { i + 1, 250 - 50*buffer[SAMPLE_RATE - SAMPLE_RATE/100 + (i + 1)*SAMPLE_RATE/100/screenWidth] };
+                Vector2 startPos = {(float)i, 250 - 50*buffer[SAMPLE_RATE - SAMPLE_RATE/100 + i*SAMPLE_RATE/100/screenWidth] };
+                Vector2 endPos = { (float)(i + 1), 250 - 50*buffer[SAMPLE_RATE - SAMPLE_RATE/100 + (i + 1)*SAMPLE_RATE/100/screenWidth] };
                 DrawLineV(startPos, endPos, RED);
             }
 
@@ -161,9 +161,9 @@ static void SineCallback(void *framesOut, unsigned int frameCount)
     int wavelength = SAMPLE_RATE/waveFrequency;
 
     // Synthesize the sine wave
-    for (int i = 0; i < frameCount; i++)
+    for (unsigned int i = 0; i < frameCount; i++)
     {
-        ((float *)framesOut)[i] = sin(2*PI*waveIndex/wavelength);
+        ((float *)framesOut)[i] = sinf(2*PI*waveIndex/wavelength);
 
         waveIndex++;
 
@@ -175,8 +175,8 @@ static void SineCallback(void *framesOut, unsigned int frameCount)
     }
 
     // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+    for (unsigned int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
 static void SquareCallback(void *framesOut, unsigned int frameCount)
@@ -184,9 +184,9 @@ static void SquareCallback(void *framesOut, unsigned int frameCount)
     int wavelength = SAMPLE_RATE/waveFrequency;
 
     // Synthesize the square wave
-    for (int i = 0; i < frameCount; i++)
+    for (unsigned int i = 0; i < frameCount; i++)
     {
-        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? 1 : -1;
+        ((float *)framesOut)[i] = (waveIndex < wavelength/2)? 1.0f : -1.0f;
         waveIndex++;
 
         if (waveIndex >= wavelength)
@@ -197,8 +197,8 @@ static void SquareCallback(void *framesOut, unsigned int frameCount)
     }
 
     // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+    for (unsigned int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
 static void TriangleCallback(void *framesOut, unsigned int frameCount)
@@ -206,7 +206,7 @@ static void TriangleCallback(void *framesOut, unsigned int frameCount)
     int wavelength = SAMPLE_RATE/waveFrequency;
 
     // Synthesize the triangle wave
-    for (int i = 0; i < frameCount; i++)
+    for (unsigned int i = 0; i < frameCount; i++)
     {
         ((float *)framesOut)[i] = (waveIndex < wavelength/2)? (-1 + 2.0f*waveIndex/(wavelength/2)) : (1 - 2.0f*(waveIndex - wavelength/2)/(wavelength/2));
         waveIndex++;
@@ -219,8 +219,8 @@ static void TriangleCallback(void *framesOut, unsigned int frameCount)
     }
 
     // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+    for (unsigned int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
 }
 
 static void SawtoothCallback(void *framesOut, unsigned int frameCount)
@@ -228,7 +228,7 @@ static void SawtoothCallback(void *framesOut, unsigned int frameCount)
     int wavelength = SAMPLE_RATE/waveFrequency;
 
     // Synthesize the sawtooth wave
-    for (int i = 0; i < frameCount; i++)
+    for (unsigned int i = 0; i < frameCount; i++)
     {
         ((float *)framesOut)[i] = -1 + 2.0f*waveIndex/wavelength;
         waveIndex++;
@@ -241,6 +241,6 @@ static void SawtoothCallback(void *framesOut, unsigned int frameCount)
     }
 
     // Save the synthesized samples for later drawing
-    for (int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
-    for (int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float *)framesOut)[i];
+    for (unsigned int i = 0; i < SAMPLE_RATE - frameCount; i++) buffer[i] = buffer[i + frameCount];
+    for (unsigned int i = 0; i < frameCount; i++) buffer[SAMPLE_RATE - frameCount + i] = ((float*)framesOut)[i];
 }

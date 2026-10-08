@@ -4214,7 +4214,7 @@ int GuiColorPicker(Rectangle bounds, const char *text, Color *color)
     // NOTE: this conversion can cause low hue-resolution, if the r, g and b value are very similar, which causes the hue bar to shift around when only the GuiColorPanel is used
     Vector3 hsv = ConvertRGBtoHSV(RAYGUI_CLITERAL(Vector3){ (*color).r/255.0f, (*color).g/255.0f, (*color).b/255.0f });
 
-    if (result != RESULT_CHANGED) result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
+    result = GuiColorBarHue(boundsHue, NULL, &hsv.x);
 
     //color.a = (unsigned char)(GuiColorBarAlpha(boundsAlpha, (float)color.a/255.0f)*255.0f);
     Vector3 rgb = ConvertHSVtoRGB(hsv);
@@ -4449,11 +4449,11 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, ch
     Rectangle textBounds = { 0 };
     if (message != NULL)
     {
-        int textSize = GuiGetTextWidth(message) + 2;
+        int messageTextSize = GuiGetTextWidth(message) + 2;
 
-        textBounds.x = bounds.x + bounds.width/2 - textSize/2;
+        textBounds.x = bounds.x + bounds.width/2 - messageTextSize/2;
         textBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + messageInputHeight/4 - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
-        textBounds.width = (float)textSize;
+        textBounds.width = (float)messageTextSize;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
     }
 
@@ -4641,8 +4641,8 @@ void GuiLoadStyle(const char *fileName)
                 {
                     case 'v':
                     {
-                        sscanf(buffer, "v %d", &version);
-                    }
+                        sscanf(buffer, "v %u", &version);
+                    } break;
                     case 'p':
                     {
                         // Style property: p <control_id> <property_id> <property_value> <property_name>

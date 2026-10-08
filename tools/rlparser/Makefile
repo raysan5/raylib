@@ -2,6 +2,14 @@ EXTENSION?=txt
 FORMAT?=DEFAULT
 .PHONY: all parse clean raylib_api
 
+# Detect the shell used by make: cmd preserves quotes, while sh removes them.
+ifndef PLATFORM_SHELL
+    PLATFORM_SHELL = sh
+    ifeq ($(shell echo "test"),"test")
+        PLATFORM_SHELL = cmd
+    endif
+endif
+
 # Determine PLATFORM_OS
 # No uname.exe on MinGW!, but OS=Windows_NT on Windows!
 # ifeq ($(UNAME),Msys) -> Windows
@@ -109,12 +117,16 @@ parse: raylib_api.$(EXTENSION) raymath_api.$(EXTENSION) rlgl_api.$(EXTENSION) ra
 # API files for individual headers can be created likeso, provided the relevant header exists:
 # FORMAT=JSON EXTENSION=json make raygui_api.json
 all: rlparser
-	FORMAT=DEFAULT EXTENSION=txt $(MAKE) parse
-	FORMAT=JSON EXTENSION=json $(MAKE) parse
-	FORMAT=XML EXTENSION=xml $(MAKE) parse
-	FORMAT=LUA EXTENSION=lua $(MAKE) parse
-	FORMAT=SEXPR EXTENSION=sexpr $(MAKE) parse
+	$(MAKE) parse FORMAT=DEFAULT EXTENSION=txt
+	$(MAKE) parse FORMAT=JSON EXTENSION=json
+	$(MAKE) parse FORMAT=XML EXTENSION=xml
+	$(MAKE) parse FORMAT=LUA EXTENSION=lua
+	$(MAKE) parse FORMAT=SEXPR EXTENSION=sexpr
 
 # Clean rlparser and generated output files 
 clean:
-	rm -f rlparser *.json *.txt *.xml *.lua *.sexpr
+ifeq ($(PLATFORM_SHELL),cmd)
+	del /q rlparser.exe *.json *.txt *.xml *.lua *.sexpr
+else
+	rm -f rlparser rlparser.exe *.json *.txt *.xml *.lua *.sexpr
+endif

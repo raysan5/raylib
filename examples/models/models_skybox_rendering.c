@@ -180,8 +180,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadShader(skybox.materials[0].shader);
     UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
-
     UnloadModel(skybox);        // Unload skybox model
+    UnloadShader(shdrCubemap);
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

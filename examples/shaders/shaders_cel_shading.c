@@ -9,6 +9,8 @@
 *
 *   NOTE: Shaders used in this example are #version 330 (OpenGL 3.3)
 *
+*   Example originally created with raylib 6.0, last time updated with raylib 6.0
+*
 *   Example contributed by Gleb A (@ggrizzly) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,

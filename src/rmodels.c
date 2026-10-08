@@ -2041,12 +2041,12 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     {
         // TODO: Implement gltf/glb support
         /*
-        cgltf_size expected = cgltf_write(options, NULL, 0, data);
-        char *buffer = (char *)RL_CALLOC(expected, 0);
-        cgltf_size actual = cgltf_write(options, buffer, expected, data);
+        cgltf_size expectedSize = cgltf_write(options, NULL, 0, data);
+        char *buffer = (char *)RL_CALLOC(expectedSize, 0);
+        cgltf_size actualSize = cgltf_write(options, buffer, expectedSize, data);
 
         // NOTE: cgltf_write() includes a NULL terminator that should be ommited in case of a .glb
-        if (options->type == cgltf_file_type_glb) cgltf_write_glb(file, buffer, actual - 1, data->bin, data->bin_size);
+        if (options->type == cgltf_file_type_glb) cgltf_write_glb(fileName, buffer, actual - 1, data->bin, data->bin_size);
         else SaveFileText(fileName, buffer); // Write a plain JSON file
         */
     }
@@ -2196,8 +2196,6 @@ Material *LoadMaterials(const char *fileName, int *materialCount)
 {
     Material *materials = NULL;
     unsigned int count = 0;
-
-    // TODO: Support IQM and GLTF for materials parsing
 
 #if SUPPORT_FILEFORMAT_MTL
     if (IsFileExtension(fileName, ".mtl"))
@@ -2513,6 +2511,9 @@ void UpdateModelAnimationEx(Model model, ModelAnimation animA, float frameA, Mod
 // NOTE: Required for CPU skinning, uploads animated vertex buffers to GPU
 static void UpdateModelAnimationVertexBuffers(Model model)
 {
+    static Matrix boneNormalMatrices[256] = { 0 }; // Normal matrix per bone, bone indices are unsigned char
+    bool boneNormalsReady = false;
+
     for (int m = 0; m < model.meshCount; m++)
     {
         Mesh *mesh = model.meshes + m; // don't copy the mesh, we may need to allocate buffers
@@ -2545,6 +2546,14 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         {
             mesh->animNormals = (float *)RL_CALLOC(mesh->vertexCount*3, sizeof(float));
             memcpy(mesh->animNormals, mesh->normals, mesh->vertexCount*3*sizeof(float));
+        }
+
+        // Normal matrix only depends on the bone, compute it once per bone instead of per vertex
+        if ((mesh.normals != NULL) && !boneNormalsReady)
+        {
+            memset(boneNormalMatrices, 0, 256*sizeof(Matrix));
+            for (unsigned int b = 0; (b < model.skeleton.boneCount) && (b < 256); b++) boneNormalMatrices[b] = MatrixTranspose(MatrixInvert(model.boneMatrices[b]));
+            boneNormalsReady = true;
         }
 
         for (int vCounter = 0; vCounter < vertexValuesCount; vCounter += 3)
@@ -4043,7 +4052,7 @@ void DrawBillboard(Camera camera, Texture2D texture, Vector3 position, float sca
 {
     Rectangle rec = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
 
-    DrawBillboardRec(camera, texture, rec, position, (Vector2){ scale*fabsf((float)rec.width/rec.height), scale }, tint);
+    DrawBillboardRec(camera, texture, rec, position, (Vector2){ scale*fabsf(rec.width/rec.height), scale }, tint);
 }
 
 // Draw a billboard (part of a texture defined by a rectangle)
@@ -4112,10 +4121,10 @@ void DrawBillboardPro(Camera camera, Texture2D texture, Rectangle rec, Vector3 p
     }
 
     Vector2 texcoords[4];
-    texcoords[0] = (Vector2){ (float)rec.x/texture.width, (float)(rec.y + rec.height)/texture.height };
-    texcoords[1] = (Vector2){ (float)(rec.x + rec.width)/texture.width, (float)(rec.y + rec.height)/texture.height };
-    texcoords[2] = (Vector2){ (float)(rec.x + rec.width)/texture.width, (float)rec.y/texture.height };
-    texcoords[3] = (Vector2){ (float)rec.x/texture.width, (float)rec.y/texture.height };
+    texcoords[0] = (Vector2){ rec.x/texture.width, (rec.y + rec.height)/texture.height };
+    texcoords[1] = (Vector2){ (rec.x + rec.width)/texture.width, (rec.y + rec.height)/texture.height };
+    texcoords[2] = (Vector2){ (rec.x + rec.width)/texture.width, rec.y/texture.height };
+    texcoords[3] = (Vector2){ rec.x/texture.width, rec.y/texture.height };
 
     rlSetTexture(texture.id);
     rlBegin(RL_QUADS);
@@ -4656,15 +4665,19 @@ static Model LoadOBJ(const char *fileName)
             int normalIndex = objAttributes.faces[faceVertIndex].vn_idx;
             int texcordIndex = objAttributes.faces[faceVertIndex].vt_idx;
 
-            for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
+            // NOTE: Out-of-range indices from malformed files are skipped, keeping zeroed values
+            if ((vertIndex >= 0) && (vertIndex < (int)objAttributes.num_vertices))
+            {
+                for (int i = 0; i < 3; i++) model.meshes[meshIndex].vertices[localMeshVertexCount*3 + i] = objAttributes.vertices[vertIndex*3 + i];
+            }
 
-            if ((objAttributes.texcoords != NULL) && (texcordIndex != TINYOBJ_INVALID_INDEX) && (texcordIndex >= 0) && (model.meshes[meshIndex].texcoords))
+            if ((objAttributes.texcoords != NULL) && (texcordIndex != TINYOBJ_INVALID_INDEX) && (texcordIndex >= 0) && (texcordIndex < (int)objAttributes.num_texcoords) && (model.meshes[meshIndex].texcoords))
             {
                 for (int i = 0; i < 2; i++) model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + i] = objAttributes.texcoords[texcordIndex*2 + i];
                 model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1] = 1.0f - model.meshes[meshIndex].texcoords[localMeshVertexCount*2 + 1];
             }
 
-            if ((objAttributes.normals != NULL) && (normalIndex != TINYOBJ_INVALID_INDEX) && (normalIndex >= 0))
+            if ((objAttributes.normals != NULL) && (normalIndex != TINYOBJ_INVALID_INDEX) && (normalIndex >= 0) && (normalIndex < (int)objAttributes.num_normals))
             {
                 for (int i = 0; i < 3; i++) model.meshes[meshIndex].normals[localMeshVertexCount*3 + i] = objAttributes.normals[normalIndex*3 + i];
             }
@@ -4862,7 +4875,7 @@ static Model LoadIQM(const char *fileName)
         memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
 
         model.materials[i] = LoadMaterialDefault();
-        model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
+        if (TextLength(material) > 0) model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
 
         model.meshMaterial[i] = i;
 
@@ -5178,7 +5191,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].keyframeCount = anim[a].num_frames;
         animations[a].keyframePoses = (Transform **)RL_CALLOC(anim[a].num_frames, sizeof(Transform *));
         memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
-        // TODO: Use animation framerate data?
+        // TODO: Store animation framerate data?
         //animations[a].framerate = anim.framerate;
 
         TRACELOG(LOG_INFO, "MODEL: [%s] Loaded animation: %s | Frames: %d | Framerate: %f", fileName, animations[a].name, animations[a].keyframeCount, anim[a].framerate);
@@ -5384,7 +5397,7 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
             image = LoadImage(TextFormat("%s/%s", texPath, cgltfImage->uri));
         }
     }
-    else if ((cgltfImage->buffer_view != NULL) && (cgltfImage->buffer_view->buffer->data != NULL))    // Check if image is provided as data buffer
+    else if ((cgltfImage->buffer_view != NULL) && (cgltfImage->buffer_view->buffer->data != NULL)) // Check if image is provided as data buffer
     {
         unsigned char *data = (unsigned char *)RL_MALLOC(cgltfImage->buffer_view->size);
         int offset = (int)cgltfImage->buffer_view->offset;
@@ -5812,7 +5825,7 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Vertices attribute data format not supported, use vec3 float", fileName);
                         }
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal)   // NORMAL, vec3, float
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_normal) // NORMAL, vec3, float
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
@@ -5912,7 +5925,7 @@ static Model LoadGLTF(const char *fileName)
                             else TRACELOG(LOG_WARNING, "MODEL: [%s] Normals attribute data format not supported, use vec3 float", fileName);
                         }
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent)   // TANGENT, vec4, float, w is tangent basis sign
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_tangent) // TANGENT, vec4, float, w is tangent basis sign
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
@@ -5949,7 +5962,7 @@ static Model LoadGLTF(const char *fileName)
 
                         if (attribute->type == cgltf_type_vec2)
                         {
-                            if (attribute->component_type == cgltf_component_type_r_32f)  // vec2, float
+                            if (attribute->component_type == cgltf_component_type_r_32f) // vec2, float
                             {
                                 // Init raylib mesh texcoords to copy glTF attribute data
                                 texcoordPtr = (float *)RL_MALLOC(attribute->count*2*sizeof(float));
@@ -5998,7 +6011,7 @@ static Model LoadGLTF(const char *fileName)
                             if (texcoordPtr != NULL) RL_FREE(texcoordPtr);
                         }
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_color)    // COLOR_n, vec3/vec4, float/u8n/u16n
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_color) // COLOR_n, vec3/vec4, float/u8n/u16n
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
@@ -6007,7 +6020,7 @@ static Model LoadGLTF(const char *fileName)
                         if (model.meshes[meshIndex].colors != NULL) TRACELOG(LOG_WARNING, "MODEL: [%s] Colors attribute data already loaded", fileName);
                         else
                         {
-                            if (attribute->type == cgltf_type_vec3)  // RGB
+                            if (attribute->type == cgltf_type_vec3) // RGB
                             {
                                 if (attribute->component_type == cgltf_component_type_r_8u)
                                 {
@@ -6300,7 +6313,7 @@ static Model LoadGLTF(const char *fileName)
                         }
                         else TRACELOG(LOG_WARNING, "MODEL: [%s] Joint attribute data format not supported", fileName);
                     }
-                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights)  // WEIGHTS_n (vec4, u8n/u16n/f32)
+                    else if (mesh->primitives[p].attributes[j].type == cgltf_attribute_type_weights) // WEIGHTS_n (vec4, u8n/u16n/f32)
                     {
                         cgltf_accessor *attribute = mesh->primitives[p].attributes[j].data;
 
@@ -6419,6 +6432,7 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
     float tstart = 0.0f;
     float tend = 0.0f;
     int keyframe = 0;       // Defaults to first pose
+    bool found = false;
 
     for (int i = 0; i < (int)input->count - 1; i++)
     {
@@ -6431,8 +6445,24 @@ static bool GetPoseAtTimeGLTF(cgltf_interpolation_type interpolationType, cgltf_
         if ((tstart <= time) && (time < tend))
         {
             keyframe = i;
+            found = true;
             break;
         }
+    }
+
+    // No interval contains a time at (or past) the last keyframe, because the
+    // search above requires time < tend: clamp to the edge interval instead of
+    // falling back to keyframe 0, which returns a pose from the start
+    if (!found && ((int)input->count >= 2))
+    {
+        keyframe = (int)input->count - 2;
+
+        float tfirst = 0.0f;
+        if (!cgltf_accessor_read_float(input, 0, &tfirst, 1)) return false;
+        if (time < tfirst) keyframe = 0;
+
+        if (!cgltf_accessor_read_float(input, keyframe, &tstart, 1)) return false;
+        if (!cgltf_accessor_read_float(input, keyframe + 1, &tend, 1)) return false;
     }
 
     // Constant animation, no need to interpolate

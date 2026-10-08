@@ -613,7 +613,7 @@ static void RGFW_cb_windowmovefunc(const RGFW_event *e)
     if (e->common.win != platform.window) return;
 
     CORE.Window.position.x = platform.window->x;
-    CORE.Window.position.y = platform.window->x;
+    CORE.Window.position.y = platform.window->y;
 }
 static void RGFW_cb_keycharfunc(const RGFW_event *e)
 {
@@ -1329,7 +1329,12 @@ Image GetClipboardImage(void)
     fileData = (void *)Win32GetClipboardImageData(&width, &height, &dataSize);
 
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data");
-    else image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
+    else
+    {
+        image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
+
+        RL_FREE(fileData);
+    }
 
 #elif defined(__linux__) && defined(DRGFW_X11)
 
@@ -1613,11 +1618,11 @@ void PollInputEvents(void)
     }
 
     //-----------------------------------------------------------------------------
-    // using RGFW callbacks instead of polling
+    // Using RGFW callbacks instead of polling
     RGFW_pollEvents();
     //-----------------------------------------------------------------------------
 
-    mg_event gamepad_event;
+    mg_event gamepad_event = { 0 };
     while (mg_gamepads_check_event(&platform.minigamepad, &gamepad_event))
     {
         int gamepadIndex = gamepad_event.gamepad->index;

@@ -25,7 +25,7 @@ Functions params | lowerCase | `width`, `height`
 Ternary Operator | (condition)? result1 : result2 | `printf("Value is 0: %s", (value == 0)? "yes" : "no");`
 
 Some other conventions to follow:
- - **ALWAYS** initialize all defined variables.
+ - **ALWAYS** initialize all defined variables, avoid defining variables in same code line, use multiple lines.
  - **Do not use TABS**, use 4 spaces instead.
  - Avoid trailing spaces, please, avoid them
  - Comments always start with space + capital letter and never end with a '.', place them **before** the line(s) they refer to

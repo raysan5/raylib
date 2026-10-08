@@ -65,7 +65,7 @@ To run it we do:
 zig build run -Dtarget=wasm32-emscripten
 ```
 
-And to make a relase build we do:
+And to make a release build we do:
 
 ```sh
 zig build -Dtarget=wasm32-emscripten -Doptimize=ReleaseFast

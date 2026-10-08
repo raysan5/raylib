@@ -115,7 +115,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangleLines((int)((subjectTarget.texture.width - captureSize)/2.0f), (int)((subjectTarget.texture.height - captureSize)/2.0f), captureSize, captureSize, GREEN);
+            DrawRectangleLines((int)((subjectTarget.texture.width - captureSize)/2.0f), (int)((subjectTarget.texture.height - captureSize)/2.0f), (int)captureSize, (int)captureSize, GREEN);
             DrawText("Subject View", 10, subjectTarget.texture.height - 30, 20, BLACK);
 
         EndTextureMode();

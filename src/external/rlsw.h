@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   rlsw v1.5 - An OpenGL 1.1-style software renderer implementation
+*   rlsw v1.6 - An OpenGL 1.1-style software renderer implementation
 *
 *   DESCRIPTION:
 *       rlsw is a custom OpenGL 1.1-style implementation on software, intended to provide all
@@ -51,13 +51,14 @@
 *       rlsw capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
 *
-*           #define SW_FRAMEBUFFER_OUTPUT_BGRA      true
-*           #define SW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8
-*           #define SW_FRAMEBUFFER_DEPTH_TYPE       D32
-*           #define SW_MAX_PROJECTION_STACK_SIZE    2
-*           #define SW_MAX_MODELVIEW_STACK_SIZE     8
-*           #define SW_MAX_TEXTURE_STACK_SIZE       2
-*           #define SW_MAX_TEXTURES                 128
+*           #define RLSW_FRAMEBUFFER_OUTPUT_BGRA      true
+*           #define RLSW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8
+*           #define RLSW_FRAMEBUFFER_DEPTH_TYPE       D32
+*           #define RLSW_MAX_PROJECTION_STACK_SIZE    2
+*           #define RLSW_MAX_MODELVIEW_STACK_SIZE     8
+*           #define RLSW_MAX_TEXTURE_STACK_SIZE       2
+*           #define RLSW_MAX_TEXTURES                 128
+*           #define RLSW_DOUBLE_BUFFERING             0
 *
 *
 *   LICENSE: MIT
@@ -87,7 +88,7 @@
 #ifndef RLSW_H
 #define RLSW_H
 
-#define RLSW_VERSION  "1.5"
+#define RLSW_VERSION  "1.6"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -95,54 +96,50 @@
 //----------------------------------------------------------------------------------
 // RLSW Configuration
 //----------------------------------------------------------------------------------
-#ifndef SW_FRAMEBUFFER_OUTPUT_BGRA
-    #define SW_FRAMEBUFFER_OUTPUT_BGRA      true
+#ifndef RLSW_FRAMEBUFFER_OUTPUT_BGRA
+    #define RLSW_FRAMEBUFFER_OUTPUT_BGRA    true
 #endif
-
-#ifndef SW_FRAMEBUFFER_COLOR_TYPE
-    #define SW_FRAMEBUFFER_COLOR_TYPE       R8G8B8A8    // Or R5G6B5, R3G3B2, etc; see `sw_pixelformat_t`
+#ifndef RLSW_FRAMEBUFFER_COLOR_TYPE
+    #define RLSW_FRAMEBUFFER_COLOR_TYPE     R8G8B8A8    // Or R5G6B5, R3G3B2, etc; see `sw_pixelformat_t`
 #endif
-
-#ifndef SW_FRAMEBUFFER_DEPTH_TYPE
-    #define SW_FRAMEBUFFER_DEPTH_TYPE       D32         // Or D16, D8
+#ifndef RLSW_FRAMEBUFFER_DEPTH_TYPE
+    #define RLSW_FRAMEBUFFER_DEPTH_TYPE     D32         // Or D16, D8
 #endif
-
-#ifndef SW_MAX_PROJECTION_STACK_SIZE
-    #define SW_MAX_PROJECTION_STACK_SIZE    2
+#ifndef RLSW_MAX_PROJECTION_STACK_SIZE
+    #define RLSW_MAX_PROJECTION_STACK_SIZE  2
 #endif
-
-#ifndef SW_MAX_MODELVIEW_STACK_SIZE
-    #define SW_MAX_MODELVIEW_STACK_SIZE     8
+#ifndef RLSW_MAX_MODELVIEW_STACK_SIZE
+    #define RLSW_MAX_MODELVIEW_STACK_SIZE   8
 #endif
-
-#ifndef SW_MAX_TEXTURE_STACK_SIZE
-    #define SW_MAX_TEXTURE_STACK_SIZE       2
+#ifndef RLSW_MAX_TEXTURE_STACK_SIZE
+    #define RLSW_MAX_TEXTURE_STACK_SIZE     2
 #endif
-
-#ifndef SW_MAX_FRAMEBUFFERS
-    #define SW_MAX_FRAMEBUFFERS             8
+#ifndef RLSW_MAX_FRAMEBUFFERS
+    #define RLSW_MAX_FRAMEBUFFERS           8
 #endif
-
-#ifndef SW_MAX_TEXTURES
-    #define SW_MAX_TEXTURES                 128
+#ifndef RLSW_MAX_TEXTURES
+    #define RLSW_MAX_TEXTURES               128
+#endif
+#ifndef RLSW_DOUBLE_BUFFERING
+    #define RLSW_DOUBLE_BUFFERING           0
 #endif
 
 // Enable the use of a lookup table for uint8_t to float conversion
 // Requires an additional 1KB of global memory
 // Disabled when SIMD intrinsics are enabled
-#ifndef SW_USE_COLOR_LUT
+#ifndef RLSW_USE_COLOR_LUT
     #if RLSW_USE_SIMD_INTRINSICS
-        #define SW_USE_COLOR_LUT            false
+        #define RLSW_USE_COLOR_LUT          false
     #else
-        #define SW_USE_COLOR_LUT            true
+        #define RLSW_USE_COLOR_LUT          true
     #endif
 #endif
 
 // Full NPOT texture support (enabled by default)
 // When disabled, SW_REPEAT requires POT on its axis (fast bitmask wrap)
 // SW_CLAMP remains supported for any dimension, per-axis
-#ifndef SW_SUPPORT_NPOT_TEXTURE
-#   define SW_SUPPORT_NPOT_TEXTURE true
+#ifndef RLSW_SUPPORT_NPOT_TEXTURE
+#   define RLSW_SUPPORT_NPOT_TEXTURE true
 #endif
 
 //----------------------------------------------------------------------------------
@@ -776,8 +773,8 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 
 // Simple log system to avoid printf() calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
-#define SW_SUPPORT_LOG_INFO
-#if defined(SW_SUPPORT_LOG_INFO) //&& defined(_DEBUG)      // WARNING: LOG() output required for this tool
+#define RLSW_SUPPORT_LOG_INFO
+#if defined(RLSW_SUPPORT_LOG_INFO)
     #include <stdio.h>
     #define SW_LOG(...) printf(__VA_ARGS__)
 #else
@@ -906,15 +903,15 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #define SW_CONCAT(a, b)                     a##b
 #define SW_CONCATX(a, b)                    SW_CONCAT(a, b)
 
-#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o)    SW_CONCATX(sw_pixel_read_color8_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_GET(c,p,o)     SW_CONCATX(sw_pixel_read_color_, SW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
-#define SW_FRAMEBUFFER_COLOR_SET(p,c,o)     SW_CONCATX(sw_pixel_write_color_, SW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
+#define SW_FRAMEBUFFER_COLOR8_GET(c,p,o)    SW_CONCATX(sw_pixel_read_color8_, RLSW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_GET(c,p,o)     SW_CONCATX(sw_pixel_read_color_, RLSW_FRAMEBUFFER_COLOR_TYPE)((c),(p),(o))
+#define SW_FRAMEBUFFER_COLOR_SET(p,c,o)     SW_CONCATX(sw_pixel_write_color_, RLSW_FRAMEBUFFER_COLOR_TYPE)((p),(c),(o))
 
-#define SW_FRAMEBUFFER_DEPTH_GET(p,o)       SW_CONCATX(sw_pixel_read_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
-#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o)     SW_CONCATX(sw_pixel_write_depth_, SW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
+#define SW_FRAMEBUFFER_DEPTH_GET(p,o)       SW_CONCATX(sw_pixel_read_depth_, RLSW_FRAMEBUFFER_DEPTH_TYPE)((p),(o))
+#define SW_FRAMEBUFFER_DEPTH_SET(p,d,o)     SW_CONCATX(sw_pixel_write_depth_, RLSW_FRAMEBUFFER_DEPTH_TYPE)((p),(d),(o))
 
-#define SW_FRAMEBUFFER_COLOR_FORMAT         SW_CONCATX(SW_PIXELFORMAT_COLOR_, SW_FRAMEBUFFER_COLOR_TYPE)
-#define SW_FRAMEBUFFER_DEPTH_FORMAT         SW_CONCATX(SW_PIXELFORMAT_DEPTH_, SW_FRAMEBUFFER_DEPTH_TYPE)
+#define SW_FRAMEBUFFER_COLOR_FORMAT         SW_CONCATX(SW_PIXELFORMAT_COLOR_, RLSW_FRAMEBUFFER_COLOR_TYPE)
+#define SW_FRAMEBUFFER_DEPTH_FORMAT         SW_CONCATX(SW_PIXELFORMAT_DEPTH_, RLSW_FRAMEBUFFER_DEPTH_TYPE)
 
 #define SW_FRAMEBUFFER_COLOR_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_COLOR_FORMAT]
 #define SW_FRAMEBUFFER_DEPTH_SIZE           SW_PIXELFORMAT_SIZE[SW_FRAMEBUFFER_DEPTH_FORMAT]
@@ -1017,7 +1014,7 @@ typedef struct sw_texture {
 
 typedef struct {
     sw_texture_t color;         // Default framebuffer color texture
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_t backColor; // Back buffer for multicore.
 #endif
     sw_texture_t depth;         // Default framebuffer depth texture
@@ -1072,9 +1069,9 @@ typedef struct {
     float pointRadius;                                          // Rasterized point radius
     float lineWidth;                                            // Rasterized line width
 
-    sw_matrix_t stackProjection[SW_MAX_PROJECTION_STACK_SIZE];  // Projection matrix stack for push/pop operations
-    sw_matrix_t stackModelview[SW_MAX_MODELVIEW_STACK_SIZE];    // Modelview matrix stack for push/pop operations
-    sw_matrix_t stackTexture[SW_MAX_TEXTURE_STACK_SIZE];        // Texture matrix stack for push/pop operations
+    sw_matrix_t stackProjection[RLSW_MAX_PROJECTION_STACK_SIZE];  // Projection matrix stack for push/pop operations
+    sw_matrix_t stackModelview[RLSW_MAX_MODELVIEW_STACK_SIZE];    // Modelview matrix stack for push/pop operations
+    sw_matrix_t stackTexture[RLSW_MAX_TEXTURE_STACK_SIZE];        // Texture matrix stack for push/pop operations
     uint32_t stackProjectionCounter;                            // Counter for matrix stack operations
     uint32_t stackModelviewCounter;                             // Counter for matrix stack operations
     uint32_t stackTextureCounter;                               // Counter for matrix stack operations
@@ -1112,7 +1109,7 @@ typedef struct {
 //----------------------------------------------------------------------------------
 static sw_context_t RLSW = { 0 };
 
-#if SW_USE_COLOR_LUT
+#if RLSW_USE_COLOR_LUT
 static float SW_LUT_UINT8_TO_FLOAT[256] = { 0 };
 #endif
 
@@ -1185,7 +1182,7 @@ static const int SW_PRIMITIVE_VERTEX_COUNT[] =
 
 // Math helper functions
 //----------------------------------------------------------------------------------
-static inline void sw_matrix_id(sw_matrix_t dst)
+static SW_INLINE void sw_matrix_id(sw_matrix_t dst)
 {
     dst[0]  = 1, dst[1]  = 0, dst[2]  = 0, dst[3]  = 0;
     dst[4]  = 0, dst[5]  = 1, dst[6]  = 0, dst[7]  = 0;
@@ -1193,7 +1190,7 @@ static inline void sw_matrix_id(sw_matrix_t dst)
     dst[12] = 0, dst[13] = 0, dst[14] = 0, dst[15] = 1;
 }
 
-static inline void sw_matrix_mul_rst(float *SW_RESTRICT dst, const float *SW_RESTRICT left, const float *SW_RESTRICT right)
+static void sw_matrix_mul_rst(float *SW_RESTRICT dst, const float *SW_RESTRICT left, const float *SW_RESTRICT right)
 {
 #ifdef SW_HAS_ESP_DSP
     // dspm_mult_4x4x4_f32 treats its operands as row-major. rlsw stores matrices
@@ -1230,28 +1227,28 @@ static inline void sw_matrix_mul_rst(float *SW_RESTRICT dst, const float *SW_RES
 #endif
 }
 
-static inline void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const sw_matrix_t right)
+static SW_INLINE void sw_matrix_mul(sw_matrix_t dst, const sw_matrix_t left, const sw_matrix_t right)
 {
     float result[16];
     sw_matrix_mul_rst(result, left, right);
     for (int i = 0; i < 16; i++) dst[i] = result[i];
 }
 
-static inline int sw_clamp_int(int v, int min, int max)
+static SW_INLINE int sw_clamp_int(int v, int min, int max)
 {
     if (v < min) return min;
     if (v > max) return max;
     return v;
 }
 
-static inline int sw_clamp(float v, float min, float max)
+static SW_INLINE int sw_clamp(float v, float min, float max)
 {
     if (v < min) return min;
     if (v > max) return max;
     return v;
 }
 
-static inline float sw_saturate(float x)
+static SW_INLINE float sw_saturate(float x)
 {
     union { float f; uint32_t u; } fb;
     fb.f = x;
@@ -1268,7 +1265,7 @@ static inline float sw_saturate(float x)
     return x;
 }
 
-static inline float sw_fract(float x)
+static SW_INLINE float sw_fract(float x)
 {
     return (x - floorf(x));
 }
@@ -1299,17 +1296,17 @@ static SW_INLINE float sw_rcp(float x)
 #endif
 }
 
-static inline uint8_t sw_luminance8(const uint8_t *color)
+static SW_INLINE uint8_t sw_luminance8(const uint8_t *color)
 {
     return (uint8_t)((color[0]*77 + color[1]*150 + color[2]*29) >> 8);
 }
 
-static inline float sw_luminance(const float *color)
+static SW_INLINE float sw_luminance(const float *color)
 {
     return color[0]*0.299f + color[1]*0.587f + color[2]*0.114f;
 }
 
-static inline void sw_lerp_vertex_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
+static void sw_lerp_vertex_PCT(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float t)
 {
     const float tInv = 1.0f - t;
 
@@ -1331,7 +1328,7 @@ static inline void sw_lerp_vertex_PCT(sw_vertex_t *SW_RESTRICT out, const sw_ver
 }
 
 // Half conversion functions
-static inline uint16_t sw_float_to_half_ui(uint32_t ui)
+static SW_INLINE uint16_t sw_float_to_half_ui(uint32_t ui)
 {
     int32_t s = (ui >> 16) & 0x8000;
     int32_t em = ui & 0x7fffffff;
@@ -1351,7 +1348,7 @@ static inline uint16_t sw_float_to_half_ui(uint32_t ui)
     return (uint16_t)(s | h);
 }
 
-static inline uint32_t sw_half_to_float_ui(uint16_t h)
+static SW_INLINE uint32_t sw_half_to_float_ui(uint16_t h)
 {
     uint32_t s = (unsigned)(h & 0x8000) << 16;
     int32_t em = h & 0x7fff;
@@ -1369,35 +1366,35 @@ static inline uint32_t sw_half_to_float_ui(uint16_t h)
     return s | r;
 }
 
-static inline sw_half_t sw_float_to_half(float i)
+static SW_INLINE sw_half_t sw_float_to_half(float i)
 {
     union { float f; uint32_t i; } v;
     v.f = i;
     return sw_float_to_half_ui(v.i);
 }
 
-static inline float sw_half_to_float(sw_half_t y)
+static SW_INLINE float sw_half_to_float(sw_half_t y)
 {
     union { float f; uint32_t i; } v;
     v.i = sw_half_to_float_ui(y);
     return v.f;
 }
 
-static inline uint8_t sw_expand_1to8(uint32_t v) { return v? 255 : 0; }
-static inline uint8_t sw_expand_2to8(uint32_t v) { return (uint8_t)(v*85); }
-static inline uint8_t sw_expand_3to8(uint32_t v) { return (uint8_t)((v << 5) | (v << 2) | (v >> 1)); }
-static inline uint8_t sw_expand_4to8(uint32_t v) { return (uint8_t)((v << 4) | v); }
-static inline uint8_t sw_expand_5to8(uint32_t v) { return (uint8_t)((v << 3) | (v >> 2)); }
-static inline uint8_t sw_expand_6to8(uint32_t v) { return (uint8_t)((v << 2) | (v >> 4)); }
+static SW_INLINE uint8_t sw_expand_1to8(uint32_t v) { return v? 255 : 0; }
+static SW_INLINE uint8_t sw_expand_2to8(uint32_t v) { return (uint8_t)(v*85); }
+static SW_INLINE uint8_t sw_expand_3to8(uint32_t v) { return (uint8_t)((v << 5) | (v << 2) | (v >> 1)); }
+static SW_INLINE uint8_t sw_expand_4to8(uint32_t v) { return (uint8_t)((v << 4) | v); }
+static SW_INLINE uint8_t sw_expand_5to8(uint32_t v) { return (uint8_t)((v << 3) | (v >> 2)); }
+static SW_INLINE uint8_t sw_expand_6to8(uint32_t v) { return (uint8_t)((v << 2) | (v >> 4)); }
 
-static inline uint32_t sw_compress_8to1(uint8_t v) { return v >> 7; }
-static inline uint32_t sw_compress_8to2(uint8_t v) { return v >> 6; }
-static inline uint32_t sw_compress_8to3(uint8_t v) { return v >> 5; }
-static inline uint32_t sw_compress_8to4(uint8_t v) { return v >> 4; }
-static inline uint32_t sw_compress_8to5(uint8_t v) { return v >> 3; }
-static inline uint32_t sw_compress_8to6(uint8_t v) { return v >> 2; }
+static SW_INLINE uint32_t sw_compress_8to1(uint8_t v) { return v >> 7; }
+static SW_INLINE uint32_t sw_compress_8to2(uint8_t v) { return v >> 6; }
+static SW_INLINE uint32_t sw_compress_8to3(uint8_t v) { return v >> 5; }
+static SW_INLINE uint32_t sw_compress_8to4(uint8_t v) { return v >> 4; }
+static SW_INLINE uint32_t sw_compress_8to5(uint8_t v) { return v >> 3; }
+static SW_INLINE uint32_t sw_compress_8to6(uint8_t v) { return v >> 2; }
 
-static inline void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *SW_RESTRICT src)
+static SW_INLINE void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *SW_RESTRICT src)
 {
 #if defined(SW_HAS_NEON)
     uint8x8_t bytes = vreinterpret_u8_u32(vld1_dup_u32((const uint32_t *)src));
@@ -1405,12 +1402,10 @@ static inline void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *SW_
     uint32x4_t dwords = vmovl_u16(vget_low_u16(words));
     float32x4_t fvals = vmulq_f32(vcvtq_f32_u32(dwords), vdupq_n_f32(SW_INV_255));
     vst1q_f32(dst, fvals);
-
 #elif defined(SW_HAS_SSE41)
     __m128i bytes = _mm_loadu_si32(src);
     __m128 fvals = _mm_mul_ps(_mm_cvtepi32_ps(_mm_cvtepu8_epi32(bytes)), _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, fvals);
-
 #elif defined(SW_HAS_SSE2)
     __m128i zero = _mm_setzero_si128();
     __m128i bytes = _mm_loadu_si32(src);
@@ -1418,22 +1413,13 @@ static inline void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *SW_
     __m128i dwords = _mm_unpacklo_epi16(words, zero);
     __m128 fvals = _mm_mul_ps(_mm_cvtepi32_ps(dwords), _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, fvals);
-
 #elif defined(SW_HAS_RVV)
-    // TODO: WARNING: Sample code generated by AI, needs testing and review
-    size_t vl = __riscv_vsetvl_e8m1(4); // Set vector length for 8-bit input elements
-    vuint8m1_t vsrc_u8 = __riscv_vle8_v_u8m1(src, vl); // Load 4 unsigned 8-bit integers
-    vuint32m1_t vsrc_u32 = __riscv_vwcvt_xu_u_v_u32m1(vsrc_u8, vl); // Widen to 32-bit unsigned integers
-    vfloat32m1_t vsrc_f32 = __riscv_vfcvt_f_xu_v_f32m1(vsrc_u32, vl); // Convert to float32
-    vfloat32m1_t vnorm = __riscv_vfmul_vf_f32m1(vsrc_f32, SW_INV_255, vl); // Multiply by 1/255.0 to normalize
-    __riscv_vse32_v_f32m1(dst, vnorm, vl); // Store result
-
-#elif SW_USE_COLOR_LUT
+    // TODO: Implement RVV intrinsics
+#elif RLSW_USE_COLOR_LUT
     dst[0] = SW_LUT_UINT8_TO_FLOAT[src[0]];
     dst[1] = SW_LUT_UINT8_TO_FLOAT[src[1]];
     dst[2] = SW_LUT_UINT8_TO_FLOAT[src[2]];
     dst[3] = SW_LUT_UINT8_TO_FLOAT[src[3]];
-
 #else
     dst[0] = (float)src[0]*SW_INV_255;
     dst[1] = (float)src[1]*SW_INV_255;
@@ -1442,7 +1428,7 @@ static inline void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *SW_
 #endif
 }
 
-static inline void sw_color_to_color8(uint8_t *SW_RESTRICT dst, const float *SW_RESTRICT src)
+static SW_INLINE void sw_color_to_color8(uint8_t *SW_RESTRICT dst, const float *SW_RESTRICT src)
 {
 #if defined(SW_HAS_NEON)
     float32x4_t fvals = vmulq_f32(vld1q_f32(src), vdupq_n_f32(255.0f));
@@ -1450,39 +1436,21 @@ static inline void sw_color_to_color8(uint8_t *SW_RESTRICT dst, const float *SW_
     uint16x4_t i16 = vmovn_u32(i32);
     uint8x8_t i8 = vmovn_u16(vcombine_u16(i16, i16));
     vst1_lane_u32((uint32_t *)dst, vreinterpret_u32_u8(i8), 0);
-
 #elif defined(SW_HAS_SSE41)
     __m128 fvals = _mm_mul_ps(_mm_loadu_ps(src), _mm_set1_ps(255.0f));
     __m128i i32 = _mm_cvttps_epi32(fvals);
     __m128i i16 = _mm_packus_epi32(i32, i32);
     __m128i i8 = _mm_packus_epi16(i16, i16);
     _mm_storeu_si32(dst, i8);
-
 #elif defined(SW_HAS_SSE2)
     __m128 fvals = _mm_mul_ps(_mm_loadu_ps(src), _mm_set1_ps(255.0f));
     __m128i i32 = _mm_cvttps_epi32(fvals);
     __m128i i16 = _mm_packs_epi32(i32, i32);
     __m128i i8 = _mm_packus_epi16(i16, i16);
     _mm_storeu_si32(dst, i8);
-
 #elif defined(SW_HAS_RVV)
-    // TODO: WARNING: Sample code generated by AI, needs testing and review
-    // REVIEW: It shouldn't perform so many operations; take inspiration from other versions
+    // TODO: Implement RVV intrinsics
     // NOTE: RVV 1.0 specs define the use of __riscv_ prefix for instrinsic functions
-    size_t vl = __riscv_vsetvl_e32m1(4); // Load up to 4 floats into a vector register
-    vfloat32m1_t vsrc = __riscv_vle32_v_f32m1(src, vl); // Load float32 values
-
-    // Multiply by 255.0f and add 0.5f for rounding
-    vfloat32m1_t vscaled = __riscv_vfmul_vf_f32m1(vsrc, 255.0f, vl);
-    vscaled = __riscv_vfadd_vf_f32m1(vscaled, 0.5f, vl);
-
-    // Convert to unsigned integer (truncate toward zero)
-    vuint32m1_t vu32 = __riscv_vfcvt_xu_f_v_u32m1(vscaled, vl);
-
-    // Narrow from u32 -> u8
-    vuint8m1_t vu8 = __riscv_vnclipu_wx_u8m1(vu32, 0, vl); // Round toward zero
-    __riscv_vse8_v_u8m1(dst, vu8, vl); // Store result
-
 #else
     dst[0] = (uint8_t)(src[0]*255.0f);
     dst[1] = (uint8_t)(src[1]*255.0f);
@@ -1575,27 +1543,27 @@ static bool sw_pool_free(sw_pool_t *pool, sw_handle_t handle)
 
 // Validity check helper functions
 //-------------------------------------------------------------------------------------------
-static inline bool sw_is_texture_valid(sw_handle_t id)
+static SW_INLINE bool sw_is_texture_valid(sw_handle_t id)
 {
     return sw_pool_valid(&RLSW.texturePool, id);
 }
 
-static inline bool sw_is_texture_complete(sw_texture_t *tex)
+static SW_INLINE bool sw_is_texture_complete(sw_texture_t *tex)
 {
     return (tex != NULL) && (tex->pixels != NULL);
 }
 
-static inline bool sw_is_texture_filter_valid(int filter)
+static SW_INLINE bool sw_is_texture_filter_valid(int filter)
 {
     return ((filter == SW_NEAREST) || (filter == SW_LINEAR));
 }
 
-static inline bool sw_is_texture_wrap_valid(int wrap)
+static SW_INLINE bool sw_is_texture_wrap_valid(int wrap)
 {
     return ((wrap == SW_REPEAT) || (wrap == SW_CLAMP));
 }
 
-static inline bool sw_is_draw_mode_valid(int mode)
+static bool sw_is_draw_mode_valid(int mode)
 {
     bool result = false;
 
@@ -1611,7 +1579,7 @@ static inline bool sw_is_draw_mode_valid(int mode)
     return result;
 }
 
-static inline bool sw_is_poly_mode_valid(int mode)
+static bool sw_is_poly_mode_valid(int mode)
 {
     bool result = false;
 
@@ -1626,12 +1594,12 @@ static inline bool sw_is_poly_mode_valid(int mode)
     return result;
 }
 
-static inline bool sw_is_face_valid(int face)
+static SW_INLINE bool sw_is_face_valid(int face)
 {
     return (face == SW_FRONT || face == SW_BACK);
 }
 
-static inline bool sw_is_ready_to_render(void)
+static SW_INLINE bool sw_is_ready_to_render(void)
 {
     return (swCheckFramebufferStatus() == SW_FRAMEBUFFER_COMPLETE);
 }
@@ -1639,7 +1607,7 @@ static inline bool sw_is_ready_to_render(void)
 
 // Pixel management functions
 //-------------------------------------------------------------------------------------------
-static inline int sw_pixel_get_format(SWformat format, SWtype type)
+static int sw_pixel_get_format(SWformat format, SWtype type)
 {
     int channels = 0;
     int bitsPerChannel = 8; // Default: 8 bits per channel
@@ -1717,7 +1685,7 @@ static inline int sw_pixel_get_format(SWformat format, SWtype type)
     return SW_PIXELFORMAT_UNKNOWN;
 }
 
-static inline bool sw_pixel_is_depth_format(sw_pixelformat_t format)
+static bool sw_pixel_is_depth_format(sw_pixelformat_t format)
 {
     switch (format)
     {
@@ -1730,7 +1698,7 @@ static inline bool sw_pixel_is_depth_format(sw_pixelformat_t format)
     return false;
 }
 
-static inline void sw_pixel_read_color8_GRAYSCALE(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_GRAYSCALE(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t gray = ((const uint8_t *)pixels)[offset];
     color[0] = gray;
@@ -1739,7 +1707,7 @@ static inline void sw_pixel_read_color8_GRAYSCALE(uint8_t *SW_RESTRICT color, co
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_GRAYALPHA(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_GRAYALPHA(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint8_t *src = &((const uint8_t *)pixels)[offset*2];
     color[0] = src[0];
@@ -1748,7 +1716,7 @@ static inline void sw_pixel_read_color8_GRAYALPHA(uint8_t *SW_RESTRICT color, co
     color[3] = src[1];
 }
 
-static inline void sw_pixel_read_color8_R3G3B2(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R3G3B2(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t pixel = ((const uint8_t *)pixels)[offset];
     color[0] = sw_expand_3to8((pixel >> 5) & 0x07);
@@ -1757,7 +1725,7 @@ static inline void sw_pixel_read_color8_R3G3B2(uint8_t *SW_RESTRICT color, const
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R5G6B5(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R5G6B5(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint16_t pixel = ((const uint16_t *)pixels)[offset];
     color[0] = sw_expand_5to8((pixel >> 11) & 0x1F);
@@ -1766,7 +1734,7 @@ static inline void sw_pixel_read_color8_R5G6B5(uint8_t *SW_RESTRICT color, const
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R8G8B8(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R8G8B8(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint8_t *src = &((const uint8_t *)pixels)[offset*3];
     color[0] = src[0];
@@ -1775,7 +1743,7 @@ static inline void sw_pixel_read_color8_R8G8B8(uint8_t *SW_RESTRICT color, const
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R5G5B5A1(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R5G5B5A1(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint16_t pixel = ((const uint16_t *)pixels)[offset];
     color[0] = sw_expand_5to8((pixel >> 11) & 0x1F);
@@ -1784,7 +1752,7 @@ static inline void sw_pixel_read_color8_R5G5B5A1(uint8_t *SW_RESTRICT color, con
     color[3] = sw_expand_1to8( pixel        & 0x01);
 }
 
-static inline void sw_pixel_read_color8_R4G4B4A4(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R4G4B4A4(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint16_t pixel = ((const uint16_t *)pixels)[offset];
     color[0] = sw_expand_4to8((pixel >> 12) & 0x0F);
@@ -1793,7 +1761,7 @@ static inline void sw_pixel_read_color8_R4G4B4A4(uint8_t *SW_RESTRICT color, con
     color[3] = sw_expand_4to8( pixel        & 0x0F);
 }
 
-static inline void sw_pixel_read_color8_R8G8B8A8(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R8G8B8A8(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint8_t *src = &((const uint8_t *)pixels)[offset*4];
     color[0] = src[0];
@@ -1802,7 +1770,7 @@ static inline void sw_pixel_read_color8_R8G8B8A8(uint8_t *SW_RESTRICT color, con
     color[3] = src[3];
 }
 
-static inline void sw_pixel_read_color8_R32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t gray = (uint8_t)(((const float *)pixels)[offset]*255.0f);
     color[0] = gray;
@@ -1811,7 +1779,7 @@ static inline void sw_pixel_read_color8_R32(uint8_t *SW_RESTRICT color, const vo
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R32G32B32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R32G32B32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const float *src = &((const float *)pixels)[offset*3];
     color[0] = (uint8_t)(src[0]*255.0f);
@@ -1820,7 +1788,7 @@ static inline void sw_pixel_read_color8_R32G32B32(uint8_t *SW_RESTRICT color, co
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R32G32B32A32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R32G32B32A32(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const float *src = &((const float *)pixels)[offset*4];
     color[0] = (uint8_t)(src[0]*255.0f);
@@ -1829,7 +1797,7 @@ static inline void sw_pixel_read_color8_R32G32B32A32(uint8_t *SW_RESTRICT color,
     color[3] = (uint8_t)(src[3]*255.0f);
 }
 
-static inline void sw_pixel_read_color8_R16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t gray = (uint8_t)(sw_half_to_float(((const uint16_t *)pixels)[offset])*255.0f);
     color[0] = gray;
@@ -1838,7 +1806,7 @@ static inline void sw_pixel_read_color8_R16(uint8_t *SW_RESTRICT color, const vo
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R16G16B16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R16G16B16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint16_t *src = &((const uint16_t *)pixels)[offset*3];
     color[0] = (uint8_t)(sw_half_to_float(src[0])*255.0f);
@@ -1847,7 +1815,7 @@ static inline void sw_pixel_read_color8_R16G16B16(uint8_t *SW_RESTRICT color, co
     color[3] = 255;
 }
 
-static inline void sw_pixel_read_color8_R16G16B16A16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color8_R16G16B16A16(uint8_t *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint16_t *src = &((const uint16_t *)pixels)[offset*4];
     color[0] = (uint8_t)(sw_half_to_float(src[0])*255.0f);
@@ -1856,7 +1824,7 @@ static inline void sw_pixel_read_color8_R16G16B16A16(uint8_t *SW_RESTRICT color,
     color[3] = (uint8_t)(sw_half_to_float(src[3])*255.0f);
 }
 
-static inline sw_pixel_read_color8_f sw_pixel_get_read_color8_func(sw_pixelformat_t format)
+static sw_pixel_read_color8_f sw_pixel_get_read_color8_func(sw_pixelformat_t format)
 {
     switch (format)
     {
@@ -1886,19 +1854,19 @@ static inline sw_pixel_read_color8_f sw_pixel_get_read_color8_func(sw_pixelforma
     return NULL;
 }
 
-static inline void sw_pixel_write_color8_GRAYSCALE(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_GRAYSCALE(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     ((uint8_t *)pixels)[offset] = sw_luminance8(color);
 }
 
-static inline void sw_pixel_write_color8_GRAYALPHA(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_GRAYALPHA(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t *dst = &((uint8_t *)pixels)[offset*2];
     dst[0] = sw_luminance8(color);
     dst[1] = color[3];
 }
 
-static inline void sw_pixel_write_color8_R3G3B2(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R3G3B2(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t pixel = (sw_compress_8to3(color[0]) << 5)
                   | (sw_compress_8to3(color[1]) << 2)
@@ -1906,7 +1874,7 @@ static inline void sw_pixel_write_color8_R3G3B2(void *SW_RESTRICT pixels, const 
     ((uint8_t *)pixels)[offset] = pixel;
 }
 
-static inline void sw_pixel_write_color8_R5G6B5(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R5G6B5(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t pixel = (sw_compress_8to5(color[0]) << 11)
                    | (sw_compress_8to6(color[1]) <<  5)
@@ -1914,7 +1882,7 @@ static inline void sw_pixel_write_color8_R5G6B5(void *SW_RESTRICT pixels, const 
     ((uint16_t *)pixels)[offset] = pixel;
 }
 
-static inline void sw_pixel_write_color8_R8G8B8(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R8G8B8(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t *dst = &((uint8_t *)pixels)[offset*3];
     dst[0] = color[0];
@@ -1922,7 +1890,7 @@ static inline void sw_pixel_write_color8_R8G8B8(void *SW_RESTRICT pixels, const 
     dst[2] = color[2];
 }
 
-static inline void sw_pixel_write_color8_R5G5B5A1(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R5G5B5A1(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t pixel = (sw_compress_8to5(color[0]) << 11)
                    | (sw_compress_8to5(color[1]) <<  6)
@@ -1931,7 +1899,7 @@ static inline void sw_pixel_write_color8_R5G5B5A1(void *SW_RESTRICT pixels, cons
     ((uint16_t *)pixels)[offset] = pixel;
 }
 
-static inline void sw_pixel_write_color8_R4G4B4A4(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R4G4B4A4(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t pixel = (sw_compress_8to4(color[0]) << 12)
                    | (sw_compress_8to4(color[1]) <<  8)
@@ -1940,7 +1908,7 @@ static inline void sw_pixel_write_color8_R4G4B4A4(void *SW_RESTRICT pixels, cons
     ((uint16_t *)pixels)[offset] = pixel;
 }
 
-static inline void sw_pixel_write_color8_R8G8B8A8(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R8G8B8A8(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t *dst = &((uint8_t *)pixels)[offset*4];
     dst[0] = color[0];
@@ -1949,12 +1917,12 @@ static inline void sw_pixel_write_color8_R8G8B8A8(void *SW_RESTRICT pixels, cons
     dst[3] = color[3];
 }
 
-static inline void sw_pixel_write_color8_R32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     ((float *)pixels)[offset] = sw_luminance8(color)*SW_INV_255;
 }
 
-static inline void sw_pixel_write_color8_R32G32B32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R32G32B32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     float *dst = &((float *)pixels)[offset*3];
     dst[0] = color[0]*SW_INV_255;
@@ -1962,7 +1930,7 @@ static inline void sw_pixel_write_color8_R32G32B32(void *SW_RESTRICT pixels, con
     dst[2] = color[2]*SW_INV_255;
 }
 
-static inline void sw_pixel_write_color8_R32G32B32A32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R32G32B32A32(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     float *dst = &((float *)pixels)[offset*4];
     dst[0] = color[0]*SW_INV_255;
@@ -1971,12 +1939,12 @@ static inline void sw_pixel_write_color8_R32G32B32A32(void *SW_RESTRICT pixels, 
     dst[3] = color[3]*SW_INV_255;
 }
 
-static inline void sw_pixel_write_color8_R16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     ((uint16_t *)pixels)[offset] = sw_float_to_half(sw_luminance8(color)*SW_INV_255);
 }
 
-static inline void sw_pixel_write_color8_R16G16B16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R16G16B16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t *dst = &((uint16_t *)pixels)[offset*3];
     dst[0] = sw_float_to_half(color[0]*SW_INV_255);
@@ -1984,7 +1952,7 @@ static inline void sw_pixel_write_color8_R16G16B16(void *SW_RESTRICT pixels, con
     dst[2] = sw_float_to_half(color[2]*SW_INV_255);
 }
 
-static inline void sw_pixel_write_color8_R16G16B16A16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color8_R16G16B16A16(void *SW_RESTRICT pixels, const uint8_t *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t *dst = &((uint16_t *)pixels)[offset*4];
     dst[0] = sw_float_to_half(color[0]*SW_INV_255);
@@ -1993,7 +1961,7 @@ static inline void sw_pixel_write_color8_R16G16B16A16(void *SW_RESTRICT pixels, 
     dst[3] = sw_float_to_half(color[3]*SW_INV_255);
 }
 
-static inline sw_pixel_write_color8_f sw_pixel_get_write_color8_func(sw_pixelformat_t format)
+static sw_pixel_write_color8_f sw_pixel_get_write_color8_func(sw_pixelformat_t format)
 {
     switch (format)
     {
@@ -2023,7 +1991,7 @@ static inline sw_pixel_write_color8_f sw_pixel_get_write_color8_func(sw_pixelfor
     return NULL;
 }
 
-static inline void sw_pixel_read_color_GRAYSCALE(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_GRAYSCALE(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     float gray = ((const uint8_t *)pixels)[offset]*SW_INV_255;
     color[0] = gray;
@@ -2032,7 +2000,7 @@ static inline void sw_pixel_read_color_GRAYSCALE(float *SW_RESTRICT color, const
     color[3] = 1.0f;
 }
 
-static inline void sw_pixel_read_color_GRAYALPHA(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_GRAYALPHA(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint8_t *src = &((const uint8_t *)pixels)[offset*2];
     float gray = src[0]*SW_INV_255;
@@ -2042,47 +2010,47 @@ static inline void sw_pixel_read_color_GRAYALPHA(float *SW_RESTRICT color, const
     color[3] = src[1]*SW_INV_255;
 }
 
-static inline void sw_pixel_read_color_R3G3B2(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R3G3B2(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t unpack[4];
     sw_pixel_read_color8_R3G3B2(unpack, pixels, offset);
     sw_color8_to_color(color, unpack);
 }
 
-static inline void sw_pixel_read_color_R5G6B5(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R5G6B5(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t unpack[4];
     sw_pixel_read_color8_R5G6B5(unpack, pixels, offset);
     sw_color8_to_color(color, unpack);
 }
 
-static inline void sw_pixel_read_color_R8G8B8(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R8G8B8(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t unpack[4];
     sw_pixel_read_color8_R8G8B8(unpack, pixels, offset);
     sw_color8_to_color(color, unpack);
 }
 
-static inline void sw_pixel_read_color_R5G5B5A1(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R5G5B5A1(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t unpack[4];
     sw_pixel_read_color8_R5G5B5A1(unpack, pixels, offset);
     sw_color8_to_color(color, unpack);
 }
 
-static inline void sw_pixel_read_color_R4G4B4A4(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R4G4B4A4(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     uint8_t unpack[4];
     sw_pixel_read_color8_R4G4B4A4(unpack, pixels, offset);
     sw_color8_to_color(color, unpack);
 }
 
-static inline void sw_pixel_read_color_R8G8B8A8(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R8G8B8A8(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     sw_color8_to_color(color, &((const uint8_t *)pixels)[offset*4]);
 }
 
-static inline void sw_pixel_read_color_R32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     float val = ((const float *)pixels)[offset];
     color[0] = val;
@@ -2091,7 +2059,7 @@ static inline void sw_pixel_read_color_R32(float *SW_RESTRICT color, const void 
     color[3] = 1.0f;
 }
 
-static inline void sw_pixel_read_color_R32G32B32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R32G32B32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const float *src = &((const float *)pixels)[offset*3];
     color[0] = src[0];
@@ -2100,7 +2068,7 @@ static inline void sw_pixel_read_color_R32G32B32(float *SW_RESTRICT color, const
     color[3] = 1.0f;
 }
 
-static inline void sw_pixel_read_color_R32G32B32A32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R32G32B32A32(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const float *src = &((const float *)pixels)[offset*4];
     color[0] = src[0];
@@ -2109,7 +2077,7 @@ static inline void sw_pixel_read_color_R32G32B32A32(float *SW_RESTRICT color, co
     color[3] = src[3];
 }
 
-static inline void sw_pixel_read_color_R16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     float val = sw_half_to_float(((const uint16_t *)pixels)[offset]);
     color[0] = val;
@@ -2118,7 +2086,7 @@ static inline void sw_pixel_read_color_R16(float *SW_RESTRICT color, const void 
     color[3] = 1.0f;
 }
 
-static inline void sw_pixel_read_color_R16G16B16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R16G16B16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint16_t *src = &((const uint16_t *)pixels)[offset*3];
     color[0] = sw_half_to_float(src[0]);
@@ -2127,7 +2095,7 @@ static inline void sw_pixel_read_color_R16G16B16(float *SW_RESTRICT color, const
     color[3] = 1.0f;
 }
 
-static inline void sw_pixel_read_color_R16G16B16A16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
+static void sw_pixel_read_color_R16G16B16A16(float *SW_RESTRICT color, const void *SW_RESTRICT pixels, uint32_t offset)
 {
     const uint16_t *src = &((const uint16_t *)pixels)[offset*4];
     color[0] = sw_half_to_float(src[0]);
@@ -2136,7 +2104,7 @@ static inline void sw_pixel_read_color_R16G16B16A16(float *SW_RESTRICT color, co
     color[3] = sw_half_to_float(src[3]);
 }
 
-static inline sw_pixel_read_color_f sw_pixel_get_read_color_func(sw_pixelformat_t format)
+static sw_pixel_read_color_f sw_pixel_get_read_color_func(sw_pixelformat_t format)
 {
     switch (format)
     {
@@ -2166,64 +2134,64 @@ static inline sw_pixel_read_color_f sw_pixel_get_read_color_func(sw_pixelformat_
     return NULL;
 }
 
-static inline void sw_pixel_write_color_GRAYSCALE(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_GRAYSCALE(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     ((uint8_t *)pixels)[offset] = (uint8_t)(sw_luminance(color)*255.0f);
 }
 
-static inline void sw_pixel_write_color_GRAYALPHA(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_GRAYALPHA(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t *dst = &((uint8_t *)pixels)[offset*2];
     dst[0] = (uint8_t)(sw_luminance(color)*255.0f);
     dst[1] = (uint8_t)(color[3]*255.0f);
 }
 
-static inline void sw_pixel_write_color_R3G3B2(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R3G3B2(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t color8[4];
     sw_color_to_color8(color8, color);
     sw_pixel_write_color8_R3G3B2(pixels, color8, offset);
 }
 
-static inline void sw_pixel_write_color_R5G6B5(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R5G6B5(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t color8[4];
     sw_color_to_color8(color8, color);
     sw_pixel_write_color8_R5G6B5(pixels, color8, offset);
 }
 
-static inline void sw_pixel_write_color_R8G8B8(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R8G8B8(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t color8[4];
     sw_color_to_color8(color8, color);
     sw_pixel_write_color8_R8G8B8(pixels, color8, offset);
 }
 
-static inline void sw_pixel_write_color_R5G5B5A1(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R5G5B5A1(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t color8[4];
     sw_color_to_color8(color8, color);
     sw_pixel_write_color8_R5G5B5A1(pixels, color8, offset);
 }
 
-static inline void sw_pixel_write_color_R4G4B4A4(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R4G4B4A4(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint8_t color8[4];
     sw_color_to_color8(color8, color);
     sw_pixel_write_color8_R4G4B4A4(pixels, color8, offset);
 }
 
-static inline void sw_pixel_write_color_R8G8B8A8(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R8G8B8A8(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     sw_color_to_color8(&((uint8_t *)pixels)[offset*4], color);
 }
 
-static inline void sw_pixel_write_color_R32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     ((float *)pixels)[offset] = sw_luminance(color);
 }
 
-static inline void sw_pixel_write_color_R32G32B32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R32G32B32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     float *dst = &((float *)pixels)[offset*3];
     dst[0] = color[0];
@@ -2231,7 +2199,7 @@ static inline void sw_pixel_write_color_R32G32B32(void *SW_RESTRICT pixels, cons
     dst[2] = color[2];
 }
 
-static inline void sw_pixel_write_color_R32G32B32A32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R32G32B32A32(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     float *dst = &((float *)pixels)[offset*4];
     dst[0] = color[0];
@@ -2240,12 +2208,12 @@ static inline void sw_pixel_write_color_R32G32B32A32(void *SW_RESTRICT pixels, c
     dst[3] = color[3];
 }
 
-static inline void sw_pixel_write_color_R16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     ((uint16_t *)pixels)[offset] = sw_float_to_half(sw_luminance(color));
 }
 
-static inline void sw_pixel_write_color_R16G16B16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R16G16B16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t *dst = &((uint16_t *)pixels)[offset*3];
     dst[0] = sw_float_to_half(color[0]);
@@ -2253,7 +2221,7 @@ static inline void sw_pixel_write_color_R16G16B16(void *SW_RESTRICT pixels, cons
     dst[2] = sw_float_to_half(color[2]);
 }
 
-static inline void sw_pixel_write_color_R16G16B16A16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
+static void sw_pixel_write_color_R16G16B16A16(void *SW_RESTRICT pixels, const float *SW_RESTRICT color, uint32_t offset)
 {
     uint16_t *dst = &((uint16_t *)pixels)[offset*4];
     dst[0] = sw_float_to_half(color[0]);
@@ -2262,7 +2230,7 @@ static inline void sw_pixel_write_color_R16G16B16A16(void *SW_RESTRICT pixels, c
     dst[3] = sw_float_to_half(color[3]);
 }
 
-static inline sw_pixel_write_color_f sw_pixel_get_write_color_func(sw_pixelformat_t format)
+static sw_pixel_write_color_f sw_pixel_get_write_color_func(sw_pixelformat_t format)
 {
     switch (format)
     {
@@ -2292,32 +2260,32 @@ static inline sw_pixel_write_color_f sw_pixel_get_write_color_func(sw_pixelforma
     return NULL;
 }
 
-static inline float sw_pixel_read_depth_D8(const void *pixels, uint32_t offset)
+static float sw_pixel_read_depth_D8(const void *pixels, uint32_t offset)
 {
     return (float)((uint8_t *)pixels)[offset]*SW_INV_255;
 }
 
-static inline float sw_pixel_read_depth_D16(const void *pixels, uint32_t offset)
+static float sw_pixel_read_depth_D16(const void *pixels, uint32_t offset)
 {
     return (float)((uint16_t *)pixels)[offset]/UINT16_MAX;
 }
 
-static inline float sw_pixel_read_depth_D32(const void *pixels, uint32_t offset)
+static float sw_pixel_read_depth_D32(const void *pixels, uint32_t offset)
 {
     return ((float *)pixels)[offset];
 }
 
-static inline void sw_pixel_write_depth_D8(void *pixels, float depth, uint32_t offset)
+static void sw_pixel_write_depth_D8(void *pixels, float depth, uint32_t offset)
 {
     ((uint8_t *)pixels)[offset] = (uint8_t)(depth*UINT8_MAX);
 }
 
-static inline void sw_pixel_write_depth_D16(void *pixels, float depth, uint32_t offset)
+static void sw_pixel_write_depth_D16(void *pixels, float depth, uint32_t offset)
 {
     ((uint16_t *)pixels)[offset] = (uint16_t)(depth*UINT16_MAX);
 }
 
-static inline void sw_pixel_write_depth_D32(void *pixels, float depth, uint32_t offset)
+static void sw_pixel_write_depth_D32(void *pixels, float depth, uint32_t offset)
 {
     ((float *)pixels)[offset] = depth;
 }
@@ -2325,7 +2293,7 @@ static inline void sw_pixel_write_depth_D32(void *pixels, float depth, uint32_t 
 
 // Texture functionality
 //-------------------------------------------------------------------------------------------
-static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int w, int h, sw_pixelformat_t format)
+static bool sw_texture_alloc(sw_texture_t *texture, const void *data, int w, int h, sw_pixelformat_t format)
 {
     bool isDepth = sw_pixel_is_depth_format(format);
     int bpp = SW_PIXELFORMAT_SIZE[format];
@@ -2394,16 +2362,16 @@ static inline bool sw_texture_alloc(sw_texture_t *texture, const void *data, int
     return true;
 }
 
-static inline void sw_texture_free(sw_texture_t *texture)
+static void sw_texture_free(sw_texture_t *texture)
 {
     SW_FREE(texture->pixels);
 }
 
-static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
+static void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
 {
     int x, y;
 
-#if SW_SUPPORT_NPOT_TEXTURE
+#if RLSW_SUPPORT_NPOT_TEXTURE
     if (tex->sWrap == SW_REPEAT) x = (int)(sw_fract(u)*tex->width);
     else x = (int)(sw_saturate(u)*tex->width);
 
@@ -2420,7 +2388,7 @@ static inline void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_
     tex->readColor(color, tex->pixels, y*tex->width + x);
 }
 
-static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
+static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_t *SW_RESTRICT tex, float u, float v)
 {
     float xf = (u*tex->width) - 0.5f;
     float yf = (v*tex->height) - 0.5f;
@@ -2436,7 +2404,7 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
 
     if (tex->sWrap == SW_REPEAT)
     {
-    #if SW_SUPPORT_NPOT_TEXTURE
+    #if RLSW_SUPPORT_NPOT_TEXTURE
         x0 = (x0%tex->width + tex->width)%tex->width;
         x1 = (x1%tex->width + tex->width)%tex->width;
     #else
@@ -2452,7 +2420,7 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
 
     if (tex->tWrap == SW_REPEAT)
     {
-    #if SW_SUPPORT_NPOT_TEXTURE
+    #if RLSW_SUPPORT_NPOT_TEXTURE
         y0 = (y0%tex->height + tex->height)%tex->height;
         y1 = (y1%tex->height + tex->height)%tex->height;
     #else
@@ -2481,7 +2449,7 @@ static inline void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_t
 }
 
 // Resolves which sample function to use from the texel-to-pixel derivative magnitude
-static inline sw_texture_sampler_f sw_texture_pick_sampler(const sw_texture_t *tex, const float dTdx[2], const float dTdy[2])
+static sw_texture_sampler_f sw_texture_pick_sampler(const sw_texture_t *tex, const float dTdx[2], const float dTdy[2])
 {
     // NOTE: Commented there is the previous method used
     // There was no need to compute the square root because
@@ -2501,14 +2469,14 @@ static inline sw_texture_sampler_f sw_texture_pick_sampler(const sw_texture_t *t
 
 // Framebuffer management functions
 //-------------------------------------------------------------------------------------------
-static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, int w, int h)
+static bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, int w, int h)
 {
     if (!sw_texture_alloc(&fb->color, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
         return false;
     }
 
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     if (!sw_texture_alloc(&fb->backColor, NULL, w, h, SW_FRAMEBUFFER_COLOR_FORMAT))
     {
         return false;
@@ -2523,16 +2491,16 @@ static inline bool sw_default_framebuffer_alloc(sw_default_framebuffer_t *fb, in
     return true;
 }
 
-static inline void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
+static void sw_default_framebuffer_free(sw_default_framebuffer_t *fb)
 {
     sw_texture_free(&fb->color);
     sw_texture_free(&fb->depth);
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_free(&fb->backColor);
 #endif
 }
 
-static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
+static void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const float color[4])
 {
     // NOTE: MSVC doesn't support VLA, so the largest possible size is allocated: 16 bytes
     //uint8_t pixel[SW_FRAMEBUFFER_COLOR_SIZE] = { 0 };
@@ -2571,7 +2539,7 @@ static inline void sw_framebuffer_fill_color(sw_texture_t *colorBuffer, const fl
     }
 }
 
-static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float depth)
+static void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float depth)
 {
     // NOTE: MSVC doesn't support VLA, so the largest possible size is allocated: 4 bytes
     //uint8_t pixel[SW_FRAMEBUFFER_DEPTH_SIZE] = { 0 };
@@ -2610,14 +2578,14 @@ static inline void sw_framebuffer_fill_depth(sw_texture_t *depthBuffer, float de
     }
 }
 
-static inline void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buffer)
+static void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buffer)
 {
     int width = buffer->width;
     int height = buffer->height;
 
     uint8_t *d = (uint8_t *)dst;
 
-#if SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
+#if RLSW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8A8)
     for (int y = height - 1; y >= 0; y--)
     {
         const uint8_t *src = (uint8_t *)(buffer->pixels) + y*width*4;
@@ -2629,7 +2597,7 @@ static inline void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buf
             d[3] = src[3];
         }
     }
-#elif SW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8)
+#elif RLSW_FRAMEBUFFER_OUTPUT_BGRA && (SW_FRAMEBUFFER_COLOR_FORMAT == SW_PIXELFORMAT_COLOR_R8G8B8)
     for (int y = height - 1; y >= 0; y--)
     {
         const uint8_t *src = (uint8_t *)(buffer->pixels) + y*width*3;
@@ -2651,7 +2619,7 @@ static inline void sw_framebuffer_output_fast(void *dst, const sw_texture_t *buf
 #endif
 }
 
-static inline void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buffer, int x, int y, int w, int h, sw_pixelformat_t format)
+static void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buffer, int x, int y, int w, int h, sw_pixelformat_t format)
 {
     int stride = buffer->width;
     int dstPixelSize = SW_PIXELFORMAT_SIZE[format];
@@ -2670,7 +2638,7 @@ static inline void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buf
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, line, 0);
 
-            #if SW_FRAMEBUFFER_OUTPUT_BGRA
+            #if RLSW_FRAMEBUFFER_OUTPUT_BGRA
             if (format == SW_PIXELFORMAT_COLOR_R8G8B8A8 || format == SW_PIXELFORMAT_COLOR_R8G8B8)
             {
                 uint8_t tmp = color[0]; color[0] = color[2]; color[2] = tmp;
@@ -2687,7 +2655,7 @@ static inline void sw_framebuffer_output_copy(void *dst, const sw_texture_t *buf
     }
 }
 
-static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer,
+static void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buffer,
     int xDst, int yDst, int wDst, int hDst, int xSrc, int ySrc, int wSrc, int hSrc, sw_pixelformat_t format)
 {
     const uint8_t *srcBase = buffer->pixels;
@@ -2716,7 +2684,7 @@ static inline void sw_framebuffer_output_blit(void *dst, const sw_texture_t *buf
             uint8_t color[4];
             SW_FRAMEBUFFER_COLOR8_GET(color, pixel, 0);
 
-            #if SW_FRAMEBUFFER_OUTPUT_BGRA
+            #if RLSW_FRAMEBUFFER_OUTPUT_BGRA
             if (format == SW_PIXELFORMAT_COLOR_R8G8B8A8 || format == SW_PIXELFORMAT_COLOR_R8G8B8)
             {
                 uint8_t tmp = color[0]; color[0] = color[2]; color[2] = tmp;
@@ -2815,7 +2783,7 @@ static const sw_blend_f SW_BLEND_TABLE[SW_BLEND_FACTOR_COUNT][SW_BLEND_FACTOR_CO
 #undef GEN_TABLE_ROW
 
 // Maps a GL blend factor enum to its compact table index
-static inline int sw_blend_factor_index(SWfactor f)
+static int sw_blend_factor_index(SWfactor f)
 {
     switch (f)
     {
@@ -2865,7 +2833,7 @@ static uint32_t sw_blend_compute_flags(SWfactor src, SWfactor dst)
 
 // Projection helper functions
 //-------------------------------------------------------------------------------------------
-static inline void sw_project_ndc_to_screen(float ndc[4])
+static void sw_project_ndc_to_screen(float ndc[4])
 {
     ndc[0] = RLSW.vpCenter[0] + ndc[0]*RLSW.vpHalf[0] + 0.5f;
     ndc[1] = RLSW.vpCenter[1] + ndc[1]*RLSW.vpHalf[1] + 0.5f;
@@ -3287,7 +3255,7 @@ static const sw_raster_point_f SW_RASTER_POINT_TABLE[] = {
 
 // Triangle rendering logic
 //-------------------------------------------------------------------------------------------
-static inline bool sw_triangle_face_culling(void)
+static bool sw_triangle_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations
     // To handle triangles crossing the w=0 plane correctly,
@@ -3396,7 +3364,7 @@ static void sw_triangle_render(uint32_t state)
 
 // Quad rendering logic
 //-------------------------------------------------------------------------------------------
-static inline bool sw_quad_face_culling(void)
+static bool sw_quad_face_culling(void)
 {
     // NOTE: Face culling is done before clipping to avoid unnecessary computations
     // To handle quads crossing the w=0 plane correctly,
@@ -3559,7 +3527,7 @@ static void sw_quad_render(uint32_t state)
 
 // Line rendering logic
 //-------------------------------------------------------------------------------------------
-static inline bool sw_line_clip_coord(float q, float p, float *t0, float *t1)
+static bool sw_line_clip_coord(float q, float p, float *t0, float *t1)
 {
     if (fabsf(p) < SW_CLIP_EPSILON)
     {
@@ -3716,12 +3684,12 @@ static void sw_point_render(uint32_t state, sw_vertex_t *v)
 
 // Polygon modes rendering logic
 //-------------------------------------------------------------------------------------------
-static inline void sw_poly_point_render(uint32_t state)
+static void sw_poly_point_render(uint32_t state)
 {
     for (int i = 0; i < RLSW.primitive.vertexCount; i++) sw_point_render(state, &RLSW.primitive.buffer[i]);
 }
 
-static inline void sw_poly_line_render(uint32_t state)
+static void sw_poly_line_render(uint32_t state)
 {
     const sw_vertex_t *vertices = RLSW.primitive.buffer;
     int cm1 = RLSW.primitive.vertexCount - 1;
@@ -3736,7 +3704,7 @@ static inline void sw_poly_line_render(uint32_t state)
     sw_line_render(state, verts);
 }
 
-static inline void sw_poly_fill_render(uint32_t state)
+static void sw_poly_fill_render(uint32_t state)
 {
     switch (RLSW.drawMode)
     {
@@ -3900,13 +3868,13 @@ bool swInit(int w, int h)
         return false;
     }
 
-    if (!sw_pool_init(&RLSW.framebufferPool, SW_MAX_FRAMEBUFFERS, sizeof(sw_framebuffer_t)))
+    if (!sw_pool_init(&RLSW.framebufferPool, RLSW_MAX_FRAMEBUFFERS, sizeof(sw_framebuffer_t)))
     {
         swClose();
         return false;
     }
 
-    if (!sw_pool_init(&RLSW.texturePool, SW_MAX_TEXTURES, sizeof(sw_texture_t)))
+    if (!sw_pool_init(&RLSW.texturePool, RLSW_MAX_TEXTURES, sizeof(sw_texture_t)))
     {
         swClose();
         return false;
@@ -3953,7 +3921,7 @@ bool swInit(int w, int h)
     RLSW.polyMode = SW_FILL;
     RLSW.cullFace = SW_BACK;
 
-#if SW_USE_COLOR_LUT
+#if RLSW_USE_COLOR_LUT
     for (int i = 0; i < 256; i++) SW_LUT_UINT8_TO_FLOAT[i] = (float)i*SW_INV_255;
 #endif
 
@@ -4065,10 +4033,9 @@ void *swGetColorBuffer(int *width, int *height)
     return RLSW.framebuffer.color.pixels;
 }
 
-
 void swSwapColorBuffers(void)
 {
-#ifdef SW_DOUBLE_BUFFERING
+#if RLSW_DOUBLE_BUFFERING
     sw_texture_t tmp = RLSW.framebuffer.color;
     RLSW.framebuffer.color = RLSW.framebuffer.backColor;
     RLSW.framebuffer.backColor = tmp;
@@ -4076,10 +4043,9 @@ void swSwapColorBuffers(void)
     // Only needs to know about current colorBuffer.
     RLSW.colorBuffer = &RLSW.framebuffer.color;
 #else
-    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (#define SW_DOUBLE_BUFFERING with a compiler option to enable).\n");
+    SW_LOG("WARNING: RLSW: swSwapColorBuffers not enabled (Define RLSW_DOUBLE_BUFFERING=1)\n");
 #endif
 }
-
 
 void swEnable(SWstate state)
 {
@@ -4329,7 +4295,7 @@ void swPushMatrix(void)
     {
         case SW_PROJECTION:
         {
-            if (RLSW.stackProjectionCounter >= SW_MAX_PROJECTION_STACK_SIZE)
+            if (RLSW.stackProjectionCounter >= RLSW_MAX_PROJECTION_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -4347,7 +4313,7 @@ void swPushMatrix(void)
         } break;
         case SW_MODELVIEW:
         {
-            if (RLSW.stackModelviewCounter >= SW_MAX_MODELVIEW_STACK_SIZE)
+            if (RLSW.stackModelviewCounter >= RLSW_MAX_MODELVIEW_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -4365,7 +4331,7 @@ void swPushMatrix(void)
         } break;
         case SW_TEXTURE:
         {
-            if (RLSW.stackTextureCounter >= SW_MAX_TEXTURE_STACK_SIZE)
+            if (RLSW.stackTextureCounter >= RLSW_MAX_TEXTURE_STACK_SIZE)
             {
                 RLSW.errCode = SW_STACK_OVERFLOW;
                 return;
@@ -5095,7 +5061,7 @@ void swTexParameteri(int param, int value)
         case SW_TEXTURE_WRAP_S:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-        #if !SW_SUPPORT_NPOT_TEXTURE
+        #if !RLSW_SUPPORT_NPOT_TEXTURE
             if (value == SW_REPEAT && (RLSW.boundTexture->width & RLSW.boundTexture->wMinus1) != 0)
             {
                 RLSW.errCode = SW_INVALID_OPERATION;
@@ -5107,7 +5073,7 @@ void swTexParameteri(int param, int value)
         case SW_TEXTURE_WRAP_T:
         {
             if (!sw_is_texture_wrap_valid(value)) { RLSW.errCode = SW_INVALID_ENUM; return; }
-        #if !SW_SUPPORT_NPOT_TEXTURE
+        #if !RLSW_SUPPORT_NPOT_TEXTURE
             if (value == SW_REPEAT && (RLSW.boundTexture->height & RLSW.boundTexture->hMinus1) != 0)
             {
                 RLSW.errCode = SW_INVALID_OPERATION;
@@ -5319,7 +5285,7 @@ typedef struct
 #endif
 } SW_SPAN_CTX;
 
-static inline void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
+static SW_INLINE void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT a, const sw_vertex_t *SW_RESTRICT b, float scale)
 {
     SW_VEC_OP(out->position[i] = (b->position[i] - a->position[i])*scale, i, 4);
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
@@ -5330,7 +5296,7 @@ static inline void SW_GRAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_R
 #endif
 }
 
-static inline void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc)
+static SW_INLINE void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc)
 {
     SW_VEC_OP(out->position[i] += inc->position[i], i, 4);
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP
@@ -5341,7 +5307,7 @@ static inline void SW_VADD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_R
 #endif
 }
 
-static inline void SW_VMAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc, float scale)
+static SW_INLINE void SW_VMAD(sw_vertex_t *SW_RESTRICT out, const sw_vertex_t *SW_RESTRICT inc, float scale)
 {
     SW_VEC_OP(out->position[i] += inc->position[i]*scale, i, 4);
 #if (SW_RASTER_TRIANGLE_FLAGS) & SW_STATE_COLOR_INTERP

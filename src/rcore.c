@@ -151,10 +151,6 @@
     #include "external/rprand.h"
 #endif
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
-    #define _GNU_SOURCE
-#endif
-
 // Platform specific defines to handle GetApplicationDirectory()
 #if defined(_WIN32)
     #if !defined(MAX_PATH)
@@ -165,6 +161,7 @@
     #if defined(__cplusplus)
     extern "C" {
     #endif
+    __declspec(dllimport) unsigned long __stdcall GetFileAttributesA(const char *lpFileName);
     __declspec(dllimport) unsigned long __stdcall GetModuleFileNameA(struct HINSTANCE__ *hModule, char *lpFilename, unsigned long nSize);
     __declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(struct HINSTANCE__ *hModule, wchar_t *lpFilename, unsigned long nSize);
     __declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned int cp, unsigned long flags, const wchar_t *widestr, int cchwide, char *str, int cbmb, const char *defchar, int *used_default);
@@ -227,7 +224,7 @@
 #endif
 #ifndef MAX_FILEPATH_LENGTH
     #if defined(_WIN32)
-        #define MAX_FILEPATH_LENGTH      256        // On Win32, MAX_PATH = 260 (limits.h) but Windows 10, Version 1607 enables long paths...
+        #define MAX_FILEPATH_LENGTH      260        // On Win32, MAX_PATH = 260 (limits.h) but Windows 10, Version 1607 enables long paths...
     #else
         #define MAX_FILEPATH_LENGTH     4096        // On Linux, PATH_MAX = 4096 by default (limits.h)
     #endif
@@ -477,7 +474,7 @@ static const char *autoEventTypeName[] = {
 
 static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
 static bool automationEventRecording = false;               // Recording automation events flag
-//static short automationEventEnabled = 0b0000001111111111; // TODO: Automation events enabled for recording/playing
+//static short automationEventEnabled = 0b0000001111111111; // Automation events enabled for recording/playing
 #endif
 //-----------------------------------------------------------------------------------
 
@@ -534,8 +531,6 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 #elif defined(PLATFORM_MEMORY)
     #include "platforms/rcore_memory.c"
 #else
-    // TODO: Include your custom platform backend!
-    // i.e software rendering backend or console backend!
     #pragma message ("WARNING: No [rcore] platform defined")
 #endif
 
@@ -610,8 +605,6 @@ void InitWindow(int width, int height, const char *title)
 #elif defined(PLATFORM_MEMORY)
     TRACELOG(LOG_INFO, "Platform backend: MEMORY (No OS)");
 #else
-    // TODO: Include your custom platform backend!
-    // i.e software rendering backend or console backend!
     TRACELOG(LOG_INFO, "Platform backend: CUSTOM");
 #endif
 
@@ -2301,9 +2294,12 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     {
         fileText = LoadFileText(fileName);
         fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
-        bool saved = SaveFileText(fileName, fileTextUpdated);
-        if (saved) result = 0;
-        MemFree(fileTextUpdated);
+        if (fileTextUpdated != NULL)
+        {
+            bool saved = SaveFileText(fileName, fileTextUpdated);
+            if (saved) result = 0;
+            MemFree(fileTextUpdated);
+        }
         UnloadFileText(fileText);
     }
 #else
@@ -2322,9 +2318,12 @@ int FileTextFindIndex(const char *fileName, const char *search)
     if (FileExists(fileName))
     {
         char *fileText = LoadFileText(fileName);
-        char *ptr = strstr(fileText, search);
-        if (ptr != NULL) result = (int)(ptr - fileText);
-        UnloadFileText(fileText);
+        if (fileText != NULL)
+        {
+            char *ptr = strstr(fileText, search);
+            if (ptr != NULL) result = (int)(ptr - fileText);
+            UnloadFileText(fileText);
+        }
     }
 
     return result;
@@ -2409,6 +2408,24 @@ bool IsFileExtension(const char *fileName, const char *ext)
         RL_FREE(extList);
     }
 
+    return result;
+}
+
+// Check if file path (file or directory) is hidden by OS
+bool IsFileHidden(const char *filePath)
+{
+    bool result = false;
+#if defined(_WIN32)
+    unsigned long attribs = GetFileAttributesA(filePath);
+
+    // Check !INVALID_FILE_ATTRIBUTES and FILE_ATTRIBUTE_HIDDEN
+    if ((attribs != -1) && ((attribs & 0x2UL) != 0)) result = true;
+#else
+    const char *basePath = strrchr(filePath, '/');
+    basePath = (basePath? basePath + 1 : filePath);
+
+    if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
+#endif
     return result;
 }
 
@@ -2583,19 +2600,27 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 {
     static char prevDirPath[MAX_FILEPATH_LENGTH] = { 0 };
     memset(prevDirPath, 0, MAX_FILEPATH_LENGTH);
-    int dirPathLength = (int)strlen(dirPath);
 
-    if (dirPathLength <= 3) snprintf(prevDirPath, MAX_FILEPATH_LENGTH, "%s", dirPath);
-
-    for (int i = (dirPathLength - 1); (i >= 0) && (dirPathLength > 3); i--)
+    const int lastIndex = (int)strlen(dirPath) - 1;
+    bool isFile = IsPathFile(dirPath);
+    for (int i = lastIndex; i >= 0; i--)
     {
+        // If the character is a path separator.
         if ((dirPath[i] == '\\') || (dirPath[i] == '/'))
         {
-            // Check for root: "C:\" or "/"
-            if (((i == 2) && (dirPath[1] ==':')) || (i == 0)) i++;
+            // If this character is a leading '/' (e.g. the '/' in "/usr") or
+            // part of a drive root (e.g. "C:\"), include it with the result.
+            if ((i == 0) || ((i == 2) && (dirPath[1] == ':'))) i += 1;
+            // If this character is a trailing path separator (e.g. the last
+            // '/' in "/usr/bin/" or the last '\' in "C:\raylib\"), continue.
+            else if (i == lastIndex) continue;
 
-            memcpy(prevDirPath, dirPath, i);
-            break;
+            if (!isFile)
+            {
+                memcpy(prevDirPath, dirPath, i);
+                break;
+            }
+            else isFile = false;
         }
     }
 
@@ -2862,7 +2887,7 @@ bool IsPathAbsolute(const char *path)
         // Check UNC path (\\server\share)
         if ((path[0] == '\\') && (path[1] == '\\')) result = true;
         // Check path starts with a drive letter (e.g. C:\ or D:/)
-        else if ((((path[0] >= 'A') && (path[0] <= 'Z')) || ((path[0] >= 'a') && (path[0] <= 'z'))) && 
+        else if ((((path[0] >= 'A') && (path[0] <= 'Z')) || ((path[0] >= 'a') && (path[0] <= 'z'))) &&
                  (path[1] != '\0') && (path[1] == ':') && (path[2] != '\0') && ((path[2] == '\\') || (path[2] == '/'))) result = true;
 #else
         // Check POSIX path, must start with /
@@ -3508,7 +3533,7 @@ unsigned int *ComputeSHA256(const unsigned char *data, int dataSize)
     hash[7] = 0x5be0cd19;
 
     const unsigned long long bitLen = 8ULL*dataSize;
-    unsigned long long paddedSize = dataSize + sizeof(dataSize);
+    unsigned long long paddedSize = dataSize + sizeof(bitLen); // Reserve room for the 64 bit message length appended at the end
     paddedSize += (64 - (paddedSize%64));
     unsigned char *buffer = (unsigned char *)RL_CALLOC(paddedSize, sizeof(unsigned char));
 
@@ -4200,8 +4225,8 @@ float GetMouseWheelMove(void)
 {
     float result = 0.0f;
 
-    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = (float)CORE.Input.Mouse.currentWheelMove.x;
-    else result = (float)CORE.Input.Mouse.currentWheelMove.y;
+    if (fabsf(CORE.Input.Mouse.currentWheelMove.x) > fabsf(CORE.Input.Mouse.currentWheelMove.y)) result = CORE.Input.Mouse.currentWheelMove.x;
+    else result = CORE.Input.Mouse.currentWheelMove.y;
 
     return result;
 }
@@ -4543,7 +4568,7 @@ static void RecordAutomationEvent(void)
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
             (CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to ready
         {
-            // TODO: Save gamepad connect event
+            // TODO: Automation event: Save gamepad connect event
         }
         */
 
@@ -4552,7 +4577,7 @@ static void RecordAutomationEvent(void)
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
             (!CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to not-ready
         {
-            // TODO: Save gamepad disconnect event
+            // TODO: Automation event: Save gamepad disconnect event
         }
         */
 

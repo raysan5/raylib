@@ -285,7 +285,6 @@ static int android_close(void *cookie);
 //       CMake: handled automatically — the PUBLIC flag propagates as INTERFACE_LINK_OPTIONS
 //              to the consumer's final link via target_link_libraries
 //        Make: pass -Wl,--wrap=fopen to the linker command producing the final artifact
-//   build.zig: pass -Wl,--wrap=fopen to the linker command producing the final artifact
 //      custom: pass -Wl,--wrap=fopen to the linker command producing the final artifact
 //
 // SHARED library (.so) — wrapping is self-contained:
@@ -296,8 +295,6 @@ static int android_close(void *cookie);
 //              only raylib internals are wrapped, app code requires a separate flag
 //        Make: handled automatically — src/Makefile sets LDFLAGS += -Wl,--wrap=fopen;
 //              only raylib internals are wrapped, app code requires a separate flag
-//   build.zig: NOT supported — std.Build has no dedicated linker wrap helper, the flag
-//              is not correctly applied at the .so link step
 //      custom: apply -Wl,--wrap=fopen to the linker command producing the .so
 FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)
 FILE *__wrap_fopen(const char *fileName, const char *mode); // Replacement for fopen()
@@ -757,12 +754,12 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
 
     for (int i = 0; i < MAX_GAMEPADS; i++)
     {
-        if (CORE.Input.Gamepad.ready[i])     // Check if gamepad is available
+        if (CORE.Input.Gamepad.ready[i]) // Check if gamepad is available
         {
             // Register previous gamepad states
             for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++)
@@ -801,6 +798,7 @@ void PollInputEvents(void)
         if (platform.app->destroyRequested != 0)
         {
             CORE.Window.shouldClose = true;
+            break;
         }
     }
 }

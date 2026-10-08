@@ -79,7 +79,11 @@
     #include <poll.h>       // Required for: drmHandleEvent() poll
     #include <errno.h>      // Required for: EBUSY, EAGAIN
 
-    #define MAX_DRM_CACHED_BUFFERS  3
+    // NOTE: Some drivers rotate more buffers than others, mesa uses 3 but the
+    // ARM Mali blob on RK3326 uses 4. A buffer beyond this count can not get a
+    // framebuffer and the display stops updating for good, so this must not be
+    // lower than any driver in use
+    #define MAX_DRM_CACHED_BUFFERS  4
 #endif
 
 #ifndef EGL_OPENGL_ES3_BIT
@@ -110,6 +114,9 @@ typedef struct {
     drmModeCrtc *crtc;                  // CRT Controller
     int modeIndex;                      // Index of the used mode of connector->modes
     uint32_t prevFB;                    // Previous DRM framebufer (during frame swapping)
+#if defined(SUPPORT_DRM_CACHE)
+    bool fbCacheFullReported;           // Framebuffer cache exhaustion already reported
+#endif
 
 #if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
     struct gbm_device *gbmDevice;       // GBM device
@@ -190,7 +197,7 @@ static const int evkeyToUnicodeLUT[] = {
 // NOTE: Use short here to save a little memory
 static const short linuxToRaylibMap[KEYMAP_SIZE] = {
     // Don't map with designated initialization,
-    // it will geenrate many naming conflicts
+    // it will generate many naming conflicts
     0,   256, 49,  50,  51,  52,  53,  54,
     55,  56,  57,  48,  45,  61,  259, 258,
     81,  87,  69,  82,  84,  89,  85,  73,
@@ -624,7 +631,18 @@ static uint32_t GetOrCreateFbForBo(struct gbm_bo *bo)
     }
 
     // Create new entry if cache not full
-    if (fbCacheCount >= MAX_DRM_CACHED_BUFFERS) return 0; // FB cache full
+    if (fbCacheCount >= MAX_DRM_CACHED_BUFFERS)
+    {
+        // NOTE: Once this happens no page flip is ever scheduled again and the
+        // screen freezes while the game keeps running, so say it out loud once
+        if (!platform.fbCacheFullReported)
+        {
+            platform.fbCacheFullReported = true;
+            TRACELOG(LOG_WARNING, "DISPLAY: DRM: Framebuffer cache full (%i buffers), display will stop updating", MAX_DRM_CACHED_BUFFERS);
+        }
+
+        return 0; // FB cache full
+    }
 
     uint32_t handle = gbm_bo_get_handle(bo).u32;
     uint32_t stride = gbm_bo_get_stride(bo);
@@ -1071,7 +1089,7 @@ void PollInputEvents(void)
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
 
     // Register previous keys states
@@ -1118,7 +1136,7 @@ void PollInputEvents(void)
     // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
     // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-    // Handle the mouse/touch/gestures events:
+    // Handle the mouse/touch/gestures events
     PollMouseEvents();
 }
 
@@ -1821,7 +1839,7 @@ static void ProcessKeyboard(void)
             if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
             else
             {
-                if (keysBuffer[i + 1] == 0x5b)    // Special function key
+                if (keysBuffer[i + 1] == 0x5b) // Special function key
                 {
                     if ((keysBuffer[i + 2] == 0x5b) || (keysBuffer[i + 2] == 0x31) || (keysBuffer[i + 2] == 0x32))
                     {
@@ -1938,7 +1956,8 @@ static void InitEvdevInput(void)
                 (strncmp("mouse", entity->d_name, strlen("mouse")) == 0))       // Search for devices named "mouse*"
             {
                 snprintf(path, MAX_FILEPATH_LENGTH, "%s%s", DEFAULT_EVDEV_PATH, entity->d_name);
-                ConfigureEvdevDevice(path);                                     // Configure the device if appropriate
+
+                ConfigureEvdevDevice(path); // Configure the device if appropriate
             }
         }
 
@@ -2191,7 +2210,7 @@ static void PollKeyboardEvents(void)
         // If the event was a key, assume a working keyboard is connected, so disable the SSH keyboard
         platform.eventKeyboardMode = true;
 #endif
-        // Keyboard keys appear for codes 1 to 255, ignore everthing else
+        // Keyboard keys appear for codes 1 to 255, ignore everything else
         if ((event.code >= 1) && (event.code <= 255))
         {
             // Lookup the scancode in the keymap to get a keycode
@@ -2217,7 +2236,7 @@ static void PollKeyboardEvents(void)
 
                     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
-                        // TODO/FIXME: This is not actually converting to unicode properly because it's not taking things like shift into account
+                        // TODO: WARNING: This is not actually converting to unicode properly because it's not taking things like shift into account
                         CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = evkeyToUnicodeLUT[event.code];
                         CORE.Input.Keyboard.charPressedQueueCount++;
                     }

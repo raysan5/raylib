@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 POSIX - www.glfw.org
+// GLFW 3.5 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2021 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -41,7 +41,8 @@ void* _glfwPlatformLoadModule(const char* path)
 
 void _glfwPlatformFreeModule(void* module)
 {
-    dlclose(module);
+    if (module)
+        dlclose(module);
 }
 
 GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)

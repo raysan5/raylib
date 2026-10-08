@@ -91,6 +91,8 @@ int main(void)
     Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
     Texture whiteTex = LoadTextureFromImage(whiteImage);
     UnloadImage(whiteImage);
+
+    SetTargetFPS(0);                    // Set our game to run with an uncapped framerate
     //--------------------------------------------------------------------------------------
 
     // Main game loop

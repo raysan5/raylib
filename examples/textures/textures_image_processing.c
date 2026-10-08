@@ -109,7 +109,7 @@ int main(void)
         else if (IsKeyPressed(KEY_UP))
         {
             currentProcess--;
-            if (currentProcess < 0) currentProcess = 7;
+            if (currentProcess < 0) currentProcess = (NUM_PROCESSES - 1);
             textureReload = true;
         }
 
