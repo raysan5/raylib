@@ -393,7 +393,7 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     SIZE clientSize = { rect.right, rect.bottom };
 
     // If client size is alread desired size, no need to update
-    if ((clientSize.cx == desiredSize.cx) || (clientSize.cy == desiredSize.cy)) return false;
+    if ((clientSize.cx == desiredSize.cx) && (clientSize.cy == desiredSize.cy)) return false;
 
     TRACELOG(LOG_INFO, "WIN32: Restoring client size from [%dx%d] to [%dx%d] (dpi:%lu dpiScaling:%d app:%ix%i)",
         clientSize.cx, clientSize.cy, desiredSize.cx, desiredSize.cy, dpi, dpiScaling, width, height);
