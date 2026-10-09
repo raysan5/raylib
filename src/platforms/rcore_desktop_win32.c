@@ -1780,8 +1780,9 @@ void ClosePlatform(void)
     {
         // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
         // If this ever changes, this code may have to be updated
-        HICON icon = (HICON)SendMessage(platform.hwnd, WM_GETICON, ICON_BIG, (LPARAM)0);
-        if (icon != NULL) DestroyIcon(icon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)0);
+        HICON previousIcon = (HICON)SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)0);
+        if (previousIcon != NULL) DestroyIcon(previousIcon);
 
         BOOL result = DestroyWindow(platform.hwnd);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
