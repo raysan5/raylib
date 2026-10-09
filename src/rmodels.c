@@ -163,6 +163,7 @@ static Model LoadOBJ(const char *fileName);     // Load OBJ mesh data
 #if SUPPORT_FILEFORMAT_IQM
 static Model LoadIQM(const char *fileName);     // Load IQM mesh data
 static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCount);   // Load IQM animation data
+static bool IsIQMDataRangeValid(int dataSize, unsigned int offset, unsigned int count, unsigned int size); // Check IQM data range fits in file data
 #endif
 #if SUPPORT_FILEFORMAT_GLTF
 static Model LoadGLTF(const char *fileName);    // Load GLTF mesh data
@@ -4684,6 +4685,13 @@ static Model LoadOBJ(const char *fileName)
 #endif
 
 #if SUPPORT_FILEFORMAT_IQM
+// Check IQM data range (count elements of size bytes at offset) fits in file data
+// NOTE: Offsets and counts come straight from the file, malformed or truncated files could point outside of it
+static bool IsIQMDataRangeValid(int dataSize, unsigned int offset, unsigned int count, unsigned int size)
+{
+    return (((unsigned long long)offset + (unsigned long long)count*size) <= (unsigned long long)dataSize);
+}
+
 // Load IQM mesh data
 static Model LoadIQM(const char *fileName)
 {
@@ -4803,7 +4811,7 @@ static Model LoadIQM(const char *fileName)
     // Read IQM header
     IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
 
-    if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
+    if ((dataSize < (int)sizeof(IQMHeader)) || (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0))
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
         UnloadFileData(fileData);
@@ -4816,6 +4824,55 @@ static Model LoadIQM(const char *fileName)
         UnloadFileData(fileData);
         return model;
     }
+
+    // Check all data required is inside the file data
+    bool validData = IsIQMDataRangeValid(dataSize, iqmHeader->ofs_text, iqmHeader->num_text, sizeof(char)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_meshes, iqmHeader->num_meshes, sizeof(IQMMesh)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_vertexarrays, iqmHeader->num_vertexarrays, sizeof(IQMVertexArray)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_triangles, iqmHeader->num_triangles, sizeof(IQMTriangle)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_joints, iqmHeader->num_joints, sizeof(IQMJoint));
+
+    if (validData)
+    {
+        // Every mesh must reference vertex and triangle ranges inside the file vertex and triangle arrays
+        for (unsigned int i = 0; i < iqmHeader->num_meshes; i++)
+        {
+            IQMMesh mesh = { 0 };
+            memcpy(&mesh, fileDataPtr + iqmHeader->ofs_meshes + i*sizeof(IQMMesh), sizeof(IQMMesh));
+
+            if ((((unsigned long long)mesh.first_vertex + mesh.num_vertexes) > iqmHeader->num_vertexes) ||
+                (((unsigned long long)mesh.first_triangle + mesh.num_triangles) > iqmHeader->num_triangles))
+            {
+                validData = false;
+                break;
+            }
+        }
+
+        // Every vertex array loaded must be inside the file data
+        for (unsigned int i = 0; validData && (i < iqmHeader->num_vertexarrays); i++)
+        {
+            IQMVertexArray array = { 0 };
+            memcpy(&array, fileDataPtr + iqmHeader->ofs_vertexarrays + i*sizeof(IQMVertexArray), sizeof(IQMVertexArray));
+
+            unsigned int vertexDataSize = 0;    // Size of one vertex data, as loaded below
+            if ((array.type == IQM_POSITION) || (array.type == IQM_NORMAL)) vertexDataSize = 3*sizeof(float);
+            else if (array.type == IQM_TEXCOORD) vertexDataSize = 2*sizeof(float);
+            else if ((array.type == IQM_BLENDINDEXES) || (array.type == IQM_BLENDWEIGHTS) || (array.type == IQM_COLOR)) vertexDataSize = 4*sizeof(unsigned char);
+
+            if (!IsIQMDataRangeValid(dataSize, array.offset, iqmHeader->num_vertexes, vertexDataSize)) validData = false;
+        }
+    }
+
+    if (!validData)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file data is not valid (corrupted or truncated)", fileName);
+        UnloadFileData(fileData);
+        return model;
+    }
+
+    // Text data, copied with a terminating null so names can be read safely
+    char *textData = (char *)RL_CALLOC(iqmHeader->num_text + 1, sizeof(char));
+    memcpy(textData, fileDataPtr + iqmHeader->ofs_text, iqmHeader->num_text);
 
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
@@ -4839,11 +4896,11 @@ static Model LoadIQM(const char *fileName)
     {
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].name, SEEK_SET);
         //fread(name, sizeof(char), MESH_NAME_LENGTH, iqmFile);
-        memcpy(name, fileDataPtr + iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH*sizeof(char));
+        snprintf(name, MESH_NAME_LENGTH, "%s", (imesh[i].name < iqmHeader->num_text)? textData + imesh[i].name : "");
 
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].material, SEEK_SET);
         //fread(material, sizeof(char), MATERIAL_NAME_LENGTH, iqmFile);
-        memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
+        snprintf(material, MATERIAL_NAME_LENGTH, "%s", (imesh[i].material < iqmHeader->num_text)? textData + imesh[i].material : "");
 
         model.materials[i] = LoadMaterialDefault();
         if (TextLength(material) > 0) model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
@@ -5029,7 +5086,7 @@ static Model LoadIQM(const char *fileName)
         model.skeleton.bones[i].parent = ijoint[i].parent;
         //fseek(iqmFile, iqmHeader->ofs_text + ijoint[a].name, SEEK_SET);
         //fread(model.bones[a].name, sizeof(char), BONE_NAME_LENGTH, iqmFile);
-        memcpy(model.skeleton.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
+        snprintf(model.skeleton.bones[i].name, BONE_NAME_LENGTH, "%s", (ijoint[i].name < iqmHeader->num_text)? textData + ijoint[i].name : "");
 
         // Bind pose (base pose)
         model.skeleton.bindPose[i].translation.x = ijoint[i].translate[0];
@@ -5055,6 +5112,7 @@ static Model LoadIQM(const char *fileName)
 
     UnloadFileData(fileData);
 
+    RL_FREE(textData);
     RL_FREE(imesh);
     RL_FREE(tri);
     RL_FREE(va);
@@ -5122,7 +5180,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
     // Read IQM header
     IQMHeader *iqmHeader = (IQMHeader *)fileDataPtr;
 
-    if (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0)
+    if ((dataSize < (int)sizeof(IQMHeader)) || (memcmp(iqmHeader->magic, IQM_MAGIC, sizeof(IQM_MAGIC)) != 0))
     {
         TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file is not a valid model", fileName);
         UnloadFileData(fileData);
@@ -5135,6 +5193,47 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         UnloadFileData(fileData);
         return NULL;
     }
+
+    // Check all data required is inside the file data
+    bool validData = IsIQMDataRangeValid(dataSize, iqmHeader->ofs_text, iqmHeader->num_text, sizeof(char)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_poses, iqmHeader->num_poses, sizeof(IQMPose)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_anims, iqmHeader->num_anims, sizeof(IQMAnim)) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_joints, iqmHeader->num_joints, sizeof(IQMJoint)) &&
+        (((unsigned long long)iqmHeader->num_frames*iqmHeader->num_framechannels) <= 0xFFFFFFFFu) &&
+        IsIQMDataRangeValid(dataSize, iqmHeader->ofs_frames, iqmHeader->num_frames*iqmHeader->num_framechannels, sizeof(unsigned short));
+
+    if (validData)
+    {
+        // Every frame reads one channel value per pose channel enabled in its mask,
+        // they must fit in the frame channels available in the file
+        unsigned long long channelCount = 0;
+        for (unsigned int i = 0; i < iqmHeader->num_poses; i++)
+        {
+            IQMPose pose = { 0 };
+            memcpy(&pose, fileDataPtr + iqmHeader->ofs_poses + i*sizeof(IQMPose), sizeof(IQMPose));
+            for (int c = 0; c < 10; c++) if (pose.mask & (1 << c)) channelCount++;
+        }
+        if ((iqmHeader->num_frames > 0) && (channelCount > iqmHeader->num_framechannels)) validData = false;
+
+        // Every animation must reference a frames range inside the file frames array
+        for (unsigned int a = 0; validData && (a < iqmHeader->num_anims); a++)
+        {
+            IQMAnim anim = { 0 };
+            memcpy(&anim, fileDataPtr + iqmHeader->ofs_anims + a*sizeof(IQMAnim), sizeof(IQMAnim));
+            if (((unsigned long long)anim.first_frame + anim.num_frames) > iqmHeader->num_frames) validData = false;
+        }
+    }
+
+    if (!validData)
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file data is not valid (corrupted or truncated)", fileName);
+        UnloadFileData(fileData);
+        return NULL;
+    }
+
+    // Text data, copied with a terminating null so names can be read safely
+    char *textData = (char *)RL_CALLOC(iqmHeader->num_text + 1, sizeof(char));
+    memcpy(textData, fileDataPtr + iqmHeader->ofs_text, iqmHeader->num_text);
 
     // Get bones data
     IQMPose *poses = (IQMPose *)RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
@@ -5168,7 +5267,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 
         animations[a].keyframeCount = anim[a].num_frames;
         animations[a].keyframePoses = (Transform **)RL_CALLOC(anim[a].num_frames, sizeof(Transform *));
-        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
+        snprintf(animations[a].name, 32, "%s", (anim[a].name < iqmHeader->num_text)? textData + anim[a].name : "");
         // TODO: Store animation framerate data?
         //animations[a].framerate = anim.framerate;
 
@@ -5281,7 +5380,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         {
             for (unsigned int i = 0; i < animations[a].boneCount; i++)
             {
-                if (bones[i].parent >= 0)
+                if ((bones[i].parent >= 0) && (bones[i].parent < (int)animations[a].boneCount))
                 {
                     animations[a].keyframePoses[frame][i].rotation = QuaternionMultiply(animations[a].keyframePoses[frame][bones[i].parent].rotation, animations[a].keyframePoses[frame][i].rotation);
                     animations[a].keyframePoses[frame][i].translation = Vector3RotateByQuaternion(animations[a].keyframePoses[frame][i].translation, animations[a].keyframePoses[frame][bones[i].parent].rotation);
@@ -5296,6 +5395,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 
     UnloadFileData(fileData);
 
+    RL_FREE(textData);
     RL_FREE(joints);
     RL_FREE(framedata);
     RL_FREE(poses);
