@@ -208,11 +208,34 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 #if defined(RLTEXGPU_SUPPORT_DDS)
+// Get the size in bytes of a DDS image data with all its mipmaps,
+// returns 0 if it is empty or larger than max_size (available file data)
+// NOTE: Mipmap sizes are computed like rlgl does when uploading them,
+// halving width and height (minimum 1) and rounding up to 4x4 blocks if compressed
+static unsigned int rl_dds_data_size(unsigned int width, unsigned int height, unsigned int mips, unsigned int unit_size, int compressed, unsigned int max_size)
+{
+    unsigned long long data_size = 0;
+
+    for (unsigned int i = 0; i < mips; i++)
+    {
+        unsigned long long w = compressed? ((unsigned long long)width + 3)/4 : width;
+        unsigned long long h = compressed? ((unsigned long long)height + 3)/4 : height;
+
+        if ((w == 0) || (h == 0) || (w*h > max_size/unit_size)) return 0;
+        data_size += w*h*unit_size;
+        if (data_size > max_size) return 0;
+
+        if (width > 1) width /= 2;
+        if (height > 1) height /= 2;
+    }
+
+    return (unsigned int)data_size;
+}
+
 // Loading DDS from memory image data (compressed or uncompressed)
 void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_size, int *width, int *height, int *format, int *mips)
 {
     void *image_data = RLTEXGPU_NULL;  // Image data pointer
-    int image_pixel_size = 0;           // Image pixel size
 
     unsigned char *file_data_ptr = (unsigned char *)file_data;
 
@@ -259,7 +282,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
         unsigned int reserved2;
     } dds_header;
 
-    if (file_data_ptr != RLTEXGPU_NULL)
+    if ((file_data_ptr != RLTEXGPU_NULL) && (file_size < 4 + sizeof(dds_header))) RLTEXGPU_LOG("DDS file data size not valid");
+    else if (file_data_ptr != RLTEXGPU_NULL)
     {
         // Verify the type of file
         unsigned char *dds_header_id = file_data_ptr;
@@ -275,13 +299,14 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
             file_data_ptr += sizeof(dds_header);        // Skip header
 
+            unsigned int data_available = file_size - 4 - sizeof(dds_header);
+            unsigned int mip_count = (header->mipmap_count == 0)? 1 : header->mipmap_count;
+
             *width = header->width;
             *height = header->height;
 
             if (*width % 4 != 0) RLTEXGPU_LOG("DDS file width must be multiple of 4. Image will not display correctly");
             if (*height % 4 != 0) RLTEXGPU_LOG("DDS file height must be multiple of 4. Image will not display correctly");
-
-            image_pixel_size = header->width*header->height;
 
             if (header->mipmap_count == 0) *mips = 1;   // Parameter not used
             else *mips = header->mipmap_count;
@@ -290,8 +315,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             {
                 if (header->ddspf.flags == 0x40)        // No alpha channel
                 {
-                    int data_size = image_pixel_size*sizeof(unsigned short);
-                    if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                    int data_size = rl_dds_data_size(header->width, header->height, mip_count, sizeof(unsigned short), 0, data_available);
+                    if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
                     image_data = RLTEXGPU_MALLOC(data_size);
 
                     RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -302,8 +327,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 {
                     if (header->ddspf.a_bit_mask == 0x8000)     // 1bit alpha
                     {
-                        int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        int data_size = rl_dds_data_size(header->width, header->height, mip_count, sizeof(unsigned short), 0, data_available);
+                        if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -322,8 +347,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     }
                     else if (header->ddspf.a_bit_mask == 0xf000)   // 4bit alpha
                     {
-                        int data_size = image_pixel_size*sizeof(unsigned short);
-                        if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        int data_size = rl_dds_data_size(header->width, header->height, mip_count, sizeof(unsigned short), 0, data_available);
+                        if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -344,8 +369,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if ((header->ddspf.flags == 0x40) && (header->ddspf.rgb_bit_count == 24)) // DDS_RGB, no compressed
             {
-                int data_size = image_pixel_size*3*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                int data_size = rl_dds_data_size(header->width, header->height, mip_count, 3, 0, data_available);
+                if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -354,8 +379,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if ((header->ddspf.flags == 0x41) && (header->ddspf.rgb_bit_count == 32)) // DDS_RGBA, no compressed
             {
-                int data_size = image_pixel_size*4*sizeof(unsigned char);
-                if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                int data_size = rl_dds_data_size(header->width, header->height, mip_count, 4, 0, data_available);
+                if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -365,7 +390,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 // NOTE: Data comes as A8R8G8B8, it must be reordered R8G8B8A8 (view next comment)
                 // DirecX understand ARGB as a 32bit DWORD but the actual memory byte alignment is BGRA
                 // So, we must realign B8G8R8A8 to R8G8B8A8
-                for (int i = 0; i < data_size; i += 4)
+                for (int i = 0; i + 3 < data_size; i += 4)
                 {
                     blue = ((unsigned char *)image_data)[i];
                     ((unsigned char *)image_data)[i] = ((unsigned char *)image_data)[i + 2];
@@ -376,11 +401,10 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             }
             else if (((header->ddspf.flags == 0x04) || (header->ddspf.flags == 0x05)) && (header->ddspf.fourcc > 0)) // Compressed
             {
-                int data_size = 0;
-
-                // Calculate data size, including all mipmaps
-                if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
-                else data_size = header->pitch_or_linear_size;
+                // Calculate data size, including all mipmaps: 8 bytes per 4x4 block for DXT1, 16 for DXT3/DXT5
+                unsigned int block_size = (header->ddspf.fourcc == FOURCC_DXT1)? 8 : 16;
+                int data_size = rl_dds_data_size(header->width, header->height, mip_count, block_size, 1, data_available);
+                if (data_size == 0) { RLTEXGPU_LOG("DDS file data size not valid"); return RLTEXGPU_NULL; }
 
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
