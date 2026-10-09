@@ -5377,12 +5377,13 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
     }
     else if ((cgltfImage->buffer_view != NULL) && (cgltfImage->buffer_view->buffer->data != NULL)) // Check if image is provided as data buffer
     {
-        unsigned char *data = (unsigned char *)RL_MALLOC(cgltfImage->buffer_view->size);
+        unsigned char *data = (unsigned char *)RL_CALLOC(cgltfImage->buffer_view->size, 1);
         int offset = (int)cgltfImage->buffer_view->offset;
         int stride = (int)cgltfImage->buffer_view->stride? (int)cgltfImage->buffer_view->stride : 1;
 
         // Copy buffer data to memory for loading
-        for (unsigned int i = 0; i < cgltfImage->buffer_view->size; i++)
+        // NOTE: Copy stops at the end of the buffer data, in case of malformed buffer view stride
+        for (unsigned int i = 0; (i < cgltfImage->buffer_view->size) && (offset < (int)cgltfImage->buffer_view->buffer->size); i++)
         {
             data[i] = ((unsigned char *)cgltfImage->buffer_view->buffer->data)[offset];
             offset += stride;
@@ -5390,7 +5391,8 @@ static Image LoadImageFromCgltfImage(cgltf_image *cgltfImage, const char *texPat
 
         // Check mime_type for image: (cgltfImage->mime_type == "image/png")
         // NOTE: Detected that some models define mime_type as "image\\/png"
-        if ((strcmp(cgltfImage->mime_type, "image\\/png") == 0) || (strcmp(cgltfImage->mime_type, "image/png") == 0))
+        if (cgltfImage->mime_type == NULL) TRACELOG(LOG_WARNING, "MODEL: glTF image data MIME type not defined");
+        else if ((strcmp(cgltfImage->mime_type, "image\\/png") == 0) || (strcmp(cgltfImage->mime_type, "image/png") == 0))
         {
             image = LoadImageFromMemory(".png", data, (int)cgltfImage->buffer_view->size);
         }
@@ -5473,18 +5475,23 @@ static Model LoadGLTF(const char *fileName)
     // Macro to simplify attributes loading code
     #define LOAD_ATTRIBUTE(accesor, numComp, srcType, dstPtr) LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, srcType)
 
+    // NOTE: Accessors without buffer view (or buffer data) provide no data, all values are zero
     #define LOAD_ATTRIBUTE_CAST(accesor, numComp, srcType, dstPtr, dstType) \
     { \
         int n = 0; \
-        srcType *buffer = (srcType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(srcType) + accesor->offset/sizeof(srcType); \
-        for (unsigned int k = 0; k < accesor->count; k++) \
-        {\
-            for (int l = 0; l < numComp; l++) \
+        if ((accesor->buffer_view == NULL) || (accesor->buffer_view->buffer->data == NULL)) memset(dstPtr, 0, accesor->count*numComp*sizeof(dstType)); \
+        else \
+        { \
+            srcType *buffer = (srcType *)accesor->buffer_view->buffer->data + accesor->buffer_view->offset/sizeof(srcType) + accesor->offset/sizeof(srcType); \
+            for (unsigned int k = 0; k < accesor->count; k++) \
             {\
-                dstPtr[numComp*k + l] = (dstType)buffer[n + l];\
+                for (int l = 0; l < numComp; l++) \
+                {\
+                    dstPtr[numComp*k + l] = (dstType)buffer[n + l];\
+                }\
+                n += (int)(accesor->stride/sizeof(srcType));\
             }\
-            n += (int)(accesor->stride/sizeof(srcType));\
-        }\
+        } \
     }
 
     Model model = { 0 };
@@ -5518,6 +5525,19 @@ static Model LoadGLTF(const char *fileName)
         // NOTE: If an uri is defined to base64 data or external path, it's automatically loaded
         result = cgltf_load_buffers(&options, data, fileName);
         if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load mesh/material buffers", fileName);
+        else
+        {
+            // Check data is consistent (accessors inside buffers, attributes count, indices range...),
+            // malformed files could make mesh data loading read outside of the buffers data
+            result = cgltf_validate(data);
+            if (result != cgltf_result_success)
+            {
+                TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data, data is not valid", fileName);
+                cgltf_free(data);
+                UnloadFileData(fileData);
+                return model;
+            }
+        }
 
         int primitivesCount = 0;
         bool dracoCompression = false;
@@ -6372,7 +6392,7 @@ static Model LoadGLTF(const char *fileName)
 #if !SUPPORT_GPU_SKINNING
                 // Animated vertex data (CPU skinning)
                 model.meshes[meshIndex].animVertices = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
-                memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
+                if (model.meshes[meshIndex].vertices != NULL) memcpy(model.meshes[meshIndex].animVertices, model.meshes[meshIndex].vertices, model.meshes[meshIndex].vertexCount*3*sizeof(float));
                 model.meshes[meshIndex].animNormals = (float *)RL_CALLOC(model.meshes[meshIndex].vertexCount*3, sizeof(float));
                 if (model.meshes[meshIndex].normals != NULL) memcpy(model.meshes[meshIndex].animNormals, model.meshes[meshIndex].normals, model.meshes[meshIndex].vertexCount*3*sizeof(float));
 #endif
@@ -6589,6 +6609,13 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
     result = cgltf_load_buffers(&options, data, fileName);
     if (result != cgltf_result_success) TRACELOG(LOG_INFO, "MODEL: [%s] Failed to load animation buffers", fileName);
+    else
+    {
+        // Check data is consistent (accessors inside buffers, attributes count, indices range...),
+        // malformed files could make animation data loading read outside of the buffers data
+        result = cgltf_validate(data);
+        if (result != cgltf_result_success) TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load animation data, data is not valid", fileName);
+    }
 
     if (result == cgltf_result_success)
     {
@@ -6784,6 +6811,7 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
         cgltf_free(data);
     }
+    else cgltf_free(data);
 
     UnloadFileData(fileData);
 
