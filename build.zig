@@ -257,10 +257,10 @@ pub const emsdk = struct {
 };
 
 pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime shcore: bool) void {
-    if (opengl) mod.linkSystemLibrary("opengl32", .{});
-    mod.linkSystemLibrary("winmm", .{});
-    mod.linkSystemLibrary("gdi32", .{});
-    if (shcore) mod.linkSystemLibrary("shcore", .{});
+    if (opengl) mod.linkSystemLibrary("opengl32", .{ .use_pkg_config = .no });
+    mod.linkSystemLibrary("winmm", .{ .use_pkg_config = .no });
+    mod.linkSystemLibrary("gdi32", .{ .use_pkg_config = .no });
+    if (shcore) mod.linkSystemLibrary("shcore", .{ .use_pkg_config = .no });
 }
 
 fn findWaylandScanner(b: *std.Build) void {
