@@ -925,7 +925,8 @@ void SetWindowIcon(Image image)
     {
         // Set both large and small icons
         SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        HICON previousIcon = (HICON)SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        if (previousIcon) DestroyIcon(previousIcon);
     }
 }
 
@@ -1777,12 +1778,18 @@ void ClosePlatform(void)
 
     if (platform.hwnd)
     {
+        // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
+        // If this ever changes, this code may have to be updated
+        HICON icon = (HICON)SendMessage(platform.hwnd, WM_GETICON, ICON_BIG, (LPARAM)0);
+
         BOOL result = DestroyWindow(platform.hwnd);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
 
         HINSTANCE hInstance = GetModuleHandleW(0);
         result = UnregisterClassW(CLASS_NAME, hInstance);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to unregister window class [ERROR: %u]", GetLastError());
+
+        if (icon != NULL) DestroyIcon(icon);
 
         platform.hwnd = NULL;
     }
