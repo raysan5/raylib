@@ -2602,15 +2602,20 @@ int GetCodepointPrevious(const char *text, int *codepointSize)
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 #if SUPPORT_FILEFORMAT_FNT || SUPPORT_FILEFORMAT_BDF
-// Read a line from memory
+// Read a line from memory, moving the data pointer to the start of the next line
 // REQUIRES: memcpy()
-// NOTE: Returns the number of bytes read
-static int GetLine(const char *origin, char *buffer, int maxLength)
+// NOTE: Data is read up to end pointer, returns the line length in bytes
+static int GetLine(const char **origin, const char *end, char *buffer, int maxLength)
 {
+    const char *line = *origin;
     int count = 0;
-    for (; count < maxLength - 1; count++) if (origin[count] == '\n') break;
-    memcpy(buffer, origin, count);
+    while ((count < (maxLength - 1)) && ((line + count) < end) && (line[count] != '\n')) count++;
+    memcpy(buffer, line, count);
     buffer[count] = '\0';
+
+    *origin = line + count;
+    if ((*origin < end) && (**origin == '\n')) (*origin)++;    // Skip line break
+
     return count;
 }
 #endif
@@ -2637,26 +2642,24 @@ static Font LoadBMFont(const char *fileName)
     char imFileName[MAX_FONT_IMAGE_PAGES][129] = { 0 };
 
     int base = 0;       // Useless data
-    int readBytes = 0;  // Data bytes read
     int readVars = 0;   // Variables filled by sscanf()
 
     char *fileText = LoadFileText(fileName);
 
     if (fileText == NULL) return font;
 
-    char *fileTextPtr = fileText;
+    const char *fileTextPtr = fileText;
+    const char *fileTextEnd = fileText + TextLength(fileText);
 
     // NOTE: Skip first line, it contains no useful information
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-    fileTextPtr += (readBytes + 1);
+    GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
 
     // Read line data
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "lineHeight");
-    readVars = sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &pageCount);
-    fileTextPtr += (readBytes + 1);
+    readVars = (searchPoint != NULL)? sscanf(searchPoint, "lineHeight=%i base=%i scaleW=%i scaleH=%i pages=%i", &fontSize, &base, &imWidth, &imHeight, &pageCount) : 0;
 
-    if (readVars < 4) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
+    if ((readVars < 4) || (pageCount < 1)) { UnloadFileText(fileText); return font; } // Some data not available, file malformed
 
     if (pageCount > MAX_FONT_IMAGE_PAGES)
     {
@@ -2666,20 +2669,18 @@ static Font LoadBMFont(const char *fileName)
 
     for (int i = 0; i < pageCount; i++)
     {
-        readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+        GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
         searchPoint = strstr(buffer, "file");
-        readVars = sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName[i]);
-        fileTextPtr += (readBytes + 1);
+        readVars = (searchPoint != NULL)? sscanf(searchPoint, "file=\"%128[^\"]\"", imFileName[i]) : 0;
 
         if (readVars < 1) { UnloadFileText(fileText); return font; } // No fileName read
     }
 
-    readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+    GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
     searchPoint = strstr(buffer, "count");
-    readVars = sscanf(searchPoint, "count=%i", &glyphCount);
-    fileTextPtr += (readBytes + 1);
+    readVars = (searchPoint != NULL)? sscanf(searchPoint, "count=%i", &glyphCount) : 0;
 
-    if (readVars < 1) { UnloadFileText(fileText); return font; } // No glyphCount read
+    if ((readVars < 1) || (glyphCount < 0)) { UnloadFileText(fileText); return font; } // No glyphCount read
 
     // Load all required images for further compose
     Image *imFonts = (Image *)RL_CALLOC(pageCount, sizeof(Image)); // Font atlases, multiple images
@@ -2736,8 +2737,8 @@ static Font LoadBMFont(const char *fileName)
     font.baseSize = fontSize;
     font.glyphCount = glyphCount;
     font.glyphPadding = 0;
-    font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
+    font.glyphs = (GlyphInfo *)RL_CALLOC(glyphCount, sizeof(GlyphInfo));
+    font.recs = (Rectangle *)RL_CALLOC(glyphCount, sizeof(Rectangle));
 
     int charId = 0;
     int charX = 0;
@@ -2751,10 +2752,9 @@ static Font LoadBMFont(const char *fileName)
 
     for (int i = 0; i < glyphCount; i++)
     {
-        readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
+        GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
         readVars = sscanf(buffer, "char id=%i x=%i y=%i width=%i height=%i xoffset=%i yoffset=%i xadvance=%i page=%i",
                        &charId, &charX, &charY, &charWidth, &charHeight, &charOffsetX, &charOffsetY, &charAdvanceX, &pageID);
-        fileTextPtr += (readBytes + 1);
 
         if (readVars == 9) // Make sure all char data has been properly read
         {
@@ -2814,12 +2814,12 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
     GlyphInfo *outGlyphPtr = NULL;  // Pointer to output glyph info (NULL if not set)
     bool internalCodepoints = false;
 
-    int totalReadBytes = 0;         // Data bytes read (total)
     int readBytes = 0;              // Data bytes read (line)
     int readVars = 0;               // Variables filled by sscanf()
 
     const char *fileText = (const char *)fileData;
     const char *fileTextPtr = fileText;
+    const char *fileTextEnd = fileText + dataSize;
 
     bool fontMalformed = false;     // Is the font malformed
     bool fontStarted = false;       // Has font started (STARTFONT)
@@ -2860,11 +2860,9 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
 
     glyphs = (GlyphInfo *)RL_CALLOC(codepointCount, sizeof(GlyphInfo));
 
-    while (totalReadBytes <= dataSize)
+    while (fileTextPtr < fileTextEnd)
     {
-        readBytes = GetLine(fileTextPtr, buffer, MAX_BUFFER_SIZE);
-        totalReadBytes += (readBytes + 1);
-        fileTextPtr += (readBytes + 1);
+        readBytes = GetLine(&fileTextPtr, fileTextEnd, buffer, MAX_BUFFER_SIZE);
 
         // Line: COMMENT
         if (strstr(buffer, "COMMENT") != NULL) continue; // Ignore line
