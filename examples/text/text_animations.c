@@ -73,13 +73,15 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "reasings.h"
+#include "../shapes/reasings.h"
+#include "raymath.h"
 #include <stdio.h>
 
 typedef struct {
-    char text[100];
+    char str[100];
     Vector2 position;
     float delta;
+    float offset;
     int duration;
 } AnimatedText;
 
@@ -95,7 +97,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
 
-    AnimatedText waveText = { "This is an animated text!", { 150, 200 }, 12, 30 };
+    AnimatedText text = { "This is an animated text!", { 150, 200 }, 12.0f, 6.0f, 30 };
     int frameCount = 0;
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -106,28 +108,40 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCount++;
+        if (IsKeyPressed(KEY_DOWN)) text.delta = Clamp(text.delta - 1.0f, 6.0f, 30.0f);
+        else if (IsKeyPressed(KEY_UP)) text.delta = Clamp(text.delta + 1.0, 6.0f, 30.0f);
+        if (IsKeyPressed(KEY_LEFT)) text.duration = Clamp(text.duration - 2, 10, 60);
+        else if (IsKeyPressed(KEY_RIGHT)) text.duration = Clamp(text.duration + 2, 10, 60);
+        if (IsKeyPressed(KEY_KP_SUBTRACT)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
+        else if (IsKeyPressed(KEY_KP_ADD)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
         
-        // else waveText.position.y = EaseBackIn((float) frameCount, 260, waveText.delta, waveText.duration);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);
 
-           for(int i=0; i<TextLength(waveText.text); i++) {
-                char str[2];
-                str[0] = waveText.text[i];
-                str[1] = 0;
-                int offset = i*6; // Each char is offset by 6 frames one from the other
-                if ((frameCount+offset)%(waveText.duration*2) < waveText.duration) 
-                {
-                    DrawText(str, waveText.position.x+22*i, EaseSineInOut((float) ((frameCount+offset)%waveText.duration), waveText.position.y, waveText.delta, waveText.duration), 24, PURPLE);
-                }
-                else DrawText(str, waveText.position.x+22*i, EaseSineInOut((float) ((frameCount+offset)%waveText.duration), waveText.position.y+waveText.delta, -waveText.delta, waveText.duration), 24, PURPLE);
-                
+        DrawText(TextFormat("Duration (Left | Right): %d", text.duration), 20, 20, 16, BLACK);
+        DrawText(TextFormat("Delta (Down | Up): %.1f", text.delta), 20, 40, 16, BLACK);
+        DrawText(TextFormat("Offset (- | +): %.1f", text.offset), 20, 60, 16, BLACK);
+
+        for(int i=0; i<TextLength(text.str); i++)
+        {
+           char str[2] = {text.str[i], 0};
+           int offset = i*text.offset;
+           if ((frameCount+offset)%(text.duration*2) < text.duration) 
+           {
+              float posY = EaseSineIn((float) ((frameCount+offset)%text.duration), text.position.y, text.delta, text.duration);
+              DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
            }
+           else 
+           {
+              float posY = EaseSineOut((float) ((frameCount+offset)%text.duration), text.position.y+text.delta, -text.delta, text.duration);
+              DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
+           }
+        }
 
         EndDrawing();
         //----------------------------------------------------------------------------------
