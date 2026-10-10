@@ -1161,7 +1161,8 @@ int main(int argc, char *argv[])
                 // Validate: example screenshot is not the template default one
                 Image imScreenshot = LoadImage(TextFormat("%s/%s/%s.png", exBasePath, exInfo->category, exInfo->name));
                 Image imTemplate = LoadImage(TextFormat("%s/examples_template.png", exBasePath));
-                if (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) == 0)
+                bool imSameSize = (imScreenshot.width == imTemplate.width) && (imScreenshot.height == imTemplate.height);
+                if (imSameSize && (memcmp(imScreenshot.data, imTemplate.data, GetPixelDataSize(imScreenshot.width, imScreenshot.height, imScreenshot.format)) == 0))
                     exInfo->status |= VALID_INVALID_PNG;
                 UnloadImage(imTemplate);
                 UnloadImage(imScreenshot);
