@@ -69,6 +69,14 @@ void SomeFunction()
    // TODO: Do something here!
 }
 ```
+ - When checking pointers, use full verbose check against `NULL`
+```c
+if (dataPtr != NULL)
+{
+    RL_FREE(dataPtr);
+    dataPtr = NULL;
+}
+```
 
 **If proposing new functions, please try to use a clear naming for function-name and functions-parameters, in case of doubt, open an issue for discussion.**
 
