@@ -97,8 +97,15 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
 
-    AnimatedText text = { "This is an animated text!", { 150, 200 }, 12.0f, 6.0f, 30 };
+    char animations[2][51] = {
+      "Waving",
+      "Flashing"
+    };
+    int curAnimation = 0;
+
+    AnimatedText text = { "This is an animated text!", { 150, 250 }, 12.0f, 6.0f, 30 };
     int frameCount = 0;
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -108,12 +115,14 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCount++;
-        if (IsKeyPressed(KEY_DOWN)) text.delta = Clamp(text.delta - 1.0f, 6.0f, 30.0f);
-        else if (IsKeyPressed(KEY_UP)) text.delta = Clamp(text.delta + 1.0, 6.0f, 30.0f);
-        if (IsKeyPressed(KEY_LEFT)) text.duration = Clamp(text.duration - 2, 10, 60);
-        else if (IsKeyPressed(KEY_RIGHT)) text.duration = Clamp(text.duration + 2, 10, 60);
-        if (IsKeyPressed(KEY_KP_SUBTRACT)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
-        else if (IsKeyPressed(KEY_KP_ADD)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
+        if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 1.0f, 6.0f, 30.0f);
+        else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 1.0, 6.0f, 30.0f);
+        if (IsKeyPressed(KEY_A)) text.duration = Clamp(text.duration - 2, 10, 60);
+        else if (IsKeyPressed(KEY_D)) text.duration = Clamp(text.duration + 2, 10, 60);
+        if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
+        else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
+        if (IsKeyPressed(KEY_Q)) curAnimation = abs((curAnimation-1)%2);
+        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation+1)%2;
         
         //----------------------------------------------------------------------------------
 
@@ -123,25 +132,40 @@ int main(void)
 
         ClearBackground(RAYWHITE);
 
-        DrawText(TextFormat("Duration (Left | Right): %d", text.duration), 20, 20, 16, BLACK);
-        DrawText(TextFormat("Delta (Down | Up): %.1f", text.delta), 20, 40, 16, BLACK);
-        DrawText(TextFormat("Offset (- | +): %.1f", text.offset), 20, 60, 16, BLACK);
+        DrawText(TextFormat("Duration (A | D): %d", text.duration), 20, 20, 20, BLACK);
+        DrawText(TextFormat("Delta (W | S): %.1f", text.delta), 20, 50, 20, BLACK);
+        DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, BLACK);
+        DrawText(TextFormat("Curent Animation (Q | E): %s", animations[curAnimation]), 20, 110, 20, BLACK);
 
-        for(int i=0; i<TextLength(text.str); i++)
+        switch (curAnimation)
         {
-           char str[2] = {text.str[i], 0};
-           int offset = i*text.offset;
-           if ((frameCount+offset)%(text.duration*2) < text.duration) 
-           {
-              float posY = EaseSineIn((float) ((frameCount+offset)%text.duration), text.position.y, text.delta, text.duration);
-              DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
-           }
-           else 
-           {
-              float posY = EaseSineOut((float) ((frameCount+offset)%text.duration), text.position.y+text.delta, -text.delta, text.duration);
-              DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
-           }
+        case 0:
+            for(int i=0; i<TextLength(text.str); i++)
+            {
+               char str[2] = {text.str[i], 0};
+               int offset = i*text.offset;
+               if ((frameCount+offset)%(text.duration*2) < text.duration) 
+               {
+                  float posY = EaseSineIn((float) ((frameCount+offset)%text.duration), text.position.y, text.delta, text.duration);
+                  DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
+               }
+               else 
+               {
+                  float posY = EaseSineOut((float) ((frameCount+offset)%text.duration), text.position.y+text.delta, -text.delta, text.duration);
+                  DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
+               }
+            }
+            break;
+         case 1:
+            for(int i=0; i<TextLength(text.str); i++)
+            {
+               char str[2] = {text.str[i], 0};
+               int offset = i*text.offset;
+               unsigned char alpha = EaseSineInOut((float) ((frameCount+offset)%text.duration), 255.0f, -255.0f, text.duration);
+               DrawText(str, text.position.x+20*i, text.position.y, 24, (Color) {200U, 122U, 255U, alpha});
+            }
         }
+        
 
         EndDrawing();
         //----------------------------------------------------------------------------------
