@@ -1141,7 +1141,7 @@ void SetClipboardText(const char *text)
                 {
                     LPVOID clipboardText = GlobalLock(globalHandle);
                     int charactersCopied = 0;
-                    if (clipboardText)
+                    if (clipboardText != NULL)
                     {
                         // Directly copies text to clipboardText and converts from UTF-8 to UTF-16
                         charactersCopied = MultiByteToWideChar(CP_UTF8, 0, text, (int)(length + 1), clipboardText, clipboardTextLength);
@@ -1179,7 +1179,7 @@ void SetClipboardText(const char *text)
 // Get clipboard text content
 const char *GetClipboardText(void)
 {
-    if (platform.clipboardText)
+    if (platform.clipboardText != NULL)
     {
         RL_FREE(platform.clipboardText);
         platform.clipboardText = NULL;
@@ -1191,7 +1191,7 @@ const char *GetClipboardText(void)
         if (clipboardDataHandle)
         {
             wchar_t *clipboardText = GlobalLock(clipboardDataHandle);
-            if (clipboardText)
+            if (clipboardText != NULL)
             {
                 // The clipboard data can't be trusted. It may or may not be null-terminated!
                 size_t maxLength = GlobalSize(clipboardDataHandle)/sizeof(wchar_t);
@@ -1883,7 +1883,7 @@ void ClosePlatform(void)
         platform.hwnd = NULL;
     }
 
-    if (platform.clipboardText)
+    if (platform.clipboardText != NULL)
     {
         RL_FREE(platform.clipboardText);
         platform.clipboardText = NULL;
