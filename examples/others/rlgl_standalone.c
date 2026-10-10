@@ -149,7 +149,7 @@ int main(void)
 
     GLFWwindow *window = glfwCreateWindow(screenWidth, screenHeight, "raylib [others] example - rlgl standalone", NULL, NULL);
 
-    if (!window)
+    if (window == NULL)
     {
         glfwTerminate();
         return 2;

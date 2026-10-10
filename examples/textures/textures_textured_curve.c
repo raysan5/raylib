@@ -95,7 +95,7 @@ int main(void)
         if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON))  curveSelectedPoint = NULL;
 
         // If a point was selected, move it
-        if (curveSelectedPoint) *curveSelectedPoint = Vector2Add(*curveSelectedPoint, GetMouseDelta());
+        if (curveSelectedPoint != NULL) *curveSelectedPoint = Vector2Add(*curveSelectedPoint, GetMouseDelta());
 
         // The mouse is down, and nothing was selected, so see if anything was picked
         Vector2 mouse = GetMousePosition();
