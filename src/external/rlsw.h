@@ -4931,10 +4931,16 @@ void swTexStorage2D(int width, int height, SWinternalformat format)
         case SW_R32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32; break;
         case SW_RGB32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32G32B32; break;
         case SW_RGBA32F: pixelFormat = SW_PIXELFORMAT_COLOR_R32G32B32A32; break;
-        case SW_DEPTH_COMPONENT16: pixelFormat = SW_PIXELFORMAT_DEPTH_D16; break;
-        case SW_DEPTH_COMPONENT24: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
-        case SW_DEPTH_COMPONENT32: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
-        case SW_DEPTH_COMPONENT32F: pixelFormat = SW_PIXELFORMAT_DEPTH_D32; break;
+        case SW_DEPTH_COMPONENT16:
+        case SW_DEPTH_COMPONENT24:
+        case SW_DEPTH_COMPONENT32:
+        case SW_DEPTH_COMPONENT32F:
+        {
+            pixelFormat = SW_FRAMEBUFFER_DEPTH_FORMAT;
+            int requestedFormat = (format == SW_DEPTH_COMPONENT16)? SW_PIXELFORMAT_DEPTH_D16 : SW_PIXELFORMAT_DEPTH_D32;
+            if (requestedFormat != pixelFormat) SW_LOG("WARNING: RLSW: Coercing depth internalformat %d to framebuffer depth format\n", format);
+            break;
+        }
         default: RLSW.errCode = SW_INVALID_ENUM; return;
     }
 
