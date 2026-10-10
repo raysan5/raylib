@@ -81,7 +81,7 @@ typedef struct {
     char str[100];
     Vector2 position;
     float delta;
-    float offset;
+    int offset;
     int duration;
 } AnimatedText;
 
@@ -97,13 +97,14 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
 
-    char animations[2][51] = {
+    char animations[3][51] = {
       "Waving",
-      "Flashing"
+      "Flashing",
+      "Shaking"
     };
     int curAnimation = 0;
 
-    AnimatedText text = { "This is an animated text!", { 150, 250 }, 12.0f, 6.0f, 30 };
+    AnimatedText text = { "This is an animated text!", { 150, 250 }, 24.0f, 6, 60 };
     int frameCount = 0;
 
     SetTargetFPS(60);
@@ -115,14 +116,14 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCount++;
-        if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 1.0f, 6.0f, 30.0f);
-        else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 1.0, 6.0f, 30.0f);
-        if (IsKeyPressed(KEY_A)) text.duration = Clamp(text.duration - 2, 10, 60);
-        else if (IsKeyPressed(KEY_D)) text.duration = Clamp(text.duration + 2, 10, 60);
-        if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
-        else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
-        if (IsKeyPressed(KEY_Q)) curAnimation = abs((curAnimation-1)%2);
-        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation+1)%2;
+        if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 2.0f, 6.0f, 60.0f);
+        else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 2.0, 6.0f, 60.0f);
+        if (IsKeyPressed(KEY_A)) text.duration = Clamp(text.duration - 5, 20, 120);
+        else if (IsKeyPressed(KEY_D)) text.duration = Clamp(text.duration + 5, 20, 120);
+        if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1, 0, 15);
+        else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1, 0, 15);
+        if (IsKeyPressed(KEY_Q)) curAnimation = curAnimation ? curAnimation - 1 : 2;
+        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation + 1)%3;
         
         //----------------------------------------------------------------------------------
 
@@ -134,35 +135,56 @@ int main(void)
 
         DrawText(TextFormat("Duration (A | D): %d", text.duration), 20, 20, 20, BLACK);
         DrawText(TextFormat("Delta (W | S): %.1f", text.delta), 20, 50, 20, BLACK);
-        DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, BLACK);
+        DrawText(TextFormat("Offset (Z | X): %d", text.offset), 20, 80, 20, BLACK);
         DrawText(TextFormat("Curent Animation (Q | E): %s", animations[curAnimation]), 20, 110, 20, BLACK);
 
         switch (curAnimation)
         {
-        case 0:
+        case 0: // Waving text
             for(int i=0; i<TextLength(text.str); i++)
             {
                char str[2] = {text.str[i], 0};
-               int offset = i*text.offset;
-               if ((frameCount+offset)%(text.duration*2) < text.duration) 
+               float time = (frameCount + i*text.offset) % text.duration;
+               if (time < text.duration/2) 
                {
-                  float posY = EaseSineIn((float) ((frameCount+offset)%text.duration), text.position.y, text.delta, text.duration);
-                  DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
+                  float posY = EaseSineIn(time, text.position.y, text.delta, text.duration);
+                  DrawText(str, text.position.x + 20*i, posY, 24, PURPLE);
                }
                else 
                {
-                  float posY = EaseSineOut((float) ((frameCount+offset)%text.duration), text.position.y+text.delta, -text.delta, text.duration);
-                  DrawText(str, text.position.x+20*i, posY, 24, PURPLE);
+                  float posY = EaseSineOut(time, text.position.y+text.delta, -text.delta, text.duration);
+                  DrawText(str, text.position.x + 20*i, posY, 24, PURPLE);
                }
             }
             break;
-         case 1:
+         case 1: // Flashing text
             for(int i=0; i<TextLength(text.str); i++)
             {
                char str[2] = {text.str[i], 0};
-               int offset = i*text.offset;
-               unsigned char alpha = EaseSineInOut((float) ((frameCount+offset)%text.duration), 255.0f, -255.0f, text.duration);
+               float time = (frameCount + i*text.offset) % text.duration;
+               unsigned char alpha = EaseSineInOut(time, 255.0f, -255.0f, text.duration);
                DrawText(str, text.position.x+20*i, text.position.y, 24, (Color) {200U, 122U, 255U, alpha});
+            }
+            break;
+         case 2: // Shaking text
+            for(int i=0; i<TextLength(text.str); i++)
+            {
+               char str[2] = {text.str[i], 0};
+               float time = (frameCount + i*text.offset) % text.duration;
+               float deltaX = (float) GetRandomValue(-text.delta/10, text.delta/10);
+               float deltaY = (float) GetRandomValue(-text.delta/10, text.delta/10);
+               if (time < text.duration/2) 
+               {
+                  float posX = EaseLinearNone(time, text.position.x + 20*i, deltaX, text.duration/2);
+                  float posY = EaseLinearNone(time, text.position.y, deltaY, text.duration/2);
+                  DrawText(str, posX, posY, 24, PURPLE);
+               }
+               else 
+               {
+                  float posX = EaseLinearNone(time - text.duration/2, text.position.x + 20*i + deltaX, -deltaX, text.duration/2);
+                  float posY = EaseLinearNone(time - text.duration/2, text.position.y + deltaY, -deltaY, text.duration/2);
+                  DrawText(str, posX, posY, 24, PURPLE);
+               }
             }
         }
         
@@ -173,8 +195,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-
-    // TODO: Unload all loaded resources at this point
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
