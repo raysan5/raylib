@@ -316,7 +316,7 @@ static void AddTriangleToMeshBuilder(MeshBuilder *mb, Vector3 vertices[3])
 static void FreeMeshBuilder(MeshBuilder *mb)
 {
     MemFree(mb->vertices);
-    if (mb->uvs) MemFree(mb->uvs);
+    if (mb->uvs != NULL) MemFree(mb->uvs);
     *mb = (MeshBuilder){ 0 };
 }
 
@@ -328,7 +328,7 @@ static Mesh BuildMesh(MeshBuilder *mb)
     outMesh.vertexCount = mb->vertexCount;
     outMesh.triangleCount = mb->vertexCount/3;
     outMesh.vertices = MemAlloc(outMesh.vertexCount*3*sizeof(float));
-    if (mb->uvs) outMesh.texcoords = MemAlloc(outMesh.vertexCount*2*sizeof(float));
+    if (mb->uvs != NULL) outMesh.texcoords = MemAlloc(outMesh.vertexCount*2*sizeof(float));
 
     for (int i = 0; i < mb->vertexCount; i++)
     {
@@ -336,7 +336,7 @@ static Mesh BuildMesh(MeshBuilder *mb)
         outMesh.vertices[3*i+1] = mb->vertices[i].y;
         outMesh.vertices[3*i+2] = mb->vertices[i].z;
 
-        if (mb->uvs)
+        if (mb->uvs != NULL)
         {
             outMesh.texcoords[2*i+0] = mb->uvs[i].x;
             outMesh.texcoords[2*i+1] = mb->uvs[i].y;
