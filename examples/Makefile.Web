@@ -633,6 +633,7 @@ TEXTURES = \
 
 TEXT = \
     text/text_3d_drawing \
+    text/text_animations \
     text/text_codepoints_loading \
     text/text_font_filters \
     text/text_font_loading \
@@ -1097,7 +1098,7 @@ textures/textures_image_rotate: textures/textures_image_rotate.c
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/parrots.png@resources/parrots.png \
-    --preload-file textures/resources/KAISG.ttf@resources/KAISG.ttf
+    --preload-file textures/KAISG.ttf@KAISG.ttf
 
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1172,6 +1173,9 @@ text/text_3d_drawing: text/text_3d_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
 
+text/text_animations: text/text_animations.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 text/text_codepoints_loading: text/text_codepoints_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/DotGothic16-Regular.ttf@resources/DotGothic16-Regular.ttf
@@ -1181,10 +1185,7 @@ text/text_font_filters: text/text_font_filters.c
     --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
 
 text/text_font_loading: text/text_font_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
-    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
-    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_font_sdf: text/text_font_sdf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

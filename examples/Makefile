@@ -672,6 +672,7 @@ TEXTURES = \
 
 TEXT = \
     text/text_3d_drawing \
+    text/text_animations \
     text/text_codepoints_loading \
     text/text_font_filters \
     text/text_font_loading \

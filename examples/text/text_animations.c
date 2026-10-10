@@ -1,17 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - <animations>
+*   raylib [text] example - animations
 *
 *   Example complexity rating: [★☆☆☆] 1/4
 *
 *   Example originally created with raylib 6.0, last time updated with raylib 6.0
 *
-*   Example contributed by <Gabriel Piangers> (@gabriel-piangers) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Gabriel Piangers (@gabriel-piangers) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2026-2026 Gabriel Piangers (@gabriel-piangers)
+*   Copyright (c) 2026 Gabriel Piangers (@gabriel-piangers)
 *
 ********************************************************************************************/
 
@@ -38,7 +38,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [<module>] example - <name>");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - animations");
 
     char animations[3][51] = {
       "Waving",
