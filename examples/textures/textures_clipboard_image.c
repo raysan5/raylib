@@ -50,7 +50,7 @@ int main(void)
         if (IsKeyPressed(KEY_R))    // Reset image collection
         {
             // Unload textures to avoid memory leaks
-            for (int i = 0; i < MAX_TEXTURE_COLLECTION; i++) UnloadTexture(collection[i].texture);
+            for (int i = 0; i < currentCollectionIndex; i++) UnloadTexture(collection[i].texture);
 
             currentCollectionIndex = 0;
         }
@@ -98,7 +98,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < MAX_TEXTURE_COLLECTION;i ++)
+    for (int i = 0; i < currentCollectionIndex; i++)
     {
         UnloadTexture(collection[i].texture);
     }
