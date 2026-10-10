@@ -97,6 +97,8 @@ typedef struct {
     unsigned int desiredFlags;
 
     LARGE_INTEGER timerFrequency;
+
+    char *clipboardText;
 } PlatformData;
 
 // Define WGL function pointer types (no wglext.h needed)
@@ -1120,14 +1122,101 @@ Vector2 GetWindowScaleDPI(void)
 // Set clipboard text content
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText not implemented");
+    if (OpenClipboard(platform.hwnd))
+    {
+        if (text == NULL)
+        {
+            EmptyClipboard();
+        }
+        else
+        {
+            size_t length = strlen(text);
+
+            int clipboardTextLength = MultiByteToWideChar(CP_UTF8, 0, text, (int)(length + 1), NULL, 0);
+            if (clipboardTextLength != 0)
+            {
+                HGLOBAL globalHandle = GlobalAlloc(GMEM_MOVEABLE, clipboardTextLength*sizeof(wchar_t));
+
+                if (globalHandle)
+                {
+                    LPVOID clipboardText = GlobalLock(globalHandle);
+                    int charactersCopied = 0;
+                    if (clipboardText != NULL)
+                    {
+                        // Directly copies text to clipboardText and converts from UTF-8 to UTF-16
+                        charactersCopied = MultiByteToWideChar(CP_UTF8, 0, text, (int)(length + 1), clipboardText, clipboardTextLength);
+                        GlobalUnlock(globalHandle);
+                    }
+
+                    if (charactersCopied != 0)
+                    {
+                        EmptyClipboard();
+
+                        // We don't need to call GlobalFree when SetClipboardData succeeds; Windows takes control of the memory
+                        HANDLE clipboardData = SetClipboardData(CF_UNICODETEXT, globalHandle);
+                        if (!clipboardData)
+                        {
+                            TRACELOG(LOG_WARNING, "Clipboard: Failed to set clipboard text.");
+                            GlobalFree(globalHandle);
+                        }
+                    }
+                    else
+                    {
+                        GlobalFree(globalHandle);
+                    }
+                }
+            }
+        }
+
+        CloseClipboard();
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "Clipboard: Failed to write to clipboard. It may be locked by another program.");
+    }
 }
 
 // Get clipboard text content
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText not implemented");
-    return NULL;
+    if (platform.clipboardText != NULL)
+    {
+        RL_FREE(platform.clipboardText);
+        platform.clipboardText = NULL;
+    }
+
+    if (OpenClipboard(platform.hwnd))
+    {
+        HANDLE clipboardDataHandle = GetClipboardData(CF_UNICODETEXT);
+        if (clipboardDataHandle)
+        {
+            wchar_t *clipboardText = GlobalLock(clipboardDataHandle);
+            if (clipboardText != NULL)
+            {
+                // The clipboard data can't be trusted. It may or may not be null-terminated!
+                size_t maxLength = GlobalSize(clipboardDataHandle)/sizeof(wchar_t);
+                int length = (int)wcsnlen(clipboardText, maxLength);
+
+                int size = WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, NULL, 0, NULL, NULL);
+                char *utf8Text = (char *)RL_MALLOC(size + 1);
+
+                if ((size > 0) && (WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, utf8Text, size, NULL, NULL) == 0)) size = 0;
+                utf8Text[size] = '\0';
+
+                platform.clipboardText = utf8Text;
+
+                GlobalUnlock(clipboardDataHandle);
+            }
+        }
+
+        CloseClipboard();
+    }
+    else
+    {
+        TRACELOG(LOG_WARNING, "Clipboard: Failed to read clipboard. It may be locked by another program.");
+    }
+
+    return platform.clipboardText;
 }
 
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
@@ -1792,6 +1881,12 @@ void ClosePlatform(void)
         if (icon != NULL) DestroyIcon(icon);
 
         platform.hwnd = NULL;
+    }
+
+    if (platform.clipboardText != NULL)
+    {
+        RL_FREE(platform.clipboardText);
+        platform.clipboardText = NULL;
     }
 
     CORE.Window.flags = savedFlags;
