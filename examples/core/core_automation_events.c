@@ -69,7 +69,7 @@ int main(void)
     // Define camera
     Camera2D camera = { 0 };
     camera.target = player.position;
-    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
@@ -117,7 +117,7 @@ int main(void)
                 player.canJump = false;
 
                 camera.target = player.position;
-                camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+                camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
                 camera.rotation = 0.0f;
                 camera.zoom = 1.0f;
             }
@@ -169,7 +169,7 @@ int main(void)
             player.canJump = false;
 
             camera.target = player.position;
-            camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+            camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
             camera.rotation = 0.0f;
             camera.zoom = 1.0f;
         }
@@ -205,7 +205,7 @@ int main(void)
         // Update camera
         //----------------------------------------------------------------------------------
         camera.target = player.position;
-        camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+        camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
         float minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
 
         // WARNING: On event replay, mouse-wheel internal value is set
@@ -267,7 +267,7 @@ int main(void)
                 player.canJump = false;
 
                 camera.target = player.position;
-                camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+                camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
                 camera.rotation = 0.0f;
                 camera.zoom = 1.0f;
             }

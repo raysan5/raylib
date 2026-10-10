@@ -151,10 +151,6 @@
     #include "external/rprand.h"
 #endif
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
-    #define _GNU_SOURCE
-#endif
-
 // Platform specific defines to handle GetApplicationDirectory()
 #if defined(_WIN32)
     #if !defined(MAX_PATH)
@@ -478,7 +474,7 @@ static const char *autoEventTypeName[] = {
 
 static AutomationEventList *currentEventList = NULL;        // Current automation events list, set by user, keep internal pointer
 static bool automationEventRecording = false;               // Recording automation events flag
-//static short automationEventEnabled = 0b0000001111111111; // TODO: Automation events enabled for recording/playing
+//static short automationEventEnabled = 0b0000001111111111; // Automation events enabled for recording/playing
 #endif
 //-----------------------------------------------------------------------------------
 
@@ -535,8 +531,6 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 #elif defined(PLATFORM_MEMORY)
     #include "platforms/rcore_memory.c"
 #else
-    // TODO: Include your custom platform backend!
-    // i.e software rendering backend or console backend!
     #pragma message ("WARNING: No [rcore] platform defined")
 #endif
 
@@ -611,8 +605,6 @@ void InitWindow(int width, int height, const char *title)
 #elif defined(PLATFORM_MEMORY)
     TRACELOG(LOG_INFO, "Platform backend: MEMORY (No OS)");
 #else
-    // TODO: Include your custom platform backend!
-    // i.e software rendering backend or console backend!
     TRACELOG(LOG_INFO, "Platform backend: CUSTOM");
 #endif
 
@@ -2302,9 +2294,12 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     {
         fileText = LoadFileText(fileName);
         fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
-        bool saved = SaveFileText(fileName, fileTextUpdated);
-        if (saved) result = 0;
-        MemFree(fileTextUpdated);
+        if (fileTextUpdated != NULL)
+        {
+            bool saved = SaveFileText(fileName, fileTextUpdated);
+            if (saved) result = 0;
+            MemFree(fileTextUpdated);
+        }
         UnloadFileText(fileText);
     }
 #else
@@ -2323,9 +2318,12 @@ int FileTextFindIndex(const char *fileName, const char *search)
     if (FileExists(fileName))
     {
         char *fileText = LoadFileText(fileName);
-        char *ptr = strstr(fileText, search);
-        if (ptr != NULL) result = (int)(ptr - fileText);
-        UnloadFileText(fileText);
+        if (fileText != NULL)
+        {
+            char *ptr = strstr(fileText, search);
+            if (ptr != NULL) result = (int)(ptr - fileText);
+            UnloadFileText(fileText);
+        }
     }
 
     return result;
@@ -4570,7 +4568,7 @@ static void RecordAutomationEvent(void)
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
             (CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to ready
         {
-            // TODO: Save gamepad connect event
+            // TODO: Automation event: Save gamepad connect event
         }
         */
 
@@ -4579,7 +4577,7 @@ static void RecordAutomationEvent(void)
         if ((CORE.Input.Gamepad.currentState[gamepad] != CORE.Input.Gamepad.previousState[gamepad]) &&
             (!CORE.Input.Gamepad.currentState[gamepad])) // Check if changed to not-ready
         {
-            // TODO: Save gamepad disconnect event
+            // TODO: Automation event: Save gamepad disconnect event
         }
         */
 

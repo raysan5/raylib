@@ -886,7 +886,7 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on Desktop platforms,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
-    // TODO: OpenGL ES 2.0 support shouldn't be platform-dependent, neither require GLAD
+    // TODO: rlgl OpenGL ES 2.0 selection shouldn't depend on raylib platform macros, a specific GLAD shouldn't be neither required
     #if defined(PLATFORM_DESKTOP_GLFW) || defined(PLATFORM_DESKTOP_SDL)
         #define GLAD_GLES2_IMPLEMENTATION
         #include "external/glad_gles2.h"
@@ -2966,8 +2966,9 @@ void rlDrawRenderBatch(rlRenderBatch *batch)
         // Activate elements VAO
         if (RLGL.ExtSupported.vao) glBindVertexArray(batch->vertexBuffer[batch->currentBuffer].vaoId);
 
-        // TODO: If no data changed on the CPU arrays there is no need to re-upload data to GPU,
-        // a flag can be used to detect changes but it would imply keeping a copy buffer and memcmp() both, does it worth it?
+        // NOTE: If no data changed on the CPU arrays there is no need to re-upload data to GPU,
+        // a flag can be used to detect changes but it would imply keeping a copy buffer and memcmp() both
+        // It was tested and the gain seemed to be minimal or nothing at all, probably driver already takes care of that
 
         // Vertex positions buffer
         glBindBuffer(GL_ARRAY_BUFFER, batch->vertexBuffer[batch->currentBuffer].vboId[0]);
@@ -3240,7 +3241,6 @@ unsigned int rlLoadTexture(const void *data, int width, int height, int format, 
 #if defined(GRAPHICS_API_OPENGL_11)
     if (format >= RL_PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
-        // TODO: Support texture data decompression
         TRACELOG(RL_LOG_WARNING, "GL: OpenGL 1.1 does not support GPU compressed texture formats");
         return id;
     }

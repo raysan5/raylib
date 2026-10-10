@@ -1431,7 +1431,11 @@ void PollInputEvents(void)
     CORE.Input.Mouse.currentWheelMove.y = 0;
 
     // Register previous mouse position
-    if (CORE.Input.Mouse.cursorLocked) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+    if (CORE.Input.Mouse.cursorLocked)
+    {
+        CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
+        CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
+    }
     else CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     // Reset last gamepad button/axis registered state
@@ -1492,43 +1496,34 @@ void PollInputEvents(void)
 
             case SDL_DROPFILE:      // Dropped file
             {
-                if (CORE.Window.dropFileCount == 0)
-                {
-                    // When a new file is dropped, reserve a fixed number of slots for all possible dropped files
-                    // at the moment limit the number of drops at once to 1024 files but this behaviour should probably be reviewed
-                    // TODO: Pointers should probably be reallocated for any new file added...
-                    CORE.Window.dropFilepaths = (char **)RL_CALLOC(1024, sizeof(char *));
+                // NOTE: SDL sends one event per file, so every event adds a new path to the list
+                int newCount = CORE.Window.dropFileCount + 1;
 
+                // Reallocate array to fit the new file path pointer
+                char **tempPaths = (char **)RL_REALLOC(CORE.Window.dropFilepaths, newCount*sizeof(char *));
+
+                if (tempPaths != NULL)
+                {
+                    CORE.Window.dropFilepaths = tempPaths;
+
+                    // Allocate memory for the file path string itself
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(USING_VERSION_SDL3)
-                    // const char *data;   // The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events
-                    // Event memory is now managed by SDL, so it should not be freed in SDL_EVENT_DROP_FILE,
-                    // in case data needs to be hold onto the text in SDL_EVENT_TEXT_EDITING and SDL_EVENT_TEXT_INPUT events,
-                    // a copy is required, SDL_TEXTINPUTEVENT_TEXT_SIZE is no longer necessary and has been removed
-                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
-                #else
-                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
-                    SDL_free(event.drop.file);
-                #endif
-
-                    CORE.Window.dropFileCount++;
+                    if (CORE.Window.dropFilepaths[CORE.Window.dropFileCount] != NULL)
+                    {
+                        // Copy the path data from SDL to our internal list
+                        #if defined(USING_VERSION_SDL3)
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
+                        #else
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
+                        #endif
+                        CORE.Window.dropFileCount++;
+                    }
                 }
-                else if (CORE.Window.dropFileCount < 1024)
-                {
-                    CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
-                #if defined(USING_VERSION_SDL3)
-                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
-                #else
-                    snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
-                    SDL_free(event.drop.file);
+                #if !defined(USING_VERSION_SDL3)
+                SDL_free(event.drop.file); // Only SDL2 needs to free, SDL3 keeps track internally
                 #endif
-
-                    CORE.Window.dropFileCount++;
-                }
-                else TRACELOG(LOG_WARNING, "FILE: Maximum drag and drop files at once is limited to 1024 files!");
-
             } break;
 
             // Window events are also polled (minimized, maximized, close...)
@@ -1736,9 +1731,8 @@ void PollInputEvents(void)
             {
                 if (CORE.Input.Mouse.cursorLocked)
                 {
-                    CORE.Input.Mouse.currentPosition.x = (float)event.motion.xrel;
-                    CORE.Input.Mouse.currentPosition.y = (float)event.motion.yrel;
-                    CORE.Input.Mouse.previousPosition = (Vector2){ 0.0f, 0.0f };
+                    CORE.Input.Mouse.currentPosition.x += (float)event.motion.xrel;
+                    CORE.Input.Mouse.currentPosition.y += (float)event.motion.yrel;
                 }
                 else
                 {

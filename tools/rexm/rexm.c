@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
     int opCode = OP_NONE;           // Operation code: 0-None(Help), 1-Create, 2-Add, 3-Rename, 4-Remove
     bool showUsage = false;         // Flag to show usage help
-    bool verbose = false;           // Flag for verbose log info
+    //bool verbose = false;           // Flag for verbose log info
 
     // Command-line usage mode: command args processing
     //--------------------------------------------------------------------------------------
@@ -491,7 +491,6 @@ int main(int argc, char *argv[])
         for (int i = 1; i < argc; i++)
         {
             if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0)) showUsage = true;
-            else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0)) verbose = true;
         }
     }
 
@@ -1040,8 +1039,13 @@ int main(int argc, char *argv[])
             FilePathList clist = LoadDirectoryFilesEx(exBasePath, ".c", true);
 
             // Load examples collection list file (raylib/examples/examples_list.txt)
-            char *exList = LoadFileText(exCollectionFilePath);
-            int exListLen = (int)strlen(exList);
+            char *exList = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+            int exListLen = 0;
+
+            char *exListFileData = LoadFileText(exCollectionFilePath);
+            exListLen = (int)strlen(exListFileData);
+            memcpy(exList, exListFileData, exListLen);
+            UnloadFileText(exListFileData);
 
             char *exListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
             bool listUpdated = false;
@@ -1098,7 +1102,10 @@ int main(int argc, char *argv[])
                                 exInfo->author, exInfo->authorGitHub));
 
                         // Add the following examples to the end of collection list
-                        strncpy(exListUpdated + exListNextCatIndex + exListNewExLen, exList + exListNextCatIndex, exListLen - exListNextCatIndex);
+                        snprintf(exListUpdated + exListNextCatIndex + exListNewExLen, exListLen - exListNextCatIndex + 1, "%s", exList + exListNextCatIndex);
+
+                        exListLen = (int)strlen(exListUpdated);
+                        memcpy(exList, exListUpdated, exListLen + 1);
 
                         listUpdated = true;
                     }
@@ -1126,7 +1133,7 @@ int main(int argc, char *argv[])
 
             if (listUpdated) SaveFileText(exCollectionFilePath, exListUpdated);
 
-            UnloadFileText(exList);
+            RL_FREE(exList);
             RL_FREE(exListUpdated);
 
             UnloadDirectoryFiles(clist);
@@ -1584,11 +1591,11 @@ int main(int argc, char *argv[])
                     "        default: break;\n    }\n"
                     "    logTextOffset += vsprintf(logText + logTextOffset, text, args);\n"
                     "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n}\n\n"
+                    "static int requestedTestFrames = 0;\n"
+                    "static int testFramesCount = 0;\n"
                     "int main(int argc, char *argv[])\n{\n"
                     "    SetTraceLogCallback(CustomTraceLog);\n"
-                    "    int requestedTestFrames = 0;\n"
-                    "    int testFramesCount = 0;\n"
-                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+                    "    if ((argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 static const char *returnReplaceText =
                     "    SaveFileText(\"outputLogFileName\", logText);\n"
@@ -1644,10 +1651,10 @@ int main(int argc, char *argv[])
                 static const char *mainReplaceText =
                     "#include <string.h>\n"
                     "#include <stdlib.h>\n"
+                    "static int requestedTestFrames = 0;\n"
+                    "static int testFramesCount = 0;\n"
                     "int main(int argc, char *argv[])\n{\n"
-                    "    int requestedTestFrames = 0;\n"
-                    "    int testFramesCount = 0;\n"
-                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+                    "    if ((argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
 
                 char *srcTextUpdated[3] = { 0 };
                 srcTextUpdated[0] = TextReplaceAlloc(srcText, "int main(void)\n{", mainReplaceText);
@@ -1656,22 +1663,26 @@ int main(int argc, char *argv[])
                 UnloadFileText(srcText);
 
                 SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[2]);
-                for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+                for (int j = 0; j < 3; j++) { MemFree(srcTextUpdated[j]); srcTextUpdated[j] = NULL; }
+
+                // Compiler flags for building the examples
+                //   -Wno-unused-function: Prevents a warning in raygui.h with GuiFontIconBaking()
+                const char *cFlags = "\"-Wno-unused-function\"";
 
                 // STEP 2: Build example for DESKTOP platform
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #elif defined(PLATFORM_DRM)
                 LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
-                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+                system(TextFormat("make -C %s %s/%s CFLAGS=%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, cFlags, exBasePath, exCategory, exName));
     #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
@@ -1881,9 +1892,9 @@ int main(int argc, char *argv[])
 
             int filesDeleted = 0;
 
-            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+            for (int c = 0; c < REXM_MAX_EXAMPLE_CATEGORIES; c++)
             {
-                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[i]));
+                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[c]));
 
                 for (int i = 0; i < pathList.count; i++)
                 {
@@ -1911,7 +1922,7 @@ int main(int argc, char *argv[])
                 // OP_TEST creates a 'logs' directory inside of example category directories
                 // Raylib currently has no way of deleting directories...
                 // We can at least delete the files
-                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[i]));
+                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[c]));
                 for (int i = 0; i < logsPathList.count; i++)
                 {
                     const char *logPath = logsPathList.paths[i];
@@ -1963,7 +1974,6 @@ int main(int argc, char *argv[])
 
             printf("OPTIONS:\n\n");
             printf("    -h, --help                    : Show tool version and command line usage help\n");
-            printf("    -v, --verbose                 : Verbose mode, show additional logs on processes\n");
 
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");

@@ -19,7 +19,7 @@ Run the following commands from the repository root:
 - `zig build [module]` to compile all examples for a module (e.g. `zig build core`)
 - `zig build [example]` to compile _and run_ a particular example (e.g. `zig build core_basic_window`)
 
-## EXAMPLES COLLECTION [TOTAL: 213]
+## EXAMPLES COLLECTION [TOTAL: 222]
 
 ### category: core [49]
 
@@ -77,7 +77,7 @@ Examples using raylib [core](../src/rcore.c) module platform functionality: wind
 | [core_keyboard_testbed](core/core_keyboard_testbed.c) | <img src="core/core_keyboard_testbed.png" alt="core_keyboard_testbed" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Ramon Santamaria](https://github.com/raysan5) |
 | [core_window_web](core/core_window_web.c) | <img src="core/core_window_web.png" alt="core_window_web" width="80"> | ⭐☆☆☆ | 1.3 | 5.5 | [Ramon Santamaria](https://github.com/raysan5) |
 
-### category: shapes [41]
+### category: shapes [45]
 
 Examples using raylib shapes drawing functionality, provided by raylib [shapes](../src/rshapes.c) module.
 
@@ -124,8 +124,12 @@ Examples using raylib shapes drawing functionality, provided by raylib [shapes](
 | [shapes_hilbert_curve](shapes/shapes_hilbert_curve.c) | <img src="shapes/shapes_hilbert_curve.png" alt="shapes_hilbert_curve" width="80"> | ⭐⭐⭐☆ | 5.6 | 5.6 | [Hamza RAHAL](https://github.com/hmz-rhl) |
 | [shapes_easings_testbed](shapes/shapes_easings_testbed.c) | <img src="shapes/shapes_easings_testbed.png" alt="shapes_easings_testbed" width="80"> | ⭐⭐⭐☆ | 2.5 | 2.5 | [Juan Miguel López](https://github.com/flashback-fx) |
 | [shapes_drag_puzzle](shapes/shapes_drag_puzzle.c) | <img src="shapes/shapes_drag_puzzle.png" alt="shapes_drag_puzzle" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Gabriel Piangers](https://github.com/gabriel-piangers) |
+| [shapes_ellipse_collision](shapes/shapes_ellipse_collision.c) | <img src="shapes/shapes_ellipse_collision.png" alt="shapes_ellipse_collision" width="80"> | ⭐⭐☆☆ | 5.5 | 5.5 | [Ziya](https://github.com/Monjaris) |
+| [shapes_outlines_testbed](shapes/shapes_outlines_testbed.c) | <img src="shapes/shapes_outlines_testbed.png" alt="shapes_outlines_testbed" width="80"> | ⭐⭐⭐☆ | 6.1 | 6.1 | [Matthew Roush](https://github.com/MatthewRoush) |
+| [shapes_outlines_thickness](shapes/shapes_outlines_thickness.c) | <img src="shapes/shapes_outlines_thickness.png" alt="shapes_outlines_thickness" width="80"> | ⭐☆☆☆ | 6.1 | 6.1 | [Matthew Roush](https://github.com/MatthewRoush) |
+| [shapes_polygon_lines](shapes/shapes_polygon_lines.c) | <img src="shapes/shapes_polygon_lines.png" alt="shapes_polygon_lines" width="80"> | ⭐⭐☆☆ | 6.1 | 6.1 | [Matthew Roush](https://github.com/MatthewRoush) |
 
-### category: textures [32]
+### category: textures [33]
 
 Examples using raylib textures functionality, including image/textures loading/generation and drawing, provided by raylib [textures](../src/rtextures.c) module.
 
@@ -163,6 +167,7 @@ Examples using raylib textures functionality, including image/textures loading/g
 | [textures_sprite_stacking](textures/textures_sprite_stacking.c) | <img src="textures/textures_sprite_stacking.png" alt="textures_sprite_stacking" width="80"> | ⭐⭐☆☆ | 6.0 | 6.0 | [Robin](https://github.com/RobinsAviary) |
 | [textures_cellular_automata](textures/textures_cellular_automata.c) | <img src="textures/textures_cellular_automata.png" alt="textures_cellular_automata" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jordi Santonja](https://github.com/JordSant) |
 | [textures_framebuffer_rendering](textures/textures_framebuffer_rendering.c) | <img src="textures/textures_framebuffer_rendering.png" alt="textures_framebuffer_rendering" width="80"> | ⭐⭐☆☆ | 5.6 | 5.6 | [Jack Boakes](https://github.com/jackboakes) |
+| [textures_portal_window](textures/textures_portal_window.c) | <img src="textures/textures_portal_window.png" alt="textures_portal_window" width="80"> | ⭐⭐⭐⭐️ | 6.0 | 6.0 | [PanicTitan](https://github.com/PanicTitan) |
 
 ### category: text [16]
 
@@ -187,7 +192,7 @@ Examples using raylib text functionality, including sprite fonts loading/generat
 | [text_words_alignment](text/text_words_alignment.c) | <img src="text/text_words_alignment.png" alt="text_words_alignment" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [JP Mortiboys](https://github.com/themushroompirates) |
 | [text_strings_management](text/text_strings_management.c) | <img src="text/text_strings_management.png" alt="text_strings_management" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [David Buzatto](https://github.com/davidbuzatto) |
 
-### category: models [30]
+### category: models [32]
 
 Examples using raylib models functionality, including models loading/generation and drawing, provided by raylib [models](../src/rmodels.c) module.
 
@@ -223,8 +228,10 @@ Examples using raylib models functionality, including models loading/generation 
 | [models_animation_blend_custom](models/models_animation_blend_custom.c) | <img src="models/models_animation_blend_custom.png" alt="models_animation_blend_custom" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [dmitrii-brand](https://github.com/dmitrii-brand) |
 | [models_animation_blending](models/models_animation_blending.c) | <img src="models/models_animation_blending.png" alt="models_animation_blending" width="80"> | ⭐⭐⭐⭐️ | 5.5 | 6.0 | [Kirandeep](https://github.com/Kirandeep-Singh-Khehra) |
 | [models_animation_timing](models/models_animation_timing.c) | <img src="models/models_animation_timing.png" alt="models_animation_timing" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Ramon Santamaria](https://github.com/raysan5) |
+| [models_mesh_uv_painting](models/models_mesh_uv_painting.c) | <img src="models/models_mesh_uv_painting.png" alt="models_mesh_uv_painting" width="80"> | ⭐⭐⭐⭐️ | 6.0 | 6.0 | [PanicTitan](https://github.com/PanicTitan) |
+| [models_procedural_decals](models/models_procedural_decals.c) | <img src="models/models_procedural_decals.png" alt="models_procedural_decals" width="80"> | ⭐⭐⭐⭐️ | 6.0 | 6.0 | [PanicTitan](https://github.com/PanicTitan) |
 
-### category: shaders [35]
+### category: shaders [36]
 
 Examples using raylib shaders functionality, including shaders loading, parameters configuration and drawing using them (model shaders and postprocessing shaders). This functionality is directly provided by raylib [rlgl](../src/rlgl.h) module.
 
@@ -265,8 +272,9 @@ Examples using raylib shaders functionality, including shaders loading, paramete
 | [shaders_game_of_life](shaders/shaders_game_of_life.c) | <img src="shaders/shaders_game_of_life.png" alt="shaders_game_of_life" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Jordi Santonja](https://github.com/JordSant) |
 | [shaders_rlgl_compute](shaders/shaders_rlgl_compute.c) | <img src="shaders/shaders_rlgl_compute.png" alt="shaders_rlgl_compute" width="80"> | ⭐⭐⭐⭐️ | 4.0 | 4.0 | [Teddy Astie](https://github.com/tsnake41) |
 | [shaders_cel_shading](shaders/shaders_cel_shading.c) | <img src="shaders/shaders_cel_shading.png" alt="shaders_cel_shading" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Gleb A](https://github.com/ggrizzly) |
+| [shaders_lights_bloom](shaders/shaders_lights_bloom.c) | <img src="shaders/shaders_lights_bloom.png" alt="shaders_lights_bloom" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [PanicTitan](https://github.com/PanicTitan) |
 
-### category: audio [10]
+### category: audio [11]
 
 Examples using raylib audio functionality, including sound/music loading and playing. This functionality is provided by raylib [raudio](../src/raudio.c) module. Note this module can be used standalone independently of raylib.
 
@@ -282,6 +290,7 @@ Examples using raylib audio functionality, including sound/music loading and pla
 | [audio_sound_positioning](audio/audio_sound_positioning.c) | <img src="audio/audio_sound_positioning.png" alt="audio_sound_positioning" width="80"> | ⭐⭐☆☆ | 5.5 | 6.0 | [Le Juez Victor](https://github.com/Bigfoot71) |
 | [audio_spectrum_visualizer](audio/audio_spectrum_visualizer.c) | <img src="audio/audio_spectrum_visualizer.png" alt="audio_spectrum_visualizer" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [IANN](https://github.com/meisei4) |
 | [audio_stream_callback](audio/audio_stream_callback.c) | <img src="audio/audio_stream_callback.png" alt="audio_stream_callback" width="80"> | ⭐⭐⭐☆ | 6.0 | 6.0 | [Dan Hoang](https://github.com/dan-hoang) |
+| [audio_amp_envelope](audio/audio_amp_envelope.c) | <img src="audio/audio_amp_envelope.png" alt="audio_amp_envelope" width="80"> | ⭐☆☆☆ | 6.0 | 6.0 | [Arbinda Rizki Muhammad](https://github.com/arbipink) |
 
 Some example missing? As always, contributions are welcome, feel free to send new examples!
 Here is an [examples template](examples_template.c) with instructions to start with!

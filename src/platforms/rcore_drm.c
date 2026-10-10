@@ -2236,7 +2236,7 @@ static void PollKeyboardEvents(void)
 
                     if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
                     {
-                        // TODO/FIXME: This is not actually converting to unicode properly because it's not taking things like shift into account
+                        // TODO: WARNING: This is not actually converting to unicode properly because it's not taking things like shift into account
                         CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = evkeyToUnicodeLUT[event.code];
                         CORE.Input.Keyboard.charPressedQueueCount++;
                     }

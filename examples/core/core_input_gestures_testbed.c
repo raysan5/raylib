@@ -50,7 +50,7 @@ int main(void)
     // NOTE: The gesture log uses an array (as an inverted circular queue) to store the performed gestures
     char gestureLog[GESTURE_LOG_SIZE][12] = { "" };
     // NOTE: The index for the inverted circular queue (moving from last to first direction, then looping around)
-    int gestureLogIndex = GESTURE_LOG_SIZE;
+    int gestureLogIndex = 0;
     int previousGesture = 0;
 
     // Log mode values:
