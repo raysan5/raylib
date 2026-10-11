@@ -44,7 +44,7 @@ int main(void)
       "Flashing",
       "Shaking"
     };
-    int animationsSize = sizeof(animations)/51;
+    int animationsSize = sizeof(animations)/sizeof(animations[0]);
     int curAnimation = 0;
 
     AnimatedText text = { "This is an animated text!", { 150, 250 }, 24.0f, 6, 60 };
