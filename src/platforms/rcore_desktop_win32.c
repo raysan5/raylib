@@ -158,6 +158,9 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 // Flags that have no operations to perform during an update
 #define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
 
+// Lowest extended-key scancode, start of keyboardKeyFromExtendedScancode[]
+#define EXTENDED_KEY_OFFSET     0x1C
+
 #define WGL_DRAW_TO_WINDOW_ARB              0x2001
 #define WGL_ACCELERATION_ARB                0x2003
 #define WGL_SUPPORT_OPENGL_ARB              0x2010
@@ -480,190 +483,6 @@ static void *WglGetProcAddress(const char *procname)
     }
 
     return proc;
-}
-
-// Get key from wparam (mapping)
-static KeyboardKey GetKeyFromWparam(WPARAM wparam)
-{
-    switch (wparam)
-    {
-        /* case VK_LBUTTON: return KEY_; */
-        /* case VK_RBUTTON: return KEY_; */
-        /* case VK_CANCEL: return KEY_; */
-        /* case VK_MBUTTON: return KEY_; */
-        /* case VK_XBUTTON1: return KEY_; */
-        /* case VK_XBUTTON2: return KEY_; */
-        /* case VK_BACK: return KEY_; */
-        /* case VK_TAB: return KEY_; */
-        /* case VK_CLEAR: return KEY_; */
-        case VK_RETURN: return KEY_ENTER;
-        /* case VK_SHIFT: return KEY_; */
-        /* case VK_CONTROL: return KEY_; */
-        /* case VK_MENU: return KEY_; */
-        /* case VK_PAUSE: return KEY_; */
-        /* case VK_CAPITAL: return KEY_; */
-        /* case VK_KANA: return KEY_; */
-        /* case VK_HANGUL: return KEY_; */
-        /* case VK_IME_ON: return KEY_; */
-        /* case VK_JUNJA: return KEY_; */
-        /* case VK_FINAL: return KEY_; */
-        /* case VK_HANJA: return KEY_; */
-        /* case VK_KANJI: return KEY_; */
-        /* case VK_IME_OFF: return KEY_; */
-        case VK_ESCAPE: return KEY_ESCAPE;
-        /* case VK_CONVERT: return KEY_; */
-        /* case VK_NONCONVERT: return KEY_; */
-        /* case VK_ACCEPT: return KEY_; */
-        /* case VK_MODECHANGE: return KEY_; */
-        case VK_SPACE: return KEY_SPACE;
-        /* case VK_PRIOR: return KEY_; */
-        /* case VK_NEXT: return KEY_; */
-        /* case VK_END: return KEY_; */
-        /* case VK_HOME: return KEY_; */
-        case VK_LEFT: return KEY_LEFT;
-        case VK_UP: return KEY_UP;
-        case VK_RIGHT: return KEY_RIGHT;
-        case VK_DOWN: return KEY_DOWN;
-        /* case VK_SELECT: return KEY_; */
-        /* case VK_PRINT: return KEY_; */
-        /* case VK_EXECUTE: return KEY_; */
-        /* case VK_SNAPSHOT: return KEY_; */
-        /* case VK_INSERT: return KEY_; */
-        /* case VK_DELETE: return KEY_; */
-        /* case VK_HELP: return KEY_; */
-        case '0': return KEY_ZERO;
-        case '1': return KEY_ONE;
-        case '2': return KEY_TWO;
-        case '3': return KEY_THREE;
-        case '4': return KEY_FOUR;
-        case '5': return KEY_FIVE;
-        case '6': return KEY_SIX;
-        case '7': return KEY_SEVEN;
-        case '8': return KEY_EIGHT;
-        case '9': return KEY_NINE;
-        /* case 0x3A-40: return KEY_; */
-        case 'A': return KEY_A;
-        case 'B': return KEY_B;
-        case 'C': return KEY_C;
-        case 'D': return KEY_D;
-        case 'E': return KEY_E;
-        case 'F': return KEY_F;
-        case 'G': return KEY_G;
-        case 'H': return KEY_H;
-        case 'I': return KEY_I;
-        case 'J': return KEY_J;
-        case 'K': return KEY_K;
-        case 'L': return KEY_L;
-        case 'M': return KEY_M;
-        case 'N': return KEY_N;
-        case 'O': return KEY_O;
-        case 'P': return KEY_P;
-        case 'Q': return KEY_Q;
-        case 'R': return KEY_R;
-        case 'S': return KEY_S;
-        case 'T': return KEY_T;
-        case 'U': return KEY_U;
-        case 'V': return KEY_V;
-        case 'W': return KEY_W;
-        case 'X': return KEY_X;
-        case 'Y': return KEY_Y;
-        case 'Z': return KEY_Z;
-        //case VK_LWIN: return KEY_;
-        //case VK_RWIN: return KEY_;
-        //case VK_APPS: return KEY_;
-        //case VK_SLEEP: return KEY_;
-        //case VK_NUMPAD0: return KEY_;
-        //case VK_NUMPAD1: return KEY_;
-        //case VK_NUMPAD2: return KEY_;
-        //case VK_NUMPAD3: return KEY_;
-        //case VK_NUMPAD4: return KEY_;
-        //case VK_NUMPAD5: return KEY_;
-        //case VK_NUMPAD6: return KEY_;
-        //case VK_NUMPAD7: return KEY_;
-        //case VK_NUMPAD8: return KEY_;
-        //case VK_NUMPAD9: return KEY_;
-        //case VK_MULTIPLY: return KEY_;
-        //case VK_ADD: return KEY_;
-        //case VK_SEPARATOR: return KEY_;
-        //case VK_SUBTRACT: return KEY_;
-        //case VK_DECIMAL: return KEY_;
-        //case VK_DIVIDE: return KEY_;
-        //case VK_F1: return KEY_;
-        //case VK_F2: return KEY_;
-        //case VK_F3: return KEY_;
-        //case VK_F4: return KEY_;
-        //case VK_F5: return KEY_;
-        //case VK_F6: return KEY_;
-        //case VK_F7: return KEY_;
-        //case VK_F8: return KEY_;
-        //case VK_F9: return KEY_;
-        //case VK_F10: return KEY_;
-        //case VK_F11: return KEY_;
-        //case VK_F12: return KEY_;
-        //case VK_F13: return KEY_;
-        //case VK_F14: return KEY_;
-        //case VK_F15: return KEY_;
-        //case VK_F16: return KEY_;
-        //case VK_F17: return KEY_;
-        //case VK_F18: return KEY_;
-        //case VK_F19: return KEY_;
-        //case VK_F20: return KEY_;
-        //case VK_F21: return KEY_;
-        //case VK_F22: return KEY_;
-        //case VK_F23: return KEY_;
-        //case VK_F24: return KEY_;
-        //case VK_NUMLOCK: return KEY_;
-        //case VK_SCROLL: return KEY_;
-        //case VK_LSHIFT: return KEY_;
-        //case VK_RSHIFT: return KEY_;
-        //case VK_LCONTROL: return KEY_;
-        //case VK_RCONTROL: return KEY_;
-        //case VK_LMENU: return KEY_;
-        //case VK_RMENU: return KEY_;
-        //case VK_BROWSER_BACK: return KEY_;
-        //case VK_BROWSER_FORWARD: return KEY_;
-        //case VK_BROWSER_REFRESH: return KEY_;
-        //case VK_BROWSER_STOP: return KEY_;
-        //case VK_BROWSER_SEARCH: return KEY_;
-        //case VK_BROWSER_FAVORITES: return KEY_;
-        //case VK_BROWSER_HOME: return KEY_;
-        //case VK_VOLUME_MUTE: return KEY_;
-        //case VK_VOLUME_DOWN: return KEY_;
-        //case VK_VOLUME_UP: return KEY_;
-        //case VK_MEDIA_NEXT_TRACK: return KEY_;
-        //case VK_MEDIA_PREV_TRACK: return KEY_;
-        //case VK_MEDIA_STOP: return KEY_;
-        //case VK_MEDIA_PLAY_PAUSE: return KEY_;
-        //case VK_LAUNCH_MAIL: return KEY_;
-        //case VK_LAUNCH_MEDIA_SELECT: return KEY_;
-        //case VK_LAUNCH_APP1: return KEY_;
-        //case VK_LAUNCH_APP2: return KEY_;
-        //case VK_OEM_1: return KEY_;
-        //case VK_OEM_PLUS: return KEY_;
-        //case VK_OEM_COMMA: return KEY_;
-        //case VK_OEM_MINUS: return KEY_;
-        //case VK_OEM_PERIOD: return KEY_;
-        //case VK_OEM_2: return KEY_;
-        //case VK_OEM_3: return KEY_;
-        //case VK_OEM_4: return KEY_;
-        //case VK_OEM_5: return KEY_;
-        //case VK_OEM_6: return KEY_;
-        //case VK_OEM_7: return KEY_;
-        //case VK_OEM_8: return KEY_;
-        //case VK_OEM_102: return KEY_;
-        //case VK_PROCESSKEY: return KEY_;
-        //case VK_PACKET: return KEY_;
-        //case VK_ATTN: return KEY_;
-        //case VK_CRSEL: return KEY_;
-        //case VK_EXSEL: return KEY_;
-        //case VK_EREOF: return KEY_;
-        //case VK_PLAY: return KEY_;
-        //case VK_ZOOM: return KEY_;
-        //case VK_NONAME: return KEY_;
-        //case VK_PA1: return KEY_;
-        //case VK_OEM_CLEAR: return KEY_;
-        default: return KEY_NULL;
-    }
 }
 
 // Get cursor name
@@ -1481,6 +1300,29 @@ void PollInputEvents(void)
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
+
+    // Windows will miss key up events for specific keys; check them manually
+    if ((GetKeyState(VK_LSHIFT) & 0x8000) == 0)
+    {
+        CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT] = 0;
+    }
+    if ((GetKeyState(VK_RSHIFT) & 0x8000) == 0)
+    {
+        CORE.Input.Keyboard.currentKeyState[KEY_RIGHT_SHIFT] = 0;
+    }
+    if ((GetKeyState(VK_LWIN) & 0x8000) == 0)
+    {
+        CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SUPER] = 0;
+    }
+    if ((GetKeyState(VK_RWIN) & 0x8000) == 0)
+    {
+        CORE.Input.Keyboard.currentKeyState[KEY_RIGHT_SUPER] = 0;
+    }
+
+    // Windows won't send a WM_KEYDOWN event for print screen; check it manually
+    bool isPrintScreenDown = ((GetAsyncKeyState(VK_SNAPSHOT) & 0x8000) != 0) && (GetForegroundWindow() == platform.hwnd);
+    CORE.Input.Keyboard.currentKeyState[KEY_PRINT_SCREEN] = isPrintScreenDown;
+    if (isPrintScreenDown && (CORE.Input.Keyboard.exitKey == KEY_PRINT_SCREEN)) CORE.Window.shouldClose = true;
 }
 
 //----------------------------------------------------------------------------------
@@ -2180,8 +2022,31 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
             }
         } break;
+        case WM_SYSKEYDOWN:
+        {
+            HandleKey(wparam, lparam, 1);
+            // WM_SYSKEYDOWN events should still call DefWindowProc to allow things like alt+F4 to work
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        } break;
+        case WM_SYSKEYUP:
+        {
+            HandleKey(wparam, lparam, 0);
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        } break;
         case WM_KEYDOWN: HandleKey(wparam, lparam, 1); break;
         case WM_KEYUP: HandleKey(wparam, lparam, 0); break;
+        case WM_SYSCOMMAND:
+        {
+            if ((wparam & 0xFFF0) == SC_KEYMENU)
+            {
+                // Prevent the window from freezing when pressing Alt or F10
+                result = 0;
+            }
+            else
+            {
+                result = DefWindowProcW(hwnd, msg, wparam, lparam);
+            }
+        } break;
         case WM_LBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_LEFT, 1); break;
         case WM_LBUTTONUP  : HandleMouseButton(MOUSE_BUTTON_LEFT, 0); break;
         case WM_RBUTTONDOWN: HandleMouseButton(MOUSE_BUTTON_RIGHT, 1); break;
@@ -2227,23 +2092,194 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     return result;
 }
 
+// Maps scancodes to Raylib keys
+static const unsigned short keyboardKeyFromScancode[] =
+{
+    [0x01] = KEY_ESCAPE,
+    [0x02] = KEY_ONE,
+    [0x03] = KEY_TWO,
+    [0x04] = KEY_THREE,
+    [0x05] = KEY_FOUR,
+    [0x06] = KEY_FIVE,
+    [0x07] = KEY_SIX,
+    [0x08] = KEY_SEVEN,
+    [0x09] = KEY_EIGHT,
+    [0x0A] = KEY_NINE,
+    [0x0B] = KEY_ZERO,
+    [0x0C] = KEY_MINUS,
+    [0x0D] = KEY_EQUAL,
+    [0x0E] = KEY_BACKSPACE,
+    [0x0F] = KEY_TAB,
+    [0x10] = KEY_Q,
+    [0x11] = KEY_W,
+    [0x12] = KEY_E,
+    [0x13] = KEY_R,
+    [0x14] = KEY_T,
+    [0x15] = KEY_Y,
+    [0x16] = KEY_U,
+    [0x17] = KEY_I,
+    [0x18] = KEY_O,
+    [0x19] = KEY_P,
+    [0x1A] = KEY_LEFT_BRACKET,
+    [0x1B] = KEY_RIGHT_BRACKET,
+    [0x1C] = KEY_ENTER,
+    [0x1D] = KEY_LEFT_CONTROL,
+    [0x1E] = KEY_A,
+    [0x1F] = KEY_S,
+    [0x20] = KEY_D,
+    [0x21] = KEY_F,
+    [0x22] = KEY_G,
+    [0x23] = KEY_H,
+    [0x24] = KEY_J,
+    [0x25] = KEY_K,
+    [0x26] = KEY_L,
+    [0x27] = KEY_SEMICOLON,
+    [0x28] = KEY_APOSTROPHE,
+    [0x29] = KEY_GRAVE,
+    [0x2A] = KEY_LEFT_SHIFT,
+    [0x2B] = KEY_BACKSLASH,
+    [0x2C] = KEY_Z,
+    [0x2D] = KEY_X,
+    [0x2E] = KEY_C,
+    [0x2F] = KEY_V,
+    [0x30] = KEY_B,
+    [0x31] = KEY_N,
+    [0x32] = KEY_M,
+    [0x33] = KEY_COMMA,
+    [0x34] = KEY_PERIOD,
+    [0x35] = KEY_SLASH,
+    [0x36] = KEY_RIGHT_SHIFT,
+    [0x37] = KEY_KP_MULTIPLY,
+    [0x38] = KEY_LEFT_ALT,
+    [0x39] = KEY_SPACE,
+    [0x3A] = KEY_CAPS_LOCK,
+    [0x3B] = KEY_F1,
+    [0x3C] = KEY_F2,
+    [0x3D] = KEY_F3,
+    [0x3E] = KEY_F4,
+    [0x3F] = KEY_F5,
+    [0x40] = KEY_F6,
+    [0x41] = KEY_F7,
+    [0x42] = KEY_F8,
+    [0x43] = KEY_F9,
+    [0x44] = KEY_F10,
+    [0x45] = KEY_PAUSE,
+    [0x46] = KEY_SCROLL_LOCK,
+    [0x47] = KEY_KP_7,
+    [0x48] = KEY_KP_8,
+    [0x49] = KEY_KP_9,
+    [0x4A] = KEY_KP_SUBTRACT,
+    [0x4B] = KEY_KP_4,
+    [0x4C] = KEY_KP_5,
+    [0x4D] = KEY_KP_6,
+    [0x4E] = KEY_KP_ADD,
+    [0x4F] = KEY_KP_1,
+    [0x50] = KEY_KP_2,
+    [0x51] = KEY_KP_3,
+    [0x52] = KEY_KP_0,
+    [0x53] = KEY_KP_DECIMAL,
+    [0x57] = KEY_F11,
+    [0x58] = KEY_F12,
+    [0x59] = KEY_KP_EQUAL,
+
+    // Duplicate scancodes
+    [0x54] = KEY_PRINT_SCREEN,      // Alt+PrtSc sends the SysRq scancode
+};
+
+// Maps scancodes with extended-flag set to Raylib keys; lowest key is 0x1C
+static const unsigned short keyboardKeyFromExtendedScancode[] =
+{
+    [0x1C - EXTENDED_KEY_OFFSET] = KEY_KP_ENTER,
+    [0x1D - EXTENDED_KEY_OFFSET] = KEY_RIGHT_CONTROL,
+    [0x35 - EXTENDED_KEY_OFFSET] = KEY_KP_DIVIDE,
+    [0x37 - EXTENDED_KEY_OFFSET] = KEY_PRINT_SCREEN,
+    [0x38 - EXTENDED_KEY_OFFSET] = KEY_RIGHT_ALT,
+    [0x45 - EXTENDED_KEY_OFFSET] = KEY_NUM_LOCK,
+    [0x47 - EXTENDED_KEY_OFFSET] = KEY_HOME,
+    [0x48 - EXTENDED_KEY_OFFSET] = KEY_UP,
+    [0x49 - EXTENDED_KEY_OFFSET] = KEY_PAGE_UP,
+    [0x4B - EXTENDED_KEY_OFFSET] = KEY_LEFT,
+    [0x4D - EXTENDED_KEY_OFFSET] = KEY_RIGHT,
+    [0x4F - EXTENDED_KEY_OFFSET] = KEY_END,
+    [0x50 - EXTENDED_KEY_OFFSET] = KEY_DOWN,
+    [0x51 - EXTENDED_KEY_OFFSET] = KEY_PAGE_DOWN,
+    [0x52 - EXTENDED_KEY_OFFSET] = KEY_INSERT,
+    [0x53 - EXTENDED_KEY_OFFSET] = KEY_DELETE,
+    [0x5B - EXTENDED_KEY_OFFSET] = KEY_LEFT_SUPER,
+    [0x5C - EXTENDED_KEY_OFFSET] = KEY_RIGHT_SUPER,
+    [0x5D - EXTENDED_KEY_OFFSET] = KEY_KB_MENU,
+
+    // Duplicate scancodes
+    [0x46 - EXTENDED_KEY_OFFSET] = KEY_PAUSE,           // Ctrl+Pause sends the Break scancode
+    [0x36 - EXTENDED_KEY_OFFSET] = KEY_RIGHT_SHIFT,     // Some keyboards set the extended bit on Right Shift
+};
+
+
 // Handle keyboard input event
 static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
 {
-    KeyboardKey key = GetKeyFromWparam(wparam);
+    bool isExtendedKey = ((HIWORD(lparam) & KF_EXTENDED) != 0);
 
-    // TODO: Use scancode?
-    //BYTE scancode = lparam >> 16;
-    //TRACELOG(LOG_INFO, "KEY key=%d vk=%lu scan=%u = %u", key, wparam, scancode, state);
-
-    if (key != KEY_NULL)
+    WORD scancode = LOBYTE(HIWORD(lparam));
+    if (scancode == 0)
     {
-        CORE.Input.Keyboard.currentKeyState[key] = state;
-
-        if (((HIWORD(lparam) & KF_REPEAT) != 0) && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-        if ((key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
+        // Certain keys don't arrive with a scancode; fall back to virtual key mapping
+        scancode = MapVirtualKeyW((UINT)wparam, MAPVK_VK_TO_VSC);
     }
-    else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
+
+    KeyboardKey key = KEY_NULL;
+    if (isExtendedKey)
+    {
+        unsigned int index = scancode - EXTENDED_KEY_OFFSET;
+        unsigned int arrayLength = sizeof(keyboardKeyFromExtendedScancode)/sizeof(keyboardKeyFromExtendedScancode[0]);
+        if (index < arrayLength)
+        {
+            key = keyboardKeyFromExtendedScancode[index];
+        }
+    }
+    else
+    {
+        unsigned int arrayLength = sizeof(keyboardKeyFromScancode)/sizeof(keyboardKeyFromScancode[0]);
+        if (scancode < arrayLength)
+        {
+            key = keyboardKeyFromScancode[scancode];
+        }
+    }
+
+    bool ignoreKey = false;
+    if ((wparam == VK_CONTROL) && !isExtendedKey)
+    {
+        // Pressing AltGr causes Windows to send a fake Left Ctrl message
+        // GLFW does something similar in win32_window.c
+        MSG next = { 0 };
+        LONG time = GetMessageTime();
+
+        if (PeekMessageW(&next, NULL, 0, 0, PM_NOREMOVE))
+        {
+            // If the current message is Left Ctrl (VK_CONTROL) and the next message is AltGr (VK_MENU) with the exact same timestamp,
+            // silently drop the fake control key event
+            bool isNextExtendedKey = ((HIWORD(next.lParam) & KF_EXTENDED) != 0);
+            if ((next.wParam == VK_MENU) && ((LONG)next.time == time) && isNextExtendedKey)
+            {
+                if ((next.message == WM_KEYDOWN) || (next.message == WM_SYSKEYDOWN) || (next.message == WM_KEYUP) || (next.message == WM_SYSKEYUP))
+                {
+                    ignoreKey = true;
+                }
+            }
+        }
+    }
+
+    if (!ignoreKey)
+    {
+        if (key != KEY_NULL)
+        {
+            CORE.Input.Keyboard.currentKeyState[key] = state;
+
+            if (((HIWORD(lparam) & KF_REPEAT) != 0) && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+            if ((key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
+        }
+        else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
+    }
 
     // TODO: Add key to the queue as well?
 }
