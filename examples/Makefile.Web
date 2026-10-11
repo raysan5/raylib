@@ -1098,7 +1098,7 @@ textures/textures_image_rotate: textures/textures_image_rotate.c
 textures/textures_image_text: textures/textures_image_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/parrots.png@resources/parrots.png \
-    --preload-file textures/KAISG.ttf@KAISG.ttf
+    --preload-file textures/resources/KAISG.ttf@resources/KAISG.ttf
 
 textures/textures_logo_raylib: textures/textures_logo_raylib.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1185,7 +1185,10 @@ text/text_font_filters: text/text_font_filters.c
     --preload-file text/resources/KAISG.ttf@resources/KAISG.ttf
 
 text/text_font_loading: text/text_font_loading.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file text/resources/pixantiqua.fnt@resources/pixantiqua.fnt \
+    --preload-file text/resources/pixantiqua.png@resources/pixantiqua.png \
+    --preload-file text/resources/pixantiqua.ttf@resources/pixantiqua.ttf
 
 text/text_font_sdf: text/text_font_sdf.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

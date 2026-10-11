@@ -16,15 +16,20 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "../shapes/reasings.h" // Required for Easing functions
-#include "raymath.h" // Required for Clamp
 
+#include "reasings.h"       // Required for: Easing functions
+#include "raymath.h"        // Required for: Clamp()
+
+#define MAX_TEXT_LENGTH     64
+#define TEXT_SPACING         4
+
+// Animated text type
 typedef struct {
-    char str[100];
-    Vector2 position;
-    float delta; // Intensity of the effect (does not apply for flashing)
-    float offset; // Time offset (in frames) between each char 
-    int duration; // Time duration (in frames) of the animation
+    char str[MAX_TEXT_LENGTH]; // Text to animate
+    Vector2 position;       // Text position on screen
+    float delta;            // Intensity of the effect (does not apply for flashing)
+    float offset;           // Time offset (in frames) between each char
+    int duration;           // Time duration (in frames) of the animation
 } AnimatedText;
 
 //------------------------------------------------------------------------------------
@@ -39,16 +44,15 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [text] example - animations");
 
-    char animations[3][51] = {
-      "Waving",
-      "Flashing",
-      "Shaking"
-    };
+    char animations[3][MAX_TEXT_LENGTH] = { "Waving", "Flashing", "Shaking" };
     int animationsSize = sizeof(animations)/sizeof(animations[0]);
-    int curAnimation = 0;
+    int currentAnimation = 0;
 
-    AnimatedText text = { "This is an animated text!", { 150, 250 }, 24.0f, 6, 60 };
+    AnimatedText text = { "This is an animated text!", { 200, 250 }, 24.0f, 6, 60 };
     int frameCount = 0;
+
+    Vector2 glyphPosition[MAX_TEXT_LENGTH] = { 0 };
+    unsigned char glyphAlpha[MAX_TEXT_LENGTH] = { 0 };
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -59,58 +63,62 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         frameCount++;
+
         if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 2.0f, 10.0f, 60.0f);
         else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 2.0, 10.0f, 60.0f);
         if (IsKeyPressed(KEY_A)) text.duration = (int) Clamp((float) text.duration - 5.0f, 20.0f, 120.0f);
         else if (IsKeyPressed(KEY_D)) text.duration = (int) Clamp((float) text.duration + 5.0f, 20.0f, 120.0f);
         if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
         else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
-        if (IsKeyPressed(KEY_Q)) curAnimation = curAnimation ? curAnimation - 1 : animationsSize-1;
-        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation + 1)%animationsSize;
-        Vector2 charPos[51] = { 0 };
-        unsigned char charAlpha[51] = { 0 }; 
+        if (IsKeyPressed(KEY_Q)) currentAnimation = currentAnimation? currentAnimation - 1 : animationsSize - 1;
+        else if (IsKeyPressed(KEY_E)) currentAnimation = (currentAnimation + 1)%animationsSize;
 
-        for (int i=0; i<TextLength(text.str); i++) 
+        for (int i = 0, offsetX = 0; i < TextLength(text.str); i++)
         {
-            charPos[i] = (Vector2) { text.position.x + 20*i, text.position.y };   
-            charAlpha[i] = 255U;
-        }    
+            // NOTE: Calculating every glyph position by its width
+            glyphPosition[i] = (Vector2) { text.position.x + offsetX, text.position.y };
+            glyphAlpha[i] = 255U;
 
-        switch (curAnimation)
+            offsetX += (MeasureText(TextSubtext(text.str, i, 1), 30) + TEXT_SPACING);
+        }
+
+        switch (currentAnimation)
         {
             case 0: // Waving animation
             {
-                for (int i=0; i<TextLength(text.str); i++)
+                for (int i = 0; i < TextLength(text.str); i++)
                 {
                     float time = (int) (frameCount + i*text.offset)%text.duration;
-                    if (time < text.duration/2) charPos[i].y = EaseSineIn(time, text.position.y, text.delta, text.duration);
-                    else charPos[i].y = EaseSineOut(time, text.position.y + text.delta, -text.delta, text.duration);
+
+                    if (time < text.duration/2) glyphPosition[i].y = EaseSineIn(time, text.position.y, text.delta, text.duration);
+                    else glyphPosition[i].y = EaseSineOut(time, text.position.y + text.delta, -text.delta, text.duration);
                 }
             } break;
             case 1: // Flashing animation
             {
-                for (int i=0; i<TextLength(text.str); i++)
+                for (int i = 0; i < TextLength(text.str); i++)
                 {
                     float time = (int) (frameCount + i*text.offset)%text.duration;
-                    charAlpha[i] = (unsigned char) EaseSineInOut(time, 255.0f, -255.0f, text.duration);
+                    glyphAlpha[i] = (unsigned char) EaseSineInOut(time, 255.0f, -255.0f, text.duration);
                 }
             } break;
             case 2: // Shaking animation
             {
-                for (int i=0; i<TextLength(text.str); i++)
+                for (int i = 0; i < TextLength(text.str); i++)
                 {
                     float time = (int) (frameCount + i*text.offset)%text.duration;
                     float deltaX = (float) GetRandomValue(-text.delta/10, text.delta/10);
                     float deltaY = (float) GetRandomValue(-text.delta/10, text.delta/10);
-                    if (time < text.duration/2) 
+
+                    if (time < (text.duration/2))
                     {
-                        charPos[i].x = EaseLinearNone(time, text.position.x + 20*i, deltaX, text.duration/2);
-                        charPos[i].y = EaseLinearNone(time, text.position.y, deltaY, text.duration/2);
+                        glyphPosition[i].x = EaseLinearNone(time, glyphPosition[i].x, deltaX, text.duration/2);
+                        glyphPosition[i].y = EaseLinearNone(time, text.position.y, deltaY, text.duration/2);
                     }
-                    else 
+                    else
                     {
-                        charPos[i].x = EaseLinearNone(time - text.duration/2, text.position.x + 20*i + deltaX, -deltaX, text.duration/2);
-                        charPos[i].y = EaseLinearNone(time - text.duration/2, text.position.y + deltaY, -deltaY, text.duration/2);
+                        glyphPosition[i].x = EaseLinearNone(time - text.duration/2, glyphPosition[i].x + deltaX, -deltaX, text.duration/2);
+                        glyphPosition[i].y = EaseLinearNone(time - text.duration/2, text.position.y + deltaY, -deltaY, text.duration/2);
                     }
                 }
             } break;
@@ -128,14 +136,15 @@ int main(void)
         DrawText(TextFormat("Duration (A | D): %d", text.duration), 20, 20, 20, GRAY);
         DrawText(TextFormat("Delta (W | S): %.1f", text.delta), 20, 50, 20, GRAY);
         DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, GRAY);
-        DrawText(TextFormat("Curent Animation (Q | E): %s", animations[curAnimation]), 20, 110, 20, GRAY);
+        DrawText(TextFormat("Curent Animation (Q | E): %s", animations[currentAnimation]), 20, 110, 20, GRAY);
 
-        for (int i=0; i<TextLength(text.str); i++)
+        for (int i = 0; i < TextLength(text.str); i++)
         {
-             char str[2] = { text.str[i], 0 };
-             DrawText(str, charPos[i].x, charPos[i].y, 24, (Color) { 200U, 122U, 255U, charAlpha[i] });
+            // NOTE: Drawing text glyph by glyph, so, spacing is actually not used
+            DrawTextEx(GetFontDefault(), TextSubtext(text.str, i, 1), glyphPosition[i],
+                GetFontDefault().baseSize*3, 0, (Color) { 200U, 122U, 255U, glyphAlpha[i] });
         }
-        
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
