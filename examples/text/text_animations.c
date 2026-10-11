@@ -29,7 +29,7 @@ typedef struct {
     Vector2 position;       // Text position on screen
     float delta;            // Intensity of the effect (does not apply for flashing)
     float offset;           // Time offset (in frames) between each char
-    int duration;           // Time duration (in frames) of the animation
+    float duration;         // Time duration (in frames) of the animation
 } AnimatedText;
 
 //------------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ int main(void)
         frameCount++;
 
         if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 2.0f, 10.0f, 60.0f);
-        else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 2.0, 10.0f, 60.0f);
+        else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 2.0f, 10.0f, 60.0f);
         if (IsKeyPressed(KEY_A)) text.duration = (int) Clamp((float) text.duration - 5.0f, 20.0f, 120.0f);
         else if (IsKeyPressed(KEY_D)) text.duration = (int) Clamp((float) text.duration + 5.0f, 20.0f, 120.0f);
         if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
@@ -73,7 +73,7 @@ int main(void)
         if (IsKeyPressed(KEY_Q)) currentAnimation = currentAnimation? currentAnimation - 1 : animationsSize - 1;
         else if (IsKeyPressed(KEY_E)) currentAnimation = (currentAnimation + 1)%animationsSize;
 
-        for (int i = 0, offsetX = 0; i < TextLength(text.str); i++)
+        for (unsigned int i = 0, offsetX = 0; i < TextLength(text.str); i++)
         {
             // NOTE: Calculating every glyph position by its width
             glyphPosition[i] = (Vector2) { text.position.x + offsetX, text.position.y };
@@ -86,9 +86,9 @@ int main(void)
         {
             case 0: // Waving animation
             {
-                for (int i = 0; i < TextLength(text.str); i++)
+                for (unsigned int i = 0; i < TextLength(text.str); i++)
                 {
-                    float time = (int) (frameCount + i*text.offset)%text.duration;
+                    float time = (int) (frameCount + i*text.offset)%(int)text.duration;
 
                     if (time < text.duration/2) glyphPosition[i].y = EaseSineIn(time, text.position.y, text.delta, text.duration);
                     else glyphPosition[i].y = EaseSineOut(time, text.position.y + text.delta, -text.delta, text.duration);
@@ -96,17 +96,17 @@ int main(void)
             } break;
             case 1: // Flashing animation
             {
-                for (int i = 0; i < TextLength(text.str); i++)
+                for (unsigned int i = 0; i < TextLength(text.str); i++)
                 {
-                    float time = (int) (frameCount + i*text.offset)%text.duration;
+                    float time = (int) (frameCount + i*text.offset)%(int)text.duration;
                     glyphAlpha[i] = (unsigned char) EaseSineInOut(time, 255.0f, -255.0f, text.duration);
                 }
             } break;
             case 2: // Shaking animation
             {
-                for (int i = 0; i < TextLength(text.str); i++)
+                for (unsigned int i = 0; i < TextLength(text.str); i++)
                 {
-                    float time = (int) (frameCount + i*text.offset)%text.duration;
+                    float time = (int) (frameCount + i*text.offset)%(int)text.duration;
                     float deltaX = (float) GetRandomValue(-text.delta/10, text.delta/10);
                     float deltaY = (float) GetRandomValue(-text.delta/10, text.delta/10);
 
@@ -138,11 +138,11 @@ int main(void)
         DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, GRAY);
         DrawText(TextFormat("Curent Animation (Q | E): %s", animations[currentAnimation]), 20, 110, 20, GRAY);
 
-        for (int i = 0; i < TextLength(text.str); i++)
+        for (unsigned int i = 0; i < TextLength(text.str); i++)
         {
             // NOTE: Drawing text glyph by glyph, so, spacing is actually not used
             DrawTextEx(GetFontDefault(), TextSubtext(text.str, i, 1), glyphPosition[i],
-                GetFontDefault().baseSize*3, 0, (Color) { 200U, 122U, 255U, glyphAlpha[i] });
+                GetFontDefault().baseSize*3.0f, 0, (Color) { 200U, 122U, 255U, glyphAlpha[i] });
         }
 
         EndDrawing();
