@@ -124,7 +124,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                           | **???**              |
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                    | **5.5**          | [Dart](https://dart.dev/)                                               | Apache-2.0 license   |
 | [mach-raylib](https://github.com/angluca/mach-raylib)                                    | **6.x-dev**      | [Mach](https://machlang.org/)                                           | MIT                  |
-| [gcl native raylib module](https://github.com/gnuchanos/GnuchanOS/tree/main/language)    | **6.0**          | [gclang](https://github.com/gnuchanos/GnuchanOS/tree/main/language)     | GPLv3                |
+| [gcl native raylib module](https://github.com/gnuchanos/gcl/blob/main/src/Modules/gcl_raylib.c)    | **6.x-dev**          | [gcl](https://github.com/gnuchanos/gcl)     | GPLv3                |
 
 
 ### Utility Wrappers
