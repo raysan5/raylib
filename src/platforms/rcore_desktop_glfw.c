@@ -303,13 +303,15 @@ void ToggleBorderlessWindowed(void)
             }
             else
             {
+                // Remove undecorated flag
+                // WARNING: Decorating the window resizes it, launching FramebufferSizeCallback() that
+                // overwrites screen size and position, so it must be done before restoring previous values
+                glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
+                FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
+
                 // Restore previous screen values
                 CORE.Window.position = CORE.Window.previousPosition;
                 CORE.Window.screen = CORE.Window.previousScreen;
-
-                // Remove undecorated flag
-                glfwSetWindowAttrib(platform.handle, GLFW_DECORATED, GLFW_TRUE);
-                FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNDECORATED);
 
             #if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
                 // Make sure to restore size considering HighDPI scaling
