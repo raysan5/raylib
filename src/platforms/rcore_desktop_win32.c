@@ -1806,8 +1806,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         //case WM_QUIT: // Application closing, not related to window
         case WM_KILLFOCUS:
         {
-            memset(CORE.Input.Keyboard.previousKeyState, 0, sizeof(CORE.Input.Keyboard.previousKeyState));
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+            memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
+            memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
         } break;
         case WM_SIZING: // Sent to a window that the user is resizing
         {
@@ -2287,9 +2288,45 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
 // Handle mouse button input event
 static void HandleMouseButton(int button, char state)
 {
+    if (state == 1)
+    {
+        // Capture the mouse on MOUSEDOWN events and no other buttons are pressed
+        bool allMouseButtonsReleased = true;
+        for (unsigned int i = 0; i < MAX_MOUSE_BUTTONS; i++)
+        {
+            if (CORE.Input.Mouse.currentButtonState[i] != 0)
+            {
+                allMouseButtonsReleased = false;
+                break;
+            }
+        }
+        if (allMouseButtonsReleased)
+        {
+            SetCapture(platform.hwnd);
+        }
+    }
+
     // Register current mouse button state
     CORE.Input.Mouse.currentButtonState[button] = state;
     CORE.Input.Touch.currentTouchState[button] = state;
+
+    if (state == 0)
+    {
+        // Release mouse capture when all mouse buttons are released
+        bool allMouseButtonsReleased = true;
+        for (unsigned int i = 0; i < MAX_MOUSE_BUTTONS; i++)
+        {
+            if (CORE.Input.Mouse.currentButtonState[i] != 0)
+            {
+                allMouseButtonsReleased = false;
+                break;
+            }
+        }
+        if (allMouseButtonsReleased)
+        {
+            ReleaseCapture();
+        }
+    }
 }
 
 // Handle raw input event
