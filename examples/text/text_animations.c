@@ -18,7 +18,6 @@
 #include "raylib.h"
 #include "../shapes/reasings.h" // Required for Easing functions
 #include "raymath.h" // Required for Clamp
-#include <stdio.h>
 
 typedef struct {
     char str[100];
@@ -45,6 +44,7 @@ int main(void)
       "Flashing",
       "Shaking"
     };
+    int animationsSize = sizeof(animations)/51;
     int curAnimation = 0;
 
     AnimatedText text = { "This is an animated text!", { 150, 250 }, 24.0f, 6, 60 };
@@ -65,9 +65,8 @@ int main(void)
         else if (IsKeyPressed(KEY_D)) text.duration = (int) Clamp((float) text.duration + 5.0f, 20.0f, 120.0f);
         if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
         else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
-        if (IsKeyPressed(KEY_Q)) curAnimation = curAnimation ? curAnimation - 1 : 2;
-        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation + 1)%3;
-        
+        if (IsKeyPressed(KEY_Q)) curAnimation = curAnimation ? curAnimation - 1 : animationsSize-1;
+        else if (IsKeyPressed(KEY_E)) curAnimation = (curAnimation + 1)%animationsSize;
         Vector2 charPos[51] = { 0 };
         unsigned char charAlpha[51] = { 0 }; 
 
