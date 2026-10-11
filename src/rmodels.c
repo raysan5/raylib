@@ -2534,7 +2534,6 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         Material material = model.materials[model.meshMaterial[m]];
         if ((material.shader.locs[SHADER_LOC_VERTEX_BONEIDS] != -1) ) continue;
 #endif
-
         // Lazy allocation of CPU animation buffers for vertex positions and normals, 
         // to be used on CPU software skinning
         if (mesh->animVertices == NULL)
@@ -2549,7 +2548,7 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         }
 
         // Normal matrix only depends on the bone, compute it once per bone instead of per vertex
-        if ((mesh.normals != NULL) && !boneNormalsReady)
+        if ((mesh->normals != NULL) && !boneNormalsReady)
         {
             memset(boneNormalMatrices, 0, 256*sizeof(Matrix));
             for (unsigned int b = 0; (b < model.skeleton.boneCount) && (b < 256); b++) boneNormalMatrices[b] = MatrixTranspose(MatrixInvert(model.boneMatrices[b]));
