@@ -577,6 +577,17 @@ RMAPI Vector2 Vector2ClampValue(Vector2 v, float min, float max)
     return result;
 }
 
+// Wrap the components of the vector from min to max values
+RMAPI Vector2 Vector2Wrap(Vector2 value, float min, float max)
+{
+    Vector2 result = { 0 };
+
+    result.x = value.x - (max - min)*floorf((value.x - min)/(max - min));
+    result.y = value.y - (max - min)*floorf((value.y - min)/(max - min));
+
+    return result;
+}
+
 // Check whether two given vectors are almost equal
 RMAPI int Vector2Equals(Vector2 p, Vector2 q)
 {
@@ -1220,6 +1231,18 @@ RMAPI Vector3 Vector3ClampValue(Vector3 v, float min, float max)
     return result;
 }
 
+// Wrap the components of the vector from min to max values 
+RMAPI Vector3 Vector3Wrap(Vector3 value, float min, float max)
+{
+    Vector3 result = { 0 };
+
+    result.x = value.x - (max - min)*floorf((value.x - min)/(max - min));
+    result.y = value.y - (max - min)*floorf((value.y - min)/(max - min));
+    result.z = value.z - (max - min)*floorf((value.z - min)/(max - min));
+
+    return result;
+}
+
 // Check whether two given vectors are almost equal
 RMAPI int Vector3Equals(Vector3 p, Vector3 q)
 {
@@ -1433,6 +1456,19 @@ RMAPI Vector4 Vector4Max(Vector4 v1, Vector4 v2)
     result.y = fmaxf(v1.y, v2.y);
     result.z = fmaxf(v1.z, v2.z);
     result.w = fmaxf(v1.w, v2.w);
+
+    return result;
+}
+
+// Wrap the components of the vector from min to max values 
+RMAPI Vector4 Vector4Wrap(Vector4 value, float min, float max)
+{
+    Vector4 result = { 0 };
+
+    result.x = value.x - (max - min)*floorf((value.x - min)/(max - min));
+    result.y = value.y - (max - min)*floorf((value.y - min)/(max - min));
+    result.z = value.z - (max - min)*floorf((value.z - min)/(max - min));
+    result.w = value.w - (max - min)*floorf((value.w - min)/(max - min));
 
     return result;
 }
