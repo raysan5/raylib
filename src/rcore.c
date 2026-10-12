@@ -1862,7 +1862,7 @@ void TraceLog(int logType, const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    if (traceLog)
+    if (traceLog != NULL)
     {
         traceLog(logType, text, args);
         va_end(args);
@@ -1948,7 +1948,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
     if (fileName != NULL)
     {
-        if (loadFileData) return loadFileData(fileName, dataSize);
+        if (loadFileData != NULL) return loadFileData(fileName, dataSize);
 
         FILE *file = fopen(fileName, "rb");
 
@@ -2012,7 +2012,7 @@ bool SaveFileData(const char *fileName, const void *data, int dataSize)
 
     if (fileName != NULL)
     {
-        if (saveFileData) return saveFileData(fileName, data, dataSize);
+        if (saveFileData != NULL) return saveFileData(fileName, data, dataSize);
 
         FILE *file = fopen(fileName, "wb");
 
@@ -2097,7 +2097,7 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        if (loadFileText) return loadFileText(fileName);
+        if (loadFileText != NULL) return loadFileText(fileName);
 
         FILE *file = fopen(fileName, "rt");
 
@@ -2153,7 +2153,7 @@ bool SaveFileText(const char *fileName, const char *text)
 
     if (fileName != NULL)
     {
-        if (saveFileText) return saveFileText(fileName, text);
+        if (saveFileText != NULL) return saveFileText(fileName, text);
 
         FILE *file = fopen(fileName, "wt");
 
@@ -2422,7 +2422,7 @@ bool IsFileHidden(const char *filePath)
     if ((attribs != -1) && ((attribs & 0x2UL) != 0)) result = true;
 #else
     const char *basePath = strrchr(filePath, '/');
-    basePath = (basePath? basePath + 1 : filePath);
+    basePath = ((basePath != NULL)? basePath + 1 : filePath);
 
     if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
 #endif
@@ -2494,7 +2494,7 @@ const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 
-    if (!dot || (dot == fileName)) return NULL;
+    if ((dot == NULL) || (dot == fileName)) return NULL;
 
     return dot;
 }
@@ -2504,7 +2504,7 @@ static const char *strprbrk(const char *text, const char *charset)
 {
     const char *latestMatch = NULL;
 
-    for (; (text != NULL) && (text = strpbrk(text, charset)); latestMatch = text++) { }
+    for (; (text != NULL) && ((text = strpbrk(text, charset)) != NULL); latestMatch = text++) { }
 
     return latestMatch;
 }
@@ -2575,7 +2575,7 @@ const char *GetDirectoryPath(const char *filePath)
     }
 
     lastSlash = strprbrk(filePath, "\\/");
-    if (lastSlash)
+    if (lastSlash != NULL)
     {
         if (lastSlash == filePath)
         {
