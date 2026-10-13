@@ -1232,11 +1232,19 @@ void SetMousePosition(int x, int y)
 {
     if (!CORE.Input.Mouse.cursorLocked)
     {
-        CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+        // Set the cursor position relative to the top-left corner of the window's client area
+        POINT topLeft = { 0 };
 
-        TRACELOG(LOG_WARNING, "SetMousePosition not implemented at platform level");
+        // Skip if window is minimized or if ClientToScreen calculation fails
+        if (!IsIconic(platform.hwnd) && ClientToScreen(platform.hwnd, &topLeft))
+        {
+            if (SetCursorPos(topLeft.x + x, topLeft.y + y))
+            {
+                CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+            }
+        }
     }
-    else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Cursor not enabled");
+    else TRACELOG(LOG_WARNING, "INPUT: MOUSE: Unable to set mouse position. The cursor is locked");
 }
 
 // Set mouse cursor
