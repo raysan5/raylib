@@ -5013,7 +5013,7 @@ static void rlLoadShaderDefault(void)
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
     "#version 300 es                    \n"
-    "precision mediump float;           \n"     // Precision required for OpenGL ES3 (WebGL 2) (on some browsers)
+    "precision highp float;             \n"     // highp is mandatory in vertex shaders, mediump may run as fp16 and misplace vertices
     "in vec3 vertexPosition;            \n"
     "in vec2 vertexTexCoord;            \n"
     "in vec4 vertexColor;               \n"
@@ -5021,7 +5021,7 @@ static void rlLoadShaderDefault(void)
     "out vec4 fragColor;                \n"
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     "#version 100                       \n"
-    "precision mediump float;           \n"     // Precision required for OpenGL ES2 (WebGL) (on some browsers)
+    "precision highp float;             \n"     // highp is mandatory in vertex shaders, mediump may run as fp16 and misplace vertices
     "attribute vec3 vertexPosition;     \n"
     "attribute vec2 vertexTexCoord;     \n"
     "attribute vec4 vertexColor;        \n"
