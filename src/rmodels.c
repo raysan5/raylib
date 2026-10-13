@@ -2598,8 +2598,8 @@ static void UpdateModelAnimationVertexBuffers(Model model)
         if (bufferUpdateRequired)
         {
             // Update GPU vertex buffers with updated data (position + normals)
-            rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_POSITION], mesh->animVertices, mesh->vertexCount*3*sizeof(float), 0);
-            if (mesh->normals != NULL) rlUpdateVertexBuffer(mesh->vboId[SHADER_LOC_VERTEX_NORMAL], mesh->animNormals, mesh->vertexCount*3*sizeof(float), 0);
+            rlUpdateVertexBuffer(mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_POSITION], mesh->animVertices, mesh->vertexCount*3*sizeof(float), 0);
+            if (mesh->normals != NULL) rlUpdateVertexBuffer(mesh->vboId[RL_DEFAULT_SHADER_ATTRIB_LOCATION_NORMAL], mesh->animNormals, mesh->vertexCount*3*sizeof(float), 0);
         }
     }
 }
