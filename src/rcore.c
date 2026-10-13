@@ -1590,6 +1590,7 @@ int GetFPS(void)
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
 
     static int index = 0;
+    static unsigned int captureFramesCounted = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
@@ -1600,6 +1601,7 @@ int GetFPS(void)
         average = 0;
         last = 0;
         index = 0;
+        captureFramesCounted = 0;
 
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
@@ -1613,9 +1615,11 @@ int GetFPS(void)
             average -= history[index];
             history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
             average += history[index];
+
+            if (captureFramesCounted < FPS_CAPTURE_FRAMES_COUNT) captureFramesCounted += 1;
         }
 
-        fps = (int)roundf(1.0f/average);
+        if (captureFramesCounted > 0) fps = (int)roundf(captureFramesCounted/(average*FPS_CAPTURE_FRAMES_COUNT));
     }
     else fps = 0;
 #endif
