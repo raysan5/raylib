@@ -158,13 +158,6 @@ if (NOT TARGET raylib)
     find_package(raylib 2.0 REQUIRED)
 endif ()
 
-# Some examples call raw OpenGL functions directly through <GL/gl.h>, so they
-# need an explicit OpenGL link. raylib links OpenGL privately, so it is not
-# propagated to the examples automatically.
-if (${PLATFORM} MATCHES "Desktop" OR ${PLATFORM} MATCHES "RGFW")
-    find_package(OpenGL REQUIRED)
-endif ()
-
 # Do each example
 foreach (example_source ${example_sources})
     # Create the basename for the example
@@ -179,9 +172,13 @@ foreach (example_source ${example_sources})
         target_link_libraries(${example_name} m)
     endif()
 
-    if (TARGET OpenGL::GL)
-        target_link_libraries(${example_name} OpenGL::GL)
-    endif()
+    # This example calls system OpenGL stencil functions directly.
+    if ("${example_name}" STREQUAL "gl_scissor_shapes")
+        if ("${PLATFORM}" MATCHES "Desktop" OR "${PLATFORM}" MATCHES "RGFW")
+            find_package(OpenGL REQUIRED)
+            target_link_libraries(${example_name} OpenGL::GL)
+        endif ()
+    endif ()
 
     string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
     string(APPEND resources_dir "resources")
