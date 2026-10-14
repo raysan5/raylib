@@ -4,20 +4,23 @@ changelog
 Current Release:    raylib 6.0 (23 April 2026)
 
 -------------------------------------------------------------------------
-Release:     raylib 6.2 (xx Oct 2026)
+Release:     raylib 6.2 (15 Oct 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
+ - Code gardening: Many consistency and formating changes all around
  - REDESIGNED: Image API for more alignment with Texture API
  - REDESIGNED: File API for more standard return result values
  - REVIEWED: Shapes lines drawing functions, added new ones and unify behaviour
+ - REVIEWED: Multiple security concerns reported by ROS (Radically Open Security)
+ - REVIEWED: New Win32 backend, many improvements and additions
 
-Detailed changes (until 08-Oct-2026):
+Detailed changes:
 
 [rcore] ADDED: `IsPathDirectory()`, for convenience and more readability at user code by @raysan5
 [rcore] ADDED: `IsPathAbsolute()`, check absolute paths by @raysan5
 [rcore] ADDED: `IsFileHidden()`, check file hidden (OS-dependant) by @raysan5
 [rcore] REVIEWED: `File*()` functions for consistent return result value by @raysan5 -WARNING-
-[rcore] REVIEWED: Not updating mouse.previousPosition when `SetMousePosition()` #5962 by @raysan5 -WARNING-
+[rcore] REVIEWED: Not updating mouse.previousPosition when `SetMousePosition()` #5962 by @raysan5
 [rcore] REVIEWED: Use `rlgl` provided interface instead of `rlsw` direct access by @raysan5
 [rcore] REVIEWED: Set mouse position to (0,0) when mouse leaves window area #5945 by @raysan5
 [rcore] REVIEWED: Multiple string boundary handling (#5812) by @zhaob1n
@@ -25,6 +28,7 @@ Detailed changes (until 08-Oct-2026):
 [rcore] REVIEWED: Fix logging format for automation event capacity warning (#5986) by @GideonSerf
 [rcore] REVIEWED: Fix initial macOS window size (#5967) by @loukamb
 [rcore] REVIEWED: Fix clipboard image memory leak (#5968) by @LuisR385
+[rcore] REVIEWED: Use explicit NULL checks (#6259) by @Ne0nWinds
 [rcore] REVIEWED: `TakeScreenshot()`, support absolute paths by @raysan5
 [rcore] REVIEWED: `OpenURL()`, added some safety checks to mitigate malicious url inputs - ROS: `CLN-002` by @raysan5 -WARNING-
 [rcore] REVIEWED: `LoadAutomationEventList()` - ROS: `CLN-005`, `CLN-006` by @raysan5
@@ -42,6 +46,7 @@ Detailed changes (until 08-Oct-2026):
 [rcore] REVIEWED: `GetGamepadAxisCount()`, `GetGamepadName()`, bounds-check gamepad index (#5937) by @szarta
 [rcore] REVIEWED: `FileText*()`, make error handling consistent with `Text*()` helpers (#6210) by @Ne0nWinds
 [rcore] REVIEWED: `MAX_FILEPATH_LENGTH` to match `MAX_PATH` (#6164) by @randomnumbersandletters
+[rcore] REVIEWED: `GetFPS()`, reporting up to 30x larger FPS than actual frame rate (#6265) by @Ne0nWinds
 [rcore][GLFW] REVIEWED: `GetClipboardImage()`, fix creating new connection under X11 (#5871) by @steampuker
 [rcore][GLFW] REVIEWED: Borderless-windowed mode being always on top (#5868) by @auwsmit
 [rcore][GLFW] REVIEWED: Clipboard image memory leak (GLFW, RGFW) (#6103) by @omaribrahimsaad
@@ -51,6 +56,7 @@ Detailed changes (until 08-Oct-2026):
 [rcore][RGFW] REVIEWED: Fix window Y position reading X in RGFW move callback (#6044) by @latent-9
 [rcore][GLFW] REVIEWED: Window centering overflow with unsigned screen size (#6119) by @nfvelten
 [rcore][GLFW] REVIEWED: Allow non-fullscreen window being able to be larger than a workable area (#6137) by @JamesMillsDev
+[rcore][GLFW] REVIEWED: Fix window size not restored when leaving borderless-windowed mode (#6253) by @Kartikey-cs
 [rcore][SDL] REVIEWED: Use precise mouse wheel values (#5830) by @Menduist
 [rcore][SDL] REVIEWED: Fix SDL3 wrong joystick functions usage (#5948) by @0xFishbyte
 [rcore][SDL] REVIEWED: Accumulate relative mouse motion per frame (#6215) by @snowyukitty
@@ -61,20 +67,27 @@ Detailed changes (until 08-Oct-2026):
 [rcore][DRM] REVIEWED: Silence warnings when using GRAPHICS_API_OPENGL_SOFTWARE (#5839) by @NighthowlerStudios
 [rcore][DRM] REVIEWED: Segfault on some NVIDIA proprietary drivers (#5960) by @girvel
 [rcore][DRM] REVIEWED: Raise MAX_DRM_CACHED_BUFFERS to 4 and warn when the cache fills (#6107) by @jtakakura
+[rcore][DRM] REVIEWED: Added `EGL_NO_GETPLATFORMDISPLAY_AVAILABLE` path for side cases #5777 by @raysan5
 [rcore][Web] REVIEWED: Fix for stale mouse position (#5981) by @largenumberhere
 [rcore][Web] REVIEWED: Avoid `glfwGetProcAddress()` to reduce code size (#6220) by @vdemcak -WARNING-
 [rcore][Win32] ADDED: Support MSAA (#6227) by @Ne0nWinds
 [rcore][Win32] ADDED: `IsKeyPressedRepeat()` implementation (#6218) by @Ne0nWinds
 [rcore][Win32] ADDED: `GetClipboardImage()` (#6091) by @omaribrahimsaad
+[rcore][Win32] ADDED: `SetMousePosition()` (#6260) by @Ne0nWinds
+[rcore][Win32] ADDED: `SetClipboardText()` and `GetClipboardText()` (#6248) by @Ne0nWinds
 [rcore][Win32] REVIEWED: Use `CORE.Input.Keyboard.exitKey` when handling window closing (#5911) by @aceinetx
 [rcore][Win32] REVIEWED: Security fixes (#5899) by @M374LX
 [rcore][Win32] REVIEWED: Handle conflict with `PlaySoundW()` for wide string builds (#6140) by @JeffM2501
 [rcore][Win32] REVIEWED: `SetWindowState()`, prevent infinite loop (#6194) by @Ne0nWinds
-[rcore][Win32] REVIEWED: Missing break in WndProc switch statement (#6209) by @Ne0nWinds
 [rcore][Win32] REVIEWED: `SetWindowSize()`, allow to change only the width or height (#6232) by @Ne0nWinds
+[rcore][Win32] REVIEWED: `SetWindowIcon()`, stop from leaking the previous icon (#6239) by @Ne0nWinds
 [rcore][Win32] REVIEWED: `CloseWindow()`, clean up window state (#6233) by @Ne0nWinds
 [rcore][Win32] REVIEWED: `IsWindowResized()`, return true only when needed (#6186) by @Ne0nWinds
+[rcore][Win32] REVIEWED: Missing break in WndProc switch statement (#6209) by @Ne0nWinds
 [rcore][Win32] REVIEWED: WGL pixel format not being applied (#6219) by @Ne0nWinds
+[rcore][Win32] REVIEWED: Clean up window state in CloseWindow() (#6233) by @Ne0nWinds
+[rcore][Win32] REVIEWED: Implement full scancode-based key mapping (#6255) by @Ne0nWinds
+[rcore][Win32] REVIEWED: Improve input handling when window loses focus (#6257) by @Ne0nWinds
 [rcore][Android] REVIEWED: Restore face-button input on Android gamepads (#5824) by @Tubbles
 [rcore][Android] REVIEWED: Relaunch hang after destroy while paused (#6040) by @get-charlie
 [rcore][Emscripten] REVIEWED: `GetTime()`, fix time calculation (#6061) by @andzdroid
@@ -83,6 +96,7 @@ Detailed changes (until 08-Oct-2026):
 [rcore][Emscripten] REVIEWED: Update emscripten mouse handling (#6070) by @andzdroid
 [rlsw] ADDED: Double buffering support and compiler requirements Pico 2 (#5994) by @NighthowlerStudios
 [rlsw] ADDED: `GL_SHADING_LANGUAGE_VERSION` for `swGetString()` by @raysan5
+[rlsw] REVIEWED: Coerce texture format to framebuffer format (#6235) by @adem482p
 [rlsw] REVIEWED: Variant dispatch refactor and render optimizations (#5996) by @Bigfoot71
 [rlgl] REVIEWED: `rlGetPixelDataSize()`, fix pixel data size regressions (#5984) by @GideonSerf
 [rlgl] REVIEWED: `rlPushMatrix()`, fix matrix stack overflow (#5935) by @szarta
@@ -100,6 +114,8 @@ Detailed changes (until 08-Oct-2026):
 [rlsw] REVIEWED: Optimizations for embedded and compiler requirements Pico 2 (#5994) by @NighthowlerStudios
 [rlsw] REVIEWED: Rename public compile-time option prefix to `RLSW_` (#6029) by @Bigfoot71
 [rlsw] REVIEWED: Variant dispatch refactor and other improvements (#5996) by @Bigfoot71
+[rlgl] REVIEWED: Use highp in default vertex shader on OpenGL ES (#6264) by @maiphi
+[rlgl] REVIEWED: Enable highp precision on default fragment shader if supported by @raysan5
 [rshapes] ADDED: `Draw*LinesEx()` functions (#6072) by @MatthewRoush
 [rshapes] RENAMED: `GetSplinePointBezierQuad()` to `GetSplinePointBezierQuadratic()` by @raysan5 -WARNING-
 [rshapes] REVIEWED: Reorder drawing functions by number of vertices by @raysan5
@@ -168,6 +184,9 @@ Detailed changes (until 08-Oct-2026):
 [rmodels] REVIEWED: `DrawCapsule()`, `DrawCapsuleWires()`, validate minimum rings (#5909) by @LuisR385
 [rmodels] REVIEWED: `UnloadModel()`, fix memory leak (#5907) by @LuisR385
 [rmodels] REVIEWED: `UpdateModelAnimation()`, compute bone normal matrices once per bone instead of per vertex (#6191) by @4RH1T3CT0R7 -WARNING-
+[rmodels] REVIEWED: `GetRayCollisionSphere()` hitting spheres behind the ray (#6231) by @Ne0nWinds
+[rmodels] REVIEWED: Fix animated normals not being updated (#6261) by @Ne0nWinds
+[rmodels] REVIEWED: Smarter use of GPU and CPU skinning (#5921) by @JeffM2501
 [raudio] REVIEWED: `UpdateSound()`, missleading parameter name by @raysan5
 [raudio] REVIEWED: `UnloadSoundAlias()`, prevent leak (#5857) by @Peter0x44
 [raudio] REVIEWED: Remove extra `drflac_free()` call (#5916) by @CrackedPixel
@@ -175,6 +194,7 @@ Detailed changes (until 08-Oct-2026):
 [raudio] REVIEWED: Define missing `UnloadFileData()` on standalone mode (#5787) by @rigidatoms
 [raudio] REVIEWED: Update to latest DR libs to fix some warnings in MSVC (#5808) by @JeffM2501
 [raudio] REVIEWED: `CloseAudioDevice()`, crash when uninit device before mutex (#6039) by @get-charlie
+[raudio] REVIEWED: `LoadSoundAlias()`, check source buffer before use (#6236) by @akashdeshmukh-git
 [raymath] ADDED: Operator overload for (float * Vector) (#5815) by @alphahex99
 [raymath] REVIEWED: `MatrixCompose()` to follow raymath conventions (#6133) by @carlost0
 [raymath] REVIEWED: `MatrixCompose()`, rotating vectors with already overwritten components (#6187) by @ethanstoner
@@ -199,6 +219,7 @@ Detailed changes (until 08-Oct-2026):
 [build][CMake] REVIEWED: Fix standalone configuration of examples project (#6079) by @zaveshaa
 [build][CMake] REVIEWED: Propagate Cocoa backend frameworks to consumers of static raylib on macOS (#6086) by @zaveshaa
 [build][CMake] REVIEWED: Fix install export with vendored SDL (#6173) by @RobLoach
+[build][CMake] REVIEWED: Fix OpenGL linking for examples requiring it (#6262) by @greaass
 [build][Zig] REVIEWED: Support wasm examples building (#5811) by @shadeops
 [build][Zig] REVIEWED: Avoid building examples all the time (#5869) by @jn-jairo
 [build][Zig] REVIEWED: Avoid building web examples all the time (#6006) by @jn-jairo
@@ -256,13 +277,16 @@ Detailed changes (until 08-Oct-2026):
 [examples] ADDED: `models_mesh_uv_painting` (#6084) by @PanicTitan
 [examples] ADDED: `models_procedural_decals` (#6083) by @PanicTitan
 [examples] ADDED: `shaders_lights_bloom` (#6081) by @PanicTitan
+[examples] ADDED: `text_animations` (#6250) by @gabriel-piangers
 [examples] REVIEWED: Clarify Camera2d.offset and how it works with High DPI scale mode (#6203) by @JeffM2501
 [examples] REVIEWED: Inconsistent version metadata (#6171) by @Ne0nWinds
 [examples] REVIEWED: Multiple examples, adding missing `Unload*()` (#6151) by @emecdelam
 [examples] REVIEWED: `core_smooth_pixelperfect` (#5803) by @rose-mtz
 [examples] REVIEWED: `core_directory_files` (#5823) by @MAXDVVV
 [examples] REVIEWED: `core_delta_time`, convert frametime to milliseconds before printing (#6201) by @Ne0nWinds
+[examples] REVIEWED: `core_input_gestures_testbed`, fix out-of-bounds log read (#6238) by @akashdeshmukh-git
 [examples] REVIEWED: `shapes_ball_physics`, move window for ball shake (#5791) by @Sebbl0508
+[examples] REVIEWED: `shapes_rlgl_color_wheel`, Remove cast from negative `float` to `unsigned int` (#6258) by @Ne0nWinds
 [examples] REVIEWED: `textures_image_drawing` by @raysan5
 [examples] REVIEWED: `textures_portal_window` by @raysan5
 [examples] REVIEWED: `textures_image_rotate`, unload source image (#6145) by @Hugohong258
@@ -277,6 +301,7 @@ Detailed changes (until 08-Oct-2026):
 [examples] REVIEWED: `shaders_shadowmap_rendering` by @raysan5
 [examples] REVIEWED: `shaders_mesh_instancing`, release mesh instancing resources on exit (#6207) by @Hugohong258
 [examples] REVIEWED: `shaders_lightmap_rendering`, unload lightmap render texture (#6188) by @Hugohong258
+[examples] REVIEWED: `audio_stream_callback`, fix out-of-bounds read in waveform drawing (#6237) by @akashdeshmukh-git
 
 [rlparser] ADDED: S-Expression output type (#5943) by @VisenDev
 [rlparser] REVIEWED: Path fixes (#5794) by @gigamonster256
@@ -287,6 +312,7 @@ Detailed changes (until 08-Oct-2026):
 [rexm] REVIEWED: Leave environment setup up to the user (#6101) by @MatthewRoush
 [rexm] REVIEWED: Makefile and change web local testing port number (#6123) by @MatthewRoush
 [rexm] REVIEWED: Simplify code, latest w64devkit supports `make` directly, no need for `mingw32-make` by @raysan5
+[rexm] REVIEWED: Validate screenshot size before comparing with template image (#6249) by @Ne0nWinds
 [misc] ADDED: SECURITY.md document by @raysan5
 [misc] REVIEWED: Several functions `const` correctness by @raysan5
 [misc] REVIEWED: `strncpy()` replaced by `snprintf()` for safety by @raysan5
