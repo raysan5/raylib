@@ -5710,6 +5710,12 @@ int GetPixelDataSize(int width, int height, int format)
 {
     int dataSize = 0;       // Size in bytes
     int bpp = 0;            // Bits per pixel
+    
+    if ((width <= 0) || (height <= 0)) return dataSize;
+    
+    // TODO: Use rlGetPixelDataSize() directly instead of custom implementation?
+    // WARNING: raylib pixel format enum must be aligned with rlgl pixel format
+    //dataSize = rlGetPixelDataSize(width, height, format);
 
     switch (format)
     {
@@ -5754,9 +5760,11 @@ int GetPixelDataSize(int width, int height, int format)
             else if ((format >= PIXELFORMAT_COMPRESSED_DXT3_RGBA) && (format < PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA)) dataSize = 16;
         }
     }
-
-    // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
-    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
+    else
+    {
+        // NOTE: In case required image data larger than 2GB, no memory allocated at all (NULL)
+        TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
+    }
 
     return dataSize;
 }

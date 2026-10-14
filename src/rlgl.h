@@ -5225,6 +5225,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
 {
     int dataSize = 0;       // Size in bytes
     int bpp = 0;            // Bits per pixel
+    
+    if ((width <= 0) || (height <= 0)) return dataSize;
 
     switch (format)
     {
@@ -5282,9 +5284,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
     {
         unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
         if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+        else TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
     }
-
-    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;
 }
