@@ -3855,7 +3855,7 @@ return {
     },
     {
       name = "SetConfigFlags",
-      description = "Set up init configuration flags (view FLAGS)",
+      description = "Set init configuration flags (view FLAGS)",
       returnType = "void",
       params = {
         {type = "unsigned int", name = "flags"}

@@ -1558,7 +1558,7 @@ Function 104: TakeScreenshot() (1 input parameters)
 Function 105: SetConfigFlags() (1 input parameters)
   Name: SetConfigFlags
   Return type: void
-  Description: Set up init configuration flags (view FLAGS)
+  Description: Set init configuration flags (view FLAGS)
   Param[1]: flags (type: unsigned int)
 Function 106: OpenURL() (1 input parameters)
   Name: OpenURL

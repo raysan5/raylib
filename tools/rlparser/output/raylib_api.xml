@@ -984,7 +984,7 @@
         <Function name="TakeScreenshot" retType="void" paramCount="1" desc="Takes a screenshot of current screen (filename extension defines format)">
             <Param type="const char *" name="fileName" desc="" />
         </Function>
-        <Function name="SetConfigFlags" retType="void" paramCount="1" desc="Set up init configuration flags (view FLAGS)">
+        <Function name="SetConfigFlags" retType="void" paramCount="1" desc="Set init configuration flags (view FLAGS)">
             <Param type="unsigned int" name="flags" desc="" />
         </Function>
         <Function name="OpenURL" retType="void" paramCount="1" desc="Open URL with default system browser (if available)">

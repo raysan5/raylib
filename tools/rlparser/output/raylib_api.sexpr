@@ -2787,7 +2787,7 @@
        ((type "const char *") (name "fileName"))))
 
     ((name "SetConfigFlags")
-     (description "Set up init configuration flags (view FLAGS)")
+     (description "Set init configuration flags (view FLAGS)")
      (return-type "void")
      (params
        ((type "unsigned int") (name "flags"))))
