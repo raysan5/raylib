@@ -1111,7 +1111,7 @@ RLAPI void UnloadRandomSequence(int *sequence);         // Unload random values 
 
 // Misc. functions
 RLAPI void TakeScreenshot(const char *fileName);                // Takes a screenshot of current screen (filename extension defines format)
-RLAPI void SetConfigFlags(unsigned int flags);                  // Set up init configuration flags (view FLAGS)
+RLAPI void SetConfigFlags(unsigned int flags);                  // Set init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                            // Open URL with default system browser (if available)
 
 // Logging system
