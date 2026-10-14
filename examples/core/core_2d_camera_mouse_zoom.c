@@ -65,8 +65,8 @@ int main(void)
                 // Get the world point that is under the mouse
                 Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
-                // Set the offset to where the mouse is
-                camera.offset = GetMousePosition();
+                // Set the offset to where the mouse is, mouse is scaled to viewport space, but offset is in unscaled pixels
+                camera.offset = Vector2Multiply(GetMousePosition(), GetWindowScaleDPI());
 
                 // Set the target to match, so that the camera maps the world space point
                 // under the cursor to the screen space point under the cursor at any zoom
@@ -86,8 +86,8 @@ int main(void)
                 // Get the world point that is under the mouse
                 Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
-                // Set the offset to where the mouse is
-                camera.offset = GetMousePosition();
+                // Set the offset to where the mouse is, mouse is scaled to viewport space, but offset is in unscaled pixels
+                camera.offset = Vector2Multiply(GetMousePosition(), GetWindowScaleDPI());
 
                 // Set the target to match, so that the camera maps the world space point
                 // under the cursor to the screen space point under the cursor at any zoom

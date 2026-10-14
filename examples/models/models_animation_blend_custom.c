@@ -43,7 +43,7 @@
 // Module Functions Declaration
 //------------------------------------------------------------------------------------
 static bool IsUpperBodyBone(const char *boneName);
-static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim1, int frame1,
+static void UpdateModelAnimationBoneCustom(Model *model, ModelAnimation *anim1, int frame1,
     ModelAnimation *anim2, int frame2, float blend, bool upperBodyBlend);
 
 //------------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ int main(void)
         // When upperBodyBlend is ON: upper body = attack (1.0), lower body = walk (0.0)
         // When upperBodyBlend is OFF: uniform blend at 0.5 (50% walk, 50% attack)
         float blendFactor = (upperBodyBlend? 1.0f : 0.5f);
-        UpdateModelAnimationBones(&model, &anim0, animCurrentFrame0,
+        UpdateModelAnimationBoneCustom(&model, &anim0, animCurrentFrame0,
             &anim1, animCurrentFrame1, blendFactor, upperBodyBlend);
 
         // raylib provided animation blending function
@@ -194,7 +194,7 @@ static bool IsUpperBodyBone(const char *boneName)
 }
 
 // Blend two animations per-bone with selective upper/lower body blending
-static void UpdateModelAnimationBones(Model *model, ModelAnimation *anim0, int frame0,
+static void UpdateModelAnimationBoneCustom(Model *model, ModelAnimation *anim0, int frame0,
     ModelAnimation *anim1, int frame1, float blend, bool upperBodyBlend)
 {
     // Validate inputs

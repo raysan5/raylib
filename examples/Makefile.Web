@@ -633,6 +633,7 @@ TEXTURES = \
 
 TEXT = \
     text/text_3d_drawing \
+    text/text_animations \
     text/text_codepoints_loading \
     text/text_font_filters \
     text/text_font_loading \
@@ -1171,6 +1172,9 @@ textures/textures_to_image: textures/textures_to_image.c
 text/text_3d_drawing: text/text_3d_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file text/resources/shaders/glsl100/alpha_discard.fs@resources/shaders/glsl100/alpha_discard.fs
+
+text/text_animations: text/text_animations.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 text/text_codepoints_loading: text/text_codepoints_loading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \

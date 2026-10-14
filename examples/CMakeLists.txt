@@ -172,6 +172,14 @@ foreach (example_source ${example_sources})
         target_link_libraries(${example_name} m)
     endif()
 
+    # This example calls system OpenGL stencil functions directly.
+    if ("${example_name}" STREQUAL "gl_scissor_shapes")
+        if ("${PLATFORM}" MATCHES "Desktop" OR "${PLATFORM}" MATCHES "RGFW")
+            find_package(OpenGL REQUIRED)
+            target_link_libraries(${example_name} OpenGL::GL)
+        endif ()
+    endif ()
+
     string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
     string(APPEND resources_dir "resources")
 

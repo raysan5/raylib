@@ -2,85 +2,257 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 pub const emsdk = struct {
-    const zemscripten = @import("zemscripten");
+    const emsdk_version = "4.0.19"; // inline constant used only in activate
+    var emsdk_dep: ?*std.Build.Dependency = null;
 
-    pub fn shell(raylib_dep: *std.Build.Dependency) std.Build.LazyPath {
-        return raylib_dep.path("src/shell.html");
-    }
-
-    pub const FlagsOptions = struct {
-        optimize: std.builtin.OptimizeMode,
-        asyncify: bool = true,
+    // ---------- core types ----------
+    pub const EmccFlags = std.StringHashMap(void);
+    pub const EmccSettings = std.StringHashMap([]const u8);
+    const EmsdkAllocator = enum {
+        none,
+        dlmalloc,
+        emmalloc,
+        @"emmalloc-debug",
+        @"emmalloc-memvalidate",
+        @"emmalloc-verbose",
+        mimalloc,
     };
 
-    pub fn emccDefaultFlags(allocator: std.mem.Allocator, options: FlagsOptions) zemscripten.EmccFlags {
-        var emcc_flags = zemscripten.emccDefaultFlags(allocator, .{
-            .optimize = options.optimize,
-            .fsanitize = true,
-        });
+    pub const ResourceFile = struct {
+        src_path: std.Build.LazyPath,
+        virtual_path: ?[]const u8 = null,
 
-        if (options.asyncify)
-            emcc_flags.put("-sASYNCIFY", {}) catch unreachable;
+        fn get(self: ResourceFile, b: *std.Build) []const u8 {
+            return if (self.virtual_path) |vp|
+                b.fmt("{s}@{s}", .{ self.src_path.getDisplayName(), vp })
+            else
+                self.src_path.getDisplayName();
+        }
+    };
 
-        return emcc_flags;
+    pub const EmccStepOptions = struct {
+        optimize: std.builtin.OptimizeMode,
+        flags: EmccFlags,
+        settings: EmccSettings,
+        use_preload_plugins: bool = false,
+        embed_paths: ?[]const ResourceFile = null,
+        preload_paths: ?[]const ResourceFile = null,
+        shell_file_path: ?std.Build.LazyPath = null,
+        js_library_path: ?std.Build.LazyPath = null,
+        out_file_name: []const u8,
+        install_dir: std.Build.InstallDir,
+    };
+
+    // ---------- helpers ----------
+    pub fn emsdkDep(b: *std.Build) !*std.Build.Dependency {
+        if (emsdk_dep == null) {
+            emsdk_dep = try b.dependencyLazy("emsdk", .{});
+        }
+
+        return emsdk_dep.?;
     }
 
-    pub const SettingsOptions = struct {
+    pub fn path(b: *std.Build, sub_path: []const u8) !std.Build.LazyPath {
+        return (try emsdkDep(b)).path(sub_path);
+    }
+
+    pub fn emccPath(b: *std.Build) !std.Build.LazyPath {
+        return try emsdk.path(b, "upstream/emscripten/emcc.py");
+    }
+
+    pub fn emrunPath(b: *std.Build) !std.Build.LazyPath {
+        return switch (builtin.target.os.tag) {
+            .windows => try emsdk.path(b, "upstream/emscripten/emrun.bat"),
+            else => try emsdk.path(b, "upstream/emscripten/emrun"),
+        };
+    }
+
+    pub fn emccDefaultFlags(allocator: std.mem.Allocator, options: struct {
+        optimize: std.builtin.OptimizeMode,
+        asyncify: bool = true,
+        fsanitize: bool = true,
+    }) EmccFlags {
+        var flags = EmccFlags.init(allocator);
+        switch (options.optimize) {
+            .Debug => {
+                flags.put("-O0", {}) catch @panic("OOM");
+                flags.put("-gsource-map", {}) catch @panic("OOM");
+                if (options.fsanitize)
+                    flags.put("-fsanitize=undefined", {}) catch @panic("OOM");
+            },
+            .ReleaseSafe => {
+                flags.put("-O3", {}) catch @panic("OOM");
+                if (options.fsanitize) {
+                    flags.put("-fsanitize=undefined", {}) catch @panic("OOM");
+                    flags.put("-fsanitize-minimal-runtime", {}) catch @panic("OOM");
+                }
+            },
+            .ReleaseFast => flags.put("-O3", {}) catch @panic("OOM"),
+            .ReleaseSmall => flags.put("-Oz", {}) catch @panic("OOM"),
+        }
+        if (options.asyncify)
+            flags.put("-sASYNCIFY", {}) catch @panic("OOM");
+        return flags;
+    }
+
+    pub fn emccDefaultSettings(allocator: std.mem.Allocator, options: struct {
         optimize: std.builtin.OptimizeMode,
         es3: bool = false,
         glfw3: bool = true,
         memory_growth: bool = false,
         total_memory: u32 = 134217728,
-        emsdk_allocator: zemscripten.EmsdkAllocator = .emmalloc,
-    };
-
-    pub fn emccDefaultSettings(allocator: std.mem.Allocator, options: SettingsOptions) zemscripten.EmccSettings {
-        var emcc_settings = zemscripten.emccDefaultSettings(allocator, .{
-            .optimize = options.optimize,
-            .emsdk_allocator = options.emsdk_allocator,
-        });
+        emsdk_allocator: EmsdkAllocator = .emmalloc,
+    }) EmccSettings {
+        var settings = EmccSettings.init(allocator);
+        switch (options.optimize) {
+            .Debug, .ReleaseSafe => {
+                settings.put("SAFE_HEAP", "1") catch @panic("OOM");
+                settings.put("STACK_OVERFLOW_CHECK", "1") catch @panic("OOM");
+                settings.put("ASSERTIONS", "1") catch @panic("OOM");
+            },
+            else => {},
+        }
+        settings.put("MALLOC", @tagName(options.emsdk_allocator)) catch @panic("OOM");
 
         if (options.es3) {
-            emcc_settings.put("FULL_ES3", "1") catch unreachable;
-            emcc_settings.put("MIN_WEBGL_VERSION", "2") catch unreachable;
-            emcc_settings.put("MAX_WEBGL_VERSION", "2") catch unreachable;
+            settings.put("FULL_ES3", "1") catch @panic("OOM");
+            settings.put("MIN_WEBGL_VERSION", "2") catch @panic("OOM");
+            settings.put("MAX_WEBGL_VERSION", "2") catch @panic("OOM");
         }
-        if (options.glfw3) {
-            emcc_settings.put("USE_GLFW", "3") catch unreachable;
-        }
+        if (options.glfw3)
+            settings.put("USE_GLFW", "3") catch @panic("OOM");
 
-        const total_memory = std.fmt.allocPrint(allocator, "{d}", .{options.total_memory}) catch unreachable;
-
-        emcc_settings.put("EXPORTED_RUNTIME_METHODS", "['requestFullscreen']") catch unreachable;
-        emcc_settings.put("TOTAL_MEMORY", total_memory) catch unreachable;
-        emcc_settings.put("FORCE_FILESYSTEM", "1") catch unreachable;
-        emcc_settings.put("EXPORTED_RUNTIME_METHODS", "ccall") catch unreachable;
+        const total_memory = std.fmt.allocPrint(allocator, "{d}", .{options.total_memory}) catch @panic("OOM");
+        settings.put("EXPORTED_RUNTIME_METHODS", "['requestFullscreen']") catch @panic("OOM");
+        settings.put("TOTAL_MEMORY", total_memory) catch @panic("OOM");
+        settings.put("FORCE_FILESYSTEM", "1") catch @panic("OOM");
+        settings.put("EXPORTED_RUNTIME_METHODS", "ccall") catch @panic("OOM");
 
         if (options.memory_growth)
-            emcc_settings.put("ALLOW_MEMORY_GROWTH", "1") catch unreachable;
+            settings.put("ALLOW_MEMORY_GROWTH", "1") catch @panic("OOM");
 
-        return emcc_settings;
+        return settings;
     }
 
-    pub fn emccStep(b: *std.Build, raylib: *std.Build.Step.Compile, wasm: *std.Build.Step.Compile, options: zemscripten.StepOptions) *std.Build.Step {
-        const activate_emsdk_step = zemscripten.activateEmsdkStep(b);
+    // ---------- step builders ----------
+    pub fn emccStep(b: *std.Build, src_paths: []const std.Build.LazyPath, compile_steps: []const *std.Build.Step.Compile, options: EmccStepOptions) !*std.Build.Step {
+        var emcc = b.addRunFile(try emccPath(b));
 
-        const emsdk_dep = b.dependency("emsdk", .{});
-        raylib.root_module.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
-        wasm.root_module.addIncludePath(emsdk_dep.path("upstream/emscripten/cache/sysroot/include"));
+        // flags
+        {
+            var it = options.flags.iterator();
+            while (it.next()) |kv| emcc.addArg(kv.key_ptr.*);
+        }
 
-        const emcc_step = zemscripten.emccStep(b, wasm, options);
-        emcc_step.dependOn(activate_emsdk_step);
+        // settings
+        {
+            var it = options.settings.iterator();
+            while (it.next()) |kv| {
+                emcc.addArg(b.fmt("-s{s}={s}", .{ kv.key_ptr.*, kv.value_ptr.* }));
+            }
+        }
 
-        return emcc_step;
+        // source files & artifact dependencies
+        for (src_paths) |sp| emcc.addFileArg(sp);
+        for (compile_steps) |cs| {
+            emcc.addArtifactArg(cs);
+            cs.root_module.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
+            for (cs.root_module.getGraph().modules) |mod| {
+                for (mod.link_objects.items) |lo| {
+                    if (lo == .other_step) {
+                        const linked = lo.other_step;
+                        if (linked.kind == .lib) emcc.addArtifactArg(linked);
+                    }
+                }
+            }
+        }
+
+        emcc.addArg("-o");
+        const out_file = emcc.addOutputFileArg(options.out_file_name);
+
+        // optional args
+        if (options.use_preload_plugins) emcc.addArg("--use-preload-plugins");
+        if (options.embed_paths) |eps| for (eps) |ep| {
+            emcc.addArg("--embed-file");
+            emcc.addFileArg(ep.src_path);
+        };
+        if (options.preload_paths) |pps| for (pps) |pp| {
+            emcc.addArg("--preload-file");
+            emcc.addArg(pp.get(b));
+        };
+        if (options.shell_file_path) |sfp| {
+            emcc.addArg("--shell-file");
+            emcc.addFileArg(sfp);
+        }
+        if (options.js_library_path) |jlp| {
+            emcc.addArg("--js-library");
+            emcc.addFileArg(jlp);
+        }
+
+        const install = b.addInstallDirectory(.{
+            .source_dir = out_file.dirname(),
+            .install_dir = options.install_dir,
+            .install_subdir = "",
+        });
+        install.step.dependOn(&emcc.step);
+        return &install.step;
     }
 
-    pub fn emrunStep(
-        b: *std.Build,
-        html_path: []const u8,
-        extra_args: []const []const u8,
-    ) *std.Build.Step {
-        return zemscripten.emrunStep(b, html_path, extra_args);
+    pub fn emrunStep(b: *std.Build, html_path: std.Build.LazyPath, extra_args: []const []const u8) !*std.Build.Step {
+        var emrun = b.addRunFile(try emrunPath(b));
+        emrun.addArgs(extra_args);
+        emrun.addFileArg(html_path);
+        return &emrun.step;
+    }
+
+    pub fn activateEmsdkStep(b: *std.Build) !*std.Build.Step {
+        const user = b.step("Activate EMSDK", "Install/Update and prepare emscripten sdk");
+        const script = switch (builtin.target.os.tag) {
+            .windows => try emsdk.path(b, "emsdk.bat"),
+            else => try emsdk.path(b, "emsdk"),
+        };
+
+        var update = b.addRunFile(script);
+        update.addArg("update");
+
+        // chmod / takeown for script
+        const make_script_exec: ?*std.Build.Step.Run = switch (builtin.target.os.tag) {
+            .linux, .macos => blk: {
+                var cmd = b.addSystemCommand(&.{ "chmod", "+x" });
+                cmd.addFileArg(script);
+                break :blk cmd;
+            },
+            .windows => blk: {
+                var cmd = b.addSystemCommand(&.{ "takeown", "/f" });
+                cmd.addFileArg(script);
+                break :blk cmd;
+            },
+            else => null,
+        };
+        if (make_script_exec) |mse| update.step.dependOn(&mse.step);
+
+        var install = b.addRunFile(script);
+        install.addArg("install");
+        install.addArg(emsdk_version);
+        install.step.dependOn(&update.step);
+
+        var activate = b.addRunFile(script);
+        activate.addArg("activate");
+        activate.addArg(emsdk_version);
+        activate.step.dependOn(&install.step);
+        user.dependOn(&activate.step);
+
+        // also ensure emcc/emrun are executable on Unix
+        if (builtin.target.os.tag == .linux or builtin.target.os.tag == .macos) {
+            for ([_]std.Build.LazyPath{ try emccPath(b), try emrunPath(b) }) |p| {
+                var cmd = b.addSystemCommand(&.{ "chmod", "a+x" });
+                cmd.addFileArg(p);
+                cmd.step.dependOn(&install.step);
+                user.dependOn(&cmd.step);
+            }
+        }
+
+        return user;
     }
 };
 
@@ -92,7 +264,7 @@ pub fn linkWindows(mod: *std.Build.Module, opengl: bool, comptime shcore: bool) 
 }
 
 fn findWaylandScanner(b: *std.Build) void {
-    _ = b.findProgram(&.{"wayland-scanner"}, &.{}) catch {
+    _ = b.findProgram(.{ .names = &.{"wayland-scanner"} }) orelse {
         std.log.err(
             \\ `wayland-scanner` may not be installed on the system.
             \\ You can switch to X11 in your `build.zig` by changing `Options.linux_display_backend`
@@ -126,13 +298,13 @@ pub fn linkBSD(_: *std.Build, mod: *std.Build.Module) void {
     mod.linkSystemLibrary("GL", .{});
 }
 
-pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) void {
+pub fn linkMacOS(b: *std.Build, mod: *std.Build.Module) !void {
     // Include xcode_frameworks for cross compilation
-    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
-        mod.addSystemFrameworkPath(dep.path("Frameworks"));
-        mod.addSystemIncludePath(dep.path("include"));
-        mod.addLibraryPath(dep.path("lib"));
-    }
+    const dep = try b.dependencyLazy("xcode_frameworks", .{});
+
+    mod.addSystemFrameworkPath(dep.path("Frameworks"));
+    mod.addSystemIncludePath(dep.path("include"));
+    mod.addLibraryPath(dep.path("lib"));
 
     mod.linkFramework("Foundation", .{});
     mod.linkFramework("CoreServices", .{});
@@ -155,7 +327,13 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
         .root_module = raylib_mod,
     });
 
-    raylib_mod.addCMacro("_GNU_SOURCE", "");
+    // On Linux (glibc) avoid _GNU_SOURCE, on glibc >= 2.38 it redirects sscanf(), strtol()...
+    // to __isoc23_*() symbols, so the generated library fails to link with older glibc versions
+    if (target.result.os.tag == .linux and !target.result.abi.isAndroid()) {
+        raylib_mod.addCMacro("_DEFAULT_SOURCE", "");
+    } else {
+        raylib_mod.addCMacro("_GNU_SOURCE", "");
+    }
     raylib_mod.addCMacro("GL_SILENCE_DEPRECATION", "199309L");
 
     var arena: std.heap.ArenaAllocator = .init(b.allocator);
@@ -262,7 +440,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     });
                     _ = raylib_flags_arr.pop();
 
-                    linkMacOS(b, raylib_mod);
+                    try linkMacOS(b, raylib_mod);
                 },
                 .emscripten => {
                     switch (opengl_version) {
@@ -273,7 +451,9 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
 
                     raylib_mod.addCMacro("PLATFORM_WEB", "");
 
-                    const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
+                    raylib_mod.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
+
+                    const activate_emsdk_step = try emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -322,7 +502,7 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     }
                 },
                 .freebsd, .openbsd, .netbsd, .dragonfly => linkBSD(b, raylib_mod),
-                .macos => linkMacOS(b, raylib_mod),
+                .macos => try linkMacOS(b, raylib_mod),
                 .emscripten => {
                     switch (opengl_version) {
                         .auto => opengl_version = OpenglVersion.gles_2,
@@ -331,7 +511,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     }
 
                     raylib_mod.addCMacro("PLATFORM_WEB_RGFW", "");
-                    const activate_emsdk_step = emsdk.zemscripten.activateEmsdkStep(b);
+
+                    raylib_mod.addIncludePath(try emsdk.path(b, "upstream/emscripten/cache/sysroot/include"));
+
+                    const activate_emsdk_step = try emsdk.activateEmsdkStep(b);
                     raylib.step.dependOn(activate_emsdk_step);
                 },
                 else => @panic("Target is not supported with this platform"),
@@ -477,33 +660,33 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
     return raylib;
 }
 
-fn addRaygui(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, raylib: *std.Build.Step.Compile) void {
-    if (b.lazyDependency("raygui", .{
+fn addRaygui(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, raylib: *std.Build.Step.Compile) !void {
+    const raygui_dep = try b.dependencyLazy("raygui", .{
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-    })) |raygui_dep| {
-        var gen_step = b.addWriteFiles();
-        raylib.step.dependOn(&gen_step.step);
+    });
 
-        const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
-        raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
-        raylib.root_module.addIncludePath(raygui_dep.path("src"));
-        raylib.root_module.addIncludePath(b.path("src"));
+    var gen_step = b.addWriteFiles();
+    raylib.step.dependOn(&gen_step.step);
 
-        raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+    const raygui_c_path = gen_step.add("raygui.c", "#define RAYGUI_IMPLEMENTATION\n#include \"raygui.h\"\n");
+    raylib.root_module.addCSourceFile(.{ .file = raygui_c_path });
+    raylib.root_module.addIncludePath(raygui_dep.path("src"));
+    raylib.root_module.addIncludePath(b.path("src"));
 
-        const c = b.addTranslateC(.{
-            .root_source_file = raygui_dep.path("src/raygui.h"),
-            .target = target,
-            .optimize = optimize,
-            .link_libc = true,
-        });
-        c.addIncludePath(b.path("src"));
-        const c_mod = c.createModule();
-        c_mod.linkLibrary(raylib);
-        b.modules.put(b.graph.arena, "raygui", c_mod) catch @panic("OOM");
-    }
+    raylib.installHeader(raygui_dep.path("src/raygui.h"), "raygui.h");
+
+    const c = b.addTranslateC(.{
+        .root_source_file = raygui_dep.path("src/raygui.h"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    c.addIncludePath(b.path("src"));
+    const c_mod = c.createModule();
+    c_mod.linkLibrary(raylib);
+    b.modules.put(b.graph.arena, "raygui", c_mod) catch @panic("OOM");
 }
 
 pub const Options = struct {
@@ -624,7 +807,7 @@ pub fn build(b: *std.Build) !void {
     translateCMod("rlgl", b, target, optimize, lib);
 
     if (options.raygui) {
-        addRaygui(b, target, optimize, lib);
+        try addRaygui(b, target, optimize, lib);
     }
 
     const examples = b.step("examples", "build/install all examples");
@@ -649,7 +832,7 @@ fn addExamples(
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
 
-    var dir = try b.build_root.handle.openDir(b.graph.io, module_subpath, .{ .iterate = true });
+    var dir = try b.root.openDir(b.graph.io, module_subpath, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
@@ -699,7 +882,7 @@ fn addExamples(
             exe_mod.addCMacro("PLATFORM_WEB", "");
 
             const wasm = b.addLibrary(.{
-                .name = filename,
+                .name = b.fmt("{s}.html", .{filename}),
                 .root_module = exe_mod,
             });
 
@@ -707,24 +890,40 @@ fn addExamples(
             const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
             const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
 
-            const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const emsdk.zemscripten.EmccFilePath);
-            const EmccExamplesPreloadKV = struct { []const u8, []const emsdk.zemscripten.EmccFilePath };
-            const emcc_examples_preloads: []const EmccExamplesPreloadKV = @import("examples/example_resources.zon");
-            const emcc_examples_preloads_map = EmccExamplesPreloadMap.initComptime(emcc_examples_preloads);
+            const SerialResourceFile = struct { src_path: []const u8, virtual_path: []const u8 };
+            const EmccExamplesPreloadMap = std.static_string_map.StaticStringMap([]const SerialResourceFile);
+            const EmccExamplesPreloadSerial = struct { []const u8, []const SerialResourceFile };
+            const emcc_examples_preloads_serial: []const EmccExamplesPreloadSerial = @import("examples/example_resources.zon");
+            const emcc_examples_preloads_map = EmccExamplesPreloadMap.initComptime(emcc_examples_preloads_serial);
+            const preload_paths: ?[]emsdk.ResourceFile = blk: {
+                if (emcc_examples_preloads_map.get(filename)) |resource_files| {
+                    var rfs = try b.allocator.alloc(emsdk.ResourceFile, resource_files.len);
+                    for (resource_files, 0..) |resource_file, rfidx| {
+                        rfs[rfidx] = .{
+                            .src_path = b.path(resource_file.src_path),
+                            .virtual_path = resource_file.virtual_path,
+                        };
+                    }
+                    break :blk rfs;
+                } else break :blk null;
+            };
 
-            const emcc_step = emsdk.emccStep(b, raylib, wasm, .{
+            const emcc_step = try emsdk.emccStep(b, &.{}, &.{ raylib, wasm }, .{
                 .optimize = optimize,
                 .flags = emcc_flags,
                 .settings = emcc_settings,
-                .preload_paths = emcc_examples_preloads_map.get(filename) orelse &.{},
+                .preload_paths = preload_paths,
                 .shell_file_path = b.path("src/shell.html"),
                 .install_dir = install_dir,
+                .out_file_name = wasm.name,
             });
 
-            const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
-            const emrun_step = emsdk.emrunStep(
+            const emrun_step = try emsdk.emrunStep(
                 b,
-                b.getInstallPath(install_dir, html_filename),
+                b.graph.path(.install_prefix, b.fmt(
+                    "web/{s}/{s}/{s}",
+                    .{ module, filename, wasm.name },
+                )),
                 &.{},
             );
 
@@ -759,7 +958,7 @@ fn waylandGenerate(
     comptime waylandDir: []const u8,
     comptime source: bool,
 ) !void {
-    const dir = try b.build_root.handle.openDir(b.graph.io, waylandDir, .{ .iterate = true });
+    const dir = try b.root.openDir(b.graph.io, waylandDir, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();
@@ -793,4 +992,3 @@ fn waylandGenerate(
         }
     }
 }
-

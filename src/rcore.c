@@ -151,10 +151,6 @@
     #include "external/rprand.h"
 #endif
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
-    #define _GNU_SOURCE
-#endif
-
 // Platform specific defines to handle GetApplicationDirectory()
 #if defined(_WIN32)
     #if !defined(MAX_PATH)
@@ -1594,6 +1590,7 @@ int GetFPS(void)
     #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
 
     static int index = 0;
+    static unsigned int captureFramesCounted = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
     static float average = 0, last = 0;
     float fpsFrame = GetFrameTime();
@@ -1604,6 +1601,7 @@ int GetFPS(void)
         average = 0;
         last = 0;
         index = 0;
+        captureFramesCounted = 0;
 
         for (int i = 0; i < FPS_CAPTURE_FRAMES_COUNT; i++) history[i] = 0;
     }
@@ -1617,9 +1615,11 @@ int GetFPS(void)
             average -= history[index];
             history[index] = fpsFrame/FPS_CAPTURE_FRAMES_COUNT;
             average += history[index];
+
+            if (captureFramesCounted < FPS_CAPTURE_FRAMES_COUNT) captureFramesCounted += 1;
         }
 
-        fps = (int)roundf(1.0f/average);
+        if (captureFramesCounted > 0) fps = (int)roundf(captureFramesCounted/(average*FPS_CAPTURE_FRAMES_COUNT));
     }
     else fps = 0;
 #endif
@@ -1866,7 +1866,7 @@ void TraceLog(int logType, const char *text, ...)
     va_list args;
     va_start(args, text);
 
-    if (traceLog)
+    if (traceLog != NULL)
     {
         traceLog(logType, text, args);
         va_end(args);
@@ -1952,7 +1952,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
     if (fileName != NULL)
     {
-        if (loadFileData) return loadFileData(fileName, dataSize);
+        if (loadFileData != NULL) return loadFileData(fileName, dataSize);
 
         FILE *file = fopen(fileName, "rb");
 
@@ -2016,7 +2016,7 @@ bool SaveFileData(const char *fileName, const void *data, int dataSize)
 
     if (fileName != NULL)
     {
-        if (saveFileData) return saveFileData(fileName, data, dataSize);
+        if (saveFileData != NULL) return saveFileData(fileName, data, dataSize);
 
         FILE *file = fopen(fileName, "wb");
 
@@ -2101,7 +2101,7 @@ char *LoadFileText(const char *fileName)
 
     if (fileName != NULL)
     {
-        if (loadFileText) return loadFileText(fileName);
+        if (loadFileText != NULL) return loadFileText(fileName);
 
         FILE *file = fopen(fileName, "rt");
 
@@ -2157,7 +2157,7 @@ bool SaveFileText(const char *fileName, const char *text)
 
     if (fileName != NULL)
     {
-        if (saveFileText) return saveFileText(fileName, text);
+        if (saveFileText != NULL) return saveFileText(fileName, text);
 
         FILE *file = fopen(fileName, "wt");
 
@@ -2298,9 +2298,12 @@ int FileTextReplace(const char *fileName, const char *search, const char *replac
     {
         fileText = LoadFileText(fileName);
         fileTextUpdated = TextReplaceAlloc(fileText, search, replacement);
-        bool saved = SaveFileText(fileName, fileTextUpdated);
-        if (saved) result = 0;
-        MemFree(fileTextUpdated);
+        if (fileTextUpdated != NULL)
+        {
+            bool saved = SaveFileText(fileName, fileTextUpdated);
+            if (saved) result = 0;
+            MemFree(fileTextUpdated);
+        }
         UnloadFileText(fileText);
     }
 #else
@@ -2319,9 +2322,12 @@ int FileTextFindIndex(const char *fileName, const char *search)
     if (FileExists(fileName))
     {
         char *fileText = LoadFileText(fileName);
-        char *ptr = strstr(fileText, search);
-        if (ptr != NULL) result = (int)(ptr - fileText);
-        UnloadFileText(fileText);
+        if (fileText != NULL)
+        {
+            char *ptr = strstr(fileText, search);
+            if (ptr != NULL) result = (int)(ptr - fileText);
+            UnloadFileText(fileText);
+        }
     }
 
     return result;
@@ -2420,7 +2426,7 @@ bool IsFileHidden(const char *filePath)
     if ((attribs != -1) && ((attribs & 0x2UL) != 0)) result = true;
 #else
     const char *basePath = strrchr(filePath, '/');
-    basePath = (basePath? basePath + 1 : filePath);
+    basePath = ((basePath != NULL)? basePath + 1 : filePath);
 
     if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
 #endif
@@ -2492,7 +2498,7 @@ const char *GetFileExtension(const char *fileName)
 {
     const char *dot = strrchr(fileName, '.');
 
-    if (!dot || (dot == fileName)) return NULL;
+    if ((dot == NULL) || (dot == fileName)) return NULL;
 
     return dot;
 }
@@ -2502,7 +2508,7 @@ static const char *strprbrk(const char *text, const char *charset)
 {
     const char *latestMatch = NULL;
 
-    for (; (text != NULL) && (text = strpbrk(text, charset)); latestMatch = text++) { }
+    for (; (text != NULL) && ((text = strpbrk(text, charset)) != NULL); latestMatch = text++) { }
 
     return latestMatch;
 }
@@ -2573,7 +2579,7 @@ const char *GetDirectoryPath(const char *filePath)
     }
 
     lastSlash = strprbrk(filePath, "\\/");
-    if (lastSlash)
+    if (lastSlash != NULL)
     {
         if (lastSlash == filePath)
         {

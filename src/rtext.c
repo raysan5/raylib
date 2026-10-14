@@ -2185,7 +2185,7 @@ char *TextToPascal(const char *text)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    if (text != NULL)
+    if ((text != NULL) && (text[0] != '\0'))
     {
         // Upper case first character
         if ((text[0] >= 'a') && (text[0] <= 'z')) buffer[0] = text[0] - 32;
@@ -2269,7 +2269,7 @@ char *TextToCamel(const char *text)
     static char buffer[MAX_TEXT_BUFFER_LENGTH] = { 0 };
     memset(buffer, 0, MAX_TEXT_BUFFER_LENGTH);
 
-    if (text != NULL)
+    if ((text != NULL) && (text[0] != '\0'))
     {
         // Lower case first character
         if ((text[0] >= 'A') && (text[0] <= 'Z')) buffer[0] = text[0] + 32;

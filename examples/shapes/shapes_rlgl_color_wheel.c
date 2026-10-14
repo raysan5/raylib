@@ -1,4 +1,4 @@
-﻿/*******************************************************************************************
+/*******************************************************************************************
 *
 *   raylib [shapes] example - rlgl color wheel
 *
@@ -74,8 +74,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        triangleCount += (unsigned int)GetMouseWheelMove();
-        triangleCount = (unsigned int)Clamp((float)triangleCount, (float)pointsMin, (float)pointsMax);
+        float wheel = roundf(GetMouseWheelMove());
+        triangleCount = (unsigned int)Clamp((float)triangleCount + wheel, (float)pointsMin, (float)pointsMax);
 
         Rectangle sliderRectangle = { 42.0f, 16.0f + 64.0f + 45.0f, 64.0f, 16.0f };
         Vector2 mousePosition = GetMousePosition();

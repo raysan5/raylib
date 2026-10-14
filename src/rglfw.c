@@ -46,7 +46,19 @@
 #endif
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && !defined(_GNU_SOURCE)
     #undef _GNU_SOURCE
-    #define _GNU_SOURCE // Required for: ppoll if compiled with c99 without gnu ext.
+    #define _GNU_SOURCE // Required for: ppoll(), mkostemp(), pipe2() if compiled with c99 without gnu ext.
+#endif
+#if defined(__linux__)
+    // NOTE: On glibc >= 2.38, _GNU_SOURCE also redirects sscanf(), strtol()... to __isoc23_*() symbols
+    // (C23 binary prefix parsing), making the library fail to link with older glibc versions,
+    // GLFW does not need it, so the redirection is disabled once <features.h> has been processed
+    #include <features.h>
+    #if defined(__GLIBC__)
+        #undef __GLIBC_USE_C2X_STRTOL
+        #define __GLIBC_USE_C2X_STRTOL 0    // glibc 2.38-2.39
+        #undef __GLIBC_USE_C23_STRTOL
+        #define __GLIBC_USE_C23_STRTOL 0    // glibc >= 2.40
+    #endif
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)

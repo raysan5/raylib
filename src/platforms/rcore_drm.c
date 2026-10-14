@@ -1430,24 +1430,28 @@ int InitPlatform(void)
     const char *eglClientExtensions = NULL;
 
     // Get an EGL device connection
-    // NOTE: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call
     platform.device = EGL_NO_DISPLAY;
-#if defined(EGL_VERSION_1_5)
+    
+#if !defined(EGL_NO_GETPLATFORMDISPLAY_AVAILABLE)
+    // WARNING: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call but
+    // on some devices (Mali GPUs: Mali-G31) symbol could not be available despite defining EGL_VERSION_1_5
+    #if defined(EGL_VERSION_1_5)
     platform.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
-#else
+    #else
     // Check if extension is available for eglGetPlatformDisplayEXT()
     // NOTE: Better compatibility with some drivers (e.g. Mali Midgard)
     eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
     if ((eglClientExtensions != NULL) && (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL))
     {
         PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
-
         if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
     }
+    #endif
+#endif
 
     // In case extension not found or display could not be retrieved, try using legacy version
     if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay((EGLNativeDisplayType)platform.gbmDevice);
-#endif
+
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");

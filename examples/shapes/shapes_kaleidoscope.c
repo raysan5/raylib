@@ -56,7 +56,7 @@ int main(void)
     Vector2 mousePos = { 0 };
     Vector2 prevMousePos = { 0 };
     Vector2 scaleVector = { 1.0f, -1.0f };
-    Vector2 offset = { (float)screenWidth/2.0f, (float)screenHeight/2.0f };
+    Vector2 offset = { GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
 
     Camera2D camera = { 0 };
     camera.target = (Vector2){ 0 };

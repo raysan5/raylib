@@ -111,6 +111,9 @@ static const char cursorLUT[11][12] = {
 int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
 void ClosePlatform(void);        // Close platform
 
+// OpenGL extensions loader
+static void *WebGLGetProcAddress(const char *procName); // Get WebGL extension procedure address, used by rlLoadExtensions()
+
 // Error callback event
 static void ErrorCallback(int error, const char *description); // GLFW3 Error Callback, runs on GLFW3 error
 
@@ -1442,7 +1445,7 @@ int InitPlatform(void)
 
     // Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions
-    rlLoadExtensions(glfwGetProcAddress);
+    rlLoadExtensions(WebGLGetProcAddress);
     //----------------------------------------------------------------------------
 
     // Initialize events callbacks
@@ -1497,6 +1500,24 @@ void ClosePlatform(void)
 {
     glfwDestroyWindow(platform.handle);
     glfwTerminate();
+}
+
+// Get WebGL extension procedure address
+// WARNING: rlGetProcAddress() uses this loader, so it only returns the functions listed below
+static void *WebGLGetProcAddress(const char *procName)
+{
+    void *proc = NULL;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (strcmp(procName, "glGenVertexArraysOES") == 0) proc = (void *)glGenVertexArraysOES;
+    else if (strcmp(procName, "glBindVertexArrayOES") == 0) proc = (void *)glBindVertexArrayOES;
+    else if (strcmp(procName, "glDeleteVertexArraysOES") == 0) proc = (void *)glDeleteVertexArraysOES;
+    else if (strcmp(procName, "glDrawArraysInstancedANGLE") == 0) proc = (void *)glDrawArraysInstancedANGLE;
+    else if (strcmp(procName, "glDrawElementsInstancedANGLE") == 0) proc = (void *)glDrawElementsInstancedANGLE;
+    else if (strcmp(procName, "glVertexAttribDivisorANGLE") == 0) proc = (void *)glVertexAttribDivisorANGLE;
+#endif
+
+    return proc;
 }
 
 // GLFW3 callback functions, called on GLFW registered events

@@ -356,6 +356,16 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
+# NOTE: Native Linux links against glibc, on glibc >= 2.38, _GNU_SOURCE redirects
+# sscanf(), strtol()... to __isoc23_*(), so the library fails to link with older glibc
+# Web and Android set PLATFORM_OS from the host, but they are not glibc and keep _GNU_SOURCE
+DEFINED_SOURCE_MACRO = _GNU_SOURCE
+ifeq ($(PLATFORM_OS), LINUX)
+    ifeq ($(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_RGFW PLATFORM_ANDROID),)
+        DEFINED_SOURCE_MACRO = _DEFAULT_SOURCE
+    endif
+endif
+
 # Define compiler flags: CFLAGS
 #------------------------------------------------------------------------------------------------
 #  -O1                      defines optimization level
@@ -370,7 +380,7 @@ endif
 #  -D_GNU_SOURCE            access to lots of nonstandard GNU/Linux extension functions
 #  -Werror=pointer-arith    catch unportable code that does direct arithmetic on void pointers
 #  -fno-strict-aliasing     jar_xm.h does shady stuff (breaks strict aliasing)
-CFLAGS = -Wall -D_GNU_SOURCE -D$(TARGET_PLATFORM) -D$(GRAPHICS) -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
+CFLAGS = -Wall -D$(DEFINED_SOURCE_MACRO) -D$(TARGET_PLATFORM) -D$(GRAPHICS) -Wno-missing-braces -Werror=pointer-arith -fno-strict-aliasing
 
 ifneq ($(RAYLIB_CONFIG_FLAGS), NONE)
     CFLAGS += -DEXTERNAL_CONFIG_FLAGS $(RAYLIB_CONFIG_FLAGS)

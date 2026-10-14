@@ -2381,10 +2381,31 @@ RMAPI Quaternion QuaternionFromVector3ToVector3(Vector3 from, Vector3 to)
     float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z); // Vector3DotProduct(from, to)
     Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
 
+    float lengths = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta); // |from|*|to|
+
     result.x = cross.x;
     result.y = cross.y;
     result.z = cross.z;
-    result.w = sqrtf(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z + cos2Theta*cos2Theta) + cos2Theta;
+    result.w = lengths + cos2Theta;
+
+    // Opposite vectors: cross product is zero, rotate 180 degrees around any axis perpendicular to 'from'
+    if ((lengths > 0.0f) && (result.w <= lengths*EPSILON))
+    {
+        if (fabsf(from.x) > fabsf(from.z))
+        {
+            result.x = -from.y;
+            result.y = from.x;
+            result.z = 0.0f;
+        }
+        else
+        {
+            result.x = 0.0f;
+            result.y = -from.z;
+            result.z = from.y;
+        }
+
+        result.w = 0.0f;
+    }
 
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
@@ -2717,9 +2738,9 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     translation->z = mat.m14;
 
     // Matrix Columns - Rotation will be extracted into here
-    Vector3 matColumns[3] = {{ mat.m0, mat.m4, mat.m8 },
-                             { mat.m1, mat.m5, mat.m9 },
-                             { mat.m2, mat.m6, mat.m10 }};
+    Vector3 matColumns[3] = {{ mat.m0, mat.m1, mat.m2 },
+                             { mat.m4, mat.m5, mat.m6 },
+                             { mat.m8, mat.m9, mat.m10 }};
 
     // Shear Parameters XY, XZ, and YZ (extract and ignored)
     float shear[3] = { 0 };
@@ -2783,10 +2804,10 @@ RMAPI void MatrixDecompose(Matrix mat, Vector3 *translation, Quaternion *rotatio
     *scale = Vector3Scale(scl, stabilizer);
 
     // Extract Rotation
-    Matrix rotationMatrix = { matColumns[0].x, matColumns[0].y, matColumns[0].z, 0,
-                             matColumns[1].x, matColumns[1].y, matColumns[1].z, 0,
-                             matColumns[2].x, matColumns[2].y, matColumns[2].z, 0,
-                             0, 0, 0, 1 };
+    Matrix rotationMatrix = { matColumns[0].x, matColumns[1].x, matColumns[2].x, 0,
+                              matColumns[0].y, matColumns[1].y, matColumns[2].y, 0,
+                              matColumns[0].z, matColumns[1].z, matColumns[2].z, 0,
+                              0, 0, 0, 1 };
     *rotation = QuaternionFromMatrix(rotationMatrix);
 }
 

@@ -16,11 +16,12 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include <math.h>
-#include <stdio.h>
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+
+#include <math.h>
+#include <stdio.h>
 
 #define MAX_PIE_SLICES  10       // Max pie slices
 
@@ -39,11 +40,7 @@ int main(void)
     int sliceCount = 7;
     float donutInnerRadius = 25.0f;
     float values[MAX_PIE_SLICES] = { 300.0f, 100.0f, 450.0f, 350.0f, 600.0f, 380.0f, 750.0f }; // Initial slice values
-    char labels[MAX_PIE_SLICES][32] = { 0 };
     bool editingLabel[MAX_PIE_SLICES] = { 0 };
-
-    for (int i = 0; i < MAX_PIE_SLICES; i++)
-        snprintf(labels[i], 32, "Slice %02i", i + 1);
 
     bool showValues = true;
     bool showPercentages = false;
@@ -59,7 +56,7 @@ int main(void)
 
     // UI Panel top-left anchor
     const Vector2 panelPos = {
-        (float)screenWidth  - panelMargin - panelWidth,
+        (float)screenWidth - panelMargin - panelWidth,
         (float)panelMargin
     };
 
@@ -72,7 +69,7 @@ int main(void)
 
     // Pie chart geometry
     const Rectangle canvas = { 0, 0, panelPos.x, (float)screenHeight };
-    const Vector2 center = { canvas.width/2.0f, canvas.height/2.0f};
+    const Vector2 center = { canvas.width/2.0f, canvas.height/2.0f };
     const float radius = 205.0f;
 
     // Total value for percentage calculations
@@ -93,6 +90,7 @@ int main(void)
         // Check for mouse hover over slices
         hoveredSlice = -1; // Reset hovered slice
         Vector2 mousePos = GetMousePosition();
+
         if (CheckCollisionPointRec(mousePos, canvas)) // Only check if mouse is inside the canvas
         {
             float dx = mousePos.x - center.x;
@@ -176,7 +174,7 @@ int main(void)
 
             if (showDonut) GuiDisable();
             GuiSliderBar((Rectangle){ panelPos.x + 80, (float)panelPos.y + 12 + 130, panelRect.width - 100, 30 },
-                            "Inner Radius", NULL, &donutInnerRadius, 5.0f, radius - 10.0f);
+                "Inner Radius", NULL, & donutInnerRadius, 5.0f, radius - 10.0f);
             GuiEnable();
 
             GuiLine((Rectangle){ panelPos.x + 10, (float)panelPos.y + 12 + 170, panelRect.width - 20, 1 }, NULL);
@@ -190,8 +188,7 @@ int main(void)
             };
             int contentHeight = sliceCount*35;
 
-            GuiScrollPanel(scrollPanelBounds, NULL,
-                (Rectangle){ 0, 0, panelRect.width - 25, (float)contentHeight },
+            GuiScrollPanel(scrollPanelBounds, NULL, (Rectangle){ 0, 0, panelRect.width - 25, (float)contentHeight },
                 &scrollContentOffset, &view);
 
             const float contentX = view.x + scrollContentOffset.x; // Left of content
@@ -208,7 +205,8 @@ int main(void)
                     DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
 
                     // Label textbox
-                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i])) editingLabel[i] = !editingLabel[i];
+                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, TextFormat("Slice %02i", i + 1), 32, editingLabel[i]))
+                        editingLabel[i] = !editingLabel[i];
 
                     GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, &values[i], 0.0f, 1000.0f);
                 }

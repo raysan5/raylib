@@ -336,7 +336,7 @@ typedef Camera3D Camera;    // Camera type fallback, defaults to Camera3D
 
 // Camera2D, defines position/orientation in 2d space
 typedef struct Camera2D {
-    Vector2 offset;         // Camera offset (screen space offset from window origin)
+    Vector2 offset;         // Camera offset (screen space offset from window origin, unscaled by DPI, real pixel size)
     Vector2 target;         // Camera target (world space target point that is mapped to screen space offset)
     float rotation;         // Camera rotation in degrees (pivots around target)
     float zoom;             // Camera zoom (scaling around target), must not be set to 0, set to 1.0f for no scale
@@ -1111,7 +1111,7 @@ RLAPI void UnloadRandomSequence(int *sequence);         // Unload random values 
 
 // Misc. functions
 RLAPI void TakeScreenshot(const char *fileName);                // Takes a screenshot of current screen (filename extension defines format)
-RLAPI void SetConfigFlags(unsigned int flags);                  // Set up init configuration flags (view FLAGS)
+RLAPI void SetConfigFlags(unsigned int flags);                  // Set init configuration flags (view FLAGS)
 RLAPI void OpenURL(const char *url);                            // Open URL with default system browser (if available)
 
 // Logging system
