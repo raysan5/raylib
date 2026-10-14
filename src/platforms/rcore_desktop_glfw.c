@@ -1668,10 +1668,10 @@ int InitPlatform(void)
         if (CORE.Window.screen.width == 0) CORE.Window.screen.width = 1;
         if (CORE.Window.screen.height == 0) CORE.Window.screen.height = 1;
 
-        unsigned int workX = 0;
-        unsigned int workY = 0;
-        unsigned int workWidth = 0;
-        unsigned int workHeight = 0;
+        int workX = 0;
+        int workY = 0;
+        int workWidth = 0;
+        int workHeight = 0;
         glfwGetMonitorWorkarea(monitor, &workX, &workY, &workWidth, &workHeight);
 
         // If the area requested by the user exceeds the maximum workable area, clamp it to that
