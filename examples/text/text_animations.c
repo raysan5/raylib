@@ -133,7 +133,7 @@ int main(void)
 
         ClearBackground(RAYWHITE);
 
-        DrawText(TextFormat("Duration (A | D): %d", text.duration), 20, 20, 20, GRAY);
+        DrawText(TextFormat("Duration (A | D): %d", (int)text.duration), 20, 20, 20, GRAY);
         DrawText(TextFormat("Delta (W | S): %.1f", text.delta), 20, 50, 20, GRAY);
         DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, GRAY);
         DrawText(TextFormat("Curent Animation (Q | E): %s", animations[currentAnimation]), 20, 110, 20, GRAY);
