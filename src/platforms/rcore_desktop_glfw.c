@@ -1677,8 +1677,8 @@ int InitPlatform(void)
         // If the area requested by the user exceeds the maximum workable area, clamp it to that
         // GLFW has a problem where if the window is greater than the workable area (this means
         // the taskbar / dockable areas) it won't show up if the window isn't fullscreen
-        if (CORE.Window.screen.width > workWidth) CORE.Window.screen.width = workWidth;
-        if (CORE.Window.screen.height > workHeight) CORE.Window.screen.height = workHeight;
+        if (CORE.Window.screen.width > (unsigned int)workWidth) CORE.Window.screen.width = workWidth;
+        if (CORE.Window.screen.height > (unsigned int)workHeight) CORE.Window.screen.height = workHeight;
 
         platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
         if (!platform.handle)
