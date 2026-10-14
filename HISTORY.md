@@ -602,3 +602,93 @@ Finally, I want to thank [puffer.ai](https://puffer.ai/) and [comma.ai](https://
 **After +12 years of development, `raylib 6.0` is today one of the bests libraries to enjoy games/tools/graphics programming!**
 
 **Enjoy graphics programming with raylib!** :)
+
+
+notes on raylib 6.2
+-------------------
+
+After almost 6 months since latest raylib release, here it is a new installment of the library. It was supposed to b just a patch version to address an issue with CMake build system but it took way longer than expected and included +300 changes and improvements.
+
+Some numbers for this release:
+
+ - **~100** closed issues (for a TOTAL of **+2240**!)
+ - **+500** commits since previous RELEASE (for a TOTAL of **+10280**!)
+ - **+20** new functions ADDED to raylib API (for a TOTAL of **619**!)
+ - **+10** new examples to learn from (for a TOTAL of **+225**!)
+ - **+100** new contributors (for a TOTAL of **+950**!)
+
+Highlights for `raylib 6.2`:
+
+ - **Code gardening**: A lot of work has been done to improve small library details, for consistency and coherence. Many comments have been reviewed, some function parameters have been renamed with more clear naming, some pointers reviewed for const-correctness, functions reordered in the API for more clarity and also several functions have been completely redesigned.
+ 
+ - **REDESIGNED: Image drawing API more alignment with Screen drawing API**: Image API has been reviewed to be aligned with Texture API, now most Texture-based functions (GPU accelerated) have a counter-part to work over Image structures (CPU), also following same parameters order. All the following functions are equivalent:
+ 
+ | Module   | Screen draw (GPU accelerated)  | Image draw (CPU software rendering) |
+| -------- | ----------------------------- | -------------------------------- |
+| `rshapes`   | `DrawPixel()`                 | `ImageDrawPixel()`               |
+| `rshapes`   | `DrawPixelV()`                | `ImageDrawPixelV()`              |
+| `rshapes`   | `DrawLine()`                  | `ImageDrawLine()`                |
+| `rshapes`   | `DrawLineV()`                 | `ImageDrawLineV()`               |
+| `rshapes`   | `DrawLineEx()`                | `ImageDrawLineEx()`              |
+| `rshapes`   | `DrawLineStrip()`             | `ImageDrawLineStrip()`           |
+| `rshapes`   | `DrawLineBezier()`            | -                                |
+| `rshapes`   | `DrawTriangle()`              | `ImageDrawTriangle()`            |
+| `rshapes`   | `DrawTriangleGradient()`      | `ImageDrawTriangleGradient()`    |
+| `rshapes`   | `DrawTriangleLines()`         | `ImageDrawTriangleLines()`       |
+| `rshapes`   | `DrawTriangleLinesEx()`       | -                                |
+| `rshapes`   | `DrawTriangleFan()`           | `ImageDrawTriangleFan()`         |
+| `rshapes`   | `DrawTriangleStrip()`         | `ImageDrawTriangleStrip()`       |
+| `rshapes`   | `DrawRectangle()`             | `ImageDrawRectangle()`           |
+| `rshapes`   | `DrawRectangleV()`            | `ImageDrawRectangleV()`          |
+| `rshapes`   | `DrawRectangleRec()`          | `ImageDrawRectangleRec()`        |
+| `rshapes`   | `DrawRectanglePro()`          | `ImageDrawRectanglePro()`        |
+| `rshapes`   | `DrawRectangleLines()`        | `ImageDrawRectangleLines()`      |
+| `rshapes`   | `DrawRectangleLinesEx()`      | `ImageDrawRectangleLinesEx()`    |
+| `rshapes`   | `DrawRectangleGradientV()`    | -                                |
+| `rshapes`   | `DrawRectangleGradientH()`    | -                                |
+| `rshapes`   | `DrawRectangleGradientEx()`   | `ImageDrawRectangleGradientEx()` |
+| `rshapes`   | `DrawRectangleRounded()`      | -                                |
+| `rshapes`   | `DrawRectangleRoundedLines()` | -                                |
+| `rshapes`   | `DrawRectangleRoundedLinesEx()` | -                              |
+| `rshapes`   | `DrawCircle()`                | `ImageDrawCircle()`              |
+| `rshapes`   | `DrawCircleV()`               | `ImageDrawCircleV()`             |
+| `rshapes`   | `DrawCircleSector()`          | -                                |
+| `rshapes`   | `DrawCircleLines()`           | `ImageDrawCircleLines()`         |
+| `rshapes`   | `DrawCircleLinesV()`          | `ImageDrawCircleLinesV()`        |
+| `rshapes`   | `DrawCircleLinesEx()`         | -                                |
+| `rshapes`   | `DrawCircleGradient()`        | `ImageDrawCircleGradient()`      |
+| `rshapes`   | `DrawEllipse()`               | -                                |
+| `rshapes`   | `DrawEllipseLines()`          | -                                |
+| `rshapes`   | `DrawRing()`                  | -                                |
+| `rshapes`   | `DrawRingLines()`             | -                                |
+| `rshapes`   | `DrawPoly()`                  | -                                |
+| `rshapes`   | `DrawPolyLines()`             | -                                |
+| `rshapes`   | `DrawPolyLinesEx()`           | -                                |
+| `rtextures` | `DrawTexture()`               | `ImageDrawImage()`               |
+| `rtextures` | `DrawTextureV()`              | -                                |
+| `rtextures` | `DrawTextureEx()`             | `ImageDrawImageEx()`             |
+| `rtextures` | `DrawTextureRec()`            | `ImageDrawImageRec()`            |
+| `rtextures` | `DrawTexturePro()`            | `ImageDrawImagePro()`            |
+| `rtextures` | `DrawTextureNPatch()`         | -                                |
+| `rtextures` | `DrawTextureTiled()`          | -                                |
+| `rtext`     | `DrawText()`                  | `ImageDrawText()`                |
+| `rtext`     | `DrawTextEx()`                | `ImageDrawTextEx()`              |
+| `rtext`     | `DrawTextPro()`               | `ImageDrawTextPro()`             |
+| `rtext`     | `DrawTextCodepoint()`         | -                                |
+| `rtext`     | `DrawTextCodepoints()`        | -                                |
+
+_NOTE: All `ImageDraw*()` functions require an `Image` pointer to draw to as first parameter: `ImageDrawImage(Image *target, ...)`_
+
+This API alignment could allow in the future faster 2D software rendering over an `Image` buffer, as an alternative to the already included `rlsw` Software Renderer that implements a pseudo-OpenGL 1.1 pipeline.
+ 
+ - **REDESIGNED: File API using more standard return result values**: File API return values have been unified to follow C conventions, returning 0 if everything worked as expected and other values for potential issues on the file processes.
+ 
+ - **REVIEWED: Multiple security concerns reported by ROS (Radically Open Security)**: Recently raylib went through a professional security audit by Radically Open Security, most of the reported security concerns have been addressed.
+ 
+Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/master/CHANGELOG) for a detailed list of changes!
+
+Again, I want to **thank all the contributors (+950!**) that helped improving raylib, this time there have been **more than 100 new contributors** sending fixes and improvements!
+
+After 13 years of development, `raylib 6.2` is today probably one of the bests libraries to enjoy **games/tools/graphics/AI programming!**
+
+**Hope you keep enjoying programming with raylib!** :)
