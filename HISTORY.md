@@ -689,6 +689,6 @@ Make sure to check raylib [CHANGELOG](https://github.com/raysan5/raylib/blob/mas
 
 Again, I want to **thank all the contributors (+950!**) that helped improving raylib, this time there have been **more than 100 new contributors** sending fixes and improvements!
 
-After 13 years of development, `raylib 6.2` is today probably one of the bests libraries to enjoy **games/tools/graphics/AI programming!**
+After 13 years of development, `raylib 6.2` is today probably one of the best libraries to enjoy **games/tools/graphics/AI programming!**
 
 **Hope you keep enjoying programming with raylib!** :)
