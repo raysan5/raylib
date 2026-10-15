@@ -120,6 +120,114 @@ static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 
+// --------------------------------------------------------------------------------
+// This part of the file contains pure functions that never access global state
+// This distinction helps keep the backend maintainable as the inputs and outputs
+// of every function called in this section can be fully derived from the call-site alone
+// --------------------------------------------------------------------------------
+
+// Prevent any code in this part of the file from accessing the global CORE state
+#define CORE DONT_USE_CORE_HERE
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
+    size_t outLen = AToWLen(inAnsi);                            \
+    outWstr = (WCHAR *)alloca(sizeof(WCHAR)*(outLen + 1));      \
+    AToWCopy(inAnsi, outWstr, outLen);                          \
+    outWstr[outLen] = 0;                                        \
+} while (0)
+
+#define STYLE_MASK_ALL          0xffffffff
+#define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
+#define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
+
+#define STYLE_FLAGS_RESIZABLE   (WS_THICKFRAME | WS_MAXIMIZEBOX)
+
+#define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
+#define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
+
+#define WINDOW_STYLE_EX         0
+
+#define CLASS_NAME              L"raylibWindow"
+
+#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
+#define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
+
+// Flags that have no operations to perform during an update
+#define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
+
+// Lowest extended-key scancode, start of keyboardKeyFromExtendedScancode[]
+#define EXTENDED_KEY_OFFSET     0x1C
+
+#define WGL_DRAW_TO_WINDOW_ARB              0x2001
+#define WGL_ACCELERATION_ARB                0x2003
+#define WGL_SUPPORT_OPENGL_ARB              0x2010
+#define WGL_DOUBLE_BUFFER_ARB               0x2011
+#define WGL_PIXEL_TYPE_ARB                  0x2013
+#define WGL_COLOR_BITS_ARB                  0x2014
+#define WGL_RED_BITS_ARB                    0x2015
+#define WGL_RED_SHIFT_ARB                   0x2016
+#define WGL_GREEN_BITS_ARB                  0x2017
+#define WGL_GREEN_SHIFT_ARB                 0x2018
+#define WGL_BLUE_BITS_ARB                   0x2019
+#define WGL_BLUE_SHIFT_ARB                  0x201a
+#define WGL_ALPHA_BITS_ARB                  0x201b
+#define WGL_ALPHA_SHIFT_ARB                 0x201c
+#define WGL_DEPTH_BITS_ARB                  0x2022
+#define WGL_STENCIL_BITS_ARB                0x2023
+#define WGL_TYPE_RGBA_ARB                   0x202b
+
+// Context acceleration types
+#define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
+#define WGL_GENERIC_ACCELERATION_ARB        0x2026
+#define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
+
+// WGL_ARB_multisample extension supported
+#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
+#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
+
+// WGL_ARB_framebuffer_sRGB extension supported
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
+
+#define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
+#define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Maximize-minimize request types
+typedef enum {
+    MIZED_NONE,
+    MIZED_MIN,
+    MIZED_MAX
+} Mized;
+
+// Flag operations
+// NOTE: Some ops need to be deferred
+typedef struct {
+    DWORD set;
+    DWORD clear;
+} FlagsOp;
+
+// Monitor info type
+typedef struct {
+    HMONITOR needle;
+    int index;
+    int matchIndex;
+    RECT rect;
+} MonitorInfo;
+
+//----------------------------------------------------------------------------------
+// Global Const Variables Definition
+//----------------------------------------------------------------------------------
 // Maps scancodes to Raylib keys
 static const unsigned short keyboardKeyFromScancode[] = {
     [0x01] = KEY_ESCAPE,
@@ -239,111 +347,6 @@ static const unsigned short keyboardKeyFromExtendedScancode[] = {
     [0x46 - EXTENDED_KEY_OFFSET] = KEY_PAUSE,           // Ctrl+Pause sends the Break scancode
     [0x36 - EXTENDED_KEY_OFFSET] = KEY_RIGHT_SHIFT,     // Some keyboards set the extended bit on Right Shift
 };
-
-// --------------------------------------------------------------------------------
-// This part of the file contains pure functions that never access global state
-// This distinction helps keep the backend maintainable as the inputs and outputs
-// of every function called in this section can be fully derived from the call-site alone
-// --------------------------------------------------------------------------------
-
-// Prevent any code in this part of the file from accessing the global CORE state
-#define CORE DONT_USE_CORE_HERE
-
-//----------------------------------------------------------------------------------
-// Defines and Macros
-//----------------------------------------------------------------------------------
-#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
-    size_t outLen = AToWLen(inAnsi);                            \
-    outWstr = (WCHAR *)alloca(sizeof(WCHAR)*(outLen + 1));      \
-    AToWCopy(inAnsi, outWstr, outLen);                          \
-    outWstr[outLen] = 0;                                        \
-} while (0)
-
-#define STYLE_MASK_ALL          0xffffffff
-#define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
-#define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
-
-#define STYLE_FLAGS_RESIZABLE   (WS_THICKFRAME | WS_MAXIMIZEBOX)
-
-#define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
-#define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
-
-#define WINDOW_STYLE_EX         0
-
-#define CLASS_NAME              L"raylibWindow"
-
-#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
-#define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
-
-// Flags that have no operations to perform during an update
-#define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
-
-// Lowest extended-key scancode, start of keyboardKeyFromExtendedScancode[]
-#define EXTENDED_KEY_OFFSET     0x1C
-
-#define WGL_DRAW_TO_WINDOW_ARB              0x2001
-#define WGL_ACCELERATION_ARB                0x2003
-#define WGL_SUPPORT_OPENGL_ARB              0x2010
-#define WGL_DOUBLE_BUFFER_ARB               0x2011
-#define WGL_PIXEL_TYPE_ARB                  0x2013
-#define WGL_COLOR_BITS_ARB                  0x2014
-#define WGL_RED_BITS_ARB                    0x2015
-#define WGL_RED_SHIFT_ARB                   0x2016
-#define WGL_GREEN_BITS_ARB                  0x2017
-#define WGL_GREEN_SHIFT_ARB                 0x2018
-#define WGL_BLUE_BITS_ARB                   0x2019
-#define WGL_BLUE_SHIFT_ARB                  0x201a
-#define WGL_ALPHA_BITS_ARB                  0x201b
-#define WGL_ALPHA_SHIFT_ARB                 0x201c
-#define WGL_DEPTH_BITS_ARB                  0x2022
-#define WGL_STENCIL_BITS_ARB                0x2023
-#define WGL_TYPE_RGBA_ARB                   0x202b
-
-// Context acceleration types
-#define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
-#define WGL_GENERIC_ACCELERATION_ARB        0x2026
-#define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
-
-// WGL_ARB_multisample extension supported
-#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
-#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
-
-// WGL_ARB_framebuffer_sRGB extension supported
-#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
-
-#define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
-#define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
-#define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
-#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
-#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
-
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-// Maximize-minimize request types
-typedef enum {
-    MIZED_NONE,
-    MIZED_MIN,
-    MIZED_MAX
-} Mized;
-
-// Flag operations
-// NOTE: Some ops need to be deferred
-typedef struct {
-    DWORD set;
-    DWORD clear;
-} FlagsOp;
-
-// Monitor info type
-typedef struct {
-    HMONITOR needle;
-    int index;
-    int matchIndex;
-    RECT rect;
-} MonitorInfo;
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
