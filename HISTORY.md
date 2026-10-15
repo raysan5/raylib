@@ -607,7 +607,7 @@ Finally, I want to thank [puffer.ai](https://puffer.ai/) and [comma.ai](https://
 notes on raylib 6.2
 -------------------
 
-After almost 6 months since latest raylib release, here it is a new installment of the library. It was supposed to b just a patch version to address an issue with CMake build system but it took way longer than expected and included +300 changes and improvements.
+After almost 6 months since latest raylib release, here it is a new installment of the library. It was supposed to be just a patch version to address an issue with CMake build system but it took way longer than expected and included +300 changes and improvements.
 
 Some numbers for this release:
 
