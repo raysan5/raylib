@@ -71,7 +71,7 @@ endif
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 6.0.0
+RAYLIB_VERSION        ?= 6.2.0
 RAYLIB_PATH           ?= ..
 
 # Define raylib source code path

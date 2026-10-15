@@ -75,8 +75,8 @@ else
 endif
 
 # Define required raylib variables
-RAYLIB_VERSION        = 6.0.0
-RAYLIB_API_VERSION    = 600
+RAYLIB_VERSION        = 6.2.0
+RAYLIB_API_VERSION    = 620
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
