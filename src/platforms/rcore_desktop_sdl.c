@@ -2198,6 +2198,7 @@ int InitPlatform(void)
 
     // NOTE: No need to call InitTimer(), let SDL manage it internally
     //----------------------------------------------------------------------------
+    CORE.Time.previous = 0.0;
 
     // Initialize storage system
     //----------------------------------------------------------------------------
