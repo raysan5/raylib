@@ -107,7 +107,7 @@ int main(void)
             DrawTextCenter(TextFormat("Window is %d \"physical pixels\" wide", GetRenderWidth()), windowCenter, pixelGridDescY, 20, BLUE);
 
             const char *text = "Can you see this?";
-            Vector2 size = MeasureTextEx(GetFontDefault(), text, 20, 3);
+            Vector2 size = MeasureTextExLs(GetFontDefault(), text, 20, 3, 0);
             Vector2 pos = (Vector2){ GetScreenWidth() - size.x - 5, GetScreenHeight() - size.y - 5 };
             DrawTextEx(GetFontDefault(), text, pos, 20, 3, LIGHTGRAY);
 

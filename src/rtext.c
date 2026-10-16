@@ -1357,6 +1357,62 @@ int MeasureText(const char *text, int fontSize)
     return (int)textSize.x;
 }
 
+// Measure string size for Font with line spacing
+Vector2 MeasureTextExLs(Font font, const char *text, float fontSize, float spacing, float lineSpacing)
+{
+    Vector2 textSize = { 0 };
+
+    if ((font.texture.id == 0) || (text == NULL) || (text[0] == '\0')) return textSize; // Security check
+
+    int size = TextLength(text);    // Get size in bytes of text
+    int tempByteCounter = 0;        // Used to count longer text line num chars
+    int byteCounter = 0;
+
+    float textWidth = 0.0f;
+    float tempTextWidth = 0.0f;     // Used to count longer text line width
+
+    float textHeight = fontSize;
+    float scaleFactor = fontSize/(float)font.baseSize;
+
+    int letter = 0;                 // Current character
+    int index = 0;                  // Index position in sprite font
+
+    for (int i = 0; i < size;)
+    {
+        byteCounter++;
+
+        int codepointByteCount = 0;
+        letter = GetCodepointNext(&text[i], &codepointByteCount);
+        index = GetGlyphIndex(font, letter);
+
+        i += codepointByteCount;
+
+        if (letter != '\n')
+        {
+            if (font.glyphs[index].advanceX > 0) textWidth += font.glyphs[index].advanceX;
+            else textWidth += (font.recs[index].width + font.glyphs[index].offsetX);
+        }
+        else
+        {
+            if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+            byteCounter = 0;
+            textWidth = 0;
+
+            // NOTE: Previous to this patch there was a global variable here called textLineSpacing, I didn't see the purpose so I utilized a local variable. I did not remove the global variable's definition
+            textHeight += (fontSize + lineSpacing);
+        }
+
+        if (tempByteCounter < byteCounter) tempByteCounter = byteCounter;
+    }
+
+    if (tempTextWidth < textWidth) tempTextWidth = textWidth;
+
+    textSize.x = tempTextWidth*scaleFactor + (float)((tempByteCounter - 1)*spacing);
+    textSize.y = textHeight;
+
+    return textSize;
+}
+
 // Measure string size for Font
 Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing)
 {

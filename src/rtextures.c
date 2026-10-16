@@ -1520,15 +1520,96 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
-// Create an image from text (default font)
-Image ImageText(const char *text, int fontSize, Color color)
+// Create an image from text (default font) utilizing line spacing
+Image ImageTextLs(const char *text, int fontSize, float lineSpacing, Color color)
 {
     Image imText = { 0 };
 #if SUPPORT_MODULE_RTEXT
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
+    imText = ImageTextExLs(GetFontDefault(), text, (float)fontSize, (float)lineSpacing, (float)spacing, color);   // WARNING: Module required: rtext
+#else
+    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
+    TRACELOG(LOG_WARNING, "IMAGE: ImageTextExLs() requires module: rtext");
+#endif
+    return imText;
+}
+
+// Create an image from text (default font)
+Image ImageText(const char *text, int fontSize, Color color)
+{
+    Image imText = { 0 };
+    #if SUPPORT_MODULE_RTEXT
+    int defaultFontSize = 10;   // Default Font chars height in pixel
+    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
+    int spacing = fontSize/defaultFontSize;
     imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);   // WARNING: Module required: rtext
+    #else
+    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
+    TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
+    #endif
+    return imText;
+}
+
+// Create an image from text (custom sprite font) utilizing line spacing
+// WARNING: Module required: rtext
+Image ImageTextExLs(Font font, const char *text, float fontSize, float spacing, float lineSpacing, Color tint)
+{
+    Image imText = { 0 };
+#if SUPPORT_MODULE_RTEXT
+    if (text == NULL) return imText;
+
+    int textLength = (int)strlen(text); // Get length of text in bytes
+    int textOffsetX = 0;            // Image drawing position X
+    int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
+
+    // NOTE: Text image is generated at font base size, later scaled to desired font size
+    Vector2 imSize = MeasureTextExLs(font, text, (float)font.baseSize, spacing, lineSpacing);  // WARNING: Module required: rtext
+    Vector2 textSize = MeasureTextExLs(font, text, fontSize, spacing, lineSpacing);
+
+    // Create image to store text
+    imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
+
+    for (int i = 0; i < textLength;)
+    {
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
+        int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
+
+        if (codepoint == '\n')
+        {
+            textOffsetY += (font.baseSize + lineSpacing); // User defined line spacing
+            textOffsetX = 0;
+        }
+        else
+        {
+            if ((codepoint != ' ') && (codepoint != '\t'))
+            {
+                Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), font.recs[index].width, font.recs[index].height };
+                ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height },
+                    rec, (Vector2){ 0 }, 0.0f, tint);
+            }
+
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
+            else textOffsetX += font.glyphs[index].advanceX + (int)spacing;
+        }
+
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
+    }
+
+    // Scale image depending on text size
+    if (textSize.x != imSize.x)
+    {
+        float scaleFactor = textSize.x/imSize.x;
+        TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
+
+        // Using nearest-neighbor scaling algorithm for default font
+        // TODO: Support other scaling mechanism, use flag?
+        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+    }
 #else
     imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
@@ -1541,7 +1622,7 @@ Image ImageText(const char *text, int fontSize, Color color)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
     Image imText = { 0 };
-#if SUPPORT_MODULE_RTEXT
+    #if SUPPORT_MODULE_RTEXT
     if (text == NULL) return imText;
 
     int textLength = (int)strlen(text); // Get length of text in bytes
@@ -1565,7 +1646,6 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         if (codepoint == '\n')
         {
             // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += (font.baseSize + font.baseSize/2);
             textOffsetX = 0;
         }
@@ -1575,7 +1655,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
             {
                 Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), font.recs[index].width, font.recs[index].height };
                 ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height },
-                    rec, (Vector2){ 0 }, 0.0f, tint);
+                                  rec, (Vector2){ 0 }, 0.0f, tint);
             }
 
             if (font.glyphs[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
@@ -1596,10 +1676,10 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
-#else
+    #else
     imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
-#endif
+    #endif
     return imText;
 }
 
@@ -4414,18 +4494,45 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
     }
 }
 
-// Draw text (default font) within an image (destination)
-void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
+// Draw text (default font) within an image (destination) utilizing line spacing
+void ImageDrawTextLs(Image *dst, const char *text, int posX, int posY, int fontSize, int lineSpacing, Color color)
 {
 #if SUPPORT_MODULE_RTEXT
     // Make sure default font is loaded to be used on image text drawing
     if (GetFontDefault().texture.id == 0) LoadFontDefault();
 
     Vector2 position = { (float)posX, (float)posY };
-    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, 1.0f, color);   // WARNING: Module required: rtext
+    ImageDrawTextExLs(dst, GetFontDefault(), text, position, (float)fontSize, (float)lineSpacing, 1.0f, color);   // WARNING: Module required: rtext
 #else
-    TRACELOG(LOG_WARNING, "IMAGE: ImageDrawText() requires module: rtext");
+    TRACELOG(LOG_WARNING, "IMAGE: ImageDrawTextLs() requires module: rtext");
 #endif
+}
+
+// Draw text (default font) within an image (destination)
+void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
+{
+    #if SUPPORT_MODULE_RTEXT
+    // Make sure default font is loaded to be used on image text drawing
+    if (GetFontDefault().texture.id == 0) LoadFontDefault();
+
+    Vector2 position = { (float)posX, (float)posY };
+    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, 1.0f, color);   // WARNING: Module required: rtext
+    #else
+    TRACELOG(LOG_WARNING, "IMAGE: ImageDrawText() requires module: rtext");
+    #endif
+}
+
+// Draw text (custom sprite font) within an image (destination) utilizing line spacing
+void ImageDrawTextExLs(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, float lineSpacing, Color tint)
+{
+    Image imText = ImageTextExLs(font, text, fontSize, spacing, lineSpacing, tint);
+
+    Rectangle srcRec = { 0.0f, 0.0f, (float)imText.width, (float)imText.height };
+    Rectangle dstRec = { position.x, position.y, (float)imText.width, (float)imText.height };
+
+    ImageDrawImagePro(dst, imText, srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
+
+    UnloadImage(imText);
 }
 
 // Draw text (custom sprite font) within an image (destination)
