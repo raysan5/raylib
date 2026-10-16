@@ -1387,7 +1387,6 @@ RLAPI Image GenImageText(int width, int height, const char *text);              
 RLAPI Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 RLAPI Image ImageFromImage(Image image, Rectangle rec);                                                  // Create an image from another image piece
 RLAPI Image ImageFromChannel(Image image, int selectedChannel);                                          // Create an image from a selected channel of another image (GRAYSCALE)
-RLAPI Image ImageTextLs(const char *text, int fontSize, float lineSpacing, Color color);                 // Create an image from text (default font) utilizing line spacing
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
 RLAPI Image ImageTextExLs(Font font, const char *text, float fontSize, float spacing, float lineSpacing, Color tint); // Create an image from text (custom sprite font) utilizing line spacing
 RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);         // Create an image from text (custom sprite font)

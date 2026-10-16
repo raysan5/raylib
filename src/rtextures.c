@@ -1520,22 +1520,6 @@ void ImageFormat(Image *image, int newFormat)
     }
 }
 
-// Create an image from text (default font) utilizing line spacing
-Image ImageTextLs(const char *text, int fontSize, float lineSpacing, Color color)
-{
-    Image imText = { 0 };
-#if SUPPORT_MODULE_RTEXT
-    int defaultFontSize = 10;   // Default Font chars height in pixel
-    if (fontSize < defaultFontSize) fontSize = defaultFontSize;
-    int spacing = fontSize/defaultFontSize;
-    imText = ImageTextExLs(GetFontDefault(), text, (float)fontSize, (float)lineSpacing, (float)spacing, color);   // WARNING: Module required: rtext
-#else
-    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
-    TRACELOG(LOG_WARNING, "IMAGE: ImageTextExLs() requires module: rtext");
-#endif
-    return imText;
-}
-
 // Create an image from text (default font)
 Image ImageText(const char *text, int fontSize, Color color)
 {
@@ -1544,7 +1528,7 @@ Image ImageText(const char *text, int fontSize, Color color)
     int defaultFontSize = 10;   // Default Font chars height in pixel
     if (fontSize < defaultFontSize) fontSize = defaultFontSize;
     int spacing = fontSize/defaultFontSize;
-    imText = ImageTextEx(GetFontDefault(), text, (float)fontSize, (float)spacing, color);   // WARNING: Module required: rtext
+    imText = ImageTextExLs(GetFontDefault(), text, (float)fontSize, 1.5, (float)spacing, color);   // WARNING: Module required: rtext
     #else
     imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
     TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
