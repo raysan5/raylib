@@ -1268,16 +1268,26 @@ void ImageCrop(Image *image, Rectangle crop)
     // Security check to avoid program crash
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
+    crop.x = floorf(crop.x);
+    crop.y = floorf(crop.y);
+    crop.width = floorf(crop.width);
+    crop.height = floorf(crop.height);
+
     // Security checks to validate crop rectangle
     if (crop.x < 0) { crop.width += crop.x; crop.x = 0; }
     if (crop.y < 0) { crop.height += crop.y; crop.y = 0; }
     if ((crop.x + crop.width) > image->width) crop.width = image->width - crop.x;
     if ((crop.y + crop.height) > image->height) crop.height = image->height - crop.y;
-    if ((crop.x > image->width) || (crop.y > image->height))
+    if ((crop.x > image->width) || (crop.y > image->height) || (crop.width < 1) || (crop.height < 1))
     {
         TRACELOG(LOG_WARNING, "IMAGE: Failed to crop, rectangle out of bounds");
         return;
     }
+
+    int cropX = (int)crop.x;
+    int cropY = (int)crop.y;
+    int cropWidth = (int)crop.width;
+    int cropHeight = (int)crop.height;
 
     if (image->mipmaps > 1) TRACELOG(LOG_WARNING, "Image manipulation only applied to base mipmap level");
     if (image->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image manipulation not supported for compressed formats");
@@ -1285,31 +1295,31 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
 
-        unsigned char *croppedData = (unsigned char *)RL_MALLOC((int)(crop.width*crop.height)*bytesPerPixel);
+        unsigned char *croppedData = (unsigned char *)RL_MALLOC(cropWidth*cropHeight*bytesPerPixel);
 
         // OPTION 1: Move cropped data line-by-line
-        for (int y = (int)crop.y, offsetSize = 0; y < (int)(crop.y + crop.height); y++)
+        for (int y = cropY, offsetSize = 0; y < cropY + cropHeight; y++)
         {
-            memcpy(croppedData + offsetSize, ((unsigned char *)image->data) + (y*image->width + (int)crop.x)*bytesPerPixel, (int)crop.width*bytesPerPixel);
-            offsetSize += ((int)crop.width*bytesPerPixel);
+            memcpy(croppedData + offsetSize, ((unsigned char *)image->data) + (y*image->width + cropX)*bytesPerPixel, cropWidth*bytesPerPixel);
+            offsetSize += (cropWidth*bytesPerPixel);
         }
 
         /*
         // OPTION 2: Move cropped data pixel-by-pixel or byte-by-byte
-        for (int y = (int)crop.y; y < (int)(crop.y + crop.height); y++)
+        for (int y = cropY; y < cropY + cropHeight; y++)
         {
-            for (int x = (int)crop.x; x < (int)(crop.x + crop.width); x++)
+            for (int x = cropX; x < cropX + cropWidth; x++)
             {
-                //memcpy(croppedData + ((y - (int)crop.y)*(int)crop.width + (x - (int)crop.x))*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + x)*bytesPerPixel, bytesPerPixel);
-                for (int i = 0; i < bytesPerPixel; i++) croppedData[((y - (int)crop.y)*(int)crop.width + (x - (int)crop.x))*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + x)*bytesPerPixel + i];
+                //memcpy(croppedData + ((y - cropY)*cropWidth + (x - cropX))*bytesPerPixel, ((unsigned char *)image->data) + (y*image->width + x)*bytesPerPixel, bytesPerPixel);
+                for (int i = 0; i < bytesPerPixel; i++) croppedData[((y - cropY)*cropWidth + (x - cropX))*bytesPerPixel + i] = ((unsigned char *)image->data)[(y*image->width + x)*bytesPerPixel + i];
             }
         }
         */
 
         RL_FREE(image->data);
         image->data = croppedData;
-        image->width = (int)crop.width;
-        image->height = (int)crop.height;
+        image->width = cropWidth;
+        image->height = cropHeight;
     }
 }
 
