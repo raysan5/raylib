@@ -41,6 +41,7 @@ int main(void)
     float donutInnerRadius = 25.0f;
     float values[MAX_PIE_SLICES] = { 300.0f, 100.0f, 450.0f, 350.0f, 600.0f, 380.0f, 750.0f }; // Initial slice values
     bool editingLabel[MAX_PIE_SLICES] = { 0 };
+    char labels[MAX_PIE_SLICES][32] = { 0 }; // Slice label texts, editable
 
     bool showValues = true;
     bool showPercentages = false;
@@ -74,6 +75,9 @@ int main(void)
 
     // Total value for percentage calculations
     float totalValue = 0.0f;
+
+    // Initialize slice labels
+    for (int i = 0; i < MAX_PIE_SLICES; i++) snprintf(labels[i], 32, "Slice %02i", i + 1);
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -205,7 +209,7 @@ int main(void)
                     DrawRectangle((int)(contentX + 15), rowY + 5, 20, 20, color);
 
                     // Label textbox
-                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, TextFormat("Slice %02i", i + 1), 32, editingLabel[i]))
+                    if (GuiTextBox((Rectangle){ contentX + 45, (float)rowY, 75, 30 }, labels[i], 32, editingLabel[i]))
                         editingLabel[i] = !editingLabel[i];
 
                     GuiSliderBar((Rectangle){ contentX + 130, (float)rowY, 110, 30 }, NULL, NULL, &values[i], 0.0f, 1000.0f);
