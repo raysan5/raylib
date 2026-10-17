@@ -402,6 +402,7 @@ static void LoadWin32FunctionPointers(void)
 static UINT GetDpiForWindowCompat(HWND hwnd)
 {
     UINT result = 0;
+
     if (pGetDpiForWindow != NULL)
     {
         // This API requires Windows 10 v1607 or newer
@@ -415,6 +416,7 @@ static UINT GetDpiForWindowCompat(HWND hwnd)
         // Before Windows 10 v1607: fallback to system-wide DPI (96 for DPI-unaware processes)
         result = GetDeviceCaps(dc, LOGPIXELSX);
     }
+
     return result;
 }
 
@@ -793,8 +795,8 @@ static bool AdoptWindowResize(unsigned flags)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-int InitPlatform(void);             // Initialize platform (graphics, inputs and more)
-void ClosePlatform(void);           // Close platform
+int InitPlatform(void);         // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);       // Close platform
 
 // Win32 process messages management function
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
@@ -1134,10 +1136,7 @@ void SetClipboardText(const char *text)
 {
     if (OpenClipboard(platform.hwnd))
     {
-        if (text == NULL)
-        {
-            EmptyClipboard();
-        }
+        if (text == NULL) EmptyClipboard();
         else
         {
             size_t length = strlen(text);
@@ -1170,20 +1169,14 @@ void SetClipboardText(const char *text)
                             GlobalFree(globalHandle);
                         }
                     }
-                    else
-                    {
-                        GlobalFree(globalHandle);
-                    }
+                    else GlobalFree(globalHandle);
                 }
             }
         }
 
         CloseClipboard();
     }
-    else
-    {
-        TRACELOG(LOG_WARNING, "Clipboard: Failed to write to clipboard. It may be locked by another program.");
-    }
+    else TRACELOG(LOG_WARNING, "Clipboard: Failed to write to clipboard. It may be locked by another program.");
 }
 
 // Get clipboard text content
@@ -1254,7 +1247,6 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
-
         RL_FREE(fileData);
     }
 #else
@@ -1882,14 +1874,7 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    // Undo disable cursor if it's locked and unregister raw input devices
-    EnableCursor();
-
-    // Calling DestroyWindow invokes a WindowProc event that sets the FLAG_WINDOW_HIDDEN flag to true
-    // If InitWindow is called again, the hidden flag will be interpreted as something the user requested
-    // Save the current flags and restore them after
-    unsigned int savedFlags = CORE.Window.flags;
-
+    // Clear required platform data
     if (platform.hwnd)
     {
         // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
@@ -1908,16 +1893,15 @@ void ClosePlatform(void)
         platform.hwnd = NULL;
     }
 
+    // Clear clipboard
     if (platform.clipboardText != NULL)
     {
         RL_FREE(platform.clipboardText);
         platform.clipboardText = NULL;
     }
 
-    CORE.Window.flags = savedFlags;
-
 #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
-    timeEndPeriod(1);           // Restore time period
+    timeEndPeriod(1); // Restore time period
 #endif
 }
 

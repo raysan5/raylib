@@ -379,6 +379,7 @@ typedef struct CoreData {
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
 
         } Gamepad;
+
     } Input;
     struct {
         double current;                     // Current time measure (seconds)
@@ -735,7 +736,9 @@ void CloseWindow(void)
     ClosePlatform();
     //--------------------------------------------------------------
 
-    CORE.Window.ready = false;
+    // Clear CORE data, in case new window is initialized
+    CORE = (CoreData){ 0 };
+    
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 

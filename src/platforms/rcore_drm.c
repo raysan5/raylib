@@ -1732,10 +1732,9 @@ void ClosePlatform(void)
     }
 #endif
 
-    CORE.Window.shouldClose = true;   // Added to force threads to exit when the close window is called
+    CORE.Window.shouldClose = true; // Added to force threads to exit when the close window is called
 
     // Close the evdev devices
-
     if (platform.mouseFd != -1)
     {
         close(platform.mouseFd);

@@ -443,8 +443,8 @@ void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-int InitPlatform(void);                                      // Initialize platform (graphics, inputs and more)
-void ClosePlatform(void);                                    // Close platform
+int InitPlatform(void);         // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);       // Close platform
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
 static int GetCodepointNextSDL(const char *text, int *codepointSize); // Get next codepoint in a byte sequence and bytes processed
@@ -2219,8 +2219,10 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     SDL_FreeCursor(platform.cursor); // Free cursor
+
     if (platform.glContext != NULL) SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
+
     SDL_Quit(); // Deinitialize SDL internal global state
 }
 
