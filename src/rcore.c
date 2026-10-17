@@ -379,6 +379,7 @@ typedef struct CoreData {
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
 
         } Gamepad;
+
     } Input;
     struct {
         double current;                     // Current time measure (seconds)
@@ -646,7 +647,6 @@ void InitWindow(int width, int height, const char *title)
     if ((title != NULL) && (title[0] != 0)) CORE.Window.title = title;
 
     // Initialize global input state
-    memset(&CORE.Input, 0, sizeof(CORE.Input)); // Reset CORE.Input structure to 0
     CORE.Input.Keyboard.exitKey = KEY_ESCAPE;
     CORE.Input.Mouse.scale = (Vector2){ 1.0f, 1.0f };
     CORE.Input.Mouse.cursor = MOUSE_CURSOR_ARROW;
@@ -708,15 +708,16 @@ void InitWindow(int width, int height, const char *title)
     #endif
 #endif
 
+    // NOTE: Should be already initialized to 0 but just in case
     CORE.Time.frameCounter = 0;
     CORE.Window.shouldClose = false;
 
     // Initialize random seed using available timer source instead of standard time() on embedded platforms
-    #ifndef PICO_RP2350
+#ifndef PICO_RP2350
     SetRandomSeed((unsigned int)time(NULL));
-    #else
+#else
     SetRandomSeed(get_rand_32());
-    #endif
+#endif
 
     TRACELOG(LOG_INFO, "SYSTEM: Working Directory: %s", GetWorkingDirectory());
 }
@@ -735,7 +736,9 @@ void CloseWindow(void)
     ClosePlatform();
     //--------------------------------------------------------------
 
-    CORE.Window.ready = false;
+    // Clear CORE data, in case new window is initialized
+    CORE = (CoreData){ 0 };
+    
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 

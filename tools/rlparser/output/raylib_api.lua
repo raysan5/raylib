@@ -15,7 +15,7 @@ return {
     {
       name = "RAYLIB_VERSION_MINOR",
       type = "INT",
-      value = 2,
+      value = 5,
       description = ""
     },
     {
@@ -27,7 +27,7 @@ return {
     {
       name = "RAYLIB_VERSION",
       type = "STRING",
-      value = "6.2",
+      value = "6.5-dev",
       description = ""
     },
     {

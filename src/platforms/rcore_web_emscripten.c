@@ -1450,6 +1450,7 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     if (platform.pixels != NULL) RL_FREE(platform.pixels);
+
     if (platform.glContext != 0) emscripten_webgl_destroy_context(platform.glContext);
 }
 
