@@ -1426,6 +1426,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     CORE.Window.resizedLastFrame = false;
+    CORE.Window.shouldClose = false;
 
     // Process windows messages
     MSG msg = { 0 };
@@ -1444,7 +1445,7 @@ void PollInputEvents(void)
     // Windows won't send a WM_KEYDOWN event for print screen; check it manually
     bool isPrintScreenDown = ((GetAsyncKeyState(VK_SNAPSHOT) & 0x8000) != 0) && (GetForegroundWindow() == platform.hwnd);
     CORE.Input.Keyboard.currentKeyState[KEY_PRINT_SCREEN] = isPrintScreenDown;
-    if (isPrintScreenDown && (CORE.Input.Keyboard.exitKey == KEY_PRINT_SCREEN)) CORE.Window.shouldClose = true;
+    if (IsKeyPressed(KEY_PRINT_SCREEN) && (CORE.Input.Keyboard.exitKey == KEY_PRINT_SCREEN)) CORE.Window.shouldClose = true;
 }
 
 //----------------------------------------------------------------------------------
@@ -2260,8 +2261,9 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
         {
             CORE.Input.Keyboard.currentKeyState[key] = state;
 
-            if (((HIWORD(lparam) & KF_REPEAT) != 0) && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-            if ((key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
+            bool isKeyRepeatEvent = ((HIWORD(lparam) & KF_REPEAT) != 0);
+            if (isKeyRepeatEvent && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+            if (!isKeyRepeatEvent && (key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
         }
         else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
     }
