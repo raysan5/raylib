@@ -2188,8 +2188,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: TRACELOG(LOG_WARNING, "TODO: Handle ex mouse button UP [wparam=%u]", HIWORD(wparam)); break;
             }
         } break;
-        case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
-        case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y += ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        // Horizontal wheel movement is inverted to match GLFW
+        case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x -= ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
 
         default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
     }
