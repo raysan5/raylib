@@ -605,8 +605,10 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     // Calculate file data_size required
     int data_size = sizeof(ktx_header);
 
+    // NOTE: Each mipmap level is stored as: UInt32 imageSize + pixel data
     for (int i = 0, w = width, h = height; i < mipmaps; i++)
     {
+        data_size += (int)sizeof(unsigned int);
         data_size += get_pixel_data_size(w, h, format);
         w /= 2; h /= 2;
     }
