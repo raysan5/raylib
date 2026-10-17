@@ -534,13 +534,16 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             //  - Premultiply alpha on loading, 4th parameter: 1
             unsigned int *pepData = pep_decompress(&p, pep_rgba, 1, 1);
 
-            image.data = pepData;
-            image.width = p.width;
-            image.height = p.height;
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-            image.mipmaps = 1;
+            if (pepData != NULL)
+            {
+                // NOTE: Image takes ownership of decompressed data, freed by UnloadImage()
+                image.data = pepData;
+                image.width = p.width;
+                image.height = p.height;
+                image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+                image.mipmaps = 1;
+            }
 
-            PEP_FREE(pepData);
             pep_free(&p);
         }
     }
