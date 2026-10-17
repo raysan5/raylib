@@ -1877,6 +1877,9 @@ void ClosePlatform(void)
     // Clear required platform data
     if (platform.hwnd)
     {
+        // Disable cursor lock (if enabled) and unregister raw input devices
+        EnableCursor();
+
         // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
         // If this ever changes, this code may have to be updated
         HICON icon = (HICON)SendMessage(platform.hwnd, WM_GETICON, ICON_BIG, (LPARAM)0);
