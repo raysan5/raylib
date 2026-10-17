@@ -540,7 +540,6 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
             image.mipmaps = 1;
 
-            PEP_FREE(pepData);
             pep_free(&p);
         }
     }
