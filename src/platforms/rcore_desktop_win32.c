@@ -107,6 +107,10 @@ typedef BOOL (WINAPI *PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int *, const FL
 typedef BOOL (WINAPI *PFNWGLSWAPINTERVALEXTPROC)(int);
 typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
 
+// Define Win32 function pointer types
+typedef UINT (WINAPI *GetDpiForWindowProc)(HWND hwnd);
+typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -119,6 +123,10 @@ static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL;
 static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
+
+// Win32 functions that need to be dynamically loaded to support older versions of Windows
+static GetDpiForWindowProc pGetDpiForWindow = NULL;
+static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 
 // --------------------------------------------------------------------------------
 // This part of the file contains pure functions that never access global state
@@ -199,6 +207,20 @@ static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
 #define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
+
+// Older versions of Windows don't support these events
+// These events won't be triggered, but this allows them to compile
+#ifndef WM_DPICHANGED
+    #define WM_DPICHANGED                   0x02E0
+#endif
+
+#ifndef WM_GETDPISCALEDSIZE
+    #define WM_GETDPISCALEDSIZE             0x02E4
+#endif
+
+#ifndef WM_MOUSEHWHEEL
+    #define WM_MOUSEHWHEEL                  0x020E
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -368,6 +390,49 @@ static void AToWCopy(const char *ascii, wchar_t *outPtr, size_t outLen)
     if (size != outLen) TRACELOG(LOG_WARNING, "WIN32: Failed to convert %i UTF-8 chars to WCHAR, converted %i chars", outLen, size);
 }
 
+// Dynamically load Windows functions that may not be available on older versions
+static void LoadWin32FunctionPointers(void)
+{
+    HMODULE user32 = GetModuleHandleW(L"user32.dll");
+    pGetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(user32, "GetDpiForWindow");
+    pAdjustWindowRectExForDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
+}
+
+// GetDpiForWindow with a fallback for older versions of Windows
+static UINT GetDpiForWindowCompat(HWND hwnd)
+{
+    UINT result = 0;
+    if (pGetDpiForWindow != NULL)
+    {
+        // This API requires Windows 10 v1607 or newer
+        result = pGetDpiForWindow(hwnd);
+    }
+    else
+    {
+        // Window uses CS_OWNDC, so we don't need to call ReleaseDC
+        HDC dc = GetDC(hwnd);
+
+        // Before Windows 10 v1607: fallback to system-wide DPI (96 for DPI-unaware processes)
+        result = GetDeviceCaps(dc, LOGPIXELSX);
+    }
+    return result;
+}
+
+// AdjustWindowRectExForDpi with a fallback for older versions of Windows
+static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
+{
+    BOOL result = FALSE;
+    if (pAdjustWindowRectExForDpi != NULL)
+    {
+        result = pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+    }
+    else
+    {
+        result = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+    }
+    return result;
+}
+
 static bool DecoratedFromStyle(DWORD style)
 {
     if (style & STYLE_FLAGS_UNDECORATED_ON)
@@ -464,7 +529,7 @@ static SIZE CalcWindowSize(UINT dpi, SIZE clientSize, DWORD style)
 {
     RECT rect = { 0, 0, clientSize.cx, clientSize.cy };
 
-    int result = AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi);
+    int result = AdjustWindowRectExForDpiCompat(&rect, style, 0, WINDOW_STYLE_EX, dpi);
     if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to adjust window rect [ERROR: %lu]", GetLastError());
 
     return (SIZE){ rect.right - rect.left, rect.bottom - rect.top };
@@ -510,7 +575,7 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     }
 
     // Get size in pixels from points, considering high-dpi
-    UINT dpi = GetDpiForWindow(hwnd);
+    UINT dpi = GetDpiForWindowCompat(hwnd);
     float dpiScale = ((float)dpi)/96.0f;
     bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
     SIZE desiredSize = {
@@ -1060,7 +1125,7 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float scale = ((float)GetDpiForWindow(platform.hwnd))/96.0f;
+    float scale = ((float)GetDpiForWindowCompat(platform.hwnd))/96.0f;
     return (Vector2){ scale, scale };
 }
 
@@ -1642,6 +1707,8 @@ int InitPlatform(void)
     CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
     CORE.Window.screenMax.width = 9999;
     CORE.Window.screenMax.height = 9999;
+
+    LoadWin32FunctionPointers();
 /*
     // TODO: Review SetProcessDpiAwarenessContext()
     // NOTE: SetProcessDpiAwarenessContext() requires Windows 10, version 1703 and shcore.lib linkage
@@ -1973,7 +2040,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 STYLESTRUCT *ss = (STYLESTRUCT *)lparam;
                 GetStyleChangeFlagOps(CORE.Window.flags, ss, deferredFlags);
 
-                UINT dpi = GetDpiForWindow(hwnd);
+                UINT dpi = GetDpiForWindowCompat(hwnd);
                 // Get client size (framebuffer inside the window)
                 RECT rect = { 0 };
                 GetClientRect(hwnd, &rect);
@@ -2351,7 +2418,7 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     SetupViewport(clientSize.cx, clientSize.cy);
 
     CORE.Window.resizedLastFrame = true;
-    float dpiScale = ((float)GetDpiForWindow(hwnd))/96.0f;
+    float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
     unsigned int screenWidth = highdpi? (unsigned int)(((float)clientSize.cx)/dpiScale) : clientSize.cx;
     unsigned int screenHeight = highdpi? (unsigned int)(((float)clientSize.cy)/dpiScale) : clientSize.cy;
