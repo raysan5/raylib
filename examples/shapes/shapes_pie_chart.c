@@ -188,7 +188,7 @@ int main(void)
                 panelPos.x + panelMargin,
                 (float)panelPos.y + 12 + 190,
                 panelRect.width - panelMargin*2,
-                panelRect.y + panelRect.height - panelPos.y + 12 + 190 - panelMargin
+                panelRect.y + panelRect.height - (panelPos.y + 12 + 190) - panelMargin
             };
             int contentHeight = sliceCount*35;
 
