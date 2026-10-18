@@ -1036,10 +1036,7 @@ void SetWindowFocused(void)
     SetForegroundWindow(platform.hwnd);
     SetFocus(platform.hwnd);
 
-    if (GetForegroundWindow() != platform.hwnd)
-    {
-        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to set window focus");
-    }
+    if (GetForegroundWindow() != platform.hwnd) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to set window focus");
 }
 
 // Get native window handle
@@ -1991,10 +1988,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
             memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
         } break;
-        case WM_SETFOCUS:
-        {
-            CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
-        } break;
+        case WM_SETFOCUS: CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED; break;
         case WM_SIZING: // Sent to a window that the user is resizing
         {
             if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
