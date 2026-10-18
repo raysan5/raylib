@@ -1082,22 +1082,25 @@ void BeginScissorMode(int x, int y, int width, int height)
 
     rlEnableScissorTest();
 
+    int viewportOffsetX = CORE.Window.usingFbo? 0 : CORE.Window.renderOffset.x/2;
+    int viewportOffsetY = CORE.Window.usingFbo? 0 : CORE.Window.renderOffset.y/2;
+
 #if defined(__APPLE__)
     if (!CORE.Window.usingFbo)
     {
         Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
+        rlScissor((int)(x*scale.x) + viewportOffsetX, (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))) + viewportOffsetY, (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
     if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
         Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        rlScissor((int)(x*scale.x) + viewportOffsetX, (int)(CORE.Window.currentFbo.height - (y + height)*scale.y) + viewportOffsetY, (int)(width*scale.x), (int)(height*scale.y));
     }
 #endif
     else
     {
-        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+        rlScissor(x + viewportOffsetX, CORE.Window.currentFbo.height - (y + height) + viewportOffsetY, width, height);
     }
 }
 
