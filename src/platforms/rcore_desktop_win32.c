@@ -1032,7 +1032,14 @@ void SetWindowOpacity(float opacity)
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused not implemented");
+    BringWindowToTop(platform.hwnd);
+    SetForegroundWindow(platform.hwnd);
+    SetFocus(platform.hwnd);
+
+    if (GetForegroundWindow() != platform.hwnd)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to set window focus");
+    }
 }
 
 // Get native window handle
@@ -1824,8 +1831,14 @@ int InitPlatform(void)
 
     CORE.Window.ready = true;
 
-    // Activate window to set focus and show taskbar icon
-    ShowWindow(platform.hwnd, SW_SHOWDEFAULT);
+    if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
+    {
+        // Show window and taskbar icon, activate unless FLAG_WINDOW_UNFOCUSED is set
+        bool isUnfocused = ((platform.desiredFlags & FLAG_WINDOW_UNFOCUSED) != 0);
+        if (isUnfocused) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        int nCmdShow = (isUnfocused)? SW_SHOWNA : SW_SHOWDEFAULT;
+        ShowWindow(platform.hwnd, nCmdShow);
+    }
 
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
