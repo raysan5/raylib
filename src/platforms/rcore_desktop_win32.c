@@ -160,7 +160,7 @@ static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 
 #define CLASS_NAME              L"raylibWindow"
 
-#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
+#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT | FLAG_WINDOW_UNFOCUSED)
 #define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
 
 // Flags that have no operations to perform during an update
@@ -1032,7 +1032,11 @@ void SetWindowOpacity(float opacity)
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused not implemented");
+    BringWindowToTop(platform.hwnd);
+    SetForegroundWindow(platform.hwnd);
+    SetFocus(platform.hwnd);
+
+    if (GetForegroundWindow() != platform.hwnd) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to set window focus");
 }
 
 // Get native window handle
@@ -1824,8 +1828,14 @@ int InitPlatform(void)
 
     CORE.Window.ready = true;
 
-    // Activate window to set focus and show taskbar icon
-    ShowWindow(platform.hwnd, SW_SHOWDEFAULT);
+    if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
+    {
+        // Show window and taskbar icon, activate unless FLAG_WINDOW_UNFOCUSED is set
+        bool isUnfocused = ((platform.desiredFlags & FLAG_WINDOW_UNFOCUSED) != 0);
+        if (isUnfocused) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        int nCmdShow = (isUnfocused)? SW_SHOWNA : SW_SHOWDEFAULT;
+        ShowWindow(platform.hwnd, nCmdShow);
+    }
 
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
@@ -1976,10 +1986,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         //case WM_QUIT: // Application closing, not related to window
         case WM_KILLFOCUS:
         {
+            CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
             memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
             memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
         } break;
+        case WM_SETFOCUS: CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED; break;
         case WM_SIZING: // Sent to a window that the user is resizing
         {
             if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
