@@ -160,7 +160,7 @@ static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 
 #define CLASS_NAME              L"raylibWindow"
 
-#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
+#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT | FLAG_WINDOW_UNFOCUSED)
 #define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
 
 // Flags that have no operations to perform during an update
@@ -1973,9 +1973,14 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         //case WM_QUIT: // Application closing, not related to window
         case WM_KILLFOCUS:
         {
+            CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
             memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
             memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
+        } break;
+        case WM_SETFOCUS:
+        {
+            CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED;
         } break;
         case WM_SIZING: // Sent to a window that the user is resizing
         {
