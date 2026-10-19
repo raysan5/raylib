@@ -881,6 +881,12 @@ void SetWindowIcon(Image image)
 {
     if (!platform.hwnd || (image.data == NULL) || (image.width <= 0) || (image.height <= 0)) return;
 
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: Window icon image must be in R8G8B8A8 pixel format");
+        return;
+    }
+
     HDC hdc = GetDC(platform.hwnd);
 
     // Create 32-bit BGRA DIB for color
