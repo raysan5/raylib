@@ -4727,6 +4727,14 @@ static Model LoadOBJ(const char *fileName)
 
 #if SUPPORT_FILEFORMAT_IQM
 // Load IQM mesh data
+// Check that reading 'length' bytes starting at 'offset' stays within an IQM
+// file buffer of 'dataSize' bytes; offsets/counts read from the file itself
+// must never be trusted to index into that buffer
+static bool IQMCheckDataRange(int dataSize, size_t offset, size_t length)
+{
+    return (offset + length <= (size_t)dataSize);
+}
+
 static Model LoadIQM(const char *fileName)
 {
     #define IQM_MAGIC        "INTERQUAKEMODEL"  // IQM file magic number
@@ -4861,6 +4869,16 @@ static Model LoadIQM(const char *fileName)
 
     //fileDataPtr += sizeof(IQMHeader);       // Move file data pointer
 
+    if (!IQMCheckDataRange(dataSize, iqmHeader->ofs_meshes, (size_t)iqmHeader->num_meshes*sizeof(IQMMesh)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_triangles, (size_t)iqmHeader->num_triangles*sizeof(IQMTriangle)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_vertexarrays, (size_t)iqmHeader->num_vertexarrays*sizeof(IQMVertexArray)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_joints, (size_t)iqmHeader->num_joints*sizeof(IQMJoint)))
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM file header offsets/counts out of bounds", fileName);
+        UnloadFileData(fileData);
+        return model;
+    }
+
     // Meshes data processing
     imesh = (IQMMesh *)RL_MALLOC(iqmHeader->num_meshes*sizeof(IQMMesh));
     //fseek(iqmFile, iqmHeader->ofs_meshes, SEEK_SET);
@@ -4881,11 +4899,15 @@ static Model LoadIQM(const char *fileName)
     {
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].name, SEEK_SET);
         //fread(name, sizeof(char), MESH_NAME_LENGTH, iqmFile);
-        memcpy(name, fileDataPtr + iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH*sizeof(char));
+        if (IQMCheckDataRange(dataSize, (size_t)iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH))
+            memcpy(name, fileDataPtr + iqmHeader->ofs_text + imesh[i].name, MESH_NAME_LENGTH*sizeof(char));
+        else memset(name, 0, MESH_NAME_LENGTH);
 
         //fseek(iqmFile, iqmHeader->ofs_text + imesh[a].material, SEEK_SET);
         //fread(material, sizeof(char), MATERIAL_NAME_LENGTH, iqmFile);
-        memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
+        if (IQMCheckDataRange(dataSize, (size_t)iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH))
+            memcpy(material, fileDataPtr + iqmHeader->ofs_text + imesh[i].material, MATERIAL_NAME_LENGTH*sizeof(char));
+        else memset(material, 0, MATERIAL_NAME_LENGTH);
 
         model.materials[i] = LoadMaterialDefault();
         if (TextLength(material) > 0) model.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = LoadTexture(TextFormat("%s/%s", basePath, material));
@@ -4942,6 +4964,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_POSITION:
             {
                 vertex = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*3*sizeof(float)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex position data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(vertex, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(vertex, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
@@ -4960,6 +4987,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_NORMAL:
             {
                 normal = (float *)RL_MALLOC(iqmHeader->num_vertexes*3*sizeof(float));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*3*sizeof(float)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex normal data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(normal, iqmHeader->num_vertexes*3*sizeof(float), 1, iqmFile);
                 memcpy(normal, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*3*sizeof(float));
@@ -4978,6 +5010,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_TEXCOORD:
             {
                 text = (float *)RL_MALLOC(iqmHeader->num_vertexes*2*sizeof(float));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*2*sizeof(float)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex texcoord data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(text, iqmHeader->num_vertexes*2*sizeof(float), 1, iqmFile);
                 memcpy(text, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*2*sizeof(float));
@@ -4995,6 +5032,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_BLENDINDEXES:
             {
                 blendi = (char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(char));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*4*sizeof(char)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex blend indexes data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendi, iqmHeader->num_vertexes*4*sizeof(char), 1, iqmFile);
                 memcpy(blendi, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(char));
@@ -5012,6 +5054,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_BLENDWEIGHTS:
             {
                 blendw = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*4*sizeof(unsigned char)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex blend weights data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(blendw, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
@@ -5029,6 +5076,11 @@ static Model LoadIQM(const char *fileName)
             case IQM_COLOR:
             {
                 color = (unsigned char *)RL_MALLOC(iqmHeader->num_vertexes*4*sizeof(unsigned char));
+                if (!IQMCheckDataRange(dataSize, va[i].offset, (size_t)iqmHeader->num_vertexes*4*sizeof(unsigned char)))
+                {
+                    TRACELOG(LOG_WARNING, "MODEL: [%s] IQM vertex color data offset out of bounds", fileName);
+                    break;
+                }
                 //fseek(iqmFile, va[a].offset, SEEK_SET);
                 //fread(blendw, iqmHeader->num_vertexes*4*sizeof(unsigned char), 1, iqmFile);
                 memcpy(color, fileDataPtr + va[i].offset, iqmHeader->num_vertexes*4*sizeof(unsigned char));
@@ -5064,7 +5116,9 @@ static Model LoadIQM(const char *fileName)
         model.skeleton.bones[i].parent = ijoint[i].parent;
         //fseek(iqmFile, iqmHeader->ofs_text + ijoint[a].name, SEEK_SET);
         //fread(model.bones[a].name, sizeof(char), BONE_NAME_LENGTH, iqmFile);
-        memcpy(model.skeleton.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
+        if (IQMCheckDataRange(dataSize, (size_t)iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH))
+            memcpy(model.skeleton.bones[i].name, fileDataPtr + iqmHeader->ofs_text + ijoint[i].name, BONE_NAME_LENGTH*sizeof(char));
+        else memset(model.skeleton.bones[i].name, 0, BONE_NAME_LENGTH);
 
         // Bind pose (base pose)
         model.skeleton.bindPose[i].translation.x = ijoint[i].translate[0];
@@ -5171,6 +5225,17 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         return NULL;
     }
 
+    if (!IQMCheckDataRange(dataSize, iqmHeader->ofs_poses, (size_t)iqmHeader->num_poses*sizeof(IQMPose)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_anims, (size_t)iqmHeader->num_anims*sizeof(IQMAnim)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_frames, (size_t)iqmHeader->num_frames*iqmHeader->num_framechannels*sizeof(unsigned short)) ||
+        !IQMCheckDataRange(dataSize, iqmHeader->ofs_joints, (size_t)iqmHeader->num_joints*sizeof(IQMJoint)))
+    {
+        TRACELOG(LOG_WARNING, "MODEL: [%s] IQM animation file header offsets/counts out of bounds", fileName);
+        UnloadFileData(fileData);
+        *animCount = 0;
+        return NULL;
+    }
+
     // Get bones data
     IQMPose *poses = (IQMPose *)RL_MALLOC(iqmHeader->num_poses*sizeof(IQMPose));
     //fseek(iqmFile, iqmHeader->ofs_poses, SEEK_SET);
@@ -5203,7 +5268,9 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
 
         animations[a].keyframeCount = anim[a].num_frames;
         animations[a].keyframePoses = (Transform **)RL_CALLOC(anim[a].num_frames, sizeof(Transform *));
-        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
+        if (IQMCheckDataRange(dataSize, (size_t)iqmHeader->ofs_text + anim[a].name, 32))
+            memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
+        else memset(animations[a].name, 0, 32);
         // TODO: Store animation framerate data?
         //animations[a].framerate = anim.framerate;
 
