@@ -55,7 +55,8 @@ static int turtleTop = -1;
 //----------------------------------------------------------------------------------
 static void PushTurtleState(TurtleState state);
 static TurtleState PopTurtleState(void);
-static PenroseLSystem CreatePenroseLSystem(float drawLength);
+static PenroseLSystem LoadPenroseLSystem(float drawLength);
+static void UnloadPenroseLSystem(PenroseLSystem ls);
 static void BuildProductionStep(PenroseLSystem *ls);
 static void DrawPenroseLSystem(PenroseLSystem *ls);
 
@@ -78,7 +79,7 @@ int main(void)
     int generations = 0;
 
     // Initialize new penrose tile
-    PenroseLSystem ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
+    PenroseLSystem ls = LoadPenroseLSystem(drawLength*(generations/(float)maxGenerations));
     for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
 
     SetTargetFPS(120);              // Set our game to run at 120 frames-per-second
@@ -109,8 +110,8 @@ int main(void)
 
         if (rebuild)
         {
-            RL_FREE(ls.production); // Free previous production for re-creation
-            ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
+            UnloadPenroseLSystem(ls); // Free previous production for re-creation
+            ls = LoadPenroseLSystem(drawLength*(generations/(float)maxGenerations));
             for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
         }
         //----------------------------------------------------------------------------------
@@ -133,7 +134,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    RL_FREE(ls.production); // Free production string
+    UnloadPenroseLSystem(ls); // Free production string
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -160,8 +161,8 @@ static TurtleState PopTurtleState(void)
     return (TurtleState){ 0 };
 }
 
-// Create a new penrose tile structure
-static PenroseLSystem CreatePenroseLSystem(float drawLength)
+// Load a new penrose tile structure
+static PenroseLSystem LoadPenroseLSystem(float drawLength)
 {
     // TODO: Review constant values assignment on recreation?
     PenroseLSystem ls = {
@@ -179,6 +180,12 @@ static PenroseLSystem CreatePenroseLSystem(float drawLength)
     strncpy(ls.production, "[X]++[X]++[X]++[X]++[X]", STR_MAX_SIZE);
 
     return ls;
+}
+
+// Unload penrose tile structure
+static void UnloadPenroseLSystem(PenroseLSystem ls)
+{
+    RL_FREE(ls.production);
 }
 
 // Build next penrose step
