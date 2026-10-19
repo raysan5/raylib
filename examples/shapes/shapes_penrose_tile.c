@@ -164,7 +164,6 @@ static TurtleState PopTurtleState(void)
 // Load a new penrose tile structure
 static PenroseLSystem LoadPenroseLSystem(float drawLength)
 {
-    // TODO: Review constant values assignment on recreation?
     PenroseLSystem ls = {
         .steps = 0,
         .ruleW = "YF++ZF4-XF[-YF4-WF]++",
