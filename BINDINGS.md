@@ -44,7 +44,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [dart-raylib](https://gitlab.com/wolfenrain/dart-raylib)                                 | 4.0              | [Dart](https://dart.dev)                                                | MIT                  |
 | [raylib_dart](https://pub.dev/packages/raylib_dart)                                      | 6.0              | [Dart](https://dart.dev)                                                | MIT                  |
 | [bindbc-raylib3](https://github.com/o3o/bindbc-raylib3)                                  | **5.0**          | [D](https://dlang.org)                                                  | BSL-1.0              |
-| [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **6.0**          | [D](https://dlang.org)                                                  | Zlib                 |
+| [raylib-d](https://github.com/schveiguy/raylib-d)                                        | **6.2**          | [D](https://dlang.org)                                                  | Zlib                 |
 | [Deno-Raylib](https://github.com/JJLDonley/Deno-Raylib)                                  | **6.0**          | [Deno / TS](https://deno.land)                                          | MIT                  |
 | [rayex](https://github.com/shiryel/rayex)                                                | 5.5              | [elixir](https://elixir-lang.org)                                       | Apache-2.0           |
 | [raylib-elfscript](https://github.com/ohmtal/raylib-elfscript)                           | 6.0              | [ElfScript](https://github.com/ohmtal/ElfScript)                        | MIT                  |
