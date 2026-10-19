@@ -706,28 +706,18 @@ static LPCWSTR GetCursorName(int cursor)
 }
 
 // Delete platform.smallIcon and platform.largeIcon
-static void DeleteIcons(void)
+static void DeletePlatformIconHandles(void)
 {
     HICON smallIcon = platform.smallIcon;
     HICON largeIcon = platform.largeIcon;
 
     if (smallIcon != NULL) DestroyIcon(smallIcon);
+
+    // Only delete largeIcon if it's not pointing to the same underlying resource as smallIcon
     if ((largeIcon != NULL) && (largeIcon != smallIcon)) DestroyIcon(largeIcon);
 
     platform.smallIcon = NULL;
     platform.largeIcon = NULL;
-}
-
-// Set window/taskbar icons and delete old ones
-static void UpdateIcons(HICON smallIcon, HICON largeIcon)
-{
-    SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
-    SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
-
-    DeleteIcons();
-
-    platform.smallIcon = smallIcon;
-    platform.largeIcon = largeIcon;
 }
 
 // Delete existing icons and replace them with the standard window/taskbar icons
@@ -736,11 +726,12 @@ static void ResetToDefaultWindowsIcons(void)
     HICON smallIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICONSM);
     HICON largeIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICON);
 
-    UpdateIcons(smallIcon, largeIcon);
+    SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+    SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
 
-    // These icons shouldn't be deleted, so don't hold a reference to them
-    platform.smallIcon = NULL;
-    platform.largeIcon = NULL;
+    // The built-in Windows icons shouldn't be deleted, so there's no need to store a reference to them
+    // Just delete the previous icons and exit
+    DeletePlatformIconHandles();
 }
 
 // Convert Image to Win32 HICON (must be RGBA)
@@ -995,7 +986,14 @@ void SetWindowIcon(Image image)
     }
 
     HICON hIcon = ConvertImageToWindowsIcon(image);
-    if (hIcon) UpdateIcons(hIcon, hIcon);
+    if (hIcon)
+    {
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+        DeletePlatformIconHandles();
+        platform.smallIcon = hIcon;
+        platform.largeIcon = hIcon;
+    }
 }
 
 // Set icon for window (multiple sizes)
@@ -1045,7 +1043,14 @@ void SetWindowIcons(Image *images, int count)
     {
         HICON smallIcon = ConvertImageToWindowsIcon(images[bestSmallIconIndex]);
         HICON largeIcon = ConvertImageToWindowsIcon(images[bestLargeIconIndex]);
-        UpdateIcons(smallIcon, largeIcon);
+
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
+
+        DeletePlatformIconHandles();
+
+        platform.smallIcon = smallIcon;
+        platform.largeIcon = largeIcon;
     }
     else TRACELOG(LOG_WARNING, "WIN32: All icons passed to SetWindowIcons were invalid");
 }
@@ -1997,7 +2002,7 @@ void ClosePlatform(void)
         result = UnregisterClassW(CLASS_NAME, hInstance);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to unregister window class [ERROR: %u]", GetLastError());
 
-        DeleteIcons();
+        DeletePlatformIconHandles();
 
         platform.hwnd = NULL;
     }
