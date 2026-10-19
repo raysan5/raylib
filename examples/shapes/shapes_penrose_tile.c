@@ -77,7 +77,7 @@ int main(void)
     int maxGenerations = 4;
     int generations = 0;
 
-    // Initializee new penrose tile
+    // Initialize new penrose tile
     PenroseLSystem ls = CreatePenroseLSystem(drawLength*(generations/(float)maxGenerations));
     for (int i = 0; i < generations; i++) BuildProductionStep(&ls);
 
@@ -119,7 +119,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground( RAYWHITE );
+            ClearBackground(RAYWHITE);
 
             if (generations > 0) DrawPenroseLSystem(&ls);
 
@@ -133,6 +133,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    RL_FREE(ls.production); // Free production string
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
