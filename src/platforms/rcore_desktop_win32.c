@@ -87,6 +87,9 @@ typedef struct {
     HDC hdc;                // Graphic context handler
     HGLRC glContext;        // OpenGL context handler
 
+    HICON largeIcon;        // Large icon typically used for the taskbar
+    HICON smallIcon;        // Small icon typically used for the window's title bar
+
     // Software renderer variables
     HDC hdcmem;             // Memory graphic context handler
     HBITMAP hbitmap;        // GDI bitmap handler
@@ -702,6 +705,101 @@ static LPCWSTR GetCursorName(int cursor)
     return name;
 }
 
+// Delete platform.smallIcon and platform.largeIcon
+static void DeletePlatformIconHandles(void)
+{
+    HICON smallIcon = platform.smallIcon;
+    HICON largeIcon = platform.largeIcon;
+
+    if (smallIcon != NULL) DestroyIcon(smallIcon);
+
+    // Only delete largeIcon if it's not pointing to the same underlying resource as smallIcon
+    if ((largeIcon != NULL) && (largeIcon != smallIcon)) DestroyIcon(largeIcon);
+
+    platform.smallIcon = NULL;
+    platform.largeIcon = NULL;
+}
+
+// Delete existing icons and replace them with the standard window/taskbar icons
+static void ResetToDefaultWindowsIcons(void)
+{
+    HICON smallIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICONSM);
+    HICON largeIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICON);
+
+    SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+    SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
+
+    // The built-in Windows icons shouldn't be deleted, so there's no need to store a reference to them
+    // Just delete the previous icons and exit
+    DeletePlatformIconHandles();
+}
+
+// Convert Image to Win32 HICON (must be RGBA)
+static HICON ConvertImageToWindowsIcon(Image image)
+{
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: Window icon image must be in R8G8B8A8 pixel format");
+        return NULL;
+    }
+
+    HDC hdc = GetDC(platform.hwnd);
+
+    // Create 32-bit BGRA DIB for color
+    BITMAPV5HEADER bi = { 0 };
+    ZeroMemory(&bi, sizeof(bi));
+    bi.bV5Size = sizeof(bi);
+    bi.bV5Width = image.width;
+    bi.bV5Height = -image.height; // Negative = top-down bitmap
+    bi.bV5Planes = 1;
+    bi.bV5BitCount = 32;
+    bi.bV5Compression = BI_BITFIELDS;
+    bi.bV5RedMask = 0x00FF0000;
+    bi.bV5GreenMask = 0x0000FF00;
+    bi.bV5BlueMask = 0x000000FF;
+    bi.bV5AlphaMask = 0xFF000000;
+
+    unsigned char *targetBits = NULL;
+    HBITMAP hColorBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&targetBits, NULL, 0);
+    if (!hColorBitmap)
+    {
+        ReleaseDC(platform.hwnd, hdc);
+        return NULL;
+    }
+
+    // Copy RGBA > BGRA (Win32 expects BGRA)
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            int i = (y*image.width + x)*4;
+            targetBits[i + 0] = ((unsigned char *)image.data)[i + 2]; // B
+            targetBits[i + 1] = ((unsigned char *)image.data)[i + 1]; // G
+            targetBits[i + 2] = ((unsigned char *)image.data)[i + 0]; // R
+            targetBits[i + 3] = ((unsigned char *)image.data)[i + 3]; // A
+        }
+    }
+
+    // Create mask bitmap (1-bit, all opaque)
+    HBITMAP hMaskBitmap = CreateBitmap(image.width, image.height, 1, 1, NULL);
+
+    // Build icon info
+    ICONINFO ii = { 0 };
+    ZeroMemory(&ii, sizeof(ii));
+    ii.fIcon = TRUE;
+    ii.hbmMask = hMaskBitmap;
+    ii.hbmColor = hColorBitmap;
+
+    HICON result = CreateIconIndirect(&ii);
+
+    // Clean up GDI bitmaps (icon keeps copies internally)
+    DeleteObject(hColorBitmap);
+    DeleteObject(hMaskBitmap);
+    ReleaseDC(platform.hwnd, hdc);
+
+    return result;
+}
+
 // Count monitors process
 // NOTE: Required by GetMonitorCount()
 static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
@@ -879,75 +977,82 @@ void ClearWindowState(unsigned int flags)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    if (!platform.hwnd || (image.data == NULL) || (image.width <= 0) || (image.height <= 0)) return;
+    if (!platform.hwnd) return;
 
-    HDC hdc = GetDC(platform.hwnd);
-
-    // Create 32-bit BGRA DIB for color
-    BITMAPV5HEADER bi = { 0 };
-    ZeroMemory(&bi, sizeof(bi));
-    bi.bV5Size = sizeof(bi);
-    bi.bV5Width = image.width;
-    bi.bV5Height = -image.height; // Negative = top-down bitmap
-    bi.bV5Planes = 1;
-    bi.bV5BitCount = 32;
-    bi.bV5Compression = BI_BITFIELDS;
-    bi.bV5RedMask = 0x00FF0000;
-    bi.bV5GreenMask = 0x0000FF00;
-    bi.bV5BlueMask = 0x000000FF;
-    bi.bV5AlphaMask = 0xFF000000;
-
-    unsigned char *targetBits = NULL;
-    HBITMAP hColorBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&targetBits, NULL, 0);
-    if (!hColorBitmap)
+    if ((image.data == NULL) || (image.width <= 0) || (image.height <= 0))
     {
-        ReleaseDC(platform.hwnd, hdc);
+        ResetToDefaultWindowsIcons();
         return;
     }
 
-    // Copy RGBA > BGRA (Win32 expects BGRA)
-    for (int y = 0; y < image.height; y++)
-    {
-        for (int x = 0; x < image.width; x++)
-        {
-            int i = (y*image.width + x)*4;
-            targetBits[i + 0] = ((unsigned char *)image.data)[i + 2]; // B
-            targetBits[i + 1] = ((unsigned char *)image.data)[i + 1]; // G
-            targetBits[i + 2] = ((unsigned char *)image.data)[i + 0]; // R
-            targetBits[i + 3] = ((unsigned char *)image.data)[i + 3]; // A
-        }
-    }
-
-    // Create mask bitmap (1-bit, all opaque)
-    HBITMAP hMaskBitmap = CreateBitmap(image.width, image.height, 1, 1, NULL);
-
-    // Build icon info
-    ICONINFO ii = { 0 };
-    ZeroMemory(&ii, sizeof(ii));
-    ii.fIcon = TRUE;
-    ii.hbmMask = hMaskBitmap;
-    ii.hbmColor = hColorBitmap;
-
-    HICON hIcon = CreateIconIndirect(&ii);
-
-    // Clean up GDI bitmaps (icon keeps copies internally)
-    DeleteObject(hColorBitmap);
-    DeleteObject(hMaskBitmap);
-    ReleaseDC(platform.hwnd, hdc);
-
+    HICON hIcon = ConvertImageToWindowsIcon(image);
     if (hIcon)
     {
-        // Set both large and small icons
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
         SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-        HICON previousIcon = (HICON)SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-        if (previousIcon) DestroyIcon(previousIcon);
+        DeletePlatformIconHandles();
+        platform.smallIcon = hIcon;
+        platform.largeIcon = hIcon;
     }
 }
 
 // Set icon for window (multiple sizes)
 void SetWindowIcons(Image *images, int count)
 {
-    // TODO: Implement SetWindowIcons()
+    if ((images == NULL) || (count <= 0))
+    {
+        ResetToDefaultWindowsIcons();
+        return;
+    }
+
+    // Large icon has a resolution of (SM_CXICON*SM_CXICON) pixels
+    int largeIconRenderSize = GetSystemMetrics(SM_CXICON);
+
+    // Attempt to find a best match for the large icon based on each image's width
+    int bestLargeIconIndex = -1;
+    int bestLargeIconSizeDifference = INT_MAX;
+    for (int i = 0; i < count; i++)
+    {
+        Image img = images[i];
+        int difference = abs(img.width - largeIconRenderSize);
+        if ((img.data != NULL) && (img.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) && (difference < bestLargeIconSizeDifference))
+        {
+            bestLargeIconIndex = i;
+            bestLargeIconSizeDifference = difference;
+        }
+    }
+
+    // Small icon has a resolution of (SM_CYSMICON*SM_CYSMICON) pixels
+    int smallIconRenderSize = GetSystemMetrics(SM_CYSMICON);
+
+    // Attempt to find a best match for the small icon based on each image's width
+    int bestSmallIconIndex = -1;
+    int bestSmallIconSizeDifference = INT_MAX;
+    for (int i = 0; i < count; i++)
+    {
+        Image img = images[i];
+        int difference = abs(img.width - smallIconRenderSize);
+        if ((img.data != NULL) && (img.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) && (difference < bestSmallIconSizeDifference))
+        {
+            bestSmallIconIndex = i;
+            bestSmallIconSizeDifference = difference;
+        }
+    }
+
+    if ((bestSmallIconIndex != -1) && (bestLargeIconIndex != -1))
+    {
+        HICON smallIcon = ConvertImageToWindowsIcon(images[bestSmallIconIndex]);
+        HICON largeIcon = ConvertImageToWindowsIcon(images[bestLargeIconIndex]);
+
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
+
+        DeletePlatformIconHandles();
+
+        platform.smallIcon = smallIcon;
+        platform.largeIcon = largeIcon;
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: All icons passed to SetWindowIcons were invalid");
 }
 
 void SetWindowTitle(const char *title)
@@ -1890,10 +1995,6 @@ void ClosePlatform(void)
         // Disable cursor lock (if enabled) and unregister raw input devices
         EnableCursor();
 
-        // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
-        // If this ever changes, this code may have to be updated
-        HICON icon = (HICON)SendMessage(platform.hwnd, WM_GETICON, ICON_BIG, (LPARAM)0);
-
         BOOL result = DestroyWindow(platform.hwnd);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
 
@@ -1901,7 +2002,7 @@ void ClosePlatform(void)
         result = UnregisterClassW(CLASS_NAME, hInstance);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to unregister window class [ERROR: %u]", GetLastError());
 
-        if (icon != NULL) DestroyIcon(icon);
+        DeletePlatformIconHandles();
 
         platform.hwnd = NULL;
     }
