@@ -543,8 +543,6 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
         }
@@ -589,8 +587,6 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
             k = 0;
