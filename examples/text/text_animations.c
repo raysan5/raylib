@@ -136,7 +136,7 @@ int main(void)
         DrawText(TextFormat("Duration (A | D): %d", (int)text.duration), 20, 20, 20, GRAY);
         DrawText(TextFormat("Delta (W | S): %.1f", text.delta), 20, 50, 20, GRAY);
         DrawText(TextFormat("Offset (Z | X): %.1f", text.offset), 20, 80, 20, GRAY);
-        DrawText(TextFormat("Curent Animation (Q | E): %s", animations[currentAnimation]), 20, 110, 20, GRAY);
+        DrawText(TextFormat("Current Animation (Q | E): %s", animations[currentAnimation]), 20, 110, 20, GRAY);
 
         for (unsigned int i = 0; i < TextLength(text.str); i++)
         {
