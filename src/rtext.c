@@ -1646,32 +1646,71 @@ int TextToInteger(const char *text)
 // WARNING: Only '.' character is understood as decimal point
 float TextToFloat(const char *text)
 {
-    float value = 0.0f;
-    float sign = 1.0f;
+    // Digits are collected as an integer and scaled once at the end,
+    // so the value is only rounded when converting to float
+    double value = 0.0;
+    double sign = 1.0;
+    int exponent = 0;
 
     if (text != NULL)
     {
         if ((text[0] == '+') || (text[0] == '-'))
         {
-            if (text[0] == '-') sign = -1.0f;
+            if (text[0] == '-') sign = -1.0;
             text++;
         }
 
+        // Digits past what a double holds exactly only move the decimal point
         int i = 0;
-        for (; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
-
-        if (text[i++] == '.')
+        for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
         {
-            float divisor = 10.0f;
+            if (value < 1e18) value = value*10.0 + (double)(text[i] - '0');
+            else exponent++;
+        }
+
+        if (text[i] == '.')
+        {
+            i++;
             for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
             {
-                value += ((float)(text[i] - '0'))/divisor;
-                divisor = divisor*10.0f;
+                if (value < 1e18)
+                {
+                    value = value*10.0 + (double)(text[i] - '0');
+                    exponent--;
+                }
+            }
+        }
+
+        if (((text[i] == 'e') || (text[i] == 'E')) && (i > 0))
+        {
+            int j = i + 1;
+            int exponentSign = 1;
+            int exponentValue = 0;
+
+            if ((text[j] == '+') || (text[j] == '-'))
+            {
+                if (text[j] == '-') exponentSign = -1;
+                j++;
+            }
+
+            if ((text[j] >= '0') && (text[j] <= '9'))
+            {
+                for (; ((text[j] >= '0') && (text[j] <= '9')); j++) if (exponentValue < 1000) exponentValue = exponentValue*10 + (text[j] - '0');
+                exponent += exponentSign*exponentValue;
             }
         }
     }
 
-    return value*sign;
+    if (value != 0.0)
+    {
+        double scale = 1.0;
+        for (int e = (exponent < 0)? -exponent : exponent; (e > 0) && (scale < 1e300); e--) scale *= 10.0;
+
+        if (exponent < 0) value /= scale;
+        else value *= scale;
+    }
+
+    return (float)(value*sign);
 }
 
 // Copy one string to another, returns bytes copied
