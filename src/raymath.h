@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raymath v2.0 - Math functions to work with Vector2, Vector3, Vector4, Matrix and Quaternions
+*   raymath v2.1 - Math functions to work with Vector2, Vector3, Vector4, Matrix and Quaternions
 *
 *   CONVENTIONS:
 *     - Matrix structure is defined as row-major (memory layout) but parameters naming AND all
@@ -9,6 +9,7 @@
 *       It benefits some functions making them cache-friendly and also avoids matrix
 *       transpositions sometimes required by OpenGL
 *       Example: In memory order, row0 is [m0 m4 m8 m12] but in semantic math row0 is [m0 m1 m2 m3]
+*     - All math is float only, no doubles usage
 *     - Functions are always self-contained, no function use another raymath function inside,
 *       required code is directly re-implemented inside
 *     - Functions input parameters are always received by value (2 unavoidable exceptions)
@@ -1970,32 +1971,32 @@ RMAPI Matrix MatrixScale(float x, float y, float z)
 }
 
 // Get perspective projection matrix
-RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top, double nearPlane, double farPlane)
+RMAPI Matrix MatrixFrustum(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
     Matrix result = { 0 };
 
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
-    float fn = (float)(farPlane - nearPlane);
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = farPlane - nearPlane;
 
-    result.m0 = ((float)nearPlane*2.0f)/rl;
+    result.m0 = (nearPlane*2.0f)/rl;
     result.m1 = 0.0f;
     result.m2 = 0.0f;
     result.m3 = 0.0f;
 
     result.m4 = 0.0f;
-    result.m5 = ((float)nearPlane*2.0f)/tb;
+    result.m5 = (nearPlane*2.0f)/tb;
     result.m6 = 0.0f;
     result.m7 = 0.0f;
 
-    result.m8 = ((float)right + (float)left)/rl;
-    result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
+    result.m8 = (right + left)/rl;
+    result.m9 = (top + bottom)/tb;
+    result.m10 = -(farPlane + nearPlane)/fn;
     result.m11 = -1.0f;
 
     result.m12 = 0.0f;
     result.m13 = 0.0f;
-    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
+    result.m14 = -(farPlane*nearPlane*2.0f)/fn;
     result.m15 = 0.0f;
 
     return result;
@@ -2003,39 +2004,39 @@ RMAPI Matrix MatrixFrustum(double left, double right, double bottom, double top,
 
 // Get perspective projection matrix
 // NOTE: Fovy angle must be provided in radians
-RMAPI Matrix MatrixPerspective(double fovY, double aspect, double nearPlane, double farPlane)
+RMAPI Matrix MatrixPerspective(float fovY, float aspect, float nearPlane, float farPlane)
 {
     Matrix result = { 0 };
 
-    double top = nearPlane*tan(fovY*0.5);
-    double bottom = -top;
-    double right = top*aspect;
-    double left = -right;
+    float top = nearPlane*tanf(fovY*0.5f);
+    float bottom = -top;
+    float right = top*aspect;
+    float left = -right;
 
     // MatrixFrustum(-right, right, -top, top, near, far);
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
-    float fn = (float)(farPlane - nearPlane);
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = farPlane - nearPlane;
 
-    result.m0 = ((float)nearPlane*2.0f)/rl;
-    result.m5 = ((float)nearPlane*2.0f)/tb;
-    result.m8 = ((float)right + (float)left)/rl;
-    result.m9 = ((float)top + (float)bottom)/tb;
-    result.m10 = -((float)farPlane + (float)nearPlane)/fn;
+    result.m0 = (nearPlane*2.0f)/rl;
+    result.m5 = (nearPlane*2.0f)/tb;
+    result.m8 = (right + left)/rl;
+    result.m9 = (top + bottom)/tb;
+    result.m10 = -(farPlane + nearPlane)/fn;
     result.m11 = -1.0f;
-    result.m14 = -((float)farPlane*(float)nearPlane*2.0f)/fn;
+    result.m14 = -(farPlane*nearPlane*2.0f)/fn;
 
     return result;
 }
 
 // Get orthographic projection matrix
-RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, double nearPlane, double farPlane)
+RMAPI Matrix MatrixOrtho(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
     Matrix result = { 0 };
 
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
-    float fn = (float)(farPlane - nearPlane);
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = farPlane - nearPlane;
 
     result.m0 = 2.0f/rl;
     result.m1 = 0.0f;
@@ -2049,9 +2050,9 @@ RMAPI Matrix MatrixOrtho(double left, double right, double bottom, double top, d
     result.m9 = 0.0f;
     result.m10 = -2.0f/fn;
     result.m11 = 0.0f;
-    result.m12 = -((float)left + (float)right)/rl;
-    result.m13 = -((float)top + (float)bottom)/tb;
-    result.m14 = -((float)farPlane + (float)nearPlane)/fn;
+    result.m12 = -(left + right)/rl;
+    result.m13 = -(top + bottom)/tb;
+    result.m14 = -(farPlane + nearPlane)/fn;
     result.m15 = 1.0f;
 
     return result;
