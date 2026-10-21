@@ -2499,7 +2499,9 @@ long GetFileModTime(const char *fileName)
 // WARNING: Getting the pointer to the input string extension position (not a string copy)
 const char *GetFileExtension(const char *fileName)
 {
-    const char *dot = strrchr(fileName, '.');
+    // Only the file name part can contain the extension, not a directory name
+    const char *name = GetFileName(fileName);
+    const char *dot = strrchr(name, '.');
 
     if ((dot == NULL) || (dot == fileName)) return NULL;
 
