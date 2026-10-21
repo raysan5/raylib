@@ -106,8 +106,8 @@ reasings_api.$(EXTENSION): ../../examples/others/reasings.h rlparser
 	./rlparser -i ../../examples/others/reasings.h -o reasings_api.$(EXTENSION) -f $(FORMAT) -d EASEDEF
 
 # rlparser execution: [raygui.h] parse, generating some output files
-raygui_api.$(EXTENSION): ../raygui.h rlparser
-	./rlparser -i ../raygui.h -o raygui_api.$(EXTENSION) -f $(FORMAT) -d RAYGUIAPI -t "RAYGUI IMPLEMENTATION"
+raygui_api.$(EXTENSION): ../../examples/core/raygui.h rlparser
+	./rlparser -i ../../examples/core/raygui.h -o raygui_api.$(EXTENSION) -f $(FORMAT) -d RAYGUIAPI -t "RAYGUI IMPLEMENTATION"
 
 # Target to generate required APIs output files
 parse: raylib_api.$(EXTENSION) raymath_api.$(EXTENSION) rlgl_api.$(EXTENSION) raygui_api.$(EXTENSION)
@@ -123,7 +123,7 @@ all: rlparser
 	$(MAKE) parse FORMAT=LUA EXTENSION=lua
 	$(MAKE) parse FORMAT=SEXPR EXTENSION=sexpr
 
-# Clean rlparser and generated output files 
+# Clean rlparser and generated output files
 clean:
 ifeq ($(PLATFORM_SHELL),cmd)
 	del /q rlparser.exe *.json *.txt *.xml *.lua *.sexpr
