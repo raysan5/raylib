@@ -1555,7 +1555,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
-    float textOffsetY = 0.0f;       // Offset between lines (on linebreak '\n')
+    int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
+    int lineIndex = 0;              // Current line index (on linebreak '\n')
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
@@ -1584,7 +1585,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
         if (codepoint == '\n')
         {
-            textOffsetY += lineStep;
+            lineIndex++;
+            textOffsetY = (int)(lineIndex*lineStep);
             textOffsetX = 0;
         }
         else
