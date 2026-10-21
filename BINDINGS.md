@@ -28,6 +28,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [raylib-beef](https://github.com/Starpelly/raylib-beef)                                  | **auto**         | [Beef](https://www.beeflang.org)                                        | MIT                  |
 | [raybit](https://github.com/Alex-Velez/raybit)                                           | **5.0**          | [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck)                    | MIT                  |
 | [raylib-c3](https://github.com/c3lang/vendor/tree/main/libraries/raylib6.c3l)            | **6**            | [C3](https://c3-lang.org)                                               | MIT                  |
+| [raylib.c3l](https://github.com/NexushasTaken/raylib.c3l)                                | **6.2**          | [C3](https://c3-lang.org)                                               | MIT                  |
 | [raylib-cs](https://github.com/raylib-cs/raylib-cs)                                      | **6.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))      | Zlib                 |
 | [Raylib-CSharp-Vinculum](https://github.com/ZeroElectric/Raylib-CSharp-Vinculum)         | **5.0**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))      | MPL-2.0              |
 | [Raylib-CSharp](https://github.com/MrScautHD/Raylib-CSharp)                              | **5.5**          | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language))      | MIT                  |
@@ -70,7 +71,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [raylib-lua-sol](https://github.com/RobLoach/raylib-lua-sol)                             | 5.5              | [Lua](http://www.lua.org)                                               | Zlib                 |
 | [raylib-luajit](https://github.com/homma/raylib-luajit)                                  | 5.5              | [Lua](http://www.lua.org)                                               | MIT                  |
 | [raylib-luajit-generated](https://github.com/james2doyle/raylib-luajit-generated)        | 5.5              | [Lua](http://www.lua.org)                                               | MIT                  |
-| [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                                |  **???**             |
+| [raylib-matte](https://github.com/jcorks/raylib-matte)                                   | 4.6-dev          | [Matte](https://github.com/jcorks/matte)                                | MIT                  |
 | [raylib_mojo](https://github.com/willGuimont/raylib_mojo)                                | **6.0**          | [Mojo](https://www.modular.com/mojo)                                    | ZLib                 |
 | [raymojo](https://github.com/RobertFlexx/raymojo)                                        | **6.0**          | [Mojo](https://www.modular.com/mojo)                                    | GPLv3                |
 | [raymod](https://github.com/RobertFlexx/raymod)                                          | **6.0**          | [Modula-2](https://en.wikipedia.org/wiki/Modula-2) / [Modula-3](https://en.wikipedia.org/wiki/Modula-3) | Apache-2.0 |
