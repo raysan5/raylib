@@ -1556,13 +1556,25 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     int textLength = (int)strlen(text); // Get length of text in bytes
     int textOffsetX = 0;            // Image drawing position X
     int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
+    int lineIndex = 0;              // Current line index (on linebreak '\n')
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
     Vector2 textSize = MeasureTextEx(font, text, fontSize, spacing);
 
+    int lineBreakCount = 0;         // Number of line breaks ('\n') in text
+    for (int i = 0; i < textLength; i++)
+    {
+        if (text[i] == '\n') lineBreakCount++;
+    }
+
+    float lineSpacing = 0.0f;       // Line spacing, as used by MeasureTextEx()
+    if (lineBreakCount > 0) lineSpacing = (textSize.y - fontSize)/lineBreakCount - fontSize;
+
+    float lineStep = (float)font.baseSize + lineSpacing*(float)font.baseSize/fontSize;   // Line advance at base size
+
     // Create image to store text
-    imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
+    imText = GenImageColor((int)imSize.x, font.baseSize + (int)(lineBreakCount*lineStep), BLANK);
 
     for (int i = 0; i < textLength;)
     {
@@ -1573,9 +1585,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
-            textOffsetY += (font.baseSize + font.baseSize/2);
+            lineIndex++;
+            textOffsetY = (int)(lineIndex*lineStep);
             textOffsetX = 0;
         }
         else
@@ -1595,15 +1606,15 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     }
 
     // Scale image depending on text size
-    if (textSize.y != imSize.y)
+    if (fontSize != (float)font.baseSize)
     {
-        float scaleFactor = textSize.y/imSize.y;
+        float scaleFactor = fontSize/(float)font.baseSize;
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
         // TODO: Support other scaling mechanism, use flag?
-        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
-        else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imText.width*scaleFactor), (int)(imText.height*scaleFactor));
+        else ImageResize(&imText, (int)(imText.width*scaleFactor), (int)(imText.height*scaleFactor));
     }
 #else
     imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
