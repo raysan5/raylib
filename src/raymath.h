@@ -2282,6 +2282,12 @@ RMAPI Quaternion QuaternionNlerp(Quaternion q1, Quaternion q2, float amount)
 {
     Quaternion result = { 0 };
 
+    // q2 and -q2 are the same rotation, take the shorter path like QuaternionSlerp()
+    if ((q1.x*q2.x + q1.y*q2.y + q1.z*q2.z + q1.w*q2.w) < 0.0f)
+    {
+        q2.x = -q2.x; q2.y = -q2.y; q2.z = -q2.z; q2.w = -q2.w;
+    }
+
     // QuaternionLerp(q1, q2, amount)
     result.x = q1.x + amount*(q2.x - q1.x);
     result.y = q1.y + amount*(q2.y - q1.y);
