@@ -2924,13 +2924,13 @@ void ImageColorBrightness(Image *image, int brightness)
         int cG = pixels[i].g + brightness;
         int cB = pixels[i].b + brightness;
 
-        if (cR < 0) cR = 1;
+        if (cR < 0) cR = 0;
         if (cR > 255) cR = 255;
 
-        if (cG < 0) cG = 1;
+        if (cG < 0) cG = 0;
         if (cG > 255) cG = 255;
 
-        if (cB < 0) cB = 1;
+        if (cB < 0) cB = 0;
         if (cB > 255) cB = 255;
 
         pixels[i].r = (unsigned char)cR;
