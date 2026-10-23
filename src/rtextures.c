@@ -3031,9 +3031,9 @@ Color *LoadImageColors(Image image)
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*255.0f/31);
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*255.0f/31);
+                    pixels[i].b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*255.0f/31);
                     pixels[i].a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
                 } break;
@@ -3041,9 +3041,9 @@ Color *LoadImageColors(Image image)
                 {
                     unsigned short pixel = ((unsigned short *)image.data)[i];
 
-                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                    pixels[i].r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*255.0f/31);
+                    pixels[i].g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*255.0f/63);
+                    pixels[i].b = (unsigned char)((float)(pixel & 0b0000000000011111)*255.0f/31);
                     pixels[i].a = 255;
 
                 } break;
@@ -3275,9 +3275,9 @@ Color GetImageColor(Image image, int x, int y)
             {
                 unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
 
-                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                color.g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*(255/31));
-                color.b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*(255/31));
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*255.0f/31);
+                color.g = (unsigned char)((float)((pixel & 0b0000011111000000) >> 6)*255.0f/31);
+                color.b = (unsigned char)((float)((pixel & 0b0000000000111110) >> 1)*255.0f/31);
                 color.a = (unsigned char)((pixel & 0b0000000000000001)*255);
 
             } break;
@@ -3285,9 +3285,9 @@ Color GetImageColor(Image image, int x, int y)
             {
                 unsigned short pixel = ((unsigned short *)image.data)[y*image.width + x];
 
-                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*(255/31));
-                color.g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*(255/63));
-                color.b = (unsigned char)((float)(pixel & 0b0000000000011111)*(255/31));
+                color.r = (unsigned char)((float)((pixel & 0b1111100000000000) >> 11)*255.0f/31);
+                color.g = (unsigned char)((float)((pixel & 0b0000011111100000) >> 5)*255.0f/63);
+                color.b = (unsigned char)((float)(pixel & 0b0000000000011111)*255.0f/31);
                 color.a = 255;
 
             } break;
