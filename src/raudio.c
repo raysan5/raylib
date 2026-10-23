@@ -447,6 +447,7 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 void UnloadAudioBuffer(AudioBuffer *buffer);
 
 bool IsAudioBufferPlaying(AudioBuffer *buffer);
+bool IsAudioBufferPaused(AudioBuffer *buffer);
 void PlayAudioBuffer(AudioBuffer *buffer);
 void StopAudioBuffer(AudioBuffer *buffer);
 void PauseAudioBuffer(AudioBuffer *buffer);
@@ -657,6 +658,17 @@ bool IsAudioBufferPlaying(AudioBuffer *buffer)
     ma_mutex_unlock(&AUDIO.System.lock);
     return result;
 }
+
+// Check if an audio buffer is paused
+bool IsAudioBufferPaused(AudioBuffer *buffer)
+{
+    bool result = false;
+    ma_mutex_lock(&AUDIO.System.lock);
+    result = buffer->paused;
+    ma_mutex_unlock(&AUDIO.System.lock);
+    return result;
+}
+
 
 // Play an audio buffer
 // NOTE: Buffer is restarted to the start
@@ -2063,6 +2075,12 @@ bool IsMusicStreamPlaying(Music music)
     return IsAudioStreamPlaying(music.stream);
 }
 
+// Check if music is paused
+bool IsMusicStreamPaused(Music music)
+{
+    return IsAudioStreamPaused(music.stream);
+}
+
 // Set volume for music
 void SetMusicVolume(Music music, float volume)
 {
@@ -2227,6 +2245,12 @@ void ResumeAudioStream(AudioStream stream)
 bool IsAudioStreamPlaying(AudioStream stream)
 {
     return IsAudioBufferPlaying(stream.buffer);
+}
+
+// Check if audio stream is paused
+bool IsAudioStreamPaused(AudioStream stream)
+{
+    return IsAudioBufferPaused(stream.buffer);
 }
 
 // Stop audio stream

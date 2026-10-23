@@ -1723,6 +1723,7 @@ RLAPI bool IsMusicValid(Music music);                                 // Check i
 RLAPI void UnloadMusicStream(Music music);                            // Unload music stream
 RLAPI void PlayMusicStream(Music music);                              // Start music playing
 RLAPI bool IsMusicStreamPlaying(Music music);                         // Check if music is playing
+RLAPI bool IsMusicStreamPaused(Music music);                          // Check if music is paused
 RLAPI void UpdateMusicStream(Music music);                            // Update buffers for music streaming
 RLAPI void StopMusicStream(Music music);                              // Stop music playing
 RLAPI void PauseMusicStream(Music music);                             // Pause music playing
@@ -1744,6 +1745,7 @@ RLAPI void PlayAudioStream(AudioStream stream);                       // Play au
 RLAPI void PauseAudioStream(AudioStream stream);                      // Pause audio stream
 RLAPI void ResumeAudioStream(AudioStream stream);                     // Resume audio stream
 RLAPI bool IsAudioStreamPlaying(AudioStream stream);                  // Check if audio stream is playing
+RLAPI bool IsAudioStreamPaused(AudioStream stream);                   // Check if audio stream is paused
 RLAPI void StopAudioStream(AudioStream stream);                       // Stop audio stream
 RLAPI void SetAudioStreamVolume(AudioStream stream, float volume);    // Set volume for audio stream (1.0 is max level)
 RLAPI void SetAudioStreamPitch(AudioStream stream, float pitch);      // Set pitch for audio stream (1.0 is base level)
