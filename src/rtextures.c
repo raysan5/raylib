@@ -2204,9 +2204,11 @@ void ImageBlurGaussian(Image *image, int blurSize)
             float avgG = 0.0f;
             float avgB = 0.0f;
             float avgAlpha = 0.0f;
-            int convolutionSize = blurSize;
 
-            for (int i = 0; i < blurSize; i++)
+            // Initial window can not be wider than the image row, blurSize could be bigger
+            int convolutionSize = (blurSize < image->width)? blurSize : image->width;
+
+            for (int i = 0; i < convolutionSize; i++)
             {
                 avgR += pixelsCopy1[row*image->width + i].x;
                 avgG += pixelsCopy1[row*image->width + i].y;
@@ -2248,9 +2250,11 @@ void ImageBlurGaussian(Image *image, int blurSize)
             float avgG = 0.0f;
             float avgB = 0.0f;
             float avgAlpha = 0.0f;
-            int convolutionSize = blurSize;
 
-            for (int i = 0; i < blurSize; i++)
+            // Initial window can not be taller than the image column, blurSize could be bigger
+            int convolutionSize = (blurSize < image->height)? blurSize : image->height;
+
+            for (int i = 0; i < convolutionSize; i++)
             {
                 avgR += pixelsCopy2[i*image->width + col].x;
                 avgG += pixelsCopy2[i*image->width + col].y;
