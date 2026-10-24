@@ -811,16 +811,8 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
     Wave wave = { 0 };
 
     // Security checks for input data
-    if ((fileData == NULL) || (dataSize <= 0))
-    {
-        TRACELOG(LOG_WARNING, "WAVE: Invalid file data");
-        return wave;
-    }
-    if (fileType == NULL)
-    {
-        TRACELOG(LOG_WARNING, "WAVE: Missing file extension");
-        return wave;
-    }
+    if ((fileData == NULL) || (dataSize <= 0)) { TRACELOG(LOG_WARNING, "WAVE: Invalid file data"); return wave; }
+    if (fileType == NULL) { TRACELOG(LOG_WARNING, "WAVE: Missing file extension"); return wave; }
 
     if (false) { }
 #if SUPPORT_FILEFORMAT_WAV
@@ -1558,16 +1550,8 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     bool musicLoaded = false;
 
     // Security checks for input data
-    if ((data == NULL) || (dataSize <= 0))
-    {
-        TRACELOG(LOG_WARNING, "MUSIC: Invalid file data");
-        return music;
-    }
-    if (fileType == NULL)
-    {
-        TRACELOG(LOG_WARNING, "MUSIC: Missing file extension");
-        return music;
-    }
+    if ((data == NULL) || (dataSize <= 0)) { TRACELOG(LOG_WARNING, "MUSIC: Invalid file data"); return music; }
+    if (fileType == NULL) { TRACELOG(LOG_WARNING, "MUSIC: Missing file extension"); return music; }
 
     if (false) { }
 #if SUPPORT_FILEFORMAT_WAV

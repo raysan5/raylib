@@ -423,16 +423,8 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
     Image image = { 0 };
 
     // Security checks for input data
-    if ((fileData == NULL) || (dataSize == 0))
-    {
-        TRACELOG(LOG_WARNING, "IMAGE: Invalid file data");
-        return image;
-    }
-    if (fileType == NULL)
-    {
-        TRACELOG(LOG_WARNING, "IMAGE: Missing file extension");
-        return image;
-    }
+    if ((fileData == NULL) || (dataSize == 0)) { TRACELOG(LOG_WARNING, "IMAGE: Invalid file data"); return image; }
+    if (fileType == NULL) { TRACELOG(LOG_WARNING, "IMAGE: Missing file extension"); return image; }
 
     if ((false)
 #if SUPPORT_FILEFORMAT_PNG
