@@ -391,6 +391,12 @@ typedef struct AudioData {
         void *pcmBuffer;            // Pre-allocated buffer to read audio data from file/memory
     } System;
     struct {
+        ma_context context;         // miniaudio context data
+        ma_device device;           // miniaudio device
+        bool isReady;               // Check if audio device is ready
+        AudioRecordingCallback callback; // Recording callback function
+    } RecordingSystem;
+    struct {
         AudioBuffer *first;         // Pointer to first AudioBuffer in the list
         AudioBuffer *last;          // Pointer to last AudioBuffer in the list
         int defaultSize;            // Default audio buffer size for audio streams
@@ -421,6 +427,7 @@ static ma_uint32 ReadAudioBufferFramesInInternalFormat(AudioBuffer *audioBuffer,
 static ma_uint32 ReadAudioBufferFramesInMixingFormat(AudioBuffer *audioBuffer, float *framesOut, ma_uint32 frameCount);
 
 static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
+static void OnReceiveAudioDataFromDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount);
 static void MixAudioFrames(float *framesOut, const float *framesIn, ma_uint32 frameCount, AudioBuffer *buffer);
 
 static bool IsAudioBufferPlayingInLockedState(AudioBuffer *buffer);
@@ -2379,6 +2386,88 @@ void DetachAudioMixedProcessor(AudioCallback process)
 }
 
 //----------------------------------------------------------------------------------
+// Module Functions Definition - Audio Recording Device initialization and closing
+//----------------------------------------------------------------------------------
+
+// Start audio recording
+void StartAudioRecording(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels, AudioRecordingCallback callback)
+{
+    // Init audio context
+    ma_context_config ctxConfig = ma_context_config_init();
+    ma_log_callback_init(OnLog, NULL);
+
+    ma_result result = ma_context_init(NULL, 0, &ctxConfig, &AUDIO.RecordingSystem.context);
+    if (result != MA_SUCCESS)
+    {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize recording context");
+        return;
+    }
+
+    ma_format format = ((sampleSize == 8)? ma_format_u8 : ((sampleSize == 16)? ma_format_s16 : ma_format_f32));
+
+    // Init audio device
+    // NOTE: Using the default device
+    ma_device_config config = ma_device_config_init(ma_device_type_capture);
+    config.capture.pDeviceID = NULL;  // NULL for the default capture AUDIO.RecordingSystem.device
+    config.capture.format = format;
+    config.capture.channels = channels;
+    config.sampleRate = sampleRate;
+    config.periodSizeInFrames = AUDIO_DEVICE_PERIOD_SIZE_IN_FRAMES;
+    config.dataCallback = OnReceiveAudioDataFromDevice;
+    config.pUserData = NULL;
+    config.noFixedSizedCallback = true;         // raylib does not require fixed sized callback guarantees. This bypasses an internal intermediary buffer
+
+    result = ma_device_init(&AUDIO.RecordingSystem.context, &config, &AUDIO.RecordingSystem.device);
+    if (result != MA_SUCCESS)
+    {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to initialize recording device");
+        ma_context_uninit(&AUDIO.RecordingSystem.context);
+        return;
+    }
+
+    AUDIO.RecordingSystem.callback = callback;
+
+    result = ma_device_start(&AUDIO.RecordingSystem.device);
+    if (result != MA_SUCCESS)
+    {
+        TRACELOG(LOG_WARNING, "AUDIO: Failed to start recording device");
+        ma_device_uninit(&AUDIO.RecordingSystem.device);
+        ma_context_uninit(&AUDIO.RecordingSystem.context);
+        return;
+    }
+
+    TRACELOG(LOG_INFO, "AUDIO: Recording device initialized successfully");
+    TRACELOG(LOG_INFO, "    > Backend:       miniaudio | %s", ma_get_backend_name(AUDIO.RecordingSystem.context.backend));
+    TRACELOG(LOG_INFO, "    > Format:        %s -> %s", ma_get_format_name(AUDIO.RecordingSystem.device.capture.format), ma_get_format_name(AUDIO.RecordingSystem.device.capture.internalFormat));
+    TRACELOG(LOG_INFO, "    > Channels:      %d -> %d", AUDIO.RecordingSystem.device.capture.channels, AUDIO.RecordingSystem.device.capture.internalChannels);
+    TRACELOG(LOG_INFO, "    > Sample rate:   %d -> %d", AUDIO.RecordingSystem.device.sampleRate, AUDIO.RecordingSystem.device.capture.internalSampleRate);
+    TRACELOG(LOG_INFO, "    > Periods size:  %d", AUDIO.RecordingSystem.device.capture.internalPeriodSizeInFrames*AUDIO.RecordingSystem.device.capture.internalPeriods);
+
+    AUDIO.RecordingSystem.isReady = true;
+}
+
+// Stop audio recording
+void StopAudioRecording(void)
+{
+    if (AUDIO.RecordingSystem.isReady)
+    {
+        ma_device_uninit(&AUDIO.RecordingSystem.device);
+        ma_context_uninit(&AUDIO.RecordingSystem.context);
+
+        AUDIO.RecordingSystem.isReady = false;
+
+        TRACELOG(LOG_INFO, "AUDIO: Recording device closed successfully");
+    }
+    else TRACELOG(LOG_WARNING, "AUDIO: Recording device could not be closed, not currently initialized");
+}
+
+// Check if device is recording
+bool IsAudioRecording(void)
+{
+    return AUDIO.RecordingSystem.isReady;
+}
+
+//----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
 // Log callback function
@@ -2660,6 +2749,13 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
     }
 
     ma_mutex_unlock(&AUDIO.System.lock);
+}
+
+// Sending audio data to device callback function
+// This function will be called when miniaudio sends more data
+static void OnReceiveAudioDataFromDevice(ma_device *pDevice, void *pFramesOut, const void *pFramesInput, ma_uint32 frameCount)
+{
+    AUDIO.RecordingSystem.callback(pFramesInput, frameCount);
 }
 
 // Main mixing function, pretty simple in this project, only an accumulation
