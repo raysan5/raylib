@@ -1646,7 +1646,14 @@ int TextToInteger(const char *text)
 // WARNING: Only '.' character is understood as decimal point
 float TextToFloat(const char *text)
 {
-    float value = 0.0f;
+    // Powers of ten a float holds exactly
+    static const float powersOfTen[11] = { 1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f, 1e7f, 1e8f, 1e9f, 1e10f };
+
+    // Up to 9 significant digits are read as an integer and scaled once at the end,
+    // later digits only move the decimal point
+    unsigned int digits = 0;
+    int digitCount = 0;
+    int exponent = 0;
     float sign = 1.0f;
 
     if (text != NULL)
@@ -1658,17 +1665,60 @@ float TextToFloat(const char *text)
         }
 
         int i = 0;
-        for (; ((text[i] >= '0') && (text[i] <= '9')); i++) value = value*10.0f + (float)(text[i] - '0');
-
-        if (text[i++] == '.')
+        for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
         {
-            float divisor = 10.0f;
+            if (digitCount < 9)
+            {
+                digits = digits*10 + (unsigned int)(text[i] - '0');
+                if (digits > 0) digitCount++;
+            }
+            else exponent++;
+        }
+
+        if (text[i] == '.')
+        {
+            i++;
             for (; ((text[i] >= '0') && (text[i] <= '9')); i++)
             {
-                value += ((float)(text[i] - '0'))/divisor;
-                divisor = divisor*10.0f;
+                if (digitCount < 9)
+                {
+                    digits = digits*10 + (unsigned int)(text[i] - '0');
+                    if (digits > 0) digitCount++;
+                    exponent--;
+                }
             }
         }
+
+        if (((text[i] == 'e') || (text[i] == 'E')) && (i > 0))
+        {
+            int j = i + 1;
+            int exponentSign = 1;
+            int exponentValue = 0;
+
+            if ((text[j] == '+') || (text[j] == '-'))
+            {
+                if (text[j] == '-') exponentSign = -1;
+                j++;
+            }
+
+            if ((text[j] >= '0') && (text[j] <= '9'))
+            {
+                for (; ((text[j] >= '0') && (text[j] <= '9')); j++) if (exponentValue < 1000) exponentValue = exponentValue*10 + (text[j] - '0');
+                exponent += exponentSign*exponentValue;
+            }
+        }
+    }
+
+    float value = (float)digits;
+
+    if (value != 0.0f)
+    {
+        // Scale in exact steps of 1e10, stopping once the value overflows or underflows
+        while ((exponent > 10) && (value < 3.4e38f)) { value *= 1e10f; exponent -= 10; }
+        while ((exponent < -10) && (value > 0.0f)) { value /= 1e10f; exponent += 10; }
+
+        if ((exponent > 0) && (exponent <= 10)) value *= powersOfTen[exponent];
+        else if ((exponent < 0) && (exponent >= -10)) value /= powersOfTen[-exponent];
     }
 
     return value*sign;
