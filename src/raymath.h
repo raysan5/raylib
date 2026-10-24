@@ -2630,21 +2630,30 @@ RMAPI Vector3 QuaternionToEuler(Quaternion q)
 {
     Vector3 result = { 0 };
 
-    // Roll (x-axis rotation)
-    float x0 = 2.0f*(q.w*q.x + q.y*q.z);
-    float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-    result.x = atan2f(x0, x1);
-
     // Pitch (y-axis rotation)
     float y0 = 2.0f*(q.w*q.y - q.z*q.x);
     y0 = y0 > 1.0f ? 1.0f : y0;
     y0 = y0 < -1.0f ? -1.0f : y0;
     result.y = asinf(y0);
 
-    // Yaw (z-axis rotation)
-    float z0 = 2.0f*(q.w*q.z + q.x*q.y);
-    float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
-    result.z = atan2f(z0, z1);
+    if (fabsf(y0) >= 0.9999995f)
+    {
+        // Gimbal lock: roll and yaw turn about the same axis, keep the whole turn in roll
+        float sign = (q.w < 0.0f)? -1.0f : 1.0f;
+        result.x = 2.0f*atan2f(sign*q.x, sign*q.w);
+    }
+    else
+    {
+        // Roll (x-axis rotation)
+        float x0 = 2.0f*(q.w*q.x + q.y*q.z);
+        float x1 = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
+        result.x = atan2f(x0, x1);
+
+        // Yaw (z-axis rotation)
+        float z0 = 2.0f*(q.w*q.z + q.x*q.y);
+        float z1 = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
+        result.z = atan2f(z0, z1);
+    }
 
     return result;
 }
