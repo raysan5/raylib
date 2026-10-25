@@ -2003,9 +2003,9 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = ((threshold < 0.5f)? 0 : 1);
 
-                unsigned char r = (unsigned char)(round((float)color.r*31.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*31.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*31.0f));
+                unsigned char r = (unsigned char)(round((float)color.r/255.0*31.0f));
+                unsigned char g = (unsigned char)(round((float)color.g/255.0*31.0f));
+                unsigned char b = (unsigned char)(round((float)color.b/255.0*31.0f));
                 unsigned char a = (color.a < 128)? 0 : 1;
 
                 for (int i = 0; i < image->width*image->height; i++)
@@ -2020,10 +2020,10 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*15.0f);
 
-                unsigned char r = (unsigned char)(round((float)color.r*15.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*15.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*15.0f));
-                unsigned char a = (unsigned char)(round((float)color.a*15.0f));
+                unsigned char r = (unsigned char)(round((float)color.r/255.0*15.0f));
+                unsigned char g = (unsigned char)(round((float)color.g/255.0*15.0f));
+                unsigned char b = (unsigned char)(round((float)color.b/255.0*15.0f));
+                unsigned char a = (unsigned char)(round((float)color.a/255.0*15.0f));
 
                 for (int i = 0; i < image->width*image->height; i++)
                 {
