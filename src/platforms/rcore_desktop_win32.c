@@ -95,6 +95,8 @@ typedef struct {
     HBITMAP hbitmap;        // GDI bitmap handler
     unsigned int *pixels;   // Pointer to pixel data buffer (BGRA format)
 
+    int previousRenderWidth;
+    int previousRenderHeight;
     int appScreenWidth;
     int appScreenHeight;
     unsigned int desiredFlags;
@@ -1602,6 +1604,35 @@ void PollInputEvents(void)
         DispatchMessageW(&msg);
     }
 
+    if ((platform.previousRenderWidth != CORE.Window.render.width) || (platform.previousRenderHeight != CORE.Window.render.height))
+    {
+        SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+        {
+            BITMAPINFO bmi = { 0 };
+            ZeroMemory(&bmi, sizeof(bmi));
+            bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bmi.bmiHeader.biWidth = (LONG)CORE.Window.render.width;
+            bmi.bmiHeader.biHeight = -(LONG)(CORE.Window.render.height); // Top-down bitmap
+            bmi.bmiHeader.biPlanes = 1;
+            bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
+            bmi.bmiHeader.biCompression = BI_RGB;
+
+            platform.hbitmap = CreateDIBSection(
+                platform.hdcmem, &bmi, DIB_RGB_COLORS,
+                (void **)&platform.pixels, NULL, 0);
+
+            HGDIOBJ oldBitmap = SelectObject(platform.hdcmem, platform.hbitmap);
+            DeleteObject(oldBitmap);
+
+            swResize(CORE.Window.render.width, CORE.Window.render.height);
+        }
+#endif
+        platform.previousRenderWidth = CORE.Window.render.width;
+        platform.previousRenderHeight = CORE.Window.render.height;
+    }
+
     // Windows will miss key up events for specific keys; check them manually
     if ((GetKeyState(VK_LSHIFT) & 0x8000) == 0) CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT] = 0;
     if ((GetKeyState(VK_RSHIFT) & 0x8000) == 0) CORE.Input.Keyboard.currentKeyState[KEY_RIGHT_SHIFT] = 0;
@@ -1903,29 +1934,7 @@ int InitPlatform(void)
     // NOTE: Windows GDI object that represents a drawing surface
     platform.hdc = GetDC(platform.hwnd);
 
-    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
-    {
-        // Initialize software framebuffer
-        BITMAPINFO bmi = { 0 };
-        ZeroMemory(&bmi, sizeof(bmi));
-        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmi.bmiHeader.biWidth = platform.appScreenWidth;
-        bmi.bmiHeader.biHeight = -(int)(platform.appScreenHeight); // Top-down bitmap
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
-        bmi.bmiHeader.biCompression = BI_RGB;
-
-        platform.hdcmem = CreateCompatibleDC(platform.hdc);
-
-        platform.hbitmap = CreateDIBSection(
-            platform.hdcmem, &bmi, DIB_RGB_COLORS,
-            (void **)&platform.pixels, NULL, 0);
-
-        SelectObject(platform.hdcmem, platform.hbitmap);
-
-        //ReleaseDC(platform.hwnd, platform.hdc); // Required?
-    }
-    else
+    if (rlGetVersion() != RL_OPENGL_SOFTWARE)
     {
         // Init hardware-accelerated OpenGL modern context
         platform.glContext = InitOpenGL(platform.hwnd, platform.hdc);
@@ -1946,10 +1955,6 @@ int InitPlatform(void)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
     CORE.Window.resizedLastFrame = false;
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
         FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
@@ -1964,6 +1969,25 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
         TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
+
+        // Initialize software framebuffer
+        BITMAPINFO bmi = { 0 };
+        ZeroMemory(&bmi, sizeof(bmi));
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = (LONG)CORE.Window.render.width;
+        bmi.bmiHeader.biHeight = -(LONG)(CORE.Window.render.height); // Top-down bitmap
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        platform.hdcmem = CreateCompatibleDC(platform.hdc);
+
+        platform.hbitmap = CreateDIBSection(
+            platform.hdcmem, &bmi, DIB_RGB_COLORS,
+            (void **)&platform.pixels, NULL, 0);
+
+        SelectObject(platform.hdcmem, platform.hbitmap);
+        //ReleaseDC(platform.hwnd, platform.hdc); // Not required because the window class uses CS_OWNDC
     }
 
     // Initialize timing system
@@ -2107,15 +2131,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-
-#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later
-            // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
-            if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-#else
-            // NOTE: This message is only triggered on window creation
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-#endif
             result = 0; // If an application processes WM_SIZE message, it should return zero
         } break;
         case WM_GETMINMAXINFO:
@@ -2287,7 +2303,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 HDC hdc = BeginPaint(hwnd, &ps);
 
                 // Blit from memory DC to window DC
-                BitBlt(hdc, 0, 0, platform.appScreenWidth, platform.appScreenHeight, platform.hdcmem, 0, 0, SRCCOPY);
+                BitBlt(hdc, 0, 0, CORE.Window.render.width, CORE.Window.render.height, platform.hdcmem, 0, 0, SRCCOPY);
 
                 EndPaint(hwnd, &ps);
             }
@@ -2516,9 +2532,10 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     GetClientRect(hwnd, &rect);
     SIZE clientSize = { rect.right, rect.bottom };
 
+    CORE.Window.render.width = (int)clientSize.cx;
+    CORE.Window.render.height = (int)clientSize.cy;
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    SetupViewport(clientSize.cx, clientSize.cy);
 
     CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
@@ -2537,10 +2554,6 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
 
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
-
-#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-    swResize(clientSize.cx, clientSize.cy);
-#endif
 }
 
 // Update window style
