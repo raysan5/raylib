@@ -1262,8 +1262,8 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 void SetMousePosition(int x, int y)
 {
     Vector2 scale = CORE.Input.Mouse.scale;
-    CORE.Input.Mouse.currentPosition.x = (int)roundf((float)x/scale.x);
-    CORE.Input.Mouse.currentPosition.y = (int)roundf((float)y/scale.y);
+    CORE.Input.Mouse.currentPosition.x = roundf((float)x/scale.x);
+    CORE.Input.Mouse.currentPosition.y = roundf((float)y/scale.y);
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
