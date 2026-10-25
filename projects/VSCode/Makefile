@@ -25,7 +25,7 @@
 
 # Define required raylib variables
 PROJECT_NAME       ?= game
-RAYLIB_VERSION     ?= 5.1-dev
+RAYLIB_VERSION     ?= 6.2
 RAYLIB_PATH        ?= ..\..
 
 # Define compiler path on Windows
@@ -121,7 +121,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
     CLANG_PATH          = $(EMSDK_PATH)/upstream/bin
     PYTHON_PATH         = $(EMSDK_PATH)/python/3.13.3_64bit
-    NODE_PATH           = $(EMSDK_PATH)/node/22.16.0_64bit/bin
+    NODE_PATH           = $(EMSDK_PATH)/node/24.19.0_64bit/bin
     export PATH         = $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH):$$(PATH)
 endif
 

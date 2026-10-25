@@ -75,8 +75,8 @@ else
 endif
 
 # Define required raylib variables
-RAYLIB_VERSION        = 6.0.0
-RAYLIB_API_VERSION    = 600
+RAYLIB_VERSION        = 6.2.0
+RAYLIB_API_VERSION    = 620
 
 # Define raylib source code path
 RAYLIB_SRC_PATH      ?= ../src
@@ -191,7 +191,7 @@ ifeq ($(TARGET_PLATFORM),$(filter $(TARGET_PLATFORM),PLATFORM_WEB PLATFORM_WEB_R
         EMSCRIPTEN_PATH    ?= $(EMSDK_PATH)/upstream/emscripten
         CLANG_PATH         := $(EMSDK_PATH)/upstream/bin
         PYTHON_PATH        := $(EMSDK_PATH)/python/3.13.3_64bit
-        NODE_PATH          := $(EMSDK_PATH)/node/22.16.0_64bit/bin
+        NODE_PATH          := $(EMSDK_PATH)/node/24.19.0_64bit/bin
         export PATH        := $(EMSDK_PATH);$(EMSCRIPTEN_PATH);$(CLANG_PATH);$(NODE_PATH);$(PYTHON_PATH);C:/raylib/MinGW/bin;$(PATH)
     endif
 endif

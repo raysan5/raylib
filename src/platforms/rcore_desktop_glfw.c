@@ -916,6 +916,8 @@ int GetCurrentMonitor(void)
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
+    Vector2 position = { 0 };
+    
     int monitorCount = 0;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
@@ -925,10 +927,11 @@ Vector2 GetMonitorPosition(int monitor)
         int y = 0;
         glfwGetMonitorPos(monitors[monitor], &x, &y);
 
-        return (Vector2){ (float)x, (float)y };
+        position = (Vector2){ (float)x, (float)y };
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    return (Vector2){ 0, 0 };
+
+    return position;
 }
 
 // Get selected monitor width (currently used by monitor)
@@ -1018,31 +1021,39 @@ int GetMonitorRefreshRate(int monitor)
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
+    const char *name = NULL;
+    
     int monitorCount = 0;
     GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
 
     if ((monitor >= 0) && (monitor < monitorCount))
     {
-        return glfwGetMonitorName(monitors[monitor]);
+        name = glfwGetMonitorName(monitors[monitor]);
     }
     else TRACELOG(LOG_WARNING, "GLFW: Failed to find selected monitor");
-    return "";
+    
+    return name;
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
+    Vector2 position = { 0 };
+    
     glfwGetWindowPos(platform.handle, &CORE.Window.position.x, &CORE.Window.position.y);
+    position = (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 
-    return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
+    
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
         glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
+    
     return scale;
 }
 
@@ -1677,8 +1688,10 @@ int InitPlatform(void)
         // If the area requested by the user exceeds the maximum workable area, clamp it to that
         // GLFW has a problem where if the window is greater than the workable area (this means
         // the taskbar / dockable areas) it won't show up if the window isn't fullscreen
-        if (CORE.Window.screen.width > workWidth) CORE.Window.screen.width = workWidth;
-        if (CORE.Window.screen.height > workHeight) CORE.Window.screen.height = workHeight;
+        // NOTE: Some window managers report a workarea that does not overlap the primary monitor
+        // (i.e. multi-monitor setups on X11), resulting in a zero/negative size, skip clamping then
+        if ((workWidth > 0) && (CORE.Window.screen.width > (unsigned int)workWidth)) CORE.Window.screen.width = workWidth;
+        if ((workHeight > 0) && (CORE.Window.screen.height > (unsigned int)workHeight)) CORE.Window.screen.height = workHeight;
 
         platform.handle = glfwCreateWindow(CORE.Window.screen.width, CORE.Window.screen.height, (CORE.Window.title != 0)? CORE.Window.title : " ", NULL, NULL);
         if (!platform.handle)
@@ -1915,7 +1928,7 @@ void ClosePlatform(void)
     glfwTerminate();
 
 #if defined(_WIN32) && SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
-    timeEndPeriod(1);           // Restore time period
+    timeEndPeriod(1); // Restore time period
 #endif
 }
 
@@ -2206,7 +2219,8 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 // GLFW3: Mouse wheel scroll callback, runs on mouse wheel changes
 static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
-    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
+    CORE.Input.Mouse.currentWheelMove.x += (float)xoffset;
+    CORE.Input.Mouse.currentWheelMove.y += (float)yoffset;
 }
 
 // GLFW3: Cursor ennter callback, when cursor enters the window

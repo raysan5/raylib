@@ -5,7 +5,7 @@
 *   Example complexity rating: [★★★★] 4/4
 *
 *   NOTE: Draw a 2D text in 3D space, each letter is drawn in a quad (or 2 quads if backface is set)
-*   where the texture coodinates of each quad map to the texture coordinates of the glyphs
+*   where the texture coordinates of each quad map to the texture coordinates of the glyphs
 *   inside the font texture
 *
 *   A more efficient approach, i believe, would be to render the text in a render texture and
@@ -303,11 +303,11 @@ int main(void)
                             DrawTextWave3D(font, text, (Vector3){ -tbox.x/2.0f, layerDistance*i, -4.5f }, fontSize, fontSpacing, lineSpacing, true, &wcfg, time, clr);
                         }
 
-                        // Draw the text boundry if set
+                        // Draw the text boundary if set
                         if (SHOW_TEXT_BOUNDRY) DrawCubeWiresV((Vector3){ 0.0f, 0.0f, -4.5f + tbox.z/2 }, tbox, dark);
                     rlPopMatrix();
 
-                    // Don't draw the letter boundries for the 3D text below
+                    // Don't draw the letter boundaries for the 3D text below
                     bool slb = SHOW_LETTER_BOUNDRY;
                     SHOW_LETTER_BOUNDRY = false;
 
@@ -388,14 +388,14 @@ int main(void)
                     DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
                     pos.z += 0.5f + m.y;
 
-                    opt = "press [F1] to toggle the letter boundry";
+                    opt = "press [F1] to toggle the letter boundary";
                     quads += 39;
                     m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
                     DrawText3D(GetFontDefault(), opt, pos, 0.6f, 0.05f, 0.0f, false, DARKBLUE);
                     pos.z += 0.5f + m.y;
 
-                    opt = "press [F2] to toggle the text boundry";
+                    opt = "press [F2] to toggle the text boundary";
                     quads += 37;
                     m = MeasureTextEx(GetFontDefault(), opt, 0.6f, 0.05f);
                     pos.x = -m.x/2.0f;
@@ -543,8 +543,6 @@ static void DrawText3D(Font font, const char *text, Vector3 position, float font
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
         }
@@ -589,8 +587,6 @@ static void DrawTextWave3D(Font font, const char *text, Vector3 position, float 
 
         if (codepoint == '\n')
         {
-            // NOTE: Fixed line spacing of 1.5 line-height
-            // TODO: Support custom line spacing defined by user
             textOffsetY += fontSize + lineSpacing;
             textOffsetX = 0.0f;
             k = 0;

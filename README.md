@@ -14,7 +14,7 @@ Ready to learn? Jump to [code examples!](https://www.raylib.com/examples.html)
 
 [![GitHub Releases Downloads](https://img.shields.io/github/downloads/raysan5/raylib/total)](https://github.com/raysan5/raylib/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/raysan5/raylib?style=flat&label=stars)](https://github.com/raysan5/raylib/stargazers)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/6.0)](https://github.com/raysan5/raylib/commits/master)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/raysan5/raylib/6.2)](https://github.com/raysan5/raylib/commits/master)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/raysan5?label=sponsors)](https://github.com/sponsors/raysan5)
 [![License](https://img.shields.io/badge/license-zlib%2Flibpng-blue.svg)](LICENSE)
 
@@ -40,16 +40,16 @@ features
   - Hardware accelerated with OpenGL: **1.1, 2.1, 3.3, 4.3, ES 2.0, ES 3.0**
   - **Unique OpenGL abstraction layer** (usable as standalone module): [rlgl](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
   - **Software Renderer** backend (no OpenGL required!): [rlsw](https://github.com/raysan5/raylib/blob/master/src/external/rlsw.h)
+  - Multiple **Texture** formats supported, including **compressed formats** (DXT, ETC, ASTC)
   - Multiple **Fonts** formats supported (TTF, OTF, FNT, BDF, sprite fonts)
-  - Multiple texture formats supported, including **compressed formats** (DXT, ETC, ASTC)
   - **Full 3D support**, including 3D Shapes, Models, Billboards, Heightmaps and more!
   - Flexible Materials system, supporting classic maps and **PBR maps**
-  - **Animated 3D models** supported (skeletal bones animation) (IQM, M3D, glTF)
+  - **Animated 3D models** supported (skeletal bones animation, GPU-skinning) (IQM, M3D, glTF)
   - Shaders support, including model shaders and **postprocessing** shaders
   - **Powerful math module** for Vector, Matrix and Quaternion operations: [raymath](https://github.com/raysan5/raylib/blob/master/src/raymath.h)
   - Audio loading and playing with streaming support (WAV, QOA, OGG, MP3, FLAC, XM, MOD)
   - **VR stereo rendering** support with configurable HMD device parameters
-  - Huge examples collection with [+200 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
+  - Huge examples collection with [+220 code examples](https://github.com/raysan5/raylib/tree/master/examples)!
   - Bindings to [+70 programming languages](https://github.com/raysan5/raylib/blob/master/BINDINGS.md)!
   - **Free and open source**
 
@@ -61,7 +61,7 @@ raylib presents some limitations by design for code simplicity. Some forks, alte
   - Single window with single OpenGL context by default, no multi-window support
   - Window resize and move stops the rendering loop on platforms supporting a window
   - `RenderTextures` are flipped vertically, as provided by OpenGL, it's up to the user to draw them flipped to the screen
-  - Font rasterization has lower quality than alternatives using `Freetype2`, `HarfBuzz` or `Slug`
+  - Font rasterization has lower quality than alternatives like `Freetype2`, `HarfBuzz` or `Slug`
   - Text drawing does not support RTL, ligatures or emojis
 
 basic example

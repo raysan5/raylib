@@ -65,8 +65,8 @@
 #endif
 
 #if defined(RCAMERA_STANDALONE)
-    #define CAMERA_CULL_DISTANCE_NEAR      0.05
-    #define CAMERA_CULL_DISTANCE_FAR    4000.0
+    #define CAMERA_CULL_DISTANCE_NEAR     0.05f
+    #define CAMERA_CULL_DISTANCE_FAR    4000.0f
 #else
     #define CAMERA_CULL_DISTANCE_NEAR   RL_CULL_DISTANCE_NEAR
     #define CAMERA_CULL_DISTANCE_FAR    RL_CULL_DISTANCE_FAR
@@ -430,8 +430,8 @@ Matrix GetCameraProjectionMatrix(Camera *camera, float aspect)
     }
     else if (camera->projection == CAMERA_ORTHOGRAPHIC)
     {
-        double top = camera->fovy/2.0;
-        double right = top*aspect;
+        float top = camera->fovy/2.0f;
+        float right = top*aspect;
 
         return MatrixOrtho(-right, right, -top, top, CAMERA_CULL_DISTANCE_NEAR, CAMERA_CULL_DISTANCE_FAR);
     }

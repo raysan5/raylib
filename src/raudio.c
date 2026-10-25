@@ -810,6 +810,10 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
 {
     Wave wave = { 0 };
 
+    // Security checks for input data
+    if ((fileData == NULL) || (dataSize <= 0)) { TRACELOG(LOG_WARNING, "WAVE: Invalid file data"); return wave; }
+    if (fileType == NULL) { TRACELOG(LOG_WARNING, "WAVE: Missing file extension"); return wave; }
+
     if (false) { }
 #if SUPPORT_FILEFORMAT_WAV
     else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
@@ -1544,6 +1548,10 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 {
     Music music = { 0 };
     bool musicLoaded = false;
+
+    // Security checks for input data
+    if ((data == NULL) || (dataSize <= 0)) { TRACELOG(LOG_WARNING, "MUSIC: Invalid file data"); return music; }
+    if (fileType == NULL) { TRACELOG(LOG_WARNING, "MUSIC: Missing file extension"); return music; }
 
     if (false) { }
 #if SUPPORT_FILEFORMAT_WAV
@@ -2781,7 +2789,7 @@ static bool IsFileExtension(const char *fileName, const char *ext)
     bool result = false;
     const char *fileExt;
 
-    if ((fileExt = strrchr(fileName, '.')) != NULL)
+    if ((fileExt = GetFileExtension(fileName)) != NULL)
     {
         if (strcmp(fileExt, ext) == 0) result = true;
     }
@@ -2792,7 +2800,9 @@ static bool IsFileExtension(const char *fileName, const char *ext)
 // Get pointer to extension for a filename string (includes the dot: .png)
 static const char *GetFileExtension(const char *fileName)
 {
-    const char *dot = strrchr(fileName, '.');
+    // Only the file name part can contain the extension, not a directory name
+    const char *name = GetFileName(fileName);
+    const char *dot = strrchr(name, '.');
 
     if (!dot || dot == fileName) return NULL;
 

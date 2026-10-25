@@ -2020,20 +2020,13 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    mg_gamepads_free(&platform.minigamepad);
+    mg_gamepads_free(&platform.minigamepad); // Clear gamepad data
     RGFW_window_close(platform.window);
 
-    #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-        if (platform.surfacePixels != NULL)
-        {
-            RL_FREE(platform.surfacePixels);
-        }
-
-        if (platform.surface != NULL)
-        {
-            RGFW_surface_free(platform.surface);
-        }
-    #endif
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    if (platform.surfacePixels != NULL) RL_FREE(platform.surfacePixels);
+    if (platform.surface != NULL) RGFW_surface_free(platform.surface);
+#endif
 }
 
 // Keycode mapping

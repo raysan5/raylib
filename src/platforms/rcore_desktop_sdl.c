@@ -443,8 +443,8 @@ void *SDL_GetClipboardData(const char *mime_type, size_t *size)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-int InitPlatform(void);                                      // Initialize platform (graphics, inputs and more)
-void ClosePlatform(void);                                    // Close platform
+int InitPlatform(void);         // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);       // Close platform
 
 static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
 static int GetCodepointNextSDL(const char *text, int *codepointSize); // Get next codepoint in a byte sequence and bytes processed
@@ -1720,11 +1720,11 @@ void PollInputEvents(void)
             case SDL_MOUSEWHEEL:
             {
 #if defined(USING_VERSION_SDL3)
-                CORE.Input.Mouse.currentWheelMove.x = event.wheel.x;
-                CORE.Input.Mouse.currentWheelMove.y = event.wheel.y;
+                CORE.Input.Mouse.currentWheelMove.x -= event.wheel.x;
+                CORE.Input.Mouse.currentWheelMove.y += event.wheel.y;
 #else
-                CORE.Input.Mouse.currentWheelMove.x = event.wheel.preciseX;
-                CORE.Input.Mouse.currentWheelMove.y = event.wheel.preciseY;
+                CORE.Input.Mouse.currentWheelMove.x -= event.wheel.preciseX;
+                CORE.Input.Mouse.currentWheelMove.y += event.wheel.preciseY;
 #endif
             } break;
             case SDL_MOUSEMOTION:
@@ -2198,6 +2198,7 @@ int InitPlatform(void)
 
     // NOTE: No need to call InitTimer(), let SDL manage it internally
     //----------------------------------------------------------------------------
+    CORE.Time.previous = 0.0;
 
     // Initialize storage system
     //----------------------------------------------------------------------------
@@ -2218,8 +2219,10 @@ int InitPlatform(void)
 void ClosePlatform(void)
 {
     SDL_FreeCursor(platform.cursor); // Free cursor
+
     if (platform.glContext != NULL) SDL_GL_DeleteContext(platform.glContext); // Deinitialize OpenGL context
     SDL_DestroyWindow(platform.window);
+
     SDL_Quit(); // Deinitialize SDL internal global state
 }
 

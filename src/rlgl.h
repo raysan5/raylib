@@ -46,15 +46,15 @@
 *       rlgl capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
 *
-*       #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192    // Default internal render batch elements limits
-*       #define RL_DEFAULT_BATCH_BUFFERS              1    // Default number of batch buffers (multi-buffering)
-*       #define RL_DEFAULT_BATCH_DRAWCALLS          256    // Default number of batch draw calls (by state changes: mode, texture)
-*       #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4    // Maximum number of texture units that can be activated on batch drawing (SetShaderValueTexture())
+*       #define RL_DEFAULT_BATCH_BUFFER_ELEMENTS   8192     // Default internal render batch elements limits
+*       #define RL_DEFAULT_BATCH_BUFFERS              1     // Default number of batch buffers (multi-buffering)
+*       #define RL_DEFAULT_BATCH_DRAWCALLS          256     // Default number of batch draw calls (by state changes: mode, texture)
+*       #define RL_DEFAULT_BATCH_MAX_TEXTURE_UNITS    4     // Maximum number of texture units that can be activated on batch drawing (SetShaderValueTexture())
 *
-*       #define RL_MAX_MATRIX_STACK_SIZE             32    // Maximum size of internal Matrix stack
-*       #define RL_MAX_SHADER_LOCATIONS              32    // Maximum number of shader locations supported
-*       #define RL_CULL_DISTANCE_NEAR              0.05    // Default projection matrix near cull distance
-*       #define RL_CULL_DISTANCE_FAR             4000.0    // Default projection matrix far cull distance
+*       #define RL_MAX_MATRIX_STACK_SIZE             32     // Maximum size of internal Matrix stack
+*       #define RL_MAX_SHADER_LOCATIONS              32     // Maximum number of shader locations supported
+*       #define RL_CULL_DISTANCE_NEAR             0.05f     // Default projection matrix near cull distance
+*       #define RL_CULL_DISTANCE_FAR            4000.0f     // Default projection matrix far cull distance
 *
 *       When loading a shader, the following vertex attributes and uniform location names are tried to be set automatically:
 *       WARNING: Pre-defined names can not be changed, they are used by default shaders and all raylib examples shaders, they are just listed here for reference
@@ -235,10 +235,10 @@
 
 // Projection matrix culling
 #ifndef RL_CULL_DISTANCE_NEAR
-    #define RL_CULL_DISTANCE_NEAR                 0.05      // Default near cull distance
+    #define RL_CULL_DISTANCE_NEAR                0.05f      // Default near cull distance
 #endif
 #ifndef RL_CULL_DISTANCE_FAR
-    #define RL_CULL_DISTANCE_FAR                4000.0      // Default far cull distance
+    #define RL_CULL_DISTANCE_FAR               4000.0f      // Default far cull distance
 #endif
 
 // Texture parameters (equivalent to OpenGL defines)
@@ -611,12 +611,12 @@ RLAPI void rlTranslatef(float x, float y, float z);     // Multiply the current 
 RLAPI void rlRotatef(float angle, float x, float y, float z); // Multiply the current matrix by a rotation matrix
 RLAPI void rlScalef(float x, float y, float z);         // Multiply the current matrix by a scaling matrix
 RLAPI void rlMultMatrixf(const float *matf);            // Multiply the current matrix by another matrix
-RLAPI void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar);
-RLAPI void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar);
+RLAPI void rlFrustum(float left, float right, float bottom, float top, float znear, float zfar);
+RLAPI void rlOrtho(float left, float right, float bottom, float top, float znear, float zfar);
 RLAPI void rlViewport(int x, int y, int width, int height); // Set the viewport area
-RLAPI void rlSetClipPlanes(double nearPlane, double farPlane);    // Set clip planes distances
-RLAPI double rlGetCullDistanceNear(void);               // Get cull plane distance near
-RLAPI double rlGetCullDistanceFar(void);                // Get cull plane distance far
+RLAPI void rlSetClipPlanes(float nearPlane, float farPlane); // Set clip planes distances
+RLAPI float rlGetCullDistanceNear(void);                // Get cull plane distance near
+RLAPI float rlGetCullDistanceFar(void);                 // Get cull plane distance far
 
 //------------------------------------------------------------------------------------
 // Functions Declaration - Vertex level operations
@@ -1111,8 +1111,8 @@ typedef struct rlglData {
 // Global Variables Definition
 //----------------------------------------------------------------------------------
 static bool isGpuReady = false;
-static double rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
-static double rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
+static float rlCullDistanceNear = RL_CULL_DISTANCE_NEAR;
+static float rlCullDistanceFar = RL_CULL_DISTANCE_FAR;
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)
 static rlglData RLGL = { 0 };
@@ -1174,12 +1174,12 @@ void rlMatrixMode(int mode)
     }
 }
 
-void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar)
+void rlFrustum(float left, float right, float bottom, float top, float znear, float zfar)
 {
     glFrustum(left, right, bottom, top, znear, zfar);
 }
 
-void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar)
+void rlOrtho(float left, float right, float bottom, float top, float znear, float zfar)
 {
     glOrtho(left, right, bottom, top, znear, zfar);
 }
@@ -1332,47 +1332,47 @@ void rlMultMatrixf(const float *matf)
 }
 
 // Multiply the current matrix by a perspective matrix generated by parameters
-void rlFrustum(double left, double right, double bottom, double top, double znear, double zfar)
+void rlFrustum(float left, float right, float bottom, float top, float znear, float zfar)
 {
     Matrix matFrustum = { 0 };
 
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
-    float fn = (float)(zfar - znear);
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = zfar - znear;
 
-    matFrustum.m0 = ((float) znear*2.0f)/rl;
+    matFrustum.m0 = (znear*2.0f)/rl;
     matFrustum.m1 = 0.0f;
     matFrustum.m2 = 0.0f;
     matFrustum.m3 = 0.0f;
 
     matFrustum.m4 = 0.0f;
-    matFrustum.m5 = ((float) znear*2.0f)/tb;
+    matFrustum.m5 = (znear*2.0f)/tb;
     matFrustum.m6 = 0.0f;
     matFrustum.m7 = 0.0f;
 
-    matFrustum.m8 = ((float)right + (float)left)/rl;
-    matFrustum.m9 = ((float)top + (float)bottom)/tb;
-    matFrustum.m10 = -((float)zfar + (float)znear)/fn;
+    matFrustum.m8 = (right + left)/rl;
+    matFrustum.m9 = (top + bottom)/tb;
+    matFrustum.m10 = -(zfar + znear)/fn;
     matFrustum.m11 = -1.0f;
 
     matFrustum.m12 = 0.0f;
     matFrustum.m13 = 0.0f;
-    matFrustum.m14 = -((float)zfar*(float)znear*2.0f)/fn;
+    matFrustum.m14 = -(zfar*znear*2.0f)/fn;
     matFrustum.m15 = 0.0f;
 
     *RLGL.State.currentMatrix = rlMatrixMultiply(*RLGL.State.currentMatrix, matFrustum);
 }
 
 // Multiply the current matrix by an orthographic matrix generated by parameters
-void rlOrtho(double left, double right, double bottom, double top, double znear, double zfar)
+void rlOrtho(float left, float right, float bottom, float top, float znear, float zfar)
 {
     // NOTE: If left-right and top-botton values are equal it could create a division by zero,
     // response to it is platform/compiler dependent
     Matrix matOrtho = { 0 };
 
-    float rl = (float)(right - left);
-    float tb = (float)(top - bottom);
-    float fn = (float)(zfar - znear);
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = zfar - znear;
 
     matOrtho.m0 = 2.0f/rl;
     matOrtho.m1 = 0.0f;
@@ -1386,9 +1386,9 @@ void rlOrtho(double left, double right, double bottom, double top, double znear,
     matOrtho.m9 = 0.0f;
     matOrtho.m10 = -2.0f/fn;
     matOrtho.m11 = 0.0f;
-    matOrtho.m12 = -((float)left + (float)right)/rl;
-    matOrtho.m13 = -((float)top + (float)bottom)/tb;
-    matOrtho.m14 = -((float)zfar + (float)znear)/fn;
+    matOrtho.m12 = -(left + right)/rl;
+    matOrtho.m13 = -(top + bottom)/tb;
+    matOrtho.m14 = -(zfar + znear)/fn;
     matOrtho.m15 = 1.0f;
 
     *RLGL.State.currentMatrix = rlMatrixMultiply(*RLGL.State.currentMatrix, matOrtho);
@@ -1402,20 +1402,20 @@ void rlViewport(int x, int y, int width, int height)
 }
 
 // Set clip planes distances
-void rlSetClipPlanes(double nearPlane, double farPlane)
+void rlSetClipPlanes(float nearPlane, float farPlane)
 {
     rlCullDistanceNear = nearPlane;
     rlCullDistanceFar = farPlane;
 }
 
 // Get cull plane distance near
-double rlGetCullDistanceNear(void)
+float rlGetCullDistanceNear(void)
 {
     return rlCullDistanceNear;
 }
 
 // Get cull plane distance far
-double rlGetCullDistanceFar(void)
+float rlGetCullDistanceFar(void)
 {
     return rlCullDistanceFar;
 }
@@ -5225,6 +5225,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
 {
     int dataSize = 0;       // Size in bytes
     int bpp = 0;            // Bits per pixel
+    
+    if ((width <= 0) || (height <= 0)) return dataSize;
 
     switch (format)
     {
@@ -5282,9 +5284,8 @@ static int rlGetPixelDataSize(int width, int height, int format)
     {
         unsigned long long dataSizeBytes = ((unsigned long long)width*height*bpp) >> 3;  // Get size in bytes (dividing by 8)
         if (dataSizeBytes < INT_MAX) dataSize = (int)dataSizeBytes;
+        else TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
     }
-
-    if (dataSize == 0) TRACELOG(LOG_WARNING, "Requested image size is larger than 2GB, it can not be allocated");
 
     return dataSize;
 }

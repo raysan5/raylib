@@ -87,6 +87,9 @@ typedef struct {
     HDC hdc;                // Graphic context handler
     HGLRC glContext;        // OpenGL context handler
 
+    HICON largeIcon;        // Large icon typically used for the taskbar
+    HICON smallIcon;        // Small icon typically used for the window's title bar
+
     // Software renderer variables
     HDC hdcmem;             // Memory graphic context handler
     HBITMAP hbitmap;        // GDI bitmap handler
@@ -107,6 +110,10 @@ typedef BOOL (WINAPI *PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC, const int *, const FL
 typedef BOOL (WINAPI *PFNWGLSWAPINTERVALEXTPROC)(int);
 typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
 
+// Define Win32 function pointer types
+typedef UINT (WINAPI *GetDpiForWindowProc)(HWND hwnd);
+typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -120,6 +127,132 @@ static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 
+// Win32 functions that need to be dynamically loaded to support older versions of Windows
+static GetDpiForWindowProc pGetDpiForWindow = NULL;
+static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
+
+// --------------------------------------------------------------------------------
+// This part of the file contains pure functions that never access global state
+// This distinction helps keep the backend maintainable as the inputs and outputs
+// of every function called in this section can be fully derived from the call-site alone
+// --------------------------------------------------------------------------------
+
+// Prevent any code in this part of the file from accessing the global CORE state
+#define CORE DONT_USE_CORE_HERE
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
+    size_t outLen = AToWLen(inAnsi);                            \
+    outWstr = (WCHAR *)alloca(sizeof(WCHAR)*(outLen + 1));      \
+    AToWCopy(inAnsi, outWstr, outLen);                          \
+    outWstr[outLen] = 0;                                        \
+} while (0)
+
+#define STYLE_MASK_ALL          0xffffffff
+#define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
+#define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
+
+#define STYLE_FLAGS_RESIZABLE   (WS_THICKFRAME | WS_MAXIMIZEBOX)
+
+#define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
+#define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
+
+#define WINDOW_STYLE_EX         0
+
+#define CLASS_NAME              L"raylibWindow"
+
+#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT | FLAG_WINDOW_UNFOCUSED)
+#define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
+
+// Flags that have no operations to perform during an update
+#define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
+
+// Lowest extended-key scancode, start of keyboardKeyFromExtendedScancode[]
+#define EXTENDED_KEY_OFFSET     0x1C
+
+#define WGL_DRAW_TO_WINDOW_ARB              0x2001
+#define WGL_ACCELERATION_ARB                0x2003
+#define WGL_SUPPORT_OPENGL_ARB              0x2010
+#define WGL_DOUBLE_BUFFER_ARB               0x2011
+#define WGL_PIXEL_TYPE_ARB                  0x2013
+#define WGL_COLOR_BITS_ARB                  0x2014
+#define WGL_RED_BITS_ARB                    0x2015
+#define WGL_RED_SHIFT_ARB                   0x2016
+#define WGL_GREEN_BITS_ARB                  0x2017
+#define WGL_GREEN_SHIFT_ARB                 0x2018
+#define WGL_BLUE_BITS_ARB                   0x2019
+#define WGL_BLUE_SHIFT_ARB                  0x201a
+#define WGL_ALPHA_BITS_ARB                  0x201b
+#define WGL_ALPHA_SHIFT_ARB                 0x201c
+#define WGL_DEPTH_BITS_ARB                  0x2022
+#define WGL_STENCIL_BITS_ARB                0x2023
+#define WGL_TYPE_RGBA_ARB                   0x202b
+
+// Context acceleration types
+#define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
+#define WGL_GENERIC_ACCELERATION_ARB        0x2026
+#define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
+
+// WGL_ARB_multisample extension supported
+#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
+#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
+
+// WGL_ARB_framebuffer_sRGB extension supported
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
+
+#define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
+#define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
+#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
+#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
+#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
+
+// Older versions of Windows don't support these events
+// These events won't be triggered, but this allows them to compile
+#ifndef WM_DPICHANGED
+    #define WM_DPICHANGED                   0x02E0
+#endif
+
+#ifndef WM_GETDPISCALEDSIZE
+    #define WM_GETDPISCALEDSIZE             0x02E4
+#endif
+
+#ifndef WM_MOUSEHWHEEL
+    #define WM_MOUSEHWHEEL                  0x020E
+#endif
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+// Maximize-minimize request types
+typedef enum {
+    MIZED_NONE,
+    MIZED_MIN,
+    MIZED_MAX
+} Mized;
+
+// Flag operations
+// NOTE: Some ops need to be deferred
+typedef struct {
+    DWORD set;
+    DWORD clear;
+} FlagsOp;
+
+// Monitor info type
+typedef struct {
+    HMONITOR needle;
+    int index;
+    int matchIndex;
+    RECT rect;
+} MonitorInfo;
+
+//----------------------------------------------------------------------------------
+// Global Const Variables Definition
+//----------------------------------------------------------------------------------
 // Maps scancodes to Raylib keys
 static const unsigned short keyboardKeyFromScancode[] = {
     [0x01] = KEY_ESCAPE,
@@ -240,111 +373,6 @@ static const unsigned short keyboardKeyFromExtendedScancode[] = {
     [0x36 - EXTENDED_KEY_OFFSET] = KEY_RIGHT_SHIFT,     // Some keyboards set the extended bit on Right Shift
 };
 
-// --------------------------------------------------------------------------------
-// This part of the file contains pure functions that never access global state
-// This distinction helps keep the backend maintainable as the inputs and outputs
-// of every function called in this section can be fully derived from the call-site alone
-// --------------------------------------------------------------------------------
-
-// Prevent any code in this part of the file from accessing the global CORE state
-#define CORE DONT_USE_CORE_HERE
-
-//----------------------------------------------------------------------------------
-// Defines and Macros
-//----------------------------------------------------------------------------------
-#define A_TO_W_ALLOCA(outWstr, inAnsi)   do {                   \
-    size_t outLen = AToWLen(inAnsi);                            \
-    outWstr = (WCHAR *)alloca(sizeof(WCHAR)*(outLen + 1));      \
-    AToWCopy(inAnsi, outWstr, outLen);                          \
-    outWstr[outLen] = 0;                                        \
-} while (0)
-
-#define STYLE_MASK_ALL          0xffffffff
-#define STYLE_MASK_READONLY     (WS_MINIMIZE | WS_MAXIMIZE)
-#define STYLE_MASK_WRITABLE     (~STYLE_MASK_READONLY)
-
-#define STYLE_FLAGS_RESIZABLE   (WS_THICKFRAME | WS_MAXIMIZEBOX)
-
-#define STYLE_FLAGS_UNDECORATED_OFF     (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX)
-#define STYLE_FLAGS_UNDECORATED_ON      WS_POPUP
-
-#define WINDOW_STYLE_EX         0
-
-#define CLASS_NAME              L"raylibWindow"
-
-#define FLAG_MASK_OPTIONAL      (FLAG_VSYNC_HINT)
-#define FLAG_MASK_REQUIRED      ~(FLAG_MASK_OPTIONAL)
-
-// Flags that have no operations to perform during an update
-#define FLAG_MASK_NO_UPDATE     (FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT)
-
-// Lowest extended-key scancode, start of keyboardKeyFromExtendedScancode[]
-#define EXTENDED_KEY_OFFSET     0x1C
-
-#define WGL_DRAW_TO_WINDOW_ARB              0x2001
-#define WGL_ACCELERATION_ARB                0x2003
-#define WGL_SUPPORT_OPENGL_ARB              0x2010
-#define WGL_DOUBLE_BUFFER_ARB               0x2011
-#define WGL_PIXEL_TYPE_ARB                  0x2013
-#define WGL_COLOR_BITS_ARB                  0x2014
-#define WGL_RED_BITS_ARB                    0x2015
-#define WGL_RED_SHIFT_ARB                   0x2016
-#define WGL_GREEN_BITS_ARB                  0x2017
-#define WGL_GREEN_SHIFT_ARB                 0x2018
-#define WGL_BLUE_BITS_ARB                   0x2019
-#define WGL_BLUE_SHIFT_ARB                  0x201a
-#define WGL_ALPHA_BITS_ARB                  0x201b
-#define WGL_ALPHA_SHIFT_ARB                 0x201c
-#define WGL_DEPTH_BITS_ARB                  0x2022
-#define WGL_STENCIL_BITS_ARB                0x2023
-#define WGL_TYPE_RGBA_ARB                   0x202b
-
-// Context acceleration types
-#define WGL_NO_ACCELERATION_ARB             0x2025      // OpenGL 1.1 GDI software rasterizer
-#define WGL_GENERIC_ACCELERATION_ARB        0x2026
-#define WGL_FULL_ACCELERATION_ARB           0x2027      // OpenGL hardware-accelerated, using GPU-drivers provided by vendor
-
-// WGL_ARB_multisample extension supported
-#define WGL_SAMPLE_BUFFERS_ARB              0x2041      // Multisampling: 1 if multisample buffers are supported
-#define WGL_SAMPLES_ARB                     0x2042      // Multisampling: Number of samples per pixel (4, 8, 16)
-
-// WGL_ARB_framebuffer_sRGB extension supported
-#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB    0x20a9      // GL_TRUE if the framebuffer can do sRGB conversion
-
-#define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
-#define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
-#define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
-#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
-#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
-
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-// Maximize-minimize request types
-typedef enum {
-    MIZED_NONE,
-    MIZED_MIN,
-    MIZED_MAX
-} Mized;
-
-// Flag operations
-// NOTE: Some ops need to be deferred
-typedef struct {
-    DWORD set;
-    DWORD clear;
-} FlagsOp;
-
-// Monitor info type
-typedef struct {
-    HMONITOR needle;
-    int index;
-    int matchIndex;
-    RECT rect;
-} MonitorInfo;
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
@@ -363,6 +391,51 @@ static void AToWCopy(const char *ascii, wchar_t *outPtr, size_t outLen)
 {
     int size = MultiByteToWideChar(CP_UTF8, 0, ascii, -1, outPtr, (int)outLen);
     if (size != outLen) TRACELOG(LOG_WARNING, "WIN32: Failed to convert %i UTF-8 chars to WCHAR, converted %i chars", outLen, size);
+}
+
+// Dynamically load Windows functions that may not be available on older versions
+static void LoadWin32FunctionPointers(void)
+{
+    HMODULE user32 = GetModuleHandleW(L"user32.dll");
+    pGetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(user32, "GetDpiForWindow");
+    pAdjustWindowRectExForDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
+}
+
+// GetDpiForWindow with a fallback for older versions of Windows
+static UINT GetDpiForWindowCompat(HWND hwnd)
+{
+    UINT result = 0;
+
+    if (pGetDpiForWindow != NULL)
+    {
+        // This API requires Windows 10 v1607 or newer
+        result = pGetDpiForWindow(hwnd);
+    }
+    else
+    {
+        // Window uses CS_OWNDC, so we don't need to call ReleaseDC
+        HDC dc = GetDC(hwnd);
+
+        // Before Windows 10 v1607: fallback to system-wide DPI (96 for DPI-unaware processes)
+        result = GetDeviceCaps(dc, LOGPIXELSX);
+    }
+
+    return result;
+}
+
+// AdjustWindowRectExForDpi with a fallback for older versions of Windows
+static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
+{
+    BOOL result = FALSE;
+    if (pAdjustWindowRectExForDpi != NULL)
+    {
+        result = pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+    }
+    else
+    {
+        result = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+    }
+    return result;
 }
 
 static bool DecoratedFromStyle(DWORD style)
@@ -461,7 +534,7 @@ static SIZE CalcWindowSize(UINT dpi, SIZE clientSize, DWORD style)
 {
     RECT rect = { 0, 0, clientSize.cx, clientSize.cy };
 
-    int result = AdjustWindowRectExForDpi(&rect, style, 0, WINDOW_STYLE_EX, dpi);
+    int result = AdjustWindowRectExForDpiCompat(&rect, style, 0, WINDOW_STYLE_EX, dpi);
     if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to adjust window rect [ERROR: %lu]", GetLastError());
 
     return (SIZE){ rect.right - rect.left, rect.bottom - rect.top };
@@ -507,7 +580,7 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     }
 
     // Get size in pixels from points, considering high-dpi
-    UINT dpi = GetDpiForWindow(hwnd);
+    UINT dpi = GetDpiForWindowCompat(hwnd);
     float dpiScale = ((float)dpi)/96.0f;
     bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
     SIZE desiredSize = {
@@ -632,6 +705,101 @@ static LPCWSTR GetCursorName(int cursor)
     return name;
 }
 
+// Delete platform.smallIcon and platform.largeIcon
+static void DeletePlatformIconHandles(void)
+{
+    HICON smallIcon = platform.smallIcon;
+    HICON largeIcon = platform.largeIcon;
+
+    if (smallIcon != NULL) DestroyIcon(smallIcon);
+
+    // Only delete largeIcon if it's not pointing to the same underlying resource as smallIcon
+    if ((largeIcon != NULL) && (largeIcon != smallIcon)) DestroyIcon(largeIcon);
+
+    platform.smallIcon = NULL;
+    platform.largeIcon = NULL;
+}
+
+// Delete existing icons and replace them with the standard window/taskbar icons
+static void ResetToDefaultWindowsIcons(void)
+{
+    HICON smallIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICONSM);
+    HICON largeIcon = (HICON)GetClassLongPtrW(platform.hwnd, GCLP_HICON);
+
+    SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+    SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
+
+    // The built-in Windows icons shouldn't be deleted, so there's no need to store a reference to them
+    // Just delete the previous icons and exit
+    DeletePlatformIconHandles();
+}
+
+// Convert Image to Win32 HICON (must be RGBA)
+static HICON ConvertImageToWindowsIcon(Image image)
+{
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: Window icon image must be in R8G8B8A8 pixel format");
+        return NULL;
+    }
+
+    HDC hdc = GetDC(platform.hwnd);
+
+    // Create 32-bit BGRA DIB for color
+    BITMAPV5HEADER bi = { 0 };
+    ZeroMemory(&bi, sizeof(bi));
+    bi.bV5Size = sizeof(bi);
+    bi.bV5Width = image.width;
+    bi.bV5Height = -image.height; // Negative = top-down bitmap
+    bi.bV5Planes = 1;
+    bi.bV5BitCount = 32;
+    bi.bV5Compression = BI_BITFIELDS;
+    bi.bV5RedMask = 0x00FF0000;
+    bi.bV5GreenMask = 0x0000FF00;
+    bi.bV5BlueMask = 0x000000FF;
+    bi.bV5AlphaMask = 0xFF000000;
+
+    unsigned char *targetBits = NULL;
+    HBITMAP hColorBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&targetBits, NULL, 0);
+    if (!hColorBitmap)
+    {
+        ReleaseDC(platform.hwnd, hdc);
+        return NULL;
+    }
+
+    // Copy RGBA > BGRA (Win32 expects BGRA)
+    for (int y = 0; y < image.height; y++)
+    {
+        for (int x = 0; x < image.width; x++)
+        {
+            int i = (y*image.width + x)*4;
+            targetBits[i + 0] = ((unsigned char *)image.data)[i + 2]; // B
+            targetBits[i + 1] = ((unsigned char *)image.data)[i + 1]; // G
+            targetBits[i + 2] = ((unsigned char *)image.data)[i + 0]; // R
+            targetBits[i + 3] = ((unsigned char *)image.data)[i + 3]; // A
+        }
+    }
+
+    // Create mask bitmap (1-bit, all opaque)
+    HBITMAP hMaskBitmap = CreateBitmap(image.width, image.height, 1, 1, NULL);
+
+    // Build icon info
+    ICONINFO ii = { 0 };
+    ZeroMemory(&ii, sizeof(ii));
+    ii.fIcon = TRUE;
+    ii.hbmMask = hMaskBitmap;
+    ii.hbmColor = hColorBitmap;
+
+    HICON result = CreateIconIndirect(&ii);
+
+    // Clean up GDI bitmaps (icon keeps copies internally)
+    DeleteObject(hColorBitmap);
+    DeleteObject(hMaskBitmap);
+    ReleaseDC(platform.hwnd, hdc);
+
+    return result;
+}
+
 // Count monitors process
 // NOTE: Required by GetMonitorCount()
 static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
@@ -725,8 +893,8 @@ static bool AdoptWindowResize(unsigned flags)
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
-int InitPlatform(void);             // Initialize platform (graphics, inputs and more)
-void ClosePlatform(void);           // Close platform
+int InitPlatform(void);         // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);       // Close platform
 
 // Win32 process messages management function
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
@@ -809,75 +977,82 @@ void ClearWindowState(unsigned int flags)
 // Set icon for window
 void SetWindowIcon(Image image)
 {
-    if (!platform.hwnd || (image.data == NULL) || (image.width <= 0) || (image.height <= 0)) return;
+    if (!platform.hwnd) return;
 
-    HDC hdc = GetDC(platform.hwnd);
-
-    // Create 32-bit BGRA DIB for color
-    BITMAPV5HEADER bi = { 0 };
-    ZeroMemory(&bi, sizeof(bi));
-    bi.bV5Size = sizeof(bi);
-    bi.bV5Width = image.width;
-    bi.bV5Height = -image.height; // Negative = top-down bitmap
-    bi.bV5Planes = 1;
-    bi.bV5BitCount = 32;
-    bi.bV5Compression = BI_BITFIELDS;
-    bi.bV5RedMask = 0x00FF0000;
-    bi.bV5GreenMask = 0x0000FF00;
-    bi.bV5BlueMask = 0x000000FF;
-    bi.bV5AlphaMask = 0xFF000000;
-
-    unsigned char *targetBits = NULL;
-    HBITMAP hColorBitmap = CreateDIBSection(hdc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, (void **)&targetBits, NULL, 0);
-    if (!hColorBitmap)
+    if ((image.data == NULL) || (image.width <= 0) || (image.height <= 0))
     {
-        ReleaseDC(platform.hwnd, hdc);
+        ResetToDefaultWindowsIcons();
         return;
     }
 
-    // Copy RGBA > BGRA (Win32 expects BGRA)
-    for (int y = 0; y < image.height; y++)
-    {
-        for (int x = 0; x < image.width; x++)
-        {
-            int i = (y*image.width + x)*4;
-            targetBits[i + 0] = ((unsigned char *)image.data)[i + 2]; // B
-            targetBits[i + 1] = ((unsigned char *)image.data)[i + 1]; // G
-            targetBits[i + 2] = ((unsigned char *)image.data)[i + 0]; // R
-            targetBits[i + 3] = ((unsigned char *)image.data)[i + 3]; // A
-        }
-    }
-
-    // Create mask bitmap (1-bit, all opaque)
-    HBITMAP hMaskBitmap = CreateBitmap(image.width, image.height, 1, 1, NULL);
-
-    // Build icon info
-    ICONINFO ii = { 0 };
-    ZeroMemory(&ii, sizeof(ii));
-    ii.fIcon = TRUE;
-    ii.hbmMask = hMaskBitmap;
-    ii.hbmColor = hColorBitmap;
-
-    HICON hIcon = CreateIconIndirect(&ii);
-
-    // Clean up GDI bitmaps (icon keeps copies internally)
-    DeleteObject(hColorBitmap);
-    DeleteObject(hMaskBitmap);
-    ReleaseDC(platform.hwnd, hdc);
-
+    HICON hIcon = ConvertImageToWindowsIcon(image);
     if (hIcon)
     {
-        // Set both large and small icons
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
         SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-        HICON previousIcon = (HICON)SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
-        if (previousIcon) DestroyIcon(previousIcon);
+        DeletePlatformIconHandles();
+        platform.smallIcon = hIcon;
+        platform.largeIcon = hIcon;
     }
 }
 
 // Set icon for window (multiple sizes)
 void SetWindowIcons(Image *images, int count)
 {
-    // TODO: Implement SetWindowIcons()
+    if ((images == NULL) || (count <= 0))
+    {
+        ResetToDefaultWindowsIcons();
+        return;
+    }
+
+    // Large icon has a resolution of (SM_CXICON*SM_CXICON) pixels
+    int largeIconRenderSize = GetSystemMetrics(SM_CXICON);
+
+    // Attempt to find a best match for the large icon based on each image's width
+    int bestLargeIconIndex = -1;
+    int bestLargeIconSizeDifference = INT_MAX;
+    for (int i = 0; i < count; i++)
+    {
+        Image img = images[i];
+        int difference = abs(img.width - largeIconRenderSize);
+        if ((img.data != NULL) && (img.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) && (difference < bestLargeIconSizeDifference))
+        {
+            bestLargeIconIndex = i;
+            bestLargeIconSizeDifference = difference;
+        }
+    }
+
+    // Small icon has a resolution of (SM_CYSMICON*SM_CYSMICON) pixels
+    int smallIconRenderSize = GetSystemMetrics(SM_CYSMICON);
+
+    // Attempt to find a best match for the small icon based on each image's width
+    int bestSmallIconIndex = -1;
+    int bestSmallIconSizeDifference = INT_MAX;
+    for (int i = 0; i < count; i++)
+    {
+        Image img = images[i];
+        int difference = abs(img.width - smallIconRenderSize);
+        if ((img.data != NULL) && (img.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) && (difference < bestSmallIconSizeDifference))
+        {
+            bestSmallIconIndex = i;
+            bestSmallIconSizeDifference = difference;
+        }
+    }
+
+    if ((bestSmallIconIndex != -1) && (bestLargeIconIndex != -1))
+    {
+        HICON smallIcon = ConvertImageToWindowsIcon(images[bestSmallIconIndex]);
+        HICON largeIcon = ConvertImageToWindowsIcon(images[bestLargeIconIndex]);
+
+        SendMessage(platform.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)smallIcon);
+        SendMessage(platform.hwnd, WM_SETICON, ICON_BIG, (LPARAM)largeIcon);
+
+        DeletePlatformIconHandles();
+
+        platform.smallIcon = smallIcon;
+        platform.largeIcon = largeIcon;
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: All icons passed to SetWindowIcons were invalid");
 }
 
 void SetWindowTitle(const char *title)
@@ -962,7 +1137,11 @@ void SetWindowOpacity(float opacity)
 // Set window focused
 void SetWindowFocused(void)
 {
-    TRACELOG(LOG_WARNING, "SetWindowFocused not implemented");
+    BringWindowToTop(platform.hwnd);
+    SetForegroundWindow(platform.hwnd);
+    SetFocus(platform.hwnd);
+
+    if (GetForegroundWindow() != platform.hwnd) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to set window focus");
 }
 
 // Get native window handle
@@ -1057,7 +1236,7 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float scale = ((float)GetDpiForWindow(platform.hwnd))/96.0f;
+    float scale = ((float)GetDpiForWindowCompat(platform.hwnd))/96.0f;
     return (Vector2){ scale, scale };
 }
 
@@ -1066,10 +1245,7 @@ void SetClipboardText(const char *text)
 {
     if (OpenClipboard(platform.hwnd))
     {
-        if (text == NULL)
-        {
-            EmptyClipboard();
-        }
+        if (text == NULL) EmptyClipboard();
         else
         {
             size_t length = strlen(text);
@@ -1102,20 +1278,14 @@ void SetClipboardText(const char *text)
                             GlobalFree(globalHandle);
                         }
                     }
-                    else
-                    {
-                        GlobalFree(globalHandle);
-                    }
+                    else GlobalFree(globalHandle);
                 }
             }
         }
 
         CloseClipboard();
     }
-    else
-    {
-        TRACELOG(LOG_WARNING, "Clipboard: Failed to write to clipboard. It may be locked by another program.");
-    }
+    else TRACELOG(LOG_WARNING, "Clipboard: Failed to write to clipboard. It may be locked by another program.");
 }
 
 // Get clipboard text content
@@ -1186,7 +1356,6 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
-
         RL_FREE(fileData);
     }
 #else
@@ -1423,6 +1592,7 @@ void PollInputEvents(void)
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 
     CORE.Window.resizedLastFrame = false;
+    CORE.Window.shouldClose = false;
 
     // Process windows messages
     MSG msg = { 0 };
@@ -1441,7 +1611,7 @@ void PollInputEvents(void)
     // Windows won't send a WM_KEYDOWN event for print screen; check it manually
     bool isPrintScreenDown = ((GetAsyncKeyState(VK_SNAPSHOT) & 0x8000) != 0) && (GetForegroundWindow() == platform.hwnd);
     CORE.Input.Keyboard.currentKeyState[KEY_PRINT_SCREEN] = isPrintScreenDown;
-    if (isPrintScreenDown && (CORE.Input.Keyboard.exitKey == KEY_PRINT_SCREEN)) CORE.Window.shouldClose = true;
+    if (IsKeyPressed(KEY_PRINT_SCREEN) && (CORE.Input.Keyboard.exitKey == KEY_PRINT_SCREEN)) CORE.Window.shouldClose = true;
 }
 
 //----------------------------------------------------------------------------------
@@ -1639,6 +1809,8 @@ int InitPlatform(void)
     CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
     CORE.Window.screenMax.width = 9999;
     CORE.Window.screenMax.height = 9999;
+
+    LoadWin32FunctionPointers();
 /*
     // TODO: Review SetProcessDpiAwarenessContext()
     // NOTE: SetProcessDpiAwarenessContext() requires Windows 10, version 1703 and shcore.lib linkage
@@ -1761,8 +1933,14 @@ int InitPlatform(void)
 
     CORE.Window.ready = true;
 
-    // Activate window to set focus and show taskbar icon
-    ShowWindow(platform.hwnd, SW_SHOWDEFAULT);
+    if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
+    {
+        // Show window and taskbar icon, activate unless FLAG_WINDOW_UNFOCUSED is set
+        bool isUnfocused = ((platform.desiredFlags & FLAG_WINDOW_UNFOCUSED) != 0);
+        if (isUnfocused) CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
+        int nCmdShow = (isUnfocused)? SW_SHOWNA : SW_SHOWDEFAULT;
+        ShowWindow(platform.hwnd, nCmdShow);
+    }
 
     // Update flags (in case of deferred state change required)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
@@ -1811,19 +1989,11 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    // Undo disable cursor if it's locked and unregister raw input devices
-    EnableCursor();
-
-    // Calling DestroyWindow invokes a WindowProc event that sets the FLAG_WINDOW_HIDDEN flag to true
-    // If InitWindow is called again, the hidden flag will be interpreted as something the user requested
-    // Save the current flags and restore them after
-    unsigned int savedFlags = CORE.Window.flags;
-
+    // Clear required platform data
     if (platform.hwnd)
     {
-        // SetWindowIcon uses the same resource for both ICON_BIG and ICON_SMALL
-        // If this ever changes, this code may have to be updated
-        HICON icon = (HICON)SendMessage(platform.hwnd, WM_GETICON, ICON_BIG, (LPARAM)0);
+        // Disable cursor lock (if enabled) and unregister raw input devices
+        EnableCursor();
 
         BOOL result = DestroyWindow(platform.hwnd);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed on window destroy [ERROR: %u]", GetLastError());
@@ -1832,21 +2002,20 @@ void ClosePlatform(void)
         result = UnregisterClassW(CLASS_NAME, hInstance);
         if (!result) TRACELOG(LOG_WARNING, "WIN32: WINDOW: Failed to unregister window class [ERROR: %u]", GetLastError());
 
-        if (icon != NULL) DestroyIcon(icon);
+        DeletePlatformIconHandles();
 
         platform.hwnd = NULL;
     }
 
+    // Clear clipboard
     if (platform.clipboardText != NULL)
     {
         RL_FREE(platform.clipboardText);
         platform.clipboardText = NULL;
     }
 
-    CORE.Window.flags = savedFlags;
-
 #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
-    timeEndPeriod(1);           // Restore time period
+    timeEndPeriod(1); // Restore time period
 #endif
 }
 
@@ -1918,10 +2087,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
         //case WM_QUIT: // Application closing, not related to window
         case WM_KILLFOCUS:
         {
+            CORE.Window.flags |= FLAG_WINDOW_UNFOCUSED;
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
             memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
             memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
         } break;
+        case WM_SETFOCUS: CORE.Window.flags &= ~FLAG_WINDOW_UNFOCUSED; break;
         case WM_SIZING: // Sent to a window that the user is resizing
         {
             if (CORE.Window.flags & FLAG_WINDOW_RESIZABLE)
@@ -1970,7 +2141,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 STYLESTRUCT *ss = (STYLESTRUCT *)lparam;
                 GetStyleChangeFlagOps(CORE.Window.flags, ss, deferredFlags);
 
-                UINT dpi = GetDpiForWindow(hwnd);
+                UINT dpi = GetDpiForWindowCompat(hwnd);
                 // Get client size (framebuffer inside the window)
                 RECT rect = { 0 };
                 GetClientRect(hwnd, &rect);
@@ -2184,8 +2355,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: TRACELOG(LOG_WARNING, "TODO: Handle ex mouse button UP [wparam=%u]", HIWORD(wparam)); break;
             }
         } break;
-        case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
-        case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x = ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        case WM_MOUSEWHEEL: CORE.Input.Mouse.currentWheelMove.y += ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
+        // Horizontal wheel movement is inverted to match GLFW
+        case WM_MOUSEHWHEEL: CORE.Input.Mouse.currentWheelMove.x -= ((float)GET_WHEEL_DELTA_WPARAM(wparam))/WHEEL_DELTA; break;
 
         default: result = DefWindowProcW(hwnd, msg, wparam, lparam); // Message passed directly for execution (default behaviour)
     }
@@ -2257,8 +2429,9 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
         {
             CORE.Input.Keyboard.currentKeyState[key] = state;
 
-            if (((HIWORD(lparam) & KF_REPEAT) != 0) && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-            if ((key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
+            bool isKeyRepeatEvent = ((HIWORD(lparam) & KF_REPEAT) != 0);
+            if (isKeyRepeatEvent && (state == 1)) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+            if (!isKeyRepeatEvent && (key == CORE.Input.Keyboard.exitKey) && (state == 1)) CORE.Window.shouldClose = true;
         }
         else TRACELOG(LOG_WARNING, "INPUT: Unknown (or currently unhandled) virtual keycode %d (0x%x)", wparam, wparam);
     }
@@ -2348,7 +2521,7 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     SetupViewport(clientSize.cx, clientSize.cy);
 
     CORE.Window.resizedLastFrame = true;
-    float dpiScale = ((float)GetDpiForWindow(hwnd))/96.0f;
+    float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
     unsigned int screenWidth = highdpi? (unsigned int)(((float)clientSize.cx)/dpiScale) : clientSize.cx;
     unsigned int screenHeight = highdpi? (unsigned int)(((float)clientSize.cy)/dpiScale) : clientSize.cy;

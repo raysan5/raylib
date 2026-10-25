@@ -554,7 +554,7 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
-    RL_FREE(platform.pixels);
+    RL_FREE(platform.pixels); // Free pixels buffer
 }
 
 //----------------------------------------------------------------------------------

@@ -1,18 +1,16 @@
 changelog
 ---------
 
-Current Release:    raylib 6.0 (23 April 2026)
+Current Release:    raylib 6.2 (15 October 2026)
 
 -------------------------------------------------------------------------
-Release:     raylib 6.2 (15 Oct 2026)
+Release:     raylib 6.2 (15 October 2026)
 -------------------------------------------------------------------------
 KEY CHANGES:
  - Code gardening: Many consistency and formating changes all around
- - REDESIGNED: Image API for more alignment with Texture API
- - REDESIGNED: File API for more standard return result values
- - REVIEWED: Shapes lines drawing functions, added new ones and unify behaviour
+ - REDESIGNED: Image drawing API more aligned with screen drawing API
+ - REDESIGNED: File API using more standard return result values
  - REVIEWED: Multiple security concerns reported by ROS (Radically Open Security)
- - REVIEWED: New Win32 backend, many improvements and additions
 
 Detailed changes:
 
