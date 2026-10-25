@@ -2963,14 +2963,15 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
 //-------------------------------------------------------------------------------------------
 // Argument count (1-4)
 #define SW_NARGS_(_1,_2,_3,_4,N,...) N
-#define SW_NARGS(...) SW_NARGS_(__VA_ARGS__,4,3,2,1)
+#define SW_EXPAND(x) x
+#define SW_NARGS(...) SW_EXPAND(SW_NARGS_(__VA_ARGS__,4,3,2,1))
 
 // State tokens -> OR'd SW_STATE_xxx flags
 #define SW_OR1(a)       (SW_STATE_##a)
 #define SW_OR2(a,b)     (SW_STATE_##a | SW_STATE_##b)
 #define SW_OR3(a,b,c)   (SW_STATE_##a | SW_STATE_##b | SW_STATE_##c)
 #define SW_OR4(a,b,c,d) (SW_STATE_##a | SW_STATE_##b | SW_STATE_##c | SW_STATE_##d)
-#define SW_FLAGS_(N, ...) SW_CONCATX(SW_OR, N)(__VA_ARGS__)
+#define SW_FLAGS_(N, ...) SW_EXPAND(SW_CONCATX(SW_OR, N)(__VA_ARGS__))
 #define SW_FLAGS(...)     SW_FLAGS_(SW_NARGS(__VA_ARGS__), __VA_ARGS__)
 
 // State tokens -> function name suffix
@@ -2978,11 +2979,12 @@ static bool sw_polygon_clip(sw_vertex_t polygon[SW_MAX_CLIPPED_POLYGON_VERTICES]
 #define SW_CAT2(a,b)     a##_##b
 #define SW_CAT3(a,b,c)   a##_##b##_##c
 #define SW_CAT4(a,b,c,d) a##_##b##_##c##_##d
-#define SW_NAME_(N, ...) SW_CONCATX(SW_CAT, N)(__VA_ARGS__)
+#define SW_NAME_(N, ...) SW_EXPAND(SW_CONCATX(SW_CAT, N)(__VA_ARGS__))
 #define SW_NAME(...)     SW_NAME_(SW_NARGS(__VA_ARGS__), __VA_ARGS__)
 
 // Forward decl for one variant; SIG is a parenthesized param list
-#define SW_RASTER_FWD(PREFIX, SIG, ...) \
+#define SW_RASTER_FWD(...) SW_EXPAND(SW_RASTER_FWD_(__VA_ARGS__))
+#define SW_RASTER_FWD_(PREFIX, SIG, ...) \
     static void SW_CONCATX(PREFIX, SW_NAME(__VA_ARGS__)) SIG;
 
 // Dispatch table entry for one variant
