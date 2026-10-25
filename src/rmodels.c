@@ -4328,6 +4328,14 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
     // Check if mesh vertex data on CPU for testing
     if (mesh.vertices != NULL)
     {
+        // transform the ray into model space by the inverse of the transform, so we can test it against the untransformed vertex data
+        Matrix inverseMatrix = MatrixInvert(transform);
+        ray.position = Vector3Transform(ray.position, inverseMatrix);
+
+        // direction does not get translation, just rotation
+        Quaternion invRot = QuaternionFromMatrix(inverseMatrix);
+        ray.direction = Vector3RotateByQuaternion(ray.direction, invRot);
+
         int triangleCount = mesh.triangleCount;
 
         // Test against all triangles in mesh
@@ -4351,10 +4359,6 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
                 c = vertdata[i*3 + 2];
             }
 
-            a = Vector3Transform(a, transform);
-            b = Vector3Transform(b, transform);
-            c = Vector3Transform(c, transform);
-
             RayCollision triHitInfo = GetRayCollisionTriangle(ray, a, b, c);
 
             if (triHitInfo.hit)
@@ -4363,6 +4367,13 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
                 if ((!collision.hit) || (collision.distance > triHitInfo.distance)) collision = triHitInfo;
             }
         }
+    }
+
+    // put the hit point and normal back in world space
+    if (collision.hit)
+    {
+        collision.point = Vector3Transform(collision.point, transform);
+        collision.normal = Vector3RotateByQuaternion(collision.normal, QuaternionFromMatrix(transform));
     }
 
     return collision;
