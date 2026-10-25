@@ -4328,11 +4328,12 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
     // Check if mesh vertex data on CPU for testing
     if (mesh.vertices != NULL)
     {
-        // transform the ray into model space by the inverse of the transform, so we can test it against the untransformed vertex data
+        // Transform the ray into model space by the inverse of the transform, 
+        // so it can be tested against the untransformed vertex data
         Matrix inverseMatrix = MatrixInvert(transform);
         ray.position = Vector3Transform(ray.position, inverseMatrix);
 
-        // direction does not get translation, just rotation
+        // Direction does not get translation, just rotation
         Quaternion invRot = QuaternionFromMatrix(inverseMatrix);
         ray.direction = Vector3RotateByQuaternion(ray.direction, invRot);
 
@@ -4369,7 +4370,7 @@ RayCollision GetRayCollisionMesh(Ray ray, Mesh mesh, Matrix transform)
         }
     }
 
-    // put the hit point and normal back in world space
+    // Set the hit point and normal back in world space
     if (collision.hit)
     {
         collision.point = Vector3Transform(collision.point, transform);
