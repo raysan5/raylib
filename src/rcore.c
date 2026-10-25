@@ -2503,7 +2503,7 @@ const char *GetFileExtension(const char *fileName)
     const char *name = GetFileName(fileName);
     const char *dot = strrchr(name, '.');
 
-    if ((dot == NULL) || (dot == fileName)) return NULL;
+    if ((dot == NULL) || (dot == name)) return NULL;     // No extension for hidden files: ".gitignore"
 
     return dot;
 }
