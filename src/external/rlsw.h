@@ -2406,7 +2406,8 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
     {
     #if RLSW_SUPPORT_NPOT_TEXTURE
         int width = tex->width;
-        x0 = (x0%width + tex->width)%width;
+        x0 %= width;
+        if (x0 < 0) x0 += width;
         x1 = ((x0 + 1) < width)? x0 + 1 : 0;
     #else
         x0 = x0 & tex->wMinus1;
@@ -2423,7 +2424,8 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
     {
     #if RLSW_SUPPORT_NPOT_TEXTURE
         int height = tex->height;
-        y0 = (y0%height + height)%height;
+        y0 %= height;
+        if (y0 < 0) y0 += height;
         y1 = ((y0 + 1) < height)? y0 + 1 : 0;
     #else
         y0 = y0 & tex->hMinus1;
