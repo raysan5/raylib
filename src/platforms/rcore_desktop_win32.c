@@ -491,7 +491,7 @@ static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bM
 // Windows 8.1/10     - per-monitor awareness v1
 // Windows Vista/7/8  - system-aware
 // Windows XP         - No DPI awareness
-static void SetProcessDpiAwareCompat()
+static void SetProcessDpiAwareCompat(void)
 {
     if (pSetProcessDpiAwarenessContext != NULL)
     {
@@ -665,8 +665,8 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     float dpiScale = ((float)dpi)/96.0f;
     bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
     SIZE desiredSize = {
-        .cx = dpiScaling? (int)((float)width*dpiScale) : width,
-        .cy = dpiScaling? (int)((float)height*dpiScale) : height
+        .cx = dpiScaling? (int)roundf((float)width*dpiScale) : width,
+        .cy = dpiScaling? (int)roundf((float)height*dpiScale) : height
     };
 
     // Get client size (framebuffer inside the window)
@@ -960,7 +960,7 @@ static void HandleRawInput(LPARAM lparam);
 static void HandleWindowResize(HWND hwnd, int *width, int *height);
 
 static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags);
-static unsigned SanitizeFlags(int mode, unsigned flags);
+static unsigned SanitizeFlags(unsigned flags);
 static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height); // Update window flags
 
 // Check if OpenGL extension is available
@@ -1017,14 +1017,34 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags | flags);
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
+    }
+
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
+    }
+
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags | flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags & ~flags);
+    if (flags & FLAG_MSAA_4X_HINT)
+    {
+        TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
+    }
+
+    if (flags & FLAG_WINDOW_HIGHDPI)
+    {
+        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
+    }
+
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags & ~flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
@@ -1889,7 +1909,7 @@ int InitPlatform(void)
 
     platform.appScreenWidth = CORE.Window.screen.width;
     platform.appScreenHeight = CORE.Window.screen.height;
-    platform.desiredFlags = SanitizeFlags(0 /*SANITIZE_FLAGS_FIRST*/, CORE.Window.flags);
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags);
 
     // NOTE: From this point CORE.Window.flags should always reflect the actual state of the window
     CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
@@ -2008,7 +2028,7 @@ int InitPlatform(void)
             int x = rcWork.left + (monitorWidth - windowWidth)/2;
             int y = rcWork.top + (monitorHeight - windowHeight)/2;
 
-            // center the window and set it to the correct DPI-adjusted size
+            // Center the window and set it to the correct DPI-adjusted size
             SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
         }
         else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
@@ -2211,9 +2231,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             UINT dpi = GetDpiForWindowCompat(hwnd);
             DWORD style = MakeWindowStyle(platform.desiredFlags);
             float clientScale = (CORE.Window.flags & FLAG_WINDOW_HIGHDPI)? ((float)dpi)/96.0f : 1.0f;
-            SIZE maxClientSize = { (LONG)(CORE.Window.screenMax.width*clientScale), (LONG)(CORE.Window.screenMax.height*clientScale) };
+            SIZE maxClientSize = { (LONG)roundf(CORE.Window.screenMax.width*clientScale), (LONG)roundf(CORE.Window.screenMax.height*clientScale) };
             SIZE maxWindowSize = CalcWindowSize(dpi, maxClientSize, style);
-            SIZE minClientSize = { (LONG)(CORE.Window.screenMin.width*clientScale), (LONG)(CORE.Window.screenMin.height*clientScale) };
+            SIZE minClientSize = { (LONG)roundf(CORE.Window.screenMin.width*clientScale), (LONG)roundf(CORE.Window.screenMin.height*clientScale) };
             SIZE minWindowSize = CalcWindowSize(dpi, minClientSize, style);
 
             LPMINMAXINFO lpmmi = (LPMINMAXINFO) lparam;
@@ -2329,8 +2349,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             bool dpiScaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
             // Calculate client area in pixels from points
             SIZE desired = {
-                .cx = dpiScaling? (int)((float)platform.appScreenWidth*dpiScale) : platform.appScreenWidth,
-                .cy = dpiScaling? (int)((float)platform.appScreenHeight*dpiScale) : platform.appScreenHeight
+                .cx = dpiScaling? (int)roundf((float)platform.appScreenWidth*dpiScale) : platform.appScreenWidth,
+                .cy = dpiScaling? (int)roundf((float)platform.appScreenHeight*dpiScale) : platform.appScreenHeight
             };
             // Calculate and set window size, including title and window border
             *inoutSize = CalcWindowSize(newDpi, desired, MakeWindowStyle(CORE.Window.flags));
@@ -2614,8 +2634,8 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
-    unsigned int screenWidth = highdpi? (unsigned int)(((float)clientSize.cx)/dpiScale) : clientSize.cx;
-    unsigned int screenHeight = highdpi? (unsigned int)(((float)clientSize.cy)/dpiScale) : clientSize.cy;
+    unsigned int screenWidth = highdpi? (unsigned int)roundf(((float)clientSize.cx)/dpiScale) : clientSize.cx;
+    unsigned int screenHeight = highdpi? (unsigned int)roundf(((float)clientSize.cy)/dpiScale) : clientSize.cy;
     CORE.Window.screen.width = screenWidth;
     CORE.Window.screen.height = screenHeight;
 
@@ -2672,7 +2692,7 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
 }
 
 // Sanitize flags
-static unsigned SanitizeFlags(int mode, unsigned flags)
+static unsigned SanitizeFlags(unsigned flags)
 {
     if (flags & FLAG_WINDOW_MAXIMIZED)
     {
@@ -2711,14 +2731,8 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
         }
     }
 
-    if (mode == 1)
-    {
-        if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
-        {
-            TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
-            flags &= ~FLAG_MSAA_4X_HINT;
-        }
-    }
+    // Don't change flags that can't be updated after window initialization
+    flags = (flags & ~FLAG_MASK_NO_UPDATE) | (CORE.Window.flags & FLAG_MASK_NO_UPDATE);
 
     return flags;
 }
