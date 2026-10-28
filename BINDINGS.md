@@ -88,7 +88,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [Raylib.4.0.Pascal](https://github.com/sysrpl/Raylib.4.0.Pascal)                         | 4.0              | [Free Pascal](https://en.wikipedia.org/wiki/Free_Pascal)                | Zlib                 |
 | [raylib-python-cffi](https://github.com/electronstudio/raylib-python-cffi)               | **6.0**          | [Python](https://www.python.org)                                        | EPL-2.0              |
 | [raylibpyctbg](https://github.com/overdev/raylibpyctbg)                                  | 5.5              | [Python](https://www.python.org)                                        | MIT                  |
-| [raylib-py](https://github.com/overdev/raylib-py)                                        | **6.0**          | [Python](https://www.python.org)                                        | MIT                  |
+| [raylib-py](https://github.com/overdev/raylib-py)                                        | **6.2**          | [Python](https://www.python.org)                                        | MIT                  |
 | [raylib-python-ctypes](https://github.com/sDos280/raylib-python-ctypes)                  | 4.6-dev          | [Python](https://www.python.org)                                        | MIT                  |
 | [raylib-pkpy-bindings](https://github.com/blueloveTH/pkpy-bindings)                      | 5.5              | [pocketpy](https://pocketpy.dev)                                        | MIT                  |
 | [raylib-php](https://github.com/joseph-montanez/raylib-php)                              | 4.5              | [PHP](https://en.wikipedia.org/wiki/PHP)                                | Zlib                 |
