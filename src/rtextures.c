@@ -493,6 +493,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             {
                 TRACELOG(LOG_WARNING, "IMAGE: HDR file format not supported");
                 UnloadImage(image);
+                image = (Image){ 0 };
             }
         }
 #endif
