@@ -120,7 +120,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [Raylib.lean](https://github.com/KislyjKisel/Raylib.lean)                                | **5.6-dev**      | [Lean4](https://lean-lang.org)                                          | BSD-3-Clause         |
 | [raylib-cobol](https://codeberg.org/glowiak/raylib-cobol)                                | **auto**         | [COBOL](https://gnucobol.sourceforge.io)                                | Public domain        |
 | [raylib-apl](https://github.com/Brian-ED/raylib-apl)                                     | **auto**         | [Dyalog APL](https://www.dyalog.com/)                                   | MIT                  |
-| [raylib-jai](https://github.com/ahmedqarmout2/raylib-jai)                                | **6.0**          | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)     | MIT                  |
+| [raylib-jai](https://github.com/ahmedqarmout2/raylib-jai)                                | **6.2**          | [Jai](https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md)     | MIT                  |
 | [fnl-raylib](https://github.com/0riginaln0/fnl-raylib)                                   | **5.5**          | [Fennel](https://fennel-lang.org/)                                      | MIT                  |
 | [Rayua](https://github.com/uiua-lang/rayua)                                              | **5.5**          | [Uiua](https://www.uiua.org/)                                           | **???**              |
 | [Target](https://github.com/FinnDemonCat/Target/tree/main/lib/raylib)                    | **5.5**          | [Dart](https://dart.dev/)                                               | Apache-2.0 license   |
