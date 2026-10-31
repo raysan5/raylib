@@ -2130,6 +2130,13 @@ void ClosePlatform(void)
         platform.clipboardText = NULL;
     }
 
+    // Unload shcore.dll
+    if (shcore != NULL)
+    {
+        FreeLibrary(shcore);
+        shcore = NULL;
+    }
+
 #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1); // Restore time period
 #endif
