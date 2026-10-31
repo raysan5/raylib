@@ -67,7 +67,7 @@
 
 #include <windowsx.h>
 
-// This is the only enum we need from shellscalingapi.h
+// Avoid including shellscalingapi.h by defining these two enums directly
 #ifndef DPI_ENUMS_DECLARED
 typedef enum PROCESS_DPI_AWARENESS {
     PROCESS_DPI_UNAWARE = 0,
@@ -84,7 +84,6 @@ typedef enum MONITOR_DPI_TYPE {
 
 #define DPI_ENUMS_DECLARED
 #endif
-
 
 #include <malloc.h>          // Required for alloca()
 
@@ -118,6 +117,8 @@ typedef struct {
     int appScreenHeight;
     unsigned int desiredFlags;
 
+    bool perMonitorDPIAwareV2; // Flag to check DPI-awareness level. This is used mainly to distinguish between per-monitor DPI awareness v1 and v2
+
     LARGE_INTEGER timerFrequency;
 
     char *clipboardText;
@@ -135,6 +136,9 @@ typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT lpRect, DWORD dwStyle
 typedef BOOL (WINAPI *SetProcessDpiAwarenessContextProc)(HANDLE value);
 typedef HRESULT (WINAPI *SetProcessDpiAwarenessProc)(PROCESS_DPI_AWARENESS value);
 typedef BOOL (WINAPI *SetProcessDPIAwareProc)(void);
+typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR monitor, MONITOR_DPI_TYPE dpiType, UINT *dpiX, UINT *dpiY);
+typedef HANDLE (WINAPI *GetThreadDpiAwarenessContextProc)(void);
+typedef BOOL (WINAPI *AreDpiAwarenessContextsEqualProc)(HANDLE a, HANDLE b);
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -156,6 +160,9 @@ static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 static SetProcessDpiAwarenessContextProc pSetProcessDpiAwarenessContext = NULL;
 static SetProcessDpiAwarenessProc pSetProcessDpiAwareness = NULL;
 static SetProcessDPIAwareProc pSetProcessDPIAware = NULL;
+static GetDpiForMonitorProc pGetDpiForMonitor = NULL;
+static GetThreadDpiAwarenessContextProc pGetThreadDpiAwarenessContext = NULL;
+static AreDpiAwarenessContextsEqualProc pAreDpiAwarenessContextsEqual = NULL;
 
 static HMODULE shcore = NULL; // shcore.dll (Windows 8.1 and early versions of Windows 10): loaded once, NULL on other versions
 
@@ -431,19 +438,24 @@ static void AToWCopy(const char *ascii, wchar_t *outPtr, size_t outLen)
 static void LoadWin32FunctionPointers(void)
 {
     HMODULE user32 = GetModuleHandleW(L"user32.dll");
+
     pGetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(user32, "GetDpiForWindow");
     pAdjustWindowRectExForDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
     pSetProcessDpiAwarenessContext = (SetProcessDpiAwarenessContextProc)GetProcAddress(user32, "SetProcessDpiAwarenessContext");
-    pSetProcessDPIAware = (SetProcessDPIAwareProc)GetProcAddress(user32, "SetProcessDPIAware");
 
-    // SetProcessDpiAwarenessContext (Windows 10 v1607) supersedes SetProcessDpiAwareness (Windows 8.1)
+    pSetProcessDPIAware = (SetProcessDPIAwareProc)GetProcAddress(user32, "SetProcessDPIAware");
+    pGetThreadDpiAwarenessContext = (GetThreadDpiAwarenessContextProc)GetProcAddress(user32, "GetThreadDpiAwarenessContext");
+    pAreDpiAwarenessContextsEqual = (AreDpiAwarenessContextsEqualProc)GetProcAddress(user32, "AreDpiAwarenessContextsEqual");
+
+    // SetProcessDpiAwarenessContext (Windows 10 v1703) supersedes SetProcessDpiAwareness (Windows 8.1)
     // We can avoid loading the shcore.dll if the newer DPI functions are available
     if (pSetProcessDpiAwarenessContext == NULL)
     {
-        if (shcore == NULL) shcore = LoadLibraryW(L"shcore.dll");
+        shcore = LoadLibraryW(L"shcore.dll");
         if (shcore != NULL)
         {
             pSetProcessDpiAwareness = (SetProcessDpiAwarenessProc)GetProcAddress(shcore, "SetProcessDpiAwareness");
+            pGetDpiForMonitor = (GetDpiForMonitorProc)GetProcAddress(shcore, "GetDpiForMonitor");
         }
     }
 }
@@ -456,15 +468,25 @@ static UINT GetDpiForWindowCompat(HWND hwnd)
     if (pGetDpiForWindow != NULL)
     {
         // This API requires Windows 10 v1607 or newer
+        // Returns 0 on failure
         result = pGetDpiForWindow(hwnd);
     }
-    else
+    else if (pGetDpiForMonitor != NULL)
     {
-        // Window uses CS_OWNDC, so we don't need to call ReleaseDC
-        HDC dc = GetDC(hwnd);
+        // Windows 8.1 and early versions of Windows 10
+        // Get the DPI based on which monitor the window is on
+        HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        UINT dpiX = 0;
+        UINT dpiY = 0;
+        HRESULT hr = pGetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        if (hr == S_OK) result = dpiX;
+    }
 
-        // Before Windows 10 v1607: fallback to system-wide DPI (96 for DPI-unaware processes)
-        result = GetDeviceCaps(dc, LOGPIXELSX);
+    if (result == 0)
+    {
+        // If running on older versions of Windows or if the modern API calls fail: fallback to system-wide DPI
+        // We can call GetDC without a corresponding ReleaseDC because the window was created with CS_OWNDC
+        result = GetDeviceCaps(GetDC(hwnd), LOGPIXELSX);
     }
 
     return result;
@@ -474,7 +496,7 @@ static UINT GetDpiForWindowCompat(HWND hwnd)
 static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
 {
     BOOL result = FALSE;
-    if (pAdjustWindowRectExForDpi != NULL)
+    if ((pAdjustWindowRectExForDpi != NULL) && platform.perMonitorDPIAwareV2)
     {
         result = pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
     }
@@ -500,7 +522,6 @@ static void SetProcessDpiAwareCompat(void)
 
         if (!succeeded)
         {
-            // Windows 10 v1607
             // If monitor aware v2 is not available, try v1
             pSetProcessDpiAwarenessContext((HANDLE)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
         }
@@ -516,7 +537,12 @@ static void SetProcessDpiAwareCompat(void)
         pSetProcessDPIAware();
     }
 
-    // All prior versions of Windows will fall through
+    platform.perMonitorDPIAwareV2 = false;
+    if ((pGetThreadDpiAwarenessContext != NULL) && (pAreDpiAwarenessContextsEqual != NULL))
+    {
+        // There are subtle differences between per-monitor v1 and v2
+        platform.perMonitorDPIAwareV2 = pAreDpiAwarenessContextsEqual(pGetThreadDpiAwarenessContext(), (HANDLE)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
 }
 
 static bool DecoratedFromStyle(DWORD style)
@@ -1017,15 +1043,8 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    if (flags & FLAG_MSAA_4X_HINT)
-    {
-        TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
-    }
-
-    if (flags & FLAG_WINDOW_HIGHDPI)
-    {
-        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
-    }
+    if (flags & FLAG_MSAA_4X_HINT) TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
+    if (flags & FLAG_WINDOW_HIGHDPI) TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
 
     platform.desiredFlags = SanitizeFlags(CORE.Window.flags | flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
@@ -1034,15 +1053,8 @@ void SetWindowState(unsigned int flags)
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    if (flags & FLAG_MSAA_4X_HINT)
-    {
-        TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
-    }
-
-    if (flags & FLAG_WINDOW_HIGHDPI)
-    {
-        TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
-    }
+    if (flags & FLAG_MSAA_4X_HINT) TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
+    if (flags & FLAG_WINDOW_HIGHDPI) TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
 
     platform.desiredFlags = SanitizeFlags(CORE.Window.flags & ~flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
@@ -1998,41 +2010,40 @@ int InitPlatform(void)
 
     CORE.Window.ready = true;
 
-    // Adjust the window size and position before displaying it, unless it's minimized
-    if ((platform.desiredFlags & FLAG_WINDOW_MINIMIZED) == 0)
+    RECT rect = { 0, 0, platform.appScreenWidth, platform.appScreenHeight };
+    if (highDPIWindowFlag)
     {
-        RECT rect = { 0, 0, platform.appScreenWidth, platform.appScreenHeight };
-        if (highDPIWindowFlag)
-        {
-            rect.right = (LONG)roundf(platform.appScreenWidth*dpiScale);
-            rect.bottom = (LONG)roundf(platform.appScreenHeight*dpiScale);
-        }
-        AdjustWindowRectExForDpiCompat(
-            &rect, MakeWindowStyle(platform.desiredFlags),
-            FALSE, WINDOW_STYLE_EX, dpi
-        );
-
-        int windowWidth = rect.right - rect.left;
-        int windowHeight = rect.bottom - rect.top;
-
-        HMONITOR monitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTONEAREST);
-
-        MONITORINFO monitorInfo = { 0 };
-        monitorInfo.cbSize = sizeof(monitorInfo);
-        if (GetMonitorInfoW(monitor, &monitorInfo))
-        {
-            // rcWork is the monitor area, not including the taskbar
-            RECT rcWork = monitorInfo.rcWork;
-            int monitorWidth = rcWork.right - rcWork.left;
-            int monitorHeight = rcWork.bottom - rcWork.top;
-            int x = rcWork.left + (monitorWidth - windowWidth)/2;
-            int y = rcWork.top + (monitorHeight - windowHeight)/2;
-
-            // Center the window and set it to the correct DPI-adjusted size
-            SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
-        }
-        else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
+        rect.right = (LONG)roundf(platform.appScreenWidth*dpiScale);
+        rect.bottom = (LONG)roundf(platform.appScreenHeight*dpiScale);
     }
+    AdjustWindowRectExForDpiCompat(
+        &rect, MakeWindowStyle(platform.desiredFlags),
+        FALSE, WINDOW_STYLE_EX, dpi
+    );
+
+    int windowWidth = rect.right - rect.left;
+    int windowHeight = rect.bottom - rect.top;
+
+    HMONITOR currentMonitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO monitorInfo = { 0 };
+    monitorInfo.cbSize = sizeof(monitorInfo);
+    if (GetMonitorInfoW(currentMonitor, &monitorInfo))
+    {
+        // rcWork is the monitor area, not including the taskbar
+        RECT rcWork = monitorInfo.rcWork;
+        int monitorWidth = rcWork.right - rcWork.left;
+        int monitorHeight = rcWork.bottom - rcWork.top;
+        int x = rcWork.left + (monitorWidth - windowWidth)/2;
+        int y = rcWork.top + (monitorHeight - windowHeight)/2;
+
+        // Ensure the window doesn't go off-screen; otherwise, the user might not be able to move it
+        if (x < rcWork.left) x = rcWork.left;
+        if (y < rcWork.top) y = rcWork.top;
+
+        // Center the window and set it to the correct DPI-adjusted size
+        SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+    else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
 
     if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
     {
@@ -2374,13 +2385,36 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 
             // Never set the window size to anything other than the suggested rect here
             // Doing so can cause a window to stutter between monitors when transitioning between them
-            BOOL succeeded = SetWindowPos(hwnd, NULL,
-                suggestedRect->left, suggestedRect->top,
-                suggestedRect->right - suggestedRect->left,
-                suggestedRect->bottom - suggestedRect->top,
-                SWP_NOZORDER | SWP_NOACTIVATE);
+            if (platform.perMonitorDPIAwareV2)
+            {
+                BOOL succeeded = SetWindowPos(hwnd, NULL,
+                    suggestedRect->left, suggestedRect->top,
+                    suggestedRect->right - suggestedRect->left,
+                    suggestedRect->bottom - suggestedRect->top,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
 
-            if (succeeded == FALSE) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+                if (succeeded == FALSE) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+            }
+            else if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) && !(CORE.Window.flags & (FLAG_WINDOW_MINIMIZED | FLAG_WINDOW_MAXIMIZED | FLAG_BORDERLESS_WINDOWED_MODE)))
+            {
+                // This code only runs when per-monitor dpi awareness v1 is enabled. v1 doesn't send WM_GETDPISCALEDSIZE and the suggested RECT is subtly wrong (doesn't properly account for the title bar size)
+                // The solution is to manually build a properly sized RECT (and ignore the advice of not using the suggested RECT). This makes a per-monitor v1 process match the behavior of per-monitor v2
+                // To prevent the potential stutter when dragging the window between monitors, the manually sized rect keeps the same center as the suggested RECT
+                RECT windowRect = { 0 };
+                RECT clientRect = { 0 };
+                GetWindowRect(hwnd, &windowRect);
+                GetClientRect(hwnd, &clientRect);
+
+                float dpiScale = ((float)LOWORD(wparam))/96.0f;
+                int width = (int)roundf(platform.appScreenWidth*dpiScale) + (windowRect.right - windowRect.left) - clientRect.right;
+                int height = (int)roundf(platform.appScreenHeight*dpiScale) + (windowRect.bottom - windowRect.top) - clientRect.bottom;
+                int x = suggestedRect->left + ((suggestedRect->right - suggestedRect->left) - width)/2;
+                int y = suggestedRect->top + ((suggestedRect->bottom - suggestedRect->top) - height)/2;
+
+                BOOL succeeded = SetWindowPos(hwnd, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+
+                if (succeeded == FALSE) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+            }
 
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 
@@ -2633,12 +2667,12 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     GetClientRect(hwnd, &rect);
     SIZE clientSize = { rect.right, rect.bottom };
 
+    if ((CORE.Window.render.width != clientSize.cx) || (CORE.Window.render.height != clientSize.cy)) CORE.Window.resizedLastFrame = true;
     CORE.Window.render.width = (int)clientSize.cx;
     CORE.Window.render.height = (int)clientSize.cy;
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
 
-    CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
     unsigned int screenWidth = highdpi? (unsigned int)roundf(((float)clientSize.cx)/dpiScale) : clientSize.cx;
@@ -2656,8 +2690,11 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
 
-    float mouseScale = (CORE.Window.flags & FLAG_WINDOW_HIGHDPI)? (1.0f/dpiScale) : 1.0f;
-    CORE.Input.Mouse.scale = (Vector2){ mouseScale, mouseScale };
+    if (CORE.Window.flags & FLAG_WINDOW_HIGHDPI)
+    {
+        float mouseScale = 1.0f/dpiScale;
+        CORE.Input.Mouse.scale = (Vector2){ mouseScale, mouseScale };
+    }
 }
 
 // Update window style
