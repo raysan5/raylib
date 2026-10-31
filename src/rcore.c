@@ -3186,8 +3186,9 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     int dataSize = (int)strlen(text); // WARNING: Expecting NULL terminated strings!
     int ending = dataSize - 1;
     int padding = 0;
-    while (text[ending] == '=') { padding++; ending--; }
+    while ((ending >= 0) && (text[ending] == '=')) { padding++; ending--; }
     int estimatedOutputSize = 3*(dataSize/4) - padding;
+    if (estimatedOutputSize < 0) estimatedOutputSize = 0;   // Invalid input, i.e. "QQ=" or "===="
     int maxOutputSize = 3*(dataSize/4);
 
     // Load some memory to store decoded data
