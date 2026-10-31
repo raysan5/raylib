@@ -57,6 +57,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 | [raylib.f](https://github.com/cthulhuology/raylib.f)                                     | **5.5**          | [Forth](https://forth.com)                                              | Zlib                 |
 | [fortran-raylib](https://github.com/interkosmos/fortran-raylib)                          | **6.0**          | [Fortran](https://fortran-lang.org)                                     | ISC                  |
 | [raylib-go](https://github.com/gen2brain/raylib-go)                                      | **6.0**          | [Go](https://golang.org)                                                | Zlib                 |
+| [raygoose](https://github.com/lamweilun/raygoose)                                        | **6.5-dev**      | [Goose](https://github.com/aardappel/goose)                             | Zlib                 |
 | [raylib-guile](https://github.com/petelliott/raylib-guile)                               | **auto**         | [Guile](https://www.gnu.org/software/guile)                             | Zlib                 |
 | [h-raylib](https://github.com/Anut-py/h-raylib)                                          | **6.1-dev**      | [Haskell](https://haskell.org)                                          | Apache-2.0           |
 | [raylib-hx](https://github.com/foreignsasquatch/raylib-hx)                               | 5.5              | [Haxe](https://haxe.org)                                                | Zlib                 |
