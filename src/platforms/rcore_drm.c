@@ -1107,8 +1107,9 @@ void PollInputEvents(void)
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 #endif
 
-    // Check exit key
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    // Check exit key, KEY_NULL disables it
+    if ((CORE.Input.Keyboard.exitKey != KEY_NULL) &&
+        (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1)) CORE.Window.shouldClose = true;
 
     // Register previous mouse position
     if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -1838,8 +1839,14 @@ static void ProcessKeyboard(void)
         // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
         if (keysBuffer[i] == 0x1b)
         {
-            // Check if ESCAPE key has been pressed to stop program
-            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
+            // A single ESC byte is the ESCAPE key, it only stops the program if it is the exit key
+            if (bufferByteCount == 1)
+            {
+                CORE.Input.Keyboard.currentKeyState[256] = 1;    // raylib KEY_ESCAPE
+
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 256;     // Add keys pressed into queue
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
             else
             {
                 if (keysBuffer[i + 1] == 0x5b) // Special function key
