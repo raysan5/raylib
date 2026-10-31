@@ -725,11 +725,15 @@ void InitWindow(int width, int height, const char *title)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
+    // If InitWindow() failed, rlgl and the default font were never loaded
+    if (CORE.Window.ready)
+    {
 #if SUPPORT_MODULE_RTEXT
-    UnloadFontDefault();        // WARNING: Module required: rtext
+        UnloadFontDefault();    // WARNING: Module required: rtext
 #endif
 
-    rlglClose();                // De-init rlgl
+        rlglClose();            // De-init rlgl
+    }
 
     // De-initialize platform
     //--------------------------------------------------------------
