@@ -1,8 +1,8 @@
 name: Run headless tests
 
-# NOTE: copy this file to .github/workflows/run_tests.yml in the fork.
+# Runs the headless tests in tests/ on Linux.
 # Dependencies mirror the ones used by build_linux.yml of raylib.
-# STATUS: NOT executed by the authors yet - run it in the fork and fix if needed.
+# STATUS: 1st run failed (missing libglfw3-dev); fixed in commit b83e2d3. macOS not tested.
 
 on:
   workflow_dispatch:
