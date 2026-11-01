@@ -1,0 +1,42 @@
+name: Run headless tests
+
+# NOTE: copy this file to .github/workflows/run_tests.yml in the fork.
+# Dependencies mirror the ones used by build_linux.yml of raylib.
+# STATUS: NOT executed by the authors yet - run it in the fork and fix if needed.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/run_tests.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/run_tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev libwayland-dev libxkbcommon-dev
+
+    - name: Build raylib (static)
+      working-directory: src
+      run: make PLATFORM=PLATFORM_DESKTOP -j"$(nproc)"
+
+    - name: Run tests
+      working-directory: tests
+      run: make test
