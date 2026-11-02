@@ -261,6 +261,12 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
 
     if (file_data_ptr != RLTEXGPU_NULL)
     {
+        if (file_size < (4 + sizeof(dds_header)))
+        {
+            RLTEXGPU_LOG("DDS file data too small");
+        }
+        else
+        {
         // Verify the type of file
         unsigned char *dds_header_id = file_data_ptr;
         file_data_ptr += 4;
@@ -274,6 +280,8 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             dds_header *header = (dds_header *)file_data_ptr;
 
             file_data_ptr += sizeof(dds_header);        // Skip header
+
+            unsigned int file_data_remaining = file_size - (unsigned int)(file_data_ptr - file_data);
 
             *width = header->width;
             *height = header->height;
@@ -292,6 +300,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 {
                     int data_size = image_pixel_size*sizeof(unsigned short);
                     if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                    if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                     image_data = RLTEXGPU_MALLOC(data_size);
 
                     RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -304,6 +313,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -324,6 +334,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -346,6 +357,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             {
                 int data_size = image_pixel_size*3*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -356,6 +368,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             {
                 int data_size = image_pixel_size*4*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -382,6 +395,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
                 else data_size = header->pitch_or_linear_size;
 
+                if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) break;
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -398,6 +412,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     default: break;
                 }
             }
+        }
         }
     }
 
@@ -444,6 +459,12 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
 
     if (file_data_ptr != RLTEXGPU_NULL)
     {
+        if (file_size < sizeof(pkm_header))
+        {
+            RLTEXGPU_LOG("PKM file data too small");
+        }
+        else
+        {
         pkm_header *header = (pkm_header *)file_data_ptr;
 
         if ((header->id[0] != 'P') || (header->id[1] != 'K') || (header->id[2] != 'M') || (header->id[3] != ' '))
@@ -453,6 +474,8 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
         else
         {
             file_data_ptr += sizeof(pkm_header);   // Skip header
+
+            unsigned int file_data_remaining = file_size - (unsigned int)sizeof(pkm_header);
 
             // NOTE: format, width and height come as big-endian, data must be swapped to little-endian
             header->format = ((header->format & 0x00FF) << 8) | ((header->format & 0xFF00) >> 8);
@@ -468,6 +491,7 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
 
             int data_size = (*width)*(*height)*bpp/8;  // Total data size in bytes
 
+            if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) return RLTEXGPU_NULL;
             image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
             RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -475,6 +499,7 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
             if (header->format == 0) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC1_RGB;
             else if (header->format == 1) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC2_RGB;
             else if (header->format == 3) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
+        }
         }
     }
 
@@ -527,6 +552,12 @@ void *rl_load_ktx_from_memory(const unsigned char *file_data, unsigned int file_
 
     if (file_data_ptr != RLTEXGPU_NULL)
     {
+        if (file_size < sizeof(ktx_header))
+        {
+            RLTEXGPU_LOG("KTX file data too small");
+        }
+        else
+        {
         ktx_header *header = (ktx_header *)file_data_ptr;
 
         if ((header->id[1] != 'K') || (header->id[2] != 'T') || (header->id[3] != 'X') ||
@@ -542,10 +573,16 @@ void *rl_load_ktx_from_memory(const unsigned char *file_data, unsigned int file_
             *height = header->height;
             *mips = header->mipmap_levels;
 
+            unsigned int header_and_kv = (unsigned int)sizeof(ktx_header) + header->key_value_data_size;
+            if (header_and_kv + sizeof(int) > file_size) return RLTEXGPU_NULL;
+
             file_data_ptr += header->key_value_data_size; // Skip value data size
 
             int data_size = ((int *)file_data_ptr)[0];
             file_data_ptr += sizeof(int);
+
+            unsigned int file_data_remaining = file_size - (unsigned int)(file_data_ptr - file_data);
+            if ((data_size <= 0) || ((unsigned int)data_size > file_data_remaining)) return RLTEXGPU_NULL;
 
             image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
@@ -556,6 +593,7 @@ void *rl_load_ktx_from_memory(const unsigned char *file_data, unsigned int file_
             else if (header->gl_internal_format == 0x9278) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA;
 
             // TODO: Support uncompressed data formats? Right now it returns format = 0!
+        }
         }
     }
 
@@ -763,6 +801,12 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
 
     if (file_data_ptr != RLTEXGPU_NULL)
     {
+        if (file_size < sizeof(pvr_header))
+        {
+            RLTEXGPU_LOG("PVR file data too small");
+        }
+        else
+        {
         // Check PVR image version
         unsigned char pvr_version = file_data_ptr[0];
 
@@ -803,6 +847,7 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
                 else if (header->channels[0] == 2) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGB;
                 else if (header->channels[0] == 3) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGBA;
 
+                if ((unsigned int)sizeof(pvr_header) + header->metadata_size > file_size) return RLTEXGPU_NULL;
                 file_data_ptr += header->metadata_size;    // Skip meta data header
 
                 // Calculate data size (depends on format)
@@ -822,12 +867,15 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
                 }
 
                 int data_size = (*width)*(*height)*bpp/8;  // Total data size in bytes
+                unsigned int pvr_remaining = file_size - (unsigned int)(file_data_ptr - file_data);
+                if ((data_size <= 0) || ((unsigned int)data_size > pvr_remaining)) return RLTEXGPU_NULL;
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
             }
         }
         else if (pvr_version == 52) RLTEXGPU_LOG("PVRv2 format not supported, update your files to PVRv3");
+        }
     }
 
     return image_data;
@@ -863,6 +911,12 @@ void *rl_load_astc_from_memory(const unsigned char *file_data, unsigned int file
 
     if (file_data_ptr != RLTEXGPU_NULL)
     {
+        if (file_size < sizeof(astc_header))
+        {
+            RLTEXGPU_LOG("ASTC file data too small");
+        }
+        else
+        {
         astc_header *header = (astc_header *)file_data_ptr;
 
         if ((header->id[3] != 0x5c) || (header->id[2] != 0xa1) || (header->id[1] != 0xab) || (header->id[0] != 0x13))
@@ -885,6 +939,8 @@ void *rl_load_astc_from_memory(const unsigned char *file_data, unsigned int file
             if ((bpp == 8) || (bpp == 2))
             {
                 int data_size = (*width)*(*height)*bpp/8;  // Data size in bytes
+                unsigned int astc_remaining = file_size - (unsigned int)sizeof(astc_header);
+                if ((data_size <= 0) || ((unsigned int)data_size > astc_remaining)) return RLTEXGPU_NULL;
 
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
@@ -894,6 +950,7 @@ void *rl_load_astc_from_memory(const unsigned char *file_data, unsigned int file
                 else if (bpp == 2) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA;
             }
             else RLTEXGPU_LOG("ASTC block size configuration not supported");
+        }
         }
     }
 
