@@ -725,8 +725,10 @@ void InitWindow(int width, int height, const char *title)
 // Close window and unload OpenGL context
 void CloseWindow(void)
 {
-    // If InitWindow() failed, rlgl and the default font were never loaded
-    if (CORE.Window.ready)
+    // If InitWindow() failed, there is no window and rlgl and the default font were never loaded
+    bool windowReady = CORE.Window.ready;
+
+    if (windowReady)
     {
 #if SUPPORT_MODULE_RTEXT
         UnloadFontDefault();    // WARNING: Module required: rtext
@@ -742,8 +744,8 @@ void CloseWindow(void)
 
     // Clear CORE data, in case new window is initialized
     CORE = (CoreData){ 0 };
-    
-    TRACELOG(LOG_INFO, "Window closed successfully");
+
+    if (windowReady) TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
 // Check if window has been initialized successfully
