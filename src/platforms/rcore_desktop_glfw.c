@@ -724,10 +724,15 @@ void SetWindowMinSize(int width, int height)
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    Vector2 scaleDpi = { 1.0f, 1.0f };
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)) scaleDpi = GetWindowScaleDPI();
+#endif
+
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.width*scaleDpi.x);
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.height*scaleDpi.y);
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.width*scaleDpi.x);
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.height*scaleDpi.y);
 
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
@@ -738,10 +743,15 @@ void SetWindowMaxSize(int width, int height)
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
 
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    Vector2 scaleDpi = { 1.0f, 1.0f };
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)) scaleDpi = GetWindowScaleDPI();
+#endif
+
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.width*scaleDpi.x);
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.height*scaleDpi.y);
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.width*scaleDpi.x);
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.height*scaleDpi.y);
 
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
@@ -751,6 +761,15 @@ void SetWindowSize(int width, int height)
 {
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        width = (int)roundf((float)width*scaleDpi.x);
+        height = (int)roundf((float)height*scaleDpi.y);
+    }
+#endif
 
     glfwSetWindowSize(platform.handle, width, height);
 }
