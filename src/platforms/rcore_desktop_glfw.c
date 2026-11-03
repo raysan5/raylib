@@ -752,6 +752,15 @@ void SetWindowSize(int width, int height)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        CORE.Window.screen.width = (int)roundf((float)width/scaleDpi.x);
+        CORE.Window.screen.height = (int)roundf((float)height/scaleDpi.y);
+    }
+#endif
+
     glfwSetWindowSize(platform.handle, width, height);
 }
 
