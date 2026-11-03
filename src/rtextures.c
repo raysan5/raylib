@@ -4592,6 +4592,7 @@ void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position,
     ImageDrawImagePro(dst, textImage, srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
 
     UnloadImage(textImage);
+    UnloadRenderTexture(framebuffer);
 }
 
 //------------------------------------------------------------------------------------
