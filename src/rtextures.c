@@ -4539,12 +4539,8 @@ void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position,
     if (dst == NULL || text == NULL || dst->data == NULL)
         return;
 
-
-
     // Draws the text into a framebuffer using the gpu and renders that framebuffer image into the dst image
     
-
-
     Vector2 framebufferSize = MeasureTextEx(font, text, fontSize, spacing);
 
     Vector2 corners[4] = {
@@ -4584,9 +4580,7 @@ void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position,
 
         DrawTextPro(font, text, (Vector2){ -minX, -minY }, origin, rotation, fontSize, spacing, tint);
 
-
     EndTextureMode();
-
 
 
     Image textImage = LoadImageFromTexture(framebuffer.texture);
