@@ -749,7 +749,17 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    // FramebufferSizeCallback updates the logical screen size, including high-DPI scaling.
+    int currentWidth = 0;
+    int currentHeight = 0;
+    glfwGetWindowSize(platform.handle, &currentWidth, &currentHeight);
+
+    // Same-size requests do not trigger a framebuffer callback to restore the logical screen size
+    if ((width != currentWidth) || (height != currentHeight))
+    {
+        CORE.Window.screen.width = width;
+        CORE.Window.screen.height = height;
+    }
+
     glfwSetWindowSize(platform.handle, width, height);
 }
 
