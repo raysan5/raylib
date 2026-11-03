@@ -1616,6 +1616,81 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     return imText;
 }
 
+Image ImageTextPro(Font font, const char *text, float fontSize, float spacing, Color tint) {
+     Image imText = { 0 };
+#if SUPPORT_MODULE_RTEXT
+    if (text == NULL) return imText;
+
+    int textLength = (int)strlen(text); // Get length of text in bytes
+    int textOffsetX = 0;            // Image drawing position X
+    int textOffsetY = 0;            // Offset between lines (on linebreak '\n')
+    int lineIndex = 0;              // Current line index (on linebreak '\n')
+
+    // NOTE: Text image is generated at font base size, later scaled to desired font size
+    Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
+    Vector2 textSize = MeasureTextEx(font, text, fontSize, spacing);
+
+    int lineBreakCount = 0;         // Number of line breaks ('\n') in text
+    for (int i = 0; i < textLength; i++)
+    {
+        if (text[i] == '\n') lineBreakCount++;
+    }
+
+    float lineSpacing = 0.0f;       // Line spacing, as used by MeasureTextEx()
+    if (lineBreakCount > 0) lineSpacing = (textSize.y - fontSize)/lineBreakCount - fontSize;
+
+    float lineStep = (float)font.baseSize + lineSpacing*(float)font.baseSize/fontSize;   // Line advance at base size
+
+    // Create image to store text
+    imText = GenImageColor((int)imSize.x, font.baseSize + (int)(lineBreakCount*lineStep), BLANK);
+
+    for (int i = 0; i < textLength;)
+    {
+        // Get next codepoint from byte string and glyph index in font
+        int codepointByteCount = 0;
+        int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
+        int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
+
+        if (codepoint == '\n')
+        {
+            lineIndex++;
+            textOffsetY = (int)(lineIndex*lineStep);
+            textOffsetX = 0;
+        }
+        else
+        {
+            if ((codepoint != ' ') && (codepoint != '\t'))
+            {
+                Rectangle rec = { (float)(textOffsetX + font.glyphs[index].offsetX), (float)(textOffsetY + font.glyphs[index].offsetY), font.recs[index].width, font.recs[index].height };
+                ImageDrawImagePro(&imText, font.glyphs[index].image, (Rectangle){ 0, 0, (float)font.glyphs[index].image.width, (float)font.glyphs[index].image.height },
+                    rec, (Vector2){ 0 }, 0.0f, tint);
+            }
+
+            if (font.glyphs[index].advanceX == 0) textOffsetX += (int)(font.recs[index].width + spacing);
+            else textOffsetX += font.glyphs[index].advanceX + (int)spacing;
+        }
+
+        i += codepointByteCount;   // Move text bytes counter to next codepoint
+    }
+
+    // Scale image depending on text size
+    if (fontSize != (float)font.baseSize)
+    {
+        float scaleFactor = fontSize/(float)font.baseSize;
+        TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
+
+        // Using nearest-neighbor scaling algorithm for default font
+        // TODO: Support other scaling mechanism, use flag?
+        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imText.width*scaleFactor), (int)(imText.height*scaleFactor));
+        else ImageResize(&imText, (int)(imText.width*scaleFactor), (int)(imText.height*scaleFactor));
+    }
+#else
+    imText = GenImageColor(200, 60, BLACK);     // Generating placeholder black image rectangle
+    TRACELOG(LOG_WARNING, "IMAGE: ImageTextEx() requires module: rtext");
+#endif
+    return imText;
+}
+
 // Create an image from a selected channel of another image
 Image ImageFromChannel(Image image, int selectedChannel)
 {
@@ -2783,6 +2858,7 @@ void ImageRotateCCW(Image *image)
         image->height = width;
     }
 }
+
 
 // Modify image color: tint
 void ImageColorTint(Image *image, Color color)
@@ -4454,10 +4530,74 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
     UnloadImage(imText);
 }
 
+
+
 // Draw text using Font and pro parameters (rotation)
 void ImageDrawTextPro(Image *dst, Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint)
 {
-    // TODO: NEW: Implement ImageDrawTextPro()
+
+    if (dst == NULL || text == NULL || dst->data == NULL)
+        return;
+
+
+
+    // Draws the text into a framebuffer using the gpu and renders that framebuffer image into the dst image
+    
+
+
+    Vector2 framebufferSize = MeasureTextEx(font, text, fontSize, spacing);
+
+    Vector2 corners[4] = {
+        { -origin.x, -origin.y },
+        { framebufferSize.x - origin.x, -origin.y },
+        { framebufferSize.x - origin.x, framebufferSize.y - origin.y  },
+        { -origin.x, framebufferSize.y - origin.y  }
+    };
+
+
+    // compute the bounding box
+
+    float rad = rotation*DEG2RAD;
+    float c = cosf(rad), s = sinf(rad);
+    float minX = 0, minY = 0, maxX = 0, maxY = 0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        float x = corners[i].x * c - corners[i].y * s;
+        float y = corners[i].x * s + corners[i].y * c;
+        if ((i == 0) || (x < minX)) minX = x;
+        if ((i == 0) || (y < minY)) minY = y;
+        if ((i == 0) || (x > maxX)) maxX = x;
+        if ((i == 0) || (y > maxY)) maxY = y;
+    }
+    minX = floorf(minX); minY = floorf(minY);
+    maxX = ceilf(maxX);  maxY = ceilf(maxY);
+
+    int width  = (int)(maxX - minX);
+    int height = (int)(maxY - minY);
+    if ((width <= 0) || (height <= 0)) return;
+
+
+    RenderTexture2D framebuffer = LoadRenderTexture(width, height);
+
+    BeginTextureMode(framebuffer);
+
+        DrawTextPro(font, text, (Vector2){ -minX, -minY }, origin, rotation, fontSize, spacing, tint);
+
+
+    EndTextureMode();
+
+
+
+    Image textImage = LoadImageFromTexture(framebuffer.texture);
+
+    ImageFlipVertical(&textImage);
+
+    Rectangle srcRec = { 0.0f, 0.0f, (float)textImage.width, (float)textImage.height };
+    Rectangle dstRec = { position.x + minX, position.y + minY, (float)textImage.width, (float)textImage.height };
+    ImageDrawImagePro(dst, textImage, srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
+
+    UnloadImage(textImage);
 }
 
 //------------------------------------------------------------------------------------
