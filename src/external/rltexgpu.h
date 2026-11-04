@@ -286,12 +286,15 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             if (header->mipmap_count == 0) *mips = 1;   // Parameter not used
             else *mips = header->mipmap_count;
 
+            unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+
             if (header->ddspf.rgb_bit_count == 16)      // 16bit mode, no compressed
             {
                 if (header->ddspf.flags == 0x40)        // No alpha channel
                 {
                     int data_size = image_pixel_size*sizeof(unsigned short);
                     if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                    if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                     image_data = RLTEXGPU_MALLOC(data_size);
 
                     RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -304,6 +307,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -324,6 +328,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                     {
                         int data_size = image_pixel_size*sizeof(unsigned short);
                         if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                        if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                         image_data = RLTEXGPU_MALLOC(data_size);
 
                         RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -346,6 +351,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             {
                 int data_size = image_pixel_size*3*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -356,6 +362,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
             {
                 int data_size = image_pixel_size*4*sizeof(unsigned char);
                 if (header->mipmap_count > 1) data_size = data_size + data_size/3;
+                if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                 image_data = RLTEXGPU_MALLOC(data_size);
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -382,6 +389,7 @@ void *rl_load_dds_from_memory(const unsigned char *file_data, unsigned int file_
                 if (header->mipmap_count > 1) data_size = header->pitch_or_linear_size + header->pitch_or_linear_size/3;
                 else data_size = header->pitch_or_linear_size;
 
+                if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -467,6 +475,8 @@ void *rl_load_pkm_from_memory(const unsigned char *file_data, unsigned int file_
             if (header->format == 3) bpp = 8;
 
             int data_size = (*width)*(*height)*bpp/8;  // Total data size in bytes
+            unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+            if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
 
             image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
@@ -542,10 +552,16 @@ void *rl_load_ktx_from_memory(const unsigned char *file_data, unsigned int file_
             *height = header->height;
             *mips = header->mipmap_levels;
 
+            unsigned int kv_end = (unsigned int)(sizeof(ktx_header) + header->key_value_data_size + sizeof(int));
+            if (kv_end > file_size) return image_data;
+
             file_data_ptr += header->key_value_data_size; // Skip value data size
 
             int data_size = ((int *)file_data_ptr)[0];
             file_data_ptr += sizeof(int);
+
+            unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+            if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
 
             image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
@@ -803,6 +819,9 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
                 else if (header->channels[0] == 2) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGB;
                 else if (header->channels[0] == 3) *format = RLTEXGPU_PIXELFORMAT_COMPRESSED_PVRT_RGBA;
 
+                unsigned int meta_end = (unsigned int)(sizeof(pvr_header) + header->metadata_size);
+                if (meta_end > file_size) return image_data;
+
                 file_data_ptr += header->metadata_size;    // Skip meta data header
 
                 // Calculate data size (depends on format)
@@ -822,6 +841,8 @@ void *rl_load_pvr_from_memory(const unsigned char *file_data, unsigned int file_
                 }
 
                 int data_size = (*width)*(*height)*bpp/8;  // Total data size in bytes
+                unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+                if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
                 RLTEXGPU_MEMCPY(image_data, file_data_ptr, data_size);
@@ -885,6 +906,8 @@ void *rl_load_astc_from_memory(const unsigned char *file_data, unsigned int file
             if ((bpp == 8) || (bpp == 2))
             {
                 int data_size = (*width)*(*height)*bpp/8;  // Data size in bytes
+                unsigned int data_offset = (unsigned int)(file_data_ptr - file_data);
+                if (data_size <= 0 || data_offset + (unsigned int)data_size > file_size) return image_data;
 
                 image_data = RLTEXGPU_MALLOC(data_size*sizeof(unsigned char));
 
