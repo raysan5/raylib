@@ -2100,10 +2100,10 @@ char **TextSplit(const char *text, char delimiter, int *count)
             else if (buffer[i] == delimiter)
             {
                 buffer[i] = '\0';   // Set an end of string at this point
+                if (counter == MAX_TEXTSPLIT_COUNT) break;  // No room for more substrings, keep the last one complete
+
                 buffers[counter] = buffer + i + 1;
                 counter++;
-
-                if (counter == MAX_TEXTSPLIT_COUNT) break;
             }
         }
     }
