@@ -182,10 +182,13 @@
 #endif
 
 #define _CRT_INTERNAL_NONSTDC_NAMES  1
-#include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
+#include <sys/stat.h>               // Required for: stat(), S_ISREG, S_ISDIR [Used in GetFileModTime(), IsPathFile(), IsPathDirectory()]
 
 #if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
     #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+#if !defined(S_ISDIR) && defined(S_IFMT) && defined(S_IFDIR)
+    #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif
 
 #if defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
@@ -2880,7 +2883,8 @@ bool IsPathDirectory(const char *path)
 {
     bool result = false;
 
-    if (!IsPathFile(path)) result = true;
+    struct stat info = { 0 };
+    if ((stat(path, &info) == 0) && S_ISDIR(info.st_mode)) result = true;
 
     return result;
 }
