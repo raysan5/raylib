@@ -47,7 +47,7 @@ int main(void)
     // Set magnifying glass zoom
     camera.zoom = 2;
     // Offset by half the size of the magnifying glass to counteract drawing the texture centered on the mouse position
-    camera.offset = Vector2Multiply((Vector2){ 128, 128 }, GetWindowScaleDPI());
+    camera.offset = (Vector2){ 128, 128 };
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
