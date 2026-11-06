@@ -1329,6 +1329,12 @@ float *LoadWaveSamples(Wave wave)
 {
     float *samples = (float *)RL_MALLOC(wave.frameCount*wave.channels*sizeof(float));
 
+    if (samples == NULL)
+    {
+        TRACELOG(LOG_WARNING, "WAVE: Failed to allocate memory for samples");
+        return NULL;
+    }
+
     // NOTE: sampleCount is the total number of interlaced samples (including channels)
 
     for (unsigned int i = 0; i < wave.frameCount*wave.channels; i++)
