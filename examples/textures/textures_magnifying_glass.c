@@ -18,7 +18,6 @@
 #include "raylib.h"
 
 #include "rlgl.h"       // Required for: rlSetBlendFactorsSeparate()
-#include "raymath.h"    // Required for: Vector2Multiply()
 
 //------------------------------------------------------------------------------------
 // Program main entry point
