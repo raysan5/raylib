@@ -3,7 +3,7 @@
 Some people ported raylib to other languages in the form of bindings or wrappers to the library. Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list or if it had been updated/archived.
 
 # Recommendations for binding authors.
-This is a set of recomendations and guidelines for binding authors, meant to help your binding be as useful as possible to your users.
+This is a set of recommendations and guidelines for binding authors, meant to help your binding be as useful as possible to your users.
 
 * Binding should be reasonably up to date with the last release, out of date bindings may be removed from bindings.md
 * Binding should expose all of raylib's API. This is to ensure compatibility with all raylib features, and allow your users to do everything in the target language they can do in C raylib.
@@ -16,7 +16,7 @@ This is a set of recomendations and guidelines for binding authors, meant to hel
 * Bindings that expose additional 'high level' functions to make the binding more native to the host language, should also include the base C style API in addition to those other functions. This is requested in order to make it easier for people to understand the raylib API independent of the language being used.
 * Bindings should have clear usage and setup instructions. Examples in the host language are highly recommended. You want your users to be able to get started right away.
 * If a binding exists for a language, before making a new one, binding authors should try to work together on maintaining a single binding for a language, this is requested in order to prevent fragmentation and confusion for users.
-* Instructions on how to build for web are highly recomeneed if the langauge supports it. This allows your bindings to be used for game jams :)
+* Instructions on how to build for web are highly recommended if the language supports it. This allows your bindings to be used for game jams :)
 
 ### Language Bindings
 
