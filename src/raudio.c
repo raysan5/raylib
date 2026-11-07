@@ -2102,10 +2102,23 @@ float GetMusicTimePlayed(Music music)
 #if SUPPORT_FILEFORMAT_XM
         if (music.ctxType == MUSIC_MODULE_XM)
         {
-            uint64_t framesPlayed = 0;
+            uint64_t framesGenerated = 0;
 
-            jar_xm_get_position((jar_xm_context_t *)music.ctxData, NULL, NULL, NULL, &framesPlayed);
+            jar_xm_get_position((jar_xm_context_t *)music.ctxData, NULL, NULL, NULL, &framesGenerated);
+
+            // NOTE: jar_xm reports frames decoded so far, not frames actually played,
+            // so the same in-flight buffer correction as the generic branch is applied
+            ma_mutex_lock(&AUDIO.System.lock);
+            int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
+            int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
+            int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+            if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
+            int framesSentToMix = (int)music.stream.buffer->frameCursorPos%subBufferSize;
+            int64_t framesPlayed = ((int64_t)framesGenerated - framesInBuffers + framesSentToMix)%(int)music.frameCount;
+            if (framesPlayed < 0) framesPlayed = 0;    // NOTE: Only reachable on Stop while paused (buffer reset skipped, jar_xm_reset still zeroes the generated counter; the generic path's framesProcessed survives Stop only while paused): clamp to 0 matches the pre-fix XM behavior instead of wrapping to the module end
             secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
+            ma_mutex_unlock(&AUDIO.System.lock);
         }
         else
 #endif
