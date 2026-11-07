@@ -735,7 +735,7 @@ static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
 
         CORE.Input.Keyboard.currentKeyState[key] = 1;
 
-        if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
+        if ((key == CORE.Input.Keyboard.exitKey) && !e->repeat) RGFW_window_setShouldClose(platform.window, true);
     }
     else
     {
@@ -1600,6 +1600,8 @@ void PollInputEvents(void)
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
     CORE.Window.resizedLastFrame = false;
+    CORE.Window.shouldClose = false;
+    RGFW_window_setShouldClose(platform.window, false);
 
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     if (RGFW_window_isCaptured(platform.window))
