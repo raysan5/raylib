@@ -902,6 +902,11 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
             instr->volume_envelope.num_points = READ_U8(offset + 225);
             instr->panning_envelope.num_points = READ_U8(offset + 226);
 
+            if (instr->volume_envelope.num_points > NUM_ENVELOPE_POINTS)
+                instr->volume_envelope.num_points = NUM_ENVELOPE_POINTS;
+            if (instr->panning_envelope.num_points > NUM_ENVELOPE_POINTS)
+                instr->panning_envelope.num_points = NUM_ENVELOPE_POINTS;
+
             for(uint8_t j = 0; j < instr->volume_envelope.num_points; ++j) {
                 instr->volume_envelope.points[j].frame = READ_U16(offset + 129 + 4 * j);
                 instr->volume_envelope.points[j].value = READ_U16(offset + 129 + 4 * j + 2);
