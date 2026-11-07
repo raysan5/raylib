@@ -3758,8 +3758,13 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "c %i\n", list.count);
     for (unsigned int i = 0; i < list.count; i++)
     {
-        byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
-            list.events[i].params[0], list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], autoEventTypeName[list.events[i].type]);
+        const char *typeName = "UNKNOWN";
+        if (list.events[i].type < (sizeof(autoEventTypeName)/sizeof(autoEventTypeName[0])))
+            typeName = autoEventTypeName[list.events[i].type];
+
+        byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n",
+            list.events[i].frame, list.events[i].type, list.events[i].params[0],
+            list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], typeName);
     }
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
