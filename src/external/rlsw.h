@@ -4359,7 +4359,7 @@ void swPopMatrix(void)
     {
         case SW_PROJECTION:
         {
-            if (RLSW.stackProjectionCounter <= 0)
+            if (RLSW.stackProjectionCounter <= 1)
             {
                 RLSW.errCode = SW_STACK_UNDERFLOW;
                 return;
@@ -4370,7 +4370,7 @@ void swPopMatrix(void)
         } break;
         case SW_MODELVIEW:
         {
-            if (RLSW.stackModelviewCounter <= 0)
+            if (RLSW.stackModelviewCounter <= 1)
             {
                 RLSW.errCode = SW_STACK_UNDERFLOW;
                 return;
@@ -4381,7 +4381,7 @@ void swPopMatrix(void)
         } break;
         case SW_TEXTURE:
         {
-            if (RLSW.stackTextureCounter <= 0)
+            if (RLSW.stackTextureCounter <= 1)
             {
                 RLSW.errCode = SW_STACK_UNDERFLOW;
                 return;
