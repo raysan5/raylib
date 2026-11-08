@@ -2405,8 +2405,10 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
     if (tex->sWrap == SW_REPEAT)
     {
     #if RLSW_SUPPORT_NPOT_TEXTURE
-        x0 = (x0%tex->width + tex->width)%tex->width;
-        x1 = (x1%tex->width + tex->width)%tex->width;
+        x0 %= tex->width;
+        if (x0 < 0) x0 += tex->width; // The modulo result may be negative. If that's the case, shift x0 back to the range [0, width)
+        x1 = x0 + 1;
+        if (x1 == tex->width) x1 = 0; // If x1 goes past the right column, wrap back to 0
     #else
         x0 = x0 & tex->wMinus1;
         x1 = x1 & tex->wMinus1;
@@ -2421,8 +2423,10 @@ static void sw_texture_sample_linear(float *SW_RESTRICT color, const sw_texture_
     if (tex->tWrap == SW_REPEAT)
     {
     #if RLSW_SUPPORT_NPOT_TEXTURE
-        y0 = (y0%tex->height + tex->height)%tex->height;
-        y1 = (y1%tex->height + tex->height)%tex->height;
+        y0 %= tex->height;
+        if (y0 < 0) y0 += tex->height; // The modulo result may be negative. If that's the case, shift y0 back to the range [0, height)
+        y1 = y0 + 1;
+        if (y1 == tex->height) y1 = 0; // If y1 goes past the bottom row, wrap back to 0
     #else
         y0 = y0 & tex->hMinus1;
         y1 = y1 & tex->hMinus1;
