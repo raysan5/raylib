@@ -157,6 +157,7 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #define MA_MALLOC RL_MALLOC
+#define MA_REALLOC RL_REALLOC
 #define MA_FREE RL_FREE
 
 #define MA_NO_JACK
