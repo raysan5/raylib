@@ -2684,18 +2684,20 @@ void ImageRotate(Image *image, int degrees)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
-                    float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
+                    float oldX = ((x + 0.5f - width/2.0f)*cosRadius + (y + 0.5f - height/2.0f)*sinRadius) + image->width/2.0f - 0.5f;
+                    float oldY = ((y + 0.5f - height/2.0f)*cosRadius - (x + 0.5f - width/2.0f)*sinRadius) + image->height/2.0f - 0.5f;
 
-                    if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
+                    if ((oldX >= -0.5f) && (oldX < image->width - 0.5f) && (oldY >= -0.5f) && (oldY < image->height - 0.5f))
                     {
-                        int x1 = (int)floorf(oldX);
-                        int y1 = (int)floorf(oldY);
+                        float sampleX = (oldX < 0)? 0 : oldX;
+                        float sampleY = (oldY < 0)? 0 : oldY;
+                        int x1 = (int)floorf(sampleX);
+                        int y1 = (int)floorf(sampleY);
                         int x2 = MIN(x1 + 1, image->width - 1);
                         int y2 = MIN(y1 + 1, image->height - 1);
 
-                        float px = oldX - x1;
-                        float py = oldY - y1;
+                        float px = sampleX - x1;
+                        float py = sampleY - y1;
 
                         for (int i = 0; i < bytesPerPixel; i++)
                         {
@@ -2706,7 +2708,7 @@ void ImageRotate(Image *image, int degrees)
 
                             float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
 
-                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)(val + 0.5f);
                         }
                     }
                 }
