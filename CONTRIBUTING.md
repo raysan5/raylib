@@ -19,7 +19,7 @@ Use your best judgment, and feel free to propose changes to this document in a p
 
 raylib project accepts PRs independently of the tools used by the experienced developers contributing to the project but the contributor must be knowledgeable about the addressed issue and the whole context involving that issue.
 
-Please, do not use AI to generate the issue description, try to avoid excessive detail and verbosity. Screeenshots of the issue and results are always preferred.
+Please, do not use AI to generate the issue description, try to avoid excessive detail and verbosity. Screenshots of the issue and results are always preferred.
 
 Remember that raylib is maintained by humans, that means a person is reading every issue/PR and taking required decision. **It takes time**, so try to shape your issues/PRs accordingly to minimize the burden for the maintainers.
 
