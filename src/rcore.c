@@ -3129,7 +3129,6 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     // Load some memory to store encoded string
     char *encodedData = (char *)RL_CALLOC(estimatedOutputSize, 1);
-    if (encodedData == NULL) return NULL;
 
     int outputCount = 0;
     for (int i = 0; i < dataSize;)
@@ -3197,7 +3196,6 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     // Load some memory to store decoded data
     // NOTE: Allocated enough size to include padding
     unsigned char *decodedData = (unsigned char *)RL_CALLOC(maxOutputSize, 1);
-    if (decodedData == NULL) return NULL;
 
     int outputCount = 0;
     for (int i = 0; i < dataSize;)

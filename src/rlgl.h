@@ -3756,7 +3756,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 #else
     // Reading data as original texture format, in some platforms (RPI, Wasm) it works
-    pixels = (unsigned char *)RL_MALLOC(rlGetPixelDataSize(width, height, format));
+    pixels = (unsigned char *)RL_CALLOC(rlGetPixelDataSize(width, height, format), 1);
     unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glReadPixels(0, 0, width, height, glFormat, glType, pixels);

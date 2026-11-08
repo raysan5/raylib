@@ -508,8 +508,8 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
 
     // Populate tempCharValues and tempCharsRecs with glyphs data
     // Move temp data to sized charValues and charRecs arrays
-    font.glyphs = (GlyphInfo *)RL_MALLOC(font.glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(font.glyphCount*sizeof(Rectangle));
+    font.glyphs = (GlyphInfo *)RL_CALLOC(font.glyphCount, sizeof(GlyphInfo));
+    font.recs = (Rectangle *)RL_CALLOC(font.glyphCount, sizeof(Rectangle));
 
     for (int i = 0; i < font.glyphCount; i++)
     {
@@ -659,7 +659,7 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
             // NOTE: By default filling glyphCount consecutively, starting at 32 (Space)
             if (requiredCodepoints == NULL)
             {
-                requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+                requiredCodepoints = (int *)RL_CALLOC(codepointCount, sizeof(int));
                 for (int i = 0; i < codepointCount; i++) requiredCodepoints[i] = i + 32;
                 genFontChars = true;
             }
@@ -823,7 +823,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     glyphCount = (glyphCount > 0)? glyphCount : 95;
 
     // NOTE: Rectangles memory is loaded here!
-    Rectangle *recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
+    Rectangle *recs = (Rectangle *)RL_CALLOC(glyphCount, sizeof(Rectangle));
 
     // Calculate image size based on total glyph width and glyph row count
     int totalWidth = 0;
@@ -927,11 +927,11 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     }
     else if (packMethod == 1) // Use Skyline rect packing algorithm (stb_pack_rect)
     {
-        stbrp_context *context = (stbrp_context *)RL_MALLOC(sizeof(*context));
-        stbrp_node *nodes = (stbrp_node *)RL_MALLOC(glyphCount*sizeof(*nodes));
+        stbrp_context *context = (stbrp_context *)RL_CALLOC(1, sizeof(stbrp_context));
+        stbrp_node *nodes = (stbrp_node *)RL_CALLOC(glyphCount, sizeof(stbrp_node));
 
         stbrp_init_target(context, atlas.width, atlas.height, nodes, glyphCount);
-        stbrp_rect *rects = (stbrp_rect *)RL_MALLOC(glyphCount*sizeof(stbrp_rect));
+        stbrp_rect *rects = (stbrp_rect *)RL_CALLOC(glyphCount, sizeof(stbrp_rect));
 
         // Fill rectangles for packaging
         for (int i = 0; i < glyphCount; i++)
@@ -994,7 +994,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     }
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)RL_MALLOC(atlas.width*atlas.height*sizeof(unsigned char)*2); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)RL_CALLOC(atlas.width*atlas.height*2, sizeof(unsigned char)); // Two channels
 
     for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
     {
@@ -1876,35 +1876,32 @@ char *TextReplaceAlloc(const char *text, const char *search, const char *replace
         int tempLen = textLen + (replaceLen - searchLen)*count + 1;
         temp = result = (char *)RL_CALLOC(tempLen, sizeof(char));
 
-        if (result != NULL) // Memory was allocated
+        // First time through the loop, all the variable are set correctly from here on,
+        //  - 'temp' points to the end of the result string
+        //  - 'insertPoint' points to the next occurrence of replace in text
+        //  - 'text' points to the remainder of text after "end of replace"
+        while (count > 0)
         {
-            // First time through the loop, all the variable are set correctly from here on,
-            //  - 'temp' points to the end of the result string
-            //  - 'insertPoint' points to the next occurrence of replace in text
-            //  - 'text' points to the remainder of text after "end of replace"
-            while (count > 0)
+            insertPoint = strstr(text, search);
+            lastReplacePos = (int)(insertPoint - text);
+
+            memcpy(temp, text, lastReplacePos);
+            temp += lastReplacePos;
+
+            if (replaceLen > 0)
             {
-                insertPoint = strstr(text, search);
-                lastReplacePos = (int)(insertPoint - text);
-
-                memcpy(temp, text, lastReplacePos);
-                temp += lastReplacePos;
-
-                if (replaceLen > 0)
-                {
-                    memcpy(temp, replacement, replaceLen);
-                    temp += replaceLen;
-                }
-
-                text += (lastReplacePos + searchLen); // Move to next "end of replace"
-
-                count--;
+                memcpy(temp, replacement, replaceLen);
+                temp += replaceLen;
             }
 
-            // Copy remaind text part after replacement to result (pointed by moving temp)
-            // NOTE: Text pointer internal copy has been updated along the process
-            memcpy(temp, text, TextLength(text));
+            text += (lastReplacePos + searchLen); // Move to next "end of replace"
+
+            count--;
         }
+
+        // Copy remaind text part after replacement to result (pointed by moving temp)
+        // NOTE: Text pointer internal copy has been updated along the process
+        memcpy(temp, text, TextLength(text));
     }
 
     return result;
@@ -2024,11 +2021,11 @@ char *TextInsertAlloc(const char *text, const char *insert, int position)
         if (position > textLen) position = textLen; // End of text string
         int insertLen = TextLength(insert);
 
-        result = (char *)RL_MALLOC(textLen + insertLen + 1);
+        result = (char *)RL_CALLOC(textLen + insertLen + 1, 1);
 
         for (int i = 0; i < position; i++) result[i] = text[i];
-        for (int i = 0; i < insertLen; i++) result[i+position] = insert[i];
-        for (int i = position; i < textLen; i++) result[i+insertLen] = text[i];
+        for (int i = 0; i < insertLen; i++) result[i + position] = insert[i];
+        for (int i = position; i < textLen; i++) result[i + insertLen] = text[i];
 
         result[textLen + insertLen] = '\0'; // Add EOL
     }
@@ -2736,8 +2733,8 @@ static Font LoadBMFont(const char *fileName)
     font.baseSize = fontSize;
     font.glyphCount = glyphCount;
     font.glyphPadding = 0;
-    font.glyphs = (GlyphInfo *)RL_MALLOC(glyphCount*sizeof(GlyphInfo));
-    font.recs = (Rectangle *)RL_MALLOC(glyphCount*sizeof(Rectangle));
+    font.glyphs = (GlyphInfo *)RL_CALLOC(glyphCount, sizeof(GlyphInfo));
+    font.recs = (Rectangle *)RL_CALLOC(glyphCount, sizeof(Rectangle));
 
     int charId = 0;
     int charX = 0;
@@ -2844,7 +2841,7 @@ static GlyphInfo *LoadFontDataBDF(const unsigned char *fileData, int dataSize, c
 
     // In case no chars count provided, default to 95
     codepointCount = (codepointCount > 0)? codepointCount : 95;
-    int *requiredCodepoints = (int *)RL_MALLOC(codepointCount*sizeof(int));
+    int *requiredCodepoints = (int *)RL_CALLOC(codepointCount, sizeof(int));
 
     if (codepoints == NULL)
     {
