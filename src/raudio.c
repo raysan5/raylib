@@ -2099,31 +2099,18 @@ float GetMusicTimePlayed(Music music)
     float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
     {
-#if SUPPORT_FILEFORMAT_XM
-        if (music.ctxType == MUSIC_MODULE_XM)
-        {
-            uint64_t framesPlayed = 0;
-
-            jar_xm_get_position((jar_xm_context_t *)music.ctxData, NULL, NULL, NULL, &framesPlayed);
-            secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
-        }
-        else
-#endif
-        {
-            ma_mutex_lock(&AUDIO.System.lock);
-            //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-            int framesProcessed = (int)music.stream.buffer->framesProcessed;
-            int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
-            int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
-            int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
-            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
-            if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
-            int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
-            int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
-            if (framesPlayed < 0) framesPlayed += music.frameCount;
-            secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
-            ma_mutex_unlock(&AUDIO.System.lock);
-        }
+        ma_mutex_lock(&AUDIO.System.lock);
+        int framesProcessed = (int)music.stream.buffer->framesProcessed;
+        int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
+        int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
+        int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+        int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+        if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
+        int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
+        int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
+        if (framesPlayed < 0) framesPlayed += music.frameCount;
+        secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
+        ma_mutex_unlock(&AUDIO.System.lock);
     }
 
     return secondsPlayed;
