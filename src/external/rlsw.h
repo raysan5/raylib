@@ -4083,9 +4083,9 @@ void swGetIntegerv(SWget name, int *v)
 {
     switch (name)
     {
-        case SW_MODELVIEW_STACK_DEPTH: *v = SW_MODELVIEW_STACK_DEPTH; break;
-        case SW_PROJECTION_STACK_DEPTH: *v = SW_PROJECTION_STACK_DEPTH; break;
-        case SW_TEXTURE_STACK_DEPTH: *v = SW_TEXTURE_STACK_DEPTH; break;
+        case SW_MODELVIEW_STACK_DEPTH: *v = RLSW.stackModelviewCounter; break;
+        case SW_PROJECTION_STACK_DEPTH: *v = RLSW.stackProjectionCounter; break;
+        case SW_TEXTURE_STACK_DEPTH: *v = RLSW.stackTextureCounter; break;
         case SW_DRAW_FRAMEBUFFER_BINDING: *v = RLSW.boundFramebufferId; break;
         default: RLSW.errCode = SW_INVALID_ENUM; break;
     }
