@@ -288,6 +288,7 @@ typedef double              GLclampd;
 
 #define GL_REPEAT                           0x2901
 #define GL_CLAMP                            0x2900
+#define GL_CLAMP_TO_EDGE                    0x812F
 
 #define GL_TEXTURE_MAG_FILTER               0x2800
 #define GL_TEXTURE_MIN_FILTER               0x2801
@@ -2373,16 +2374,16 @@ static void sw_texture_sample_nearest(float *SW_RESTRICT color, const sw_texture
 
 #if RLSW_SUPPORT_NPOT_TEXTURE
     if (tex->sWrap == SW_REPEAT) x = (int)(sw_fract(u)*tex->width);
-    else x = (int)(sw_saturate(u)*tex->width);
+    else x = sw_clamp_int((int)(sw_saturate(u)*tex->width), 0, tex->wMinus1);
 
     if (tex->tWrap == SW_REPEAT) y = (int)(sw_fract(v)*tex->height);
-    else y = (int)(sw_saturate(v)*tex->height);
+    else y = sw_clamp_int((int)(sw_saturate(v)*tex->height), 0, tex->hMinus1);
 #else
     if (tex->sWrap == SW_REPEAT) x = (int)(u*tex->width) & tex->wMinus1;
-    else x = (int)(sw_saturate(u)*tex->width);
+    else x = sw_clamp_int((int)(sw_saturate(u)*tex->width), 0, tex->wMinus1);
 
     if (tex->tWrap == SW_REPEAT) y = (int)(v*tex->height) & tex->hMinus1;
-    else y = (int)(sw_saturate(v)*tex->height);
+    else y = sw_clamp_int((int)(sw_saturate(v)*tex->height), 0, tex->hMinus1);
 #endif
 
     tex->readColor(color, tex->pixels, y*tex->width + x);
@@ -5057,6 +5058,9 @@ void swTexParameteri(int param, int value)
     }
 
     if (RLSW.boundTexture == NULL) return;
+
+    // Treat GL_CLAMP_TO_EDGE as GL_CLAMP
+    if (value == GL_CLAMP_TO_EDGE) value = GL_CLAMP;
 
     switch (param)
     {
