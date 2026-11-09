@@ -770,6 +770,7 @@ SWAPI void swGetFramebufferAttachmentParameteriv(SWattachment attachment, SWatta
 #include <stdlib.h>         // Required for: malloc(), free()
 #include <stddef.h>         // Required for: NULL, size_t, uint8_t, uint16_t, uint32_t...
 #include <math.h>           // Required for: sinf(), cosf(), floorf(), fabsf(), sqrtf(), roundf()
+#include <string.h>         // Required for: memcpy()
 
 // Simple log system to avoid printf() calls if required
 // NOTE: Avoiding those calls, also avoids const strings memory usage
@@ -1403,12 +1404,16 @@ static SW_INLINE void sw_color8_to_color(float *SW_RESTRICT dst, const uint8_t *
     float32x4_t fvals = vmulq_f32(vcvtq_f32_u32(dwords), vdupq_n_f32(SW_INV_255));
     vst1q_f32(dst, fvals);
 #elif defined(SW_HAS_SSE41)
-    __m128i bytes = _mm_loadu_si32(src);
+    int packedColor = 0;
+    memcpy(&packedColor, src, sizeof(int));
+    __m128i bytes = _mm_cvtsi32_si128(packedColor);
     __m128 fvals = _mm_mul_ps(_mm_cvtepi32_ps(_mm_cvtepu8_epi32(bytes)), _mm_set1_ps(SW_INV_255));
     _mm_storeu_ps(dst, fvals);
 #elif defined(SW_HAS_SSE2)
     __m128i zero = _mm_setzero_si128();
-    __m128i bytes = _mm_loadu_si32(src);
+    int packedColor = 0;
+    memcpy(&packedColor, src, sizeof(int));
+    __m128i bytes = _mm_cvtsi32_si128(packedColor);
     __m128i words = _mm_unpacklo_epi8(bytes, zero);
     __m128i dwords = _mm_unpacklo_epi16(words, zero);
     __m128 fvals = _mm_mul_ps(_mm_cvtepi32_ps(dwords), _mm_set1_ps(SW_INV_255));
@@ -1441,13 +1446,15 @@ static SW_INLINE void sw_color_to_color8(uint8_t *SW_RESTRICT dst, const float *
     __m128i i32 = _mm_cvttps_epi32(fvals);
     __m128i i16 = _mm_packus_epi32(i32, i32);
     __m128i i8 = _mm_packus_epi16(i16, i16);
-    _mm_storeu_si32(dst, i8);
+    int packedColor = _mm_cvtsi128_si32(i8);
+    memcpy(dst, &packedColor, sizeof(int));
 #elif defined(SW_HAS_SSE2)
     __m128 fvals = _mm_mul_ps(_mm_loadu_ps(src), _mm_set1_ps(255.0f));
     __m128i i32 = _mm_cvttps_epi32(fvals);
     __m128i i16 = _mm_packs_epi32(i32, i32);
     __m128i i8 = _mm_packus_epi16(i16, i16);
-    _mm_storeu_si32(dst, i8);
+    int packedColor = _mm_cvtsi128_si32(i8);
+    memcpy(dst, &packedColor, sizeof(int));
 #elif defined(SW_HAS_RVV)
     // TODO: Implement RVV intrinsics
     // NOTE: RVV 1.0 specs define the use of __riscv_ prefix for instrinsic functions
