@@ -64,6 +64,7 @@
 | A IA sugeriu sincronizar a `master` do fork com o `upstream` para evitar builds no PR #1. | Quebraria as referências `arquivo:linha` do relatório (as linhas mudaram no upstream). | Sugestão retirada: a `master` do fork permanece no snapshot de 31/10. |
 | A IA sugeriu o comentário "Review done here" para fechar o PR #1. | Falso: a revisão pelo outro integrante ainda não foi feita. | Erro reconhecido; a dupla deve editar o comentário (ver `REVISAO.md`). |
 | A IA indicou a revisão no PR #1. | O PR #1 tem base antiga: 45 commits e comentários do CodeQL sobre arquivos que a dupla não alterou. | Código revisado no PR #6400 (7 arquivos); registro da revisão no fork. |
+| A IA passou ao revisor o comando do teste de mutação sem indicar onde gravar a biblioteca. | O Makefile do raylib grava `libraylib.a` em `../src/` (`RAYLIB_RELEASE_PATH ?= ../src`): a cópia `src_mut` ficou com a biblioteca original, os testes passaram e a mutação não foi exercitada; a biblioteca original foi sobrescrita pela versão mutada. | Reconstruir a biblioteca original e refazer a mutação com `RAYLIB_RELEASE_PATH=.`; roteiro do `REVISAO.md` corrigido. |
 
 ## 6. O que a IA **não** fez / limites
 
