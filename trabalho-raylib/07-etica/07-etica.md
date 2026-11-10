@@ -33,7 +33,7 @@
 1. **Conhecer e cumprir as obrigações de cada licença** ao redistribuir binários (ex.: reproduzir avisos MIT de `cgltf`/`par_shapes`/`tinyobj`), e **não assumir que "permissiva" = "sem obrigações"**.
 2. **Rastrear dependências** e suas licenças (inventário/SBOM), e reavaliar a cada atualização de biblioteca embutida.
 3. **Marcar claramente** o *fork* como alterado (`README.md` da dupla) e **não usar a marca/nome de forma enganosa**.
-4. **Atribuição e IA:** declarar o uso de IA (`08-ia/ia.md`) e conferir que trecho gerado não reproduz código de licença incompatível; o código dos testes é nosso e é oferecido sob zlib, coerente com o projeto (`TODO: confirmar com a dupla a licença do fork`).
+4. **Atribuição e IA:** declarar o uso de IA (`08-ia/ia.md`) e conferir que trecho gerado não reproduz código de licença incompatível; o código dos testes é nosso e é oferecido sob zlib, coerente com o projeto (o fork herda a licença zlib/libpng do raylib, arquivo `LICENSE` na raiz, com copyright de Ramon Santamaria (@raysan5)).
 5. **Respeitar a licença dos recursos** (assets) incluídos em exemplos e não copiar documentação do projeto como se fosse própria (critério 13 do enunciado).
 
 ---
