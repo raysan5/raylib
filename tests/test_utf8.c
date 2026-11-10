@@ -1,10 +1,9 @@
 // Headless tests for the UTF-8 helpers in rtext.c
 // (GetCodepoint, GetCodepointCount, CodepointToUTF8)
 //
-// Known upstream issue covered with KNOWN_BUG():
-//   PR #6348 "[rtext] Fix GetCodepoint() size on invalid sequences reading past the string end"
-//   On a truncated sequence, codepointSize can be larger than the bytes left before the '\0',
-//   so a caller that advances text += codepointSize skips the terminator and reads out of bounds.
+// Regression test for PR #6348 "[rtext] Fix GetCodepoint() size on invalid sequences reading past the string end"
+//   Before that fix, on a truncated sequence codepointSize could be larger than the bytes left before the '\0',
+//   so a caller that advanced with text += codepointSize skipped the terminator and read out of bounds.
 
 #include "raylib.h"
 #include "rtest.h"
@@ -39,7 +38,7 @@ static void test_invalid_size_stays_inside_string(void)
     {
         int size = 0;
         GetCodepoint(truncated[i], &size);
-        KNOWN_BUG(size <= (int)strlen(truncated[i]), "PR #6348");
+        CHECK(size <= (int)strlen(truncated[i]));
     }
 }
 
