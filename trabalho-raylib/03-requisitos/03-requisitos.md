@@ -90,13 +90,13 @@ Convenção: `[L]` arquivo local, `[GH]` GitHub, `[M]` medido/executado por nós
 **Como** mantenedor, **quero** anotar no teste que um bug já é conhecido (com o número do PR ou da issue), **para** deixar o problema registrado sem pintar o CI de vermelho enquanto a correção não chega.
 
 - **Cenário 4.1 — Falha esperada (XFAIL)**\
-  **Dado que** o PR #6348 (que corrige o tamanho devolvido por `GetCodepoint` em texto cortado) ainda está aberto,\
+  **Dado que** o PR #6348 (que corrige o tamanho devolvido por `GetCodepoint` em texto cortado) ainda estava aberto (situação em 01–02/11/2026),\
   **Quando** eu rodo `test_utf8`,\
-  **Então** aparecem 3 linhas `XFAIL … (known bug PR #6348)` e o programa termina com sucesso `[M]`.
+  **Então** apareciam 3 linhas `XFAIL … (known bug PR #6348)` e o programa terminava com sucesso `[M]`.
 - **Cenário 4.2 — A correção chega (XPASS)**\
-  **Dado que** o PR #6348 já foi aceito e o bug não existe mais,\
+  **Dado que** o PR #6348 foi aceito (mesclado em 09/11/2026, commit `7e626d65`) `[GH]` e o bug não existe mais,\
   **Quando** eu rodo `test_utf8`,\
-  **Então** as linhas passam a mostrar `XPASS … seems FIXED`, avisando que aquela verificação já pode virar um teste normal (`CHECK`), como o `rtest.h` foi feito para fazer.
+  **Então** as linhas passam a mostrar `XPASS … seems FIXED`, avisando que aquela verificação já pode virar um teste normal (`CHECK`), como o `rtest.h` foi feito para fazer. **Foi o que aconteceu** ao atualizar o fork para o `master` de 10/11/2026: as 3 linhas viraram `XPASS` e a verificação foi promovida a `CHECK` `[M]`.
 
 ### US05 — Fixar o comportamento de uma função (Persona 4: autor de binding) · evolução
 
@@ -120,6 +120,6 @@ Convenção: `[L]` arquivo local, `[GH]` GitHub, `[M]` medido/executado por nós
 | História/cenário | Teste automatizado (pasta `06-implementacao/tests/`) |
 |---|---|
 | US03/3.1, 3.2 | `Makefile` (`make test`), `test_hash.c::test_sha256_boundaries` |
-| US04/4.1 | `test_utf8.c::test_invalid_size_stays_inside_string` (`KNOWN_BUG`) |
+| US04/4.1 | `test_utf8.c::test_invalid_size_stays_inside_string` (era `KNOWN_BUG`; hoje é `CHECK`, desde o merge do #6348) |
 | US05/5.1–5.3 | `test_paths.c::test_get_file_extension` |
 | US01, US02 | **Não cobertos** pela evolução (exigem janela/entrada); permanecem fora do MVP — ver `05-evolucao/` |

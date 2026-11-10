@@ -1,46 +1,58 @@
 # [tests] Add headless regression tests for core utility functions
 
-## Problema
+<!-- Texto do Pull Request para raysan5/raylib (em inglês, porque é lido pelo mantenedor).
+     Cole a 1ª linha acima como TÍTULO do PR e o restante como DESCRIÇÃO. -->
 
-raylib não tem testes automatizados das **funções da biblioteca**: o CI compila e roda análise estática; o passo `ctest` existe mas não há nenhum `add_test()`.
-O `rexm test` valida exemplos (inicializa/fecha/carrega), não o resultado das funções. Resultado: bugs em funções puras só aparecem depois do uso, p.ex.
+## Problem
 
-- `ComputeSHA256()` com hash errado para `tamanho mod 64 ∈ 56..59` — issue #6143 / PR #6144
-- `GetFileExtension()` corrigida duas vezes em 3 dias — PRs #6312 e #6326
-- `GetCodepoint()` devolvendo tamanho além do `'\0'` em sequência truncada — PR #6348 (aberto)
+raylib has no automated tests for the **library functions**. CI builds and runs static analysis, and a `ctest` step exists in `build_cmake.yml`, but there is no `add_test()` anywhere. `rexm test` validates the examples (they initialize/close/load), not the results of the functions.
 
-## O que muda
+As a consequence, bugs in small pure functions are only found after users hit them, for example:
 
-Somente arquivos novos; **nenhuma alteração em `src/`**.
+- `ComputeSHA256()` returning a wrong hash for lengths where `size mod 64` is in `56..59` — issue #6143 / PR #6144
+- `GetFileExtension()` fixed twice in 3 days — PRs #6312 and #6326
+- `GetCodepoint()` returning a size past the `'\0'` on truncated UTF-8 — PR #6348 (fixed in 7e626d65)
 
-- `tests/rtest.h`: helper mínimo (C99, sem dependências) com `CHECK*`, `KNOWN_BUG` (XFAIL/XPASS).
-- `tests/test_hash.c` (65 verificações), `tests/test_paths.c` (29), `tests/test_utf8.c` (26, com 3 `KNOWN_BUG` do PR #6348).
+## What changes
+
+Only new files. **Nothing in `src/` is modified.**
+
+- `tests/rtest.h`: minimal helper (C99, no dependencies) with `CHECK`, `CHECK_INT`, `CHECK_STR` and `KNOWN_BUG` (reports XFAIL/XPASS so a known upstream bug does not turn CI red, and a fix is noticed automatically).
+- `tests/test_hash.c` (65 checks): `ComputeSHA256/SHA1/MD5` at 14 boundary lengths, `ComputeCRC32`, Base64.
+- `tests/test_paths.c` (29 checks): `GetFileName`, `GetFileExtension`, `IsFileExtension`, `GetFileNameWithoutExt`, `IsPathAbsolute`.
+- `tests/test_utf8.c` (26 checks): `GetCodepoint` (valid / invalid / truncated), `GetCodepointCount`, `CodepointToUTF8`. It includes a regression test for #6348.
 - `tests/Makefile`: `make test`.
-- `.github/workflows/run_tests.yml`: roda a suíte no Linux.
+- `.github/workflows/run_tests.yml`: runs the suite on Linux.
 
-## Como testar
+All tests are **headless**: no window and no OpenGL context are created.
+
+## How to test
 
 ```bash
 cd src && make PLATFORM=PLATFORM_DESKTOP     # Windows/MSYS2: mingw32-make
 cd ../tests && make test
 ```
 
-Resultado local (Windows 11, gcc 14.2.0): `ALL TEST FILES PASSED` — 120 verificações, 0 falhas, 3 XFAIL.
+Expected result: `ALL TEST FILES PASSED` (120 checks, 0 failed). `RAYLIB_SRC` can point to another folder containing `raylib.h` and `libraylib.a` (default `../src`).
 
-## Evidências
+## Evidence
 
-- **Oráculo independente:** hashes esperados gerados com .NET `System.Security.Cryptography` (não com o raylib); CRC-32 com valor padrão `0xCBF43926`; Base64 com RFC 4648.
-- **Teste de mutação:** com `paddedSize = dataSize + 4` em `ComputeSHA256()` (cópia descartável), `test_hash` falha em 56, 57, 59, 120 e 121 e retorna código 1.
-- **CI:** o workflow `Run headless tests` (Ubuntu) ficou **verde** no commit `b83e2d3`; a 1ª execução falhou por falta de `libglfw3-dev` nas dependências (corrigido neste PR).
-- **Limitações:** testado no Windows/MSYS2 (local) e Linux/Ubuntu (CI), **não** no macOS; `GetFileExtension(NULL)` trava (achado, **não** coberto por teste automático).
+- **Independent oracle:** expected SHA-256/SHA-1/MD5 values were generated with .NET `System.Security.Cryptography` (not with raylib); CRC-32 uses the standard check value `0xCBF43926`; Base64 uses the RFC 4648 vectors.
+- **Mutation test:** changing `paddedSize = dataSize + sizeof(bitLen)` to `dataSize + 4` in `ComputeSHA256()` (on a throw-away copy) makes `test_hash` fail at lengths 56, 57, 59, 120 and 121 and exit with code 1.
+- **Known-bug tracking works:** while #6348 was open, `test_utf8` reported 3 XFAIL. After rebasing on the current `master` (which contains the fix), they became XPASS, and they were promoted to regular `CHECK`s in this PR.
+- **CI:** the `Run headless tests` workflow (Ubuntu) runs green on my fork (the first run failed only because `libglfw3-dev` was missing; it is installed now, like the other workflows do).
+- **Limitations:** tested on Windows 11 (MSYS2 gcc 14.2) and Ubuntu (CI), **not** on macOS. While writing the tests I also noticed that `GetFileExtension(NULL)` crashes (`GetFileName(NULL)` returns `NULL` and `strrchr(NULL, '.')` follows); this is **not** covered by an automated test because it would abort the process. I can open a separate issue for it if that is useful.
 
-## Fora do escopo
+## Out of scope
 
-Testes de janela/GPU/áudio; matriz multiplataforma; integração com `add_test()`/CMake (próximo passo); correção dos bugs encontrados.
+Window/GPU/audio tests; a multi-platform CI matrix; integrating the tests with `add_test()` / CMake (a natural next step); fixing the bugs found.
+
+## Notes
+
+- Parts of this change (tests and documentation) were drafted with AI assistance (Claude Code). The authors reviewed the code, built it and ran it before submitting.
 
 ## Checklist
 
-- [x] `make test` passa localmente (Windows/MSYS2)
-- [x] Nenhum arquivo de `src/` alterado
-- [ ] Revisado pelo outro integrante (ver `06-implementacao/REVISAO.md`)
-- [x] Workflow de CI executado e verde em *Actions* (commit `b83e2d3`)
+- [x] `make test` passes locally (Windows/MSYS2)
+- [x] No file in `src/` is changed
+- [x] CI workflow runs green on my fork

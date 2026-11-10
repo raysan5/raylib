@@ -7,7 +7,7 @@
 | [`tests/rtest.h`](tests/rtest.h) | Mini-helper de testes (`CHECK`, `CHECK_INT`, `CHECK_STR`, `KNOWN_BUG`, `RUN`, `RTEST_SUMMARY`) | — |
 | [`tests/test_hash.c`](tests/test_hash.c) | `ComputeSHA256/SHA1/MD5` em 14 comprimentos de fronteira, `ComputeCRC32`, Base64 (RFC 4648) | 65 |
 | [`tests/test_paths.c`](tests/test_paths.c) | `GetFileName`, `GetFileExtension`, `IsFileExtension`, `GetFileNameWithoutExt`, `IsPathAbsolute` | 29 |
-| [`tests/test_utf8.c`](tests/test_utf8.c) | `GetCodepoint` (válido/inválido/truncado), `GetCodepointCount`, `CodepointToUTF8` + 3 `KNOWN_BUG` (PR #6348) | 26 |
+| [`tests/test_utf8.c`](tests/test_utf8.c) | `GetCodepoint` (válido/inválido/truncado), `GetCodepointCount`, `CodepointToUTF8` + teste de regressão do PR #6348 | 26 |
 | [`tests/Makefile`](tests/Makefile) | `make test` (Windows/MSYS2, Linux, macOS) | — |
 | [`ci/run_tests.yml`](ci/run_tests.yml) | Workflow de CI para copiar em `.github/workflows/` do fork | **executado no fork**: 1ª execução falhou, 2ª (com `libglfw3-dev`) verde |
 | [`PR_DESCRIPTION.md`](PR_DESCRIPTION.md) | Texto do Pull Request | — |
@@ -42,8 +42,8 @@ A variável `RAYLIB_SRC` aponta para a pasta com `raylib.h` e `libraylib.a` (pad
 === test_paths ===
 29 checks, 0 failed, 0 known bugs (XFAIL), 0 fixed known bugs (XPASS)
 === test_utf8 ===
-  XFAIL test_utf8.c:42: size <= (int)strlen(truncated[i]) (known bug PR #6348)   (x3)
-26 checks, 0 failed, 3 known bugs (XFAIL), 0 fixed known bugs (XPASS)
+  (nenhuma linha XFAIL/XPASS: o PR #6348 já foi mesclado no raylib)
+26 checks, 0 failed, 0 known bugs (XFAIL), 0 fixed known bugs (XPASS)
 ALL TEST FILES PASSED
 ```
 
@@ -68,10 +68,10 @@ Os comprimentos 0, 1, 3, 55, 60, 63, 64, 65 e 119 seguiram corretos — coerente
 Os valores esperados de SHA-256/SHA-1/MD5 foram gerados com **.NET `System.Security.Cryptography`** (não com o raylib) sobre a mensagem `'a' × N`;
 CRC-32 usa o valor de verificação padrão `0xCBF43926` para `"123456789"`; Base64 usa os vetores da RFC 4648 §10.
 
-### 3. Bugs reais documentados como `XFAIL`
+### 3. Bug real documentado como `XFAIL` e depois promovido a `CHECK`
 
-`test_utf8.c` registra o problema do PR #6348 (aberto): para sequências truncadas (`"\xC3"`, `"\xE2\x82"`, `"\xF0\x9F\x98"`),
-`GetCodepoint()` devolve um tamanho maior que `strlen`. Quando o PR for mesclado, a saída vira `XPASS` avisando para promover a `CHECK`.
+`test_utf8.c` registrou o problema do PR #6348 (aberto na época): para sequências truncadas (`"\xC3"`, `"\xE2\x82"`, `"\xF0\x9F\x98"`),
+`GetCodepoint()` devolvia um tamanho maior que `strlen`, e na 1ª execução apareceram 3 `XFAIL`. O PR foi mesclado em 09/11/2026 (commit `7e626d65`); ao atualizar o fork em 10/11 a saída virou 3 `XPASS` — o aviso que o `rtest.h` foi feito para dar — e a verificação foi promovida a `CHECK`. Hoje é um teste de regressão comum (26 verificações, 0 XFAIL).
 
 ### 4. CI no GitHub Actions (prints)
 

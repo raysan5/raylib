@@ -33,9 +33,9 @@
 | Estruturas e fluxos de UML | Cada elemento ligado a arquivo:linha (tabela de correspondências em `04-uml/`). **Sintaxe Mermaid validada** com o *parser* oficial (`mermaid@11` + `jsdom`: 5/5 blocos OK) — isso valida a sintaxe, **não** a fidelidade ao código, que foi conferida por leitura. |
 | Contagens (310 entradas no changelog 6.2; ~130 autores; 70 do mantenedor; 15 `-WARNING-`; 59.590 vs 266.147 linhas; 228 exemplos) | Executadas por **scripts PowerShell** no snapshot local (`[M]`). A contagem de "autores distintos" inclui qualquer `@nome` na seção 6.2 (aproximação). |
 | Dados do GitHub (datas, autores, merge) | Obtidos pela **API pública** via ferramenta de busca que **resume o JSON com um modelo menor** → sujeita a erro. Por isso conferimos individualmente #4869, #5264, #5266, #6348, #6326, #5664 e corrigimos divergências (item 5). **A dupla deve abrir cada link e conferir antes de apresentar.** |
-| Código dos testes (`rtest.h`, `test_*.c`, `Makefile`) | **Compilado e executado** (gcc 14.2.0, MSYS2): 120 verificações, 0 falhas, 3 XFAIL. Vetores de hash vêm de **oráculo independente (.NET)**. **Teste de mutação** provou que detectam um `ComputeSHA256` quebrado (5 falhas, código de saída 1). |
+| Código dos testes (`rtest.h`, `test_*.c`, `Makefile`) | **Compilado e executado** (gcc 14.2.0, MSYS2): 120 verificações, 0 falhas (3 XFAIL na 1ª execução; 0 após o merge do #6348, em 10/11). Vetores de hash vêm de **oráculo independente (.NET)**. **Teste de mutação** provou que detectam um `ComputeSHA256` quebrado (5 falhas, código de saída 1). |
 | Achado: `GetFileExtension(NULL)` trava | **Reproduzido** com programa mínimo: código de saída `0xC0000005`. Causa lida em `rcore.c:2503-2504`. |
-| Achado: `GetCodepoint` ainda tem o problema do PR #6348 | **Reproduzido** pelos 3 `XFAIL`; PR confirmado como aberto na API. |
+| Achado: `GetCodepoint` tinha o problema do PR #6348 | **Reproduzido** pelos 3 `XFAIL` (PR aberto na API em 01/11). O PR foi mesclado em 09/11 (commit `7e626d65`); em 10/11 os testes viraram `XPASS` e foram promovidos a `CHECK`. |
 
 ## 5. Resultados descartados ou corrigidos durante o trabalho
 

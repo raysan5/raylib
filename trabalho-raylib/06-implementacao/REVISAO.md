@@ -13,7 +13,7 @@
 ### A. Ler e entender (sem executar)
 - [ ] O PR toca apenas `tests/` e `.github/workflows/run_tests.yml` (nenhum `src/`)?
 - [ ] Cada valor esperado em `test_hash.c` tem origem independente do raylib? (conferir comentário no topo e recalcular 2 valores à mão — ver C.)
-- [ ] `KNOWN_BUG` sempre cita issue/PR real? Abrir #6348 e confirmar que continua aberto.
+- [ ] `KNOWN_BUG` (se houver) cita issue/PR real? Abrir #6348 e confirmar que foi mesclado (commit `7e626d65`) e que o teste correspondente hoje é `CHECK`, não `KNOWN_BUG`.
 - [ ] O código dos testes segue `CONVENTIONS.md` (4 espaços, sem TAB, comentário antes da linha, `float x.xf`)?
 
 ### B. Executar
@@ -38,7 +38,7 @@ $b=[byte[]]@(0x61)*56; ([BitConverter]::ToString([Security.Cryptography.SHA256]:
 
 ### E. Pontos de atenção que a revisão deve avaliar
 - Testes de caminho absoluto dependem de `#ifdef _WIN32` — ok para Linux/macOS?
-- O workflow de CI: abrir a aba *Actions* e conferir se está verde no commit mais recente do PR. (Histórico: a 1ª execução, no commit `9657563`, falhou; a do commit `b83e2d3`, com `libglfw3-dev`, passou.) Revisor: confirmar isso você mesmo(a) na aba *Actions*.
+- O workflow de CI: abrir a aba *Actions* e conferir se está verde no commit mais recente do PR. (Histórico, com os hashes de antes do rebase de 10/11/2026: a 1ª execução, no commit `9657563`, falhou; a do commit `b83e2d3`, com `libglfw3-dev`, passou.) Revisor: confirmar isso você mesmo(a) na aba *Actions*.
 - Algum teste "trava" o processo? (`GetFileExtension(NULL)` **não** deve estar na suíte.)
 
 ## Parecer
