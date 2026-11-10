@@ -2278,11 +2278,7 @@ int FileMove(const char *srcPath, const char *dstPath)
                 result = FileRemove(srcPath);
                 if (result != 0) TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to remove source file after copy", srcPath);
             }
-            else
-            {
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
-                result = -1;
-            }
+            else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to copy file to [%s]", srcPath, dstPath);
         }
     }
 	else TRACELOG(LOG_WARNING, "FILEIO: [%s] Source file does not exist", srcPath);
