@@ -31,6 +31,7 @@ int main(void)
 
     Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
 
+    // Dividing by 6 to only get the first sprite of the spritesheet
     int frameWidth = scarfy.width/6;
     int frameHeight = scarfy.height;
 
@@ -41,7 +42,8 @@ int main(void)
     Rectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
 
     // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { (float)frameWidth, (float)frameHeight };
+    // Dividing by two for its center point
+    Vector2 origin = { (float)destRec.width / 2 , (float)destRec.height / 2 };
 
     int rotation = 0;
 
