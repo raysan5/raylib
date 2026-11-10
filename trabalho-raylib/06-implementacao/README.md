@@ -75,7 +75,9 @@ CRC-32 usa o valor de verificação padrão `0xCBF43926` para `"123456789"`; Bas
 
 ### 4. CI no GitHub Actions (prints)
 
-Pull request no fork: https://github.com/FaMarcolino/raylib/pull/1
+Pull request no fork (revisão interna): https://github.com/FaMarcolino/raylib/pull/1
+
+Pull request ao projeto original (raysan5/raylib), aberto em 10/11/2026: https://github.com/raysan5/raylib/pull/6400
 
 **1ª execução: falhou** (commit `9657563`). Faltava instalar `libglfw3-dev` no workflow (erro de link `cannot find -lGL`).
 

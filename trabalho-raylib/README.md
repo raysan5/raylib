@@ -9,7 +9,8 @@ Trabalho Prático de **CSI412 – Engenharia de Software I** (UFOP/ICEA/DECSI, 2
 | **Projeto original** | https://github.com/raysan5/raylib |
 | **Licença do projeto** | zlib/libpng (`LICENSE`) |
 | **Versão analisada** | Release estável **6.2** (tag `6.2`, 15/10/2026) + snapshot do `master` de 31/10/2026 (`RAYLIB_VERSION "6.5-dev"`, commit `2f4b7d8` ou posterior) |
-| **Fork com a intervenção** | https://github.com/FaMarcolino/raylib (branch `feat/headless-tests`; commit base `2f4b7d8e9f4aef3d5ed81a683b54594849e9d7a7`) |
+| **Fork com a intervenção** | https://github.com/FaMarcolino/raylib (branch `feat/headless-tests`; commit base da análise `2f4b7d8e9f4aef3d5ed81a683b54594849e9d7a7`; após o rebase de 10/11/2026 a branch está sobre `0dedaf3066ffd0a63b5899385f59055a915f839c`) |
+| **Pull Request ao projeto original** | https://github.com/raysan5/raylib/pull/6400 (aberto em 10/11/2026; revisão interna no fork: https://github.com/FaMarcolino/raylib/pull/1) |
 
 
 ## Objetivo do trabalho

@@ -5,7 +5,7 @@
 
 - **Autor do PR:** `TODO`
 - **Revisor(a):** `TODO` (não pode ser o autor)
-- **Link do PR:** `TODO`
+- **Link do PR:** https://github.com/raysan5/raylib/pull/6400 (PR ao projeto original; PR interno de revisão no fork: https://github.com/FaMarcolino/raylib/pull/1)
 - **Data da revisão:** `TODO`
 
 ## Roteiro de revisão
