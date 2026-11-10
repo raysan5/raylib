@@ -6721,28 +6721,15 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
 
                     if (animData.channels[j].sampler->interpolation != cgltf_interpolation_type_max_enum)
                     {
-                        if (channel.target_path == cgltf_animation_path_type_translation)
-                        {
-                            boneChannels[boneIndex].translate = &animData.channels[j];
-                        }
-                        else if (channel.target_path == cgltf_animation_path_type_rotation)
-                        {
-                            boneChannels[boneIndex].rotate = &animData.channels[j];
-                        }
-                        else if (channel.target_path == cgltf_animation_path_type_scale)
-                        {
-                            boneChannels[boneIndex].scale = &animData.channels[j];
-                        }
-                        else
-                        {
-                            TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, a);
-                        }
+                        if (channel.target_path == cgltf_animation_path_type_translation) boneChannels[boneIndex].translate = &animData.channels[j];
+                        else if (channel.target_path == cgltf_animation_path_type_rotation) boneChannels[boneIndex].rotate = &animData.channels[j];
+                        else if (channel.target_path == cgltf_animation_path_type_scale) boneChannels[boneIndex].scale = &animData.channels[j];
+                        else TRACELOG(LOG_WARNING, "MODEL: [%s] Unsupported target_path on channel %d's sampler for animation %d. Skipping.", fileName, j, a);
                     }
                     else TRACELOG(LOG_WARNING, "MODEL: [%s] Invalid interpolation curve encountered for GLTF animation.", fileName);
 
                     float time = 0.0f;
-                    cgltf_bool result = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &time, 1);
-
+                    result = cgltf_accessor_read_float(channel.sampler->input, channel.sampler->input->count - 1, &time, 1);
                     if (!result)
                     {
                         TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load input time", fileName);
