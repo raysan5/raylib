@@ -76,7 +76,7 @@ int main(void)
     float drawLength = 460.0f;
     int minGenerations = 0;
     int maxGenerations = 4;
-    int generations = 0;
+    int generations = 1;
 
     // Initialize new penrose tile
     PenroseLSystem ls = LoadPenroseLSystem(drawLength*(generations/(float)maxGenerations));
