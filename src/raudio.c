@@ -1086,11 +1086,11 @@ bool ExportWave(Wave wave, const char *fileName)
 
         void *fileData = NULL;
         size_t fileDataSize = 0;
-        result = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-        if (result) result = (int)drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
-        drwav_result result = drwav_uninit(&wav);
+        drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
+        drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
+        drwav_uninit(&wav);
 
-        if (result == DRWAV_SUCCESS) result = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
+        result = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
 
         drwav_free(fileData, NULL);
     }
