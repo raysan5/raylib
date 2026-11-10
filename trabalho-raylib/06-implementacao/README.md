@@ -79,6 +79,8 @@ Pull request no fork (revisão interna): https://github.com/FaMarcolino/raylib/p
 
 Pull request ao projeto original (raysan5/raylib), aberto em 10/11/2026: https://github.com/raysan5/raylib/pull/6400
 
+**Desfecho do PR ao projeto original (10/11/2026):** o mantenedor (`raysan5`) **fechou o PR sem mesclar**, com o único comentário "No, thanks.", sem apontar o motivo. Antes disso, os workflows do PR ficaram aguardando aprovação de mantenedor e expiraram sem rodar nenhum job ("This workflow run required approval but was not approved before it expired."); por isso a evidência de CI está **no fork**: `Run headless tests` verde (execuções #4, #5 e #6) e build do macOS verde na execução manual #5. O risco de não aceitação já estava previsto em `05-evolucao/` (riscos, item c). A intervenção continua disponível na branch `feat/headless-tests` do fork.
+
 **1ª execução: falhou** (commit `9657563`). Faltava instalar `libglfw3-dev` no workflow (erro de link `cannot find -lGL`).
 
 ![CI falhou no commit 9657563](evidencias/ci-1-falhou-commit-9657563.png)

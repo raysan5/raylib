@@ -1,7 +1,8 @@
 # [tests] Add headless regression tests for core utility functions
 
 <!-- Texto do Pull Request enviado a raysan5/raylib (em inglês, curto, como pede o CONTRIBUTING.md).
-     Título = 1ª linha acima. Descrição = o bloco abaixo, sem este comentário. -->
+     Título = 1ª linha acima. Descrição = o bloco abaixo, sem este comentário.
+     Desfecho: o PR #6400 foi fechado pelo mantenedor em 10/11/2026, sem mesclar ("No, thanks."). Este arquivo guarda o texto que foi enviado. -->
 
 raylib has no automated tests for its library functions. Bugs in small pure
 functions have reached users before (#6143 SHA-256, #6312/#6326 GetFileExtension,

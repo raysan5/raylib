@@ -44,7 +44,7 @@
 | Achado: `GetCodepoint` tinha o problema do PR #6348 | **Reproduzido** pelos 3 `XFAIL` (PR aberto na API em 01/11). O PR foi mesclado em 09/11 (commit `7e626d65`); em 10/11 os testes viraram `XPASS` e foram promovidos a `CHECK`. |
 | Migração do relatório para `trabalho-raylib/` no fork `FaMarcolino/raylib` (branch `master`) | Conferida com git: 21 arquivos no fork = 21 no repositório antigo, sem diferença de nomes; o repositório antigo só foi apagado depois. |
 | Rebase de `feat/headless-tests` sobre o `upstream/master` | `git rev-list --left-right --count` mostrou 38 commits de atraso e 7 de avanço; rebase sem conflito; `git ls-tree` confirmou que `tests/` e `run_tests.yml` não existiam no upstream; `make test` rodou pela dupla após o rebase: 120 verificações, `ALL TEST FILES PASSED`. |
-| PR ao projeto original: **#6400** | Aberto pela dupla; conferido na página: 8 commits, título e descrição, base `raysan5/raylib:master`. |
+| PR ao projeto original: **#6400** | Aberto pela dupla; conferido na página: 8 commits, título e descrição, base `raysan5/raylib:master`. **Desfecho:** o mantenedor o fechou sem mesclar em 10/11/2026 (comentário: "No, thanks.", sem motivo); os workflows do PR expiraram aguardando aprovação ("required approval but was not approved before it expired"). A IA **não** sabe o motivo da recusa. |
 | Diagnóstico da falha do workflow macOS no PR #1 | Log colado pela dupla: "The job was not acquired by Runner of type hosted" (falha de infraestrutura do GitHub); as execuções manuais #4 (`master`) e #5 (`feat/headless-tests`) passaram. |
 | Linhas `arquivo:linha` citadas no relatório | Conferidas na `master` do fork (`git show origin/master:src/rcore.c` etc.): `rcore.c:586`, `:863`, `:2500`, `:3509`, `:3545`, `rtext.c:2437` e `rlgl.h:420` batem; no raylib atual elas já mudaram. |
 | Checagem do trabalho contra o enunciado (cada seção → arquivo) | Feita pela IA lendo os arquivos do repositório; a dupla deve reconferir. |
@@ -63,7 +63,7 @@
 | A IA redigiu a descrição do PR ao raylib em inglês, longa e detalhada (evidências, checklist). | O GitHub avisou que o `CONTRIBUTING.md` ganhou a seção "About AI Usage": pede descrição curta, não gerada por IA, e que o contribuidor conheça o contexto. | Texto reescrito curto; a dupla deve adaptá-lo com as próprias palavras; o PR mantém a declaração de uso de IA. |
 | A IA sugeriu sincronizar a `master` do fork com o `upstream` para evitar builds no PR #1. | Quebraria as referências `arquivo:linha` do relatório (as linhas mudaram no upstream). | Sugestão retirada: a `master` do fork permanece no snapshot de 31/10. |
 | A IA sugeriu o comentário "Review done here" para fechar o PR #1. | Falso: a revisão pelo outro integrante ainda não foi feita. | Erro reconhecido; a dupla deve editar o comentário (ver `REVISAO.md`). |
-| A IA indicou a revisão no PR #1. | O PR #1 tem base antiga: 45 commits e comentários do CodeQL sobre arquivos que a dupla não alterou. | Código revisado no PR #6400 (7 arquivos); registro da revisão no fork. |
+| A IA indicou a revisão no PR #1. | O PR #1 tem base antiga: 45 commits e comentários do CodeQL sobre arquivos que a dupla não alterou. | Código revisado a partir do diff do PR #6400 (7 arquivos; PR depois fechado pelo mantenedor) e da branch do fork; registro da revisão no fork. |
 | A IA passou ao revisor o comando do teste de mutação sem indicar onde gravar a biblioteca. | O Makefile do raylib grava `libraylib.a` em `../src/` (`RAYLIB_RELEASE_PATH ?= ../src`): a cópia `src_mut` ficou com a biblioteca original, os testes passaram e a mutação não foi exercitada; a biblioteca original foi sobrescrita pela versão mutada. | Reconstruir a biblioteca original e refazer a mutação com `RAYLIB_RELEASE_PATH=.`; roteiro do `REVISAO.md` corrigido. |
 
 ## 6. O que a IA **não** fez / limites
@@ -84,7 +84,7 @@
 - [ ] Conseguir explicar sem consultar: o que `InitPlatform()` faz; por que `GetFileExtension(".gitignore")` é `NULL`; o que é XFAIL/XPASS; por que o teste é *headless*.
 - [ ] Reler cada documento e **reescrever com suas palavras** o que não souberem defender (o enunciado permite perguntas individuais).
 - [ ] Preencher todos os `TODO` (nomes, ferramentas e prompts da dupla).
-- [ ] Abrir o PR #6400 e conferir título, 8 commits, 7 arquivos e a nota de uso de IA.
+- [ ] Abrir o PR #6400 e conferir o desfecho: fechado pelo mantenedor em 10/11 com o comentário "No, thanks." (sem mesclar), e saber explicar isso.
 - [ ] Reler a seção "About AI Usage" do `CONTRIBUTING.md` do raylib e adaptar a descrição do PR com as próprias palavras.
 - [ ] Conferir que o comentário de fechamento do PR #1 não afirma uma revisão que ainda não aconteceu.
 - [ ] Abrir 2 ou 3 linhas `arquivo:linha` na `master` do **fork** (não no upstream atual) e conferir o conteúdo.
