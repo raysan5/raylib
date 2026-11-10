@@ -359,7 +359,8 @@ void MinimizeWindow(void)
 // Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
-    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    if ((glfwGetWindowAttrib(platform.handle, GLFW_ICONIFIED) == GLFW_TRUE) ||
+        (glfwGetWindowAttrib(platform.handle, GLFW_MAXIMIZED) == GLFW_TRUE))
     {
         // Restores the specified window if it was previously iconified (minimized) or maximized
         glfwRestoreWindow(platform.handle);
