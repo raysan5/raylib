@@ -448,8 +448,10 @@ typedef enum AutomationEventType {
     ACTION_SETTARGETFPS             // param[0]: fps
 } AutomationEventType;
 
+#define MAX_AUTOMATION_EVENT_TYPES  24
+
 // Event type name strings, required for export
-static const char *autoEventTypeName[] = {
+static const char *autoEventTypeName[MAX_AUTOMATION_EVENT_TYPES] = {
     "EVENT_NONE",
     "INPUT_KEY_UP",
     "INPUT_KEY_DOWN",
@@ -3767,6 +3769,8 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "c %i\n", list.count);
     for (unsigned int i = 0; i < list.count; i++)
     {
+        if ((list.events[i].type < 0) || (list.events[i].type >= MAX_AUTOMATION_EVENT_TYPES)) list.events[i].type = 0;
+        
         byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
             list.events[i].params[0], list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], autoEventTypeName[list.events[i].type]);
     }
