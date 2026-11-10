@@ -1,0 +1,48 @@
+# Revisão do Pull Request (feita pelo outro integrante)
+
+> **Este arquivo é um roteiro + registro a preencher.** O enunciado exige revisão realizada pelo outro integrante;
+> nenhum resultado abaixo foi preenchido por nós — só vale depois que a pessoa revisora **executar** os passos.
+
+- **Autor do PR:** `TODO`
+- **Revisor(a):** `TODO` (não pode ser o autor)
+- **Link do PR:** `TODO`
+- **Data da revisão:** `TODO`
+
+## Roteiro de revisão
+
+### A. Ler e entender (sem executar)
+- [ ] O PR toca apenas `tests/` e `.github/workflows/run_tests.yml` (nenhum `src/`)?
+- [ ] Cada valor esperado em `test_hash.c` tem origem independente do raylib? (conferir comentário no topo e recalcular 2 valores à mão — ver C.)
+- [ ] `KNOWN_BUG` sempre cita issue/PR real? Abrir #6348 e confirmar que continua aberto.
+- [ ] O código dos testes segue `CONVENTIONS.md` (4 espaços, sem TAB, comentário antes da linha, `float x.xf`)?
+
+### B. Executar
+```bash
+cd src && make PLATFORM=PLATFORM_DESKTOP
+cd ../tests && make test
+```
+- [ ] Saída final `ALL TEST FILES PASSED`? Anote as contagens: `test_hash` ___ · `test_paths` ___ · `test_utf8` ___
+
+### C. Conferir um valor por conta própria
+PowerShell (SHA-256 de `'a'` × 56 deve ser `b35439a4…6738a`):
+```powershell
+$b=[byte[]]@(0x61)*56; ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($b))).Replace('-','').ToLower()
+```
+- [ ] Bateu com o esperado em `test_hash.c`?
+
+### D. Teste de mutação (o teste realmente pega o bug?)
+1. Crie uma **cópia** de `src/` (não altere o original).
+2. Em `rcore.c`, troque `unsigned long long paddedSize = dataSize + sizeof(bitLen);` por `... = dataSize + 4;`
+3. Recompile a cópia (`make PLATFORM=PLATFORM_DESKTOP`) e rode `test_hash` apontando `RAYLIB_SRC` para ela.
+- [ ] `test_hash` falhou (código de saída ≠ 0) nos comprimentos 56, 57, 59, 120, 121?
+
+### E. Pontos de atenção que a revisão deve avaliar
+- Testes de caminho absoluto dependem de `#ifdef _WIN32` — ok para Linux/macOS?
+- O workflow de CI: abrir a aba *Actions* e conferir se está verde no commit mais recente do PR. (Histórico: a 1ª execução, no commit `9657563`, falhou; a do commit `b83e2d3`, com `libglfw3-dev`, passou.) Revisor: confirmar isso você mesmo(a) na aba *Actions*.
+- Algum teste "trava" o processo? (`GetFileExtension(NULL)` **não** deve estar na suíte.)
+
+## Parecer
+
+- **Resultado:** `TODO: aprovado / aprovado com ressalvas / mudanças solicitadas`
+- **Comentários principais (copiar do PR):** `TODO`
+- **Mudanças feitas após a revisão (commits):** `TODO`
