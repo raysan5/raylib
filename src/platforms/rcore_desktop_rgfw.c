@@ -576,7 +576,7 @@ static void RGFW_cb_windowresizefunc(const RGFW_event *e)
         if (platform.surfacePixels != NULL)
         {
             RL_FREE(platform.surfacePixels);
-            platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
+            platform.surfacePixels = RL_CALLOC(platform.surfaceWidth*platform.surfaceHeight*4, 1);
         }
 
         if (platform.surface != NULL)
@@ -1887,13 +1887,7 @@ int InitPlatform(void)
 
         platform.surfaceWidth = CORE.Window.currentFbo.width;
         platform.surfaceHeight = CORE.Window.currentFbo.height;
-
-        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
-        if (platform.surfacePixels == NULL)
-        {
-            TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software pixel buffer");
-            return -1;
-        }
+        platform.surfacePixels = RL_CALLOC(platform.surfaceWidth*platform.surfaceHeight*4, 1);
 
         platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
 

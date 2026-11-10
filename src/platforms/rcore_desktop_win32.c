@@ -1396,7 +1396,7 @@ const char *GetClipboardText(void)
                 int length = (int)wcsnlen(clipboardText, maxLength);
 
                 int size = WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, NULL, 0, NULL, NULL);
-                char *utf8Text = (char *)RL_MALLOC(size + 1);
+                char *utf8Text = (char *)RL_CALLOC(size + 1, 1);
 
                 if ((size > 0) && (WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, utf8Text, size, NULL, NULL) == 0)) size = 0;
                 utf8Text[size] = '\0';
