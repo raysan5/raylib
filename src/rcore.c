@@ -2248,13 +2248,12 @@ int FileCopy(const char *srcPath, const char *dstPath)
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
-    // Create required paths if they do not exist
-    if (DirectoryExists(GetDirectoryPath(dstPath))) result = 0; // Already exists
-    else result = MakeDirectory(GetDirectoryPath(dstPath));
-
-    if (result == 0) // Directory created successfully or already exists
+    if ((srcFileData != NULL) && (srcDataSize > 0))
     {
-        if ((srcFileData != NULL) && (srcDataSize > 0))
+        // Create required paths if they do not exist
+        const char *dstDirPath = GetDirectoryPath(dstPath);
+
+        if (DirectoryExists(dstDirPath) || (MakeDirectory(dstDirPath) == 0)) // Directory created successfully or already exists
         {
             bool saved = SaveFileData(dstPath, srcFileData, srcDataSize);
             if (saved) result = 0;
