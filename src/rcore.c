@@ -2250,13 +2250,14 @@ int FileCopy(const char *srcPath, const char *dstPath)
 
     if ((srcFileData != NULL) && (srcDataSize > 0))
     {
-        // Create required paths if they do not exist
+        // Get full destination directory path
         const char *dstDirPath = GetDirectoryPath(dstPath);
-
-        if (DirectoryExists(dstDirPath) || (MakeDirectory(dstDirPath) == 0)) // Directory created successfully or already exists
+        
+        // Check if directory exist or create it otherwise
+        if (DirectoryExists(dstDirPath) || (MakeDirectory(dstDirPath) == 0))
         {
             bool saved = SaveFileData(dstPath, srcFileData, srcDataSize);
-            if (saved) result = 0;
+            if (saved) result = 0; // WARNING: SaveFileData() returns true on success
         }
     }
 
