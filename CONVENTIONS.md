@@ -77,6 +77,7 @@ if (dataPtr != NULL)
     dataPtr = NULL;
 }
 ```
+ - Memory allocation return value checks: no checks are done, the probabilities of allocators failing are very low and it would add a great amount of checking code, if a finer control is needed for allocators, macors can be overriden by custom implementations.
 
 **If proposing new functions, please try to use a clear naming for function-name and functions-parameters, in case of doubt, open an issue for discussion.**
 
