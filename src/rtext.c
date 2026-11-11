@@ -855,6 +855,20 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         imAtlas.height = imageSize;  // Atlas bitmap height
     }
 
+    // Security: reject malformed/oversized atlas dimensions before allocating. A crafted
+    // font can inflate the estimated size until imAtlas.width*imAtlas.height overflows int
+    // (e.g. 65536*65536 wraps to 0), yielding a 0-byte allocation and a later out-of-bounds
+    // write in the glyph copy loop (the bounds check validates the logical dimensions, not
+    // the allocation size).
+    if ((imAtlas.width <= 0) || (imAtlas.height <= 0) ||
+        ((long long)imAtlas.width*imAtlas.height > 0x3FFFFFFF))
+    {
+        TRACELOG(LOG_WARNING, "FONT: Invalid atlas size (%i x %i), aborting atlas generation", imAtlas.width, imAtlas.height);
+        RL_FREE(recs);
+        imAtlas = (Image){ 0 };
+        return imAtlas;
+    }
+
     int atlasDataSize = imAtlas.width*imAtlas.height; // Save total size for bounds checking
     imAtlas.data = (unsigned char *)RL_CALLOC(atlasDataSize, 1); // Create a bitmap to store characters (8 bpp)
     imAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
