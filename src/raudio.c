@@ -1695,22 +1695,17 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #if SUPPORT_FILEFORMAT_MOD
     else if ((strcmp(fileType, ".mod") == 0) || (strcmp(fileType, ".MOD") == 0))
     {
-        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_CALLOC(1, sizeof(jar_mod_context_t));
         int result = 0;
-
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_CALLOC(1, sizeof(jar_mod_context_t));
         jar_mod_init(ctxMod);
 
-        // Copy data to allocated memory for default UnloadMusicStream
+        // Load XM file data from memory buffer
         unsigned char *newData = (unsigned char *)RL_CALLOC(dataSize, 1);
-        for (int i = 0; i < dataSize; i++) newData[i] = data[i];
+        memcpy(newData, data, dataSize);
 
-        // Memory loaded version for jar_mod_load_file()
-        if (dataSize && (dataSize < 32*1024*1024))
-        {
-            ctxMod->modfilesize = dataSize;
-            ctxMod->modfile = newData;
-            if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
-        }
+        ctxMod->modfile = newData;
+        ctxMod->modfilesize = dataSize;
+        if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
 
         if (result > 0)
         {
