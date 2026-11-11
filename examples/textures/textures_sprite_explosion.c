@@ -36,11 +36,11 @@ int main(void)
     Sound fxBoom = LoadSound("resources/boom.wav");
 
     // Load explosion texture
-    Texture2D explosion = LoadTexture("resources/explosion.png");
+    Texture2D texExplosion = LoadTexture("resources/explosion.png");
 
     // Init variables for animation
-    float frameWidth = (float)explosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
-    float frameHeight = (float)explosion.height/NUM_LINES;           // Sprite one frame rectangle height
+    float frameWidth = (float)texExplosion.width/NUM_FRAMES_PER_LINE;   // Sprite one frame rectangle width
+    float frameHeight = (float)texExplosion.height/NUM_LINES;           // Sprite one frame rectangle height
     int currentFrame = 0;
     int currentLine = 0;
 
@@ -107,7 +107,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw explosion required frame rectangle
-            if (active) DrawTextureRec(explosion, frameRec, position, WHITE);
+            if (active) DrawTextureRec(texExplosion, frameRec, position, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(explosion);   // Unload texture
+    UnloadTexture(texExplosion);   // Unload texture
     UnloadSound(fxBoom);        // Unload sound
 
     CloseAudioDevice();

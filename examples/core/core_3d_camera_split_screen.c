@@ -37,7 +37,7 @@ int main(void)
     cameraPlayer1.position.z = -3.0f;
     cameraPlayer1.position.y = 1.0f;
 
-    RenderTexture screenPlayer1 = LoadRenderTexture(screenWidth/2, screenHeight);
+    RenderTexture2D rtScreenPlayer1 = LoadRenderTexture(screenWidth/2, screenHeight);
 
     // Setup player two camera and screen
     Camera cameraPlayer2 = { 0 };
@@ -47,10 +47,10 @@ int main(void)
     cameraPlayer2.position.x = -3.0f;
     cameraPlayer2.position.y = 3.0f;
 
-    RenderTexture screenPlayer2 = LoadRenderTexture(screenWidth/2, screenHeight);
+    RenderTexture2D rtScreenPlayer2 = LoadRenderTexture(screenWidth/2, screenHeight);
 
     // Build a flipped rectangle the size of the split view to use for drawing later
-    Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenPlayer1.texture.width, (float)-screenPlayer1.texture.height };
+    Rectangle recSplitScreen = { 0.0f, 0.0f, (float)rtScreenPlayer1.texture.width, (float)-rtScreenPlayer1.texture.height };
 
     // Grid data
     int count = 5;
@@ -96,7 +96,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         // Draw Player1 view to the render texture
-        BeginTextureMode(screenPlayer1);
+        BeginTextureMode(rtScreenPlayer1);
             ClearBackground(SKYBLUE);
 
             BeginMode3D(cameraPlayer1);
@@ -125,7 +125,7 @@ int main(void)
         EndTextureMode();
 
         // Draw Player2 view to the render texture
-        BeginTextureMode(screenPlayer2);
+        BeginTextureMode(rtScreenPlayer2);
             ClearBackground(SKYBLUE);
 
             BeginMode3D(cameraPlayer2);
@@ -157,8 +157,8 @@ int main(void)
         BeginDrawing();
             ClearBackground(BLACK);
 
-            DrawTextureRec(screenPlayer1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
-            DrawTextureRec(screenPlayer2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
+            DrawTextureRec(rtScreenPlayer1.texture, recSplitScreen, (Vector2){ 0, 0 }, WHITE);
+            DrawTextureRec(rtScreenPlayer2.texture, recSplitScreen, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
 
             DrawRectangle(GetScreenWidth()/2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
         EndDrawing();
@@ -166,8 +166,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(screenPlayer1); // Unload render texture
-    UnloadRenderTexture(screenPlayer2); // Unload render texture
+    UnloadRenderTexture(rtScreenPlayer1); // Unload render texture
+    UnloadRenderTexture(rtScreenPlayer2); // Unload render texture
 
     CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -36,12 +36,12 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Texture2D bill = LoadTexture("resources/billboard.png");    // Our billboard texture
+    Texture2D texBillboard = LoadTexture("resources/billboard.png");    // Our billboard texture
     Vector3 billPositionStatic = { 0.0f, 2.0f, 0.0f };          // Position of static billboard
     Vector3 billPositionRotating = { 1.0f, 2.0f, 1.0f };        // Position of rotating billboard
 
     // Entire billboard texture, source is used to take a segment from a larger texture
-    Rectangle source = { 0.0f, 0.0f, (float)bill.width, (float)bill.height };
+    Rectangle source = { 0.0f, 0.0f, (float)texBillboard.width, (float)texBillboard.height };
 
     // NOTE: Billboard locked on axis-Y
     Vector3 billUp = { 0.0f, 1.0f, 0.0f };
@@ -87,13 +87,13 @@ int main(void)
                 // Draw order matters!
                 if (distanceStatic > distanceRotating)
                 {
-                    DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
-                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
+                    DrawBillboard(camera, texBillboard, billPositionStatic, 2.0f, WHITE);
+                    DrawBillboardPro(camera, texBillboard, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
                 }
                 else
                 {
-                    DrawBillboardPro(camera, bill, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
-                    DrawBillboard(camera, bill, billPositionStatic, 2.0f, WHITE);
+                    DrawBillboardPro(camera, texBillboard, source, billPositionRotating, billUp, size, origin, rotation, WHITE);
+                    DrawBillboard(camera, texBillboard, billPositionStatic, 2.0f, WHITE);
                 }
 
             EndMode3D();
@@ -106,7 +106,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(bill);        // Unload texture
+    UnloadTexture(texBillboard);        // Unload texture
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

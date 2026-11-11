@@ -51,8 +51,8 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load skybox model
-    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
-    Model skybox = LoadModelFromMesh(cube);
+    Mesh mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Model modelSkybox = LoadModelFromMesh(mesh);
 
     // Set this to true to use an HDR Texture
     // NOTE: raylib must be built with HDR Support for this to work: SUPPORT_FILEFORMAT_HDR
@@ -60,12 +60,12 @@ int main(void)
 
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
-    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION),
+    modelSkybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/skybox.vs", GLSL_VERSION),
                                             TextFormat("resources/shaders/glsl%i/skybox.fs", GLSL_VERSION));
 
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(modelSkybox.materials[0].shader, GetShaderLocation(modelSkybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
+    SetShaderValue(modelSkybox.materials[0].shader, GetShaderLocation(modelSkybox.materials[0].shader, "doGamma"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(modelSkybox.materials[0].shader, GetShaderLocation(modelSkybox.materials[0].shader, "vflipped"), (int[1]){ useHDR? 1 : 0 }, SHADER_UNIFORM_INT);
 
     // Load cubemap shader and setup required shader locations
     Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/cubemap.vs", GLSL_VERSION),
@@ -80,23 +80,23 @@ int main(void)
         TextCopy(skyboxFileName, "resources/dresden_square_2k.hdr");
 
         // Load HDR panorama (sphere) texture
-        Texture2D panorama = LoadTexture(skyboxFileName);
+        Texture2D texPanorama = LoadTexture(skyboxFileName);
 
         // Generate cubemap (texture with 6 quads-cube-mapping) from panorama HDR texture
         // NOTE 1: New texture is generated rendering to texture, shader calculates the sphere->cube coordinates mapping
         // NOTE 2: It seems on some Android devices WebGL, fbo does not properly support a FLOAT-based attachment,
         // despite texture can be successfully created.. so using PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 instead of PIXELFORMAT_UNCOMPRESSED_R32G32B32A32
-        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+        modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, texPanorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
-        UnloadTexture(panorama);        // Texture not required anymore, cubemap already generated
+        UnloadTexture(texPanorama);        // Texture not required anymore, cubemap already generated
     }
     else
     {
         // TODO: WARNING: On PLATFORM_WEB it requires a big amount of memory to process input image
         // and generate the required cubemap image to be passed to rlLoadTextureCubemap()
-        Image image = LoadImage("resources/skybox.png");
-        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);
-        UnloadImage(image);
+        Image imSkybox = LoadImage("resources/skybox.png");
+        modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(imSkybox, CUBEMAP_LAYOUT_AUTO_DETECT);
+        UnloadImage(imSkybox);
     }
 
     DisableCursor();                    // Limit cursor to relative movement inside the window
@@ -121,7 +121,7 @@ int main(void)
                 if (IsFileExtension(droppedFiles.paths[0], ".png;.jpg;.hdr;.bmp;.tga"))
                 {
                     // Unload current cubemap texture to load new one
-                    UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
+                    UnloadTexture(modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
 
                     if (useHDR)
                     {
@@ -129,14 +129,14 @@ int main(void)
                         Texture2D panorama = LoadTexture(droppedFiles.paths[0]);
 
                         // Generate cubemap from panorama texture
-                        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+                        modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
                         UnloadTexture(panorama);    // Texture not required anymore, cubemap already generated
                     }
                     else
                     {
                         Image image = LoadImage(droppedFiles.paths[0]);
-                        skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);
+                        modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(image, CUBEMAP_LAYOUT_AUTO_DETECT);
                         UnloadImage(image);
                     }
 
@@ -159,7 +159,7 @@ int main(void)
                 // We are inside the cube, we need to disable backface culling!
                 rlDisableBackfaceCulling();
                 rlDisableDepthMask();
-                    DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
+                    DrawModel(modelSkybox, (Vector3){0, 0, 0}, 1.0f, WHITE);
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
 
@@ -178,9 +178,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadShader(skybox.materials[0].shader);
-    UnloadTexture(skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
-    UnloadModel(skybox);        // Unload skybox model
+    UnloadShader(modelSkybox.materials[0].shader);
+    UnloadTexture(modelSkybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture);
+    UnloadModel(modelSkybox);        // Unload skybox model
     UnloadShader(shdrCubemap);
 
     CloseWindow();              // Close window and OpenGL context

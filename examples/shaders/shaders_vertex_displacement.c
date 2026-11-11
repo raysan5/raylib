@@ -54,22 +54,22 @@ int main(void)
         TextFormat("resources/shaders/glsl%i/vertex_displacement.fs", GLSL_VERSION));
 
     // Load perlin noise texture
-    Image perlinNoiseImage = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
-    Texture perlinNoiseMap = LoadTextureFromImage(perlinNoiseImage);
-    UnloadImage(perlinNoiseImage);
+    Image imPerlinNoise = GenImagePerlinNoise(512, 512, 0, 0, 1.0f);
+    Texture2D texPerlinNoise = LoadTextureFromImage(imPerlinNoise);
+    UnloadImage(imPerlinNoise);
 
     // Set shader uniform location
     int perlinNoiseMapLoc = GetShaderLocation(shader, "perlinNoiseMap");
     rlEnableShader(shader.id);
     rlActiveTextureSlot(1);
-    rlEnableTexture(perlinNoiseMap.id);
+    rlEnableTexture(texPerlinNoise.id);
     rlSetUniformSampler(perlinNoiseMapLoc, 1);
 
     // Create a plane mesh and model
-    Mesh planeMesh = GenMeshPlane(50, 50, 50, 50);
-    Model planeModel = LoadModelFromMesh(planeMesh);
+    Mesh meshPlane  = GenMeshPlane(50, 50, 50, 50);
+    Model modelPlane = LoadModelFromMesh(meshPlane);
     // Set plane model material
-    planeModel.materials[0].shader = shader;
+    modelPlane.materials[0].shader = shader;
 
     float time = 0.0f;
 
@@ -96,7 +96,7 @@ int main(void)
 
                 BeginShaderMode(shader);
                     // Draw plane model
-                    DrawModel(planeModel, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, (Color) {255, 255, 255, 255});
+                    DrawModel(modelPlane, (Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, (Color) {255, 255, 255, 255});
                 EndShaderMode();
 
             EndMode3D();
@@ -111,8 +111,8 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);
-    UnloadModel(planeModel);
-    UnloadTexture(perlinNoiseMap);
+    UnloadModel(modelPlane);
+    UnloadTexture(texPerlinNoise);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

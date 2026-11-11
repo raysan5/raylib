@@ -37,18 +37,18 @@ int main(void)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
-    Image imMap = LoadImage("resources/cubicmap.png");      // Load cubicmap image (RAM)
-    Texture2D cubicmap = LoadTextureFromImage(imMap);       // Convert image to texture to display (VRAM)
-    Mesh mesh = GenMeshCubicmap(imMap, (Vector3){ 1.0f, 1.0f, 1.0f });
+    Image imCubicmap = LoadImage("resources/cubicmap.png"); // Load cubicmap image (RAM)
+    Texture2D texCubicmap = LoadTextureFromImage(imCubicmap); // Convert image to texture to display (VRAM)
+    Mesh mesh = GenMeshCubicmap(imCubicmap, (Vector3){ 1.0f, 1.0f, 1.0f });
     Model model = LoadModelFromMesh(mesh);
 
     // NOTE: By default each cube is mapped to one part of texture atlas
-    Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;    // Set map diffuse texture
+    Texture2D texAtlas = LoadTexture("resources/cubicmap_atlas.png");    // Load map texture
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texAtlas;    // Set map diffuse texture
 
     // Get map image data to be used for collision detection
-    Color *mapPixels = LoadImageColors(imMap);
-    UnloadImage(imMap);             // Unload image from RAM
+    Color *mapPixels = LoadImageColors(imCubicmap);
+    UnloadImage(imCubicmap);             // Unload image from RAM
 
     Vector3 mapPosition = { -16.0f, 0.0f, -8.0f };  // Set model position
 
@@ -75,22 +75,22 @@ int main(void)
 
         // Out-of-limits security check
         if (playerCellX < 0) playerCellX = 0;
-        else if (playerCellX >= cubicmap.width) playerCellX = cubicmap.width - 1;
+        else if (playerCellX >= texCubicmap.width) playerCellX = texCubicmap.width - 1;
 
         if (playerCellY < 0) playerCellY = 0;
-        else if (playerCellY >= cubicmap.height) playerCellY = cubicmap.height - 1;
+        else if (playerCellY >= texCubicmap.height) playerCellY = texCubicmap.height - 1;
 
         // Check map collisions using image data and player position against surrounding cells only
         for (int y = playerCellY - 1; y <= playerCellY + 1; y++)
         {
             // Avoid map accessing out of bounds
-            if ((y >= 0) && (y < cubicmap.height))
+            if ((y >= 0) && (y < texCubicmap.height))
             {
                 for (int x = playerCellX - 1; x <= playerCellX + 1; x++)
                 {
                     // NOTE: Collision: Only checking R channel for white pixel
-                    if (((x >= 0) && (x < cubicmap.width)) &&
-                        (mapPixels[y*cubicmap.width + x].r == 255) &&
+                    if (((x >= 0) && (x < texCubicmap.width)) &&
+                        (mapPixels[y*texCubicmap.width + x].r == 255) &&
                         (CheckCollisionCircleRec(playerPos, playerRadius,
                         (Rectangle){ mapPosition.x - 0.5f + x*1.0f, mapPosition.z - 0.5f + y*1.0f, 1.0f, 1.0f })))
                     {
@@ -112,11 +112,11 @@ int main(void)
                 DrawModel(model, mapPosition, 1.0f, WHITE);                     // Draw maze map
             EndMode3D();
 
-            DrawTextureEx(cubicmap, (Vector2){ GetScreenWidth() - cubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
-            DrawRectangleLines(GetScreenWidth() - cubicmap.width*4 - 20, 20, cubicmap.width*4, cubicmap.height*4, GREEN);
+            DrawTextureEx(texCubicmap, (Vector2){ GetScreenWidth() - texCubicmap.width*4.0f - 20, 20.0f }, 0.0f, 4.0f, WHITE);
+            DrawRectangleLines(GetScreenWidth() - texCubicmap.width*4 - 20, 20, texCubicmap.width*4, texCubicmap.height*4, GREEN);
 
             // Draw player position radar
-            DrawRectangle(GetScreenWidth() - cubicmap.width*4 - 20 + playerCellX*4, 20 + playerCellY*4, 4, 4, RED);
+            DrawRectangle(GetScreenWidth() - texCubicmap.width*4 - 20 + playerCellX*4, 20 + playerCellY*4, 4, 4, RED);
 
             DrawFPS(10, 10);
 
@@ -128,8 +128,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadImageColors(mapPixels);   // Unload color array
 
-    UnloadTexture(cubicmap);        // Unload cubicmap texture
-    UnloadTexture(texture);         // Unload map texture
+    UnloadTexture(texCubicmap);        // Unload cubicmap texture
+    UnloadTexture(texAtlas);         // Unload map texture
     UnloadModel(model);             // Unload map model
 
     CloseWindow();                  // Close window and OpenGL context

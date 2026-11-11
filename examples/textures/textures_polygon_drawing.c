@@ -67,9 +67,9 @@ int main(void)
     for (int i = 0; i < MAX_POINTS; i++) positions[i] = points[i];
 
     // Load texture to be mapped to poly
-    Texture texture = LoadTexture("resources/cat.png");
+    Texture2D texture = LoadTexture("resources/cat.png");
 
-    float angle = 0.0f;             // Rotation angle (in degrees)
+    float angle = 0.0f; // Rotation angle (in degrees)
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------

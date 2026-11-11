@@ -80,9 +80,9 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - spectrum visualizer");
 
-    Image fftImage = GenImageColor(BUFFER_SIZE, TEXTURE_HEIGHT, WHITE);
-    Texture2D fftTexture = LoadTextureFromImage(fftImage);
-    RenderTexture2D bufferA = LoadRenderTexture(screenWidth, screenHeight);
+    Image imFFT = GenImageColor(BUFFER_SIZE, TEXTURE_HEIGHT, WHITE);
+    Texture2D texFFT = LoadTextureFromImage(imFFT);
+    RenderTexture2D rtBufferA = LoadRenderTexture(screenWidth, screenHeight);
     Vector2 iResolution = { (float)screenWidth, (float)screenHeight };
 
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/fft.fs", GLSL_VERSION));
@@ -90,14 +90,14 @@ int main(void)
     int iResolutionLocation = GetShaderLocation(shader, "iResolution");
     int iChannel0Location = GetShaderLocation(shader, "iChannel0");
     SetShaderValue(shader, iResolutionLocation, &iResolution, SHADER_UNIFORM_VEC2);
-    SetShaderValueTexture(shader, iChannel0Location, fftTexture);
+    SetShaderValueTexture(shader, iChannel0Location, texFFT);
 
     InitAudioDevice();
     SetAudioStreamBufferSizeDefault(AUDIO_STREAM_RING_BUFFER_SIZE);
 
     // WARNING: Memory out-of-bounds on PLATFORM_WEB
-    Wave wav = LoadWave("resources/country.mp3");
-    WaveFormat(&wav, SAMPLE_RATE, PER_SAMPLE_BIT_DEPTH, MONO);
+    Wave wave = LoadWave("resources/country.mp3");
+    WaveFormat(&wave, SAMPLE_RATE, PER_SAMPLE_BIT_DEPTH, MONO);
 
     AudioStream audioStream = LoadAudioStream(SAMPLE_RATE, PER_SAMPLE_BIT_DEPTH, MONO);
     PlayAudioStream(audioStream);
@@ -116,7 +116,7 @@ int main(void)
     };
 
     unsigned int wavCursor = 0;
-    const short *wavPCM16 = wav.data;
+    const short *wavPCM16 = wave.data;
 
     short chunkSamples[AUDIO_STREAM_RING_BUFFER_SIZE] = { 0 };
     float audioSamples[FFT_WINDOW_SIZE] = { 0 };
@@ -133,11 +133,11 @@ int main(void)
         {
             for (int i = 0; i < AUDIO_STREAM_RING_BUFFER_SIZE; i++)
             {
-                int left = (wav.channels == 2)? wavPCM16[wavCursor*2 + 0] : wavPCM16[wavCursor];
-                int right = (wav.channels == 2)? wavPCM16[wavCursor*2 + 1] : left;
+                int left = (wave.channels == 2)? wavPCM16[wavCursor*2 + 0] : wavPCM16[wavCursor];
+                int right = (wave.channels == 2)? wavPCM16[wavCursor*2 + 1] : left;
                 chunkSamples[i] = (short)((left + right)/2);
 
-                if (++wavCursor >= wav.frameCount) wavCursor = 0;
+                if (++wavCursor >= wave.frameCount) wavCursor = 0;
             }
 
             UpdateAudioStream(audioStream, chunkSamples, AUDIO_STREAM_RING_BUFFER_SIZE);
@@ -146,8 +146,8 @@ int main(void)
         }
 
         CaptureFrame(&fft, audioSamples);
-        RenderFrame(&fft, &fftImage);
-        UpdateTexture(fftTexture, fftImage.data);
+        RenderFrame(&fft, &imFFT);
+        UpdateTexture(texFFT, imFFT.data);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -157,8 +157,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             BeginShaderMode(shader);
-                SetShaderValueTexture(shader, iChannel0Location, fftTexture);
-                DrawTextureRec(bufferA.texture,
+                SetShaderValueTexture(shader, iChannel0Location, texFFT);
+                DrawTextureRec(rtBufferA.texture,
                     (Rectangle){ 0, 0, (float)screenWidth, (float)-screenHeight },
                     (Vector2){ 0, 0 }, WHITE);
             EndShaderMode();
@@ -170,11 +170,11 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);
-    UnloadRenderTexture(bufferA);
-    UnloadTexture(fftTexture);
-    UnloadImage(fftImage);
+    UnloadRenderTexture(rtBufferA);
+    UnloadTexture(texFFT);
+    UnloadImage(imFFT);
     UnloadAudioStream(audioStream);
-    UnloadWave(wav);
+    UnloadWave(wave);
     CloseAudioDevice();
 
     RL_FREE(fft.spectrum);

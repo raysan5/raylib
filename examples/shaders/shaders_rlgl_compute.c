@@ -88,9 +88,9 @@ int main(void)
 
     // Create a white texture of the size of the window to update
     // each pixel of the window using the fragment shader: golRenderShader
-    Image whiteImage = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
-    Texture whiteTex = LoadTextureFromImage(whiteImage);
-    UnloadImage(whiteImage);
+    Image imCanvas = GenImageColor(GOL_WIDTH, GOL_WIDTH, WHITE);
+    Texture2D texCanvas = LoadTextureFromImage(imCanvas);
+    UnloadImage(imCanvas);
 
     SetTargetFPS(0);                    // Set our game to run with an uncapped framerate
     //--------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ int main(void)
             ClearBackground(BLANK);
 
             BeginShaderMode(golRenderShader);
-                DrawTexture(whiteTex, 0, 0, WHITE);
+                DrawTexture(texCanvas, 0, 0, WHITE);
             EndShaderMode();
 
             DrawRectangleLines(GetMouseX() - brushSize/2, GetMouseY() - brushSize/2, brushSize, brushSize, RED);
@@ -177,7 +177,7 @@ int main(void)
     rlUnloadShaderProgram(golTransfertProgram);
     rlUnloadShaderProgram(golLogicProgram);
 
-    UnloadTexture(whiteTex);            // Unload white texture
+    UnloadTexture(texCanvas);            // Unload white texture
     UnloadShader(golRenderShader);      // Unload rendering fragment shader
 
     CloseWindow();                      // Close window and OpenGL context

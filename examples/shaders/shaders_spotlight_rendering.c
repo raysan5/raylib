@@ -84,7 +84,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - spotlight rendering");
     HideCursor();
 
-    Texture texRay = LoadTexture("resources/raysan.png");
+    Texture2D texRay = LoadTexture("resources/raysan.png");
 
     Star stars[MAX_STARS] = { 0 };
 

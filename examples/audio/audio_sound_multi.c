@@ -18,8 +18,6 @@
 #include "raylib.h"
 
 #define MAX_SOUNDS 10
-Sound soundArray[MAX_SOUNDS] = { 0 };
-int currentSound;
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -34,15 +32,15 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [audio] example - sound multi");
 
     InitAudioDevice();      // Initialize audio device
+    
+    Sound sounds[MAX_SOUNDS] = { 0 };
+    int currentSound = 0;
 
-    // Load audio file into the first slot as the 'source' sound,
-    // this sound owns the sample data
-    soundArray[0] = LoadSound("resources/sound.wav");
+    // Load audio file into the first slot as the 'source' sound
+    sounds[0] = LoadSound("resources/sound.wav");
 
     // Load an alias of the sound into slots 1-9. These do not own the sound data, but can be played
-    for (int i = 1; i < MAX_SOUNDS; i++) soundArray[i] = LoadSoundAlias(soundArray[0]);
-
-    currentSound = 0;               // Set the sound list to the start
+    for (int i = 1; i < MAX_SOUNDS; i++) sounds[i] = LoadSoundAlias(sounds[0]);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -54,7 +52,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         if (IsKeyPressed(KEY_SPACE))
         {
-            PlaySound(soundArray[currentSound]);    // Play the next open sound slot
+            PlaySound(sounds[currentSound]);    // Play the next open sound slot
             currentSound++;                         // Increment the sound slot
 
             // If the sound slot is out of bounds, go back to 0
@@ -79,8 +77,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 1; i < MAX_SOUNDS; i++) UnloadSoundAlias(soundArray[i]); // Unload sound aliases
-    UnloadSound(soundArray[0]); // Unload source sound data
+    for (int i = 1; i < MAX_SOUNDS; i++) UnloadSoundAlias(sounds[i]); // Unload sound aliases
+    UnloadSound(sounds[0]); // Unload source sound data
 
     CloseAudioDevice();     // Close audio device
 

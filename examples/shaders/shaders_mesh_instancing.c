@@ -52,7 +52,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;                     // Camera projection type
 
     // Define mesh to be instanced
-    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Mesh mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
 
     // Define transforms to be uploaded to GPU for instances
     Matrix *transforms = (Matrix *)RL_CALLOC(MAX_INSTANCES, sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
@@ -118,15 +118,15 @@ int main(void)
             BeginMode3D(camera);
 
                 // Draw cube mesh with default material (BLUE)
-                DrawMesh(cube, matDefault, MatrixTranslate(-10.0f, 0.0f, 0.0f));
+                DrawMesh(mesh, matDefault, MatrixTranslate(-10.0f, 0.0f, 0.0f));
 
                 // Draw meshes instanced using material containing instancing shader (RED + lighting),
                 // transforms[] for the instances should be provided, they are dynamically
                 // updated in GPU every frame, so we can animate the different mesh instances
-                DrawMeshInstanced(cube, matInstances, transforms, MAX_INSTANCES);
+                DrawMeshInstanced(mesh, matInstances, transforms, MAX_INSTANCES);
 
                 // Draw cube mesh with default material (BLUE)
-                DrawMesh(cube, matDefault, MatrixTranslate(10.0f, 0.0f, 0.0f));
+                DrawMesh(mesh, matDefault, MatrixTranslate(10.0f, 0.0f, 0.0f));
 
             EndMode3D();
 
@@ -141,7 +141,7 @@ int main(void)
     RL_FREE(transforms);    // Free transforms
     UnloadMaterial(matInstances);    // Also unloads the instancing shader
     UnloadMaterial(matDefault);      // Unload default material
-    UnloadMesh(cube);                // Unload cube mesh
+    UnloadMesh(mesh);                // Unload cube mesh
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

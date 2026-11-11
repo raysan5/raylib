@@ -67,14 +67,14 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;
 
     // CPU-side canvas plus the GPU texture it gets pushed to after every stroke
-    Image canvasImage = GenImageColor(CANVAS_SIZE, CANVAS_SIZE, RAYWHITE);
-    Texture2D canvasTexture = LoadTextureFromImage(canvasImage);
-    SetTextureFilter(canvasTexture, TEXTURE_FILTER_BILINEAR);
+    Image imCanvas = GenImageColor(CANVAS_SIZE, CANVAS_SIZE, RAYWHITE);
+    Texture2D texCanvas = LoadTextureFromImage(imCanvas);
+    SetTextureFilter(texCanvas, TEXTURE_FILTER_BILINEAR);
 
     Model model = { 0 };
     BoundingBox modelBBox = { 0 };
     ShapeType currentShape = SHAPE_SPHERE;
-    ChangeShape(&model, &modelBBox, &currentShape, SHAPE_SPHERE, canvasTexture);
+    ChangeShape(&model, &modelBBox, &currentShape, SHAPE_SPHERE, texCanvas);
 
     ToolMode currentTool = TOOL_PAINT;
     Color activeColor = RED;
@@ -121,19 +121,19 @@ int main(void)
                         for (int i = 0; i <= steps; i++)
                         {
                             float t = (float)i / (float)steps;
-                            ImageDrawCircle(&canvasImage, (int)Lerp((float)lastPx, (float)px, t),
+                            ImageDrawCircle(&imCanvas, (int)Lerp((float)lastPx, (float)px, t),
                                 (int)Lerp((float)lastPy, (float)py, t), brushRadius, activeColor);
                         }
                     }
-                    else ImageDrawCircle(&canvasImage, px, py, brushRadius, activeColor);
+                    else ImageDrawCircle(&imCanvas, px, py, brushRadius, activeColor);
 
-                    UpdateTexture(canvasTexture, canvasImage.data);
+                    UpdateTexture(texCanvas, imCanvas.data);
                     lastHitUV = hitUV;
                     hasLastHit = true;
                 }
                 else
                 {
-                    activeColor = GetImageColor(canvasImage, px, py);
+                    activeColor = GetImageColor(imCanvas, px, py);
                     currentTool = TOOL_PAINT;
                     hasLastHit = false;
                 }
@@ -173,13 +173,13 @@ int main(void)
             bool torusActive = (currentShape == SHAPE_TORUS);
 
             if (GuiToggle((Rectangle){ 25, 120, 95, 28 }, "SPHERE", &sphereActive))
-                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_SPHERE, canvasTexture);
+                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_SPHERE, texCanvas);
             if (GuiToggle((Rectangle){ 125, 120, 95, 28 }, "CUBE", &cubeActive))
-                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CUBE, canvasTexture);
+                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CUBE, texCanvas);
             if (GuiToggle((Rectangle){ 25, 153, 95, 28 }, "CYLINDER", &cylinderActive))
-                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CYLINDER, canvasTexture);
+                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_CYLINDER, texCanvas);
             if (GuiToggle((Rectangle){ 125, 153, 95, 28 }, "TORUS", &torusActive))
-                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_TORUS, canvasTexture);
+                ChangeShape(&model, &modelBBox, &currentShape, SHAPE_TORUS, texCanvas);
 
             // Color display
             DrawText("Active Color:", 25, 195, 10, LIGHTGRAY);
@@ -204,13 +204,13 @@ int main(void)
             // Canvas action buttons
             if (GuiButton((Rectangle){ 25, 410, 95, 30 }, "CLEAR"))
             {
-                ImageClearBackground(&canvasImage, RAYWHITE);
-                UpdateTexture(canvasTexture, canvasImage.data);
+                ImageClearBackground(&imCanvas, RAYWHITE);
+                UpdateTexture(texCanvas, imCanvas.data);
             }
             if (GuiButton((Rectangle){ 125, 410, 95, 30 }, "FILL"))
             {
-                ImageClearBackground(&canvasImage, activeColor);
-                UpdateTexture(canvasTexture, canvasImage.data);
+                ImageClearBackground(&imCanvas, activeColor);
+                UpdateTexture(texCanvas, imCanvas.data);
             }
 
             DrawText("Left click: paint / pick color   |   Right drag: orbit camera", 260, screenHeight - 25, 10, RAYWHITE);
@@ -223,8 +223,8 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);
-    UnloadImage(canvasImage);
-    UnloadTexture(canvasTexture);
+    UnloadImage(imCanvas);
+    UnloadTexture(texCanvas);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

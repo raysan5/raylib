@@ -36,7 +36,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image kernel");
 
-    Image image = LoadImage("resources/cat.png"); // Loaded in CPU memory (RAM)
+    Image imCat = LoadImage("resources/cat.png"); // Loaded in CPU memory (RAM)
 
     float gaussiankernel[] = {
         1.0f, 2.0f, 1.0f,
@@ -60,36 +60,36 @@ int main(void)
     NormalizeKernel(sharpenkernel, 9);
     NormalizeKernel(sobelkernel, 9);
 
-    Image catSharpend = ImageCopy(image);
-    ImageKernelConvolution(&catSharpend, sharpenkernel, 9);
+    Image imCatSharpend = ImageCopy(imCat);
+    ImageKernelConvolution(&imCatSharpend, sharpenkernel, 9);
 
-    Image catSobel = ImageCopy(image);
-    ImageKernelConvolution(&catSobel, sobelkernel, 9);
+    Image imCatSobel = ImageCopy(imCat);
+    ImageKernelConvolution(&imCatSobel, sobelkernel, 9);
 
-    Image catGaussian = ImageCopy(image);
+    Image imCatGaussian = ImageCopy(imCat);
 
     for (int i = 0; i < 6; i++)
     {
-        ImageKernelConvolution(&catGaussian, gaussiankernel, 9);
+        ImageKernelConvolution(&imCatGaussian, gaussiankernel, 9);
     }
 
-    ImageCrop(&image, (Rectangle){ 0, 0, (float)200, (float)450 });
-    ImageCrop(&catGaussian, (Rectangle){ 0, 0, (float)200, (float)450 });
-    ImageCrop(&catSobel, (Rectangle){ 0, 0, (float)200, (float)450 });
-    ImageCrop(&catSharpend, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&imCat, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&imCatGaussian, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&imCatSobel, (Rectangle){ 0, 0, (float)200, (float)450 });
+    ImageCrop(&imCatSharpend, (Rectangle){ 0, 0, (float)200, (float)450 });
 
     // Images converted to texture, GPU memory (VRAM)
-    Texture2D texture = LoadTextureFromImage(image);
-    Texture2D catSharpendTexture = LoadTextureFromImage(catSharpend);
-    Texture2D catSobelTexture = LoadTextureFromImage(catSobel);
-    Texture2D catGaussianTexture = LoadTextureFromImage(catGaussian);
+    Texture2D texCat = LoadTextureFromImage(imCat);
+    Texture2D texCatSharpend = LoadTextureFromImage(imCatSharpend);
+    Texture2D texCatSobel = LoadTextureFromImage(imCatSobel);
+    Texture2D texCatGaussian = LoadTextureFromImage(imCatGaussian);
 
     // Once images have been converted to texture and uploaded to VRAM,
     // they can be unloaded from RAM
-    UnloadImage(image);
-    UnloadImage(catGaussian);
-    UnloadImage(catSobel);
-    UnloadImage(catSharpend);
+    UnloadImage(imCat);
+    UnloadImage(imCatGaussian);
+    UnloadImage(imCatSobel);
+    UnloadImage(imCatSharpend);
 
     SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
@@ -108,10 +108,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawTexture(catSharpendTexture, 0, 0, WHITE);
-            DrawTexture(catSobelTexture, 200, 0, WHITE);
-            DrawTexture(catGaussianTexture, 400, 0, WHITE);
-            DrawTexture(texture, 600, 0, WHITE);
+            DrawTexture(texCatSharpend, 0, 0, WHITE);
+            DrawTexture(texCatSobel, 200, 0, WHITE);
+            DrawTexture(texCatGaussian, 400, 0, WHITE);
+            DrawTexture(texCat, 600, 0, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -119,10 +119,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture);
-    UnloadTexture(catGaussianTexture);
-    UnloadTexture(catSobelTexture);
-    UnloadTexture(catSharpendTexture);
+    UnloadTexture(texCat);
+    UnloadTexture(texCatGaussian);
+    UnloadTexture(texCatSobel);
+    UnloadTexture(texCatSharpend);
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -39,7 +39,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - tiled drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture texPattern = LoadTexture("resources/patterns.png");
+    Texture2D texPattern = LoadTexture("resources/patterns.png");
     SetTextureFilter(texPattern, TEXTURE_FILTER_BILINEAR); // Makes the texture smoother when upscaled
 
     // Coordinates for all patterns inside the texture

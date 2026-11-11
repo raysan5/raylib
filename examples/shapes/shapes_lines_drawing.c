@@ -38,7 +38,7 @@ int main(void)
     Vector2 mousePositionPrevious = GetMousePosition();
 
     // The canvas to draw lines on
-    RenderTexture canvas = LoadRenderTexture(screenWidth, screenHeight);
+    RenderTexture2D canvas = LoadRenderTexture(screenWidth, screenHeight);
 
     // The line's thickness
     float lineThickness = 8.0f;

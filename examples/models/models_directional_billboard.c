@@ -43,12 +43,10 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE; // Projection type (Standard 3D perspective)
 
     // Load billboard texture
-    Texture skillbot = LoadTexture("resources/skillbot.png");
+    Texture2D texSkillbot = LoadTexture("resources/skillbot.png");
 
-    // Timer to update animation
-    float anim_timer = 0.0f;
-    // Animation frame
-    unsigned int anim = 0;
+    float deltaTime = 0.0f; // Timer to update animation
+    unsigned int anim = 0;  // Animation frame
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -61,12 +59,12 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Update timer with delta time
-        anim_timer += GetFrameTime();
+        deltaTime += GetFrameTime();
 
         // Update frame index after a certain amount of time (half a second)
-        if (anim_timer > 0.5f)
+        if (deltaTime > 0.5f)
         {
-            anim_timer = 0.0f;
+            deltaTime = 0.0f;
             anim += 1;
         }
 
@@ -74,33 +72,31 @@ int main(void)
         if (anim >= 4) anim = 0;
 
         // Find the current direction frame based on the camera position to the billboard object
-        float dir = (float)floor(((Vector2Angle((Vector2){ 2.0f, 0.0f }, (Vector2){ camera.position.x, camera.position.z })/PI)*4.0f) + 0.25f);
+        float direction = (float)floor(((Vector2Angle((Vector2){ 2.0f, 0.0f }, 
+            (Vector2){ camera.position.x, camera.position.z })/PI)*4.0f) + 0.25f);
 
         // Correct frame index if angle is negative
-        if (dir < 0.0f)
-        {
-            dir = 8.0f - (float)abs((int)dir);
-        }
+        if (direction < 0.0f) direction = 8.0f - (float)abs((int)direction);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+            ClearBackground(RAYWHITE);
 
-        BeginMode3D(camera);
+            BeginMode3D(camera);
 
-            DrawGrid(10, 1.0f);
+                DrawGrid(10, 1.0f);
 
-            // Draw billboard pointing straight up to the sky, rotated relative to the camera and offset from the bottom
-            DrawBillboardPro(camera, skillbot, (Rectangle){ 0.0f + (anim*24.0f), 0.0f + (dir*24.0f), 24.0f, 24.0f }, Vector3Zero(), (Vector3){ 0.0f, 1.0f, 0.0f }, Vector2One(), (Vector2){ 0.5f, 0.0f }, 0, WHITE);
+                // Draw billboard pointing straight up to the sky, rotated relative to the camera and offset from the bottom
+                DrawBillboardPro(camera, texSkillbot, (Rectangle){ 0.0f + (anim*24.0f), 0.0f + (direction*24.0f), 24.0f, 24.0f }, Vector3Zero(), (Vector3){ 0.0f, 1.0f, 0.0f }, Vector2One(), (Vector2){ 0.5f, 0.0f }, 0, WHITE);
 
-        EndMode3D();
+            EndMode3D();
 
-        // Render various variables for reference
-        DrawText(TextFormat("animation: %d", anim), 10, 10, 20, DARKGRAY);
-        DrawText(TextFormat("direction frame: %.0f", dir), 10, 40, 20, DARKGRAY);
+            // Render various variables for reference
+            DrawText(TextFormat("animation: %d", anim), 10, 10, 20, DARKGRAY);
+            DrawText(TextFormat("direction frame: %.0f", direction), 10, 40, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -109,7 +105,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     // Unload billboard texture
-    UnloadTexture(skillbot);
+    UnloadTexture(texSkillbot);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
