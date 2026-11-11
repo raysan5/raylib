@@ -1259,19 +1259,26 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    RGFW_monitor *monitor = NULL;
+    Vector2 scale = { 1.0f, 1.0f };
 
-    if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
-    else monitor = RGFW_getPrimaryMonitor();
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
+    {
+        RGFW_monitor *monitor = NULL;
 
-    #if defined(__APPLE__)
-        // Apple does < 1.0f scaling, example: 0.66f, 0.5f
-        // it needs to be convert to be consistent
-        return (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
-    #else
-        // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
-        return (Vector2){ monitor->scaleX, monitor->scaleX };
-    #endif
+        if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
+        else monitor = RGFW_getPrimaryMonitor();
+
+        #if defined(__APPLE__)
+            // Apple does < 1.0f scaling, example: 0.66f, 0.5f
+            // it needs to be convert to be consistent
+            scale = (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
+        #else
+            // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
+            scale = (Vector2){ monitor->scaleX, monitor->scaleX };
+        #endif
+    }
+
+    return scale;
 }
 
 // Get monitor pixel ratio

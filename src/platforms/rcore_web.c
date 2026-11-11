@@ -790,8 +790,13 @@ Vector2 GetWindowScaleDPI(void)
 {
     // NOTE: Returned scale is relative to the current monitor where the browser window is located
     Vector2 scale = { 1.0f, 1.0f };
-    scale.x = (float)EM_ASM_DOUBLE( { return window.devicePixelRatio; } );
-    scale.y = scale.x;
+
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
+    {
+        scale.x = (float)EM_ASM_DOUBLE( { return window.devicePixelRatio; } );
+        scale.y = scale.x;
+    }
+
     return scale;
 }
 
