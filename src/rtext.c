@@ -1646,9 +1646,6 @@ int TextToInteger(const char *text)
 // WARNING: Only '.' character is understood as decimal point
 float TextToFloat(const char *text)
 {
-    // Powers of ten a float holds exactly
-    static const float powersOfTen[11] = { 1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f, 1e7f, 1e8f, 1e9f, 1e10f };
-
     // Up to 9 significant digits are read as an integer and scaled once at the end,
     // later digits only move the decimal point
     unsigned int digits = 0;
@@ -1717,8 +1714,13 @@ float TextToFloat(const char *text)
         while ((exponent > 10) && (value < 3.4e38f)) { value *= 1e10f; exponent -= 10; }
         while ((exponent < -10) && (value > 0.0f)) { value /= 1e10f; exponent += 10; }
 
-        if ((exponent > 0) && (exponent <= 10)) value *= powersOfTen[exponent];
-        else if ((exponent < 0) && (exponent >= -10)) value /= powersOfTen[-exponent];
+        // Powers of ten up to 1e10 are exact in a float
+        int powerCount = (exponent < 0)? -exponent : exponent;
+        float power = 1.0f;
+        if (powerCount <= 10) for (int k = 0; k < powerCount; k++) power *= 10.0f;
+
+        if (exponent > 0) value *= power;
+        else if (exponent < 0) value /= power;
     }
 
     return value*sign;
