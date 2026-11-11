@@ -619,8 +619,6 @@ void SetClipboardText(const char *text)
     jmethodID setPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "setPrimaryClip", "(Landroid/content/ClipData;)V");
     (*env)->CallVoidMethod(env, clipboard, setPrimaryClip, clip);
 
-    if ((*env)->ExceptionCheck(env)) (*env)->ExceptionClear(env);
-
     (*vm)->DetachCurrentThread(vm);
 }
 
