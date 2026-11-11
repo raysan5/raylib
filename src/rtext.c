@@ -493,7 +493,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     for (int i = 0; i < image.height*image.width; i++) if (COLOR_EQUAL(pixels[i], key)) pixels[i] = BLANK;
 
     // Create a new image with the processed color data (key color replaced by BLANK)
-    Image fontClear = {
+    Image imFontClear = {
         .data = pixels,
         .width = image.width,
         .height = image.height,
@@ -502,7 +502,7 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
     };
 
     // Set font with all data parsed from image
-    font.texture = LoadTextureFromImage(fontClear); // Convert processed image to OpenGL texture
+    font.texture = LoadTextureFromImage(imFontClear); // Convert processed image to OpenGL texture
     font.glyphCount = index;
     font.glyphPadding = 0;
 
@@ -523,11 +523,11 @@ Font LoadFontFromImage(Image image, Color key, int firstChar)
         font.glyphs[i].offsetY = 0;
         font.glyphs[i].advanceX = 0;
 
-        // Fill character image data from fontClear data
-        font.glyphs[i].image = ImageFromImage(fontClear, tempCharRecs[i]);
+        // Fill character image data from imFontClear data
+        font.glyphs[i].image = ImageFromImage(imFontClear, tempCharRecs[i]);
     }
 
-    UnloadImage(fontClear);     // Unload processed image once converted to texture
+    UnloadImage(imFontClear);     // Unload processed image once converted to texture
 
     font.baseSize = (int)font.recs[0].height;
 
@@ -570,17 +570,17 @@ Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int
     {
         font.glyphPadding = FONT_TTF_DEFAULT_CHARS_PADDING;
 
-        Image atlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount, font.baseSize, font.glyphPadding, 0);
-        font.texture = LoadTextureFromImage(atlas);
+        Image imAtlas = GenImageFontAtlas(font.glyphs, &font.recs, font.glyphCount, font.baseSize, font.glyphPadding, 0);
+        font.texture = LoadTextureFromImage(imAtlas);
 
         // Update glyphs[i].image to use alpha, required to be used on ImageDrawText()
         for (int i = 0; i < font.glyphCount; i++)
         {
             UnloadImage(font.glyphs[i].image);
-            font.glyphs[i].image = ImageFromImage(atlas, font.recs[i]);
+            font.glyphs[i].image = ImageFromImage(imAtlas, font.recs[i]);
         }
 
-        UnloadImage(atlas);
+        UnloadImage(imAtlas);
 
         TRACELOG(LOG_INFO, "FONT: Data loaded successfully (%i pixel size | %i glyphs)", font.baseSize, font.glyphCount);
     }
@@ -809,12 +809,12 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
 #if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
 Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod)
 {
-    Image atlas = { 0 };
+    Image imAtlas = { 0 };
 
     if (glyphs == NULL)
     {
         TRACELOG(LOG_WARNING, "FONT: Provided glyphs info not valid, returning empty image atlas");
-        return atlas;
+        return imAtlas;
     }
 
     *glyphRecs = NULL;
@@ -846,22 +846,22 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
 
     if (totalArea < ((imageSize*imageSize)/2))
     {
-        atlas.width = imageSize;    // Atlas bitmap width
-        atlas.height = imageSize/2; // Atlas bitmap height
+        imAtlas.width = imageSize;    // Atlas bitmap width
+        imAtlas.height = imageSize/2; // Atlas bitmap height
     }
     else
     {
-        atlas.width = imageSize;   // Atlas bitmap width
-        atlas.height = imageSize;  // Atlas bitmap height
+        imAtlas.width = imageSize;   // Atlas bitmap width
+        imAtlas.height = imageSize;  // Atlas bitmap height
     }
 
-    int atlasDataSize = atlas.width*atlas.height; // Save total size for bounds checking
-    atlas.data = (unsigned char *)RL_CALLOC(atlasDataSize, 1); // Create a bitmap to store characters (8 bpp)
-    atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-    atlas.mipmaps = 1;
+    int atlasDataSize = imAtlas.width*imAtlas.height; // Save total size for bounds checking
+    imAtlas.data = (unsigned char *)RL_CALLOC(atlasDataSize, 1); // Create a bitmap to store characters (8 bpp)
+    imAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+    imAtlas.mipmaps = 1;
 
     // DEBUG: View padding in the generated image setting a gray background...
-    //for (int i = 0; i < atlas.width*atlas.height; i++) ((unsigned char *)atlas.data)[i] = 100;
+    //for (int i = 0; i < imAtlas.width*imAtlas.height; i++) ((unsigned char *)imAtlas.data)[i] = 100;
 
     if (packMethod == 0) // Use basic packing algorithm
     {
@@ -872,7 +872,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         for (int i = 0; i < glyphCount; i++)
         {
             // Check remaining space for glyph
-            if (offsetX >= (atlas.width - glyphs[i].image.width - 2*padding))
+            if (offsetX >= (imAtlas.width - glyphs[i].image.width - 2*padding))
             {
                 offsetX = padding;
 
@@ -881,19 +881,19 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                 // height is bigger than fontSize, it could be up to (fontSize + 8)
                 offsetY += (fontSize + 2*padding);
 
-                if (offsetY > (atlas.height - fontSize - padding))
+                if (offsetY > (imAtlas.height - fontSize - padding))
                 {
                     TRACELOG(LOG_WARNING, "FONT: Updating atlas size to fit all characters");
 
                     // Update atlas size to fit all characters
-                    int updatedAtlasHeight = atlas.height*2;
-                    int updatedAtlasDataSize = atlas.width*updatedAtlasHeight;
+                    int updatedAtlasHeight = imAtlas.height*2;
+                    int updatedAtlasDataSize = imAtlas.width*updatedAtlasHeight;
                     unsigned char *updatedAtlasData = (unsigned char *)RL_CALLOC(updatedAtlasDataSize, 1);
 
-                    memcpy(updatedAtlasData, atlas.data, atlasDataSize);
-                    RL_FREE(atlas.data);
-                    atlas.data = updatedAtlasData;
-                    atlas.height = updatedAtlasHeight;
+                    memcpy(updatedAtlasData, imAtlas.data, atlasDataSize);
+                    RL_FREE(imAtlas.data);
+                    imAtlas.data = updatedAtlasData;
+                    imAtlas.height = updatedAtlasHeight;
                     atlasDataSize = updatedAtlasDataSize;
                 }
             }
@@ -907,9 +907,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                     int destY = offsetY + y;
 
                     // Security: check both lower and upper bounds
-                    if ((destX >= 0) && (destX < atlas.width) && (destY >= 0) && (destY < atlas.height))
+                    if ((destX >= 0) && (destX < imAtlas.width) && (destY >= 0) && (destY < imAtlas.height))
                     {
-                        ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                        ((unsigned char *)imAtlas.data)[destY*imAtlas.width + destX] =
                             ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                     }
                 }
@@ -930,7 +930,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
         stbrp_context *context = (stbrp_context *)RL_CALLOC(1, sizeof(stbrp_context));
         stbrp_node *nodes = (stbrp_node *)RL_CALLOC(glyphCount, sizeof(stbrp_node));
 
-        stbrp_init_target(context, atlas.width, atlas.height, nodes, glyphCount);
+        stbrp_init_target(context, imAtlas.width, imAtlas.height, nodes, glyphCount);
         stbrp_rect *rects = (stbrp_rect *)RL_CALLOC(glyphCount, sizeof(stbrp_rect));
 
         // Fill rectangles for packaging
@@ -963,9 +963,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                         int destY = rects[i].y + padding + y;
 
                         // Security fix: check both lower and upper bounds
-                        if (destX >= 0 && destX < atlas.width && destY >= 0 && destY < atlas.height)
+                        if (destX >= 0 && destX < imAtlas.width && destY >= 0 && destY < imAtlas.height)
                         {
-                            ((unsigned char *)atlas.data)[destY*atlas.width + destX] =
+                            ((unsigned char *)imAtlas.data)[destY*imAtlas.width + destX] =
                                 ((unsigned char *)glyphs[i].image.data)[y*glyphs[i].image.width + x];
                         }
                     }
@@ -982,33 +982,33 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     // Add a 3x3 white rectangle at the bottom-right corner of the generated atlas,
     // useful to use as the white texture to draw shapes with raylib
     // Security: ensure the atlas is large enough to hold a 3x3 rectangle
-    if ((FONT_ATLAS_CORNER_REC_SIZE > 0) && (atlas.width >= 3) && (atlas.height >= 3))
+    if ((FONT_ATLAS_CORNER_REC_SIZE > 0) && (imAtlas.width >= 3) && (imAtlas.height >= 3))
     {
-        for (int i = 0, k = atlas.width*atlas.height - 1; i < FONT_ATLAS_CORNER_REC_SIZE; i++)
+        for (int i = 0, k = imAtlas.width*imAtlas.height - 1; i < FONT_ATLAS_CORNER_REC_SIZE; i++)
         {
-            ((unsigned char *)atlas.data)[k - 0] = 255;
-            ((unsigned char *)atlas.data)[k - 1] = 255;
-            ((unsigned char *)atlas.data)[k - 2] = 255;
-            k -= atlas.width;
+            ((unsigned char *)imAtlas.data)[k - 0] = 255;
+            ((unsigned char *)imAtlas.data)[k - 1] = 255;
+            ((unsigned char *)imAtlas.data)[k - 2] = 255;
+            k -= imAtlas.width;
         }
     }
 
     // Convert image data from GRAYSCALE to GRAY_ALPHA
-    unsigned char *dataGrayAlpha = (unsigned char *)RL_CALLOC(atlas.width*atlas.height*2, sizeof(unsigned char)); // Two channels
+    unsigned char *dataGrayAlpha = (unsigned char *)RL_CALLOC(imAtlas.width*imAtlas.height*2, sizeof(unsigned char)); // Two channels
 
-    for (int i = 0, k = 0; i < atlas.width*atlas.height; i++, k += 2)
+    for (int i = 0, k = 0; i < imAtlas.width*imAtlas.height; i++, k += 2)
     {
         dataGrayAlpha[k] = 255;
-        dataGrayAlpha[k + 1] = ((unsigned char *)atlas.data)[i];
+        dataGrayAlpha[k + 1] = ((unsigned char *)imAtlas.data)[i];
     }
 
-    RL_FREE(atlas.data);
-    atlas.data = dataGrayAlpha;
-    atlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
+    RL_FREE(imAtlas.data);
+    imAtlas.data = dataGrayAlpha;
+    imAtlas.format = PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA;
 
     *glyphRecs = recs;
 
-    return atlas;
+    return imAtlas;
 }
 #endif
 
@@ -2759,7 +2759,7 @@ static Font LoadBMFont(const char *fileName)
         }
     }
 
-    Image fullFont = imFonts[0];
+    Image imFullFont = imFonts[0];
     for (int i = 1; i < pageCount; i++) UnloadImage(imFonts[i]);
 
     // If multiple atlas, then merge atlas
@@ -2767,19 +2767,19 @@ static Font LoadBMFont(const char *fileName)
     if (pageCount > 1)
     {
         // Resize font atlas to draw additional images
-        ImageResizeCanvas(&fullFont, imWidth, imHeight*pageCount, 0, 0, BLACK);
+        ImageResizeCanvas(&imFullFont, imWidth, imHeight*pageCount, 0, 0, BLACK);
 
         for (int i = 1; i < pageCount; i++)
         {
             Rectangle srcRec = { 0.0f, 0.0f, (float)imWidth, (float)imHeight };
             Rectangle dstRec = { 0.0f, (float)imHeight*(float)i, (float)imWidth, (float)imHeight };
-            ImageDrawImagePro(&fullFont, imFonts[i], srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
+            ImageDrawImagePro(&imFullFont, imFonts[i], srcRec, dstRec, (Vector2){ 0 }, 0.0f, WHITE);
         }
     }
 
     RL_FREE(imFonts);
 
-    font.texture = LoadTextureFromImage(fullFont);
+    font.texture = LoadTextureFromImage(imFullFont);
 
     // Fill font characters info data
     font.baseSize = fontSize;
@@ -2817,7 +2817,7 @@ static Font LoadBMFont(const char *fileName)
             font.glyphs[i].advanceX = charAdvanceX;
 
             // Fill character image data from full font data
-            font.glyphs[i].image = ImageFromImage(fullFont, font.recs[i]);
+            font.glyphs[i].image = ImageFromImage(imFullFont, font.recs[i]);
         }
         else
         {
@@ -2826,7 +2826,7 @@ static Font LoadBMFont(const char *fileName)
         }
     }
 
-    UnloadImage(fullFont);
+    UnloadImage(imFullFont);
     UnloadFileText(fileText);
 
     if (font.texture.id == 0)
