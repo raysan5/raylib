@@ -1339,6 +1339,12 @@ void SetTextLineSpacing(int spacing)
     textLineSpacing = spacing;
 }
 
+// Get vertical line spacing when drawing with line-breaks
+int GetTextLineSpacing()
+{
+    return textLineSpacing;
+}
+
 // Measure string width for default font
 int MeasureText(const char *text, int fontSize)
 {
