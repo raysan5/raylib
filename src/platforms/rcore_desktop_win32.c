@@ -1322,11 +1322,7 @@ Vector2 GetWindowPosition(void)
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
-    float scale = 1.0f;
-
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-        scale = ((float)GetDpiForWindowCompat(platform.hwnd))/96.0f;
-
+    float scale = ((float)GetDpiForWindowCompat(platform.hwnd))/96.0f;
     return (Vector2){ scale, scale };
 }
 

@@ -1161,19 +1161,16 @@ Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
 
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-    {
 #if defined(USING_VERSION_SDL3)
-        // NOTE: SDL_GetWindowDisplayScale added on SDL3
-        // REF: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
-        scale.x = SDL_GetWindowDisplayScale(platform.window);
-        scale.y = scale.x;
+    // NOTE: SDL_GetWindowDisplayScale added on SDL3
+    // REF: https://wiki.libsdl.org/SDL3/SDL_GetWindowDisplayScale
+    scale.x = SDL_GetWindowDisplayScale(platform.window);
+    scale.y = scale.x;
 #else
-        // NOTE: SDL_GetWindowDisplayScale not available on SDL2
-        // TODO: Implement the window scale factor calculation manually
-        TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
+    // NOTE: SDL_GetWindowDisplayScale not available on SDL2
+    // TODO: Implement the window scale factor calculation manually
+    TRACELOG(LOG_WARNING, "GetWindowScaleDPI() not implemented on target platform");
 #endif
-    }
 
     return scale;
 }
