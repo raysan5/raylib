@@ -1090,14 +1090,16 @@ void BeginScissorMode(int x, int y, int width, int height)
 #if defined(__APPLE__)
     if (!CORE.Window.usingFbo)
     {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
+        float scaleX = (float)GetRenderWidth()/GetScreenWidth();
+        float scaleY = (float)GetRenderHeight()/GetScreenHeight();
+        rlScissor((int)(x*scaleX), (int)(GetScreenHeight()*scaleY - (((y + height)*scaleY))), (int)(width*scaleX), (int)(height*scaleY));
     }
 #else
     if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
-        Vector2 scale = GetWindowScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        float scaleX = (float)GetRenderWidth()/GetScreenWidth();
+        float scaleY = (float)GetRenderHeight()/GetScreenHeight();
+        rlScissor((int)(x*scaleX), (int)(CORE.Window.currentFbo.height - (y + height)*scaleY), (int)(width*scaleX), (int)(height*scaleY));
     }
 #endif
     else
@@ -1824,12 +1826,8 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    // Apply content scaling if required
-    Vector2 scale = { 1.0f, 1.0f };
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
-
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    unsigned char *imgData = rlReadScreenPixels((int)GetRenderWidth(), (int)GetRenderHeight());
+    Image image = { imgData, (int)GetRenderWidth(), (int)GetRenderHeight(), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     if (!IsPathAbsolute(fileName)) snprintf(path, MAX_FILEPATH_LENGTH, "%s", TextFormat("%s/%s", CORE.Storage.basePath, fileName));
