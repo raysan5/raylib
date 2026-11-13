@@ -3,10 +3,10 @@
 > **Este arquivo é um roteiro + registro a preencher.** O enunciado exige revisão realizada pelo outro integrante;
 > nenhum resultado abaixo foi preenchido por nós — só vale depois que a pessoa revisora **executar** os passos.
 
-- **Autor do PR:** `TODO`
-- **Revisor(a):** `TODO` (não pode ser o autor)
+- **Autor do PR:** conta GitHub `FaMarcolino`
+- **Revisor(a):** conta GitHub `luanpais` (integrante diferente do autor)
 - **Link do PR:** https://github.com/raysan5/raylib/pull/6400 (PR ao projeto original, **fechado pelo mantenedor em 10/11/2026 sem mesclar**; o código revisado continua na branch `feat/headless-tests`. PR interno de revisão no fork: https://github.com/FaMarcolino/raylib/pull/1)
-- **Data da revisão:** `TODO`
+- **Data da revisão:** testes e teste de mutação executados em 10/11/2026; parecer publicado em 13/11/2026 no PR #1 do fork (https://github.com/FaMarcolino/raylib/pull/1)
 
 ## Roteiro de revisão
 
@@ -44,6 +44,6 @@ $b=[byte[]]@(0x61)*56; ([BitConverter]::ToString([Security.Cryptography.SHA256]:
 
 ## Parecer
 
-- **Resultado:** `TODO: aprovado / aprovado com ressalvas / mudanças solicitadas`
-- **Comentários principais (copiar do PR):** `TODO`
+- **Resultado:** **aprovado com ressalvas**
+- **Comentários principais** (resumo; o texto completo está no comentário do revisor no PR #1 do fork): confirmou que só `tests/` e `run_tests.yml` mudaram; rodou a suíte no Windows (gcc 16.2.0) e passou; o teste de mutação falhou nos comprimentos 56, 57, 59, 120 e 121, como esperado. Ressalvas: (1) falta o comprimento 58, que está dentro da faixa do bug; (2) a verificação de UTF-8 truncado é fraca, pois só confere que o tamanho não passa do fim da string; (3) os testes de caminho específicos do Windows só rodam localmente (o CI é Linux); (4) o workflow do macOS falhou uma vez de forma intermitente; (5) algumas convenções de estilo não foram seguidas; (6) algumas funções têm poucos casos de teste. `TODO: conferir este resumo com o texto original do comentário.`
 - **Mudanças feitas após a revisão (commits):** `TODO`
