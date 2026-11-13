@@ -38,7 +38,7 @@ This is a set of recommendations and guidelines for binding authors, meant to he
 | [claw-raylib](https://github.com/bohonghuang/claw-raylib)                                | **auto**         | [Common Lisp](https://common-lisp.net)                                  | Apache-2.0           |
 | [raylib](https://github.com/fosskers/raylib)                                             | 5.5              | [Common Lisp](https://common-lisp.net)                                  | MPL-2.0              |
 | [chez-raylib](https://github.com/Yunoinsky/chez-raylib)                                  | **auto**         | [Chez Scheme](https://cisco.github.io/ChezScheme)                       | GPLv3                |
-| [chicken-raylib](https://github.com/meowstr/chicken-raylib)                              | 5.5              | [CHICKEN Scheme](https://wiki.call-cc.org)                              | MIT                  |
+| [chicken-raylib](https://github.com/meowstr/chicken-raylib)                              | **6.2**          | [CHICKEN Scheme](https://wiki.call-cc.org)                              | MIT                  |
 | [CLIPSraylib](https://github.com/mrryanjohnston/CLIPSraylib)                             | **auto**         | [CLIPS](https://www.clipsrules.net/)                                    | MIT                  |
 | [raylib-cr](https://github.com/sol-vin/raylib-cr)                                        | 6.0              | [Crystal](https://crystal-lang.org)                                     | Apache-2.0           |
 | [ray-cyber](https://github.com/fubark/ray-cyber)                                         | **5.0**          | [Cyber](https://cyberscript.dev)                                        | MIT                  |
