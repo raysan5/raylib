@@ -1086,6 +1086,10 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
+    if ((CORE.Window.screen.width != width) || (CORE.Window.screen.height != height))
+    {
+        CORE.Window.resizedLastFrame = true;
+    }
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
     {
         CORE.Window.screen.width = width;
