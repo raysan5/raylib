@@ -97,7 +97,7 @@ This is a set of recommendations and guidelines for binding authors, meant to he
 | [raylibr](https://github.com/jeroenjanssens/raylibr)                                     | auto             | [R](https://www.r-project.org)                                          | MIT                  |
 | [raylib-ffi](https://github.com/ewpratten/raylib-ffi)                                    | 5.5              | [Rust](https://www.rust-lang.org)                                       | GPLv3                |
 | [raylib-rs](https://github.com/raylib-rs/raylib-rs)                                      | **6.0**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
-| [sola-raylib](https://github.com/brettchalupa/sola-raylib)                               | **6.0**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
+| [sola-raylib](https://github.com/brettchalupa/sola-raylib)                               | **6.2**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
 | [raylib-ruby](https://github.com/wilsonsilva/raylib-ruby)                                | 4.5              | [Ruby](https://www.ruby-lang.org)                                       | Zlib                 |
 | [racket-raylib](https://github.com/eutro/racket-raylib)                                  | **6.0**          | [Racket](https://racket-lang.org)                                       | MIT/Apache-2.0       |
 | [raylib-swift](https://github.com/STREGAsGate/Raylib)                                    | 4.0              | [Swift](https://swift.org)                                              | MIT                  |
