@@ -176,6 +176,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vecto
 {
     if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
     if ((source.width == 0) || (source.height == 0)) return;
+    if ((dest.width <= 0.0f) || (dest.height <= 0.0f)) return; // Resizing can leave no space for tiles
 
     int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
     if ((dest.width < tileWidth) && (dest.height < tileHeight))

@@ -764,7 +764,7 @@ void SetWindowSize(int width, int height)
     CORE.Window.screen.height = height;
 
 #if !defined(__APPLE__)
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
     {
         Vector2 scaleDpi = GetWindowScaleDPI();
         width = (int)roundf((float)width*scaleDpi.x);
@@ -1070,10 +1070,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-        glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
-    
+    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
 
@@ -1790,6 +1787,8 @@ int InitPlatform(void)
         {
             // Set screen size to logical pixel size, considering content scaling
             Vector2 scaleDpi = GetWindowScaleDPI();
+            if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) scaleDpi = (Vector2){ 1.0f, 1.0f };
+
             CORE.Window.render.width = (int)roundf(CORE.Window.screen.width*scaleDpi.x);
             CORE.Window.render.height = (int)roundf(CORE.Window.screen.height*scaleDpi.y);
             //TRACELOG(LOG_INFO, "DPI SCALING: %.2f, %.2f", scaleDpi.x, scaleDpi.y);

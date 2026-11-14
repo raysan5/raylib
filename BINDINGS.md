@@ -38,7 +38,7 @@ This is a set of recommendations and guidelines for binding authors, meant to he
 | [claw-raylib](https://github.com/bohonghuang/claw-raylib)                                | **auto**         | [Common Lisp](https://common-lisp.net)                                  | Apache-2.0           |
 | [raylib](https://github.com/fosskers/raylib)                                             | 5.5              | [Common Lisp](https://common-lisp.net)                                  | MPL-2.0              |
 | [chez-raylib](https://github.com/Yunoinsky/chez-raylib)                                  | **auto**         | [Chez Scheme](https://cisco.github.io/ChezScheme)                       | GPLv3                |
-| [chicken-raylib](https://github.com/meowstr/chicken-raylib)                              | 5.5              | [CHICKEN Scheme](https://wiki.call-cc.org)                              | MIT                  |
+| [chicken-raylib](https://github.com/meowstr/chicken-raylib)                              | **6.2**          | [CHICKEN Scheme](https://wiki.call-cc.org)                              | MIT                  |
 | [CLIPSraylib](https://github.com/mrryanjohnston/CLIPSraylib)                             | **auto**         | [CLIPS](https://www.clipsrules.net/)                                    | MIT                  |
 | [raylib-cr](https://github.com/sol-vin/raylib-cr)                                        | **6.0**          | [Crystal](https://crystal-lang.org)                                     | Apache-2.0           |
 | [ray-cyber](https://github.com/fubark/ray-cyber)                                         | 5.0              | [Cyber](https://cyberscript.dev)                                        | MIT                  |
@@ -97,7 +97,7 @@ This is a set of recommendations and guidelines for binding authors, meant to he
 | [raylibr](https://github.com/jeroenjanssens/raylibr)                                     | auto             | [R](https://www.r-project.org)                                          | MIT                  |
 | [raylib-ffi](https://github.com/ewpratten/raylib-ffi)                                    | 5.5              | [Rust](https://www.rust-lang.org)                                       | GPLv3                |
 | [raylib-rs](https://github.com/raylib-rs/raylib-rs)                                      | **6.0**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
-| [sola-raylib](https://github.com/brettchalupa/sola-raylib)                               | **6.0**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
+| [sola-raylib](https://github.com/brettchalupa/sola-raylib)                               | **6.2**          | [Rust](https://www.rust-lang.org)                                       | Zlib                 |
 | [raylib-ruby](https://github.com/wilsonsilva/raylib-ruby)                                | 4.5              | [Ruby](https://www.ruby-lang.org)                                       | Zlib                 |
 | [racket-raylib](https://github.com/eutro/racket-raylib)                                  | **6.0**          | [Racket](https://racket-lang.org)                                       | MIT/Apache-2.0       |
 | [raylib-swift](https://github.com/STREGAsGate/Raylib)                                    | 4.0              | [Swift](https://swift.org)                                              | MIT                  |

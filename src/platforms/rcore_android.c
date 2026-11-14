@@ -583,9 +583,43 @@ Vector2 GetWindowScaleDPI(void)
 }
 
 // Set clipboard text content
+// NOTE: Implementation based on https://stackoverflow.com/questions/76759222/how-to-copy-to-clipboard-on-android-via-jni
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on target platform");
+    JNIEnv *env = NULL;
+    JavaVM *vm = platform.app->activity->vm;
+    jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
+    if (result != JNI_OK) {
+        TRACELOG(LOG_WARNING, "Failed to allocate a thread to set the clipboard text");
+        return;
+    }
+    jobject activity = platform.app->activity->clazz;
+    if (!activity) {
+        TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
+        (*vm)->DetachCurrentThread(vm);
+        return;
+    }
+
+    // ClipboardManager
+    jclass activityClass = (*env)->GetObjectClass(env, activity);
+    jmethodID getSystemService = (*env)->GetMethodID(env, activityClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jstring serviceName = (*env)->NewStringUTF(env, "clipboard");
+    jobject clipboard = (*env)->CallObjectMethod(env, activity, getSystemService, serviceName);
+
+    // ClipData
+    jclass clipDataClass = (*env)->FindClass(env, "android/content/ClipData");
+    jmethodID newPlainText = (*env)->GetStaticMethodID(env, clipDataClass, "newPlainText", "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;");
+    const char *windowTitle = (CORE.Window.title != NULL) ? CORE.Window.title : "raylib";
+    jstring label = (*env)->NewStringUTF(env, windowTitle);
+    jstring textString = (*env)->NewStringUTF(env, text);
+    jobject clip = (*env)->CallStaticObjectMethod(env, clipDataClass, newPlainText, label, textString);
+
+    // cm.setPrimaryClip(clip)
+    jclass clipboardClass = (*env)->FindClass(env, "android/content/ClipboardManager");
+    jmethodID setPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "setPrimaryClip", "(Landroid/content/ClipData;)V");
+    (*env)->CallVoidMethod(env, clipboard, setPrimaryClip, clip);
+
+    (*vm)->DetachCurrentThread(vm);
 }
 
 // Get clipboard text content
