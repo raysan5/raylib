@@ -1792,8 +1792,14 @@ static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheel
 {
     if (eventType == EMSCRIPTEN_EVENT_WHEEL)
     {
-        CORE.Input.Mouse.currentWheelMove.x = (float)wheelEvent->deltaX;
-        CORE.Input.Mouse.currentWheelMove.y = -(float)wheelEvent->deltaY;
+        // Convert to glfw units
+        // Scaling factors copied from emscripten's libbrowser.js
+        float wheelScale = 1.0f/100.0f;
+        if (wheelEvent->deltaMode == DOM_DELTA_LINE) wheelScale = 1.0f/3.0f;
+        else if (wheelEvent->deltaMode == DOM_DELTA_PAGE) wheelScale = 80.0f;
+
+        CORE.Input.Mouse.currentWheelMove.x = (float)wheelEvent->deltaX*wheelScale;
+        CORE.Input.Mouse.currentWheelMove.y = -(float)wheelEvent->deltaY*wheelScale;
     }
 
     return 1; // The event was consumed by the callback handler
