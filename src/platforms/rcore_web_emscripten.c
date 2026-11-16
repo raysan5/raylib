@@ -1436,6 +1436,9 @@ static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent
         {
             FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);
             memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+            memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
+            memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
+            CORE.Input.Touch.pointCount = 0;
         } break;
         case EMSCRIPTEN_EVENT_FOCUS: FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED); break;
         default: consumed = 0; break;
