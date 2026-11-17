@@ -820,12 +820,10 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         {
             wave.frameCount = (unsigned int)wav.totalPCMFrameCount;
             wave.sampleRate = wav.sampleRate;
-            wave.sampleSize = 16;
+            wave.sampleSize = wav.bitsPerSample;
             wave.channels = wav.channels;
-            wave.data = (short *)RL_CALLOC((size_t)wave.frameCount*wave.channels, sizeof(short));
-
-            // NOTE: Forcing conversion to 16bit sample size on reading
-            drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
+            wave.data = RL_CALLOC((size_t)wave.frameCount*wave.channels*wave.sampleSize/8, 1);
+            drwav_read_pcm_frames(&wav, wave.frameCount, (drwav_int16 *)wave.data);
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
 
