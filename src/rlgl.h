@@ -3919,7 +3919,7 @@ bool rlFramebufferComplete(unsigned int id)
 }
 
 // Unload framebuffer from GPU memory
-// NOTE: All attached textures/cubemaps/renderbuffers are also deleted
+// WARNING: All attached depth-textures/renderbuffers are also deleted
 void rlUnloadFramebuffer(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
