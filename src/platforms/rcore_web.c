@@ -684,6 +684,10 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
+    if ((CORE.Window.screen.width != width) || (CORE.Window.screen.height != height))
+    {
+        CORE.Window.resizedLastFrame = true;
+    }
     glfwSetWindowSize(platform.handle, width, height);
 }
 

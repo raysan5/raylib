@@ -1211,6 +1211,11 @@ void SetWindowSize(int width, int height)
     int screenWidth = fmaxf(CORE.Window.screenMin.width, fminf(CORE.Window.screenMax.width, width));
     int screenHeight = fmaxf(CORE.Window.screenMin.height, fminf(CORE.Window.screenMax.height, height));
 
+    if ((CORE.Window.screen.width != screenWidth) || (CORE.Window.screen.height != screenHeight))
+    {
+        CORE.Window.resizedLastFrame = true;
+    }
+
     UpdateWindowSize(1, platform.hwnd, screenWidth, screenHeight, platform.desiredFlags);
 }
 
