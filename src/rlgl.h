@@ -880,9 +880,28 @@ RLAPI void rlLoadDrawQuad(void);     // Load and draw a quad
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_ES3)
-    #include <GLES3/gl3.h>              // OpenGL ES 3.0 library
-    #define GL_GLEXT_PROTOTYPES
-    #include <GLES2/gl2ext.h>           // OpenGL ES 2.0 extensions library
+    #if defined(PLATFORM_APPLE_MOBILE)
+        #include <OpenGLES/ES3/gl.h>
+        #include <OpenGLES/ES3/glext.h>
+
+        // Apple's ES3 headers omit these extension aliases for core texture formats.
+        #ifndef GL_RED_EXT
+            #define GL_RED_EXT GL_RED
+        #endif
+        #ifndef GL_R32F_EXT
+            #define GL_R32F_EXT GL_R32F
+        #endif
+        #ifndef GL_RGB32F_EXT
+            #define GL_RGB32F_EXT GL_RGB32F
+        #endif
+        #ifndef GL_RGBA32F_EXT
+            #define GL_RGBA32F_EXT GL_RGBA32F
+        #endif
+    #else
+        #include <GLES3/gl3.h>          // OpenGL ES 3.0 library
+        #define GL_GLEXT_PROTOTYPES
+        #include <GLES2/gl2ext.h>       // OpenGL ES 2.0 extensions library
+    #endif
 #elif defined(GRAPHICS_API_OPENGL_ES2)
     // NOTE: OpenGL ES 2.0 can be enabled on Desktop platforms,
     // in that case, functions are loaded from a custom glad for OpenGL ES 2.0
@@ -1836,11 +1855,19 @@ void rlDisableShader(void)
 #endif
 }
 
+// The UIKit drawable is backed by an application-owned framebuffer.
+#if defined(PLATFORM_APPLE_MOBILE)
+static unsigned int rlAppleDrawableFramebuffer = 0;
+#define RLGL_DEFAULT_FRAMEBUFFER rlAppleDrawableFramebuffer
+#else
+#define RLGL_DEFAULT_FRAMEBUFFER 0
+#endif
+
 // Enable rendering to texture (fbo)
 void rlEnableFramebuffer(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
-    glBindFramebuffer(GL_FRAMEBUFFER, id);
+    glBindFramebuffer(GL_FRAMEBUFFER, (id != 0)? id : RLGL_DEFAULT_FRAMEBUFFER);
 #endif
 }
 
@@ -1851,14 +1878,14 @@ unsigned int rlGetActiveFramebuffer(void)
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboId);
 #endif
-    return fboId;
+    return (fboId == (GLint)RLGL_DEFAULT_FRAMEBUFFER)? 0 : (unsigned int)fboId;
 }
 
 // Disable rendering to texture
 void rlDisableFramebuffer(void)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER);
 #endif
 }
 
@@ -1874,7 +1901,7 @@ void rlBlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX
 void rlBindFramebuffer(unsigned int target, unsigned int framebuffer)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
-    glBindFramebuffer(target, framebuffer);
+    glBindFramebuffer(target, (framebuffer != 0)? framebuffer : RLGL_DEFAULT_FRAMEBUFFER);
 #endif
 }
 
@@ -3415,7 +3442,7 @@ unsigned int rlLoadTextureDepth(int width, int height, bool useRenderBuffer)
     // Possible formats: GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32 and GL_DEPTH_COMPONENT32F
     unsigned int glInternalFormat = GL_DEPTH_COMPONENT;
 
-#if defined(GRAPHICS_API_OPENGL_ES2)
+#if defined(GRAPHICS_API_OPENGL_ES2) && !defined(GRAPHICS_API_OPENGL_ES3)
     // WARNING: WebGL platform requires unsized internal format definition (GL_DEPTH_COMPONENT)
     // while other platforms using OpenGL ES 2.0 require/support sized internal formats depending on the GPU capabilities
     if (!RLGL.ExtSupported.texDepthWebGL || useRenderBuffer)
@@ -3742,6 +3769,13 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     // 2 - Create an fbo, activate it, render quad with texture, glReadPixels()
     // Using Option 1, care for texture format on retrieval
     // NOTE: This behaviour could be conditioned by graphic driver...
+#if defined(PLATFORM_APPLE_MOBILE)
+    GLint previousDrawFramebuffer = 0;
+    GLint previousReadFramebuffer = 0;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &previousDrawFramebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previousReadFramebuffer);
+#endif
+
     unsigned int fboId = rlLoadFramebuffer();
 
     glBindFramebuffer(GL_FRAMEBUFFER, fboId);
@@ -3762,10 +3796,15 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     glReadPixels(0, 0, width, height, glFormat, glType, pixels);
 #endif
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER);
 
     // Clean up temporal fbo
     rlUnloadFramebuffer(fboId);
+
+#if defined(PLATFORM_APPLE_MOBILE)
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, (unsigned int)previousDrawFramebuffer);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, (unsigned int)previousReadFramebuffer);
+#endif
 #endif
 
     return pixels;
@@ -3841,7 +3880,7 @@ unsigned int rlLoadFramebuffer(void)
 
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))
     glGenFramebuffers(1, &fboId);         // Create the framebuffer object
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind any framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER); // Unbind any framebuffer
 #endif
 
     return fboId;
@@ -3882,7 +3921,7 @@ void rlFramebufferAttach(unsigned int id, unsigned int texId, int attachType, in
         default: break;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER);
 #endif
 }
 
@@ -3910,7 +3949,7 @@ bool rlFramebufferComplete(unsigned int id)
         }
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER);
 
     result = (status == GL_FRAMEBUFFER_COMPLETE);
 #endif
@@ -3940,7 +3979,7 @@ void rlUnloadFramebuffer(unsigned int id)
     // NOTE: If a texture object is deleted while its image is attached to the *currently bound* framebuffer,
     // the texture image is automatically detached from the currently bound framebuffer
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, RLGL_DEFAULT_FRAMEBUFFER);
     glDeleteFramebuffers(1, &id);
 
     TRACELOG(RL_LOG_INFO, "FBO: [ID %i] Unloaded framebuffer from VRAM (GPU)", id);

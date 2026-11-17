@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
+
+if (PLATFORM MATCHES "^(iOS|tvOS)$" AND NOT DEFINED CMAKE_SYSTEM_NAME AND NOT CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_SYSTEM_NAME "${PLATFORM}")
+endif ()
+if (CMAKE_SYSTEM_NAME MATCHES "^(iOS|tvOS)$" AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "17.0" CACHE STRING "Minimum Apple OS version")
+endif ()
+
 project(raylib)
 
 # Avoid excessive expansion of variables in conditionals. In particular, if
@@ -36,6 +44,20 @@ endif()
 
 # Main sources directory (the second parameter sets the output directory name to raylib)
 add_subdirectory(src raylib)
+
+if (PROJECT_IS_TOP_LEVEL AND CMAKE_HOST_APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    add_custom_target(raylib_xcframework
+        COMMAND ${CMAKE_COMMAND}
+            "-DRAYLIB_APPLE_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}"
+            "-DRAYLIB_APPLE_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/apple/$<CONFIG>"
+            "-DRAYLIB_APPLE_CONFIG=$<CONFIG>"
+            "-DRAYLIB_APPLE_AUDIO=${SUPPORT_MODULE_RAUDIO}"
+            "-DRAYLIB_APPLE_MODELS=${SUPPORT_MODULE_RMODELS}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AppleXCFramework.cmake"
+        USES_TERMINAL
+        VERBATIM
+    )
+endif ()
 
 # Uninstall target, only create when building raylib by itself
 # Avoid conflicting target names when using raylib with other libraries

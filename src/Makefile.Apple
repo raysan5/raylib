@@ -1,0 +1,64 @@
+# Apple SDK builds share the CMake platform configuration
+CMAKE ?= cmake
+APPLE_BUILD_DIR ?= ../build/apple
+RAYLIB_LIBTYPE ?= STATIC
+RAYLIB_BUILD_MODE ?= RELEASE
+RAYLIB_MODULE_AUDIO ?= TRUE
+RAYLIB_MODULE_MODELS ?= TRUE
+
+apple_build_type = $(if $(filter DEBUG,$(RAYLIB_BUILD_MODE)),Debug,Release)
+apple_shared = $(if $(filter SHARED,$(RAYLIB_LIBTYPE)),ON,OFF)
+apple_options = -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=$(apple_build_type) \
+    -DCUSTOMIZE_BUILD=ON -DSUPPORT_MODULE_RAUDIO=$(RAYLIB_MODULE_AUDIO) \
+    -DSUPPORT_MODULE_RMODELS=$(RAYLIB_MODULE_MODELS)
+apple_host_check = $(if $(filter Darwin,$(shell uname -s)),,$(error Apple SDK builds require macOS and Xcode))
+
+.PHONY: apple-universal apple-xcframework
+apple-universal:
+	$(apple_host_check)
+	$(CMAKE) -S .. -B "$(APPLE_BUILD_DIR)/macosx/$(apple_build_type)/$(RAYLIB_LIBTYPE)" $(apple_options) \
+	    -DPLATFORM=Desktop -DCMAKE_OSX_SYSROOT=macosx -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+	    "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DBUILD_SHARED_LIBS=$(apple_shared)
+	$(CMAKE) --build "$(APPLE_BUILD_DIR)/macosx/$(apple_build_type)/$(RAYLIB_LIBTYPE)" --target raylib
+
+apple-xcframework:
+	$(apple_host_check)
+	$(CMAKE) -S .. -B "$(APPLE_BUILD_DIR)/xcframework/$(apple_build_type)" $(apple_options) -DPLATFORM=Desktop
+	$(CMAKE) --build "$(APPLE_BUILD_DIR)/xcframework/$(apple_build_type)" --target raylib_xcframework
+
+ifneq ($(filter $(PLATFORM),PLATFORM_IOS PLATFORM_TVOS),)
+    ifeq ($(PLATFORM),PLATFORM_IOS)
+        apple_platform = iOS
+        APPLE_SDK ?= iphoneos
+        apple_sdks = iphoneos iphonesimulator
+    else
+        apple_platform = tvOS
+        APPLE_SDK ?= appletvos
+        apple_sdks = appletvos appletvsimulator
+    endif
+
+    APPLE_ARCHS ?= $(if $(filter %simulator,$(APPLE_SDK)),$(shell uname -m),arm64)
+    APPLE_DEPLOYMENT_TARGET ?= 17.0
+    apple_sdk_build_dir = $(APPLE_BUILD_DIR)/$(APPLE_SDK)/$(apple_build_type)
+    apple_sdk_check = $(if $(filter $(APPLE_SDK),$(apple_sdks)),,$(error APPLE_SDK for $(PLATFORM) must be one of $(apple_sdks)))
+
+    .PHONY: raylib
+    all: raylib
+
+    raylib:
+	$(apple_host_check)
+	$(apple_sdk_check)
+	$(CMAKE) -S .. -B "$(apple_sdk_build_dir)" $(apple_options) \
+	    -DPLATFORM=$(apple_platform) -DCMAKE_OSX_SYSROOT=$(APPLE_SDK) \
+	    "-DCMAKE_OSX_ARCHITECTURES=$(APPLE_ARCHS)" -DCMAKE_OSX_DEPLOYMENT_TARGET=$(APPLE_DEPLOYMENT_TARGET) \
+	    -DBUILD_SHARED_LIBS=$(apple_shared)
+	$(CMAKE) --build "$(apple_sdk_build_dir)" --target raylib
+    ifdef RAYLIB_RELEASE_PATH
+	$(CMAKE) -E make_directory "$(RAYLIB_RELEASE_PATH)"
+	$(CMAKE) -E copy_if_different "$(apple_sdk_build_dir)/raylib/libraylib.a" "$(RAYLIB_RELEASE_PATH)/libraylib.a"
+    endif
+
+    clean:
+	$(apple_sdk_check)
+	if [ -f "$(apple_sdk_build_dir)/CMakeCache.txt" ]; then $(CMAKE) --build "$(apple_sdk_build_dir)" --target clean; fi
+endif

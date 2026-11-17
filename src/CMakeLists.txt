@@ -47,7 +47,7 @@ if (NOT DEFINED SUPPORT_MODULE_RMODELS OR SUPPORT_MODULE_RMODELS)
 endif()
 
 # <root>/cmake/GlfwImport.cmake handles the details around the inclusion of glfw
-if (NOT ${PLATFORM} MATCHES "Web")
+if (NOT PLATFORM MATCHES "Web|^(iOS|tvOS)$")
     include(GlfwImport)
 endif ()
 
@@ -56,6 +56,16 @@ endif ()
 # Produces a variable LIBS_PRIVATE that will be used later
 include(LibraryConfigurations)
 
+if (PLATFORM_CPP STREQUAL "PLATFORM_APPLE_MOBILE")
+    enable_language(OBJC)
+    list(APPEND raylib_sources platforms/rcore_apple.m)
+    list(APPEND raylib_public_headers raylib_apple.h)
+    set_source_files_properties(platforms/rcore_apple.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    if (SUPPORT_MODULE_RAUDIO)
+        set_source_files_properties(raudio.c PROPERTIES LANGUAGE OBJC COMPILE_OPTIONS "-fno-objc-arc")
+    endif ()
+endif ()
+
 if (DEFINED SUPPORT_MODULE_RAUDIO AND NOT SUPPORT_MODULE_RAUDIO)
     MESSAGE(STATUS "Audio Backend: None (-DCUSTOMIZE_BUILD=ON -DSUPPORT_MODULE_RAUDIO=OFF)")
 else ()
@@ -63,6 +73,13 @@ else ()
 endif ()
 
 add_library(raylib ${raylib_sources} ${raylib_public_headers})
+
+if (PLATFORM_CPP STREQUAL "PLATFORM_APPLE_MOBILE")
+    target_compile_definitions(raylib PRIVATE GLES_SILENCE_DEPRECATION)
+    foreach (framework IN LISTS RAYLIB_APPLE_FRAMEWORKS)
+        target_link_options(raylib INTERFACE "SHELL:-framework ${framework}")
+    endforeach ()
+endif ()
 
 if (NOT BUILD_SHARED_LIBS)
     MESSAGE(STATUS "Building raylib static library")

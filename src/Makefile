@@ -34,6 +34,8 @@
 #         - Embedded devices (with GPU)
 #     > PLATFORM_ANDROID (native NDK):
 #         - Android (ARM, ARM64)
+#     > PLATFORM_IOS / PLATFORM_TVOS (UIKit backend):
+#         - iOS, iPadOS and tvOS (device and simulator)
 #     > PLATFORM_MEMORY
 #         - Memory framebuffer output, using software renderer, no OS required
 #
@@ -68,6 +70,11 @@
 #------------------------------------------------------------------------------------------------
 # Define target platform
 PLATFORM             ?= PLATFORM_DESKTOP
+
+.DEFAULT_GOAL := all
+include $(dir $(lastword $(MAKEFILE_LIST)))Makefile.Apple
+
+ifeq ($(filter $(PLATFORM),PLATFORM_IOS PLATFORM_TVOS),)
 ifeq ($(PLATFORM), PLATFORM_DESKTOP)
     TARGET_PLATFORM   = PLATFORM_DESKTOP_GLFW
 else
@@ -1002,3 +1009,5 @@ clean_shell_cmd:
 	del lib$(RAYLIB_LIB_NAME)dll.a /s & \
 	del $(RAYLIB_LIB_NAME).dll /s & \
 	del raygui.c /s & \
+
+endif  # Non-UIKit platforms

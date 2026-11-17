@@ -13,6 +13,15 @@ if (NOT DEFINED PLATFORM)
     set(PLATFORM "Desktop" CACHE STRING "Platform to build examples for")
 endif ()
 
+if (CMAKE_SYSTEM_NAME MATCHES "^(iOS|tvOS)$")
+    if (NOT TARGET raylib)
+        find_package(raylib REQUIRED)
+    endif ()
+    include("${CMAKE_CURRENT_LIST_DIR}/../projects/CMake/AppleApp.cmake")
+    raylib_add_apple_app(core_basic_window "${CMAKE_CURRENT_SOURCE_DIR}/core/core_basic_window.c")
+    return()
+endif ()
+
 # Directories that contain examples
 set(example_dirs
     audio

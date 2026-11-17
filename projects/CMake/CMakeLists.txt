@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.11) # FetchContent is available in 3.11+
+if (CMAKE_SYSTEM_NAME MATCHES "^(iOS|tvOS)$")
+  cmake_minimum_required(VERSION 3.22)
+  if (NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "17.0" CACHE STRING "Minimum Apple OS version")
+  endif ()
+endif ()
 project(example)
 
 # Generate compile_commands.json
@@ -6,8 +12,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Dependencies
 set(RAYLIB_VERSION 6.0)
-find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
-if (NOT raylib_FOUND) # If there's none, fetch and build raylib
+if (CMAKE_SYSTEM_NAME MATCHES "^(iOS|tvOS)$" AND
+    EXISTS "${CMAKE_CURRENT_LIST_DIR}/../../src/raylib_apple.h" AND NOT DEFINED raylib_DIR)
+  add_subdirectory(../.. raylib)
+else ()
+  find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
+endif ()
+if (NOT TARGET raylib AND NOT raylib_FOUND) # If there's none, fetch and build raylib
   include(FetchContent)
   FetchContent_Declare(
     raylib
@@ -22,6 +33,11 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
 endif()
 
 # Our Project
+if (CMAKE_SYSTEM_NAME MATCHES "^(iOS|tvOS)$")
+    include("${CMAKE_CURRENT_LIST_DIR}/AppleApp.cmake")
+    raylib_add_apple_app(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/core_basic_window.c" "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+    return()
+endif ()
 
 add_executable(${PROJECT_NAME} core_basic_window.c)
 #set(raylib_VERBOSE 1)
