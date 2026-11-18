@@ -43,7 +43,6 @@
 *
 **********************************************************************************************/
 
-#include "raylib.h"
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 #include <android/log.h>                // Required for: Android log system: __android_log_vprint()
