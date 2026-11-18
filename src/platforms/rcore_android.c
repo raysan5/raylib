@@ -53,15 +53,14 @@
 #include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL(), GetCurrentMonitor(), SetClipboardText(), GetClipboardText()]
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
-#include <stdio.h>
 
-
+#include <stdio.h>                      // Required for: NULL
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #ifndef MAX_CLIPBOARD_BUFFER_LENGTH
-    #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
+    #define MAX_CLIPBOARD_BUFFER_LENGTH     1024
 #endif
 
 //----------------------------------------------------------------------------------
@@ -593,18 +592,22 @@ Vector2 GetWindowScaleDPI(void)
 }
 
 // Set clipboard text content
-// NOTE: Implementation based on https://stackoverflow.com/questions/76759222/how-to-copy-to-clipboard-on-android-via-jni
+// REF: https://stackoverflow.com/questions/76759222/how-to-copy-to-clipboard-on-android-via-jni
 void SetClipboardText(const char *text)
 {
     JNIEnv *env = NULL;
     JavaVM *vm = platform.app->activity->vm;
+    
     jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
-    if (result != JNI_OK) {
+    if (result != JNI_OK)
+    {
         TRACELOG(LOG_WARNING, "Failed to allocate a thread to set the clipboard text");
         return;
     }
+    
     jobject activity = platform.app->activity->clazz;
-    if (!activity) {
+    if (!activity)
+    {
         TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
         (*vm)->DetachCurrentThread(vm);
         return;
@@ -636,20 +639,26 @@ void SetClipboardText(const char *text)
 const char *GetClipboardText(void)
 {
     static char buffer[MAX_CLIPBOARD_BUFFER_LENGTH] = { 0 };
+    
     JNIEnv *env = NULL;
     JavaVM *vm = platform.app->activity->vm;
+    
     jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
-    if (result != JNI_OK) {
+    if (result != JNI_OK)
+    {
         TRACELOG(LOG_WARNING, "Failed to allocate a thread to get the clipboard text");
         return NULL;
     }
+    
     jobject activity = platform.app->activity->clazz;
-    if (!activity) {
+    if (!activity)
+    {
         TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
         (*vm)->DetachCurrentThread(vm);
         return NULL;
     }
-    // ClipboardManager
+    
+    // Get clipboard manager service
     jclass activityClass = (*env)->GetObjectClass(env, activity);
     jmethodID getSystemService = (*env)->GetMethodID(env, activityClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
     jstring serviceName = (*env)->NewStringUTF(env, "clipboard");
@@ -659,7 +668,8 @@ const char *GetClipboardText(void)
     jclass clipboardClass = (*env)->GetObjectClass(env, clipboard);
     jmethodID getPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "getPrimaryClip", "()Landroid/content/ClipData;");
     jobject clip = (*env)->CallObjectMethod(env, clipboard, getPrimaryClip);
-    if (!clip) {
+    if (!clip)
+    {
         (*vm)->DetachCurrentThread(vm);
         return NULL;
     }
@@ -672,10 +682,12 @@ const char *GetClipboardText(void)
     jclass itemClass = (*env)->GetObjectClass(env, item);
     jmethodID getText = (*env)->GetMethodID(env, itemClass, "getText", "()Ljava/lang/CharSequence;");
     jobject text = (*env)->CallObjectMethod(env, item, getText);
-    if (!text) {
+    if (!text)
+    {
         (*vm)->DetachCurrentThread(vm);
         return NULL;
     }
+    
     jclass charSequenceClass = (*env)->FindClass(env, "java/lang/CharSequence");
     jmethodID toString = (*env)->GetMethodID(env, charSequenceClass, "toString", "()Ljava/lang/String;");
     jstring string = (jstring)(*env)->CallObjectMethod(env, text, toString);
@@ -687,9 +699,10 @@ const char *GetClipboardText(void)
         char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
         sprintf(truncate, "...");
     }
+    
     (*env)->ReleaseStringUTFChars(env, string, chars);
- 
     (*vm)->DetachCurrentThread(vm);
+    
     return buffer;
 }
 

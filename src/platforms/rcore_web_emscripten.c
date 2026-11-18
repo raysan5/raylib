@@ -903,6 +903,7 @@ EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
 const char *GetClipboardText(void)
 {
     RequestClipboardData();
+    
     return GetLastPastedText();
 }
 
@@ -910,13 +911,17 @@ const char *GetClipboardText(void)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    int w = 0, h = 0;
+    int width = 0; 
+    int height = 0;
+    
     RequestClipboardData();
-    unsigned char* data = GetLastPastedImage(&w, &h);
-    if (data != NULL) {
+    unsigned char *data = GetLastPastedImage(&width, &height);
+    
+    if (data != NULL)
+    {
         image.data = data;
-        image.width = w;
-        image.height = h;
+        image.width = width;
+        image.height = height;
         image.mipmaps = 1;
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     }

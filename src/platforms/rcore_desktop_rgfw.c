@@ -1244,34 +1244,41 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    if (platform.window == NULL)
+    Vector2 position = { 0 };
+    
+    if (platform.window != NULL)
     {
-        return (Vector2){ 0.0f, 0.0f };
+        int result = RGFW_window_getPosition(platform.window, &platform.window->x, &platform.window->y);
+        
+        if (result != 0)
+        {
+            position.x = (float)platform.window->x;
+            position.y = (float)platform.window->y;
+        }
     }
 
-    if (RGFW_window_getPosition(platform.window, &platform.window->x, &platform.window->y)) {
-        return (Vector2){ (float)platform.window->x, (float)platform.window->y };
-    }
-
-    return (Vector2){ 0.0f, 0.0f };
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
+    Vector2 scaleDPI = { 0 };
     RGFW_monitor *monitor = NULL;
 
     if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
     else monitor = RGFW_getPrimaryMonitor();
 
-    #if defined(__APPLE__)
-        // Apple does < 1.0f scaling, example: 0.66f, 0.5f
-        // it needs to be convert to be consistent
-        return (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
-    #else
-        // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
-        return (Vector2){ monitor->scaleX, monitor->scaleX };
-    #endif
+#if defined(__APPLE__)
+    // Apple does < 1.0f scaling, example: 0.66f, 0.5f
+    // it needs to be convert to be consistent
+    scaleDPI = (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
+#else
+    // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
+    scaleDPI = (Vector2){ monitor->scaleX, monitor->scaleX };
+#endif
+    
+    return scaleDPI;
 }
 
 // Get monitor pixel ratio
@@ -1653,7 +1660,8 @@ void PollInputEvents(void)
             {
                 int axis = mg_axisConvertTable[gamepad_event.axis];
 
-                switch (axis) {
+                switch (axis)
+                {
                     case GAMEPAD_AXIS_LEFT_X:
                     case GAMEPAD_AXIS_LEFT_Y:
                     case GAMEPAD_AXIS_RIGHT_X:
@@ -1854,7 +1862,8 @@ int InitPlatform(void)
     CORE.Window.currentFbo.height = CORE.Window.render.height;
 
     // adjust scale if using highdpi
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
