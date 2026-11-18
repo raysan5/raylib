@@ -1574,7 +1574,13 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
     if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);  // The window was focused
-    else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);            // The window lost focus
+    else
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);            // The window lost focus
+        memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
+        memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
+        CORE.Input.Touch.pointCount = 0;
+    }
 }
 
 // GLFW3: Called on file-drop over the window

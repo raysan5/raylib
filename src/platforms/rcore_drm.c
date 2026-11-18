@@ -1666,6 +1666,30 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    // Close surface, context and display
+    // NOTE: EGL must be released before the GBM surface and device it was created on
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
+#endif
+
     if (platform.prevFB)
     {
         drmModeRmFB(platform.fd, platform.prevFB);
@@ -1712,27 +1736,6 @@ void ClosePlatform(void)
         platform.fd = -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
-    // Close surface, context and display
-    if (platform.device != EGL_NO_DISPLAY)
-    {
-        if (platform.surface != EGL_NO_SURFACE)
-        {
-            eglDestroySurface(platform.device, platform.surface);
-            platform.surface = EGL_NO_SURFACE;
-        }
-
-        if (platform.context != EGL_NO_CONTEXT)
-        {
-            eglDestroyContext(platform.device, platform.context);
-            platform.context = EGL_NO_CONTEXT;
-        }
-
-        eglTerminate(platform.device);
-        platform.device = EGL_NO_DISPLAY;
-    }
-#endif
-
     CORE.Window.shouldClose = true; // Added to force threads to exit when the close window is called
 
     // Close the evdev devices
@@ -1753,6 +1756,12 @@ void ClosePlatform(void)
         close(platform.keyboardFd);
         platform.keyboardFd = -1;
     }
+
+#if SUPPORT_SSH_KEYBOARD_RPI
+    // Restore the terminal now, not only at exit: InitKeyboard() of a later InitWindow()
+    // would otherwise save the modified settings as the ones to restore
+    RestoreKeyboard();
+#endif
 }
 
 #if SUPPORT_SSH_KEYBOARD_RPI

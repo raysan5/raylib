@@ -334,7 +334,6 @@ int main(void)
     rlUnloadTexture(gBuffer.positionTextureId);
     rlUnloadTexture(gBuffer.normalTextureId);
     rlUnloadTexture(gBuffer.albedoSpecTextureId);
-    rlUnloadTexture(gBuffer.depthRenderbufferId);
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
