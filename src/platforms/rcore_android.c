@@ -43,6 +43,7 @@
 *
 **********************************************************************************************/
 
+#include "raylib.h"
 #include <android_native_app_glue.h>    // Required for: android_app struct and activity management
 #include <android/window.h>             // Required for: AWINDOW_FLAG_FULLSCREEN definition and others
 #include <android/log.h>                // Required for: Android log system: __android_log_vprint()
@@ -50,9 +51,19 @@
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
 
 #include <errno.h>                      // Required for: error types
-#include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL() and GetCurrentMonitor()]
+#include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL(), GetCurrentMonitor(), SetClipboardText(), GetClipboardText()]
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
+#include <stdio.h>
+
+
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_CLIPBOARD_BUFFER_LENGTH
+    #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -623,11 +634,64 @@ void SetClipboardText(const char *text)
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on target platform");
-    return NULL;
+    static char buffer[MAX_CLIPBOARD_BUFFER_LENGTH] = { 0 };
+    JNIEnv *env = NULL;
+    JavaVM *vm = platform.app->activity->vm;
+    jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
+    if (result != JNI_OK) {
+        TRACELOG(LOG_WARNING, "Failed to allocate a thread to get the clipboard text");
+        return NULL;
+    }
+    jobject activity = platform.app->activity->clazz;
+    if (!activity) {
+        TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    // ClipboardManager
+    jclass activityClass = (*env)->GetObjectClass(env, activity);
+    jmethodID getSystemService = (*env)->GetMethodID(env, activityClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jstring serviceName = (*env)->NewStringUTF(env, "clipboard");
+    jobject clipboard = (*env)->CallObjectMethod(env, activity, getSystemService, serviceName);
+
+    // ClipData
+    jclass clipboardClass = (*env)->GetObjectClass(env, clipboard);
+    jmethodID getPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "getPrimaryClip", "()Landroid/content/ClipData;");
+    jobject clip = (*env)->CallObjectMethod(env, clipboard, getPrimaryClip);
+    if (!clip) {
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    
+    // ClipData.Item
+    jclass clipClass = (*env)->GetObjectClass(env, clip);
+    jmethodID getItemAt = (*env)->GetMethodID(env, clipClass, "getItemAt", "(I)Landroid/content/ClipData$Item;");
+    jobject item = (*env)->CallObjectMethod(env, clip, getItemAt, 0);
+
+    jclass itemClass = (*env)->GetObjectClass(env, item);
+    jmethodID getText = (*env)->GetMethodID(env, itemClass, "getText", "()Ljava/lang/CharSequence;");
+    jobject text = (*env)->CallObjectMethod(env, item, getText);
+    if (!text) {
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    jclass charSequenceClass = (*env)->FindClass(env, "java/lang/CharSequence");
+    jmethodID toString = (*env)->GetMethodID(env, charSequenceClass, "toString", "()Ljava/lang/String;");
+    jstring string = (jstring)(*env)->CallObjectMethod(env, text, toString);
+
+    const char *chars = (*env)->GetStringUTFChars(env, string, NULL);
+    int clipboardSize = snprintf(buffer, MAX_CLIPBOARD_BUFFER_LENGTH, "%s", chars);
+    if (clipboardSize >= MAX_CLIPBOARD_BUFFER_LENGTH)
+    {
+        char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
+        sprintf(truncate, "...");
+    }
+    (*env)->ReleaseStringUTFChars(env, string, chars);
+ 
+    (*vm)->DetachCurrentThread(vm);
+    return buffer;
 }
 
 // Get clipboard image
