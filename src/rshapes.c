@@ -83,6 +83,7 @@ static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source
 // Module Internal Functions Declaration
 //----------------------------------------------------------------------------------
 static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
+static Vector2 CalculateHalfPixelOffsets(void);
 
 //----------------------------------------------------------------------------------
 // Module Functions Definition
@@ -743,9 +744,9 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-    Matrix mat = rlGetMatrixTransform();
-    float xOffset = 0.5f/mat.m0;
-    float yOffset = 0.5f/mat.m5;
+    Vector2 halfPixelOffsets = CalculateHalfPixelOffsets();
+    float xOffset = halfPixelOffsets.x;
+    float yOffset = halfPixelOffsets.y;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1140,17 +1141,21 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
            P5 ------------------ P4
     */
 
+    Vector2 halfPixelOffsets = CalculateHalfPixelOffsets();
+    float xOffset = halfPixelOffsets.x;
+    float yOffset = halfPixelOffsets.y;
+
     // The x-coordinates used for the outline
-    float x0 = rec.x + radius + 0.5f;
-    float x1 = (rec.x + rec.width) - radius - 0.5f;
-    float x2 = (rec.x + rec.width) - 0.5f;
-    float x3 = rec.x + 0.5f;
+    float x0 = rec.x + radius + xOffset;
+    float x1 = (rec.x + rec.width) - radius - xOffset;
+    float x2 = (rec.x + rec.width) - xOffset;
+    float x3 = rec.x + xOffset;
 
     // The y-coordinates used for the outline
-    float y0 = rec.y + 0.5f;
-    float y1 = rec.y + radius + 0.5f;
-    float y2 = (rec.y + rec.height) - radius - 0.5f;
-    float y3 = (rec.y + rec.height) - 0.5f;
+    float y0 = rec.y + yOffset;
+    float y1 = rec.y + radius + yOffset;
+    float y2 = (rec.y + rec.height) - radius - yOffset;
+    float y3 = (rec.y + rec.height) - yOffset;
 
     Vector2 points[8] = {
         { x0, y0 }, // P0
@@ -4564,6 +4569,31 @@ static float EaseCubicInOut(float t, float b, float c, float d)
     }
 
     return result;
+}
+
+// Calculate how much a 2D vertex position should move to shift it to the center of a pixel
+static Vector2 CalculateHalfPixelOffsets(void)
+{
+    Matrix t = rlGetMatrixTransform();
+    Matrix m = rlGetMatrixModelview();
+
+    // Compute upper-left 2x2 of M*T
+    // ax and ay are the first column of the matrix; bx and by are the second
+    float ax = m.m0*t.m0 + m.m4*t.m1;
+    float ay = m.m1*t.m0 + m.m5*t.m1;
+    float bx = m.m0*t.m4 + m.m4*t.m5;
+    float by = m.m1*t.m4 + m.m5*t.m5;
+
+    // Column lengths are pixels per world unit along world x- and y-axes
+    float column0Length = sqrtf(ax*ax + ay*ay);
+    float column1Length = sqrtf(bx*bx + by*by);
+
+    // Take inverse column lengths: how many world units translate to one pixel
+    // Divide by two: world units to half-pixel
+    float xOffset = 0.5f/column0Length;
+    float yOffset = 0.5f/column1Length;
+
+    return (Vector2){ xOffset, yOffset };
 }
 
 #endif // SUPPORT_MODULE_RSHAPES
