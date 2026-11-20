@@ -1675,9 +1675,10 @@ RLAPI RayCollision GetRayCollisionTriangle(Ray ray, Vector3 p1, Vector3 p2, Vect
 RLAPI RayCollision GetRayCollisionQuad(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4); // Get collision info between ray and quad
 
 //------------------------------------------------------------------------------------
-// Audio Loading and Playing Functions (Module: audio)
+// Audio Loading, Playing and Recording Functions (Module: audio)
 //------------------------------------------------------------------------------------
 typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
+typedef void (*AudioRecordingCallback)(const void *bufferData, unsigned int frames);
 
 // Audio device management functions
 RLAPI void InitAudioDevice(void);                                     // Initialize audio device and context
@@ -1685,6 +1686,11 @@ RLAPI void CloseAudioDevice(void);                                    // Close t
 RLAPI bool IsAudioDeviceReady(void);                                  // Check if audio device has been initialized successfully
 RLAPI void SetMasterVolume(float volume);                             // Set master volume (listener)
 RLAPI float GetMasterVolume(void);                                    // Get master volume (listener)
+
+// Audio recording device management functions
+RLAPI void StartAudioRecording(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels, AudioRecordingCallback callback); // Start audio recording
+RLAPI void StopAudioRecording(void);                                  // Stop audio recording
+RLAPI bool IsAudioRecording(void);                                    // Check if device is recording
 
 // Wave/Sound loading/unloading functions
 RLAPI Wave LoadWave(const char *fileName);                            // Load wave data from file
