@@ -80,11 +80,6 @@ static Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used o
 static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
-// Module Internal Functions Declaration
-//----------------------------------------------------------------------------------
-static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
-
-//----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 // Set texture and rectangle to be used on shapes drawing
@@ -237,10 +232,17 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
     for (int i = 1; i <= SPLINE_SEGMENT_DIVISIONS; i++)
     {
+        current.x = previous.x + (endPos.x - startPos.x)/(float)SPLINE_SEGMENT_DIVISIONS;
+        
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)SPLINE_SEGMENT_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/(float)SPLINE_SEGMENT_DIVISIONS;
+        float t = (float)i/(0.5f*(float)SPLINE_SEGMENT_DIVISIONS);
+        if (t < 1.0f) current.y = 0.5f*(endPos.y - startPos.y)*t*t*t + startPos.y;
+        else
+        {
+            t -= 2.0f;
+            current.y = 0.5f*(endPos.y - startPos.y)*(t*t*t + 2.0f) + startPos.y;
+        }
 
         float dy = current.y - previous.y;
         float dx = current.x - previous.x;
@@ -4544,26 +4546,6 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     }
 
     return overlap;
-}
-
-//----------------------------------------------------------------------------------
-// Module Internal Functions Definition
-//----------------------------------------------------------------------------------
-
-// Cubic easing in-out
-// NOTE: Used by DrawLineBezier() only
-static float EaseCubicInOut(float t, float b, float c, float d)
-{
-    float result = 0.0f;
-    t /= 0.5f*d;
-    if (t < 1) result = 0.5f*c*t*t*t + b;
-    else
-    {
-        t -= 2;
-        result = 0.5f*c*(t*t*t + 2.0f) + b;
-    }
-
-    return result;
 }
 
 #endif // SUPPORT_MODULE_RSHAPES
