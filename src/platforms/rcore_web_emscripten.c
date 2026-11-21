@@ -1702,8 +1702,8 @@ static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheel
         if (wheelEvent->deltaMode == DOM_DELTA_LINE) wheelScale = 1.0f/3.0f;
         else if (wheelEvent->deltaMode == DOM_DELTA_PAGE) wheelScale = 80.0f;
 
-        CORE.Input.Mouse.currentWheelMove.x = (float)wheelEvent->deltaX*wheelScale;
-        CORE.Input.Mouse.currentWheelMove.y = -(float)wheelEvent->deltaY*wheelScale;
+        CORE.Input.Mouse.currentWheelMove.x -= (float)wheelEvent->deltaX*wheelScale;
+        CORE.Input.Mouse.currentWheelMove.y -= (float)wheelEvent->deltaY*wheelScale;
     }
 
     return 1; // The event was consumed by the callback handler
