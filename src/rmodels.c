@@ -2587,7 +2587,7 @@ static void UpdateModelAnimationVertexBuffers(Model model)
                 if ((mesh->normals != NULL) && (mesh->animNormals != NULL ))
                 {
                     animNormal = (Vector3){ mesh->normals[vCounter], mesh->normals[vCounter + 1], mesh->normals[vCounter + 2] };
-                    animNormal = Vector3Transform(animNormal, MatrixTranspose(MatrixInvert(model.boneMatrices[boneIndex])));
+                    animNormal = Vector3Transform(animNormal, boneNormalMatrices[boneIndex]);
                     mesh->animNormals[vCounter] += animNormal.x*boneWeight;
                     mesh->animNormals[vCounter + 1] += animNormal.y*boneWeight;
                     mesh->animNormals[vCounter + 2] += animNormal.z*boneWeight;
