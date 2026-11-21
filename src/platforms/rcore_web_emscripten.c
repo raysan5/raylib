@@ -1568,8 +1568,11 @@ static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboar
         } break;
         case EMSCRIPTEN_EVENT_KEYPRESS:
         {
+            unsigned int codepoint = keyboardEvent->charCode;
+            if ((codepoint < 32) || ((codepoint > 126) && (codepoint < 160))) break;
+
             // Check if there is space available in the queue for characters to be added
-            if ((keyboardEvent->charCode > 0) && (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE))
+            if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
             {
                 CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = keyboardEvent->charCode;
                 CORE.Input.Keyboard.charPressedQueueCount++;
