@@ -42,7 +42,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture waves");
 
-    // Load texture texture to apply shaders
+    // Load texture to apply shaders
     Texture2D texture = LoadTexture("resources/space.png");
 
     // Load shader and setup location points and values
