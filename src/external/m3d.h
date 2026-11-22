@@ -2417,7 +2417,7 @@ m3d_t *m3d_load(unsigned char *data, m3dread_t readfilecb, m3dfree_t freecb, m3d
     char *name, *lang;
     float f;
     m3d_t *model;
-    M3D_INDEX mi;
+    M3D_INDEX mi = { 0 };
 #ifdef M3D_VERTEXMAX
     M3D_INDEX pi;
 #endif
