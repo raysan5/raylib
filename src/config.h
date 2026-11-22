@@ -148,10 +148,8 @@
 //------------------------------------------------------------------------------------
 // Module: rlgl - Configuration values
 //------------------------------------------------------------------------------------
-#ifndef RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-    // Request OpenGL debug context (only available on OpenGL 4.3)
-    #define RLGL_ENABLE_OPENGL_DEBUG_CONTEXT       0
-#endif
+// OpenGL debug context messages can be enabled at runtime with the
+// FLAG_GL_CONTEXT_DEBUG flag (see raylib.h)
 #ifndef RLGL_SHOW_GL_DETAILS_INFO
     // Show OpenGL detailed info on initialization,
     // supported GL extensions and GL capabilities

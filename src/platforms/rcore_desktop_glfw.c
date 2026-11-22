@@ -1611,7 +1611,6 @@ int InitPlatform(void)
 #else
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE); // Forward Compatibility Hint: Only 3.3 and above!
 #endif
-        //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE); // Request OpenGL DEBUG context
     }
     else if (rlGetVersion() == RL_OPENGL_43)
     {
@@ -1619,9 +1618,6 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);          // Choose OpenGL minor version (just hint)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_FALSE);
-#if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);   // Enable OpenGL Debug Context
-#endif
     }
     else if (rlGetVersion() == RL_OPENGL_ES_20)                 // Request OpenGL ES 2.0 context
     {
@@ -1637,6 +1633,10 @@ int InitPlatform(void)
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
         glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
     }
+
+    // Request OpenGL debug context if FLAG_GL_CONTEXT_DEBUG was set
+    // NOTE: Debug context might not be supported by the graphic driver on older OpenGL versions
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_GL_CONTEXT_DEBUG)) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
     // NOTE: GLFW 3.4+ defers initialization of the Joystick subsystem on the first call to any Joystick related functions
     // Forcing this initialization here avoids doing it on PollInputEvents() called by EndDrawing() after first frame has been drawn

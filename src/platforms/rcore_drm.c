@@ -1424,6 +1424,11 @@ int InitPlatform(void)
 
     const EGLint contextAttribs[] = {
         EGL_CONTEXT_CLIENT_VERSION, 2,
+#if defined(EGL_CONTEXT_OPENGL_DEBUG)
+        // Request OpenGL debug context if FLAG_GL_CONTEXT_DEBUG was set
+        // NOTE: Debug context might not be supported by the graphic driver
+        EGL_CONTEXT_OPENGL_DEBUG, (FLAG_IS_SET(CORE.Window.flags, FLAG_GL_CONTEXT_DEBUG))? EGL_TRUE : EGL_FALSE,
+#endif
         EGL_NONE
     };
 

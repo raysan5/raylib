@@ -2054,9 +2054,6 @@ int InitPlatform(void)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    #if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);   // Enable OpenGL Debug Context
-    #endif
         }
         else if (rlGetVersion() == RL_OPENGL_ES_20)                 // Request OpenGL ES 2.0 context
         {
@@ -2069,6 +2066,13 @@ int InitPlatform(void)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        }
+
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_GL_CONTEXT_DEBUG))
+        {
+            int contextFlags = 0;
+            SDL_GL_GetAttribute(SDL_GL_CONTEXT_FLAGS, &contextFlags);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags | SDL_GL_CONTEXT_DEBUG_FLAG);
         }
 
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT))

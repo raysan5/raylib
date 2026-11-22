@@ -40,8 +40,9 @@
 *       #if RLGL_SHOW_GL_DETAILS_INFO
 *           Show OpenGL extensions and capabilities detailed logs on init
 *
-*       #if RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-*           Enable debug context (only available on OpenGL 4.3)
+*       OpenGL debug messages require a debug context, which can be requested with the
+*       raylib FLAG_GL_CONTEXT_DEBUG config flag on InitWindow(), rlgl then
+*       registers the debug callback automatically with rlEnableDebugContext()
 *
 *       rlgl capabilities could be customized defining some internal
 *       values before library inclusion (default values listed):
@@ -702,6 +703,7 @@ RLAPI bool rlIsStereoRenderEnabled(void);               // Check if stereo rende
 RLAPI void rlClearColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a); // Clear color buffer with color
 RLAPI void rlClearScreenBuffers(void);                  // Clear used screen buffers (color and depth)
 RLAPI void rlCheckErrors(void);                         // Check and log OpenGL error codes
+RLAPI void rlEnableDebugContext(void);                  // Enable OpenGL debug context messages (requires a debug context)
 RLAPI void rlSetBlendMode(int mode);                    // Set blending mode
 RLAPI void rlSetBlendFactors(int glSrcFactor, int glDstFactor, int glEquation); // Set blending mode factor and equation (using OpenGL factors)
 RLAPI void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha, int glDstAlpha, int glEqRGB, int glEqAlpha); // Set blending mode factors and equations separately (using OpenGL factors)
@@ -2193,7 +2195,10 @@ void rlSetBlendFactorsSeparate(int glSrcRGB, int glDstRGB, int glSrcAlpha, int g
 //----------------------------------------------------------------------------------
 // Module Functions Definition - OpenGL Debug
 //----------------------------------------------------------------------------------
-#if defined(GRAPHICS_API_OPENGL_43) && RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
+#if defined(GRAPHICS_API_OPENGL_33)
+// OpenGL debug message callback
+// NOTE: It requires a debug context to be created by the platform layer,
+// debug messages are only reported by the driver on those contexts
 static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
     // Ignore non-significant error/warning codes (NVidia drivers)
@@ -2250,6 +2255,55 @@ static void GLAPIENTRY rlDebugMessageCallback(GLenum source, GLenum type, GLuint
 }
 #endif
 
+// Enable OpenGL debug context messages: register debug callback and enable debug output
+// NOTE: It requires a graphic context created with debug support, that can be
+// verified checking 'GL_CONTEXT_FLAGS' for 'GL_CONTEXT_FLAG_DEBUG_BIT', the platform
+// layer requests it with the raylib FLAG_GL_CONTEXT_DEBUG flag
+// NOTE: Debug output on OpenGL 4.3+ is provided by the core feature, on older versions
+// it can be provided by the GL_ARB_debug_output extension (OpenGL 3.0+)
+// WARNING: Debug output might have a negative impact on performance
+void rlEnableDebugContext(void)
+{
+#if defined(GRAPHICS_API_OPENGL_33)
+    // Selected function to enable debug output, it depends on the OpenGL version
+    GLenum debugOutput = 0;
+
+#if defined(GRAPHICS_API_OPENGL_43)
+    // OpenGL 4.3+ provides debug output as a core feature
+    if (glad_glDebugMessageCallback != NULL)
+    {
+        glDebugMessageCallback(rlDebugMessageCallback, 0);
+        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE);
+
+        // Debug context options:
+        //  - GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
+        //  - GL_DEBUG_OUTPUT_SYNCHRONOUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error
+        glEnable(GL_DEBUG_OUTPUT);
+
+        debugOutput = GL_DEBUG_OUTPUT_SYNCHRONOUS;
+    }
+#else
+    // Older OpenGL versions can provide debug output with the GL_ARB_debug_output extension
+    if (glad_glDebugMessageCallbackARB != NULL)
+    {
+        glDebugMessageCallbackARB(rlDebugMessageCallback, 0);
+
+        // NOTE: GL_ARB_debug_output does not provide the GL_DEBUG_OUTPUT master switch,
+        // only the synchronous debug output option is available
+        debugOutput = GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB;
+    }
+#endif
+
+    if (debugOutput != 0)
+    {
+        glEnable(debugOutput);
+
+        TRACELOG(RL_LOG_INFO, "GL: OpenGL debug messages enabled");
+    }
+    else TRACELOG(RL_LOG_WARNING, "GL: OpenGL debug messages not supported by current context");
+#endif
+}
+
 //----------------------------------------------------------------------------------
 // Module Functions Definition - rlgl functionality
 //----------------------------------------------------------------------------------
@@ -2259,19 +2313,13 @@ void rlglInit(int width, int height)
 {
     isGpuReady = true;
 
-    // Enable OpenGL debug context if requested (and supported)
-#if defined(GRAPHICS_API_OPENGL_43) && RLGL_ENABLE_OPENGL_DEBUG_CONTEXT
-    if ((glDebugMessageCallback != NULL) && (glDebugMessageControl != NULL))
-    {
-        glDebugMessageCallback(rlDebugMessageCallback, 0);
-        // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_HIGH, 0, 0, GL_TRUE);
-
-        // Debug context options:
-        //  - GL_DEBUG_OUTPUT - Faster version but not useful for breakpoints
-        //  - GL_DEBUG_OUTPUT_SYNCHRONUS - Callback is in sync with errors, so a breakpoint can be placed on the callback in order to get a stacktrace for the GL error
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    }
+// NOTE: GL_CONTEXT_FLAGS is only available on OpenGL 3.0+, skip OpenGL 2.1 builds
+#if defined(GRAPHICS_API_OPENGL_33) && !defined(GRAPHICS_API_OPENGL_21)
+    // Enable OpenGL debug context messages if the graphic context was created with debug support
+    // NOTE: Debug context is requested by the platform layer with the FLAG_GL_CONTEXT_DEBUG flag
+    GLint contextFlags = 0;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &contextFlags);
+    if (contextFlags & GL_CONTEXT_FLAG_DEBUG_BIT) rlEnableDebugContext();
 #endif
 
 #if defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2)

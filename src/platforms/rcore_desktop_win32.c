@@ -240,6 +240,8 @@ static HMODULE shcore = NULL; // shcore.dll (Windows 8.1 and early versions of W
 #define WGL_NUMBER_PIXEL_FORMATS_ARB        0x2000
 #define WGL_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB       0x2092
+#define WGL_CONTEXT_FLAGS_ARB               0x2094
+#define WGL_CONTEXT_DEBUG_BIT_ARB           0x00000001
 #define WGL_CONTEXT_PROFILE_MASK_ARB        0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB    0x00000001
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
@@ -1875,13 +1877,25 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
             else TRACELOG(LOG_WARNING, "GL: OpenGL ES context not supported by GPU");
         }
 
-        int contextAttribs[] = {
+        int glContextFlags = 0;
+
+        // Request OpenGL debug context if FLAG_GL_CONTEXT_DEBUG was set
+        // NOTE: Debug context might not be supported by the graphic driver on older OpenGL versions
+        if (platform.desiredFlags & FLAG_GL_CONTEXT_DEBUG) glContextFlags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+
+        int contextAttribs[9] = {
             WGL_CONTEXT_MAJOR_VERSION_ARB, glContextVersionMajor,
             WGL_CONTEXT_MINOR_VERSION_ARB, glContextVersionMinor,
             WGL_CONTEXT_PROFILE_MASK_ARB, glContextProfile, // WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, WGL_CONTEXT_ES_PROFILE_BIT_EXT (if supported)
-            //WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB [glDebugMessageCallback()]
             0 // Terminator
         };
+
+        // NOTE: 'WGL_CONTEXT_FLAGS_ARB' is only provided when a debug context is requested
+        if (glContextFlags != 0)
+        {
+            contextAttribs[6] = WGL_CONTEXT_FLAGS_ARB;
+            contextAttribs[7] = glContextFlags;   // WGL_CONTEXT_DEBUG_BIT_ARB [glDebugMessageCallback()]
+        }
 
         // NOTE: Not sharing context resources so, second parameters is NULL
         realContext = wglCreateContextAttribsARB(hdc, NULL, contextAttribs);

@@ -1814,6 +1814,10 @@ int InitPlatform(void)
         hints->renderer = RGFW_glSoftware;
     }
     if (FLAG_IS_SET(CORE.Window.flags, FLAG_MSAA_4X_HINT)) hints->samples = 4;
+
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_GL_CONTEXT_DEBUG)) hints->debug = true;
+    else hints->debug = false;
+
     RGFW_setGlobalHints_OpenGL(hints);
 
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
