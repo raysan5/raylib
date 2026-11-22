@@ -208,6 +208,8 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     ifeq ($(OS),Windows_NT)
         ANDROID_NDK ?= C:/android-ndk-r30
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
+        # NOTE: To run from a CMD shell, CC requires the .cmd extension on the call or it fails trying to find [bash]
+        ANDROID_SHELL_CMD = .cmd
     else
 		ANDROID_NDK ?= /usr/lib/android/ndk
 		ifeq ($(PLATFORM_OS), OSX)
@@ -341,18 +343,18 @@ endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # Android toolchain (must be provided for desired architecture and compiler)
     ifeq ($(ANDROID_ARCH),arm)
-        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-androideabi$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-androideabi$(ANDROID_API_VERSION)-clang$(ANDROID_SHELL_CMD)
     endif
     ifeq ($(ANDROID_ARCH),arm64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang$(ANDROID_SHELL_CMD)
     endif
     ifeq ($(ANDROID_ARCH),x86)
-        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang$(ANDROID_SHELL_CMD)
     endif
     ifeq ($(ANDROID_ARCH),x86_64)
-        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang
+        CC = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_COMPILER_ARCH)-linux-android$(ANDROID_API_VERSION)-clang$(ANDROID_SHELL_CMD)
     endif
-    # It seems from Android NDK r22 onwards we need to use llvm-ar
+    # NOTE: Since Android NDK r22 onwards, llvm-ar should be used
     AR = $(ANDROID_TOOLCHAIN)/bin/llvm-ar
 endif
 
@@ -457,7 +459,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # -Werror=format-security
     CFLAGS += -Wa,--noexecstack -Wformat -no-canonical-prefixes
     # Preprocessor macro definitions
-    CFLAGS += -D__ANDROID__ -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
+    CFLAGS += -D__ANDROID__ -DPLATFORM_ANDROID
+    # NOTE: API level is already implicit on compiler call, no need for redefinition
+    #-D__ANDROID_API__=$(ANDROID_API_VERSION)
 endif
 
 # Define required compilation flags for raylib SHARED lib
