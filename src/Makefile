@@ -200,8 +200,9 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # Android architecture
     # NOTE: Starting at 2019 using arm64 is mandatory for published apps,
     # NOTE: Starting on August 2020, minimum required target API is Android 10 (API level 29)
+    # NOTE: Android 13 (API level 33), released on August 2022 should be a safe bet
     ANDROID_ARCH ?= arm64
-    ANDROID_API_VERSION ?= 29
+    ANDROID_API_VERSION ?= 33
 
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
