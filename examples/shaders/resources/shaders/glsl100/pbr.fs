@@ -120,7 +120,7 @@ vec3 ComputePBR()
         vec3 H = normalize(V + L);                                  // Compute halfway bisecting vector
         float dist = length(lights[i].position - fragPosition);     // Compute distance to light
         float attenuation = 1.0/(dist*dist*0.23);                   // Compute attenuation
-        vec3 radiance = lights[i].color.rgb*lights[i].intensity*attenuation; // Compute input radiance, light energy comming in
+        vec3 radiance = lights[i].color.rgb*lights[i].intensity*attenuation; // Compute input radiance, light energy coming in
 
         // Cook-Torrance BRDF distribution function
         float nDotV = max(dot(N,V), 0.0000001);
