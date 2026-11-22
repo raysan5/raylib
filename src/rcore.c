@@ -3202,7 +3202,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     while ((ending >= 0) && (text[ending] == '=')) { padding++; ending--; }
     int estimatedOutputSize = 3*(dataSize/4) - padding;
     if (estimatedOutputSize < 0) estimatedOutputSize = 0;   // Invalid input, i.e. "QQ=" or "===="
-    int maxOutputSize = 3*(dataSize/4);
+    unsigned int maxOutputSize = 3*(dataSize/4);
 
     // Load some memory to store decoded data
     // NOTE: Allocated enough size to include padding
