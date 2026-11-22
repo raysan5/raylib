@@ -1515,7 +1515,7 @@ void rlVertex3f(float x, float y, float z)
             (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%2 == 0))
         {
             // Reached the maximum number of vertices for RL_LINES drawing
-            // Launch a draw call but keep current state for next vertices comming
+            // Launch a draw call but keep current state for next vertices coming
             // NOTE: Adding +1 vertex to the check for some safety
             rlCheckRenderBatchLimit(2 + 1);
         }
