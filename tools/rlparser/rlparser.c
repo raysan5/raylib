@@ -1463,7 +1463,7 @@ static char *TextReplace(char *text, const char *replace, const char *by)
     char *insertPoint;      // Next insert point
     char *temp;             // Temp pointer
     int replaceLen;         // Replace string length of (the string to remove)
-    int byLen;              // Replacement length (the string to replace replace by)
+    int byLen;              // Replacement length (the string to replace by)
     int lastReplacePos;     // Distance between replace and end of last replace
     int count;              // Number of replacements
 
