@@ -198,15 +198,15 @@ endif
 
 ifeq ($(TARGET_PLATFORM),PLATFORM_ANDROID)
     # Android architecture
-    # Starting at 2019 using arm64 is mandatory for published apps,
-    # Starting on August 2020, minimum required target API is Android 10 (API level 29)
+    # NOTE: Starting at 2019 using arm64 is mandatory for published apps,
+    # NOTE: Starting on August 2020, minimum required target API is Android 10 (API level 29)
     ANDROID_ARCH ?= arm64
     ANDROID_API_VERSION ?= 29
 
     # Android required path variables
     # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
     ifeq ($(OS),Windows_NT)
-        ANDROID_NDK ?= C:/android-ndk
+        ANDROID_NDK ?= C:/android-ndk-r30
         ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
     else
 		ANDROID_NDK ?= /usr/lib/android/ndk
