@@ -37,8 +37,8 @@
 #     > PLATFORM_MEMORY
 #         - Memory framebuffer output, using software renderer, no OS required
 #
-#   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline.
-#   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline.
+#   Many thanks to Milan Nikolic (@gen2brain) for implementing Android platform pipeline
+#   Many thanks to Emanuele Petriglia for his contribution on GNU/Linux pipeline
 #
 #   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5)
 #
@@ -118,12 +118,12 @@ RAYLIB_MODULE_RAYGUI_PATH ?= $(RAYLIB_SRC_PATH)/../../raygui/src
 USE_EXTERNAL_GLFW     ?= FALSE
 
 # Enable support for X11 by default on Linux when using GLFW
-# NOTE: Wayland is disabled by default, only enable if you are sure
+# NOTE: Wayland is disabled by default, enable if required
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
 
 # Enable support for X11 by default on Linux when using RGFW
-# NOTE: Wayland is disabled by default, only enable if you are sure
+# NOTE: Wayland is disabled by default, enable if required
 RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 RGFW_LINUX_ENABLE_X11      ?= TRUE
 
@@ -137,11 +137,11 @@ SDL_LIBRARIES         ?= -lSDL2 -lSDL2main
 # "whoami" prints the name of the user that calls him (so, if it is the root user, "whoami" prints "root")
 ROOT = $(shell whoami)
 
-# By default we suppose we are working on Windows
+# WARNING: Default to Windows host and target
 HOST_PLATFORM_OS ?= WINDOWS
 PLATFORM_OS ?= WINDOWS
 
-# Detect the shell used by make: cmd preserves quotes, while sh removes them.
+# Detect the shell used by make: cmd preserves quotes, while sh removes them
 ifndef PLATFORM_SHELL
     PLATFORM_SHELL = sh
     ifeq ($(shell echo "test"),"test")
@@ -800,8 +800,8 @@ else
 				@echo "raylib dynamic library ($(RAYLIB_LIB_NAME).dll) and import library (lib$(RAYLIB_LIB_NAME)dll.a) generated!"
             endif
             ifeq ($(PLATFORM_OS),LINUX)
-                # Compile raylib shared library version $(RAYLIB_VERSION).
-                # WARNING: you should type "make clean" before doing this target
+                # Compile raylib shared library version $(RAYLIB_VERSION)
+                # WARNING: "make clean" should be called before running this target
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) $(LDLIBS)
 				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
@@ -815,7 +815,7 @@ else
 				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).dylib lib$(RAYLIB_LIB_NAME).dylib
             endif
             ifeq ($(PLATFORM_OS),BSD)
-                # WARNING: you should type "gmake clean" before doing this target
+                # WARNING: "gmake clean" should be called before running this target
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so $(OBJS) $(LDFLAGS) $(LDLIBS)
 				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fs lib$(RAYLIB_LIB_NAME).$(RAYLIB_VERSION).so lib$(RAYLIB_LIB_NAME).$(RAYLIB_API_VERSION).so
@@ -823,8 +823,8 @@ else
             endif
         endif
         ifeq ($(TARGET_PLATFORM),PLATFORM_DRM)
-                # Compile raylib shared library version $(RAYLIB_VERSION).
-                # WARNING: you should type "make clean" before doing this target
+                # Compile raylib shared library version $(RAYLIB_VERSION)
+                # WARNING: "make clean" should be called before running this target
 				$(CC) -shared -o $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) $(OBJS) $(LDFLAGS) $(LDLIBS)
 				@echo "raylib shared library generated (lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)) in $(RAYLIB_RELEASE_PATH)!"
 				cd $(RAYLIB_RELEASE_PATH) && ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
@@ -841,7 +841,7 @@ else
         endif
     else
         # Compile raylib static library version $(RAYLIB_VERSION)
-        # WARNING: You should type "make clean" before doing this target.
+        # WARNING: "make clean" should be called before running this target
 		$(AR) rcs $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(OBJS)
 		@echo "raylib static library generated (lib$(RAYLIB_LIB_NAME).a) in $(RAYLIB_RELEASE_PATH)!"
     endif
@@ -908,44 +908,42 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
 	endif
 endif
 
-# Install generated and needed files to desired directories.
+# Install generated and needed files to desired directories
 # On GNU/Linux and BSDs, there are some standard directories that contain extra
 # libraries and header files. These directories (often /usr/local/lib and
 # /usr/local/include) are for libraries that are installed manually
 # (without a package manager). We'll use /usr/local/lib/raysan5 and /usr/local/include/raysan5
-# for our -L and -I specification to simplify management of the raylib source package.
-# Customize these locations if you like but don't forget to pass them to make
-# for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig.
-# HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles.
-# See below and ../examples/Makefile for more information.
+# for our -L and -I specification to simplify management of the raylib source package
+# Customize these locations if desired but don't forget to pass them to make
+# for compilation and enable runtime linking with -rpath, LD_LIBRARY_PATH, or ldconfig
+# HINT: Add -L$(RAYLIB_INSTALL_PATH) -I$(RAYLIB_H_INSTALL_PATH) to your own makefiles
+# See below and ../examples/Makefile for more information
 
-# RAYLIB_INSTALL_PATH should be the desired full path to libraylib. No relative paths.
+# RAYLIB_INSTALL_PATH should be the desired full path to libraylib, no relative paths
 DESTDIR ?= /usr/local
 RAYLIB_INSTALL_PATH ?= $(DESTDIR)/lib
-# RAYLIB_H_INSTALL_PATH locates the installed raylib header and associated source files.
+# RAYLIB_H_INSTALL_PATH locates the installed raylib header and associated source files
 RAYLIB_H_INSTALL_PATH ?= $(DESTDIR)/include
 
 install :
 ifeq ($(ROOT),root)
     ifeq ($(PLATFORM_OS),LINUX)
-        # Attention! You are root, writing files to $(RAYLIB_INSTALL_PATH)
-        # and $(RAYLIB_H_INSTALL_PATH). Consult this Makefile for more information.
-        # Prepare the environment as needed.
+        # WARNING: root user, writing files to $(RAYLIB_INSTALL_PATH) and $(RAYLIB_H_INSTALL_PATH)
 		mkdir --parents --verbose $(RAYLIB_INSTALL_PATH)
 		mkdir --parents --verbose $(RAYLIB_H_INSTALL_PATH)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
-            # Installing raylib to $(RAYLIB_INSTALL_PATH).
+            # Installing raylib to $(RAYLIB_INSTALL_PATH)
 			cp --update --verbose $(RAYLIB_RELEASE_PATH)/libraylib.so.$(RAYLIB_VERSION) $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION)
 			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_VERSION) lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION)
 			cd $(RAYLIB_INSTALL_PATH); ln -fsv lib$(RAYLIB_LIB_NAME).so.$(RAYLIB_API_VERSION) lib$(RAYLIB_LIB_NAME).so
-            # Uncomment to update the runtime linker cache with RAYLIB_INSTALL_PATH.
-            # Not necessary if later embedding RPATH in your executable. See examples/Makefile.
+            # Uncomment to update the runtime linker cache with $(RAYLIB_INSTALL_PATH)
+            # Not necessary if later embedding RPATH in your executable. See examples/Makefile
 			ldconfig $(RAYLIB_INSTALL_PATH)
         else
-            # Installing raylib to $(RAYLIB_INSTALL_PATH).
+            # Installing raylib to $(RAYLIB_INSTALL_PATH)
 			cp --update --verbose $(RAYLIB_RELEASE_PATH)/lib$(RAYLIB_LIB_NAME).a $(RAYLIB_INSTALL_PATH)/lib$(RAYLIB_LIB_NAME).a
         endif
-        # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH).
+        # Copying raylib development files to $(RAYLIB_H_INSTALL_PATH)
 		cp --update raylib.h $(RAYLIB_H_INSTALL_PATH)/raylib.h
 		cp --update raymath.h $(RAYLIB_H_INSTALL_PATH)/raymath.h
 		cp --update rcamera.h $(RAYLIB_H_INSTALL_PATH)/rcamera.h
@@ -959,17 +957,16 @@ else
 endif
 
 # Remove raylib dev files installed on the system
-# NOTE: see 'install' target.
+# NOTE: Check 'install' target for details
 uninstall :
 ifeq ($(ROOT),root)
-    # WARNING: You are root, about to delete items from $(RAYLIB_INSTALL_PATH).
-    # and $(RAYLIB_H_INSTALL_PATH). Please confirm each item.
+    # WARNING: root user, about to delete items from $(RAYLIB_INSTALL_PATH) and $(RAYLIB_H_INSTALL_PATH)
     ifeq ($(PLATFORM_OS),LINUX)
         ifeq ($(RAYLIB_LIBTYPE),SHARED)
 			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so
 			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_API_VERSION)
 			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.so.$(RAYLIB_VERSION)
-            # Uncomment to clean up the runtime linker cache. See install target.
+            # Uncomment to clean up the runtime linker cache, check install target
 			ldconfig
         else
 			rm --force --interactive --verbose $(RAYLIB_INSTALL_PATH)/libraylib.a
