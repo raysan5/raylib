@@ -80,11 +80,6 @@ static Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used o
 static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
-// Module Internal Functions Declaration
-//----------------------------------------------------------------------------------
-static Vector2 CalculateHalfPixelOffsets(void);
-
-//----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 // Set texture and rectangle to be used on shapes drawing
@@ -750,9 +745,20 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-    Vector2 halfPixelOffsets = CalculateHalfPixelOffsets();
-    float xOffset = halfPixelOffsets.x;
-    float yOffset = halfPixelOffsets.y;
+    Matrix t = rlGetMatrixTransform();
+    Matrix m = rlGetMatrixModelview();
+
+    // Compute upper-left 2x2 of M*T
+    float ax = m.m0*t.m0 + m.m4*t.m1;
+    float ay = m.m1*t.m0 + m.m5*t.m1;
+    float bx = m.m0*t.m4 + m.m4*t.m5;
+    float by = m.m1*t.m4 + m.m5*t.m5;
+
+    // Use the 2x2 inverse of M*T to convert 0.5 px screen-space to world units
+    // Using max(|bx|, |by|) and max(|ax|, |ay|) matches OpenGL's diamond-exit rule
+    float invDet = 0.5f/fabsf(ax*by - ay*bx);
+    float xOffset = ((fabsf(bx) > fabsf(by))? fabsf(bx) : fabsf(by))*invDet;
+    float yOffset = ((fabsf(ax) > fabsf(ay))? fabsf(ax) : fabsf(ay))*invDet;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1147,9 +1153,20 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
            P5 ------------------ P4
     */
 
-    Vector2 halfPixelOffsets = CalculateHalfPixelOffsets();
-    float xOffset = halfPixelOffsets.x;
-    float yOffset = halfPixelOffsets.y;
+    Matrix t = rlGetMatrixTransform();
+    Matrix m = rlGetMatrixModelview();
+
+    // Compute upper-left 2x2 of M*T
+    float ax = m.m0*t.m0 + m.m4*t.m1;
+    float ay = m.m1*t.m0 + m.m5*t.m1;
+    float bx = m.m0*t.m4 + m.m4*t.m5;
+    float by = m.m1*t.m4 + m.m5*t.m5;
+
+    // Use the 2x2 inverse of M*T to convert 0.5 px screen-space to world units
+    // Using max(|bx|, |by|) and max(|ax|, |ay|) matches OpenGL's diamond-exit rule
+    float invDet = 0.5f/fabsf(ax*by - ay*bx);
+    float xOffset = ((fabsf(bx) > fabsf(by))? fabsf(bx) : fabsf(by))*invDet;
+    float yOffset = ((fabsf(ax) > fabsf(ay))? fabsf(ax) : fabsf(ay))*invDet;
 
     // The x-coordinates used for the outline
     float x0 = rec.x + radius + xOffset;
@@ -4555,35 +4572,6 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     }
 
     return overlap;
-}
-
-//----------------------------------------------------------------------------------
-// Module Internal Functions Definition
-//----------------------------------------------------------------------------------
-
-// Calculate how much a 2D vertex position should move to shift it to the center of a pixel
-static Vector2 CalculateHalfPixelOffsets(void)
-{
-    Matrix t = rlGetMatrixTransform();
-    Matrix m = rlGetMatrixModelview();
-
-    // Compute upper-left 2x2 of M*T
-    // ax and ay are the first column of the matrix; bx and by are the second
-    float ax = m.m0*t.m0 + m.m4*t.m1;
-    float ay = m.m1*t.m0 + m.m5*t.m1;
-    float bx = m.m0*t.m4 + m.m4*t.m5;
-    float by = m.m1*t.m4 + m.m5*t.m5;
-
-    // Column lengths are pixels per world unit along world x- and y-axes
-    float column0Length = sqrtf(ax*ax + ay*ay);
-    float column1Length = sqrtf(bx*bx + by*by);
-
-    // Take inverse column lengths: how many world units translate to one pixel
-    // Divide by two: world units to half-pixel
-    float xOffset = 0.5f/column0Length;
-    float yOffset = 0.5f/column1Length;
-
-    return (Vector2){ xOffset, yOffset };
 }
 
 #endif // SUPPORT_MODULE_RSHAPES
