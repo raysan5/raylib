@@ -95,6 +95,18 @@ typedef enum MONITOR_DPI_TYPE {
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
 
+typedef struct {
+    HMONITOR handle;            // Win32 monitor handle
+    char *name;                 // Human-readable UTF-8 name, lazily allocated when GetMonitorName() is called
+    int x;                      // Virtual desktop X position
+    int y;                      // Virtual desktop Y position
+    int width;                  // Current mode width (pixels)
+    int height;                 // Current mode height (pixels)
+    int physicalWidth;          // Physical width (mm)
+    int physicalHeight;         // Physical height (mm)
+    int refreshRate;            // Current mode refresh rate (Hz)
+} Win32Monitor;
+
 // NOTE: appScreenSize is the last screen size requested by the app,
 // the backend must keep the client area this size (after DPI scaling is applied)
 // when the window isn't fullscreen/maximized/minimized
@@ -118,6 +130,11 @@ typedef struct {
     unsigned int desiredFlags;
 
     bool perMonitorDPIAwareV2; // Flag to check DPI-awareness level. This is used mainly to distinguish between per-monitor DPI awareness v1 and v2
+
+    Win32Monitor *monitors;
+    int monitorCount;
+    int monitorCapacity;
+    int currentMonitor;
 
     LARGE_INTEGER timerFrequency;
 
@@ -282,14 +299,6 @@ typedef struct {
     DWORD set;
     DWORD clear;
 } FlagsOp;
-
-// Monitor info type
-typedef struct {
-    HMONITOR needle;
-    int index;
-    int matchIndex;
-    RECT rect;
-} MonitorInfo;
 
 //----------------------------------------------------------------------------------
 // Global Const Variables Definition
@@ -458,6 +467,23 @@ static void LoadWin32FunctionPointers(void)
             pGetDpiForMonitor = (GetDpiForMonitorProc)GetProcAddress(shcore, "GetDpiForMonitor");
         }
     }
+}
+
+static int GetMonitorIndexFromHWND(HWND hwnd)
+{
+    HMONITOR handle = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    int result = 0;
+
+    for (int i = 0; i < platform.monitorCount; i++)
+    {
+        if (platform.monitors[i].handle == handle)
+        {
+            result = i;
+            break;
+        }
+    }
+
+    return result;
 }
 
 // GetDpiForWindow with a fallback for older versions of Windows
@@ -880,37 +906,6 @@ static HICON ConvertImageToWindowsIcon(Image image)
     return result;
 }
 
-// Count monitors process
-// NOTE: Required by GetMonitorCount()
-static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
-{
-    int *count = (int *)lparam;
-    *count += 1;
-
-    // Always return TRUE to continue the loop, otherwise, the caller
-    // can't distinguish between stopping the loop and an error
-    return TRUE;
-}
-
-// Find monitor process
-// NOTE: Required by GetCurrentMonitor()
-static BOOL CALLBACK FindMonitorProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
-{
-    MonitorInfo *monitor = (MonitorInfo *)lparam;
-
-    if (handle == monitor->needle)
-    {
-        monitor->matchIndex = monitor->index;
-        monitor->rect = *rect;
-    }
-
-    monitor->index += 1;
-
-    // Always return TRUE to continue the loop, otherwise, the caller
-    // can't distinguish between stopping the loop and an error
-    return TRUE;
-}
-
 // Get style changed required operations flags
 // NOTE: Required for deferred operations
 static void GetStyleChangeFlagOps(DWORD coreWindowFlags, STYLESTRUCT *style, FlagsOp *deferredFlags)
@@ -1157,22 +1152,55 @@ void SetWindowPosition(int x, int y)
 {
     if (platform.hwnd != NULL)
     {
-        RECT rect = { 0 };
-        if (GetWindowRect(platform.hwnd, &rect))
-        {
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-
-            // Move the window to the new position (keeping size and z-order)
-            SetWindowPos(platform.hwnd, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
-        }
+        RECT rect = { x, y, x, y };
+        AdjustWindowRectExForDpiCompat(&rect, MakeWindowStyle(CORE.Window.flags), FALSE, WINDOW_STYLE_EX, GetDpiForWindowCompat(platform.hwnd));
+        SetWindowPos(platform.hwnd, NULL, rect.left, rect.top, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
     }
 }
 
-// Set monitor for the current window
+// Place window on a given monitor
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMonitor not implemented");
+    if ((monitor >= 0) && (monitor < platform.monitorCount))
+    {
+        MONITORINFO info = { 0 };
+        info.cbSize = sizeof(info);
+
+        HMONITOR monitorHandle = platform.monitors[monitor].handle;
+        if (GetMonitorInfoW(monitorHandle, &info))
+        {
+            RECT windowRect = { 0 };
+            GetWindowRect(platform.hwnd, &windowRect);
+            int windowWidth = windowRect.right - windowRect.left;
+            int windowHeight = windowRect.bottom - windowRect.top;
+
+            RECT rcWork = info.rcWork;
+            int x = rcWork.left + ((rcWork.right - rcWork.left) - windowWidth)/2;
+            int y = rcWork.top + ((rcWork.bottom - rcWork.top) - windowHeight)/2;
+
+            // Keep title bar on-screen if window is larger than the target monitor's work area
+            if (x < rcWork.left) x = rcWork.left;
+            if (y < rcWork.top) y = rcWork.top;
+
+            SetWindowPos(platform.hwnd, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+
+            GetWindowRect(platform.hwnd, &windowRect);
+            int newWidth = windowRect.right - windowRect.left;
+            int newHeight = windowRect.bottom - windowRect.top;
+
+            // The window size can change due to the WM_DPICHANGED event. The window has to be re-centered if this happens
+            if ((newWidth != windowWidth) || (newHeight != windowHeight))
+            {
+                x = rcWork.left + ((rcWork.right - rcWork.left) - newWidth)/2;
+                y = rcWork.top + ((rcWork.bottom - rcWork.top) - newHeight)/2;
+                if (x < rcWork.left) x = rcWork.left;
+                if (y < rcWork.top) y = rcWork.top;
+                SetWindowPos(platform.hwnd, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+            }
+        }
+        else TRACELOG(LOG_WARNING, "WIN32: Failed to get monitor info [ERROR: %lu]", GetLastError());
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -1236,87 +1264,206 @@ void *GetWindowHandle(void)
     return (void *)platform.hwnd;
 }
 
+// Update all monitor info in PlatformData. This function is called via EnumDisplayMonitors
+static BOOL CALLBACK RefreshMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
+{
+    MONITORINFOEXW info = { 0 };
+    info.cbSize = sizeof(info);
+    if (!GetMonitorInfoW(handle, (MONITORINFO *)&info)) return TRUE;
+
+    if (platform.monitorCount == platform.monitorCapacity)
+    {
+        platform.monitorCapacity += 1;
+        platform.monitors = (Win32Monitor *)RL_REALLOC(platform.monitors, platform.monitorCapacity*sizeof(Win32Monitor));
+    }
+
+    bool isPrimary = ((info.dwFlags & MONITORINFOF_PRIMARY) != 0);
+
+    // The primary monitor should always be at the first index
+    if (isPrimary && (platform.monitorCount > 0)) memmove(platform.monitors + 1, platform.monitors, sizeof(Win32Monitor)*platform.monitorCount);
+
+    Win32Monitor *monitor = &platform.monitors[(isPrimary)? 0 : platform.monitorCount];
+    *monitor = (Win32Monitor){ 0 };
+
+    monitor->handle = handle;
+
+    DEVMODEW dm = { 0 };
+    dm.dmSize = sizeof(dm);
+    if (EnumDisplaySettingsExW(info.szDevice, ENUM_CURRENT_SETTINGS, &dm, EDS_ROTATEDMODE))
+    {
+        monitor->x = (int)dm.dmPosition.x;
+        monitor->y = (int)dm.dmPosition.y;
+        monitor->width = (int)dm.dmPelsWidth;
+        monitor->height = (int)dm.dmPelsHeight;
+        monitor->refreshRate = (int)dm.dmDisplayFrequency;
+    }
+
+    HDC dc = CreateDCW(L"DISPLAY", info.szDevice, NULL, NULL);
+    if (dc)
+    {
+        // Checking these functions as a proxy for Windows version
+        if ((pSetProcessDpiAwarenessContext != NULL) || (pGetDpiForMonitor != NULL))
+        {
+            // Windows 8.1+, HORZSIZE/VERTSIZE report physical size in millimeters
+            monitor->physicalWidth = GetDeviceCaps(dc, HORZSIZE);
+            monitor->physicalHeight = GetDeviceCaps(dc, VERTSIZE);
+        }
+        else
+        {
+            // Older Windows fallback: use system DPI
+            int dpiX = GetDeviceCaps(dc, LOGPIXELSX);
+            int dpiY = GetDeviceCaps(dc, LOGPIXELSY);
+
+            // Divide native display resolution by DPI to get physical size in inches
+            // Multiply by 25.4 to convert from inches to millimeters
+            if (dpiX > 0) monitor->physicalWidth = (int)(dm.dmPelsWidth*25.4f/dpiX);
+            if (dpiY > 0) monitor->physicalHeight = (int)(dm.dmPelsHeight*25.4f/dpiY);
+        }
+
+        DeleteDC(dc);
+    }
+
+    platform.monitorCount += 1;
+
+    // Return TRUE to continue iterating
+    return TRUE;
+}
+
 int GetMonitorCount(void)
 {
-    int count = 0;
-
-    int result = EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count);
-    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
-
-    return count;
+    return platform.monitorCount;
 }
 
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    HMONITOR monitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTOPRIMARY);
-    if (!monitor) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "MonitorFromWindow", GetLastError());
-
-    MonitorInfo info = { 0 };
-    info.needle = monitor;
-    info.index = 0;
-    info.matchIndex = -1;
-
-    int result = EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&info);
-    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
-
-    return info.matchIndex;
+    return platform.currentMonitor;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPosition not implemented");
-    return (Vector2){ 0, 0 };
+    Vector2 position = { 0 };
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount))
+    {
+        position.x = (float)platform.monitors[monitor].x;
+        position.y = (float)platform.monitors[monitor].y;
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return position;
 }
 
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    //TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
-    return 0;
+    int width = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) width = platform.monitors[monitor].width;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    //TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
-    return 0;
+    int height = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) height = platform.monitors[monitor].height;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth not implemented");
-    return 0;
+    int physicalWidth = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) physicalWidth = platform.monitors[monitor].physicalWidth;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return physicalWidth;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight not implemented");
-    return 0;
+    int physicalHeight = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) physicalHeight = platform.monitors[monitor].physicalHeight;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return physicalHeight;
 }
 
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate not implemented");
-    return 0;
+    int refreshRate = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) refreshRate = platform.monitors[monitor].refreshRate;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return refreshRate;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName not implemented");
-    return 0;
+    const char *name = NULL;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount))
+    {
+        Win32Monitor *win32Monitor = &platform.monitors[monitor];
+
+        // Querying the monitor name with EnumDisplayDevicesW is surprisingly expensive
+        // This function lazily fills out the monitor name when the user actually requests it
+        if (win32Monitor->name == NULL)
+        {
+            MONITORINFOEXW info = { 0 };
+            info.cbSize = sizeof(info);
+            if (GetMonitorInfoW(win32Monitor->handle, (LPMONITORINFO)&info))
+            {
+                // Find the first active display on this adapter. Raylib only uses this for the monitor name (fallback to device name if none are available)
+                const WCHAR *monitorNameW = info.szDevice;
+                DISPLAY_DEVICEW display = { 0 };
+                for (DWORD displayIndex = 0; ; displayIndex++)
+                {
+                    display = (DISPLAY_DEVICEW){ 0 };
+                    display.cb = sizeof(display);
+
+                    if (!EnumDisplayDevicesW(info.szDevice, displayIndex, &display, 0)) break;
+                    if ((display.StateFlags & DISPLAY_DEVICE_ACTIVE) != 0)
+                    {
+                        // Take name from first active display and break out of loop
+                        monitorNameW = display.DeviceString;
+                        break;
+                    }
+                }
+
+                int nameSize = WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, NULL, 0, NULL, NULL);
+                if (nameSize > 0)
+                {
+                    win32Monitor->name = (char *)RL_CALLOC(nameSize, sizeof(char));
+                    WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, win32Monitor->name, nameSize, NULL, NULL);
+                }
+            }
+        }
+
+        name = win32Monitor->name;
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return name;
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    //TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
-    return (Vector2){ 0, 0 };
+    return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 }
 
 // Get window scale DPI factor for current monitor
@@ -1954,24 +2101,6 @@ int InitPlatform(void)
     result = (int)RegisterClassExW(&windowClass);
     if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to register window class [ERROR: %lu]", GetLastError());
 
-    // Get primary monitor info
-    POINT primaryTopLeft = { 0 };
-    HMONITOR monitor = MonitorFromPoint(primaryTopLeft, MONITOR_DEFAULTTOPRIMARY);
-    if (monitor != NULL)
-    {
-        MONITORINFO info = { 0 };
-        info.cbSize = sizeof(info);
-        result = (int)GetMonitorInfoW(monitor, &info);
-
-        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get monitor info [ERROR: %u]", GetLastError());
-        else
-        {
-            CORE.Window.display.width = info.rcMonitor.right - info.rcMonitor.left;
-            CORE.Window.display.height = info.rcMonitor.bottom - info.rcMonitor.top;
-        }
-    }
-    else TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get primary monitor from point [ERROR: %u]", GetLastError());
-
     // Create window
     // NOTE: Title string needs to be converted to WCHAR
     WCHAR *titleWide = NULL;
@@ -2024,26 +2153,39 @@ int InitPlatform(void)
     int windowWidth = rect.right - rect.left;
     int windowHeight = rect.bottom - rect.top;
 
-    HMONITOR currentMonitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTONEAREST);
-    MONITORINFO monitorInfo = { 0 };
-    monitorInfo.cbSize = sizeof(monitorInfo);
-    if (GetMonitorInfoW(currentMonitor, &monitorInfo))
+    // Set initial monitor array capacity. This array only grows with RL_REALLOC
+    platform.monitorCapacity = 1;
+    platform.monitors = (Win32Monitor *)RL_CALLOC(platform.monitorCapacity, sizeof(Win32Monitor));
+    platform.monitorCount = 0;
+    EnumDisplayMonitors(NULL, NULL, RefreshMonitorsProc, 0);
+    platform.currentMonitor = GetMonitorIndexFromHWND(platform.hwnd);
+    if (platform.monitorCount > 0)
     {
-        // rcWork is the monitor area, not including the taskbar
-        RECT rcWork = monitorInfo.rcWork;
-        int monitorWidth = rcWork.right - rcWork.left;
-        int monitorHeight = rcWork.bottom - rcWork.top;
-        int x = rcWork.left + (monitorWidth - windowWidth)/2;
-        int y = rcWork.top + (monitorHeight - windowHeight)/2;
+        // This is only used for logging on desktop backends
+        CORE.Window.display.width = platform.monitors[platform.currentMonitor].width;
+        CORE.Window.display.height = platform.monitors[platform.currentMonitor].height;
 
-        // Ensure the window doesn't go off-screen; otherwise, the user might not be able to move it
-        if (x < rcWork.left) x = rcWork.left;
-        if (y < rcWork.top) y = rcWork.top;
+        HMONITOR currentMonitor = platform.monitors[platform.currentMonitor].handle;
+        MONITORINFO monitorInfo = { 0 };
+        monitorInfo.cbSize = sizeof(monitorInfo);
+        if (GetMonitorInfoW(currentMonitor, &monitorInfo))
+        {
+            // rcWork is the monitor area, not including the taskbar
+            RECT rcWork = monitorInfo.rcWork;
+            int monitorWidth = rcWork.right - rcWork.left;
+            int monitorHeight = rcWork.bottom - rcWork.top;
+            int x = rcWork.left + (monitorWidth - windowWidth)/2;
+            int y = rcWork.top + (monitorHeight - windowHeight)/2;
 
-        // Center the window and set it to the correct DPI-adjusted size
-        SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+            // Ensure the window doesn't go off-screen; otherwise, the user might not be able to move it
+            if (x < rcWork.left) x = rcWork.left;
+            if (y < rcWork.top) y = rcWork.top;
+
+            // Center the window and set it to the correct DPI-adjusted size
+            SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
     }
-    else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
 
     if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
     {
@@ -2148,6 +2290,18 @@ void ClosePlatform(void)
         shcore = NULL;
     }
 
+    if (platform.monitors != NULL)
+    {
+        for (int i = 0; i < platform.monitorCount; i++)
+        {
+            if (platform.monitors[i].name != NULL) RL_FREE(platform.monitors[i].name);
+        }
+
+        RL_FREE(platform.monitors);
+    }
+
+    platform = (PlatformData){ 0 };
+
 #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1); // Restore time period
 #endif
@@ -2242,6 +2396,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+            platform.currentMonitor = GetMonitorIndexFromHWND(hwnd);
             result = 0; // If an application processes WM_SIZE message, it should return zero
         } break;
         case WM_GETMINMAXINFO:
@@ -2344,13 +2499,19 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: break;
             }
         } break;
-        //case WM_MOVE: break;
+        case WM_MOVE:
+        {
+            CORE.Window.position.x = (int)(short)LOWORD(lparam);
+            CORE.Window.position.y = (int)(short)HIWORD(lparam);
+            platform.currentMonitor = GetMonitorIndexFromHWND(hwnd);
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        } break;
         case WM_WINDOWPOSCHANGED:
         {
             WINDOWPOS *pos = (WINDOWPOS*)lparam;
             if (!(pos->flags & SWP_NOSIZE)) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 
-            DefWindowProc(hwnd, msg, wparam, lparam);
+            DefWindowProcW(hwnd, msg, wparam, lparam);
         } break;
         case WM_GETDPISCALEDSIZE:
         {
@@ -2419,6 +2580,26 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 
         } break;
+        case WM_DISPLAYCHANGE:
+        {
+            for (int i = 0; i < platform.monitorCount; i++)
+            {
+                if (platform.monitors[i].name != NULL) RL_FREE(platform.monitors[i].name);
+                platform.monitors[i].name = NULL;
+            }
+            platform.monitorCount = 0;
+            EnumDisplayMonitors(NULL, NULL, RefreshMonitorsProc, 0);
+            platform.currentMonitor = GetMonitorIndexFromHWND(platform.hwnd);
+
+            POINT position = { 0, 0 };
+            if (ClientToScreen(hwnd, &position))
+            {
+                CORE.Window.position.x = (int)position.x;
+                CORE.Window.position.y = (int)position.y;
+            }
+
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        } break;
         case WM_SETCURSOR:
         {
             // Called when mouse moves, enters/leaves window...
@@ -2428,7 +2609,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 return 0;
             }
 
-            result = DefWindowProc(hwnd, msg, wparam, lparam);
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
         } break;
         case WM_PAINT:
         {
