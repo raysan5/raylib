@@ -1215,22 +1215,22 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if SUPPORT_CLIPBOARD_IMAGE
 #if !SUPPORT_MODULE_RTEXTURES
-    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
     return image;
 #endif
 
 // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
 #if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
-    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_FILEFORMAT_BMP on Windows");
     return image;
 #endif
 
 // From what I've tested applications on Wayland saves images on clipboard as PNG
 #if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
-    TRACELOG(LOG_WARNING, "WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
+    TRACELOG(LOG_WARNING, "Clipboard image might require SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
 #endif
+
     // Let's hope compiler put these arrays in static memory
     const char *imageFormats[] = {
         "image/bmp",
@@ -1238,6 +1238,7 @@ Image GetClipboardImage(void)
         "image/jpg",
         "image/tiff",
     };
+    
     const char *imageExtensions[] = {
         ".bmp",
         ".png",
@@ -1246,7 +1247,7 @@ Image GetClipboardImage(void)
     };
 
     size_t dataSize = 0;
-    void  *fileData = NULL;
+    void *fileData = NULL;
 
     for (int i = 0; i < SDL_arraysize(imageFormats); i++)
     {
@@ -1259,14 +1260,13 @@ Image GetClipboardImage(void)
 
             if (IsImageValid(image))
             {
-                TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
+                TRACELOG(LOG_INFO, "Clipboard image retrieved successfully (%s image data)", imageExtensions[i]);
                 return image;
             }
         }
     }
 
-    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
-#endif // SUPPORT_CLIPBOARD_IMAGE
+    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard image data can not be retrieved, ERROR: %s", SDL_GetError());
 
     return image;
 }

@@ -721,7 +721,7 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "Clipboard image retrieving not implemented");
 
     return image;
 }

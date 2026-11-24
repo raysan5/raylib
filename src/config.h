@@ -113,16 +113,6 @@
     // Enabling this flag allows manual control of the frame processes, use at your own risk
     #define SUPPORT_CUSTOM_FRAME_CONTROL    0       // Disabled by default
 #endif
-#ifndef SUPPORT_CLIPBOARD_IMAGE
-    // Support for clipboard image loading
-    // NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
-    // WARNING: It requires support for some additional flags:
-    //  - SUPPORT_MODULE_RTEXTURES
-    //  - SUPPORT_FILEFORMAT_BMP (Windows clipboard)
-    //  - SUPPORT_FILEFORMAT_PNG (Wayland clipboard)
-    //  - SUPPORT_FILEFORMAT_JPG
-    #define SUPPORT_CLIPBOARD_IMAGE         1
-#endif
 
 // rcore: Configuration values
 // NOTE: Below values are already defined inside [rcore.c] so there is no need to be

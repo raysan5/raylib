@@ -901,11 +901,16 @@ bool SetClipboardImage(Image image)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    int width = 0;
-    int height = 0;
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
     
     RequestClipboardData();
-    
+
+    int width = 0; 
+    int height = 0;
     unsigned char *data = GetLastPastedImage(&width, &height);
     
     if (data != NULL)
@@ -1703,7 +1708,6 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // Gesture data is sent to gestures-system for processing
     // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
     if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
-
 #endif
 }
 

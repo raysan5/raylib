@@ -91,13 +91,11 @@ typedef enum MONITOR_DPI_TYPE {
     #include <GL/gl.h>
 #endif
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-    #define WIN32_CLIPBOARD_IMPLEMENTATION
-    #define WINUSER_ALREADY_INCLUDED
-    #define WINBASE_ALREADY_INCLUDED
-    #define WINGDI_ALREADY_INCLUDED
-    #include "../external/win32_clipboard.h"
-#endif
+#define WIN32_CLIPBOARD_IMPLEMENTATION
+#define WINUSER_ALREADY_INCLUDED
+#define WINBASE_ALREADY_INCLUDED
+#define WINGDI_ALREADY_INCLUDED
+#include "../external/win32_clipboard.h"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -1484,8 +1482,12 @@ bool SetClipboardImage(Image image)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
     unsigned int dataSize = 0;
     void *fileData = NULL;
     int width = 0;
@@ -1496,12 +1498,10 @@ Image GetClipboardImage(void)
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else
     {
+        // TODO: Support additional image file-formats
         image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
         RL_FREE(fileData);
     }
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif
 
     return image;
 }

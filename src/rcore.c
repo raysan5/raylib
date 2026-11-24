@@ -579,6 +579,13 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 //Vector2 GetMonitorPosition(int monitor)
 //const char *GetMonitorName(int monitor)
 
+// Clipboard interaction support
+// NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
+// WARNING: It requires support for some additional flags:
+//  - SUPPORT_MODULE_RTEXTURES
+//  - SUPPORT_FILEFORMAT_BMP (Windows clipboard)
+//  - SUPPORT_FILEFORMAT_PNG (Wayland clipboard)
+//  - SUPPORT_FILEFORMAT_JPG
 //void SetClipboardText(const char *text)
 //const char *GetClipboardText(void)
 //bool SetClipboardImage(Image image)

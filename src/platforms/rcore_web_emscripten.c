@@ -864,12 +864,15 @@ EM_ASYNC_JS(void, RequestClipboardData, (void), {
 EM_JS(char *, GetLastPastedText, (void), {
     var str = window._lastClipboardString || "";
     var length = lengthBytesUTF8(str) + 1;
+    
     if (length > 1)
     {
         var ptr = _malloc(length);
         stringToUTF8(str, ptr, length);
+        
         return ptr;
     }
+
     return 0;
 });
 
@@ -885,7 +888,7 @@ EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
 
             // Set the width and height via the pointers passed from C
             // HEAP32 handles the 4-byte integers
-            if (width)  setValue(width, window._lastImgWidth,  'i32');
+            if (width) setValue(width, window._lastImgWidth,  'i32');
             if (height) setValue(height, window._lastImgHeight, 'i32');
 
             // Clear the JS buffer so there is no need to fetch the same image twice
@@ -921,10 +924,16 @@ bool SetClipboardImage(Image image)
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
+
+    RequestClipboardData();
+
     int width = 0; 
     int height = 0;
-    
-    RequestClipboardData();
     unsigned char *data = GetLastPastedImage(&width, &height);
     
     if (data != NULL)

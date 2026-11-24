@@ -1080,7 +1080,7 @@ void SetClipboardText(const char *text)
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
+// NOTE: Returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
     return glfwGetClipboardString(platform.handle);
@@ -1108,7 +1108,11 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
+
 #if defined(_WIN32)
     unsigned int dataSize = 0;
     void *bmpData = NULL;
@@ -1163,11 +1167,8 @@ Image GetClipboardImage(void)
         XFree(data);
     }
 #else
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "Clipboard image not implemented on target platform");
 #endif
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
 }
