@@ -1079,7 +1079,6 @@ typedef struct rlglData {
 
         int framebufferWidth;               // Current framebuffer width
         int framebufferHeight;              // Current framebuffer height
-
     } State;            // Renderer state
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
@@ -1101,7 +1100,6 @@ typedef struct rlglData {
 
         float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
-
     } ExtSupported;     // Extensions supported flags
 } rlglData;
 

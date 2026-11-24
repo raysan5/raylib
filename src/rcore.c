@@ -322,11 +322,9 @@ typedef struct CoreData {
 
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
-
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
-
     } Storage;
     struct {
         struct {
@@ -343,7 +341,6 @@ typedef struct CoreData {
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
-
         } Keyboard;
         struct {
             Vector2 offset;                 // Mouse offset
@@ -361,7 +358,6 @@ typedef struct CoreData {
             char previousButtonState[MAX_MOUSE_BUTTONS]; // Registers previous mouse button state
             Vector2 currentWheelMove;       // Registers current mouse wheel variation
             Vector2 previousWheelMove;      // Registers previous mouse wheel variation
-
         } Mouse;
         struct {
             int pointCount;                                 // Number of touch points active
@@ -370,7 +366,6 @@ typedef struct CoreData {
             Vector2 previousPosition[MAX_TOUCH_POINTS];     // Previous touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state
-
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -380,9 +375,7 @@ typedef struct CoreData {
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
-
         } Gamepad;
-
     } Input;
     struct {
         double current;                     // Current time measure (seconds)
@@ -393,7 +386,6 @@ typedef struct CoreData {
         double target;                      // Desired time for one frame, if 0 not applied (seconds)
         unsigned long long base;            // Base time measure for hi-res timer (ticks or nanoseconds)
         unsigned int frameCounter;          // Frame counter (frames)
-
     } Time;
 } CoreData;
 
@@ -2701,9 +2693,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '\\';
     }
-
 #elif defined(__linux__)
-
     unsigned int size = sizeof(appDir);
     ssize_t len = readlink("/proc/self/exe", appDir, size);
 
@@ -2723,9 +2713,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__APPLE__)
-
     uint32_t size = sizeof(appDir);
 
     if (_NSGetExecutablePath(appDir, &size) == 0)
@@ -2745,9 +2733,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__FreeBSD__)
-
     size_t size = sizeof(appDir);
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
 
@@ -2768,9 +2754,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__wasm__)
-
     appDir[0] = '/';
 #endif
 
