@@ -52,6 +52,7 @@ int main(void)
     int frameCount = 0;
 
     Vector2 glyphPosition[MAX_TEXT_LENGTH] = { 0 };
+    Vector2 glyphDelta[MAX_TEXT_LENGTH] = { 0 };
     unsigned char glyphAlpha[MAX_TEXT_LENGTH] = { 0 };
 
     SetTargetFPS(60);
@@ -66,8 +67,8 @@ int main(void)
 
         if (IsKeyPressed(KEY_S)) text.delta = Clamp(text.delta - 2.0f, 10.0f, 60.0f);
         else if (IsKeyPressed(KEY_W)) text.delta = Clamp(text.delta + 2.0f, 10.0f, 60.0f);
-        if (IsKeyPressed(KEY_A)) text.duration = (int) Clamp((float) text.duration - 5.0f, 20.0f, 120.0f);
-        else if (IsKeyPressed(KEY_D)) text.duration = (int) Clamp((float) text.duration + 5.0f, 20.0f, 120.0f);
+        if (IsKeyPressed(KEY_A)) text.duration = (int) Clamp((float) text.duration - 5.0f, 10.0f, 120.0f);
+        else if (IsKeyPressed(KEY_D)) text.duration = (int) Clamp((float) text.duration + 5.0f, 10.0f, 120.0f);
         if (IsKeyPressed(KEY_Z)) text.offset = Clamp(text.offset - 1.0f, 0.0f, 15.0f);
         else if (IsKeyPressed(KEY_X)) text.offset = Clamp(text.offset + 1.0f, 0.0f, 15.0f);
         if (IsKeyPressed(KEY_Q)) currentAnimation = currentAnimation? currentAnimation - 1 : animationsSize - 1;
@@ -107,18 +108,21 @@ int main(void)
                 for (unsigned int i = 0; i < TextLength(text.str); i++)
                 {
                     float time = (int) (frameCount + i*text.offset)%(int)text.duration;
-                    float deltaX = (float) GetRandomValue(-text.delta/10, text.delta/10);
-                    float deltaY = (float) GetRandomValue(-text.delta/10, text.delta/10);
+                    if (time <= 1.0f) // Actives once every `text.duration` frames
+                    {
+                        glyphDelta[i].x = (float) GetRandomValue(-text.delta/10, text.delta/10);
+                        glyphDelta[i].y = (float) GetRandomValue(-text.delta/10, text.delta/10);
+                    }
 
                     if (time < (text.duration/2))
                     {
-                        glyphPosition[i].x = EaseLinearNone(time, glyphPosition[i].x, deltaX, text.duration/2);
-                        glyphPosition[i].y = EaseLinearNone(time, text.position.y, deltaY, text.duration/2);
+                        glyphPosition[i].x = EaseLinearNone(time, glyphPosition[i].x, glyphDelta[i].x, text.duration/2);
+                        glyphPosition[i].y = EaseLinearNone(time, text.position.y, glyphDelta[i].y, text.duration/2);
                     }
                     else
                     {
-                        glyphPosition[i].x = EaseLinearNone(time - text.duration/2, glyphPosition[i].x + deltaX, -deltaX, text.duration/2);
-                        glyphPosition[i].y = EaseLinearNone(time - text.duration/2, text.position.y + deltaY, -deltaY, text.duration/2);
+                        glyphPosition[i].x = EaseLinearNone(time - text.duration/2, glyphPosition[i].x + glyphDelta[i].x, -glyphDelta[i].x, text.duration/2);
+                        glyphPosition[i].y = EaseLinearNone(time - text.duration/2, text.position.y + glyphDelta[i].y, -glyphDelta[i].y, text.duration/2);
                     }
                 }
             } break;
