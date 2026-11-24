@@ -59,6 +59,7 @@
         typedef struct HWND__ *HWND;
     #endif
 
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
     #include "../external/win32_clipboard.h" // Clipboard image copy-paste
 
     #define GLFW_EXPOSE_NATIVE_WIN32
@@ -796,8 +797,7 @@ void *GetWindowHandle(void)
 
 #if defined(_WIN32)
     handle = glfwGetWin32Window(platform.handle); // Type: HWND
-#endif
-#if defined(__linux__)
+#elif defined(__linux__)
     #if defined(_GLFW_WAYLAND)
         #if defined(_GLFW_X11)
             int platformID = glfwGetPlatform();
@@ -818,8 +818,7 @@ void *GetWindowHandle(void)
         platform.windowHandleX11 = glfwGetX11Window(platform.handle);
         handle = &platform.windowHandleX11;
     #endif
-#endif
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
     handle = (void *)glfwGetCocoaWindow(platform.handle); // Type: NSWindow*
 #endif
 
@@ -1087,6 +1086,23 @@ const char *GetClipboardText(void)
     return glfwGetClipboardString(platform.handle);
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+#if defined(_WIN32)
+
+#elif defined(__linux__)
+
+
+#elif defined(__APPLE__)
+
+#endif
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
@@ -1094,7 +1110,6 @@ Image GetClipboardImage(void)
 
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
 #if defined(_WIN32)
-
     unsigned int dataSize = 0;
     void *bmpData = NULL;
     int width = 0;
@@ -1106,13 +1121,10 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
-
         RL_FREE(bmpData);
     }
-
 #elif defined(__linux__) && defined(_GLFW_X11)
-    // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
-
+    // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.
     static Atom clipboard = 0;
     static Atom targetType = 0;
     static Atom property = 0;
@@ -1150,10 +1162,9 @@ Image GetClipboardImage(void)
         image = LoadImageFromMemory(".png", data, (int)nitems);
         XFree(data);
     }
-
 #else
     TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif // _WIN32
+#endif
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
 #endif // SUPPORT_CLIPBOARD_IMAGE
@@ -1245,11 +1256,9 @@ void OpenURL(const char *url)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 16, sizeof(char));
 #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
-#endif
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-#endif
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
 #endif
         int result = system(cmd);
@@ -2277,8 +2286,4 @@ static void JoystickCallback(int jid, int event)
     }
 }
 
-#ifdef _WIN32
-#   define WIN32_CLIPBOARD_IMPLEMENTATION
-#   include "../external/win32_clipboard.h"
-#endif
 // EOF

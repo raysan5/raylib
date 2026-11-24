@@ -91,6 +91,14 @@ typedef enum MONITOR_DPI_TYPE {
     #include <GL/gl.h>
 #endif
 
+#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
+    #define WINUSER_ALREADY_INCLUDED
+    #define WINBASE_ALREADY_INCLUDED
+    #define WINGDI_ALREADY_INCLUDED
+    #include "../external/win32_clipboard.h"
+#endif
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -1417,13 +1425,60 @@ const char *GetClipboardText(void)
     return platform.clipboardText;
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-    #define WIN32_CLIPBOARD_IMPLEMENTATION
-    #define WINUSER_ALREADY_INCLUDED
-    #define WINBASE_ALREADY_INCLUDED
-    #define WINGDI_ALREADY_INCLUDED
-    #include "../external/win32_clipboard.h"
-#endif
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    BOOL opened = OpenClipboard(NULL);
+    if (opened)
+    {
+        EmptyClipboard();
+        
+        Image imCopy = { 0 };
+        bool useCopy = false;
+        if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+        {
+            // Make sure data is RGBA 32bit
+            imCopy = ImageCopy(image);
+            ImageFormat(&imCopy, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+            useCopy = true;
+        }
+
+        // Calculate bitmap information size.
+        BITMAPINFOHEADER header = { 0 };
+        header.biSize = sizeof(BITMAPINFOHEADER);
+        header.biWidth = image.width;
+        header.biHeight = -image.height; // Top-down bitmap
+        header.biPlanes = 1;
+        header.biBitCount = 32;
+        header.biCompression = BI_RGB;
+        header.biSizeImage = image.width*image.height*4;
+
+        SIZE_T size = sizeof(header) + header.biSizeImage;
+
+        HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, size);
+
+        if (memory)
+        {
+            BYTE *data = (BYTE *)GlobalLock(memory);
+
+            memcpy(data, &header, sizeof(header));
+            memcpy(data + sizeof(header), useCopy? imCopy.data : image.data, header.biSizeImage);
+
+            GlobalUnlock(memory);
+            
+            HANDLE clipset = SetClipboardData(CF_DIB, memory);
+            if (clipset == NULL) GlobalFree(memory);
+        }
+        
+        if (useCopy) UnloadImage(imCopy);
+
+        CloseClipboard();
+    }
+    
+    return result;
+}
 
 // Get clipboard image
 Image GetClipboardImage(void)
@@ -1446,7 +1501,7 @@ Image GetClipboardImage(void)
     }
 #else
     TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_CLIPBOARD_IMAGE
+#endif
 
     return image;
 }
@@ -1777,7 +1832,11 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
     HGLRC tempContext = wglCreateContext(dummyHDC);
     //if (!tempContext) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglCreateContext", GetLastError()); return -1; }
     BOOL result = wglMakeCurrent(dummyHDC, tempContext);
-    //if (!result) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglMakeCurrent", GetLastError()); return -1; }
+    if (!result)
+    {
+        TRACELOG(LOG_ERROR, "GL: Context failed to be set as current, error code: %lu", GetLastError()); 
+        return NULL;
+    }
 
     // Load WGL extension entry points
     wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");

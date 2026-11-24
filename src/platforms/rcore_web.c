@@ -883,7 +883,18 @@ EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
 const char *GetClipboardText(void)
 {
     RequestClipboardData();
+    
     return GetLastPastedText();
+}
+
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
 }
 
 // Get clipboard image
@@ -894,6 +905,7 @@ Image GetClipboardImage(void)
     int height = 0;
     
     RequestClipboardData();
+    
     unsigned char *data = GetLastPastedImage(&width, &height);
     
     if (data != NULL)

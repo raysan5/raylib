@@ -1326,8 +1326,7 @@ Image GetClipboardImage(void)
     Image image = { 0 };
 
 #if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-#if defined(_WIN32)
-
+#if defined(_WIN32
     unsigned int dataSize = 0;
     void *fileData = NULL;
 
@@ -1339,12 +1338,9 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
-
         RL_FREE(fileData);
     }
-
 #elif defined(__linux__) && defined(DRGFW_X11)
-
     // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
     Display *dpy = XOpenDisplay(NULL);
     if (!dpy) return image;
@@ -2042,8 +2038,8 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
     return (KeyboardKey)RGFW_keyConvertTable[keycode];
 }
 
-// assign mouse to touches
-// 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+// Assign mouse input events to touches
+// NOTE: 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
 void RemapMouseToTouch(int touchAction)
 {
     #if SUPPORT_GESTURES_SYSTEM

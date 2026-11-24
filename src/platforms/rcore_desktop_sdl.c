@@ -1200,6 +1200,16 @@ const char *GetClipboardText(void)
     return buffer;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    // TODO: bool SDL_SetClipboardData(SDL_ClipboardDataCallback callback, SDL_ClipboardCleanupCallback cleanup, void *userdata, const char *const *mime_types, size_t num_mime_types);
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
@@ -1245,7 +1255,6 @@ Image GetClipboardImage(void)
         if (fileData)
         {
             image = LoadImageFromMemory(imageExtensions[i], fileData, (int)dataSize);
-
             SDL_free(fileData);
 
             if (IsImageValid(image))

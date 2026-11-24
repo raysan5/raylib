@@ -524,7 +524,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_desktop_glfw.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
-#elif (defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW))
+#elif defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW)
     #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_DESKTOP_WIN32)
     #include "platforms/rcore_desktop_win32.c"
@@ -581,6 +581,8 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 
 //void SetClipboardText(const char *text)
 //const char *GetClipboardText(void)
+//bool SetClipboardImage(Image image)
+//Image GetClipboardImage(void)
 
 //void ShowCursor(void)
 //void HideCursor(void)
@@ -909,7 +911,7 @@ void EndDrawing(void)
         double waitTime = CORE.Time.current - CORE.Time.previous;
         CORE.Time.previous = CORE.Time.current;
 
-        CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
+        CORE.Time.frame += waitTime; // Total frame time: update + draw + wait
     }
 
     PollInputEvents();      // Poll user events (before next frame update)
@@ -1675,8 +1677,7 @@ void WaitTime(double seconds)
     // System halt functions
     #if defined(_WIN32)
         Sleep((unsigned long)(sleepSeconds*1000.0));
-    #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+    #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
         time_t sec = sleepSeconds;
         long nsec = (sleepSeconds - sec)*1000000000L;
@@ -1685,8 +1686,7 @@ void WaitTime(double seconds)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated
         while (nanosleep(&req, &req) == -1) continue;
-    #endif
-    #if defined(__APPLE__)
+    #elif defined(__APPLE__)
         usleep(sleepSeconds*1000000.0);
     #endif
 
@@ -2424,6 +2424,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 bool IsFileHidden(const char *filePath)
 {
     bool result = false;
+
 #if defined(_WIN32)
     unsigned long attribs = GetFileAttributesA(filePath);
 
@@ -2435,6 +2436,7 @@ bool IsFileHidden(const char *filePath)
 
     if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
 #endif
+
     return result;
 }
 

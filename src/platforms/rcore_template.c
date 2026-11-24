@@ -287,6 +287,16 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
