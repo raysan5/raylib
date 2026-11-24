@@ -6808,10 +6808,9 @@ static ModelAnimation *LoadModelAnimationsGLTF(const char *fileName, int *animCo
         {
             TRACELOG(LOG_WARNING, "MODEL: [%s] Expected one unique skin to load animation data from, but found %i", fileName, data->skins_count);
         }
-
-        cgltf_free(data);
     }
 
+    cgltf_free(data);
     UnloadFileData(fileData);
 
     return animations;
