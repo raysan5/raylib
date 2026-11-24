@@ -681,7 +681,7 @@
             <Param type="unsigned int" name="frames" desc="" />
         </Callback>
     </Callbacks>
-    <Functions count="619">
+    <Functions count="620">
         <Function name="InitWindow" retType="void" paramCount="3" desc="Initialize window and OpenGL context">
             <Param type="int" name="width" desc="" />
             <Param type="int" name="height" desc="" />
@@ -801,6 +801,9 @@
             <Param type="const char *" name="text" desc="" />
         </Function>
         <Function name="GetClipboardText" retType="const char *" paramCount="0" desc="Get clipboard text content">
+        </Function>
+        <Function name="SetClipboardImage" retType="bool" paramCount="1" desc="Set clipboard image content">
+            <Param type="Image" name="image" desc="" />
         </Function>
         <Function name="GetClipboardImage" retType="Image" paramCount="0" desc="Get clipboard image content">
         </Function>
