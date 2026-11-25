@@ -685,6 +685,7 @@ SWAPI void swSwapColorBuffers(void); // Swap software renderer color/back buffer
 SWAPI void swEnable(SWstate state);
 SWAPI void swDisable(SWstate state);
 
+SWAPI void swGetIntegerv(SWget name, int *v);
 SWAPI void swGetFloatv(SWget name, float *v);
 SWAPI const char *swGetString(SWget name);
 SWAPI SWerrcode swGetError(void);
@@ -746,6 +747,7 @@ SWAPI void swDrawElements(SWdraw mode, int count, int type, const void *indices)
 SWAPI void swGenTextures(int count, uint32_t *textures);
 SWAPI void swDeleteTextures(int count, uint32_t *textures);
 SWAPI void swBindTexture(uint32_t id);
+SWAPI void swTexStorage2D(int width, int height, SWinternalformat format);
 SWAPI void swTexImage2D(int width, int height, SWformat format, SWtype type, const void *data);
 SWAPI void swTexSubImage2D(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
 SWAPI void swTexParameteri(int param, int value);
