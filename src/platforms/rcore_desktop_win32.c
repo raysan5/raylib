@@ -97,7 +97,7 @@ typedef enum MONITOR_DPI_TYPE {
 
 typedef struct {
     HMONITOR handle;            // Win32 monitor handle
-    char *name;                 // Human-readable UTF-8 name, lazily allocated when GetMonitorName() is called
+    char *name;                 // Human-readable UTF-8 name
     int x;                      // Virtual desktop X position
     int y;                      // Virtual desktop Y position
     int width;                  // Current mode width (pixels)
@@ -1298,6 +1298,29 @@ static BOOL CALLBACK RefreshMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, 
         monitor->refreshRate = (int)dm.dmDisplayFrequency;
     }
 
+    const WCHAR *monitorNameW = info.szDevice;
+    DISPLAY_DEVICEW display = { 0 };
+    for (DWORD displayIndex = 0; ; displayIndex++)
+    {
+        display = (DISPLAY_DEVICEW){ 0 };
+        display.cb = sizeof(display);
+
+        if (!EnumDisplayDevicesW(info.szDevice, displayIndex, &display, 0)) break;
+        if ((display.StateFlags & DISPLAY_DEVICE_ACTIVE) != 0)
+        {
+            // Take name from first active display and break out of loop
+            monitorNameW = display.DeviceString;
+            break;
+        }
+    }
+
+    int nameSize = WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, NULL, 0, NULL, NULL);
+    if (nameSize > 0)
+    {
+        monitor->name = (char *)RL_CALLOC(nameSize, sizeof(char));
+        WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, monitor->name, nameSize, NULL, NULL);
+    }
+
     HDC dc = CreateDCW(L"DISPLAY", info.szDevice, NULL, NULL);
     if (dc)
     {
@@ -1415,46 +1438,7 @@ const char *GetMonitorName(int monitor)
 {
     const char *name = NULL;
 
-    if ((monitor >= 0) && (monitor < platform.monitorCount))
-    {
-        Win32Monitor *win32Monitor = &platform.monitors[monitor];
-
-        // Querying the monitor name with EnumDisplayDevicesW is surprisingly expensive
-        // This function lazily fills out the monitor name when the user actually requests it
-        if (win32Monitor->name == NULL)
-        {
-            MONITORINFOEXW info = { 0 };
-            info.cbSize = sizeof(info);
-            if (GetMonitorInfoW(win32Monitor->handle, (LPMONITORINFO)&info))
-            {
-                // Find the first active display on this adapter. Raylib only uses this for the monitor name (fallback to device name if none are available)
-                const WCHAR *monitorNameW = info.szDevice;
-                DISPLAY_DEVICEW display = { 0 };
-                for (DWORD displayIndex = 0; ; displayIndex++)
-                {
-                    display = (DISPLAY_DEVICEW){ 0 };
-                    display.cb = sizeof(display);
-
-                    if (!EnumDisplayDevicesW(info.szDevice, displayIndex, &display, 0)) break;
-                    if ((display.StateFlags & DISPLAY_DEVICE_ACTIVE) != 0)
-                    {
-                        // Take name from first active display and break out of loop
-                        monitorNameW = display.DeviceString;
-                        break;
-                    }
-                }
-
-                int nameSize = WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, NULL, 0, NULL, NULL);
-                if (nameSize > 0)
-                {
-                    win32Monitor->name = (char *)RL_CALLOC(nameSize, sizeof(char));
-                    WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, win32Monitor->name, nameSize, NULL, NULL);
-                }
-            }
-        }
-
-        name = win32Monitor->name;
-    }
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) name = platform.monitors[monitor].name;
     else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
 
     return name;
