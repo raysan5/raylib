@@ -62,6 +62,7 @@
 #include <string.h>         // Required for: strcmp(), strstr(), strncpy(), sscanf() [Used in LoadBMFont()]
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
+#include <limits.h>         // Required for: INT_MAX [Used in TextSplit()]
 
 #if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     #if defined(__GNUC__) // GCC and Clang
@@ -1861,7 +1862,7 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         insertPoint = (char *)text;
         for (count = 0; (tempPtr = strstr(insertPoint, search)); count++) insertPoint = tempPtr + searchLen;
 
-        if ((textLen + count*(replaceLen - searchLen)) < (MAX_TEXT_BUFFER_LENGTH - 1))
+        if (((long long) textLen + count*(replaceLen - searchLen)) < (MAX_TEXT_BUFFER_LENGTH - 1))
         {
             tempPtr = buffer; // Point to result start
 
@@ -1925,9 +1926,21 @@ char *TextReplaceAlloc(const char *text, const char *search, const char *replace
         for (count = 0; (temp = strstr(insertPoint, search)); count++) insertPoint = temp + searchLen;
 
         // Allocate returning string and point temp to it
-        int tempLen = textLen + (replaceLen - searchLen)*count + 1;
-        temp = result = (char *)RL_CALLOC(tempLen, sizeof(char));
+        long long tempLen = textLen + (long long) (replaceLen - searchLen)*count + 1;
 
+        // Check for overflow as 32 bit systems may not be able to allocate more than INT_MAX bytes
+        if ((tempLen < 0) || (tempLen > INT_MAX))
+        {
+            TRACELOG(LOG_WARNING, "TextReplaceAllocText with replacement is too long, cannot allocate memory");
+            return NULL;
+        }
+
+        temp = result = (char *)RL_CALLOC(tempLen, sizeof(char));
+        if (result == NULL)
+        {
+            TRACELOG(LOG_WARNING, "TextReplaceAlloc: memory allocation failed");
+            return NULL;
+        }
         // First time through the loop, all the variable are set correctly from here on,
         //  - 'temp' points to the end of the result string
         //  - 'insertPoint' points to the next occurrence of replace in text
