@@ -2101,7 +2101,7 @@ char *TextJoin(char **textList, int count, const char *delimiter)
         int textLength = TextLength(textList[i]);
 
         // Make sure joined text could fit inside MAX_TEXT_BUFFER_LENGTH
-        if ((totalLength + textLength + delimiterLen) < MAX_TEXT_BUFFER_LENGTH)
+        if ((totalLength + textLength + ((i < (count - 1))? delimiterLen : 0)) < MAX_TEXT_BUFFER_LENGTH)
         {
             memcpy(textPtr, textList[i], textLength);
             totalLength += textLength;
