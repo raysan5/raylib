@@ -32,6 +32,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
+    // Remove FLAG_WINDOW_HIGHDPI to compare with automatic DPI scaling disabled
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - highdpi demo");
     SetWindowMinSize(450, 450);
@@ -45,7 +46,6 @@ int main(void)
     int pixelGridLabelY = pixelGridBottom + 30;
     int pixelGridDescY = pixelGridLabelY + 30;
     int cellSize = 50;
-    float cellSizePx = (float)cellSize;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -64,7 +64,11 @@ int main(void)
 
         int currentMonitor = GetCurrentMonitor();
         Vector2 dpiScale = GetWindowScaleDPI();
-        cellSizePx = ((float)cellSize)/dpiScale.x;
+        int renderWidth = GetRenderWidth();
+
+        // The monitor DPI scale can differ from the actual render scale when HiDPI is disabled
+        float renderToLogicalX = (renderWidth > 0)? ((float)GetScreenWidth())/renderWidth : 1.0f;
+        int pixelCellWidth = (int)(cellSize*renderToLogicalX);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -90,12 +94,12 @@ int main(void)
             odd = true;
             const int minTextSpace = 30;
             int lastTextX = -minTextSpace;
-            for (int i = cellSize; i < GetRenderWidth(); i += cellSize, odd = !odd)
+            for (int i = cellSize; i < renderWidth; i += cellSize, odd = !odd)
             {
-                int x = (int)(((float)i)/dpiScale.x);
-                if (odd) DrawRectangle(x, pixelGridTop, (int)cellSizePx, pixelGridBottom - pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
+                int x = (int)(i*renderToLogicalX);
+                if (odd) DrawRectangle(x, pixelGridTop, pixelCellWidth, pixelGridBottom - pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
 
-                DrawLine(x, pixelGridTop, (int)(((float)i)/dpiScale.x), pixelGridLabelY - 10, GRAY);
+                DrawLine(x, pixelGridTop, x, pixelGridLabelY - 10, GRAY);
 
                 if ((x - lastTextX) >= minTextSpace)
                 {
@@ -104,7 +108,7 @@ int main(void)
                 }
             }
 
-            DrawTextCenter(TextFormat("Window is %d \"physical pixels\" wide", GetRenderWidth()), windowCenter, pixelGridDescY, 20, BLUE);
+            DrawTextCenter(TextFormat("Window is %d \"physical pixels\" wide", renderWidth), windowCenter, pixelGridDescY, 20, BLUE);
 
             const char *text = "Can you see this?";
             Vector2 size = MeasureTextEx(GetFontDefault(), text, 20, 3);
