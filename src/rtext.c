@@ -62,6 +62,7 @@
 #include <string.h>         // Required for: strcmp(), strstr(), strncpy(), sscanf() [Used in LoadBMFont()]
 #include <stdarg.h>         // Required for: va_list, va_start(), vsprintf(), va_end() [Used in TextFormat()]
 #include <ctype.h>          // Required for: toupper(), tolower() [Used in TextToUpper(), TextToLower()]
+#include <limits.h>         // Required for: INT_MAX [Used in TextSplit()]
 
 #if SUPPORT_FILEFORMAT_TTF || SUPPORT_FILEFORMAT_BDF
     #if defined(__GNUC__) // GCC and Clang
@@ -1861,7 +1862,12 @@ char *TextReplace(const char *text, const char *search, const char *replacement)
         insertPoint = (char *)text;
         for (count = 0; (tempPtr = strstr(insertPoint, search)); count++) insertPoint = tempPtr + searchLen;
 
-        if ((textLen + count*(replaceLen - searchLen)) < (MAX_TEXT_BUFFER_LENGTH - 1))
+        int delta = replaceLen - searchLen;
+        int overflow = 0;
+        if (delta > 0) overflow = (count > (INT_MAX - textLen)/delta);
+        else if (delta < 0) overflow = (count > textLen/-delta);
+
+        if (!overflow && ((textLen + count*delta) < (MAX_TEXT_BUFFER_LENGTH - 1)))
         {
             tempPtr = buffer; // Point to result start
 
@@ -1924,8 +1930,20 @@ char *TextReplaceAlloc(const char *text, const char *search, const char *replace
         insertPoint = (char *)text;
         for (count = 0; (temp = strstr(insertPoint, search)); count++) insertPoint = temp + searchLen;
 
+        int delta = replaceLen - searchLen;
+        int overflow = 0;
+        if (delta > 0) overflow = (count > (INT_MAX - textLen)/delta);
+        else if (delta < 0) overflow = (count > textLen/-delta);
+
+        if (overflow || ((textLen + count*delta) >= INT_MAX))
+        {
+            TRACELOG(LOG_WARNING, "TextReplaceAlloc: replacement text is too long, cannot allocate memory");
+            return NULL;
+        }
+
         // Allocate returning string and point temp to it
-        int tempLen = textLen + (replaceLen - searchLen)*count + 1;
+        int tempLen = textLen + count*delta + 1;
+
         temp = result = (char *)RL_CALLOC(tempLen, sizeof(char));
 
         // First time through the loop, all the variable are set correctly from here on,
