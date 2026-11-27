@@ -157,6 +157,7 @@ typedef struct tagBITMAPINFOHEADER {
 #endif
 
 #define MA_MALLOC RL_MALLOC
+#define MA_REALLOC RL_REALLOC
 #define MA_FREE RL_FREE
 
 #define MA_NO_JACK
@@ -577,12 +578,6 @@ AudioBuffer *LoadAudioBuffer(ma_format format, ma_uint32 channels, ma_uint32 sam
 {
     AudioBuffer *audioBuffer = (AudioBuffer *)RL_CALLOC(1, sizeof(AudioBuffer));
 
-    if (audioBuffer == NULL)
-    {
-        TRACELOG(LOG_WARNING, "AUDIO: Failed to allocate memory for buffer");
-        return NULL;
-    }
-
     if (sizeInFrames > 0) audioBuffer->data = (unsigned char *)RL_CALLOC(sizeInFrames*channels*ma_get_bytes_per_sample(format), 1);
 
     // Audio data runs through a format converter
@@ -825,12 +820,10 @@ Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int
         {
             wave.frameCount = (unsigned int)wav.totalPCMFrameCount;
             wave.sampleRate = wav.sampleRate;
-            wave.sampleSize = 16;
+            wave.sampleSize = wav.bitsPerSample;
             wave.channels = wav.channels;
-            wave.data = (short *)RL_CALLOC((size_t)wave.frameCount*wave.channels, sizeof(short));
-
-            // NOTE: Forcing conversion to 16bit sample size on reading
-            drwav_read_pcm_frames_s16(&wav, wave.frameCount, (drwav_int16 *)wave.data);
+            wave.data = RL_CALLOC((size_t)wave.frameCount*wave.channels*wave.sampleSize/8, 1);
+            drwav_read_pcm_frames(&wav, wave.frameCount, (drwav_int16 *)wave.data);
         }
         else TRACELOG(LOG_WARNING, "WAVE: Failed to load WAV data");
 
@@ -1091,11 +1084,11 @@ bool ExportWave(Wave wave, const char *fileName)
 
         void *fileData = NULL;
         size_t fileDataSize = 0;
-        result = drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
-        if (result) result = (int)drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
-        drwav_result result = drwav_uninit(&wav);
+        drwav_init_memory_write(&wav, &fileData, &fileDataSize, &format, NULL);
+        drwav_write_pcm_frames(&wav, wave.frameCount, wave.data);
+        drwav_uninit(&wav);
 
-        if (result == DRWAV_SUCCESS) result = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
+        result = SaveFileData(fileName, (unsigned char *)fileData, (unsigned int)fileDataSize);
 
         drwav_free(fileData, NULL);
     }
@@ -1266,6 +1259,7 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
     void *data = RL_CALLOC(frameCount*channels*(sampleSize/8), 1);
 
     frameCount = (ma_uint32)ma_convert_frames(data, frameCount, formatOut, channels, sampleRate, wave->data, frameCountIn, formatIn, wave->channels, wave->sampleRate);
+
     if (frameCount == 0)
     {
         RL_FREE(data);
@@ -1285,22 +1279,16 @@ void WaveFormat(Wave *wave, int sampleRate, int sampleSize, int channels)
 // Copy a wave to a new wave
 Wave WaveCopy(Wave wave)
 {
-    Wave newWave = { 0 };
+    Wave copy = { 0 };
 
-    newWave.data = RL_MALLOC(wave.frameCount*wave.channels*wave.sampleSize/8);
+    copy.data = RL_CALLOC(wave.frameCount*wave.channels*wave.sampleSize/8, 1);
+    memcpy(copy.data, wave.data, wave.frameCount*wave.channels*wave.sampleSize/8);
+    copy.frameCount = wave.frameCount;
+    copy.sampleRate = wave.sampleRate;
+    copy.sampleSize = wave.sampleSize;
+    copy.channels = wave.channels;
 
-    if (newWave.data != NULL)
-    {
-        // NOTE: Size must be provided in bytes
-        memcpy(newWave.data, wave.data, wave.frameCount*wave.channels*wave.sampleSize/8);
-
-        newWave.frameCount = wave.frameCount;
-        newWave.sampleRate = wave.sampleRate;
-        newWave.sampleSize = wave.sampleSize;
-        newWave.channels = wave.channels;
-    }
-
-    return newWave;
+    return copy;
 }
 
 // Crop a wave to defined frames range
@@ -1311,7 +1299,7 @@ void WaveCrop(Wave *wave, int initFrame, int finalFrame)
     {
         int frameCount = finalFrame - initFrame;
 
-        void *data = RL_MALLOC(frameCount*wave->channels*wave->sampleSize/8);
+        void *data = RL_CALLOC(frameCount*wave->channels*wave->sampleSize/8, 1);
 
         memcpy(data, (unsigned char *)wave->data + (initFrame*wave->channels*wave->sampleSize/8), frameCount*wave->channels*wave->sampleSize/8);
 
@@ -1327,7 +1315,7 @@ void WaveCrop(Wave *wave, int initFrame, int finalFrame)
 // NOTE 2: Sample data allocated should be freed with UnloadWaveSamples()
 float *LoadWaveSamples(Wave wave)
 {
-    float *samples = (float *)RL_MALLOC(wave.frameCount*wave.channels*sizeof(float));
+    float *samples = (float *)RL_CALLOC(wave.frameCount*wave.channels*sizeof(float), 1);
 
     // NOTE: sampleCount is the total number of interlaced samples (including channels)
 
@@ -1558,7 +1546,6 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
     else if ((strcmp(fileType, ".wav") == 0) || (strcmp(fileType, ".WAV") == 0))
     {
         drwav *ctxWav = (drwav *)RL_CALLOC(1, sizeof(drwav));
-
         bool success = drwav_init_memory(ctxWav, (const void *)data, dataSize, NULL);
 
         if (success)
@@ -1706,22 +1693,17 @@ Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data,
 #if SUPPORT_FILEFORMAT_MOD
     else if ((strcmp(fileType, ".mod") == 0) || (strcmp(fileType, ".MOD") == 0))
     {
-        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_MALLOC(sizeof(jar_mod_context_t));
         int result = 0;
-
+        jar_mod_context_t *ctxMod = (jar_mod_context_t *)RL_CALLOC(1, sizeof(jar_mod_context_t));
         jar_mod_init(ctxMod);
 
-        // Copy data to allocated memory for default UnloadMusicStream
-        unsigned char *newData = (unsigned char *)RL_MALLOC(dataSize);
-        for (int i = 0; i < dataSize; i++) newData[i] = data[i];
+        // Load XM file data from memory buffer
+        unsigned char *newData = (unsigned char *)RL_CALLOC(dataSize, 1);
+        memcpy(newData, data, dataSize);
 
-        // Memory loaded version for jar_mod_load_file()
-        if (dataSize && (dataSize < 32*1024*1024))
-        {
-            ctxMod->modfilesize = dataSize;
-            ctxMod->modfile = newData;
-            if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
-        }
+        ctxMod->modfile = newData;
+        ctxMod->modfilesize = dataSize;
+        if (jar_mod_load(ctxMod, (void *)ctxMod->modfile, dataSize)) result = dataSize;
 
         if (result > 0)
         {
@@ -2099,31 +2081,18 @@ float GetMusicTimePlayed(Music music)
     float secondsPlayed = 0.0f;
     if (music.stream.buffer != NULL)
     {
-#if SUPPORT_FILEFORMAT_XM
-        if (music.ctxType == MUSIC_MODULE_XM)
-        {
-            uint64_t framesPlayed = 0;
-
-            jar_xm_get_position((jar_xm_context_t *)music.ctxData, NULL, NULL, NULL, &framesPlayed);
-            secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
-        }
-        else
-#endif
-        {
-            ma_mutex_lock(&AUDIO.System.lock);
-            //ma_uint32 frameSizeInBytes = ma_get_bytes_per_sample(music.stream.buffer->dsp.formatConverterIn.config.formatIn)*music.stream.buffer->dsp.formatConverterIn.config.channels;
-            int framesProcessed = (int)music.stream.buffer->framesProcessed;
-            int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
-            int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
-            int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
-            int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
-            if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
-            int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
-            int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
-            if (framesPlayed < 0) framesPlayed += music.frameCount;
-            secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
-            ma_mutex_unlock(&AUDIO.System.lock);
-        }
+        ma_mutex_lock(&AUDIO.System.lock);
+        int framesProcessed = (int)music.stream.buffer->framesProcessed;
+        int subBufferSize = (int)music.stream.buffer->sizeInFrames/2;
+        int framesInFirstBuffer = music.stream.buffer->isSubBufferProcessed[0]? 0 : subBufferSize;
+        int framesInSecondBuffer = music.stream.buffer->isSubBufferProcessed[1]? 0 : subBufferSize;
+        int framesInBuffers = framesInFirstBuffer + framesInSecondBuffer;
+        if (((unsigned int)framesInBuffers > music.frameCount) && !music.looping) framesInBuffers = music.frameCount;
+        int framesSentToMix = music.stream.buffer->frameCursorPos%subBufferSize;
+        int framesPlayed = (framesProcessed - framesInBuffers + framesSentToMix)%(int)music.frameCount;
+        if (framesPlayed < 0) framesPlayed += music.frameCount;
+        secondsPlayed = (float)framesPlayed/music.stream.sampleRate;
+        ma_mutex_unlock(&AUDIO.System.lock);
     }
 
     return secondsPlayed;
@@ -2284,10 +2253,8 @@ void AttachAudioStreamProcessor(AudioStream stream, AudioCallback process)
 
     rAudioProcessor *last = stream.buffer->processor;
 
-    while (last && last->next)
-    {
-        last = last->next;
-    }
+    while (last && last->next) last = last->next;
+
     if (last)
     {
         processor->prev = last;
@@ -2337,10 +2304,8 @@ void AttachAudioMixedProcessor(AudioCallback process)
 
     rAudioProcessor *last = AUDIO.mixedProcessor;
 
-    while (last && last->next)
-    {
-        last = last->next;
-    }
+    while (last && last->next) last = last->next;
+
     if (last)
     {
         processor->prev = last;
@@ -2596,9 +2561,9 @@ static void OnSendAudioDataToDevice(ma_device *pDevice, void *pFramesOut, const 
                     float tempBuffer[1024] = { 0 }; // Frames for stereo
 
                     ma_uint32 framesToReadRightNow = framesToRead;
-                    if (framesToReadRightNow > sizeof(tempBuffer)/sizeof(tempBuffer[0])/AUDIO_DEVICE_CHANNELS)
+                    if (framesToReadRightNow > (1024/AUDIO_DEVICE_CHANNELS))
                     {
-                        framesToReadRightNow = sizeof(tempBuffer)/sizeof(tempBuffer[0])/AUDIO_DEVICE_CHANNELS;
+                        framesToReadRightNow = (1024/AUDIO_DEVICE_CHANNELS);
                     }
 
                     ma_uint32 framesJustRead = ReadAudioBufferFramesInMixingFormat(audioBuffer, tempBuffer, framesToReadRightNow);
@@ -2875,7 +2840,7 @@ static unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
             if (size > 0)
             {
-                data = (unsigned char *)RL_MALLOC(size*sizeof(unsigned char));
+                data = (unsigned char *)RL_CALLOC(size, 1);
 
                 // NOTE: fread() returns number of read elements instead of bytes, so reading [1 byte, size elements]
                 unsigned int count = (unsigned int)fread(data, sizeof(unsigned char), size, file);

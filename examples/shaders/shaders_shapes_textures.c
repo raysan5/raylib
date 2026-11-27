@@ -40,7 +40,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - shapes textures");
 
-    Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
+    Texture2D texture = LoadTexture("resources/fudesumi.png");
 
     // Load shader to be used on some parts drawing
     // NOTE 1: Using GLSL 330 shader version, on OpenGL ES 2.0 use GLSL 100 shader version
@@ -100,7 +100,7 @@ int main(void)
             // Activate our custom shader to be applied on next shapes/textures drawings
             BeginShaderMode(shader);
 
-                DrawTexture(fudesumi, 500, -30, WHITE);    // Using custom shader
+                DrawTexture(texture, 500, -30, WHITE);    // Using custom shader
 
             // Activate our default shader for next drawings
             EndShaderMode();
@@ -114,7 +114,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadShader(shader);       // Unload shader
-    UnloadTexture(fudesumi);    // Unload texture
+    UnloadTexture(texture);    // Unload texture
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

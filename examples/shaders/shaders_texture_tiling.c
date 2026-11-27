@@ -46,8 +46,8 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Load a cube model
-    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
-    Model model = LoadModelFromMesh(cube);
+    Mesh mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Model model = LoadModelFromMesh(mesh);
 
     // Load a texture and assign to cube model
     Texture2D texture = LoadTexture("resources/cubicmap_atlas.png");

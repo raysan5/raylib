@@ -31,15 +31,15 @@ int main(void)
 
     InitAudioDevice();      // Initialize audio device
 
-    Sound fxButton = LoadSound("resources/buttonfx.wav");   // Load button sound
-    Texture2D button = LoadTexture("resources/button.png"); // Load button texture
+    Sound fxButton = LoadSound("resources/buttonfx.wav"); // Load button sound
+    Texture2D texButton = LoadTexture("resources/button.png"); // Load button texture
 
     // Define frame rectangle for drawing
-    float frameHeight = (float)button.height/NUM_FRAMES;
-    Rectangle sourceRec = { 0, 0, (float)button.width, frameHeight };
+    float frameHeight = (float)texButton.height/NUM_FRAMES;
+    Rectangle sourceRec = { 0, 0, (float)texButton.width, frameHeight };
 
     // Define button bounds on screen
-    Rectangle btnBounds = { screenWidth/2.0f - button.width/2.0f, screenHeight/2.0f - (float)button.height/NUM_FRAMES/2.0f, (float)button.width, frameHeight };
+    Rectangle btnBounds = { screenWidth/2.0f - texButton.width/2.0f, screenHeight/2.0f - (float)texButton.height/NUM_FRAMES/2.0f, (float)texButton.width, frameHeight };
 
     int btnState = 0;               // Button state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
     bool btnAction = false;         // Button action should be activated
@@ -84,7 +84,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawTextureRec(button, sourceRec, (Vector2){ btnBounds.x, btnBounds.y }, WHITE); // Draw button frame
+            DrawTextureRec(texButton, sourceRec, (Vector2){ btnBounds.x, btnBounds.y }, WHITE); // Draw button frame
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(button);  // Unload button texture
+    UnloadTexture(texButton);  // Unload button texture
     UnloadSound(fxButton);  // Unload sound
 
     CloseAudioDevice();     // Close audio device

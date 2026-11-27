@@ -883,20 +883,41 @@ EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
 const char *GetClipboardText(void)
 {
     RequestClipboardData();
+    
     return GetLastPastedText();
+}
+
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
 }
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
-    int w = 0, h = 0;
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
+    
     RequestClipboardData();
-    unsigned char* data = GetLastPastedImage(&w, &h);
-    if (data != NULL) {
+
+    int width = 0; 
+    int height = 0;
+    unsigned char *data = GetLastPastedImage(&width, &height);
+    
+    if (data != NULL)
+    {
         image.data = data;
-        image.width = w;
-        image.height = h;
+        image.width = width;
+        image.height = height;
         image.mipmaps = 1;
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     }
@@ -1574,7 +1595,13 @@ static void WindowIconifyCallback(GLFWwindow *window, int iconified)
 static void WindowFocusCallback(GLFWwindow *window, int focused)
 {
     if (focused) FLAG_CLEAR(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);  // The window was focused
-    else FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);            // The window lost focus
+    else
+    {
+        FLAG_SET(CORE.Window.flags, FLAG_WINDOW_UNFOCUSED);            // The window lost focus
+        memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
+        memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
+        CORE.Input.Touch.pointCount = 0;
+    }
 }
 
 // GLFW3: Called on file-drop over the window
@@ -1681,7 +1708,6 @@ static void MouseButtonCallback(GLFWwindow *window, int button, int action, int 
     // Gesture data is sent to gestures-system for processing
     // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
     if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
-
 #endif
 }
 

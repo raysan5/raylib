@@ -24,8 +24,10 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+
 #include "raymath.h"
 
 #include <stddef.h>     // Required for: NULL
@@ -81,11 +83,11 @@ int main(void)
     // Target model: a procedurally generated knot with a checkerboard skin
     Model model = LoadModelFromMesh(GenMeshTorus(0.8f, 1.8f, 32, 64));
 
-    Image checkerImage = GenImageChecked(512, 512, 32, 32, LIGHTGRAY, GRAY);
-    Texture2D modelTexture = LoadTextureFromImage(checkerImage);
-    UnloadImage(checkerImage);
-    SetTextureFilter(modelTexture, TEXTURE_FILTER_BILINEAR);
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = modelTexture;
+    Image imChecker = GenImageChecked(512, 512, 32, 32, LIGHTGRAY, GRAY);
+    Texture2D texChecker = LoadTextureFromImage(imChecker);
+    UnloadImage(imChecker);
+    SetTextureFilter(texChecker, TEXTURE_FILTER_BILINEAR);
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texChecker;
 
     BoundingBox modelBBox = GetMeshBoundingBox(model.meshes[0]);
     camera.target = Vector3Lerp(modelBBox.min, modelBBox.max, 0.5f);
@@ -97,26 +99,26 @@ int main(void)
     float decalOffset = 0.01f;
 
     // Translucent cube previewing where the next decal will land
-    Model placementCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
-    placementCube.materials[0].maps[0].color = LIME;
+    Model modelPlacementCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
+    modelPlacementCube.materials[0].maps[0].color = LIME;
 
     // Decal texture: a procedurally drawn target/bullseye, no image file needed
-    Image decalImage = GenImageColor(128, 128, BLANK);
-    ImageDrawCircle(&decalImage, 64, 64, 60, RED);
-    ImageDrawCircle(&decalImage, 64, 64, 45, WHITE);
-    ImageDrawCircle(&decalImage, 64, 64, 30, RED);
-    ImageDrawCircle(&decalImage, 64, 64, 15, YELLOW);
+    Image imDecal = GenImageColor(128, 128, BLANK);
+    ImageDrawCircle(&imDecal, 64, 64, 60, RED);
+    ImageDrawCircle(&imDecal, 64, 64, 45, WHITE);
+    ImageDrawCircle(&imDecal, 64, 64, 30, RED);
+    ImageDrawCircle(&imDecal, 64, 64, 15, YELLOW);
 
-    Texture2D decalTexture = LoadTextureFromImage(decalImage);
-    UnloadImage(decalImage);
-    SetTextureFilter(decalTexture, TEXTURE_FILTER_BILINEAR);
+    Texture2D texDecal = LoadTextureFromImage(imDecal);
+    UnloadImage(imDecal);
+    SetTextureFilter(texDecal, TEXTURE_FILTER_BILINEAR);
 
-    Material decalMaterial = LoadMaterialDefault();
-    decalMaterial.maps[MATERIAL_MAP_DIFFUSE].texture = decalTexture;
-    decalMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
+    Material matDecal = LoadMaterialDefault();
+    matDecal.maps[MATERIAL_MAP_DIFFUSE].texture = texDecal;
+    matDecal.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
 
     bool showModel = true;
-    Model decals[MAX_DECALS] = { 0 };
+    Model modelDecals[MAX_DECALS] = { 0 };
     int decalCount = 0;
 
     SetTargetFPS(60);
@@ -149,12 +151,12 @@ int main(void)
             Matrix splat = MatrixLookAt(collision.point, lookTarget, (Vector3){ 0.0f, 1.0f, 0.0f });
             splat = MatrixMultiply(splat, MatrixRotateZ(DEG2RAD*(float)GetRandomValue(-180, 180)));
 
-            Mesh decalMesh = GenMeshDecal(model, splat, decalSize, decalOffset);
+            Mesh meshDecal = GenMeshDecal(model, splat, decalSize, decalOffset);
 
-            if (decalMesh.vertexCount > 0)
+            if (meshDecal.vertexCount > 0)
             {
-                decals[decalCount] = LoadModelFromMesh(decalMesh);
-                decals[decalCount].materials[0].maps[0] = decalMaterial.maps[0];
+                modelDecals[decalCount] = LoadModelFromMesh(meshDecal);
+                modelDecals[decalCount].materials[0].maps[0] = matDecal.maps[0];
                 decalCount++;
             }
         }
@@ -170,15 +172,15 @@ int main(void)
 
                 if (showModel) DrawModel(model, Vector3Zero(), 1.0f, WHITE);
 
-                for (int i = 0; i < decalCount; i++) DrawModel(decals[i], Vector3Zero(), 1.0f, WHITE);
+                for (int i = 0; i < decalCount; i++) DrawModel(modelDecals[i], Vector3Zero(), 1.0f, WHITE);
 
                 // Preview cube at the surface point currently under the mouse
                 if (collision.hit)
                 {
                     Vector3 lookTarget = Vector3Add(collision.point, collision.normal);
                     Matrix splat = MatrixLookAt(collision.point, lookTarget, (Vector3){ 0.0f, 1.0f, 0.0f });
-                    placementCube.transform = MatrixInvert(splat);
-                    DrawModel(placementCube, Vector3Zero(), 1.0f, Fade(WHITE, 0.5f));
+                    modelPlacementCube.transform = MatrixInvert(splat);
+                    DrawModel(modelPlacementCube, Vector3Zero(), 1.0f, Fade(WHITE, 0.5f));
                 }
 
                 DrawGrid(10, 1.0f);
@@ -196,8 +198,8 @@ int main(void)
             int totalVertices = baseVertices, totalTriangles = baseTriangles;
             for (int i = 0; i < decalCount; i++)
             {
-                totalVertices += decals[i].meshes[0].vertexCount;
-                totalTriangles += decals[i].meshes[0].triangleCount;
+                totalVertices += modelDecals[i].meshes[0].vertexCount;
+                totalTriangles += modelDecals[i].meshes[0].triangleCount;
             }
 
             int statX = screenWidth - 280;
@@ -215,7 +217,7 @@ int main(void)
 
             if (GuiButton((Rectangle){ 120, screenHeight - 80.0f, 100, 40 }, "Clear Decals"))
             {
-                for (int i = 0; i < decalCount; i++) UnloadModel(decals[i]);
+                for (int i = 0; i < decalCount; i++) UnloadModel(modelDecals[i]);
                 decalCount = 0;
             }
 
@@ -228,11 +230,11 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < decalCount; i++) UnloadModel(decals[i]);
+    for (int i = 0; i < decalCount; i++) UnloadModel(modelDecals[i]);
 
-    UnloadModel(placementCube);
-    UnloadTexture(decalTexture);
-    UnloadTexture(modelTexture);
+    UnloadModel(modelPlacementCube);
+    UnloadTexture(texDecal);
+    UnloadTexture(texChecker);
     UnloadModel(model);
 
     CloseWindow();        // Close window and OpenGL context

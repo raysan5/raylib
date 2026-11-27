@@ -287,12 +287,22 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "Clipboard image retrieving not implemented");
 
     return image;
 }

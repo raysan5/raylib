@@ -39,7 +39,7 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - tiled drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture texPattern = LoadTexture("resources/patterns.png");
+    Texture2D texPattern = LoadTexture("resources/patterns.png");
     SetTextureFilter(texPattern, TEXTURE_FILTER_BILINEAR); // Makes the texture smoother when upscaled
 
     // Coordinates for all patterns inside the texture
@@ -176,6 +176,7 @@ void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vecto
 {
     if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
     if ((source.width == 0) || (source.height == 0)) return;
+    if ((dest.width <= 0.0f) || (dest.height <= 0.0f)) return; // Resizing can leave no space for tiles
 
     int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
     if ((dest.width < tileWidth) && (dest.height < tileHeight))

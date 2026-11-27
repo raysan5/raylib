@@ -2,9 +2,9 @@
 *
 *   raylib [textures] example - srcrec dstrec
 *
-*   Example complexity rating: [★★★☆] 3/4
+*   Example complexity rating: [★★☆☆] 2/4
 *
-*   Example originally created with raylib 1.3, last time updated with raylib 1.3
+*   Example originally created with raylib 1.3, last time updated with raylib 6.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -27,23 +27,26 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - srcrec dstrec");
 
-    // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
+    // Load texture, spritesheet of character containing 6 frames
+    Texture2D texture = LoadTexture("resources/scarfy.png");
 
-    Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
+    // NOTE: Spritesheet contains 6 frames in horizontal, 
+    // so dividing by 6 to get the width of one frame
+    int frameWidth = texture.width/6;
+    int frameHeight = texture.height;
 
-    int frameWidth = scarfy.width/6;
-    int frameHeight = scarfy.height;
-
-    // Source rectangle (part of the texture to use for drawing)
+    // Source rectangle: rectangle piece of the texture to use for drawing
     Rectangle sourceRec = { 0.0f, 0.0f, (float)frameWidth, (float)frameHeight };
 
-    // Destination rectangle (screen rectangle where drawing part of texture)
+    // Destination rectangle: screen-coordinates rectangle to draw the source part of texture
+    // NOTE: Defines position on screen and scaling, set to center of screen with a scale x2
     Rectangle destRec = { screenWidth/2.0f, screenHeight/2.0f, frameWidth*2.0f, frameHeight*2.0f };
 
-    // Origin of the texture (rotation/scale point), it's relative to destination rectangle size
-    Vector2 origin = { (float)frameWidth, (float)frameHeight };
+    // Origin of the texture (rotation/scale point)
+    // NOTE: Relative to destination rectangle size, set at the center of it
+    Vector2 origin = { (float)destRec.width/2, (float)destRec.height/2 };
 
-    int rotation = 0;
+    int rotation = 0; // Rotation in degrees
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -67,12 +70,12 @@ int main(void)
             // destRec defines the rectangle where our texture part will fit (scaling it to fit)
             // origin defines the point of the texture used as reference for rotation and scaling
             // rotation defines the texture rotation (using origin as rotation point)
-            DrawTexturePro(scarfy, sourceRec, destRec, origin, (float)rotation, WHITE);
+            DrawTexturePro(texture, sourceRec, destRec, origin, (float)rotation, WHITE);
 
             DrawLine((int)destRec.x, 0, (int)destRec.x, screenHeight, GRAY);
             DrawLine(0, (int)destRec.y, screenWidth, (int)destRec.y, GRAY);
 
-            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Scarfy spritesheet by Eiden Marsal", screenWidth - 220, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -80,7 +83,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(scarfy);        // Texture unloading
+    UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

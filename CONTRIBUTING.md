@@ -13,6 +13,16 @@ Do you enjoy raylib and want to contribute? Nice! You can help with the followin
 This document contains a set of guidelines to contribute to the project. These are mostly guidelines, not rules. 
 Use your best judgment, and feel free to propose changes to this document in a pull request.
 
+### About AI Usage
+
+**Please, if you never used raylib, avoid sending PRs to the project.**
+
+raylib project accepts PRs independently of the tools used by the experienced developers contributing to the project but the contributor must be knowledgeable about the addressed issue and the whole context involving that issue.
+
+Please, do not use AI to generate the issue description, try to avoid excessive detail and verbosity. Screenshots of the issue and results are always preferred.
+
+Remember that raylib is maintained by humans, that means a person is reading every issue/PR and taking required decision. **It takes time**, so try to shape your issues/PRs accordingly to minimize the burden for the maintainers.
+
 ### raylib philosophy
 
  - raylib is a tool to **ENJOY** videogames programming, every function in raylib is designed as a mini-tutorial on itself.

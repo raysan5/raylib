@@ -80,11 +80,6 @@ static Texture2D texShapes = { 1, 1, 1, 1, 7 };                // Texture used o
 static Rectangle texShapesRec = { 0.0f, 0.0f, 1.0f, 1.0f };    // Texture source rectangle used on shapes drawing
 
 //----------------------------------------------------------------------------------
-// Module Internal Functions Declaration
-//----------------------------------------------------------------------------------
-static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic easing
-
-//----------------------------------------------------------------------------------
 // Module Functions Definition
 //----------------------------------------------------------------------------------
 // Set texture and rectangle to be used on shapes drawing
@@ -237,10 +232,17 @@ void DrawLineBezier(Vector2 startPos, Vector2 endPos, float thick, Color color)
 
     for (int i = 1; i <= SPLINE_SEGMENT_DIVISIONS; i++)
     {
+        current.x = previous.x + (endPos.x - startPos.x)/(float)SPLINE_SEGMENT_DIVISIONS;
+        
         // Cubic easing in-out
         // NOTE: Easing is calculated only for y position value
-        current.y = EaseCubicInOut((float)i, startPos.y, endPos.y - startPos.y, (float)SPLINE_SEGMENT_DIVISIONS);
-        current.x = previous.x + (endPos.x - startPos.x)/(float)SPLINE_SEGMENT_DIVISIONS;
+        float t = (float)i/(0.5f*(float)SPLINE_SEGMENT_DIVISIONS);
+        if (t < 1.0f) current.y = 0.5f*(endPos.y - startPos.y)*t*t*t + startPos.y;
+        else
+        {
+            t -= 2.0f;
+            current.y = 0.5f*(endPos.y - startPos.y)*(t*t*t + 2.0f) + startPos.y;
+        }
 
         float dy = current.y - previous.y;
         float dx = current.x - previous.x;
@@ -743,9 +745,20 @@ void DrawRectangleGradientEx(Rectangle rec, Color col1, Color col2, Color col3, 
 // but it solves another issue: https://github.com/raysan5/raylib/issues/3884
 void DrawRectangleLines(int posX, int posY, int width, int height, Color color)
 {
-    Matrix mat = rlGetMatrixTransform();
-    float xOffset = 0.5f/mat.m0;
-    float yOffset = 0.5f/mat.m5;
+    Matrix t = rlGetMatrixTransform();
+    Matrix m = rlGetMatrixModelview();
+
+    // Compute upper-left 2x2 of M*T
+    float ax = m.m0*t.m0 + m.m4*t.m1;
+    float ay = m.m1*t.m0 + m.m5*t.m1;
+    float bx = m.m0*t.m4 + m.m4*t.m5;
+    float by = m.m1*t.m4 + m.m5*t.m5;
+
+    // Use the 2x2 inverse of M*T to convert 0.5 px screen-space to world units
+    // Using max(|bx|, |by|) and max(|ax|, |ay|) matches OpenGL's diamond-exit rule
+    float invDet = 0.5f/fabsf(ax*by - ay*bx);
+    float xOffset = ((fabsf(bx) > fabsf(by))? fabsf(bx) : fabsf(by))*invDet;
+    float yOffset = ((fabsf(ax) > fabsf(ay))? fabsf(ax) : fabsf(ay))*invDet;
 
     rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
@@ -1140,17 +1153,32 @@ void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Col
            P5 ------------------ P4
     */
 
+    Matrix t = rlGetMatrixTransform();
+    Matrix m = rlGetMatrixModelview();
+
+    // Compute upper-left 2x2 of M*T
+    float ax = m.m0*t.m0 + m.m4*t.m1;
+    float ay = m.m1*t.m0 + m.m5*t.m1;
+    float bx = m.m0*t.m4 + m.m4*t.m5;
+    float by = m.m1*t.m4 + m.m5*t.m5;
+
+    // Use the 2x2 inverse of M*T to convert 0.5 px screen-space to world units
+    // Using max(|bx|, |by|) and max(|ax|, |ay|) matches OpenGL's diamond-exit rule
+    float invDet = 0.5f/fabsf(ax*by - ay*bx);
+    float xOffset = ((fabsf(bx) > fabsf(by))? fabsf(bx) : fabsf(by))*invDet;
+    float yOffset = ((fabsf(ax) > fabsf(ay))? fabsf(ax) : fabsf(ay))*invDet;
+
     // The x-coordinates used for the outline
-    float x0 = rec.x + radius + 0.5f;
-    float x1 = (rec.x + rec.width) - radius - 0.5f;
-    float x2 = (rec.x + rec.width) - 0.5f;
-    float x3 = rec.x + 0.5f;
+    float x0 = rec.x + radius + xOffset;
+    float x1 = (rec.x + rec.width) - radius - xOffset;
+    float x2 = (rec.x + rec.width) - xOffset;
+    float x3 = rec.x + xOffset;
 
     // The y-coordinates used for the outline
-    float y0 = rec.y + 0.5f;
-    float y1 = rec.y + radius + 0.5f;
-    float y2 = (rec.y + rec.height) - radius - 0.5f;
-    float y3 = (rec.y + rec.height) - 0.5f;
+    float y0 = rec.y + yOffset;
+    float y1 = rec.y + radius + yOffset;
+    float y2 = (rec.y + rec.height) - radius - yOffset;
+    float y3 = (rec.y + rec.height) - yOffset;
 
     Vector2 points[8] = {
         { x0, y0 }, // P0
@@ -1701,7 +1729,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
         }
 
         // NOTE: In case number of segments is odd, adding one last piece to the cake
-        if ((((unsigned int)segments)%2) == 1)
+        if ((segments & 1) == 1)
         {
             rlColor4ub(color.r, color.g, color.b, color.a);
 
@@ -2607,7 +2635,8 @@ void DrawEllipseLinesEx(Vector2 center, float radiusH, float radiusV, float thic
     float outerRadiusV = radiusV;
     float innerRadiusV = radiusV - thick;
 
-    if (thick >= 0.0f) {
+    if (thick >= 0.0f)
+    {
         // Just a filled-in ellipse
         if ((innerRadiusH <= 0.0f) || (innerRadiusV <= 0.0f))
         {
@@ -4543,26 +4572,6 @@ Rectangle GetCollisionRec(Rectangle rec1, Rectangle rec2)
     }
 
     return overlap;
-}
-
-//----------------------------------------------------------------------------------
-// Module Internal Functions Definition
-//----------------------------------------------------------------------------------
-
-// Cubic easing in-out
-// NOTE: Used by DrawLineBezier() only
-static float EaseCubicInOut(float t, float b, float c, float d)
-{
-    float result = 0.0f;
-    t /= 0.5f*d;
-    if (t < 1) result = 0.5f*c*t*t*t + b;
-    else
-    {
-        t -= 2;
-        result = 0.5f*c*(t*t*t + 2.0f) + b;
-    }
-
-    return result;
 }
 
 #endif // SUPPORT_MODULE_RSHAPES

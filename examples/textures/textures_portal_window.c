@@ -65,9 +65,10 @@ int main(void)
     // and window position, shifted by the offset between the two portals
     Vector3 portalA = { 0.0f, 0.0f, 0.0f };
     Vector3 portalB = { 0.0f, 0.0f, -60.0f };
-    RenderTexture2D portalView = LoadRenderTexture(480, 640);
+    RenderTexture2D rtPortalView = LoadRenderTexture(480, 640);
 
-    DisableCursor();        // Lock cursor for first-person free camera controls
+    DisableCursor(); // Lock cursor for first-person free camera controls
+
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
@@ -92,7 +93,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         // Render Dimension B into an offscreen texture, using an oblique projection so
         // its perspective lines up with the archway exactly as the real camera sees it
-        BeginTextureMode(portalView);
+        BeginTextureMode(rtPortalView);
 
             ClearBackground((Color){ 10, 5, 20, 255 });
 
@@ -145,7 +146,7 @@ int main(void)
 
                 // The portal opening itself: a plain quad textured with the Dimension B
                 // render, filling the archway exactly, so nothing "leaks" outside its shape
-                rlSetTexture(portalView.texture.id);
+                rlSetTexture(rtPortalView.texture.id);
                 rlBegin(RL_QUADS);
                     rlColor4ub(255, 255, 255, 255);
                     rlNormal3f(0.0f, 0.0f, 1.0f);
@@ -171,7 +172,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(portalView);
+    UnloadRenderTexture(rtPortalView);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

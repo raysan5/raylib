@@ -73,9 +73,9 @@ int main(void)
     Model model = LoadModel("resources/models/obj/character.obj");
 
     // Apply character skin
-    Texture2D modelTexture = LoadTexture("resources/models/obj/character_diffuse.png");
-    SetTextureFilter(modelTexture, TEXTURE_FILTER_BILINEAR);
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = modelTexture;
+    Texture2D texture = LoadTexture("resources/models/obj/character_diffuse.png");
+    SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
     BoundingBox modelBBox = GetMeshBoundingBox(model.meshes[0]);    // Get mesh bounding box
 
@@ -92,20 +92,20 @@ int main(void)
     float decalSize = modelSize*0.25f;
     float decalOffset = 0.01f;
 
-    Model placementCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
-    placementCube.materials[0].maps[0].color = LIME;
+    Model modelCube = LoadModelFromMesh(GenMeshCube(decalSize, decalSize, decalSize));
+    modelCube.materials[0].maps[0].color = LIME;
 
-    Material decalMaterial = LoadMaterialDefault();
-    decalMaterial.maps[0].color = YELLOW;
+    Material matDecal = LoadMaterialDefault();
+    matDecal.maps[0].color = YELLOW;
 
-    Image decalImage = LoadImage("resources/raylib_logo.png");
-    ImageResizeNN(&decalImage, decalImage.width/4, decalImage.height/4);
-    Texture decalTexture = LoadTextureFromImage(decalImage);
-    UnloadImage(decalImage);
+    Image imDecal = LoadImage("resources/raylib_logo.png");
+    ImageResizeNN(&imDecal, imDecal.width/4, imDecal.height/4);
+    Texture2D texDecal = LoadTextureFromImage(imDecal);
+    UnloadImage(imDecal);
 
-    SetTextureFilter(decalTexture, TEXTURE_FILTER_BILINEAR);
-    decalMaterial.maps[MATERIAL_MAP_DIFFUSE].texture = decalTexture;
-    decalMaterial.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
+    SetTextureFilter(texDecal, TEXTURE_FILTER_BILINEAR);
+    matDecal.maps[MATERIAL_MAP_DIFFUSE].texture = texDecal;
+    matDecal.maps[MATERIAL_MAP_DIFFUSE].color = RAYWHITE;
 
     bool showModel = true;
     static Model decalModels[MAX_DECALS] = { 0 };
@@ -168,7 +168,7 @@ int main(void)
             {
                 int decalIndex = decalCount++;
                 decalModels[decalIndex] = LoadModelFromMesh(decalMesh);
-                decalModels[decalIndex].materials[0].maps[0] = decalMaterial.maps[0];
+                decalModels[decalIndex].materials[0].maps[0] = matDecal.maps[0];
             }
         }
         //----------------------------------------------------------------------------------
@@ -190,8 +190,8 @@ int main(void)
                 {
                     Vector3 origin = Vector3Add(collision.point, Vector3Scale(collision.normal, 1.0f));
                     Matrix splat = MatrixLookAt(collision.point, origin, (Vector3){0,1,0});
-                    placementCube.transform = MatrixInvert(splat);
-                    DrawModel(placementCube, (Vector3){ 0 }, 1.0f, Fade(WHITE, 0.5f));
+                    modelCube.transform = MatrixInvert(splat);
+                    DrawModel(modelCube, (Vector3){ 0 }, 1.0f, Fade(WHITE, 0.5f));
                 }
 
                 DrawGrid(10, 10.0f);
@@ -267,13 +267,13 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadModel(model);
-    UnloadModel(placementCube);
-    UnloadTexture(modelTexture);
+    UnloadModel(modelCube);
+    UnloadTexture(texture);
 
     // Unload decal models
     for (int i = 0; i < decalCount; i++) UnloadModel(decalModels[i]);
 
-    UnloadTexture(decalTexture);
+    UnloadTexture(texDecal);
 
     FreeDecalMeshData();        // Free the data for decal generation
 

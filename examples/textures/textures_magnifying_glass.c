@@ -18,7 +18,6 @@
 #include "raylib.h"
 
 #include "rlgl.h"       // Required for: rlSetBlendFactorsSeparate()
-#include "raymath.h"    // Required for: Vector2Multiply()
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -32,22 +31,20 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - magnifying glass");
 
-    Texture2D bunny = LoadTexture("resources/raybunny.png");
-    Texture2D parrots = LoadTexture("resources/parrots.png");
+    Texture2D texBunny = LoadTexture("resources/raybunny.png");
+    Texture2D texParrots = LoadTexture("resources/parrots.png");
 
     // Use image draw to generate a mask texture instead of loading it from a file.
-    Image circle = GenImageColor(256, 256, BLANK);
-    ImageDrawCircle(&circle, 128, 128, 128, WHITE);
-    Texture2D mask = LoadTextureFromImage(circle); // Copy the mask image from RAM to VRAM
-    UnloadImage(circle); // Unload the image from RAM
+    Image imCircle = GenImageColor(256, 256, BLANK);
+    ImageDrawCircle(&imCircle, 128, 128, 128, WHITE);
+    Texture2D texMask = LoadTextureFromImage(imCircle);
+    UnloadImage(imCircle);
 
-    RenderTexture2D magnifiedWorld = LoadRenderTexture(256, 256);
+    RenderTexture2D rtMagnifiedWorld = LoadRenderTexture(256, 256);
 
     Camera2D camera = { 0 };
-    // Set magnifying glass zoom
-    camera.zoom = 2;
-    // Offset by half the size of the magnifying glass to counteract drawing the texture centered on the mouse position
-    camera.offset = Vector2Multiply((Vector2){ 128, 128 }, GetWindowScaleDPI());
+    camera.zoom = 2; // Set magnifying glass zoom
+    camera.offset = (Vector2){ 128, 128 }; // Offset by half the size of the magnifying glass
 
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
@@ -57,9 +54,8 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        Vector2 mPos = GetMousePosition();
-        camera.target = mPos;
-
+        Vector2 mousePosition = GetMousePosition();
+        camera.target = mousePosition;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -69,25 +65,25 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw the normal version of the world
-            DrawTexture(parrots, 144, 33, WHITE);
+            DrawTexture(texParrots, 144, 33, WHITE);
             DrawText("Use the magnifying glass to find hidden bunnies!", 154, 6, 20, BLACK);
 
             // Render to a the magnifying glass
-            BeginTextureMode(magnifiedWorld);
+            BeginTextureMode(rtMagnifiedWorld);
                 ClearBackground(RAYWHITE);
 
                 BeginMode2D(camera);
                     // Draw the same things in the magnified world as were in the normal version
-                    DrawTexture(parrots, 144, 33, WHITE);
+                    DrawTexture(texParrots, 144, 33, WHITE);
                     DrawText("Use the magnifying glass to find hidden bunnies!", 154, 6, 20, BLACK);
 
                     // Draw bunnies only in the magnified world.
                     // BLEND_MULTIPLIED lets them take on the color of the image below them.
                     BeginBlendMode(BLEND_MULTIPLIED);
-                        DrawTexture(bunny, 250, 350, WHITE);
-                        DrawTexture(bunny, 500, 100, WHITE);
-                        DrawTexture(bunny, 420, 300, WHITE);
-                        DrawTexture(bunny, 650, 10, WHITE);
+                        DrawTexture(texBunny, 250, 350, WHITE);
+                        DrawTexture(texBunny, 500, 100, WHITE);
+                        DrawTexture(texBunny, 420, 300, WHITE);
+                        DrawTexture(texBunny, 650, 10, WHITE);
                     EndBlendMode();
                 EndMode2D();
 
@@ -102,20 +98,20 @@ int main(void)
                     //   glEqRGB: RL_FUNC_ADD   - Cs(0) + Cd = Cd - destination color is unmodified
                     //   glEqAlpha: RL_FUNC_ADD - As + Ad(0) = As - destination alpha is set to source alpha
                     rlSetBlendFactorsSeparate(RL_ZERO, RL_ONE, RL_ONE, RL_ZERO, RL_FUNC_ADD, RL_FUNC_ADD);
-                    DrawTexture(mask, 0, 0, WHITE);
+                    DrawTexture(texMask, 0, 0, WHITE);
                 EndBlendMode();
             EndTextureMode();
 
             // Draw magnifiedWorld to screen, centered on cursor
-            DrawTextureRec(magnifiedWorld.texture, (Rectangle){0, 0, 256, -256}, (Vector2){mPos.x - 128, mPos.y - 128}, WHITE);
+            DrawTextureRec(rtMagnifiedWorld.texture, (Rectangle){0, 0, 256, -256}, (Vector2){mousePosition.x - 128, mousePosition.y - 128}, WHITE);
 
             // Draw the outer ring of the magnifying glass
-            DrawRing(mPos, 126, 130, 0, 360, 64, BLACK);
+            DrawRing(mousePosition, 126, 130, 0, 360, 64, BLACK);
 
             // Draw floating specular highlight on the glass
-            float rx = mPos.x/800;
-            float ry = mPos.y/800;
-            DrawCircle((int)(mPos.x - 64*rx) - 32, (int)(mPos.y - 64*ry) - 32, 4, ColorAlpha(WHITE, 0.5));
+            float rx = mousePosition.x/800;
+            float ry = mousePosition.y/800;
+            DrawCircle((int)(mousePosition.x - 64*rx) - 32, (int)(mousePosition.y - 64*ry) - 32, 4, ColorAlpha(WHITE, 0.5));
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -123,10 +119,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(parrots);
-    UnloadTexture(bunny);
-    UnloadTexture(mask);
-    UnloadRenderTexture(magnifiedWorld);
+    UnloadTexture(texParrots);
+    UnloadTexture(texBunny);
+    UnloadTexture(texMask);
+    UnloadRenderTexture(rtMagnifiedWorld);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -35,10 +35,9 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - ascii rendering");
 
-    // Texture to test static drawing
-    Texture2D fudesumi = LoadTexture("resources/fudesumi.png");
-    // Texture to test moving drawing
-    Texture2D raysan = LoadTexture("resources/raysan.png");
+    // Load required textures
+    Texture2D texFudesumi = LoadTexture("resources/fudesumi.png");
+    Texture2D texRaysan = LoadTexture("resources/raysan.png");
 
     // Load shader to be used on postprocessing
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/ascii.fs", GLSL_VERSION));
@@ -84,8 +83,8 @@ int main(void)
             ClearBackground(WHITE);
 
             // Draw scene in our render texture
-            DrawTexture(fudesumi, 500, -30, WHITE);
-            DrawTextureV(raysan, circlePos, WHITE);
+            DrawTexture(texFudesumi, 500, -30, WHITE);
+            DrawTextureV(texRaysan, circlePos, WHITE);
         EndTextureMode();
 
         BeginDrawing();
@@ -111,8 +110,8 @@ int main(void)
     UnloadRenderTexture(target);    // Unload render texture
 
     UnloadShader(shader);           // Unload shader
-    UnloadTexture(fudesumi);        // Unload texture
-    UnloadTexture(raysan);          // Unload texture
+    UnloadTexture(texFudesumi);        // Unload texture
+    UnloadTexture(texRaysan);          // Unload texture
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -58,7 +58,7 @@ int main(void)
     Model modelA = LoadModelFromMesh(GenMeshTorus(0.4f, 1.0f, 16, 32));
     Model modelB = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     Model modelC = LoadModelFromMesh(GenMeshSphere(0.5f, 32, 32));
-    Texture texture = LoadTexture("resources/texel_checker.png");
+    Texture2D texture = LoadTexture("resources/texel_checker.png");
 
     // Assign texture to default model material
     modelA.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;

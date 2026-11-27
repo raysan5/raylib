@@ -113,16 +113,6 @@
     // Enabling this flag allows manual control of the frame processes, use at your own risk
     #define SUPPORT_CUSTOM_FRAME_CONTROL    0       // Disabled by default
 #endif
-#ifndef SUPPORT_CLIPBOARD_IMAGE
-    // Support for clipboard image loading
-    // NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
-    // WARNING: It requires support for some additional flags:
-    //  - SUPPORT_MODULE_RTEXTURES
-    //  - SUPPORT_FILEFORMAT_BMP (Windows clipboard)
-    //  - SUPPORT_FILEFORMAT_PNG (Wayland clipboard)
-    //  - SUPPORT_FILEFORMAT_JPG
-    #define SUPPORT_CLIPBOARD_IMAGE         1
-#endif
 
 // rcore: Configuration values
 // NOTE: Below values are already defined inside [rcore.c] so there is no need to be
@@ -329,7 +319,8 @@
 #endif
 #ifndef SUPPORT_GPU_SKINNING
     // GPU skinning enabled by default for GL3.3+, 
-    //  Some GPUs do not support more than 8 VBOs so you may need to disable it if you have issues loading animated models
+    // NOTE: Some GPUs do not support more than 8 VBOs it may need to be disabled 
+    // if there are some issues loading animated models
     #define SUPPORT_GPU_SKINNING        1
 #endif
 

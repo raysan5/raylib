@@ -43,7 +43,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [shaders] example - color correction");
 
-    Texture2D texture[MAX_TEXTURES] = {
+    Texture2D textures[MAX_TEXTURES] = {
         LoadTexture("resources/parrots.png"),
         LoadTexture("resources/cat.png"),
         LoadTexture("resources/mandrill.png"),
@@ -105,7 +105,7 @@ int main(void)
 
             BeginShaderMode(shdrColorCorrection);
 
-                DrawTexture(texture[imageIndex], 580/2 - texture[imageIndex].width/2, GetScreenHeight()/2 - texture[imageIndex].height/2, WHITE);
+                DrawTexture(textures[imageIndex], 580/2 - textures[imageIndex].width/2, GetScreenHeight()/2 - textures[imageIndex].height/2, WHITE);
 
             EndShaderMode();
 
@@ -138,7 +138,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    for (int i = 0; i < MAX_TEXTURES; i++) UnloadTexture(texture[i]);
+    for (int i = 0; i < MAX_TEXTURES; i++) UnloadTexture(textures[i]);
     UnloadShader(shdrColorCorrection);
 
     CloseWindow();        // Close window and OpenGL context

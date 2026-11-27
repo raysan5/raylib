@@ -182,10 +182,13 @@
 #endif
 
 #define _CRT_INTERNAL_NONSTDC_NAMES  1
-#include <sys/stat.h>               // Required for: stat(), S_ISREG [Used in GetFileModTime(), IsFilePath()]
+#include <sys/stat.h>               // Required for: stat(), S_ISREG, S_ISDIR [Used in GetFileModTime(), IsPathFile(), IsPathDirectory()]
 
 #if !defined(S_ISREG) && defined(S_IFMT) && defined(S_IFREG)
     #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+#if !defined(S_ISDIR) && defined(S_IFMT) && defined(S_IFDIR)
+    #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif
 
 #if defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
@@ -319,11 +322,9 @@ typedef struct CoreData {
 
         char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
         unsigned int dropFileCount;         // Count dropped files strings
-
     } Window;
     struct {
         const char *basePath;               // Base path for data storage
-
     } Storage;
     struct {
         struct {
@@ -340,7 +341,6 @@ typedef struct CoreData {
 
             int charPressedQueue[MAX_CHAR_PRESSED_QUEUE]; // Input characters queue (unicode)
             int charPressedQueueCount;      // Input characters queue count
-
         } Keyboard;
         struct {
             Vector2 offset;                 // Mouse offset
@@ -358,7 +358,6 @@ typedef struct CoreData {
             char previousButtonState[MAX_MOUSE_BUTTONS]; // Registers previous mouse button state
             Vector2 currentWheelMove;       // Registers current mouse wheel variation
             Vector2 previousWheelMove;      // Registers previous mouse wheel variation
-
         } Mouse;
         struct {
             int pointCount;                                 // Number of touch points active
@@ -367,7 +366,6 @@ typedef struct CoreData {
             Vector2 previousPosition[MAX_TOUCH_POINTS];     // Previous touch position on screen
             char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state
             char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state
-
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -377,9 +375,7 @@ typedef struct CoreData {
             char currentButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];     // Current gamepad buttons state
             char previousButtonState[MAX_GAMEPADS][MAX_GAMEPAD_BUTTONS];    // Previous gamepad buttons state
             float axisState[MAX_GAMEPADS][MAX_GAMEPAD_AXES];                // Gamepad axes state
-
         } Gamepad;
-
     } Input;
     struct {
         double current;                     // Current time measure (seconds)
@@ -390,7 +386,6 @@ typedef struct CoreData {
         double target;                      // Desired time for one frame, if 0 not applied (seconds)
         unsigned long long base;            // Base time measure for hi-res timer (ticks or nanoseconds)
         unsigned int frameCounter;          // Frame counter (frames)
-
     } Time;
 } CoreData;
 
@@ -445,8 +440,10 @@ typedef enum AutomationEventType {
     ACTION_SETTARGETFPS             // param[0]: fps
 } AutomationEventType;
 
+#define MAX_AUTOMATION_EVENT_TYPES  24
+
 // Event type name strings, required for export
-static const char *autoEventTypeName[] = {
+static const char *autoEventTypeName[MAX_AUTOMATION_EVENT_TYPES] = {
     "EVENT_NONE",
     "INPUT_KEY_UP",
     "INPUT_KEY_DOWN",
@@ -519,7 +516,7 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
     #include "platforms/rcore_desktop_glfw.c"
 #elif defined(PLATFORM_DESKTOP_SDL)
     #include "platforms/rcore_desktop_sdl.c"
-#elif (defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW))
+#elif defined(PLATFORM_DESKTOP_RGFW) || defined(PLATFORM_WEB_RGFW)
     #include "platforms/rcore_desktop_rgfw.c"
 #elif defined(PLATFORM_DESKTOP_WIN32)
     #include "platforms/rcore_desktop_win32.c"
@@ -574,8 +571,17 @@ const char *TextFormat(const char *text, ...); // Formatting of text with variab
 //Vector2 GetMonitorPosition(int monitor)
 //const char *GetMonitorName(int monitor)
 
+// Clipboard interaction support
+// NOTE: Only working on SDL3, GLFW (Windows) and RGFW (Windows)
+// WARNING: It requires support for some additional flags:
+//  - SUPPORT_MODULE_RTEXTURES
+//  - SUPPORT_FILEFORMAT_BMP (Windows clipboard)
+//  - SUPPORT_FILEFORMAT_PNG (Wayland clipboard)
+//  - SUPPORT_FILEFORMAT_JPG
 //void SetClipboardText(const char *text)
 //const char *GetClipboardText(void)
+//bool SetClipboardImage(Image image)
+//Image GetClipboardImage(void)
 
 //void ShowCursor(void)
 //void HideCursor(void)
@@ -904,7 +910,7 @@ void EndDrawing(void)
         double waitTime = CORE.Time.current - CORE.Time.previous;
         CORE.Time.previous = CORE.Time.current;
 
-        CORE.Time.frame += waitTime;    // Total frame time: update + draw + wait
+        CORE.Time.frame += waitTime; // Total frame time: update + draw + wait
     }
 
     PollInputEvents();      // Poll user events (before next frame update)
@@ -1085,11 +1091,12 @@ void BeginScissorMode(int x, int y, int width, int height)
 #if defined(__APPLE__)
     if (!CORE.Window.usingFbo)
     {
-        Vector2 scale = GetWindowScaleDPI();
+        Vector2 scale = { 1.0f, 1.0f };
+        if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    if (!CORE.Window.usingFbo && FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
     {
         Vector2 scale = GetWindowScaleDPI();
         rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
@@ -1669,8 +1676,7 @@ void WaitTime(double seconds)
     // System halt functions
     #if defined(_WIN32)
         Sleep((unsigned long)(sleepSeconds*1000.0));
-    #endif
-    #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
+    #elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMSCRIPTEN__)
         struct timespec req = { 0 };
         time_t sec = sleepSeconds;
         long nsec = (sleepSeconds - sec)*1000000000L;
@@ -1679,8 +1685,7 @@ void WaitTime(double seconds)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated
         while (nanosleep(&req, &req) == -1) continue;
-    #endif
-    #if defined(__APPLE__)
+    #elif defined(__APPLE__)
         usleep(sleepSeconds*1000000.0);
     #endif
 
@@ -1819,12 +1824,8 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    // Apply content scaling if required
-    Vector2 scale = { 1.0f, 1.0f };
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) scale = GetWindowScaleDPI();
-
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    unsigned char *imgData = rlReadScreenPixels(CORE.Window.render.width, CORE.Window.render.height);
+    Image image = { imgData, CORE.Window.render.width, CORE.Window.render.height, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[MAX_FILEPATH_LENGTH] = { 0 };
     if (!IsPathAbsolute(fileName)) snprintf(path, MAX_FILEPATH_LENGTH, "%s", TextFormat("%s/%s", CORE.Storage.basePath, fileName));
@@ -2243,16 +2244,16 @@ int FileCopy(const char *srcPath, const char *dstPath)
     int srcDataSize = 0;
     unsigned char *srcFileData = LoadFileData(srcPath, &srcDataSize);
 
-    // Create required paths if they do not exist
-    if (DirectoryExists(GetDirectoryPath(dstPath))) result = 0; // Already exists
-    else result = MakeDirectory(GetDirectoryPath(dstPath));
-
-    if (result == 0) // Directory created successfully or already exists
+    if ((srcFileData != NULL) && (srcDataSize > 0))
     {
-        if ((srcFileData != NULL) && (srcDataSize > 0))
+        // Get full destination directory path
+        const char *dstDirPath = GetDirectoryPath(dstPath);
+        
+        // Check if directory exist or create it otherwise
+        if (DirectoryExists(dstDirPath) || (MakeDirectory(dstDirPath) == 0))
         {
             bool saved = SaveFileData(dstPath, srcFileData, srcDataSize);
-            if (saved) result = 0;
+            if (saved) result = 0; // WARNING: SaveFileData() returns true on success
         }
     }
 
@@ -2422,6 +2423,7 @@ bool IsFileExtension(const char *fileName, const char *ext)
 bool IsFileHidden(const char *filePath)
 {
     bool result = false;
+
 #if defined(_WIN32)
     unsigned long attribs = GetFileAttributesA(filePath);
 
@@ -2433,6 +2435,7 @@ bool IsFileHidden(const char *filePath)
 
     if ((basePath[0] == '.') && (strcmp(basePath, ".") != 0) && (strcmp(basePath, "..") != 0)) result = true;
 #endif
+
     return result;
 }
 
@@ -2503,7 +2506,7 @@ const char *GetFileExtension(const char *fileName)
     const char *name = GetFileName(fileName);
     const char *dot = strrchr(name, '.');
 
-    if ((dot == NULL) || (dot == fileName)) return NULL;
+    if ((dot == NULL) || (dot == name)) return NULL;     // No extension for hidden files: ".gitignore"
 
     return dot;
 }
@@ -2575,7 +2578,8 @@ const char *GetDirectoryPath(const char *filePath)
 
     // In case provided path does not contain a root drive letter (C:\, D:\)
     // nor leading path separator (\, /), add the current directory path to dirPath
-    if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))
+    bool isRelative = (filePath[0] != '\\') && (filePath[0] != '/') && ((filePath[0] == '\0') || (filePath[1] != ':'));
+    if (isRelative)
     {
         // For security, set starting path to current directory,
         // obtained path will be concatenated to this
@@ -2594,10 +2598,19 @@ const char *GetDirectoryPath(const char *filePath)
         }
         else
         {
-            char *dirPathPtr = dirPath;
-            if ((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/')) dirPathPtr += 2;     // Skip drive letter, "C:"
-            memcpy(dirPathPtr, filePath, strlen(filePath) - (strlen(lastSlash) - 1));
-            dirPath[strlen(filePath) - strlen(lastSlash) + (((filePath[1] != ':') && (filePath[0] != '\\') && (filePath[0] != '/'))? 2 : 0)] = '\0';  // Add '\0' manually
+            int dirPathOffset = isRelative? 2 : 0;          // Skip "./" added for relative paths
+            int dirPathLength = (int)(lastSlash - filePath);
+
+            if ((dirPathOffset + dirPathLength) < MAX_FILEPATH_LENGTH)
+            {
+                memcpy(dirPath + dirPathOffset, filePath, dirPathLength);
+                dirPath[dirPathOffset + dirPathLength] = '\0';
+            }
+            else
+            {
+                TRACELOG(LOG_WARNING, "FILEIO: Directory path too long");
+                dirPath[0] = '\0';
+            }
         }
     }
 
@@ -2626,7 +2639,8 @@ const char *GetPrevDirectoryPath(const char *dirPath)
 
             if (!isFile)
             {
-                memcpy(prevDirPath, dirPath, i);
+                if (i < MAX_FILEPATH_LENGTH) memcpy(prevDirPath, dirPath, i);
+                else TRACELOG(LOG_WARNING, "FILEIO: Directory path too long");
                 break;
             }
             else isFile = false;
@@ -2679,9 +2693,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '\\';
     }
-
 #elif defined(__linux__)
-
     unsigned int size = sizeof(appDir);
     ssize_t len = readlink("/proc/self/exe", appDir, size);
 
@@ -2701,9 +2713,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__APPLE__)
-
     uint32_t size = sizeof(appDir);
 
     if (_NSGetExecutablePath(appDir, &size) == 0)
@@ -2723,9 +2733,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__FreeBSD__)
-
     size_t size = sizeof(appDir);
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
 
@@ -2746,9 +2754,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-
 #elif defined(__wasm__)
-
     appDir[0] = '/';
 #endif
 
@@ -2880,7 +2886,8 @@ bool IsPathDirectory(const char *path)
 {
     bool result = false;
 
-    if (!IsPathFile(path)) result = true;
+    struct stat info = { 0 };
+    if ((stat(path, &info) == 0) && S_ISDIR(info.st_mode)) result = true;
 
     return result;
 }
@@ -3125,7 +3132,6 @@ char *EncodeDataBase64(const unsigned char *data, int dataSize, int *outputSize)
 
     // Load some memory to store encoded string
     char *encodedData = (char *)RL_CALLOC(estimatedOutputSize, 1);
-    if (encodedData == NULL) return NULL;
 
     int outputCount = 0;
     for (int i = 0; i < dataSize;)
@@ -3186,14 +3192,14 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
     int dataSize = (int)strlen(text); // WARNING: Expecting NULL terminated strings!
     int ending = dataSize - 1;
     int padding = 0;
-    while (text[ending] == '=') { padding++; ending--; }
+    while ((ending >= 0) && (text[ending] == '=')) { padding++; ending--; }
     int estimatedOutputSize = 3*(dataSize/4) - padding;
-    int maxOutputSize = 3*(dataSize/4);
+    if (estimatedOutputSize < 0) estimatedOutputSize = 0;   // Invalid input, i.e. "QQ=" or "===="
+    unsigned int maxOutputSize = 3*(dataSize/4);
 
     // Load some memory to store decoded data
     // NOTE: Allocated enough size to include padding
     unsigned char *decodedData = (unsigned char *)RL_CALLOC(maxOutputSize, 1);
-    if (decodedData == NULL) return NULL;
 
     int outputCount = 0;
     for (int i = 0; i < dataSize;)
@@ -3754,6 +3760,8 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "c %i\n", list.count);
     for (unsigned int i = 0; i < list.count; i++)
     {
+        if ((list.events[i].type < 0) || (list.events[i].type >= MAX_AUTOMATION_EVENT_TYPES)) list.events[i].type = 0;
+        
         byteCount += snprintf(txtData + byteCount, 256, "e %i %i %i %i %i %i // Event: %s\n", list.events[i].frame, list.events[i].type,
             list.events[i].params[0], list.events[i].params[1], list.events[i].params[2], list.events[i].params[3], autoEventTypeName[list.events[i].type]);
     }

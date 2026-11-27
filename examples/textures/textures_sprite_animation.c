@@ -31,10 +31,12 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - sprite animation");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D scarfy = LoadTexture("resources/scarfy.png");        // Texture loading
+
+    // Load spritesheet animation, 6 frames width
+    Texture2D texture = LoadTexture("resources/scarfy.png");
 
     Vector2 position = { 350.0f, 280.0f };
-    Rectangle frameRec = { 0.0f, 0.0f, (float)scarfy.width/6, (float)scarfy.height };
+    Rectangle frameRec = { 0.0f, 0.0f, (float)texture.width/6, (float)texture.height };
     int currentFrame = 0;
 
     int framesCounter = 0;
@@ -57,7 +59,7 @@ int main(void)
 
             if (currentFrame > 5) currentFrame = 0;
 
-            frameRec.x = (float)currentFrame*(float)scarfy.width/6;
+            frameRec.x = (float)currentFrame*(float)texture.width/6;
         }
 
         // Control frames speed
@@ -74,8 +76,8 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawTexture(scarfy, 15, 40, WHITE);
-            DrawRectangleLines(15, 40, scarfy.width, scarfy.height, LIME);
+            DrawTexture(texture, 15, 40, WHITE);
+            DrawRectangleLines(15, 40, texture.width, texture.height, LIME);
             DrawRectangleLines(15 + (int)frameRec.x, 40 + (int)frameRec.y, (int)frameRec.width, (int)frameRec.height, RED);
 
             DrawText("FRAME SPEED: ", 165, 210, 10, DARKGRAY);
@@ -88,9 +90,9 @@ int main(void)
                 DrawRectangleLines(250 + 21*i, 205, 20, 20, MAROON);
             }
 
-            DrawTextureRec(scarfy, frameRec, position, WHITE);  // Draw part of the texture
+            DrawTextureRec(texture, frameRec, position, WHITE);  // Draw part of the texture
 
-            DrawText("(c) Scarfy sprite by Eiden Marsal", screenWidth - 200, screenHeight - 20, 10, GRAY);
+            DrawText("(c) Scarfy spritesheet by Eiden Marsal", screenWidth - 220, screenHeight - 20, 10, GRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -98,7 +100,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(scarfy);       // Texture unloading
+    UnloadTexture(texture);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

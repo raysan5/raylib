@@ -42,8 +42,8 @@ int main(void)
     unsigned char *indexBuffer = RL_CALLOC(imageWidth*imageWidth, sizeof(unsigned char));
     unsigned char *flameRootBuffer = RL_CALLOC(flameWidth, sizeof(unsigned char));
 
-    Image screenImage = GenImageColor(imageWidth, imageHeight, BLACK);
-    Texture screenTexture = LoadTextureFromImage(screenImage);
+    Image imScreen = GenImageColor(imageWidth, imageHeight, BLACK);
+    Texture2D texScreen = LoadTextureFromImage(imScreen);
 
     // Generate flame color palette
     for (int i = 0; i < MAX_COLORS; i++)
@@ -120,11 +120,11 @@ int main(void)
                 unsigned char colorIndex = indexBuffer[i];
                 Color col = palette[colorIndex];
 
-                ImageDrawPixel(&screenImage, x, y, col);
+                ImageDrawPixel(&imScreen, x, y, col);
             }
         }
 
-        UpdateTexture(screenTexture, screenImage.data);
+        UpdateTexture(texScreen, imScreen.data);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -133,7 +133,7 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            DrawTextureEx(screenTexture, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texScreen, (Vector2){ 0, 0 }, 0.0f, 2.0f, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -143,8 +143,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     RL_FREE(indexBuffer);
     RL_FREE(flameRootBuffer);
-    UnloadTexture(screenTexture);
-    UnloadImage(screenImage);
+    UnloadTexture(texScreen);
+    UnloadImage(imScreen);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

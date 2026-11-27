@@ -320,7 +320,7 @@ Image LoadImageRaw(const char *fileName, int width, int height, int format, int 
             // Offset file data to expected raw image by header size
             if ((headerSize > 0) && ((headerSize + size) <= dataSize)) dataPtr += headerSize;
 
-            image.data = RL_MALLOC(size);      // Allocate required memory in bytes
+            image.data = RL_CALLOC(size, 1);   // Allocate required memory in bytes
             memcpy(image.data, dataPtr, size); // Copy required data to image
             image.width = width;
             image.height = height;
@@ -493,6 +493,7 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
             {
                 TRACELOG(LOG_WARNING, "IMAGE: HDR file format not supported");
                 UnloadImage(image);
+                image = (Image){ 0 };
             }
         }
 #endif
@@ -858,7 +859,7 @@ Image GenImageColor(int width, int height, Color color)
 // The gradient effectively rotates counter-clockwise by the specified amount
 Image GenImageGradientLinear(int width, int height, int direction, Color start, Color end)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     float radianDirection = (float)(90 - direction)/180.f*3.14159f;
     float cosDir = cosf(radianDirection);
@@ -906,7 +907,7 @@ Image GenImageGradientLinear(int width, int height, int direction, Color start, 
 // Generate image: radial gradient
 Image GenImageGradientRadial(int width, int height, float density, Color inner, Color outer)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
     float radius = (width < height)? (float)width/2.0f : (float)height/2.0f;
 
     float centerX = (float)width/2.0f;
@@ -943,7 +944,7 @@ Image GenImageGradientRadial(int width, int height, float density, Color inner, 
 // Generate image: square gradient
 Image GenImageGradientSquare(int width, int height, float density, Color inner, Color outer)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     float centerX = (float)width/2.0f;
     float centerY = (float)height/2.0f;
@@ -992,7 +993,7 @@ Image GenImageGradientSquare(int width, int height, float density, Color inner, 
 // Generate image: checked
 Image GenImageChecked(int width, int height, int checksX, int checksY, Color col1, Color col2)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     for (int y = 0; y < height; y++)
     {
@@ -1018,7 +1019,7 @@ Image GenImageChecked(int width, int height, int checksX, int checksY, Color col
 // NOTE: It requires GetRandomValue(), defined in [rcore]
 Image GenImageWhiteNoise(int width, int height, float factor)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     for (int i = 0; i < width*height; i++)
     {
@@ -1040,7 +1041,7 @@ Image GenImageWhiteNoise(int width, int height, float factor)
 // Generate image: perlin noise
 Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     float aspectRatio = (float)width/(float)height;
 
@@ -1091,13 +1092,13 @@ Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float
 // Generate image: cellular algorithm. Bigger tileSize means bigger cells
 Image GenImageCellular(int width, int height, int tileSize)
 {
-    Color *pixels = (Color *)RL_MALLOC(width*height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(width*height, sizeof(Color));
 
     int seedsPerRow = width/tileSize;
     int seedsPerCol = height/tileSize;
     int seedCount = seedsPerRow*seedsPerCol;
 
-    Vector2 *seeds = (Vector2 *)RL_MALLOC(seedCount*sizeof(Vector2));
+    Vector2 *seeds = (Vector2 *)RL_CALLOC(seedCount, sizeof(Vector2));
 
     for (int i = 0; i < seedCount; i++)
     {
@@ -1182,7 +1183,7 @@ Image GenImageText(int width, int height, const char *text)
 // Copy an image to a new image
 Image ImageCopy(Image image)
 {
-    Image newImage = { 0 };
+    Image imCopy = { 0 };
 
     int width = image.width;
     int height = image.height;
@@ -1200,29 +1201,29 @@ Image ImageCopy(Image image)
         if (height < 1) height = 1;
     }
 
-    newImage.data = RL_CALLOC(size, 1);
+    imCopy.data = RL_CALLOC(size, 1);
 
-    if (newImage.data != NULL)
+    if (imCopy.data != NULL)
     {
         // NOTE: Size must be provided in bytes
-        memcpy(newImage.data, image.data, size);
+        memcpy(imCopy.data, image.data, size);
 
-        newImage.width = image.width;
-        newImage.height = image.height;
-        newImage.mipmaps = image.mipmaps;
-        newImage.format = image.format;
+        imCopy.width = image.width;
+        imCopy.height = image.height;
+        imCopy.mipmaps = image.mipmaps;
+        imCopy.format = image.format;
     }
 
-    return newImage;
+    return imCopy;
 }
 
 // Create an image from another image piece
 Image ImageFromImage(Image image, Rectangle rec)
 {
-    Image result = { 0 };
+    Image imResult = { 0 };
 
     // Security check to avoid program crash
-    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result;
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return imResult;
 
     if (image.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
     {
@@ -1233,15 +1234,15 @@ Image ImageFromImage(Image image, Rectangle rec)
         {
             int bytesPerPixel = GetPixelDataSize(1, 1, image.format);
 
-            result.width = (int)rec.width;
-            result.height = (int)rec.height;
-            result.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
-            result.format = image.format;
-            result.mipmaps = 1;
+            imResult.width = (int)rec.width;
+            imResult.height = (int)rec.height;
+            imResult.data = RL_CALLOC((int)rec.width*(int)rec.height*bytesPerPixel, 1);
+            imResult.format = image.format;
+            imResult.mipmaps = 1;
 
             for (int y = 0; y < (int)rec.height; y++)
             {
-                memcpy(((unsigned char *)result.data) + y*(int)rec.width*bytesPerPixel,
+                memcpy(((unsigned char *)imResult.data) + y*(int)rec.width*bytesPerPixel,
                     ((unsigned char *)image.data) + ((y + (int)rec.y)*image.width + (int)rec.x)*bytesPerPixel,
                     (int)rec.width*bytesPerPixel);
             }
@@ -1250,7 +1251,7 @@ Image ImageFromImage(Image image, Rectangle rec)
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Image manipulation not supported for compressed formats");
 
-    return result;
+    return imResult;
 }
 
 // Crop an image to area defined by a rectangle
@@ -1287,7 +1288,7 @@ void ImageCrop(Image *image, Rectangle crop)
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
 
-        unsigned char *croppedData = (unsigned char *)RL_MALLOC(cropWidth*cropHeight*bytesPerPixel);
+        unsigned char *croppedData = (unsigned char *)RL_CALLOC(cropWidth*cropHeight*bytesPerPixel, 1);
 
         // OPTION 1: Move cropped data line-by-line
         for (int y = cropY, offsetSize = 0; y < cropY + cropHeight; y++)
@@ -1335,7 +1336,7 @@ void ImageFormat(Image *image, int newFormat)
             {
                 case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE:
                 {
-                    image->data = (unsigned char *)RL_MALLOC(image->width*image->height*sizeof(unsigned char));
+                    image->data = (unsigned char *)RL_CALLOC(image->width*image->height, sizeof(unsigned char));
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
@@ -1345,7 +1346,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA:
                 {
-                    image->data = (unsigned char *)RL_MALLOC(image->width*image->height*2*sizeof(unsigned char));
+                    image->data = (unsigned char *)RL_CALLOC(image->width*image->height*2, sizeof(unsigned char));
 
                     for (int i = 0, k = 0; i < image->width*image->height*2; i += 2, k++)
                     {
@@ -1356,7 +1357,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G6B5:
                 {
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height, sizeof(unsigned short));
 
                     unsigned char r = 0;
                     unsigned char g = 0;
@@ -1374,7 +1375,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8:
                 {
-                    image->data = (unsigned char *)RL_MALLOC(image->width*image->height*3*sizeof(unsigned char));
+                    image->data = (unsigned char *)RL_CALLOC(image->width*image->height*3, sizeof(unsigned char));
 
                     for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
@@ -1385,7 +1386,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R5G5B5A1:
                 {
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height, sizeof(unsigned short));
 
                     unsigned char r = 0;
                     unsigned char g = 0;
@@ -1405,7 +1406,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R4G4B4A4:
                 {
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height, sizeof(unsigned short));
 
                     unsigned char r = 0;
                     unsigned char g = 0;
@@ -1425,7 +1426,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8:
                 {
-                    image->data = (unsigned char *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned char));
+                    image->data = (unsigned char *)RL_CALLOC(image->width*image->height*4, sizeof(unsigned char));
 
                     for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
@@ -1439,7 +1440,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     // WARNING: Image is converted to GRAYSCALE equivalent 32bit
 
-                    image->data = (float *)RL_MALLOC(image->width*image->height*sizeof(float));
+                    image->data = (float *)RL_CALLOC(image->width*image->height, sizeof(float));
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
@@ -1448,7 +1449,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32:
                 {
-                    image->data = (float *)RL_MALLOC(image->width*image->height*3*sizeof(float));
+                    image->data = (float *)RL_CALLOC(image->width*image->height*3, sizeof(float));
 
                     for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
@@ -1459,7 +1460,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R32G32B32A32:
                 {
-                    image->data = (float *)RL_MALLOC(image->width*image->height*4*sizeof(float));
+                    image->data = (float *)RL_CALLOC(image->width*image->height*4, sizeof(float));
 
                     for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
@@ -1473,7 +1474,7 @@ void ImageFormat(Image *image, int newFormat)
                 {
                     // WARNING: Image is converted to GRAYSCALE equivalent 16bit
 
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height, sizeof(unsigned short));
 
                     for (int i = 0; i < image->width*image->height; i++)
                     {
@@ -1482,7 +1483,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16:
                 {
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*3*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height*3, sizeof(unsigned short));
 
                     for (int i = 0, k = 0; i < image->width*image->height*3; i += 3, k++)
                     {
@@ -1493,7 +1494,7 @@ void ImageFormat(Image *image, int newFormat)
                 } break;
                 case PIXELFORMAT_UNCOMPRESSED_R16G16B16A16:
                 {
-                    image->data = (unsigned short *)RL_MALLOC(image->width*image->height*4*sizeof(unsigned short));
+                    image->data = (unsigned short *)RL_CALLOC(image->width*image->height*4, sizeof(unsigned short));
 
                     for (int i = 0, k = 0; i < image->width*image->height*4; i += 4, k++)
                     {
@@ -1618,9 +1619,9 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 // Create an image from a selected channel of another image
 Image ImageFromChannel(Image image, int selectedChannel)
 {
-    Image result = { 0 };
+    Image imChannel = { 0 };
 
-    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return result; // Security check
+    if ((image.data == NULL) || (image.width == 0) || (image.height == 0)) return imChannel; // Security check
 
     // Check selected channel is valid
     if (selectedChannel < 0)
@@ -1667,10 +1668,10 @@ Image ImageFromChannel(Image image, int selectedChannel)
     }
 
     // TODO: Support R16 and R32 channel sizes, not only 8-bit
-    result.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-    result.height = image.height;
-    result.width = image.width;
-    result.mipmaps = 1;
+    imChannel.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+    imChannel.height = image.height;
+    imChannel.width = image.width;
+    imChannel.mipmaps = 1;
 
     unsigned char *pixels = (unsigned char *)RL_CALLOC(image.width*image.height, sizeof(unsigned char)); // Values from 0 to 255
 
@@ -1777,9 +1778,9 @@ Image ImageFromChannel(Image image, int selectedChannel)
         }
     }
 
-    result.data = pixels;
+    imChannel.data = pixels;
 
-    return result;
+    return imChannel;
 }
 
 // Resize and image to new size using Nearest-Neighbor scaling algorithm
@@ -1789,7 +1790,7 @@ void ImageResizeNN(Image *image, int newWidth, int newHeight)
     if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
 
     Color *pixels = LoadImageColors(*image);
-    Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+    Color *output = (Color *)RL_CALLOC(newWidth*newHeight, sizeof(Color));
 
     // EDIT: added +1 to account for an early rounding problem
     int xRatio = ((image->width << 16)/newWidth) + 1;
@@ -1839,7 +1840,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
         (image->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8))
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *output = (unsigned char *)RL_MALLOC(newWidth*newHeight*bytesPerPixel);
+        unsigned char *output = (unsigned char *)RL_CALLOC(newWidth*newHeight*bytesPerPixel, 1);
 
         switch (image->format)
         {
@@ -1859,7 +1860,7 @@ void ImageResize(Image *image, int newWidth, int newHeight)
     {
         // Get data as Color pixels array to work with it
         Color *pixels = LoadImageColors(*image);
-        Color *output = (Color *)RL_MALLOC(newWidth*newHeight*sizeof(Color));
+        Color *output = (Color *)RL_CALLOC(newWidth*newHeight, sizeof(Color));
 
         // NOTE: Color data is cast to (unsigned char *), there shouldn't been any problem...
         stbir_resize_uint8_linear((unsigned char *)pixels, image->width, image->height, 0, (unsigned char *)output, newWidth, newHeight, 0, (stbir_pixel_layout)4);
@@ -2003,9 +2004,9 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = ((threshold < 0.5f)? 0 : 1);
 
-                unsigned char r = (unsigned char)(round((float)color.r*31.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*31.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*31.0f));
+                unsigned char r = (unsigned char)(round((float)color.r/255.0*31.0f));
+                unsigned char g = (unsigned char)(round((float)color.g/255.0*31.0f));
+                unsigned char b = (unsigned char)(round((float)color.b/255.0*31.0f));
                 unsigned char a = (color.a < 128)? 0 : 1;
 
                 for (int i = 0; i < image->width*image->height; i++)
@@ -2020,10 +2021,10 @@ void ImageAlphaClear(Image *image, Color color, float threshold)
             {
                 unsigned char thresholdValue = (unsigned char)(threshold*15.0f);
 
-                unsigned char r = (unsigned char)(round((float)color.r*15.0f));
-                unsigned char g = (unsigned char)(round((float)color.g*15.0f));
-                unsigned char b = (unsigned char)(round((float)color.b*15.0f));
-                unsigned char a = (unsigned char)(round((float)color.a*15.0f));
+                unsigned char r = (unsigned char)(round((float)color.r/255.0*15.0f));
+                unsigned char g = (unsigned char)(round((float)color.g/255.0*15.0f));
+                unsigned char b = (unsigned char)(round((float)color.b/255.0*15.0f));
+                unsigned char a = (unsigned char)(round((float)color.a/255.0*15.0f));
 
                 for (int i = 0; i < image->width*image->height; i++)
                 {
@@ -2094,19 +2095,19 @@ void ImageAlphaMask(Image *image, Image alphaMask)
     else
     {
         // Force mask to be Grayscale
-        Image mask = ImageCopy(alphaMask);
-        if (mask.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ImageFormat(&mask, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
+        Image imMask = ImageCopy(alphaMask);
+        if (imMask.format != PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ImageFormat(&imMask, PIXELFORMAT_UNCOMPRESSED_GRAYSCALE);
 
         // In case image is only grayscale, add alpha channel
         if (image->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE)
         {
-            unsigned char *data = (unsigned char *)RL_MALLOC(image->width*image->height*2);
+            unsigned char *data = (unsigned char *)RL_CALLOC(image->width*image->height*2, 1);
 
             // Apply alpha mask to alpha channel
-            for (int i = 0, k = 0; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 2)
+            for (int i = 0, k = 0; (i < imMask.width*imMask.height) || (i < image->width*image->height); i++, k += 2)
             {
                 data[k] = ((unsigned char *)image->data)[i];
-                data[k + 1] = ((unsigned char *)mask.data)[i];
+                data[k + 1] = ((unsigned char *)imMask.data)[i];
             }
 
             RL_FREE(image->data);
@@ -2119,13 +2120,13 @@ void ImageAlphaMask(Image *image, Image alphaMask)
             if (image->format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8) ImageFormat(image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
             // Apply alpha mask to alpha channel
-            for (int i = 0, k = 3; (i < mask.width*mask.height) || (i < image->width*image->height); i++, k += 4)
+            for (int i = 0, k = 3; (i < imMask.width*imMask.height) || (i < image->width*image->height); i++, k += 4)
             {
-                ((unsigned char *)image->data)[k] = ((unsigned char *)mask.data)[i];
+                ((unsigned char *)image->data)[k] = ((unsigned char *)imMask.data)[i];
             }
         }
 
-        UnloadImage(mask);
+        UnloadImage(imMask);
     }
 }
 
@@ -2175,8 +2176,8 @@ void ImageBlurGaussian(Image *image, int blurSize)
     Color *pixels = LoadImageColors(*image);
 
     // Loop switches between pixelsCopy1 and pixelsCopy2
-    Vector4 *pixelsCopy1 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
-    Vector4 *pixelsCopy2 = (Vector4 *)RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy1 = (Vector4 *)RL_CALLOC(image->height*image->width, sizeof(Vector4));
+    Vector4 *pixelsCopy2 = (Vector4 *)RL_CALLOC(image->height*image->width, sizeof(Vector4));
 
     for (int i = 0; i < (image->height*image->width); i++)
     {
@@ -2323,7 +2324,7 @@ void ImageKernelConvolution(Image *image, const float *kernel, int kernelSize)
     }
 
     Color *pixels = LoadImageColors(*image);
-    Color *result = (Color *)RL_MALLOC((image->height)*(image->width)*sizeof(Color));
+    Color *result = (Color *)RL_CALLOC((image->height)*(image->width), sizeof(Color));
 
     int startRange = 0, endRange = 0;
 
@@ -2510,7 +2511,7 @@ void ImageDither(Image *image, int rBpp, int gBpp, int bBpp, int aBpp)
         }
 
         // NOTE: Storing the dithered data as unsigned short (16bpp)
-        image->data = (unsigned short *)RL_MALLOC(image->width*image->height*sizeof(unsigned short));
+        image->data = (unsigned short *)RL_CALLOC(image->width*image->height, sizeof(unsigned short));
 
         Color oldPixel = WHITE;
         Color newPixel = WHITE;
@@ -2598,7 +2599,7 @@ void ImageFlipVertical(Image *image)
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *flippedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
+        unsigned char *flippedData = (unsigned char *)RL_CALLOC(image->width*image->height*bytesPerPixel, 1);
 
         for (int i = (image->height - 1), offsetSize = 0; i >= 0; i--)
         {
@@ -2622,7 +2623,7 @@ void ImageFlipHorizontal(Image *image)
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *flippedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
+        unsigned char *flippedData = (unsigned char *)RL_CALLOC(image->width*image->height*bytesPerPixel, 1);
 
         for (int y = 0; y < image->height; y++)
         {
@@ -2683,18 +2684,20 @@ void ImageRotate(Image *image, int degrees)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    float oldX = ((x - width/2.0f)*cosRadius + (y - height/2.0f)*sinRadius) + image->width/2.0f;
-                    float oldY = ((y - height/2.0f)*cosRadius - (x - width/2.0f)*sinRadius) + image->height/2.0f;
+                    float oldX = ((x + 0.5f - width/2.0f)*cosRadius + (y + 0.5f - height/2.0f)*sinRadius) + image->width/2.0f - 0.5f;
+                    float oldY = ((y + 0.5f - height/2.0f)*cosRadius - (x + 0.5f - width/2.0f)*sinRadius) + image->height/2.0f - 0.5f;
 
-                    if ((oldX >= 0) && (oldX < image->width) && (oldY >= 0) && (oldY < image->height))
+                    if ((oldX >= -0.5f) && (oldX < image->width - 0.5f) && (oldY >= -0.5f) && (oldY < image->height - 0.5f))
                     {
-                        int x1 = (int)floorf(oldX);
-                        int y1 = (int)floorf(oldY);
+                        float sampleX = (oldX < 0)? 0 : oldX;
+                        float sampleY = (oldY < 0)? 0 : oldY;
+                        int x1 = (int)floorf(sampleX);
+                        int y1 = (int)floorf(sampleY);
                         int x2 = MIN(x1 + 1, image->width - 1);
                         int y2 = MIN(y1 + 1, image->height - 1);
 
-                        float px = oldX - x1;
-                        float py = oldY - y1;
+                        float px = sampleX - x1;
+                        float py = sampleY - y1;
 
                         for (int i = 0; i < bytesPerPixel; i++)
                         {
@@ -2705,7 +2708,7 @@ void ImageRotate(Image *image, int degrees)
 
                             float val = f1*(1 - px)*(1 - py) + f2*px*(1 - py) + f3*(1 - px)*py + f4*px*py;
 
-                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)val;
+                            rotatedData[(y*width + x)*bytesPerPixel + i] = (unsigned char)(val + 0.5f);
                         }
                     }
                 }
@@ -2730,7 +2733,7 @@ void ImageRotateCW(Image *image)
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(image->width*image->height*bytesPerPixel, 1);
 
         for (int y = 0; y < image->height; y++)
         {
@@ -2762,7 +2765,7 @@ void ImageRotateCCW(Image *image)
     else
     {
         int bytesPerPixel = GetPixelDataSize(1, 1, image->format);
-        unsigned char *rotatedData = (unsigned char *)RL_MALLOC(image->width*image->height*bytesPerPixel);
+        unsigned char *rotatedData = (unsigned char *)RL_CALLOC(image->width*image->height*bytesPerPixel, 1);
 
         for (int y = 0; y < image->height; y++)
         {
@@ -2985,7 +2988,7 @@ Color *LoadImageColors(Image image)
 {
     if ((image.width == 0) || (image.height == 0)) return NULL; // Security check
 
-    Color *pixels = (Color *)RL_MALLOC(image.width*image.height*sizeof(Color));
+    Color *pixels = (Color *)RL_CALLOC(image.width*image.height, sizeof(Color));
 
     if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else
@@ -3141,7 +3144,7 @@ Color *LoadImagePalette(Image image, int maxPaletteSize, int *colorCount)
 
     if (pixels != NULL)
     {
-        palette = (Color *)RL_MALLOC(maxPaletteSize*sizeof(Color));
+        palette = (Color *)RL_CALLOC(maxPaletteSize, sizeof(Color));
 
         for (int i = 0; i < maxPaletteSize; i++) palette[i] = BLANK;   // Set all colors to BLANK
 
@@ -4285,8 +4288,8 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
     if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
     else
     {
-        Image srcMod = { 0 };       // Source copy (in case it was required)
-        Image *srcPtr = &src;       // Pointer to source image
+        Image imSrcMod = { 0 };     // Source copy (in case it was required)
+        Image *imSrcPtr = &src;     // Pointer to source image
         bool useSrcMod = false;     // Track source copy required
 
         // Source rectangle out-of-bounds security checks
@@ -4299,11 +4302,11 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
         // In that case, make a copy of source, and apply all required transform
         if (((int)srcRec.width != (int)dstRec.width) || ((int)srcRec.height != (int)dstRec.height))
         {
-            srcMod = ImageFromImage(src, srcRec); // Create image from another image
-            ImageResize(&srcMod, (int)dstRec.width, (int)dstRec.height); // Resize to destination rectangle
-            srcRec = (Rectangle){ 0, 0, (float)srcMod.width, (float)srcMod.height };
+            imSrcMod = ImageFromImage(src, srcRec); // Create image from another image
+            ImageResize(&imSrcMod, (int)dstRec.width, (int)dstRec.height); // Resize to destination rectangle
+            srcRec = (Rectangle){ 0, 0, (float)imSrcMod.width, (float)imSrcMod.height };
 
-            srcPtr = &srcMod;
+            imSrcPtr = &imSrcMod;
             useSrcMod = true;
         }
 
@@ -4346,22 +4349,22 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
 
         // Fast path: Avoid blend if source has no alpha to blend
         if ((tint.a == 255) &&
-            ((srcPtr->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16) ||
-            (srcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16G16B16)))
+            ((imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R5G6B5) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R32G32B32) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16) ||
+            (imSrcPtr->format == PIXELFORMAT_UNCOMPRESSED_R16G16B16)))
             blendRequired = false;
 
         int strideDst = GetPixelDataSize(dst->width, 1, dst->format);
         int bytesPerPixelDst = strideDst/(dst->width);
 
-        int strideSrc = GetPixelDataSize(srcPtr->width, 1, srcPtr->format);
-        int bytesPerPixelSrc = strideSrc/(srcPtr->width);
+        int strideSrc = GetPixelDataSize(imSrcPtr->width, 1, imSrcPtr->format);
+        int bytesPerPixelSrc = strideSrc/(imSrcPtr->width);
 
-        unsigned char *pSrcBase = (unsigned char *)srcPtr->data + ((int)srcRec.y*srcPtr->width + (int)srcRec.x)*bytesPerPixelSrc;
+        unsigned char *pSrcBase = (unsigned char *)imSrcPtr->data + ((int)srcRec.y*imSrcPtr->width + (int)srcRec.x)*bytesPerPixelSrc;
         unsigned char *pDstBase = (unsigned char *)dst->data + ((int)dstRec.y*dst->width + (int)dstRec.x)*bytesPerPixelDst;
 
         for (int y = 0; y < (int)srcRec.height; y++)
@@ -4370,12 +4373,12 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
             unsigned char *pDst = pDstBase;
 
             // Fast path: Avoid moving pixel by pixel if no blend required and same format
-            if (!blendRequired && (srcPtr->format == dst->format)) memcpy(pDst, pSrc, (int)(srcRec.width)*bytesPerPixelSrc);
+            if (!blendRequired && (imSrcPtr->format == dst->format)) memcpy(pDst, pSrc, (int)(srcRec.width)*bytesPerPixelSrc);
             else
             {
                 for (int x = 0; x < (int)srcRec.width; x++)
                 {
-                    colSrc = GetPixelColor(pSrc, srcPtr->format);
+                    colSrc = GetPixelColor(pSrc, imSrcPtr->format);
                     colDst = GetPixelColor(pDst, dst->format);
 
                     // Fast path: Avoid blend if source has no alpha to blend
@@ -4393,21 +4396,21 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
             pDstBase += strideDst;
         }
 
-        if (useSrcMod) UnloadImage(srcMod);     // Unload source modified image
+        if (useSrcMod) UnloadImage(imSrcMod);     // Unload source modified image
 
         if ((dst->mipmaps > 1) && (src.mipmaps > 1))
         {
-            Image mipmapDst = *dst;
-            mipmapDst.data = (char *)mipmapDst.data + GetPixelDataSize(mipmapDst.width, mipmapDst.height, mipmapDst.format);
-            mipmapDst.width /= 2;
-            mipmapDst.height /= 2;
-            mipmapDst.mipmaps--;
+            Image imMipmapDst = *dst;
+            imMipmapDst.data = (char *)imMipmapDst.data + GetPixelDataSize(imMipmapDst.width, imMipmapDst.height, imMipmapDst.format);
+            imMipmapDst.width /= 2;
+            imMipmapDst.height /= 2;
+            imMipmapDst.mipmaps--;
 
-            Image mipmapSrc = src;
-            mipmapSrc.data = (char *)mipmapSrc.data + GetPixelDataSize(mipmapSrc.width, mipmapSrc.height, mipmapSrc.format);
-            mipmapSrc.width /= 2;
-            mipmapSrc.height /= 2;
-            mipmapSrc.mipmaps--;
+            Image imMipmapSrc = src;
+            imMipmapSrc.data = (char *)imMipmapSrc.data + GetPixelDataSize(imMipmapSrc.width, imMipmapSrc.height, imMipmapSrc.format);
+            imMipmapSrc.width /= 2;
+            imMipmapSrc.height /= 2;
+            imMipmapSrc.mipmaps--;
 
             Rectangle mipmapSrcRec = srcRec;
             mipmapSrcRec.width /= 2;
@@ -4421,7 +4424,7 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
             mipmapDstRec.x /= 2;
             mipmapDstRec.y /= 2;
 
-            ImageDrawImagePro(&mipmapDst, mipmapSrc, mipmapSrcRec, mipmapDstRec, (Vector2){ 0 }, 0.0f, tint);
+            ImageDrawImagePro(&imMipmapDst, imMipmapSrc, mipmapSrcRec, mipmapDstRec, (Vector2){ 0 }, 0.0f, tint);
         }
     }
 }
@@ -4532,14 +4535,14 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
     {
         int size = cubemap.width;
 
-        Image faces = { 0 };                // Vertical column image
+        Image imFaces = { 0 };                // Vertical column image
         Rectangle faceRecs[6] = { 0 };      // Face source rectangles
 
         for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
 
         if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
         {
-            faces = ImageCopy(image);       // Image data already follows expected convention
+            imFaces = ImageCopy(image);       // Image data already follows expected convention
         }
         /*else if (layout == CUBEMAP_LAYOUT_PANORAMA)
         {
@@ -4570,33 +4573,33 @@ TextureCubemap LoadTextureCubemap(Image image, int layout)
 
             // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
             // NOTE: Image formatting does not work with compressed textures
-            faces = GenImageColor(size, size*6, MAGENTA);
-            ImageFormat(&faces, image.format);
+            imFaces = GenImageColor(size, size*6, MAGENTA);
+            ImageFormat(&imFaces, image.format);
 
-            Image mipmapped = ImageCopy(image);
+            Image imMipmapped = ImageCopy(image);
             if (image.mipmaps > 1)
             {
-                ImageMipmaps(&mipmapped);
-                ImageMipmaps(&faces);
+                ImageMipmaps(&imMipmapped);
+                ImageMipmaps(&imFaces);
             }
 
-            for (int i = 0; i < 6; i++) ImageDrawImagePro(&faces, mipmapped, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, (Vector2){ 0 }, 0.0f, WHITE);
+            for (int i = 0; i < 6; i++) ImageDrawImagePro(&imFaces, imMipmapped, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, (Vector2){ 0 }, 0.0f, WHITE);
 
-            UnloadImage(mipmapped);
+            UnloadImage(imMipmapped);
         }
 
         // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
         // one after the other (that's a vertical image), following convention: +X, -X, +Y, -Y, +Z, -Z
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format, faces.mipmaps);
+        cubemap.id = rlLoadTextureCubemap(imFaces.data, size, imFaces.format, imFaces.mipmaps);
 
         if (cubemap.id != 0)
         {
-            cubemap.format = faces.format;
-            cubemap.mipmaps = faces.mipmaps;
+            cubemap.format = imFaces.format;
+            cubemap.mipmaps = imFaces.mipmaps;
         }
         else TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
 
-        UnloadImage(faces);
+        UnloadImage(imFaces);
     }
     else TRACELOG(LOG_WARNING, "IMAGE: Failed to detect cubemap image layout");
 
@@ -5328,7 +5331,7 @@ Color ColorFromHSV(float hue, float saturation, float value)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.r = (unsigned char)((value - value*saturation*k)*255.0f);
+    color.r = (unsigned char)((value - value*saturation*k)*255.0f + 0.5f);
 
     // Green channel
     k = fmodf((3.0f + hue/60.0f), 6);
@@ -5336,7 +5339,7 @@ Color ColorFromHSV(float hue, float saturation, float value)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.g = (unsigned char)((value - value*saturation*k)*255.0f);
+    color.g = (unsigned char)((value - value*saturation*k)*255.0f + 0.5f);
 
     // Blue channel
     k = fmodf((1.0f + hue/60.0f), 6);
@@ -5344,7 +5347,7 @@ Color ColorFromHSV(float hue, float saturation, float value)
     k = (t < k)? t : k;
     k = (k < 1)? k : 1;
     k = (k > 0)? k : 0;
-    color.b = (unsigned char)((value - value*saturation*k)*255.0f);
+    color.b = (unsigned char)((value - value*saturation*k)*255.0f + 0.5f);
 
     return color;
 }
@@ -5829,7 +5832,7 @@ static unsigned short FloatToHalf(float x)
 // Get pixel data from image as Vector4 array (float normalized)
 static Vector4 *LoadImageDataNormalized(Image image)
 {
-    Vector4 *pixels = (Vector4 *)RL_MALLOC(image.width*image.height*sizeof(Vector4));
+    Vector4 *pixels = (Vector4 *)RL_CALLOC(image.width*image.height, sizeof(Vector4));
 
     if (image.format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "IMAGE: Pixel data retrieval not supported for compressed image formats");
     else

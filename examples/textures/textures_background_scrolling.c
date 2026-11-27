@@ -29,13 +29,13 @@ int main(void)
 
     // NOTE: Be careful, background width must be equal or bigger than screen width
     // if not, texture should be draw more than two times for scrolling effect
-    Texture2D background = LoadTexture("resources/cyberpunk_street_background.png");
-    Texture2D midground = LoadTexture("resources/cyberpunk_street_midground.png");
-    Texture2D foreground = LoadTexture("resources/cyberpunk_street_foreground.png");
+    Texture2D texBackground = LoadTexture("resources/cyberpunk_street_background.png");
+    Texture2D texMidground = LoadTexture("resources/cyberpunk_street_midground.png");
+    Texture2D texForeground = LoadTexture("resources/cyberpunk_street_foreground.png");
 
-    float scrollingBack = 0.0f;
-    float scrollingMid = 0.0f;
-    float scrollingFore = 0.0f;
+    float scrollingBackground = 0.0f;
+    float scrollingMidground = 0.0f;
+    float scrollingForeground = 0.0f;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -45,14 +45,14 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        scrollingBack -= 0.1f;
-        scrollingMid -= 0.5f;
-        scrollingFore -= 1.0f;
+        scrollingBackground -= 0.1f;
+        scrollingMidground -= 0.5f;
+        scrollingForeground -= 1.0f;
 
         // NOTE: Texture is scaled twice its size, so it sould be considered on scrolling
-        if (scrollingBack <= -background.width*2) scrollingBack = 0;
-        if (scrollingMid <= -midground.width*2) scrollingMid = 0;
-        if (scrollingFore <= -foreground.width*2) scrollingFore = 0;
+        if (scrollingBackground <= -texBackground.width*2) scrollingBackground = 0;
+        if (scrollingMidground <= -texMidground.width*2) scrollingMidground = 0;
+        if (scrollingForeground <= -texForeground.width*2) scrollingForeground = 0;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -63,16 +63,16 @@ int main(void)
 
             // Draw background image twice
             // NOTE: Texture is scaled twice its size
-            DrawTextureEx(background, (Vector2){ scrollingBack, 20 }, 0.0f, 2.0f, WHITE);
-            DrawTextureEx(background, (Vector2){ background.width*2 + scrollingBack, 20 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texBackground, (Vector2){ scrollingBackground, 20 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texBackground, (Vector2){ texBackground.width*2 + scrollingBackground, 20 }, 0.0f, 2.0f, WHITE);
 
             // Draw midground image twice
-            DrawTextureEx(midground, (Vector2){ scrollingMid, 20 }, 0.0f, 2.0f, WHITE);
-            DrawTextureEx(midground, (Vector2){ midground.width*2 + scrollingMid, 20 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texMidground, (Vector2){ scrollingMidground, 20 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texMidground, (Vector2){ texMidground.width*2 + scrollingMidground, 20 }, 0.0f, 2.0f, WHITE);
 
             // Draw foreground image twice
-            DrawTextureEx(foreground, (Vector2){ scrollingFore, 70 }, 0.0f, 2.0f, WHITE);
-            DrawTextureEx(foreground, (Vector2){ foreground.width*2 + scrollingFore, 70 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texForeground, (Vector2){ scrollingForeground, 70 }, 0.0f, 2.0f, WHITE);
+            DrawTextureEx(texForeground, (Vector2){ texForeground.width*2 + scrollingForeground, 70 }, 0.0f, 2.0f, WHITE);
 
             DrawText("BACKGROUND SCROLLING & PARALLAX", 10, 10, 20, RED);
             DrawText("(c) Cyberpunk Street Environment by Luis Zuno (@ansimuz)", screenWidth - 330, screenHeight - 20, 10, RAYWHITE);
@@ -83,9 +83,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(background);  // Unload background texture
-    UnloadTexture(midground);   // Unload midground texture
-    UnloadTexture(foreground);  // Unload foreground texture
+    UnloadTexture(texBackground);  // Unload background texture
+    UnloadTexture(texMidground);   // Unload midground texture
+    UnloadTexture(texForeground);  // Unload foreground texture
 
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

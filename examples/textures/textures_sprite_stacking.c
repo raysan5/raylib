@@ -32,7 +32,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - sprite stacking");
 
-    Texture2D booth = LoadTexture("resources/booth.png");
+    Texture2D texBooth = LoadTexture("resources/booth.png");
 
     float stackScale = 3.0f; // Overall scale of the stacked sprite
     float stackSpacing = 2.0f; // Vertical spacing between each layer
@@ -67,8 +67,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Get the size of a single slice
-            float frameWidth = (float)booth.width;
-            float frameHeight = (float)booth.height/(float)stackCount;
+            float frameWidth = (float)texBooth.width;
+            float frameHeight = (float)texBooth.height/(float)stackCount;
 
             // Get the scaled resolution to draw at
             float scaledWidth = frameWidth*stackScale;
@@ -82,7 +82,7 @@ int main(void)
                 Rectangle dest = { screenWidth/2.0f, (screenHeight/2.0f) + (i*stackSpacing) - (stackSpacing*stackCount/2.0f), scaledWidth, scaledHeight };
                 Vector2 origin = { scaledWidth/2.0f, scaledHeight/2.0f };
 
-                DrawTexturePro(booth, source, dest, origin, rotation, WHITE);
+                DrawTexturePro(texBooth, source, dest, origin, rotation, WHITE);
             }
 
             DrawText("A/D to spin\nmouse wheel to change separation (aka 'angle')", 10, 10, 20, DARKGRAY);
@@ -96,7 +96,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(booth);
+    UnloadTexture(texBooth);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

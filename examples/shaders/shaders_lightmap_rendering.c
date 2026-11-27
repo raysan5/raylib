@@ -80,43 +80,43 @@ int main(void)
     Shader shader = LoadShader(TextFormat("resources/shaders/glsl%i/lightmap.vs", GLSL_VERSION),
                                TextFormat("resources/shaders/glsl%i/lightmap.fs", GLSL_VERSION));
 
-    Texture texture = LoadTexture("resources/cubicmap_atlas.png");
-    Texture light = LoadTexture("resources/spark_flame.png");
+    Texture2D texCubicmap = LoadTexture("resources/cubicmap_atlas.png");
+    Texture2D texLight = LoadTexture("resources/spark_flame.png");
 
-    GenTextureMipmaps(&texture);
-    SetTextureFilter(texture, TEXTURE_FILTER_TRILINEAR);
+    GenTextureMipmaps(&texCubicmap);
+    SetTextureFilter(texCubicmap, TEXTURE_FILTER_TRILINEAR);
 
-    RenderTexture lightmap = LoadRenderTexture(MAP_SIZE, MAP_SIZE);
+    RenderTexture2D rtLightmap = LoadRenderTexture(MAP_SIZE, MAP_SIZE);
 
     Material material = LoadMaterialDefault();
     material.shader = shader;
-    material.maps[MATERIAL_MAP_ALBEDO].texture = texture;
-    material.maps[MATERIAL_MAP_METALNESS].texture = lightmap.texture;
+    material.maps[MATERIAL_MAP_ALBEDO].texture = texCubicmap;
+    material.maps[MATERIAL_MAP_METALNESS].texture = rtLightmap.texture;
 
     // Drawing to lightmap
-    BeginTextureMode(lightmap);
+    BeginTextureMode(rtLightmap);
         ClearBackground(BLACK);
 
         BeginBlendMode(BLEND_ADDITIVE);
             DrawTexturePro(
-                light,
-                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
+                texLight,
+                (Rectangle){ 0, 0, (float)texLight.width, (float)texLight.height },
                 (Rectangle){ 0, 0, 2.0f*MAP_SIZE, 2.0f*MAP_SIZE },
                 (Vector2){ (float)MAP_SIZE, (float)MAP_SIZE },
                 0.0,
                 RED
             );
             DrawTexturePro(
-                light,
-                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
+                texLight,
+                (Rectangle){ 0, 0, (float)texLight.width, (float)texLight.height },
                 (Rectangle){ (float)MAP_SIZE*0.8f, (float)MAP_SIZE/2.0f, 2.0f*MAP_SIZE, 2.0f*MAP_SIZE },
                 (Vector2){ (float)MAP_SIZE, (float)MAP_SIZE },
                 0.0,
                 BLUE
             );
             DrawTexturePro(
-                light,
-                (Rectangle){ 0, 0, (float)light.width, (float)light.height },
+                texLight,
+                (Rectangle){ 0, 0, (float)texLight.width, (float)texLight.height },
                 (Rectangle){ (float)MAP_SIZE*0.8f, (float)MAP_SIZE*0.8f, (float)MAP_SIZE, (float)MAP_SIZE },
                 (Vector2){ (float)MAP_SIZE/2.0f, (float)MAP_SIZE/2.0f },
                 0.0,
@@ -126,8 +126,8 @@ int main(void)
     EndTextureMode();
 
     // NOTE: To enable trilinear filtering we need mipmaps available for texture
-    GenTextureMipmaps(&lightmap.texture);
-    SetTextureFilter(lightmap.texture, TEXTURE_FILTER_TRILINEAR);
+    GenTextureMipmaps(&rtLightmap.texture);
+    SetTextureFilter(rtLightmap.texture, TEXTURE_FILTER_TRILINEAR);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ int main(void)
                 DrawMesh(mesh, material, MatrixIdentity());
             EndMode3D();
 
-            DrawTexturePro(lightmap.texture, (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
+            DrawTexturePro(rtLightmap.texture, (Rectangle){ 0, 0, -MAP_SIZE, -MAP_SIZE },
                 (Rectangle){ (float)GetRenderWidth() - MAP_SIZE*8 - 10, 10, (float)MAP_SIZE*8, (float)MAP_SIZE*8 },
                 (Vector2){ 0.0, 0.0 }, 0.0, WHITE);
 
@@ -166,9 +166,9 @@ int main(void)
     //--------------------------------------------------------------------------------------
     UnloadMesh(mesh);       // Unload the mesh
     UnloadShader(shader);   // Unload shader
-    UnloadTexture(texture); // Unload texture
-    UnloadTexture(light);   // Unload texture
-    UnloadRenderTexture(lightmap); // Unload lightmap render texture
+    UnloadTexture(texCubicmap); // Unload texture
+    UnloadTexture(texLight);   // Unload texture
+    UnloadRenderTexture(rtLightmap); // Unload lightmap render texture
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -19,7 +19,6 @@
 ********************************************************************************************/
 
 #include "raylib.h"
-#include "raymath.h"
 
 #define PLAYER_SIZE 40
 
@@ -40,21 +39,21 @@ int main(void)
 
     Camera2D camera1 = { 0 };
     camera1.target = (Vector2){ player1.x, player1.y };
-    camera1.offset = Vector2Multiply((Vector2){ 200.0f, 200.0f }, GetWindowScaleDPI());
+    camera1.offset = (Vector2){ 200.0f, 200.0f };
     camera1.rotation = 0.0f;
     camera1.zoom = 1.0f;
 
     Camera2D camera2 = { 0 };
     camera2.target = (Vector2){ player2.x, player2.y };
-    camera2.offset = Vector2Multiply((Vector2){ 200.0f, 200.0f }, GetWindowScaleDPI());
+    camera2.offset = (Vector2){ 200.0f, 200.0f };
     camera2.rotation = 0.0f;
     camera2.zoom = 1.0f;
 
-    RenderTexture screenCamera1 = LoadRenderTexture(screenWidth/2, screenHeight);
-    RenderTexture screenCamera2 = LoadRenderTexture(screenWidth/2, screenHeight);
+    RenderTexture2D rtScreenCamera1 = LoadRenderTexture(screenWidth/2, screenHeight);
+    RenderTexture2D rtScreenCamera2 = LoadRenderTexture(screenWidth/2, screenHeight);
 
     // Build a flipped rectangle the size of the split view to use for drawing later
-    Rectangle splitScreenRect = { 0.0f, 0.0f, (float)screenCamera1.texture.width, (float)-screenCamera1.texture.height };
+    Rectangle recSplitScreen = { 0.0f, 0.0f, (float)rtScreenCamera1.texture.width, (float)-rtScreenCamera1.texture.height };
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -80,7 +79,7 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginTextureMode(screenCamera1);
+        BeginTextureMode(rtScreenCamera1);
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera1);
@@ -113,7 +112,7 @@ int main(void)
 
         EndTextureMode();
 
-        BeginTextureMode(screenCamera2);
+        BeginTextureMode(rtScreenCamera2);
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera2);
@@ -151,8 +150,8 @@ int main(void)
         BeginDrawing();
             ClearBackground(BLACK);
 
-            DrawTextureRec(screenCamera1.texture, splitScreenRect, (Vector2){ 0, 0 }, WHITE);
-            DrawTextureRec(screenCamera2.texture, splitScreenRect, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
+            DrawTextureRec(rtScreenCamera1.texture, recSplitScreen, (Vector2){ 0, 0 }, WHITE);
+            DrawTextureRec(rtScreenCamera2.texture, recSplitScreen, (Vector2){ screenWidth/2.0f, 0 }, WHITE);
 
             DrawRectangle(GetScreenWidth()/2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
         EndDrawing();
@@ -160,8 +159,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(screenCamera1); // Unload render texture
-    UnloadRenderTexture(screenCamera2); // Unload render texture
+    UnloadRenderTexture(rtScreenCamera1); // Unload render texture
+    UnloadRenderTexture(rtScreenCamera2); // Unload render texture
 
     CloseWindow();                      // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -2453,6 +2453,12 @@
      (description "Get clipboard text content")
      (return-type "const char *"))
 
+    ((name "SetClipboardImage")
+     (description "Set clipboard image content")
+     (return-type "bool")
+     (params
+       ((type "Image") (name "image"))))
+
     ((name "GetClipboardImage")
      (description "Get clipboard image content")
      (return-type "Image"))

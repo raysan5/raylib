@@ -555,12 +555,22 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "Clipboard image retrieving not implemented");
 
     return image;
 }
@@ -1107,8 +1117,9 @@ void PollInputEvents(void)
     if (!platform.eventKeyboardMode) ProcessKeyboard();
 #endif
 
-    // Check exit key
-    if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1) CORE.Window.shouldClose = true;
+    // Check exit key, KEY_NULL disables it
+    if ((CORE.Input.Keyboard.exitKey != KEY_NULL) &&
+        (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] == 1)) CORE.Window.shouldClose = true;
 
     // Register previous mouse position
     if (platform.cursorRelative) CORE.Input.Mouse.currentPosition = (Vector2){ 0.0f, 0.0f };
@@ -1665,6 +1676,30 @@ int InitPlatform(void)
 // Close platform
 void ClosePlatform(void)
 {
+#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    // Close surface, context and display
+    // NOTE: EGL must be released before the GBM surface and device it was created on
+    if (platform.device != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(platform.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+        if (platform.surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(platform.device, platform.surface);
+            platform.surface = EGL_NO_SURFACE;
+        }
+
+        if (platform.context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(platform.device, platform.context);
+            platform.context = EGL_NO_CONTEXT;
+        }
+
+        eglTerminate(platform.device);
+        platform.device = EGL_NO_DISPLAY;
+    }
+#endif
+
     if (platform.prevFB)
     {
         drmModeRmFB(platform.fd, platform.prevFB);
@@ -1711,27 +1746,6 @@ void ClosePlatform(void)
         platform.fd = -1;
     }
 
-#if !defined(GRAPHICS_API_OPENGL_SOFTWARE)
-    // Close surface, context and display
-    if (platform.device != EGL_NO_DISPLAY)
-    {
-        if (platform.surface != EGL_NO_SURFACE)
-        {
-            eglDestroySurface(platform.device, platform.surface);
-            platform.surface = EGL_NO_SURFACE;
-        }
-
-        if (platform.context != EGL_NO_CONTEXT)
-        {
-            eglDestroyContext(platform.device, platform.context);
-            platform.context = EGL_NO_CONTEXT;
-        }
-
-        eglTerminate(platform.device);
-        platform.device = EGL_NO_DISPLAY;
-    }
-#endif
-
     CORE.Window.shouldClose = true; // Added to force threads to exit when the close window is called
 
     // Close the evdev devices
@@ -1752,6 +1766,12 @@ void ClosePlatform(void)
         close(platform.keyboardFd);
         platform.keyboardFd = -1;
     }
+
+#if SUPPORT_SSH_KEYBOARD_RPI
+    // Restore the terminal now, not only at exit: InitKeyboard() of a later InitWindow()
+    // would otherwise save the modified settings as the ones to restore
+    RestoreKeyboard();
+#endif
 }
 
 #if SUPPORT_SSH_KEYBOARD_RPI
@@ -1838,8 +1858,14 @@ static void ProcessKeyboard(void)
         // Up -> 1b 5b 41 / Left -> 1b 5b 44 / Right -> 1b 5b 43 / Down -> 1b 5b 42
         if (keysBuffer[i] == 0x1b)
         {
-            // Check if ESCAPE key has been pressed to stop program
-            if (bufferByteCount == 1) CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey] = 1;
+            // A single ESC byte is the ESCAPE key, it only stops the program if it is the exit key
+            if (bufferByteCount == 1)
+            {
+                CORE.Input.Keyboard.currentKeyState[256] = 1;    // raylib KEY_ESCAPE
+
+                CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = 256;     // Add keys pressed into queue
+                CORE.Input.Keyboard.keyPressedQueueCount++;
+            }
             else
             {
                 if (keysBuffer[i + 1] == 0x5b) // Special function key

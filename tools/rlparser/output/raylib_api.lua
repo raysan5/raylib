@@ -3428,6 +3428,14 @@ return {
       returnType = "const char *"
     },
     {
+      name = "SetClipboardImage",
+      description = "Set clipboard image content",
+      returnType = "bool",
+      params = {
+        {type = "Image", name = "image"}
+      }
+    },
+    {
       name = "GetClipboardImage",
       description = "Get clipboard image content",
       returnType = "Image"

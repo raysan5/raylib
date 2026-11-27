@@ -106,22 +106,22 @@ int main(void)
     SetShaderValue(shdrGameOfLife, resolutionLoc, resolution, SHADER_UNIFORM_VEC2);
 
     // Define two textures: the current world and the previous world
-    RenderTexture2D world1 = LoadRenderTexture(worldWidth, worldHeight);
-    RenderTexture2D world2 = LoadRenderTexture(worldWidth, worldHeight);
-    BeginTextureMode(world2);
+    RenderTexture2D rtWorld1 = LoadRenderTexture(worldWidth, worldHeight);
+    RenderTexture2D rtWorld2 = LoadRenderTexture(worldWidth, worldHeight);
+    BeginTextureMode(rtWorld2);
         ClearBackground(RAYWHITE);
     EndTextureMode();
 
-    Image startPattern = LoadImage("resources/game_of_life/r_pentomino.png");
-    UpdateTextureRec(world2.texture, (Rectangle){ worldWidth/2.0f, worldHeight/2.0f, (float)(startPattern.width), (float)(startPattern.height) }, startPattern.data);
-    UnloadImage(startPattern);
+    Image imPentomino = LoadImage("resources/game_of_life/r_pentomino.png");
+    UpdateTextureRec(rtWorld2.texture, (Rectangle){ worldWidth/2.0f, worldHeight/2.0f, (float)(imPentomino.width), (float)(imPentomino.height) }, imPentomino.data);
+    UnloadImage(imPentomino);
 
     // Pointers to the two textures, to be swapped
-    RenderTexture2D *currentWorld = &world2;
-    RenderTexture2D *previousWorld = &world1;
+    RenderTexture2D *rtWorldCurrentPtr = &rtWorld2;
+    RenderTexture2D *rtWorldPreviousPtr = &rtWorld1;
 
     // Image to be used in DRAW mode, to be changed with mouse input
-    Image *imageToDraw = NULL;
+    Image *imToDrawPtr = NULL;
 
     SetTargetFPS(60);               // Set at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ int main(void)
         float mouseWheelMove = GetMouseWheelMove();
         if (buttonZoomIn || (buttonZomOut && (zoom > 1)) || (mouseWheelMove != 0.0f))
         {
-            FreeImageToDraw(&imageToDraw);  // Zoom change: free the image to draw to be recreated again
+            FreeImageToDraw(&imToDrawPtr);  // Zoom change: free the image to draw to be recreated again
 
             const float centerX = offsetX + (windowWidth/2.0f)/zoom;
             const float centerY = offsetY + (windowHeight/2.0f)/zoom;
@@ -154,7 +154,7 @@ int main(void)
         // Mouse management
         if ((mode == MODE_RUN) || (mode == MODE_PAUSE))
         {
-            FreeImageToDraw(&imageToDraw);  // Free the image to draw: no longer needed in these modes
+            FreeImageToDraw(&imToDrawPtr);  // Free the image to draw: no longer needed in these modes
 
             // Pan with mouse left button
             static Vector2 previousMousePosition = { 0.0f, 0.0f };
@@ -176,15 +176,15 @@ int main(void)
             if (offsetY + sizeInWorldY >= worldHeight) sizeInWorldY = worldHeight - (int)floorf(offsetY);
 
             // Create image to draw if not created yet
-            if (imageToDraw == NULL)
+            if (imToDrawPtr == NULL)
             {
                 RenderTexture2D worldOnScreen = LoadRenderTexture(sizeInWorldX, sizeInWorldY);
                 BeginTextureMode(worldOnScreen);
-                    DrawTexturePro(currentWorld->texture, (Rectangle) { floorf(offsetX), floorf(offsetY), (float)(sizeInWorldX), -(float)(sizeInWorldY) },
+                    DrawTexturePro(rtWorldCurrentPtr->texture, (Rectangle) { floorf(offsetX), floorf(offsetY), (float)(sizeInWorldX), -(float)(sizeInWorldY) },
                             (Rectangle) { 0, 0, (float)(sizeInWorldX), (float)(sizeInWorldY) }, (Vector2) { 0, 0 }, 0.0f, WHITE);
                 EndTextureMode();
-                imageToDraw = (Image*)RL_MALLOC(sizeof(Image));
-                *imageToDraw = LoadImageFromTexture(worldOnScreen.texture);
+                imToDrawPtr = (Image*)RL_MALLOC(sizeof(Image));
+                *imToDrawPtr = LoadImageFromTexture(worldOnScreen.texture);
 
                 UnloadRenderTexture(worldOnScreen);
             }
@@ -197,12 +197,12 @@ int main(void)
                 int mouseY = (int)(mousePosition.y + offsetDecimalY*zoom)/zoom;
                 if (mouseX >= sizeInWorldX) mouseX = sizeInWorldX - 1;
                 if (mouseY >= sizeInWorldY) mouseY = sizeInWorldY - 1;
-                if (firstColor == -1) firstColor = (GetImageColor(*imageToDraw, mouseX, mouseY).r < 5)? 0 : 1;
-                const int prevColor = (GetImageColor(*imageToDraw, mouseX, mouseY).r < 5)? 0 : 1;
+                if (firstColor == -1) firstColor = (GetImageColor(*imToDrawPtr, mouseX, mouseY).r < 5)? 0 : 1;
+                const int prevColor = (GetImageColor(*imToDrawPtr, mouseX, mouseY).r < 5)? 0 : 1;
 
-                ImageDrawPixel(imageToDraw, mouseX, mouseY, (firstColor) ? BLACK : RAYWHITE);
+                ImageDrawPixel(imToDrawPtr, mouseX, mouseY, (firstColor) ? BLACK : RAYWHITE);
 
-                if (prevColor != firstColor) UpdateTextureRec(currentWorld->texture, (Rectangle){ floorf(offsetX), floorf(offsetY), (float)(sizeInWorldX), (float)(sizeInWorldY) }, imageToDraw->data);
+                if (prevColor != firstColor) UpdateTextureRec(rtWorldCurrentPtr->texture, (Rectangle){ floorf(offsetX), floorf(offsetY), (float)(sizeInWorldX), (float)(sizeInWorldY) }, imToDrawPtr->data);
             }
             else firstColor = -1;
         }
@@ -225,11 +225,11 @@ int main(void)
                     case 7: pattern = LoadImage("resources/game_of_life/glider_gun.png"); break;
                     case 8: pattern = LoadImage("resources/game_of_life/breeder.png"); break;
                 }
-                BeginTextureMode(*currentWorld);
+                BeginTextureMode(*rtWorldCurrentPtr);
                     ClearBackground(RAYWHITE);
                 EndTextureMode();
 
-                UpdateTextureRec(currentWorld->texture, (Rectangle){ worldWidth*presetPatterns[preset].position.x - pattern.width/2.0f,
+                UpdateTextureRec(rtWorldCurrentPtr->texture, (Rectangle){ worldWidth*presetPatterns[preset].position.x - pattern.width/2.0f,
                                                                      worldHeight*presetPatterns[preset].position.y - pattern.height/2.0f,
                                                                      (float)(pattern.width), (float)(pattern.height) }, pattern.data);
             }
@@ -248,7 +248,7 @@ int main(void)
                                 if (GetRandomValue(0, 100) < 15) ImageDrawPixel(&pattern, x, y, BLACK);
                             }
                         }
-                        UpdateTextureRec(currentWorld->texture,
+                        UpdateTextureRec(rtWorldCurrentPtr->texture,
                                          (Rectangle){ (float)(pattern.width*i), (float)(pattern.height*j),
                                                       (float)(pattern.width), (float)(pattern.height) }, pattern.data);
                     }
@@ -277,14 +277,14 @@ int main(void)
         if ((mode == MODE_RUN) && ((frame%framesPerStep) == 0))
         {
             // Swap worlds
-            RenderTexture2D *tempWorld = currentWorld;
-            currentWorld = previousWorld;
-            previousWorld = tempWorld;
+            RenderTexture2D *tempWorld = rtWorldCurrentPtr;
+            rtWorldCurrentPtr = rtWorldPreviousPtr;
+            rtWorldPreviousPtr = tempWorld;
 
             // Draw to texture
-            BeginTextureMode(*currentWorld);
+            BeginTextureMode(*rtWorldCurrentPtr);
                 BeginShaderMode(shdrGameOfLife);
-                    DrawTexturePro(previousWorld->texture, worldRectSource, worldRectDest, (Vector2){ 0, 0 }, 0.0f, RAYWHITE);
+                    DrawTexturePro(rtWorldPreviousPtr->texture, worldRectSource, worldRectDest, (Vector2){ 0, 0 }, 0.0f, RAYWHITE);
                 EndShaderMode();
             EndTextureMode();
         }
@@ -294,7 +294,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            DrawTexturePro(currentWorld->texture, textureSourceToScreen, textureOnScreen, (Vector2){ 0, 0 }, 0.0f, WHITE);
+            DrawTexturePro(rtWorldCurrentPtr->texture, textureSourceToScreen, textureOnScreen, (Vector2){ 0, 0 }, 0.0f, WHITE);
 
             DrawLine(windowWidth, 0, windowWidth, screenHeight, (Color){ 218, 218, 218, 255 });
             DrawRectangle(windowWidth, 0, screenWidth - windowWidth, screenHeight, (Color){ 232, 232, 232, 255 });
@@ -328,10 +328,10 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadShader(shdrGameOfLife);
-    UnloadRenderTexture(world1);
-    UnloadRenderTexture(world2);
+    UnloadRenderTexture(rtWorld1);
+    UnloadRenderTexture(rtWorld2);
 
-    FreeImageToDraw(&imageToDraw);
+    FreeImageToDraw(&imToDrawPtr);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -63,11 +63,11 @@ int main(void)
     float magicCircleRotation = 0;
 
     // Used on performance drawing
-    RenderTexture bulletTexture = LoadRenderTexture(24, 24);
+    RenderTexture2D rtBullet = LoadRenderTexture(24, 24);
 
     // Draw circle to bullet texture, then draw bullet using DrawTexture()
     // NOTE: This is done to improve the performance, since DrawCircle() is very slow
-    BeginTextureMode(bulletTexture);
+    BeginTextureMode(rtBullet);
         DrawCircle(12, 12, (float)bulletRadius, WHITE);
         DrawCircleLines(12, 12, (float)bulletRadius, BLACK);
     EndTextureMode();
@@ -191,9 +191,9 @@ int main(void)
                     // Do not draw disabled bullets (out of screen)
                     if (!bullets[i].disabled)
                     {
-                        DrawTexture(bulletTexture.texture,
-                            (int)(bullets[i].position.x - bulletTexture.texture.width*0.5f),
-                            (int)(bullets[i].position.y - bulletTexture.texture.height*0.5f),
+                        DrawTexture(rtBullet.texture,
+                            (int)(bullets[i].position.x - rtBullet.texture.width*0.5f),
+                            (int)(bullets[i].position.y - rtBullet.texture.height*0.5f),
                             bullets[i].color);
                     }
                 }
@@ -237,7 +237,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(bulletTexture); // Unload bullet texture
+    UnloadRenderTexture(rtBullet); // Unload bullet texture
 
     RL_FREE(bullets);     // Free bullets array data
 

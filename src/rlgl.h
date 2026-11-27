@@ -1079,7 +1079,6 @@ typedef struct rlglData {
 
         int framebufferWidth;               // Current framebuffer width
         int framebufferHeight;              // Current framebuffer height
-
     } State;            // Renderer state
     struct {
         bool vao;                           // VAO support (OpenGL ES2 could not support VAO extension) (GL_ARB_vertex_array_object)
@@ -1101,7 +1100,6 @@ typedef struct rlglData {
 
         float maxAnisotropyLevel;           // Maximum anisotropy level supported (minimum is 2.0f)
         int maxDepthBits;                   // Maximum bits for depth component
-
     } ExtSupported;     // Extensions supported flags
 } rlglData;
 
@@ -1515,7 +1513,7 @@ void rlVertex3f(float x, float y, float z)
             (RLGL.currentBatch->draws[RLGL.currentBatch->drawCounter - 1].vertexCount%2 == 0))
         {
             // Reached the maximum number of vertices for RL_LINES drawing
-            // Launch a draw call but keep current state for next vertices comming
+            // Launch a draw call but keep current state for next vertices coming
             // NOTE: Adding +1 vertex to the check for some safety
             rlCheckRenderBatchLimit(2 + 1);
         }
@@ -3756,7 +3754,7 @@ void *rlReadTexturePixels(unsigned int id, int width, int height, int format)
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 #else
     // Reading data as original texture format, in some platforms (RPI, Wasm) it works
-    pixels = (unsigned char *)RL_MALLOC(rlGetPixelDataSize(width, height, format));
+    pixels = (unsigned char *)RL_CALLOC(rlGetPixelDataSize(width, height, format), 1);
     unsigned int glInternalFormat = 0, glFormat = 0, glType = 0;
     rlGetGlTextureFormats(format, &glInternalFormat, &glFormat, &glType);
     glReadPixels(0, 0, width, height, glFormat, glType, pixels);
@@ -3919,7 +3917,7 @@ bool rlFramebufferComplete(unsigned int id)
 }
 
 // Unload framebuffer from GPU memory
-// NOTE: All attached textures/cubemaps/renderbuffers are also deleted
+// WARNING: All attached depth-textures/renderbuffers are also deleted
 void rlUnloadFramebuffer(unsigned int id)
 {
 #if (defined(GRAPHICS_API_OPENGL_33) || defined(GRAPHICS_API_OPENGL_ES2) || defined(GRAPHICS_API_OPENGL_SOFTWARE))

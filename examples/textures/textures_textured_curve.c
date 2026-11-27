@@ -26,7 +26,7 @@
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static Texture texRoad = { 0 };
+static Texture2D texRoad = { 0 };
 
 static bool showCurve = false;
 

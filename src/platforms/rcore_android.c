@@ -50,9 +50,18 @@
 //#include <android/sensor.h>           // Required for: Android sensors functions (accelerometer, gyroscope, light...)
 
 #include <errno.h>                      // Required for: error types
-#include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL() and GetCurrentMonitor()]
+#include <jni.h>                        // Required for: JNIEnv and JavaVM [Used in OpenURL(), GetCurrentMonitor(), SetClipboardText(), GetClipboardText()]
 
 #include <EGL/egl.h>                    // Native platform windowing system interface
+
+#include <stdio.h>                      // Required for: NULL
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#ifndef MAX_CLIPBOARD_BUFFER_LENGTH
+    #define MAX_CLIPBOARD_BUFFER_LENGTH     1024
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -583,17 +592,128 @@ Vector2 GetWindowScaleDPI(void)
 }
 
 // Set clipboard text content
+// REF: https://stackoverflow.com/questions/76759222/how-to-copy-to-clipboard-on-android-via-jni
 void SetClipboardText(const char *text)
 {
-    TRACELOG(LOG_WARNING, "SetClipboardText() not implemented on target platform");
+    JNIEnv *env = NULL;
+    JavaVM *vm = platform.app->activity->vm;
+    
+    jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
+    if (result != JNI_OK)
+    {
+        TRACELOG(LOG_WARNING, "Failed to allocate a thread to set the clipboard text");
+        return;
+    }
+    
+    jobject activity = platform.app->activity->clazz;
+    if (!activity)
+    {
+        TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
+        (*vm)->DetachCurrentThread(vm);
+        return;
+    }
+
+    // ClipboardManager
+    jclass activityClass = (*env)->GetObjectClass(env, activity);
+    jmethodID getSystemService = (*env)->GetMethodID(env, activityClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jstring serviceName = (*env)->NewStringUTF(env, "clipboard");
+    jobject clipboard = (*env)->CallObjectMethod(env, activity, getSystemService, serviceName);
+
+    // ClipData
+    jclass clipDataClass = (*env)->FindClass(env, "android/content/ClipData");
+    jmethodID newPlainText = (*env)->GetStaticMethodID(env, clipDataClass, "newPlainText", "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;");
+    const char *windowTitle = (CORE.Window.title != NULL) ? CORE.Window.title : "raylib";
+    jstring label = (*env)->NewStringUTF(env, windowTitle);
+    jstring textString = (*env)->NewStringUTF(env, text);
+    jobject clip = (*env)->CallStaticObjectMethod(env, clipDataClass, newPlainText, label, textString);
+
+    // cm.setPrimaryClip(clip)
+    jclass clipboardClass = (*env)->FindClass(env, "android/content/ClipboardManager");
+    jmethodID setPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "setPrimaryClip", "(Landroid/content/ClipData;)V");
+    (*env)->CallVoidMethod(env, clipboard, setPrimaryClip, clip);
+
+    (*vm)->DetachCurrentThread(vm);
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
-    TRACELOG(LOG_WARNING, "GetClipboardText() not implemented on target platform");
-    return NULL;
+    static char buffer[MAX_CLIPBOARD_BUFFER_LENGTH] = { 0 };
+    
+    JNIEnv *env = NULL;
+    JavaVM *vm = platform.app->activity->vm;
+    
+    jint result = (*vm)->AttachCurrentThread(vm, &env, NULL);
+    if (result != JNI_OK)
+    {
+        TRACELOG(LOG_WARNING, "Failed to allocate a thread to get the clipboard text");
+        return NULL;
+    }
+    
+    jobject activity = platform.app->activity->clazz;
+    if (!activity)
+    {
+        TRACELOG(LOG_WARNING, "Failed to get Android activity class reference");
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    
+    // Get clipboard manager service
+    jclass activityClass = (*env)->GetObjectClass(env, activity);
+    jmethodID getSystemService = (*env)->GetMethodID(env, activityClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+    jstring serviceName = (*env)->NewStringUTF(env, "clipboard");
+    jobject clipboard = (*env)->CallObjectMethod(env, activity, getSystemService, serviceName);
+
+    // ClipData
+    jclass clipboardClass = (*env)->GetObjectClass(env, clipboard);
+    jmethodID getPrimaryClip = (*env)->GetMethodID(env, clipboardClass, "getPrimaryClip", "()Landroid/content/ClipData;");
+    jobject clip = (*env)->CallObjectMethod(env, clipboard, getPrimaryClip);
+    if (!clip)
+    {
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    
+    // ClipData.Item
+    jclass clipClass = (*env)->GetObjectClass(env, clip);
+    jmethodID getItemAt = (*env)->GetMethodID(env, clipClass, "getItemAt", "(I)Landroid/content/ClipData$Item;");
+    jobject item = (*env)->CallObjectMethod(env, clip, getItemAt, 0);
+
+    jclass itemClass = (*env)->GetObjectClass(env, item);
+    jmethodID getText = (*env)->GetMethodID(env, itemClass, "getText", "()Ljava/lang/CharSequence;");
+    jobject text = (*env)->CallObjectMethod(env, item, getText);
+    if (!text)
+    {
+        (*vm)->DetachCurrentThread(vm);
+        return NULL;
+    }
+    
+    jclass charSequenceClass = (*env)->FindClass(env, "java/lang/CharSequence");
+    jmethodID toString = (*env)->GetMethodID(env, charSequenceClass, "toString", "()Ljava/lang/String;");
+    jstring string = (jstring)(*env)->CallObjectMethod(env, text, toString);
+
+    const char *chars = (*env)->GetStringUTFChars(env, string, NULL);
+    int clipboardSize = snprintf(buffer, MAX_CLIPBOARD_BUFFER_LENGTH, "%s", chars);
+    if (clipboardSize >= MAX_CLIPBOARD_BUFFER_LENGTH)
+    {
+        char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
+        sprintf(truncate, "...");
+    }
+    
+    (*env)->ReleaseStringUTFChars(env, string, chars);
+    (*vm)->DetachCurrentThread(vm);
+    
+    return buffer;
+}
+
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
 }
 
 // Get clipboard image
@@ -601,7 +721,7 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
+    TRACELOG(LOG_WARNING, "Clipboard image retrieving not implemented");
 
     return image;
 }

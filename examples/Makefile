@@ -323,7 +323,7 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         LDFLAGS += -Lsrc -L$(RAYLIB_LIB_PATH)
     endif
 	ifeq ($(PLATFORM_OS),OSX)
-		LDFLAGS += -L/opt/homebrew/lib -L$(RAYLIB_LIB_PATH)
+		LDFLAGS += -L$(RAYLIB_LIB_PATH)
 	endif
 endif
 ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_SDL)

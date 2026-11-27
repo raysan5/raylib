@@ -168,6 +168,17 @@ extern "C" {
     #undef Size
 #endif
 
+#if defined(_WIN32)
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
+    #define WINUSER_ALREADY_INCLUDED
+    #define WINBASE_ALREADY_INCLUDED
+    #define WINGDI_ALREADY_INCLUDED
+    #include "../external/win32_clipboard.h"
+#elif defined(__linux__) && defined(DRGFW_X11)
+    #include <X11/Xlib.h>
+    #include <X11/Xatom.h>
+#endif
+
 #include <stdbool.h>
 
 //----------------------------------------------------------------------------------
@@ -576,7 +587,7 @@ static void RGFW_cb_windowresizefunc(const RGFW_event *e)
         if (platform.surfacePixels != NULL)
         {
             RL_FREE(platform.surfacePixels);
-            platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
+            platform.surfacePixels = RL_CALLOC(platform.surfaceWidth*platform.surfaceHeight*4, 1);
         }
 
         if (platform.surface != NULL)
@@ -735,7 +746,7 @@ static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
 
         CORE.Input.Keyboard.currentKeyState[key] = 1;
 
-        if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) RGFW_window_setShouldClose(platform.window, true);
+        if ((key == CORE.Input.Keyboard.exitKey) && !e->repeat) RGFW_window_setShouldClose(platform.window, true);
     }
     else
     {
@@ -1244,34 +1255,41 @@ const char *GetMonitorName(int monitor)
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    if (platform.window == NULL)
+    Vector2 position = { 0 };
+    
+    if (platform.window != NULL)
     {
-        return (Vector2){ 0.0f, 0.0f };
+        int result = RGFW_window_getPosition(platform.window, &platform.window->x, &platform.window->y);
+        
+        if (result != 0)
+        {
+            position.x = (float)platform.window->x;
+            position.y = (float)platform.window->y;
+        }
     }
 
-    if (RGFW_window_getPosition(platform.window, &platform.window->x, &platform.window->y)) {
-        return (Vector2){ (float)platform.window->x, (float)platform.window->y };
-    }
-
-    return (Vector2){ 0.0f, 0.0f };
+    return position;
 }
 
 // Get window scale DPI factor for current monitor
 Vector2 GetWindowScaleDPI(void)
 {
+    Vector2 scaleDPI = { 0 };
     RGFW_monitor *monitor = NULL;
 
     if (platform.window) monitor = RGFW_window_getMonitor(platform.window);
     else monitor = RGFW_getPrimaryMonitor();
 
-    #if defined(__APPLE__)
-        // Apple does < 1.0f scaling, example: 0.66f, 0.5f
-        // it needs to be convert to be consistent
-        return (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
-    #else
-        // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
-        return (Vector2){ monitor->scaleX, monitor->scaleX };
-    #endif
+#if defined(__APPLE__)
+    // Apple does < 1.0f scaling, example: 0.66f, 0.5f
+    // it needs to be convert to be consistent
+    scaleDPI = (Vector2){ 1.0f/monitor->scaleX, 1.0f/monitor->scaleX };
+#else
+    // Linux and Windows do >= 1.0f scaling, example: 1.0f, 1.25f, 2.0f
+    scaleDPI = (Vector2){ monitor->scaleX, monitor->scaleX };
+#endif
+    
+    return scaleDPI;
 }
 
 // Get monitor pixel ratio
@@ -1300,27 +1318,17 @@ const char *GetClipboardText(void)
     return RGFW_readClipboard(NULL);
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE
-#if defined(_WIN32)
-    #define WIN32_CLIPBOARD_IMPLEMENTATION
-    #define WINUSER_ALREADY_INCLUDED
-    #define WINBASE_ALREADY_INCLUDED
-    #define WINGDI_ALREADY_INCLUDED
-    #include "../external/win32_clipboard.h"
-#elif defined(__linux__) && defined(DRGFW_X11)
-    #include <X11/Xlib.h>
-    #include <X11/Xatom.h>
-#endif
-#endif
-
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-#if defined(_WIN32)
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
 
+#if defined(_WIN32)
     unsigned int dataSize = 0;
     void *fileData = NULL;
 
@@ -1332,12 +1340,9 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char *)fileData, (int)dataSize);
-
         RL_FREE(fileData);
     }
-
 #elif defined(__linux__) && defined(DRGFW_X11)
-
     // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
     Display *dpy = XOpenDisplay(NULL);
     if (!dpy) return image;
@@ -1383,11 +1388,8 @@ Image GetClipboardImage(void)
     XDestroyWindow(dpy, win);
     XCloseDisplay(dpy);
 #else
-    TRACELOG(LOG_WARNING, "Clipboard image: PLATFORM_DESKTOP_RGFW doesn't implement GetClipboardImage() for this OS");
-#endif // _WIN32
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_CLIPBOARD_IMAGE
+    TRACELOG(LOG_WARNING, "Clipboard image not implemented on target platform");
+#endif
 
     return image;
 }
@@ -1600,6 +1602,8 @@ void PollInputEvents(void)
     // Poll input events for current platform
     //-----------------------------------------------------------------------------
     CORE.Window.resizedLastFrame = false;
+    CORE.Window.shouldClose = false;
+    RGFW_window_setShouldClose(platform.window, false);
 
     CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
     if (RGFW_window_isCaptured(platform.window))
@@ -1651,7 +1655,8 @@ void PollInputEvents(void)
             {
                 int axis = mg_axisConvertTable[gamepad_event.axis];
 
-                switch (axis) {
+                switch (axis)
+                {
                     case GAMEPAD_AXIS_LEFT_X:
                     case GAMEPAD_AXIS_LEFT_Y:
                     case GAMEPAD_AXIS_RIGHT_X:
@@ -1852,7 +1857,8 @@ int InitPlatform(void)
     CORE.Window.currentFbo.height = CORE.Window.render.height;
 
     // adjust scale if using highdpi
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)) {
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
+    {
         Vector2 scaleDpi = GetWindowScaleDPI();
 
         #if defined(__APPLE__)
@@ -1885,13 +1891,7 @@ int InitPlatform(void)
 
         platform.surfaceWidth = CORE.Window.currentFbo.width;
         platform.surfaceHeight = CORE.Window.currentFbo.height;
-
-        platform.surfacePixels = RL_MALLOC(platform.surfaceWidth*platform.surfaceHeight*4);
-        if (platform.surfacePixels == NULL)
-        {
-            TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize software pixel buffer");
-            return -1;
-        }
+        platform.surfacePixels = RL_CALLOC(platform.surfaceWidth*platform.surfaceHeight*4, 1);
 
         platform.surface = RGFW_window_createSurface(platform.window, platform.surfacePixels, platform.surfaceWidth, platform.surfaceHeight, RGFW_formatBGRA8);
 
@@ -2037,8 +2037,8 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
     return (KeyboardKey)RGFW_keyConvertTable[keycode];
 }
 
-// assign mouse to touches
-// 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+// Assign mouse input events to touches
+// NOTE: 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
 void RemapMouseToTouch(int touchAction)
 {
     #if SUPPORT_GESTURES_SYSTEM

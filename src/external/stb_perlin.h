@@ -1,4 +1,4 @@
-// stb_perlin.h - v0.5 - perlin noise
+// stb_perlin.h - v0.6 - perlin noise
 // public domain single-file C implementation by Sean Barrett
 //
 // LICENSE
@@ -35,15 +35,42 @@
 // float  stb_perlin_noise3_seed( float x,
 //                                float y,
 //                                float z,
-//                                int   x_wrap=0,
-//                                int   y_wrap=0,
-//                                int   z_wrap=0,
+//                                int   x_wrap,
+//                                int   y_wrap,
+//                                int   z_wrap,
 //                                int   seed)
 //
 // As above, but 'seed' selects from multiple different variations of the
 // noise function. The current implementation only uses the bottom 8 bits
 // of 'seed', but possibly in the future more bits will be used.
 //
+// float  stb_perlin_noise3_wrap_nonpow2( float x,
+//                                        float y,
+//                                        float z,
+//                                        int   x_wrap,
+//                                        int   y_wrap,
+//                                        int   z_wrap,
+//                                        int   seed)
+//
+// As above, but "wrap" does not need to be a power of 2. NOTE: the result
+// is different from the previous function, even for power-of-2 values. In
+// the current implementation "wrap" outside [1..256] is treated as 256.
+//
+// float  stb_perlin_noise3_derivatives( float x,
+//                                       float y,
+//                                       float z,
+//                                       int   x_wrap,
+//                                       int   y_wrap,
+//                                       int   z_wrap,
+//                                       int   seed,
+//                                       float *dx,
+//                                       float *dy,
+//                                       float *dz)
+//
+// As above (i.e. matches non-power-of-2 version), but also optionally
+// computes partial derivatives and stores them into dx/dy/dz. Any
+// of the 3 pointers can be NULL, in which case computing that
+// derivative is skipped.
 //
 // Fractal Noise:
 //
@@ -71,21 +98,33 @@
 // Contributors:
 //    Jack Mott - additional noise functions
 //    Jordan Peck - seeded noise
+//    github:fp64 - derivatives
 //
 
+#ifndef STB_INCLUDED_STB_PERLIN_H
+#define STB_INCLUDED_STB_PERLIN_H
+
+#if defined(__cplusplus) && (!defined(_MSC_VER) || _MSC_VER > 1400) // VC6 doesn't allow default arguments in extern "C"
+// Only the basic version gets default arguments.
+extern "C" float stb_perlin_noise3(float x, float y, float z, int x_wrap=0, int y_wrap=0, int z_wrap=0);
+#else
+extern     float stb_perlin_noise3(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap);
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern float stb_perlin_noise3(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap);
 extern float stb_perlin_noise3_seed(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, int seed);
+extern float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed);
+extern float stb_perlin_noise3_derivatives(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, int seed, float *dx, float *dy, float *dz);
 extern float stb_perlin_ridge_noise3(float x, float y, float z, float lacunarity, float gain, float offset, int octaves);
 extern float stb_perlin_fbm_noise3(float x, float y, float z, float lacunarity, float gain, int octaves);
 extern float stb_perlin_turbulence_noise3(float x, float y, float z, float lacunarity, float gain, int octaves);
-extern float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed);
 #ifdef __cplusplus
 }
 #endif
+
+#endif // STB_INCLUDED_STB_PERLIN_H
 
 #ifdef STB_PERLIN_IMPLEMENTATION
 
@@ -176,6 +215,21 @@ static unsigned char stb__perlin_randtab_grad_idx[512] =
     9, 0, 11, 5, 10, 3, 2, 3, 5, 9, 7, 9, 8, 4, 6, 5,
 };
 
+static float stb__perlin_basistab[12][4]={
+   {  1, 1, 0 },
+   { -1, 1, 0 },
+   {  1,-1, 0 },
+   { -1,-1, 0 },
+   {  1, 0, 1 },
+   { -1, 0, 1 },
+   {  1, 0,-1 },
+   { -1, 0,-1 },
+   {  0, 1, 1 },
+   {  0,-1, 1 },
+   {  0, 1,-1 },
+   {  0,-1,-1 },
+};
+
 static float stb__perlin_lerp(float a, float b, float t)
 {
    return a + (b-a) * t;
@@ -184,58 +238,34 @@ static float stb__perlin_lerp(float a, float b, float t)
 static int stb__perlin_fastfloor(float a)
 {
     int ai = (int) a;
-    return (a < ai) ? ai-1 : ai;
+    return (a < (float)ai) ? ai-1 : ai;
 }
 
 // different grad function from Perlin's, but easy to modify to match reference
 static float stb__perlin_grad(int grad_idx, float x, float y, float z)
 {
-   static float basis[12][4] =
-   {
-      {  1, 1, 0 },
-      { -1, 1, 0 },
-      {  1,-1, 0 },
-      { -1,-1, 0 },
-      {  1, 0, 1 },
-      { -1, 0, 1 },
-      {  1, 0,-1 },
-      { -1, 0,-1 },
-      {  0, 1, 1 },
-      {  0,-1, 1 },
-      {  0, 1,-1 },
-      {  0,-1,-1 },
-   };
-
-   float *grad = basis[grad_idx];
+   float *grad = stb__perlin_basistab[grad_idx];
    return grad[0]*x + grad[1]*y + grad[2]*z;
 }
 
-float stb_perlin_noise3_internal(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed)
+static float stb__perlin_noise3_impl(int y0, int z0, int y1, int z1, int r0, int r1, float x, float y, float z, float *dx, float *dy, float *dz)
 {
    float u,v,w;
    float n000,n001,n010,n011,n100,n101,n110,n111;
    float n00,n01,n10,n11;
    float n0,n1;
+   float n;
 
-   unsigned int x_mask = (x_wrap-1) & 255;
-   unsigned int y_mask = (y_wrap-1) & 255;
-   unsigned int z_mask = (z_wrap-1) & 255;
-   int px = stb__perlin_fastfloor(x);
-   int py = stb__perlin_fastfloor(y);
-   int pz = stb__perlin_fastfloor(z);
-   int x0 = px & x_mask, x1 = (px+1) & x_mask;
-   int y0 = py & y_mask, y1 = (py+1) & y_mask;
-   int z0 = pz & z_mask, z1 = (pz+1) & z_mask;
-   int r0,r1, r00,r01,r10,r11;
+   int r00,r01,r10,r11;
+   int i;
+   float *out[3]={dx,dy,dz};
 
    #define stb__perlin_ease(a)   (((a*6-15)*a + 10) * a * a * a)
+   #define stb__perlin_dease(a)  (((a*30-60)*a + 30) * a * a)
 
-   x -= px; u = stb__perlin_ease(x);
-   y -= py; v = stb__perlin_ease(y);
-   z -= pz; w = stb__perlin_ease(z);
-
-   r0 = stb__perlin_randtab[x0+seed];
-   r1 = stb__perlin_randtab[x1+seed];
+   u = stb__perlin_ease(x);
+   v = stb__perlin_ease(y);
+   w = stb__perlin_ease(z);
 
    r00 = stb__perlin_randtab[r0+y0];
    r01 = stb__perlin_randtab[r0+y1];
@@ -259,7 +289,122 @@ float stb_perlin_noise3_internal(float x, float y, float z, int x_wrap, int y_wr
    n0 = stb__perlin_lerp(n00,n01,v);
    n1 = stb__perlin_lerp(n10,n11,v);
 
-   return stb__perlin_lerp(n0,n1,u);
+   n = stb__perlin_lerp(n0,n1,u);
+
+   for(i = 0; i < 3; i++)
+   {
+      float d000,d001,d010,d011,d100,d101,d110,d111;
+      float d00,d01,d10,d11;
+      float d0,d1;
+      float d;
+      float t00,t01,t10,t11;
+      float t0,t1;
+      float t;
+      float u0=1.0f-u, v0=1.0f-v, w0=1.0f-w, u1=u, v1=v, w1=w;
+
+      if(out[i] == 0) continue;
+
+      if(i == 0) {u1 = stb__perlin_dease(x); u0 = -u1;}
+      if(i == 1) {v1 = stb__perlin_dease(y); v0 = -v1;}
+      if(i == 2) {w1 = stb__perlin_dease(z); w0 = -w1;}
+
+      d000 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r00+z0]][i];
+      d001 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r00+z1]][i];
+      d010 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r01+z0]][i];
+      d011 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r01+z1]][i];
+      d100 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r10+z0]][i];
+      d101 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r10+z1]][i];
+      d110 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r11+z0]][i];
+      d111 = stb__perlin_basistab[stb__perlin_randtab_grad_idx[r11+z1]][i];
+
+      d00 = stb__perlin_lerp(d000,d001,w);
+      d01 = stb__perlin_lerp(d010,d011,w);
+      d10 = stb__perlin_lerp(d100,d101,w);
+      d11 = stb__perlin_lerp(d110,d111,w);
+
+      d0 = stb__perlin_lerp(d00,d01,v);
+      d1 = stb__perlin_lerp(d10,d11,v);
+
+      d = stb__perlin_lerp(d0,d1,u);
+
+      t00 = n000*w0 + n001*w1;
+      t01 = n010*w0 + n011*w1;
+      t10 = n100*w0 + n101*w1;
+      t11 = n110*w0 + n111*w1;
+
+      t0 = t00*v0 + t01*v1;
+      t1 = t10*v0 + t11*v1;
+
+      t  = t0*u0 + t1*u1;
+
+      *(out[i]) = (d + t);
+   }
+
+   return n;
+}
+
+static float stb_perlin_noise3_internal(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed)
+{
+   int x_mask = (x_wrap-1) & 255;
+   int y_mask = (y_wrap-1) & 255;
+   int z_mask = (z_wrap-1) & 255;
+   int px = stb__perlin_fastfloor(x);
+   int py = stb__perlin_fastfloor(y);
+   int pz = stb__perlin_fastfloor(z);
+   int x0 = px & x_mask, x1 = (px+1) & x_mask;
+   int y0 = py & y_mask, y1 = (py+1) & y_mask;
+   int z0 = pz & z_mask, z1 = (pz+1) & z_mask;
+   int r0,r1;
+   seed &= 255;
+   r0 = stb__perlin_randtab[x0+seed];
+   r1 = stb__perlin_randtab[x1+seed];
+   x -= (float)px;
+   y -= (float)py;
+   z -= (float)pz;
+   return stb__perlin_noise3_impl(y0,z0,y1,z1,r0,r1,x,y,z,0,0,0);
+}
+
+float stb_perlin_noise3_derivatives(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, int seed,float *dx, float *dy, float *dz)
+{
+   int px = stb__perlin_fastfloor(x);
+   int py = stb__perlin_fastfloor(y);
+   int pz = stb__perlin_fastfloor(z);
+   int x0, x1, y0, y1, z0, z1;
+   int r0, r1;
+   x -= (float)px;
+   y -= (float)py;
+   z -= (float)pz;
+   seed &= 255;
+   if(((x_wrap & (x_wrap-1)) | (y_wrap & (y_wrap-1)) | (z_wrap & (z_wrap-1))))
+   {
+      int x_wrap2 = ((x_wrap>0 && x_wrap<256) ? x_wrap : 256);
+      int y_wrap2 = ((y_wrap>0 && y_wrap<256) ? y_wrap : 256);
+      int z_wrap2 = ((z_wrap>0 && z_wrap<256) ? z_wrap : 256);
+      x0 = px % x_wrap2;
+      y0 = py % y_wrap2;
+      z0 = pz % z_wrap2;
+      if (x0 < 0) x0 += x_wrap2;
+      if (y0 < 0) y0 += y_wrap2;
+      if (z0 < 0) z0 += z_wrap2;
+      x1 = (x0+1) % x_wrap2;
+      y1 = (y0+1) % y_wrap2;
+      z1 = (z0+1) % z_wrap2;
+   }
+   else
+   {
+      int x_mask = (x_wrap-1) & 255;
+      int y_mask = (y_wrap-1) & 255;
+      int z_mask = (z_wrap-1) & 255;
+      x0 = px & x_mask; x1 = (px+1) & x_mask;
+      y0 = py & y_mask; y1 = (py+1) & y_mask;
+      z0 = pz & z_mask; z1 = (pz+1) & z_mask;
+   }
+   r0 = stb__perlin_randtab[x0];
+   r0 = stb__perlin_randtab[r0+seed];
+   r1 = stb__perlin_randtab[x1];
+   r1 = stb__perlin_randtab[r1+seed];
+
+   return stb__perlin_noise3_impl(y0,z0,y1,z1,r0,r1,x,y,z,dx,dy,dz);
 }
 
 float stb_perlin_noise3(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap)
@@ -269,7 +414,12 @@ float stb_perlin_noise3(float x, float y, float z, int x_wrap, int y_wrap, int z
 
 float stb_perlin_noise3_seed(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, int seed)
 {
-    return stb_perlin_noise3_internal(x,y,z,x_wrap,y_wrap,z_wrap, (unsigned char) seed);
+    return stb_perlin_noise3_internal(x,y,z,x_wrap,y_wrap,z_wrap,(unsigned char)seed);
+}
+
+float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed)
+{
+   return stb_perlin_noise3_derivatives(x,y,z,x_wrap,y_wrap,z_wrap,(int)seed,0,0,0);
 }
 
 float stb_perlin_ridge_noise3(float x, float y, float z, float lacunarity, float gain, float offset, int octaves)
@@ -321,67 +471,6 @@ float stb_perlin_turbulence_noise3(float x, float y, float z, float lacunarity, 
       amplitude *= gain;
    }
    return sum;
-}
-
-float stb_perlin_noise3_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed)
-{
-   float u,v,w;
-   float n000,n001,n010,n011,n100,n101,n110,n111;
-   float n00,n01,n10,n11;
-   float n0,n1;
-
-   int px = stb__perlin_fastfloor(x);
-   int py = stb__perlin_fastfloor(y);
-   int pz = stb__perlin_fastfloor(z);
-   int x_wrap2 = (x_wrap ? x_wrap : 256);
-   int y_wrap2 = (y_wrap ? y_wrap : 256);
-   int z_wrap2 = (z_wrap ? z_wrap : 256);
-   int x0 = px % x_wrap2, x1;
-   int y0 = py % y_wrap2, y1;
-   int z0 = pz % z_wrap2, z1;
-   int r0,r1, r00,r01,r10,r11;
-
-   if (x0 < 0) x0 += x_wrap2;
-   if (y0 < 0) y0 += y_wrap2;
-   if (z0 < 0) z0 += z_wrap2;
-   x1 = (x0+1) % x_wrap2;
-   y1 = (y0+1) % y_wrap2;
-   z1 = (z0+1) % z_wrap2;
-
-   #define stb__perlin_ease(a)   (((a*6-15)*a + 10) * a * a * a)
-
-   x -= px; u = stb__perlin_ease(x);
-   y -= py; v = stb__perlin_ease(y);
-   z -= pz; w = stb__perlin_ease(z);
-
-   r0 = stb__perlin_randtab[x0];
-   r0 = stb__perlin_randtab[r0+seed];
-   r1 = stb__perlin_randtab[x1];
-   r1 = stb__perlin_randtab[r1+seed];
-
-   r00 = stb__perlin_randtab[r0+y0];
-   r01 = stb__perlin_randtab[r0+y1];
-   r10 = stb__perlin_randtab[r1+y0];
-   r11 = stb__perlin_randtab[r1+y1];
-
-   n000 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r00+z0], x  , y  , z   );
-   n001 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r00+z1], x  , y  , z-1 );
-   n010 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r01+z0], x  , y-1, z   );
-   n011 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r01+z1], x  , y-1, z-1 );
-   n100 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r10+z0], x-1, y  , z   );
-   n101 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r10+z1], x-1, y  , z-1 );
-   n110 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r11+z0], x-1, y-1, z   );
-   n111 = stb__perlin_grad(stb__perlin_randtab_grad_idx[r11+z1], x-1, y-1, z-1 );
-
-   n00 = stb__perlin_lerp(n000,n001,w);
-   n01 = stb__perlin_lerp(n010,n011,w);
-   n10 = stb__perlin_lerp(n100,n101,w);
-   n11 = stb__perlin_lerp(n110,n111,w);
-
-   n0 = stb__perlin_lerp(n00,n01,v);
-   n1 = stb__perlin_lerp(n10,n11,v);
-
-   return stb__perlin_lerp(n0,n1,u);
 }
 #endif  // STB_PERLIN_IMPLEMENTATION
 

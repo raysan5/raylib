@@ -31,39 +31,39 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - image channel");
 
-    Image fudesumiImage = LoadImage("resources/fudesumi.png");
+    Image imFudesumi = LoadImage("resources/fudesumi.png");
 
-    Image imageAlpha = ImageFromChannel(fudesumiImage, 3);
-    ImageAlphaMask(&imageAlpha, imageAlpha);
+    Image imFudesumiAlpha = ImageFromChannel(imFudesumi, 3);
+    ImageAlphaMask(&imFudesumiAlpha, imFudesumiAlpha);
 
-    Image imageRed = ImageFromChannel(fudesumiImage, 0);
-    ImageAlphaMask(&imageRed, imageAlpha);
+    Image imFudesumiRed = ImageFromChannel(imFudesumi, 0);
+    ImageAlphaMask(&imFudesumiRed, imFudesumiAlpha);
 
-    Image imageGreen = ImageFromChannel(fudesumiImage, 1);
-    ImageAlphaMask(&imageGreen, imageAlpha);
+    Image imFudesumiGreen = ImageFromChannel(imFudesumi, 1);
+    ImageAlphaMask(&imFudesumiGreen, imFudesumiAlpha);
 
-    Image imageBlue = ImageFromChannel(fudesumiImage, 2);
-    ImageAlphaMask(&imageBlue, imageAlpha);
+    Image imFudesumiBlue = ImageFromChannel(imFudesumi, 2);
+    ImageAlphaMask(&imFudesumiBlue, imFudesumiAlpha);
 
-    Image backgroundImage = GenImageChecked(screenWidth, screenHeight, screenWidth/20, screenHeight/20, ORANGE, YELLOW);
+    Image imBackground = GenImageChecked(screenWidth, screenHeight, screenWidth/20, screenHeight/20, ORANGE, YELLOW);
 
-    Texture2D fudesumiTexture = LoadTextureFromImage(fudesumiImage);
-    Texture2D textureAlpha = LoadTextureFromImage(imageAlpha);
-    Texture2D textureRed = LoadTextureFromImage(imageRed);
-    Texture2D textureGreen = LoadTextureFromImage(imageGreen);
-    Texture2D textureBlue = LoadTextureFromImage(imageBlue);
-    Texture2D backgroundTexture = LoadTextureFromImage(backgroundImage);
+    Texture2D texFudesumi = LoadTextureFromImage(imFudesumi);
+    Texture2D texFudesumiAlpha = LoadTextureFromImage(imFudesumiAlpha);
+    Texture2D texFudesumiRed = LoadTextureFromImage(imFudesumiRed);
+    Texture2D texFudesumiGreen = LoadTextureFromImage(imFudesumiGreen);
+    Texture2D texFudesumiBlue = LoadTextureFromImage(imFudesumiBlue);
+    Texture2D texBackground = LoadTextureFromImage(imBackground);
 
-    UnloadImage(fudesumiImage);
-    UnloadImage(imageAlpha);
-    UnloadImage(imageRed);
-    UnloadImage(imageGreen);
-    UnloadImage(imageBlue);
-    UnloadImage(backgroundImage);
+    UnloadImage(imFudesumi);
+    UnloadImage(imFudesumiAlpha);
+    UnloadImage(imFudesumiRed);
+    UnloadImage(imFudesumiGreen);
+    UnloadImage(imFudesumiBlue);
+    UnloadImage(imBackground);
 
-    Rectangle fudesumiRec = {0, 0, (float)fudesumiImage.width, (float)fudesumiImage.height};
+    Rectangle fudesumiRec = {0, 0, (float)imFudesumi.width, (float)imFudesumi.height};
 
-    Rectangle fudesumiPos = {50, 10, fudesumiImage.width*0.8f, fudesumiImage.height*0.8f};
+    Rectangle fudesumiPos = {50, 10, imFudesumi.width*0.8f, imFudesumi.height*0.8f};
     Rectangle redPos = { 410, 10, fudesumiPos.width/2.0f, fudesumiPos.height/2.0f };
     Rectangle greenPos = { 600, 10, fudesumiPos.width/2.0f, fudesumiPos.height/2.0f };
     Rectangle bluePos = { 410, 230, fudesumiPos.width/2.0f, fudesumiPos.height/2.0f };
@@ -84,13 +84,13 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            DrawTexture(backgroundTexture, 0, 0, WHITE);
-            DrawTexturePro(fudesumiTexture, fudesumiRec, fudesumiPos, (Vector2) {0, 0}, 0, WHITE);
+            DrawTexture(texBackground, 0, 0, WHITE);
+            DrawTexturePro(texFudesumi, fudesumiRec, fudesumiPos, (Vector2) {0, 0}, 0, WHITE);
 
-            DrawTexturePro(textureRed, fudesumiRec, redPos, (Vector2) {0, 0}, 0, RED);
-            DrawTexturePro(textureGreen, fudesumiRec, greenPos, (Vector2) {0, 0}, 0, GREEN);
-            DrawTexturePro(textureBlue, fudesumiRec, bluePos, (Vector2) {0, 0}, 0, BLUE);
-            DrawTexturePro(textureAlpha, fudesumiRec, alphaPos, (Vector2) {0, 0}, 0, WHITE);
+            DrawTexturePro(texFudesumiRed, fudesumiRec, redPos, (Vector2) {0, 0}, 0, RED);
+            DrawTexturePro(texFudesumiGreen, fudesumiRec, greenPos, (Vector2) {0, 0}, 0, GREEN);
+            DrawTexturePro(texFudesumiBlue, fudesumiRec, bluePos, (Vector2) {0, 0}, 0, BLUE);
+            DrawTexturePro(texFudesumiAlpha, fudesumiRec, alphaPos, (Vector2) {0, 0}, 0, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -98,12 +98,12 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(backgroundTexture);
-    UnloadTexture(fudesumiTexture);
-    UnloadTexture(textureRed);
-    UnloadTexture(textureGreen);
-    UnloadTexture(textureBlue);
-    UnloadTexture(textureAlpha);
+    UnloadTexture(texBackground);
+    UnloadTexture(texFudesumi);
+    UnloadTexture(texFudesumiRed);
+    UnloadTexture(texFudesumiGreen);
+    UnloadTexture(texFudesumiBlue);
+    UnloadTexture(texFudesumiAlpha);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

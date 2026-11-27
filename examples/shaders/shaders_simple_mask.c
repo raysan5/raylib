@@ -52,37 +52,37 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;             // Camera projection type
 
     // Define our three models to show the shader on
-    Mesh torus = GenMeshTorus(0.3f, 1, 16, 32);
-    Model model1 = LoadModelFromMesh(torus);
+    Mesh meshTorus = GenMeshTorus(0.3f, 1, 16, 32);
+    Model modelTorus = LoadModelFromMesh(meshTorus);
 
-    Mesh cube = GenMeshCube(0.8f,0.8f,0.8f);
-    Model model2 = LoadModelFromMesh(cube);
+    Mesh meshCube = GenMeshCube(0.8f,0.8f,0.8f);
+    Model modelCube = LoadModelFromMesh(meshCube);
 
     // Generate model to be shaded just to see the gaps in the other two
-    Mesh sphere = GenMeshSphere(1, 16, 16);
-    Model model3 = LoadModelFromMesh(sphere);
+    Mesh meshSphere = GenMeshSphere(1, 16, 16);
+    Model modelSphere = LoadModelFromMesh(meshSphere);
 
     // Load the shader
     Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/mask.fs", GLSL_VERSION));
 
     // Load and apply the diffuse texture (colour map)
-    Texture texDiffuse = LoadTexture("resources/plasma.png");
-    model1.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texDiffuse;
-    model2.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texDiffuse;
+    Texture2D texDiffuse = LoadTexture("resources/plasma.png");
+    modelTorus.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texDiffuse;
+    modelCube.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texDiffuse;
 
     // Using MATERIAL_MAP_EMISSION as a spare slot to use for 2nd texture
     // NOTE: Don't use MATERIAL_MAP_IRRADIANCE, MATERIAL_MAP_PREFILTER or  MATERIAL_MAP_CUBEMAP as they are bound as cube maps
-    Texture texMask = LoadTexture("resources/mask.png");
-    model1.materials[0].maps[MATERIAL_MAP_EMISSION].texture = texMask;
-    model2.materials[0].maps[MATERIAL_MAP_EMISSION].texture = texMask;
+    Texture2D texMask = LoadTexture("resources/mask.png");
+    modelTorus.materials[0].maps[MATERIAL_MAP_EMISSION].texture = texMask;
+    modelCube.materials[0].maps[MATERIAL_MAP_EMISSION].texture = texMask;
     shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "mask");
 
     // Frame is incremented each frame to animate the shader
     int shaderFrame = GetShaderLocation(shader, "frame");
 
     // Apply the shader to the two models
-    model1.materials[0].shader = shader;
-    model2.materials[0].shader = shader;
+    modelTorus.materials[0].shader = shader;
+    modelCube.materials[0].shader = shader;
 
     int framesCounter = 0;
     Vector3 rotation = { 0 };           // Model rotation angles
@@ -107,7 +107,7 @@ int main(void)
         SetShaderValue(shader, shaderFrame, &framesCounter, SHADER_UNIFORM_INT);
 
         // Rotate one of the models
-        model1.transform = MatrixRotateXYZ(rotation);
+        modelTorus.transform = MatrixRotateXYZ(rotation);
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -118,9 +118,9 @@ int main(void)
 
             BeginMode3D(camera);
 
-                DrawModel(model1, (Vector3){ 0.5f, 0.0f, 0.0f }, 1, WHITE);
-                DrawModelEx(model2, (Vector3){ -0.5f, 0.0f, 0.0f }, (Vector3){ 1.0f, 1.0f, 0.0f }, 50, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
-                DrawModel(model3,(Vector3){ 0.0f, 0.0f, -1.5f }, 1, WHITE);
+                DrawModel(modelTorus, (Vector3){ 0.5f, 0.0f, 0.0f }, 1, WHITE);
+                DrawModelEx(modelCube, (Vector3){ -0.5f, 0.0f, 0.0f }, (Vector3){ 1.0f, 1.0f, 0.0f }, 50, (Vector3){ 1.0f, 1.0f, 1.0f }, WHITE);
+                DrawModel(modelSphere,(Vector3){ 0.0f, 0.0f, -1.5f }, 1, WHITE);
                 DrawGrid(10, 1.0f);        // Draw a grid
 
             EndMode3D();
@@ -136,9 +136,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(model1);
-    UnloadModel(model2);
-    UnloadModel(model3);
+    UnloadModel(modelTorus);
+    UnloadModel(modelCube);
+    UnloadModel(modelSphere);
 
     UnloadTexture(texDiffuse);  // Unload default diffuse texture
     UnloadTexture(texMask);     // Unload texture mask

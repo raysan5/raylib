@@ -4,7 +4,7 @@ This provides a base project template which builds with [CMake](https://cmake.or
 
 ## Usage
 
-To compile the example, use one of the following dependending on your build target...
+To compile the example, use one of the following depending on your build target...
 
 ### Desktop
 

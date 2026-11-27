@@ -56,6 +56,8 @@ int main(void)
             camera.target = Vector2Add(camera.target, delta);
         }
 
+        Vector2 renderScale = { (float)GetRenderWidth()/GetScreenWidth(), (float)GetRenderHeight()/GetScreenHeight() };
+
         if (zoomMode == 0)
         {
             // Zoom based on mouse wheel
@@ -66,7 +68,7 @@ int main(void)
                 Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
                 // Set the offset to where the mouse is, mouse is scaled to viewport space, but offset is in unscaled pixels
-                camera.offset = Vector2Multiply(GetMousePosition(), GetWindowScaleDPI());
+                camera.offset = Vector2Multiply(GetMousePosition(), renderScale);
 
                 // Set the target to match, so that the camera maps the world space point
                 // under the cursor to the screen space point under the cursor at any zoom
@@ -87,7 +89,7 @@ int main(void)
                 Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
 
                 // Set the offset to where the mouse is, mouse is scaled to viewport space, but offset is in unscaled pixels
-                camera.offset = Vector2Multiply(GetMousePosition(), GetWindowScaleDPI());
+                camera.offset = Vector2Multiply(GetMousePosition(), renderScale);
 
                 // Set the target to match, so that the camera maps the world space point
                 // under the cursor to the screen space point under the cursor at any zoom

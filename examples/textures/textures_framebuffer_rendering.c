@@ -53,18 +53,18 @@ int main(void)
     observerCamera.projection = CAMERA_PERSPECTIVE;
 
     // Set up render textures
-    RenderTexture2D observerTarget = LoadRenderTexture(splitWidth, screenHeight);
-    Rectangle observerSource = { 0.0f, 0.0f, (float)observerTarget.texture.width, -(float)observerTarget.texture.height };
+    RenderTexture2D rtObserver = LoadRenderTexture(splitWidth, screenHeight);
+    Rectangle observerSource = { 0.0f, 0.0f, (float)rtObserver.texture.width, -(float)rtObserver.texture.height };
     Rectangle observerDest = { 0.0f, 0.0f, (float)splitWidth, (float)screenHeight };
 
-    RenderTexture2D subjectTarget = LoadRenderTexture(splitWidth, screenHeight);
-    Rectangle subjectSource = { 0.0f, 0.0f, (float)subjectTarget.texture.width, -(float)subjectTarget.texture.height };
+    RenderTexture2D rtSubject = LoadRenderTexture(splitWidth, screenHeight);
+    Rectangle subjectSource = { 0.0f, 0.0f, (float)rtSubject.texture.width, -(float)rtSubject.texture.height };
     Rectangle subjectDest = { (float)splitWidth, 0.0f, (float)splitWidth, (float)screenHeight };
-    const float textureAspectRatio = (float)subjectTarget.texture.width/(float)subjectTarget.texture.height;
+    const float textureAspectRatio = (float)rtSubject.texture.width/(float)rtSubject.texture.height;
 
     // Rectangles for cropping render texture
     const float captureSize = 128.0f;
-    Rectangle cropSource = { (subjectTarget.texture.width - captureSize)/2.0f, (subjectTarget.texture.height - captureSize)/2.0f, captureSize, -captureSize };
+    Rectangle cropSource = { (rtSubject.texture.width - captureSize)/2.0f, (rtSubject.texture.height - captureSize)/2.0f, captureSize, -captureSize };
     Rectangle cropDest = { splitWidth + 20.0f, 20.0f, captureSize, captureSize};
 
     SetTargetFPS(60);
@@ -82,7 +82,7 @@ int main(void)
         if (IsKeyPressed(KEY_R)) observerCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
 
         // Build LHS observer view texture
-        BeginTextureMode(observerTarget);
+        BeginTextureMode(rtObserver);
 
             ClearBackground(RAYWHITE);
 
@@ -95,7 +95,7 @@ int main(void)
 
             EndMode3D();
 
-            DrawText("Observer View", 10, observerTarget.texture.height - 30, 20, BLACK);
+            DrawText("Observer View", 10, rtObserver.texture.height - 30, 20, BLACK);
             DrawText("WASD + Mouse to Move", 10, 10, 20, DARKGRAY);
             DrawText("Scroll to Zoom", 10, 30, 20, DARKGRAY);
             DrawText("R to Reset Observer Target", 10, 50, 20, DARKGRAY);
@@ -103,7 +103,7 @@ int main(void)
         EndTextureMode();
 
         // Build RHS subject view texture
-        BeginTextureMode(subjectTarget);
+        BeginTextureMode(rtSubject);
 
             ClearBackground(RAYWHITE);
 
@@ -115,8 +115,8 @@ int main(void)
 
             EndMode3D();
 
-            DrawRectangleLines((int)((subjectTarget.texture.width - captureSize)/2.0f), (int)((subjectTarget.texture.height - captureSize)/2.0f), (int)captureSize, (int)captureSize, GREEN);
-            DrawText("Subject View", 10, subjectTarget.texture.height - 30, 20, BLACK);
+            DrawRectangleLines((int)((rtSubject.texture.width - captureSize)/2.0f), (int)((rtSubject.texture.height - captureSize)/2.0f), (int)captureSize, (int)captureSize, GREEN);
+            DrawText("Subject View", 10, rtSubject.texture.height - 30, 20, BLACK);
 
         EndTextureMode();
         //----------------------------------------------------------------------------------
@@ -128,13 +128,13 @@ int main(void)
             ClearBackground(BLACK);
 
             // Draw observer texture LHS
-            DrawTexturePro(observerTarget.texture, observerSource, observerDest, (Vector2){0.0f, 0.0f }, 0.0f, WHITE);
+            DrawTexturePro(rtObserver.texture, observerSource, observerDest, (Vector2){0.0f, 0.0f }, 0.0f, WHITE);
 
             // Draw subject texture RHS
-            DrawTexturePro(subjectTarget.texture, subjectSource, subjectDest, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
+            DrawTexturePro(rtSubject.texture, subjectSource, subjectDest, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
 
             // Draw the small crop overlay on top
-            DrawTexturePro(subjectTarget.texture, cropSource, cropDest, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
+            DrawTexturePro(rtSubject.texture, cropSource, cropDest, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
             DrawRectangleLinesEx(cropDest, 2, BLACK);
 
             // Draw split screen divider line
@@ -146,8 +146,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadRenderTexture(observerTarget);
-    UnloadRenderTexture(subjectTarget);
+    UnloadRenderTexture(rtObserver);
+    UnloadRenderTexture(rtSubject);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

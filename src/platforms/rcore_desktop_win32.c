@@ -66,8 +66,24 @@
 #undef DrawTextExW
 
 #include <windowsx.h>
-#include <shellscalingapi.h>
-#include <versionhelpers.h>
+
+// Avoid including shellscalingapi.h by defining these two enums directly
+#ifndef DPI_ENUMS_DECLARED
+typedef enum PROCESS_DPI_AWARENESS {
+    PROCESS_DPI_UNAWARE = 0,
+    PROCESS_SYSTEM_DPI_AWARE = 1,
+    PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+
+typedef enum MONITOR_DPI_TYPE {
+    MDT_EFFECTIVE_DPI = 0,
+    MDT_ANGULAR_DPI = 1,
+    MDT_RAW_DPI = 2,
+    MDT_DEFAULT = MDT_EFFECTIVE_DPI
+} MONITOR_DPI_TYPE;
+
+#define DPI_ENUMS_DECLARED
+#endif
 
 #include <malloc.h>          // Required for alloca()
 
@@ -75,9 +91,27 @@
     #include <GL/gl.h>
 #endif
 
+#define WIN32_CLIPBOARD_IMPLEMENTATION
+#define WINUSER_ALREADY_INCLUDED
+#define WINBASE_ALREADY_INCLUDED
+#define WINGDI_ALREADY_INCLUDED
+#include "../external/win32_clipboard.h"
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
+
+typedef struct {
+    HMONITOR handle;            // Win32 monitor handle
+    char *name;                 // Human-readable UTF-8 name
+    int x;                      // Virtual desktop X position
+    int y;                      // Virtual desktop Y position
+    int width;                  // Current mode width (pixels)
+    int height;                 // Current mode height (pixels)
+    int physicalWidth;          // Physical width (mm)
+    int physicalHeight;         // Physical height (mm)
+    int refreshRate;            // Current mode refresh rate (Hz)
+} Win32Monitor;
 
 // NOTE: appScreenSize is the last screen size requested by the app,
 // the backend must keep the client area this size (after DPI scaling is applied)
@@ -95,9 +129,18 @@ typedef struct {
     HBITMAP hbitmap;        // GDI bitmap handler
     unsigned int *pixels;   // Pointer to pixel data buffer (BGRA format)
 
+    int previousRenderWidth;
+    int previousRenderHeight;
     int appScreenWidth;
     int appScreenHeight;
     unsigned int desiredFlags;
+
+    bool perMonitorDPIAwareV2; // Flag to check DPI-awareness level. This is used mainly to distinguish between per-monitor DPI awareness v1 and v2
+
+    Win32Monitor *monitors;
+    int monitorCount;
+    int monitorCapacity;
+    int currentMonitor;
 
     LARGE_INTEGER timerFrequency;
 
@@ -113,6 +156,12 @@ typedef const char *(WINAPI *PFNWGLGETEXTENSIONSSTRINGARBPROC)(HDC hdc);
 // Define Win32 function pointer types
 typedef UINT (WINAPI *GetDpiForWindowProc)(HWND hwnd);
 typedef BOOL (WINAPI *AdjustWindowRectExForDpiProc)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
+typedef BOOL (WINAPI *SetProcessDpiAwarenessContextProc)(HANDLE value);
+typedef HRESULT (WINAPI *SetProcessDpiAwarenessProc)(PROCESS_DPI_AWARENESS value);
+typedef BOOL (WINAPI *SetProcessDPIAwareProc)(void);
+typedef HRESULT (WINAPI *GetDpiForMonitorProc)(HMONITOR monitor, MONITOR_DPI_TYPE dpiType, UINT *dpiX, UINT *dpiY);
+typedef HANDLE (WINAPI *GetThreadDpiAwarenessContextProc)(void);
+typedef BOOL (WINAPI *AreDpiAwarenessContextsEqualProc)(HANDLE a, HANDLE b);
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -128,8 +177,17 @@ static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 static PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = NULL;
 
 // Win32 functions that need to be dynamically loaded to support older versions of Windows
+// Before calling any of these functions, they should be null-checked
 static GetDpiForWindowProc pGetDpiForWindow = NULL;
 static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
+static SetProcessDpiAwarenessContextProc pSetProcessDpiAwarenessContext = NULL;
+static SetProcessDpiAwarenessProc pSetProcessDpiAwareness = NULL;
+static SetProcessDPIAwareProc pSetProcessDPIAware = NULL;
+static GetDpiForMonitorProc pGetDpiForMonitor = NULL;
+static GetThreadDpiAwarenessContextProc pGetThreadDpiAwarenessContext = NULL;
+static AreDpiAwarenessContextsEqualProc pAreDpiAwarenessContextsEqual = NULL;
+
+static HMODULE shcore = NULL; // shcore.dll (Windows 8.1 and early versions of Windows 10): loaded once, NULL on other versions
 
 // --------------------------------------------------------------------------------
 // This part of the file contains pure functions that never access global state
@@ -211,8 +269,7 @@ static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 #define WGL_CONTEXT_ES_PROFILE_BIT_EXT        0x00000004
 #define WGL_CONTEXT_ES2_PROFILE_BIT_EXT        0x00000004
 
-// Older versions of Windows don't support these events
-// These events won't be triggered, but this allows them to compile
+// Polyfill macro definitions and enums for older Windows SDKs
 #ifndef WM_DPICHANGED
     #define WM_DPICHANGED                   0x02E0
 #endif
@@ -223,6 +280,13 @@ static AdjustWindowRectExForDpiProc pAdjustWindowRectExForDpi = NULL;
 
 #ifndef WM_MOUSEHWHEEL
     #define WM_MOUSEHWHEEL                  0x020E
+#endif
+
+#ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE
+    #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ((HANDLE)-3)
+#endif
+#ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+    #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((HANDLE)-4)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -241,14 +305,6 @@ typedef struct {
     DWORD set;
     DWORD clear;
 } FlagsOp;
-
-// Monitor info type
-typedef struct {
-    HMONITOR needle;
-    int index;
-    int matchIndex;
-    RECT rect;
-} MonitorInfo;
 
 //----------------------------------------------------------------------------------
 // Global Const Variables Definition
@@ -397,8 +453,43 @@ static void AToWCopy(const char *ascii, wchar_t *outPtr, size_t outLen)
 static void LoadWin32FunctionPointers(void)
 {
     HMODULE user32 = GetModuleHandleW(L"user32.dll");
+
     pGetDpiForWindow = (GetDpiForWindowProc)GetProcAddress(user32, "GetDpiForWindow");
     pAdjustWindowRectExForDpi = (AdjustWindowRectExForDpiProc)GetProcAddress(user32, "AdjustWindowRectExForDpi");
+    pSetProcessDpiAwarenessContext = (SetProcessDpiAwarenessContextProc)GetProcAddress(user32, "SetProcessDpiAwarenessContext");
+
+    pSetProcessDPIAware = (SetProcessDPIAwareProc)GetProcAddress(user32, "SetProcessDPIAware");
+    pGetThreadDpiAwarenessContext = (GetThreadDpiAwarenessContextProc)GetProcAddress(user32, "GetThreadDpiAwarenessContext");
+    pAreDpiAwarenessContextsEqual = (AreDpiAwarenessContextsEqualProc)GetProcAddress(user32, "AreDpiAwarenessContextsEqual");
+
+    // SetProcessDpiAwarenessContext (Windows 10 v1703) supersedes SetProcessDpiAwareness (Windows 8.1)
+    // We can avoid loading the shcore.dll if the newer DPI functions are available
+    if (pSetProcessDpiAwarenessContext == NULL)
+    {
+        shcore = LoadLibraryW(L"shcore.dll");
+        if (shcore != NULL)
+        {
+            pSetProcessDpiAwareness = (SetProcessDpiAwarenessProc)GetProcAddress(shcore, "SetProcessDpiAwareness");
+            pGetDpiForMonitor = (GetDpiForMonitorProc)GetProcAddress(shcore, "GetDpiForMonitor");
+        }
+    }
+}
+
+static int GetMonitorIndexFromHWND(HWND hwnd)
+{
+    HMONITOR handle = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    int result = 0;
+
+    for (int i = 0; i < platform.monitorCount; i++)
+    {
+        if (platform.monitors[i].handle == handle)
+        {
+            result = i;
+            break;
+        }
+    }
+
+    return result;
 }
 
 // GetDpiForWindow with a fallback for older versions of Windows
@@ -409,15 +500,25 @@ static UINT GetDpiForWindowCompat(HWND hwnd)
     if (pGetDpiForWindow != NULL)
     {
         // This API requires Windows 10 v1607 or newer
+        // Returns 0 on failure
         result = pGetDpiForWindow(hwnd);
     }
-    else
+    else if (pGetDpiForMonitor != NULL)
     {
-        // Window uses CS_OWNDC, so we don't need to call ReleaseDC
-        HDC dc = GetDC(hwnd);
+        // Windows 8.1 and early versions of Windows 10
+        // Get the DPI based on which monitor the window is on
+        HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        UINT dpiX = 0;
+        UINT dpiY = 0;
+        HRESULT hr = pGetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        if (hr == S_OK) result = dpiX;
+    }
 
-        // Before Windows 10 v1607: fallback to system-wide DPI (96 for DPI-unaware processes)
-        result = GetDeviceCaps(dc, LOGPIXELSX);
+    if (result == 0)
+    {
+        // If running on older versions of Windows or if the modern API calls fail: fallback to system-wide DPI
+        // We can call GetDC without a corresponding ReleaseDC because the window was created with CS_OWNDC
+        result = GetDeviceCaps(GetDC(hwnd), LOGPIXELSX);
     }
 
     return result;
@@ -427,7 +528,7 @@ static UINT GetDpiForWindowCompat(HWND hwnd)
 static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
 {
     BOOL result = FALSE;
-    if (pAdjustWindowRectExForDpi != NULL)
+    if ((pAdjustWindowRectExForDpi != NULL) && platform.perMonitorDPIAwareV2)
     {
         result = pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
     }
@@ -436,6 +537,44 @@ static BOOL AdjustWindowRectExForDpiCompat(LPRECT lpRect, DWORD dwStyle, BOOL bM
         result = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
     }
     return result;
+}
+
+// Set process to highest level of dpi awareness on this version of Windows
+// DPI awareness can only be set once. This function will fail on subsequent calls (which is harmless)
+// Windows 10 v1703+  - per-monitor awareness v2
+// Windows 8.1/10     - per-monitor awareness v1
+// Windows Vista/7/8  - system-aware
+// Windows XP         - No DPI awareness
+static void SetProcessDpiAwareCompat(void)
+{
+    if (pSetProcessDpiAwarenessContext != NULL)
+    {
+        // Windows 10 v1703+
+        BOOL succeeded = pSetProcessDpiAwarenessContext((HANDLE)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+        if (!succeeded)
+        {
+            // If monitor aware v2 is not available, try v1
+            pSetProcessDpiAwarenessContext((HANDLE)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+        }
+    }
+    else if (pSetProcessDpiAwareness != NULL)
+    {
+        // Windows 8.1+
+        pSetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+    }
+    else if (pSetProcessDPIAware != NULL)
+    {
+        // Windows Vista+
+        pSetProcessDPIAware();
+    }
+
+    platform.perMonitorDPIAwareV2 = false;
+    if ((pGetThreadDpiAwarenessContext != NULL) && (pAreDpiAwarenessContextsEqual != NULL))
+    {
+        // There are subtle differences between per-monitor v1 and v2
+        platform.perMonitorDPIAwareV2 = pAreDpiAwarenessContextsEqual(pGetThreadDpiAwarenessContext(), (HANDLE)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
 }
 
 static bool DecoratedFromStyle(DWORD style)
@@ -447,7 +586,7 @@ static bool DecoratedFromStyle(DWORD style)
     }
 
     DWORD masked = (style & STYLE_FLAGS_UNDECORATED_OFF);
-    if (STYLE_FLAGS_UNDECORATED_OFF != masked) 
+    if (STYLE_FLAGS_UNDECORATED_OFF != masked)
     {
         TRACELOG(LOG_ERROR, "WIN32: FLAGS: Style 0x%x is missing flags 0x%x", masked, masked ^ STYLE_FLAGS_UNDECORATED_OFF);
     }
@@ -584,8 +723,8 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     float dpiScale = ((float)dpi)/96.0f;
     bool dpiScaling = flags & FLAG_WINDOW_HIGHDPI;
     SIZE desiredSize = {
-        .cx = dpiScaling? (int)((float)width*dpiScale) : width,
-        .cy = dpiScaling? (int)((float)height*dpiScale) : height
+        .cx = dpiScaling? (int)roundf((float)width*dpiScale) : width,
+        .cy = dpiScaling? (int)roundf((float)height*dpiScale) : height
     };
 
     // Get client size (framebuffer inside the window)
@@ -628,33 +767,6 @@ static bool UpdateWindowSize(int mode, HWND hwnd, int width, int height, unsigne
     SetWindowPos(hwnd, NULL, windowPos.x, windowPos.y, windowSize.cx, windowSize.cy, SWP_NOMOVE | SWP_NOZORDER);
 
     return true;
-}
-
-// Check if running in Windows 10 version 1703 (Creators Update)
-static BOOL IsWindows10Version1703OrGreaterWin32(void)
-{
-    HMODULE ntdll = LoadLibraryW(L"ntdll.dll");
-
-    DWORD (*Verify)(RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG) =
-        (DWORD (*)(RTL_OSVERSIONINFOEXW*, ULONG, ULONGLONG))GetProcAddress(ntdll, "RtlVerifyVersionInfo");
-    if (!Verify)
-    {
-        TRACELOG(LOG_ERROR, "WIN32: Failed to verify Windows version [ERROR: %lu]", GetLastError());
-        return 0;
-    }
-
-    RTL_OSVERSIONINFOEXW osvi = { 0 };
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    osvi.dwMajorVersion = 10;
-    osvi.dwMinorVersion = 0;
-    osvi.dwBuildNumber = 15063;  // Build 15063 corresponds to Windows 10 version 1703 (Creators Update)
-
-    DWORDLONG cond = 0;
-    VER_SET_CONDITION(cond, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(cond, VER_MINORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(cond, VER_BUILDNUMBER, VER_GREATER_EQUAL);
-
-    return 0 == (*Verify)(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, cond);
 }
 
 // Get OpenGL function pointers
@@ -800,37 +912,6 @@ static HICON ConvertImageToWindowsIcon(Image image)
     return result;
 }
 
-// Count monitors process
-// NOTE: Required by GetMonitorCount()
-static BOOL CALLBACK CountMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
-{
-    int *count = (int *)lparam;
-    *count += 1;
-
-    // Always return TRUE to continue the loop, otherwise, the caller
-    // can't distinguish between stopping the loop and an error
-    return TRUE;
-}
-
-// Find monitor process
-// NOTE: Required by GetCurrentMonitor()
-static BOOL CALLBACK FindMonitorProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
-{
-    MonitorInfo *monitor = (MonitorInfo *)lparam;
-
-    if (handle == monitor->needle)
-    {
-        monitor->matchIndex = monitor->index;
-        monitor->rect = *rect;
-    }
-
-    monitor->index += 1;
-
-    // Always return TRUE to continue the loop, otherwise, the caller
-    // can't distinguish between stopping the loop and an error
-    return TRUE;
-}
-
 // Get style changed required operations flags
 // NOTE: Required for deferred operations
 static void GetStyleChangeFlagOps(DWORD coreWindowFlags, STYLESTRUCT *style, FlagsOp *deferredFlags)
@@ -906,7 +987,7 @@ static void HandleRawInput(LPARAM lparam);
 static void HandleWindowResize(HWND hwnd, int *width, int *height);
 
 static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags);
-static unsigned SanitizeFlags(int mode, unsigned flags);
+static unsigned SanitizeFlags(unsigned flags);
 static void UpdateFlags(HWND hwnd, unsigned desiredFlags, int width, int height); // Update window flags
 
 // Check if OpenGL extension is available
@@ -963,14 +1044,20 @@ void RestoreWindow(void)
 // Set window configuration state using flags
 void SetWindowState(unsigned int flags)
 {
-    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags | flags);
+    if (flags & FLAG_MSAA_4X_HINT) TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
+    if (flags & FLAG_WINDOW_HIGHDPI) TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
+
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags | flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
 // Clear window configuration state flags
 void ClearWindowState(unsigned int flags)
 {
-    platform.desiredFlags = SanitizeFlags(1 /*SANITIZE_FLAGS_NORMAL*/, CORE.Window.flags & ~flags);
+    if (flags & FLAG_MSAA_4X_HINT) TRACELOG(LOG_WARNING, "WINDOW: MSAA can only be configured before window initialization");
+    if (flags & FLAG_WINDOW_HIGHDPI) TRACELOG(LOG_WARNING, "WINDOW: High DPI can only be configured before window initialization");
+
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags & ~flags);
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 }
 
@@ -1071,22 +1158,55 @@ void SetWindowPosition(int x, int y)
 {
     if (platform.hwnd != NULL)
     {
-        RECT rect = { 0 };
-        if (GetWindowRect(platform.hwnd, &rect))
-        {
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-
-            // Move the window to the new position (keeping size and z-order)
-            SetWindowPos(platform.hwnd, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
-        }
+        RECT rect = { x, y, x, y };
+        AdjustWindowRectExForDpiCompat(&rect, MakeWindowStyle(CORE.Window.flags), FALSE, WINDOW_STYLE_EX, GetDpiForWindowCompat(platform.hwnd));
+        SetWindowPos(platform.hwnd, NULL, rect.left, rect.top, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
     }
 }
 
-// Set monitor for the current window
+// Place window on a given monitor
 void SetWindowMonitor(int monitor)
 {
-    TRACELOG(LOG_WARNING, "SetWindowMonitor not implemented");
+    if ((monitor >= 0) && (monitor < platform.monitorCount))
+    {
+        MONITORINFO info = { 0 };
+        info.cbSize = sizeof(info);
+
+        HMONITOR monitorHandle = platform.monitors[monitor].handle;
+        if (GetMonitorInfoW(monitorHandle, &info))
+        {
+            RECT windowRect = { 0 };
+            GetWindowRect(platform.hwnd, &windowRect);
+            int windowWidth = windowRect.right - windowRect.left;
+            int windowHeight = windowRect.bottom - windowRect.top;
+
+            RECT rcWork = info.rcWork;
+            int x = rcWork.left + ((rcWork.right - rcWork.left) - windowWidth)/2;
+            int y = rcWork.top + ((rcWork.bottom - rcWork.top) - windowHeight)/2;
+
+            // Keep title bar on-screen if window is larger than the target monitor's work area
+            if (x < rcWork.left) x = rcWork.left;
+            if (y < rcWork.top) y = rcWork.top;
+
+            SetWindowPos(platform.hwnd, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+
+            GetWindowRect(platform.hwnd, &windowRect);
+            int newWidth = windowRect.right - windowRect.left;
+            int newHeight = windowRect.bottom - windowRect.top;
+
+            // The window size can change due to the WM_DPICHANGED event. The window has to be re-centered if this happens
+            if ((newWidth != windowWidth) || (newHeight != windowHeight))
+            {
+                x = rcWork.left + ((rcWork.right - rcWork.left) - newWidth)/2;
+                y = rcWork.top + ((rcWork.bottom - rcWork.top) - newHeight)/2;
+                if (x < rcWork.left) x = rcWork.left;
+                if (y < rcWork.top) y = rcWork.top;
+                SetWindowPos(platform.hwnd, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+            }
+        }
+        else TRACELOG(LOG_WARNING, "WIN32: Failed to get monitor info [ERROR: %lu]", GetLastError());
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
 }
 
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
@@ -1150,87 +1270,190 @@ void *GetWindowHandle(void)
     return (void *)platform.hwnd;
 }
 
+// Update all monitor info in PlatformData. This function is called via EnumDisplayMonitors
+static BOOL CALLBACK RefreshMonitorsProc(HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lparam)
+{
+    MONITORINFOEXW info = { 0 };
+    info.cbSize = sizeof(info);
+    if (!GetMonitorInfoW(handle, (MONITORINFO *)&info)) return TRUE;
+
+    if (platform.monitorCount == platform.monitorCapacity)
+    {
+        platform.monitorCapacity += 1;
+        platform.monitors = (Win32Monitor *)RL_REALLOC(platform.monitors, platform.monitorCapacity*sizeof(Win32Monitor));
+    }
+
+    bool isPrimary = ((info.dwFlags & MONITORINFOF_PRIMARY) != 0);
+
+    // The primary monitor should always be at the first index
+    if (isPrimary && (platform.monitorCount > 0)) memmove(platform.monitors + 1, platform.monitors, sizeof(Win32Monitor)*platform.monitorCount);
+
+    Win32Monitor *monitor = &platform.monitors[(isPrimary)? 0 : platform.monitorCount];
+    *monitor = (Win32Monitor){ 0 };
+
+    monitor->handle = handle;
+
+    DEVMODEW dm = { 0 };
+    dm.dmSize = sizeof(dm);
+    if (EnumDisplaySettingsExW(info.szDevice, ENUM_CURRENT_SETTINGS, &dm, EDS_ROTATEDMODE))
+    {
+        monitor->x = (int)dm.dmPosition.x;
+        monitor->y = (int)dm.dmPosition.y;
+        monitor->width = (int)dm.dmPelsWidth;
+        monitor->height = (int)dm.dmPelsHeight;
+        monitor->refreshRate = (int)dm.dmDisplayFrequency;
+    }
+
+    const WCHAR *monitorNameW = info.szDevice;
+    DISPLAY_DEVICEW display = { 0 };
+    for (DWORD displayIndex = 0; ; displayIndex++)
+    {
+        display = (DISPLAY_DEVICEW){ 0 };
+        display.cb = sizeof(display);
+
+        if (!EnumDisplayDevicesW(info.szDevice, displayIndex, &display, 0)) break;
+        if ((display.StateFlags & DISPLAY_DEVICE_ACTIVE) != 0)
+        {
+            // Take name from first active display and break out of loop
+            monitorNameW = display.DeviceString;
+            break;
+        }
+    }
+
+    int nameSize = WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, NULL, 0, NULL, NULL);
+    if (nameSize > 0)
+    {
+        monitor->name = (char *)RL_CALLOC(nameSize, sizeof(char));
+        WideCharToMultiByte(CP_UTF8, 0, monitorNameW, -1, monitor->name, nameSize, NULL, NULL);
+    }
+
+    HDC dc = CreateDCW(L"DISPLAY", info.szDevice, NULL, NULL);
+    if (dc)
+    {
+        // Checking these functions as a proxy for Windows version
+        if ((pSetProcessDpiAwarenessContext != NULL) || (pGetDpiForMonitor != NULL))
+        {
+            // Windows 8.1+, HORZSIZE/VERTSIZE report physical size in millimeters
+            monitor->physicalWidth = GetDeviceCaps(dc, HORZSIZE);
+            monitor->physicalHeight = GetDeviceCaps(dc, VERTSIZE);
+        }
+        else
+        {
+            // Older Windows fallback: use system DPI
+            int dpiX = GetDeviceCaps(dc, LOGPIXELSX);
+            int dpiY = GetDeviceCaps(dc, LOGPIXELSY);
+
+            // Divide native display resolution by DPI to get physical size in inches
+            // Multiply by 25.4 to convert from inches to millimeters
+            if (dpiX > 0) monitor->physicalWidth = (int)(dm.dmPelsWidth*25.4f/dpiX);
+            if (dpiY > 0) monitor->physicalHeight = (int)(dm.dmPelsHeight*25.4f/dpiY);
+        }
+
+        DeleteDC(dc);
+    }
+
+    platform.monitorCount += 1;
+
+    // Return TRUE to continue iterating
+    return TRUE;
+}
+
 int GetMonitorCount(void)
 {
-    int count = 0;
-
-    int result = EnumDisplayMonitors(NULL, NULL, CountMonitorsProc, (LPARAM)&count);
-    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
-
-    return count;
+    return platform.monitorCount;
 }
 
 // Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
-    HMONITOR monitor = MonitorFromWindow(platform.hwnd, MONITOR_DEFAULTTOPRIMARY);
-    if (!monitor) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "MonitorFromWindow", GetLastError());
-
-    MonitorInfo info = { 0 };
-    info.needle = monitor;
-    info.index = 0;
-    info.matchIndex = -1;
-
-    int result = EnumDisplayMonitors(NULL, NULL, FindMonitorProc, (LPARAM)&info);
-    if (result == 0) TRACELOG(LOG_ERROR, "%s failed, error=%lu", "EnumDisplayMonitors", GetLastError());
-
-    return info.matchIndex;
+    return platform.currentMonitor;
 }
 
 // Get selected monitor position
 Vector2 GetMonitorPosition(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPosition not implemented");
-    return (Vector2){ 0, 0 };
+    Vector2 position = { 0 };
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount))
+    {
+        position.x = (float)platform.monitors[monitor].x;
+        position.y = (float)platform.monitors[monitor].y;
+    }
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return position;
 }
 
 // Get selected monitor width (currently used by monitor)
 int GetMonitorWidth(int monitor)
 {
-    //TRACELOG(LOG_WARNING, "GetMonitorWidth not implemented");
-    return 0;
+    int width = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) width = platform.monitors[monitor].width;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return width;
 }
 
 // Get selected monitor height (currently used by monitor)
 int GetMonitorHeight(int monitor)
 {
-    //TRACELOG(LOG_WARNING, "GetMonitorHeight not implemented");
-    return 0;
+    int height = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) height = platform.monitors[monitor].height;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return height;
 }
 
 // Get selected monitor physical width in millimetres
 int GetMonitorPhysicalWidth(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth not implemented");
-    return 0;
+    int physicalWidth = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) physicalWidth = platform.monitors[monitor].physicalWidth;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return physicalWidth;
 }
 
 // Get selected monitor physical height in millimetres
 int GetMonitorPhysicalHeight(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight not implemented");
-    return 0;
+    int physicalHeight = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) physicalHeight = platform.monitors[monitor].physicalHeight;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return physicalHeight;
 }
 
 // Get selected monitor refresh rate
 int GetMonitorRefreshRate(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate not implemented");
-    return 0;
+    int refreshRate = 0;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) refreshRate = platform.monitors[monitor].refreshRate;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return refreshRate;
 }
 
 // Get the human-readable, UTF-8 encoded name of the selected monitor
 const char *GetMonitorName(int monitor)
 {
-    TRACELOG(LOG_WARNING, "GetMonitorName not implemented");
-    return 0;
+    const char *name = NULL;
+
+    if ((monitor >= 0) && (monitor < platform.monitorCount)) name = platform.monitors[monitor].name;
+    else TRACELOG(LOG_WARNING, "WIN32: Failed to find monitor with index %d", monitor);
+
+    return name;
 }
 
 // Get window position XY on monitor
 Vector2 GetWindowPosition(void)
 {
-    //TRACELOG(LOG_WARNING, "GetWindowPosition not implemented");
-    return (Vector2){ 0, 0 };
+    return (Vector2){ (float)CORE.Window.position.x, (float)CORE.Window.position.y };
 }
 
 // Get window scale DPI factor for current monitor
@@ -1310,7 +1533,7 @@ const char *GetClipboardText(void)
                 int length = (int)wcsnlen(clipboardText, maxLength);
 
                 int size = WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, NULL, 0, NULL, NULL);
-                char *utf8Text = (char *)RL_MALLOC(size + 1);
+                char *utf8Text = (char *)RL_CALLOC(size + 1, 1);
 
                 if ((size > 0) && (WideCharToMultiByte(CP_UTF8, 0, clipboardText, length, utf8Text, size, NULL, NULL) == 0)) size = 0;
                 utf8Text[size] = '\0';
@@ -1331,20 +1554,71 @@ const char *GetClipboardText(void)
     return platform.clipboardText;
 }
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-    #define WIN32_CLIPBOARD_IMPLEMENTATION
-    #define WINUSER_ALREADY_INCLUDED
-    #define WINBASE_ALREADY_INCLUDED
-    #define WINGDI_ALREADY_INCLUDED
-    #include "../external/win32_clipboard.h"
-#endif
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    BOOL opened = OpenClipboard(NULL);
+    if (opened)
+    {
+        EmptyClipboard();
+        
+        Image imCopy = { 0 };
+        bool useCopy = false;
+        if (image.format != PIXELFORMAT_UNCOMPRESSED_R8G8B8A8)
+        {
+            // Make sure data is RGBA 32bit
+            imCopy = ImageCopy(image);
+            ImageFormat(&imCopy, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+            useCopy = true;
+        }
+
+        // Calculate bitmap information size.
+        BITMAPINFOHEADER header = { 0 };
+        header.biSize = sizeof(BITMAPINFOHEADER);
+        header.biWidth = image.width;
+        header.biHeight = -image.height; // Top-down bitmap
+        header.biPlanes = 1;
+        header.biBitCount = 32;
+        header.biCompression = BI_RGB;
+        header.biSizeImage = image.width*image.height*4;
+
+        SIZE_T size = sizeof(header) + header.biSizeImage;
+
+        HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, size);
+
+        if (memory)
+        {
+            BYTE *data = (BYTE *)GlobalLock(memory);
+
+            memcpy(data, &header, sizeof(header));
+            memcpy(data + sizeof(header), useCopy? imCopy.data : image.data, header.biSizeImage);
+
+            GlobalUnlock(memory);
+            
+            HANDLE clipset = SetClipboardData(CF_DIB, memory);
+            if (clipset == NULL) GlobalFree(memory);
+        }
+        
+        if (useCopy) UnloadImage(imCopy);
+
+        CloseClipboard();
+    }
+    
+    return result;
+}
 
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
     unsigned int dataSize = 0;
     void *fileData = NULL;
     int width = 0;
@@ -1355,12 +1629,10 @@ Image GetClipboardImage(void)
     if (fileData == NULL) TRACELOG(LOG_WARNING, "Clipboard image: Couldn't get clipboard data.");
     else
     {
+        // TODO: Support additional image file-formats
         image = LoadImageFromMemory(".bmp", (const unsigned char*)fileData, (int)dataSize);
         RL_FREE(fileData);
     }
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_CLIPBOARD_IMAGE
 
     return image;
 }
@@ -1530,9 +1802,12 @@ void SetMousePosition(int x, int y)
         // Skip if window is minimized or if ClientToScreen calculation fails
         if (!IsIconic(platform.hwnd) && ClientToScreen(platform.hwnd, &topLeft))
         {
-            if (SetCursorPos(topLeft.x + x, topLeft.y + y))
+            Vector2 scale = CORE.Input.Mouse.scale;
+            int xScaled = (int)roundf(x/scale.x);
+            int yScaled = (int)roundf(y/scale.y);
+            if (SetCursorPos(topLeft.x + xScaled, topLeft.y + yScaled))
             {
-                CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+                CORE.Input.Mouse.currentPosition = (Vector2){ (float)xScaled, (float)yScaled };
             }
         }
     }
@@ -1602,6 +1877,35 @@ void PollInputEvents(void)
         DispatchMessageW(&msg);
     }
 
+    if ((platform.previousRenderWidth != CORE.Window.render.width) || (platform.previousRenderHeight != CORE.Window.render.height))
+    {
+        SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+        if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+        {
+            BITMAPINFO bmi = { 0 };
+            ZeroMemory(&bmi, sizeof(bmi));
+            bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bmi.bmiHeader.biWidth = (LONG)CORE.Window.render.width;
+            bmi.bmiHeader.biHeight = -(LONG)(CORE.Window.render.height); // Top-down bitmap
+            bmi.bmiHeader.biPlanes = 1;
+            bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
+            bmi.bmiHeader.biCompression = BI_RGB;
+
+            platform.hbitmap = CreateDIBSection(
+                platform.hdcmem, &bmi, DIB_RGB_COLORS,
+                (void **)&platform.pixels, NULL, 0);
+
+            HGDIOBJ oldBitmap = SelectObject(platform.hdcmem, platform.hbitmap);
+            DeleteObject(oldBitmap);
+
+            swResize(CORE.Window.render.width, CORE.Window.render.height);
+        }
+#endif
+        platform.previousRenderWidth = CORE.Window.render.width;
+        platform.previousRenderHeight = CORE.Window.render.height;
+    }
+
     // Windows will miss key up events for specific keys; check them manually
     if ((GetKeyState(VK_LSHIFT) & 0x8000) == 0) CORE.Input.Keyboard.currentKeyState[KEY_LEFT_SHIFT] = 0;
     if ((GetKeyState(VK_RSHIFT) & 0x8000) == 0) CORE.Input.Keyboard.currentKeyState[KEY_RIGHT_SHIFT] = 0;
@@ -1659,7 +1963,11 @@ HGLRC InitOpenGL(HWND hwnd, HDC hdc)
     HGLRC tempContext = wglCreateContext(dummyHDC);
     //if (!tempContext) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglCreateContext", GetLastError()); return -1; }
     BOOL result = wglMakeCurrent(dummyHDC, tempContext);
-    //if (!result) { TRACELOG(LOG_ERROR, "%s failed, error=%lu", "wglMakeCurrent", GetLastError()); return -1; }
+    if (!result)
+    {
+        TRACELOG(LOG_ERROR, "GL: Context failed to be set as current, error code: %lu", GetLastError()); 
+        return NULL;
+    }
 
     // Load WGL extension entry points
     wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
@@ -1803,7 +2111,7 @@ int InitPlatform(void)
 
     platform.appScreenWidth = CORE.Window.screen.width;
     platform.appScreenHeight = CORE.Window.screen.height;
-    platform.desiredFlags = SanitizeFlags(0 /*SANITIZE_FLAGS_FIRST*/, CORE.Window.flags);
+    platform.desiredFlags = SanitizeFlags(CORE.Window.flags);
 
     // NOTE: From this point CORE.Window.flags should always reflect the actual state of the window
     CORE.Window.flags = FLAG_WINDOW_HIDDEN | (platform.desiredFlags & FLAG_MASK_NO_UPDATE);
@@ -1811,22 +2119,9 @@ int InitPlatform(void)
     CORE.Window.screenMax.height = 9999;
 
     LoadWin32FunctionPointers();
-/*
-    // TODO: Review SetProcessDpiAwarenessContext()
-    // NOTE: SetProcessDpiAwarenessContext() requires Windows 10, version 1703 and shcore.lib linkage
-    if (IsWindows10Version1703OrGreaterWin32())
-    {
-        TRACELOG(LOG_INFO, "DpiAware: >=Win10Creators");
-        if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))
-            TRACELOG(LOG_ERROR, "%s failed, error %u", "SetProcessDpiAwarenessContext", GetLastError());
-    }
-    else
-    {
-        TRACELOG(LOG_INFO, "DpiAware: <Win10Creators");
-        HRESULT hr = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-        if (hr < 0) TRACELOG(LOG_ERROR, "%s failed, hresult=0x%lx", "SetProcessDpiAwareness", (DWORD)hr);
-    }
-*/
+
+    SetProcessDpiAwareCompat();
+
     HINSTANCE hInstance = GetModuleHandleW(0);
 
     // Define window class
@@ -1849,34 +2144,6 @@ int InitPlatform(void)
     result = (int)RegisterClassExW(&windowClass);
     if (result == 0) TRACELOG(LOG_ERROR, "WIN32: Failed to register window class [ERROR: %lu]", GetLastError());
 
-    // Get primary monitor info
-    POINT primaryTopLeft = { 0 };
-    HMONITOR monitor = MonitorFromPoint(primaryTopLeft, MONITOR_DEFAULTTOPRIMARY);
-    if (monitor != NULL)
-    {
-        MONITORINFO info = { 0 };
-        info.cbSize = sizeof(info);
-        result = (int)GetMonitorInfoW(monitor, &info);
-
-        if (result == 0) TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get monitor info [ERROR: %u]", GetLastError());
-        else
-        {
-            CORE.Window.display.width = info.rcMonitor.right - info.rcMonitor.left;
-            CORE.Window.display.height = info.rcMonitor.bottom - info.rcMonitor.top;
-        }
-    }
-    else TRACELOG(LOG_WARNING, "WIN32: DISPLAY: Failed to get primary monitor from point [ERROR: %u]", GetLastError());
-
-    // Adjust the window rectangle so the *client area* matches desired size
-    // NOTE: Window width/height includes borders and title-bar
-    DWORD style = WS_OVERLAPPEDWINDOW;
-    RECT rect = { 0, 0, platform.appScreenWidth, platform.appScreenHeight };
-    AdjustWindowRect(&rect, style, FALSE);
-    //AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, WINDOW_STYLE_EX);
-    //AdjustWindowRectExForDpi(&rect, style, FALSE, WINDOW_STYLE_EX, dpi);
-    int windowWidth  = rect.right - rect.left;
-    int windowHeight = rect.bottom - rect.top;
-
     // Create window
     // NOTE: Title string needs to be converted to WCHAR
     WCHAR *titleWide = NULL;
@@ -1887,9 +2154,9 @@ int InitPlatform(void)
         WINDOW_STYLE_EX,
         CLASS_NAME,
         titleWide,
-        MakeWindowStyle(CORE.Window.flags),     // WS_OVERLAPPEDWINDOW | WS_VISIBLE
+        MakeWindowStyle(CORE.Window.flags | FLAG_WINDOW_HIDDEN),
         CW_USEDEFAULT, CW_USEDEFAULT,
-        windowWidth, windowHeight,  // TODO: Window size [width, height], needs to be updated?
+        CW_USEDEFAULT, CW_USEDEFAULT, // Window size/position will be overridden after creation
         NULL, NULL,
         GetModuleHandleW(NULL), NULL);
 
@@ -1903,35 +2170,65 @@ int InitPlatform(void)
     // NOTE: Windows GDI object that represents a drawing surface
     platform.hdc = GetDC(platform.hwnd);
 
-    if (rlGetVersion() == RL_OPENGL_SOFTWARE) // Using software renderer
-    {
-        // Initialize software framebuffer
-        BITMAPINFO bmi = { 0 };
-        ZeroMemory(&bmi, sizeof(bmi));
-        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmi.bmiHeader.biWidth = platform.appScreenWidth;
-        bmi.bmiHeader.biHeight = -(int)(platform.appScreenHeight); // Top-down bitmap
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
-        bmi.bmiHeader.biCompression = BI_RGB;
+    bool highDPIWindowFlag = platform.desiredFlags & FLAG_WINDOW_HIGHDPI;
+    UINT dpi = GetDpiForWindowCompat(platform.hwnd);
+    float dpiScale = dpi/96.0f;
 
-        platform.hdcmem = CreateCompatibleDC(platform.hdc);
-
-        platform.hbitmap = CreateDIBSection(
-            platform.hdcmem, &bmi, DIB_RGB_COLORS,
-            (void **)&platform.pixels, NULL, 0);
-
-        SelectObject(platform.hdcmem, platform.hbitmap);
-
-        //ReleaseDC(platform.hwnd, platform.hdc); // Required?
-    }
-    else
+    if (rlGetVersion() != RL_OPENGL_SOFTWARE)
     {
         // Init hardware-accelerated OpenGL modern context
         platform.glContext = InitOpenGL(platform.hwnd, platform.hdc);
     }
 
     CORE.Window.ready = true;
+
+    RECT rect = { 0, 0, platform.appScreenWidth, platform.appScreenHeight };
+    if (highDPIWindowFlag)
+    {
+        rect.right = (LONG)roundf(platform.appScreenWidth*dpiScale);
+        rect.bottom = (LONG)roundf(platform.appScreenHeight*dpiScale);
+    }
+    AdjustWindowRectExForDpiCompat(
+        &rect, MakeWindowStyle(platform.desiredFlags),
+        FALSE, WINDOW_STYLE_EX, dpi
+    );
+
+    int windowWidth = rect.right - rect.left;
+    int windowHeight = rect.bottom - rect.top;
+
+    // Set initial monitor array capacity. This array only grows with RL_REALLOC
+    platform.monitorCapacity = 1;
+    platform.monitors = (Win32Monitor *)RL_CALLOC(platform.monitorCapacity, sizeof(Win32Monitor));
+    platform.monitorCount = 0;
+    EnumDisplayMonitors(NULL, NULL, RefreshMonitorsProc, 0);
+    platform.currentMonitor = GetMonitorIndexFromHWND(platform.hwnd);
+    if (platform.monitorCount > 0)
+    {
+        // This is only used for logging on desktop backends
+        CORE.Window.display.width = platform.monitors[platform.currentMonitor].width;
+        CORE.Window.display.height = platform.monitors[platform.currentMonitor].height;
+
+        HMONITOR currentMonitor = platform.monitors[platform.currentMonitor].handle;
+        MONITORINFO monitorInfo = { 0 };
+        monitorInfo.cbSize = sizeof(monitorInfo);
+        if (GetMonitorInfoW(currentMonitor, &monitorInfo))
+        {
+            // rcWork is the monitor area, not including the taskbar
+            RECT rcWork = monitorInfo.rcWork;
+            int monitorWidth = rcWork.right - rcWork.left;
+            int monitorHeight = rcWork.bottom - rcWork.top;
+            int x = rcWork.left + (monitorWidth - windowWidth)/2;
+            int y = rcWork.top + (monitorHeight - windowHeight)/2;
+
+            // Ensure the window doesn't go off-screen; otherwise, the user might not be able to move it
+            if (x < rcWork.left) x = rcWork.left;
+            if (y < rcWork.top) y = rcWork.top;
+
+            // Center the window and set it to the correct DPI-adjusted size
+            SetWindowPos(platform.hwnd, NULL, x, y, windowWidth, windowHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        else TRACELOG(LOG_WARNING, "DISPLAY: Unable to retrieve information about monitor");
+    }
 
     if ((platform.desiredFlags & FLAG_WINDOW_HIDDEN) == 0)
     {
@@ -1946,10 +2243,6 @@ int InitPlatform(void)
     UpdateFlags(platform.hwnd, platform.desiredFlags, platform.appScreenWidth, platform.appScreenHeight);
 
     CORE.Window.resizedLastFrame = false;
-    CORE.Window.render.width = CORE.Window.screen.width;
-    CORE.Window.render.height = CORE.Window.screen.height;
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
     TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
         FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
@@ -1964,6 +2257,25 @@ int InitPlatform(void)
         TRACELOG(LOG_INFO, "    > Renderer: %s", glGetString(GL_RENDERER));
         TRACELOG(LOG_INFO, "    > Version:  %s", glGetString(GL_VERSION));
         TRACELOG(LOG_INFO, "    > GLSL:     %s", "NOT SUPPORTED");
+
+        // Initialize software framebuffer
+        BITMAPINFO bmi = { 0 };
+        ZeroMemory(&bmi, sizeof(bmi));
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = (LONG)CORE.Window.render.width;
+        bmi.bmiHeader.biHeight = -(LONG)(CORE.Window.render.height); // Top-down bitmap
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount  = 32;         // 32-bit BGRA
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        platform.hdcmem = CreateCompatibleDC(platform.hdc);
+
+        platform.hbitmap = CreateDIBSection(
+            platform.hdcmem, &bmi, DIB_RGB_COLORS,
+            (void **)&platform.pixels, NULL, 0);
+
+        SelectObject(platform.hdcmem, platform.hbitmap);
+        //ReleaseDC(platform.hwnd, platform.hdc); // Not required because the window class uses CS_OWNDC
     }
 
     // Initialize timing system
@@ -2013,6 +2325,25 @@ void ClosePlatform(void)
         RL_FREE(platform.clipboardText);
         platform.clipboardText = NULL;
     }
+
+    // Unload shcore.dll
+    if (shcore != NULL)
+    {
+        FreeLibrary(shcore);
+        shcore = NULL;
+    }
+
+    if (platform.monitors != NULL)
+    {
+        for (int i = 0; i < platform.monitorCount; i++)
+        {
+            if (platform.monitors[i].name != NULL) RL_FREE(platform.monitors[i].name);
+        }
+
+        RL_FREE(platform.monitors);
+    }
+
+    platform = (PlatformData){ 0 };
 
 #if SUPPORT_WINMM_HIGHRES_TIMER && !SUPPORT_BUSY_WAIT_LOOP
     timeEndPeriod(1); // Restore time period
@@ -2107,24 +2438,19 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-
-#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later
-            // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
-            if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-#else
-            // NOTE: This message is only triggered on window creation
             HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
-#endif
+            platform.currentMonitor = GetMonitorIndexFromHWND(hwnd);
             result = 0; // If an application processes WM_SIZE message, it should return zero
         } break;
         case WM_GETMINMAXINFO:
         {
+            UINT dpi = GetDpiForWindowCompat(hwnd);
             DWORD style = MakeWindowStyle(platform.desiredFlags);
-            SIZE maxClientSize = { CORE.Window.screenMax.width, CORE.Window.screenMax.height };
-            SIZE maxWindowSize = CalcWindowSize(96, maxClientSize, style);
-            SIZE minClientSize = { CORE.Window.screenMin.width, CORE.Window.screenMin.height };
-            SIZE minWindowSize = CalcWindowSize(96, minClientSize, style);
+            float clientScale = (CORE.Window.flags & FLAG_WINDOW_HIGHDPI)? ((float)dpi)/96.0f : 1.0f;
+            SIZE maxClientSize = { (LONG)roundf(CORE.Window.screenMax.width*clientScale), (LONG)roundf(CORE.Window.screenMax.height*clientScale) };
+            SIZE maxWindowSize = CalcWindowSize(dpi, maxClientSize, style);
+            SIZE minClientSize = { (LONG)roundf(CORE.Window.screenMin.width*clientScale), (LONG)roundf(CORE.Window.screenMin.height*clientScale) };
+            SIZE minWindowSize = CalcWindowSize(dpi, minClientSize, style);
 
             LPMINMAXINFO lpmmi = (LPMINMAXINFO) lparam;
             lpmmi->ptMaxSize.x = maxWindowSize.cx;
@@ -2216,13 +2542,19 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 default: break;
             }
         } break;
-        //case WM_MOVE: break;
+        case WM_MOVE:
+        {
+            CORE.Window.position.x = (int)(short)LOWORD(lparam);
+            CORE.Window.position.y = (int)(short)HIWORD(lparam);
+            platform.currentMonitor = GetMonitorIndexFromHWND(hwnd);
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
+        } break;
         case WM_WINDOWPOSCHANGED:
         {
             WINDOWPOS *pos = (WINDOWPOS*)lparam;
             if (!(pos->flags & SWP_NOSIZE)) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 
-            DefWindowProc(hwnd, msg, wparam, lparam);
+            DefWindowProcW(hwnd, msg, wparam, lparam);
         } break;
         case WM_GETDPISCALEDSIZE:
         {
@@ -2230,43 +2562,86 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             UINT newDpi = (UINT)wparam; // TODO: WARNING: Converting from WPARAM = UINT_PTR
 
             // For the following flag changes, a window resize event should be posted,
-            // TODO: Should it be done after dpi changes?
+            // Keep the pending size when minimized, maximized, or borderless
             if (CORE.Window.flags & FLAG_WINDOW_MINIMIZED) return TRUE;
             if (CORE.Window.flags & FLAG_WINDOW_MAXIMIZED) return TRUE;
             if (CORE.Window.flags & FLAG_BORDERLESS_WINDOWED_MODE) return TRUE;
 
             float dpiScale = ((float)newDpi)/96.0f;
             bool dpiScaling = CORE.Window.flags & FLAG_WINDOW_HIGHDPI;
-            // Get size in pixels from points
+            // Calculate client area in pixels from points
             SIZE desired = {
-                .cx = dpiScaling? (int)((float)platform.appScreenWidth*dpiScale) : platform.appScreenWidth,
-                .cy = dpiScaling? (int)((float)platform.appScreenHeight*dpiScale) : platform.appScreenHeight
+                .cx = dpiScaling? (int)roundf((float)platform.appScreenWidth*dpiScale) : platform.appScreenWidth,
+                .cy = dpiScaling? (int)roundf((float)platform.appScreenHeight*dpiScale) : platform.appScreenHeight
             };
-            inoutSize->cx = desired.cx;
-            inoutSize->cy = desired.cy;
+            // Calculate and set window size, including title and window border
+            *inoutSize = CalcWindowSize(newDpi, desired, MakeWindowStyle(CORE.Window.flags));
 
             result = TRUE;
         } break;
         case WM_DPICHANGED:
         {
             // Get current dpi scale factor
-            //float scalex = HIWORD(wparam)/96.0f;
-            //float scaley = LOWORD(wparam)/96.0f;
+            //float scalex = LOWORD(wparam)/96.0f;
+            //float scaley = HIWORD(wparam)/96.0f;
 
             RECT *suggestedRect = (RECT *)lparam;
 
             // Never set the window size to anything other than the suggested rect here
             // Doing so can cause a window to stutter between monitors when transitioning between them
-            int result = (int)SetWindowPos(hwnd, NULL,
-                suggestedRect->left, suggestedRect->top,
-                suggestedRect->right - suggestedRect->left,
-                suggestedRect->bottom - suggestedRect->top,
-                SWP_NOZORDER | SWP_NOACTIVATE);
+            if (platform.perMonitorDPIAwareV2)
+            {
+                BOOL succeeded = SetWindowPos(hwnd, NULL,
+                    suggestedRect->left, suggestedRect->top,
+                    suggestedRect->right - suggestedRect->left,
+                    suggestedRect->bottom - suggestedRect->top,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
 
-            if (result == 0) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+                if (succeeded == FALSE) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+            }
+            else if ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) && !(CORE.Window.flags & (FLAG_WINDOW_MINIMIZED | FLAG_WINDOW_MAXIMIZED | FLAG_BORDERLESS_WINDOWED_MODE)))
+            {
+                // This code only runs when per-monitor dpi awareness v1 is enabled. v1 doesn't send WM_GETDPISCALEDSIZE and the suggested RECT is subtly wrong (doesn't properly account for the title bar size)
+                // The solution is to manually build a properly sized RECT (and ignore the advice of not using the suggested RECT). This makes a per-monitor v1 process match the behavior of per-monitor v2
+                // To prevent the potential stutter when dragging the window between monitors, the manually sized rect keeps the same center as the suggested RECT
+                RECT windowRect = { 0 };
+                RECT clientRect = { 0 };
+                GetWindowRect(hwnd, &windowRect);
+                GetClientRect(hwnd, &clientRect);
 
-            // TODO: Update screen data, render size, screen scaling, viewport...
+                float dpiScale = ((float)LOWORD(wparam))/96.0f;
+                int width = (int)roundf(platform.appScreenWidth*dpiScale) + (windowRect.right - windowRect.left) - clientRect.right;
+                int height = (int)roundf(platform.appScreenHeight*dpiScale) + (windowRect.bottom - windowRect.top) - clientRect.bottom;
+                int x = suggestedRect->left + ((suggestedRect->right - suggestedRect->left) - width)/2;
+                int y = suggestedRect->top + ((suggestedRect->bottom - suggestedRect->top) - height)/2;
 
+                BOOL succeeded = SetWindowPos(hwnd, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+
+                if (succeeded == FALSE) TRACELOG(LOG_ERROR, "Failed to set window position [ERROR: %lu]", GetLastError());
+            }
+
+            HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
+
+        } break;
+        case WM_DISPLAYCHANGE:
+        {
+            for (int i = 0; i < platform.monitorCount; i++)
+            {
+                if (platform.monitors[i].name != NULL) RL_FREE(platform.monitors[i].name);
+                platform.monitors[i].name = NULL;
+            }
+            platform.monitorCount = 0;
+            EnumDisplayMonitors(NULL, NULL, RefreshMonitorsProc, 0);
+            platform.currentMonitor = GetMonitorIndexFromHWND(platform.hwnd);
+
+            POINT position = { 0, 0 };
+            if (ClientToScreen(hwnd, &position))
+            {
+                CORE.Window.position.x = (int)position.x;
+                CORE.Window.position.y = (int)position.y;
+            }
+
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
         } break;
         case WM_SETCURSOR:
         {
@@ -2277,7 +2652,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 return 0;
             }
 
-            result = DefWindowProc(hwnd, msg, wparam, lparam);
+            result = DefWindowProcW(hwnd, msg, wparam, lparam);
         } break;
         case WM_PAINT:
         {
@@ -2287,7 +2662,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
                 HDC hdc = BeginPaint(hwnd, &ps);
 
                 // Blit from memory DC to window DC
-                BitBlt(hdc, 0, 0, platform.appScreenWidth, platform.appScreenHeight, platform.hdcmem, 0, 0, SRCCOPY);
+                BitBlt(hdc, 0, 0, CORE.Window.render.width, CORE.Window.render.height, platform.hdcmem, 0, 0, SRCCOPY);
 
                 EndPaint(hwnd, &ps);
             }
@@ -2417,7 +2792,7 @@ static void HandleKey(WPARAM wparam, LPARAM lparam, char state)
             bool isNextExtendedKey = ((HIWORD(next.lParam) & KF_EXTENDED) != 0);
             if ((next.wParam == VK_MENU) && ((LONG)next.time == time) && isNextExtendedKey)
             {
-                if ((next.message == WM_KEYDOWN) || (next.message == WM_SYSKEYDOWN) || 
+                if ((next.message == WM_KEYDOWN) || (next.message == WM_SYSKEYDOWN) ||
                     (next.message == WM_KEYUP) || (next.message == WM_SYSKEYUP)) ignoreKey = true;
             }
         }
@@ -2516,15 +2891,16 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     GetClientRect(hwnd, &rect);
     SIZE clientSize = { rect.right, rect.bottom };
 
+    if ((CORE.Window.render.width != clientSize.cx) || (CORE.Window.render.height != clientSize.cy)) CORE.Window.resizedLastFrame = true;
+    CORE.Window.render.width = (int)clientSize.cx;
+    CORE.Window.render.height = (int)clientSize.cy;
     CORE.Window.currentFbo.width = (int)clientSize.cx;
     CORE.Window.currentFbo.height = (int)clientSize.cy;
-    SetupViewport(clientSize.cx, clientSize.cy);
 
-    CORE.Window.resizedLastFrame = true;
     float dpiScale = ((float)GetDpiForWindowCompat(hwnd))/96.0f;
     bool highdpi = !!(CORE.Window.flags & FLAG_WINDOW_HIGHDPI);
-    unsigned int screenWidth = highdpi? (unsigned int)(((float)clientSize.cx)/dpiScale) : clientSize.cx;
-    unsigned int screenHeight = highdpi? (unsigned int)(((float)clientSize.cy)/dpiScale) : clientSize.cy;
+    unsigned int screenWidth = highdpi? (unsigned int)roundf(((float)clientSize.cx)/dpiScale) : clientSize.cx;
+    unsigned int screenHeight = highdpi? (unsigned int)roundf(((float)clientSize.cy)/dpiScale) : clientSize.cy;
     CORE.Window.screen.width = screenWidth;
     CORE.Window.screen.height = screenHeight;
 
@@ -2538,9 +2914,11 @@ static void HandleWindowResize(HWND hwnd, int *width, int *height)
     CORE.Window.screenScale = MatrixScale( (float)CORE.Window.render.width/CORE.Window.screen.width,
         (float)CORE.Window.render.height/CORE.Window.screen.height, 1.0f);
 
-#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-    swResize(clientSize.cx, clientSize.cy);
-#endif
+    if (CORE.Window.flags & FLAG_WINDOW_HIGHDPI)
+    {
+        float mouseScale = 1.0f/dpiScale;
+        CORE.Input.Mouse.scale = (Vector2){ mouseScale, mouseScale };
+    }
 }
 
 // Update window style
@@ -2582,7 +2960,7 @@ static void UpdateWindowStyle(HWND hwnd, unsigned desiredFlags)
 }
 
 // Sanitize flags
-static unsigned SanitizeFlags(int mode, unsigned flags)
+static unsigned SanitizeFlags(unsigned flags)
 {
     if (flags & FLAG_WINDOW_MAXIMIZED)
     {
@@ -2621,14 +2999,8 @@ static unsigned SanitizeFlags(int mode, unsigned flags)
         }
     }
 
-    if (mode == 1)
-    {
-        if ((flags & FLAG_MSAA_4X_HINT) && (!(CORE.Window.flags & FLAG_MSAA_4X_HINT)))
-        {
-            TRACELOG(LOG_WARNING, "WIN32: WINDOW: MSAA can only be configured before window initialization");
-            flags &= ~FLAG_MSAA_4X_HINT;
-        }
-    }
+    // Don't change flags that can't be updated after window initialization
+    flags = (flags & ~FLAG_MASK_NO_UPDATE) | (CORE.Window.flags & FLAG_MASK_NO_UPDATE);
 
     return flags;
 }

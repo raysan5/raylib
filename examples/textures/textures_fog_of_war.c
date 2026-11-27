@@ -66,9 +66,9 @@ int main(void)
     // Render texture to render fog of war
     // NOTE: To get an automatic smooth-fog effect we use a render texture to render fog
     // at a smaller size (one pixel per tile) and scale it on drawing with bilinear filtering
-    RenderTexture2D fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
-    SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_BILINEAR);
-    SetTextureWrap(fogOfWar.texture, TEXTURE_WRAP_CLAMP);
+    RenderTexture2D rtFogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
+    SetTextureFilter(rtFogOfWar.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(rtFogOfWar.texture, TEXTURE_WRAP_CLAMP);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         // Draw fog of war to a small render texture for automatic smoothing on scaling
-        BeginTextureMode(fogOfWar);
+        BeginTextureMode(rtFogOfWar);
             ClearBackground(BLANK);
             for (unsigned int y = 0; y < map.tilesY; y++)
                 for (unsigned int x = 0; x < map.tilesX; x++)
@@ -135,7 +135,7 @@ int main(void)
 
 
             // Draw fog of war (scaled to full map, bilinear filtering)
-            DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
+            DrawTexturePro(rtFogOfWar.texture, (Rectangle){ 0, 0, (float)rtFogOfWar.texture.width, (float)-rtFogOfWar.texture.height },
                            (Rectangle){ 0, 0, (float)map.tilesX*MAP_TILE_SIZE, (float)map.tilesY*MAP_TILE_SIZE },
                            (Vector2){ 0, 0 }, 0.0f, WHITE);
 
@@ -152,7 +152,7 @@ int main(void)
     RL_FREE(map.tileIds);   // Free allocated map tile ids
     RL_FREE(map.tileFog);   // Free allocated map tile fog state
 
-    UnloadRenderTexture(fogOfWar);  // Unload render texture
+    UnloadRenderTexture(rtFogOfWar);  // Unload render texture
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

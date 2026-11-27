@@ -59,6 +59,7 @@
         typedef struct HWND__ *HWND;
     #endif
 
+    #define WIN32_CLIPBOARD_IMPLEMENTATION
     #include "../external/win32_clipboard.h" // Clipboard image copy-paste
 
     #define GLFW_EXPOSE_NATIVE_WIN32
@@ -231,8 +232,8 @@ void ToggleFullscreen(void)
         if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
         {
             Vector2 scaleDpi = GetWindowScaleDPI();
-            CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width*scaleDpi.x);
-            CORE.Window.screen.height = (unsigned int)(CORE.Window.screen.height*scaleDpi.y);
+            CORE.Window.screen.width = (unsigned int)roundf(CORE.Window.screen.width*scaleDpi.x);
+            CORE.Window.screen.height = (unsigned int)roundf(CORE.Window.screen.height*scaleDpi.y);
         }
 #endif
 
@@ -319,8 +320,8 @@ void ToggleBorderlessWindowed(void)
                 if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI))
                 {
                     Vector2 scaleDpi = GetWindowScaleDPI();
-                    CORE.Window.screen.width = (unsigned int)(CORE.Window.screen.width*scaleDpi.x);
-                    CORE.Window.screen.height = (unsigned int)(CORE.Window.screen.height*scaleDpi.y);
+                    CORE.Window.screen.width = (unsigned int)roundf(CORE.Window.screen.width*scaleDpi.x);
+                    CORE.Window.screen.height = (unsigned int)roundf(CORE.Window.screen.height*scaleDpi.y);
                 }
             #endif
 
@@ -359,7 +360,8 @@ void MinimizeWindow(void)
 // Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
-    if (glfwGetWindowAttrib(platform.handle, GLFW_RESIZABLE) == GLFW_TRUE)
+    if ((glfwGetWindowAttrib(platform.handle, GLFW_ICONIFIED) == GLFW_TRUE) ||
+        (glfwGetWindowAttrib(platform.handle, GLFW_MAXIMIZED) == GLFW_TRUE))
     {
         // Restores the specified window if it was previously iconified (minimized) or maximized
         glfwRestoreWindow(platform.handle);
@@ -724,10 +726,15 @@ void SetWindowMinSize(int width, int height)
     CORE.Window.screenMin.width = width;
     CORE.Window.screenMin.height = height;
 
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    Vector2 scaleDpi = { 1.0f, 1.0f };
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)) scaleDpi = GetWindowScaleDPI();
+#endif
+
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.width*scaleDpi.x);
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.height*scaleDpi.y);
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.width*scaleDpi.x);
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.height*scaleDpi.y);
 
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
@@ -738,10 +745,15 @@ void SetWindowMaxSize(int width, int height)
     CORE.Window.screenMax.width = width;
     CORE.Window.screenMax.height = height;
 
-    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.width;
-    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMin.height;
-    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.width;
-    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)CORE.Window.screenMax.height;
+    Vector2 scaleDpi = { 1.0f, 1.0f };
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND)) scaleDpi = GetWindowScaleDPI();
+#endif
+
+    int minWidth  = (CORE.Window.screenMin.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.width*scaleDpi.x);
+    int minHeight = (CORE.Window.screenMin.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMin.height*scaleDpi.y);
+    int maxWidth  = (CORE.Window.screenMax.width  == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.width*scaleDpi.x);
+    int maxHeight = (CORE.Window.screenMax.height == 0)? GLFW_DONT_CARE : (int)roundf(CORE.Window.screenMax.height*scaleDpi.y);
 
     glfwSetWindowSizeLimits(platform.handle, minWidth, minHeight, maxWidth, maxHeight);
 }
@@ -751,6 +763,15 @@ void SetWindowSize(int width, int height)
 {
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
+
+#if !defined(__APPLE__)
+    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE) && (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        width = (int)roundf((float)width*scaleDpi.x);
+        height = (int)roundf((float)height*scaleDpi.y);
+    }
+#endif
 
     glfwSetWindowSize(platform.handle, width, height);
 }
@@ -776,8 +797,7 @@ void *GetWindowHandle(void)
 
 #if defined(_WIN32)
     handle = glfwGetWin32Window(platform.handle); // Type: HWND
-#endif
-#if defined(__linux__)
+#elif defined(__linux__)
     #if defined(_GLFW_WAYLAND)
         #if defined(_GLFW_X11)
             int platformID = glfwGetPlatform();
@@ -798,8 +818,7 @@ void *GetWindowHandle(void)
         platform.windowHandleX11 = glfwGetX11Window(platform.handle);
         handle = &platform.windowHandleX11;
     #endif
-#endif
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
     handle = (void *)glfwGetCocoaWindow(platform.handle); // Type: NSWindow*
 #endif
 
@@ -1050,10 +1069,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
-    if (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI) && !FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE))
-        glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
-    
+    glfwGetWindowContentScale(platform.handle, &scale.x, &scale.y);
     return scale;
 }
 
@@ -1064,10 +1080,27 @@ void SetClipboardText(const char *text)
 }
 
 // Get clipboard text content
-// NOTE: returned string is allocated and freed by GLFW
+// NOTE: Returned string is allocated and freed by GLFW
 const char *GetClipboardText(void)
 {
     return glfwGetClipboardString(platform.handle);
+}
+
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+#if defined(_WIN32)
+
+#elif defined(__linux__)
+
+
+#elif defined(__APPLE__)
+
+#endif
+    
+    return result;
 }
 
 // Get clipboard image
@@ -1075,9 +1108,12 @@ Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if SUPPORT_CLIPBOARD_IMAGE && SUPPORT_MODULE_RTEXTURES
-#if defined(_WIN32)
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
 
+#if defined(_WIN32)
     unsigned int dataSize = 0;
     void *bmpData = NULL;
     int width = 0;
@@ -1089,13 +1125,10 @@ Image GetClipboardImage(void)
     else
     {
         image = LoadImageFromMemory(".bmp", (const unsigned char *)bmpData, (int)dataSize);
-
         RL_FREE(bmpData);
     }
-
 #elif defined(__linux__) && defined(_GLFW_X11)
-    // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.c
-
+    // REF: https://github.com/ColleagueRiley/Clipboard-Copy-Paste/blob/main/x11.
     static Atom clipboard = 0;
     static Atom targetType = 0;
     static Atom property = 0;
@@ -1133,13 +1166,9 @@ Image GetClipboardImage(void)
         image = LoadImageFromMemory(".png", data, (int)nitems);
         XFree(data);
     }
-
 #else
-    TRACELOG(LOG_WARNING, "GetClipboardImage() not implemented on target platform");
-#endif // _WIN32
-#else
-    TRACELOG(LOG_WARNING, "Clipboard image: SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
-#endif // SUPPORT_CLIPBOARD_IMAGE
+    TRACELOG(LOG_WARNING, "Clipboard image not implemented on target platform");
+#endif
 
     return image;
 }
@@ -1228,11 +1257,9 @@ void OpenURL(const char *url)
         char *cmd = (char *)RL_CALLOC(strlen(url) + 16, sizeof(char));
 #if defined(_WIN32)
         sprintf(cmd, "explorer \"%s\"", url);
-#endif
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
         sprintf(cmd, "xdg-open '%s'", url); // Alternatives: firefox, x-www-browser
-#endif
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
         sprintf(cmd, "open '%s'", url);
 #endif
         int result = system(cmd);
@@ -1261,7 +1288,9 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
-    CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
+    Vector2 scale = CORE.Input.Mouse.scale;
+    CORE.Input.Mouse.currentPosition.x = roundf((float)x/scale.x);
+    CORE.Input.Mouse.currentPosition.y = roundf((float)y/scale.y);
 
     // NOTE: emscripten not implemented
     glfwSetCursorPos(platform.handle, CORE.Input.Mouse.currentPosition.x, CORE.Input.Mouse.currentPosition.y);
@@ -1768,8 +1797,10 @@ int InitPlatform(void)
         {
             // Set screen size to logical pixel size, considering content scaling
             Vector2 scaleDpi = GetWindowScaleDPI();
-            CORE.Window.render.width = (int)(CORE.Window.screen.width*scaleDpi.x);
-            CORE.Window.render.height = (int)(CORE.Window.screen.height*scaleDpi.y);
+            if (FLAG_IS_SET(CORE.Window.flags, FLAG_FULLSCREEN_MODE)) scaleDpi = (Vector2){ 1.0f, 1.0f };
+
+            CORE.Window.render.width = (int)roundf(CORE.Window.screen.width*scaleDpi.x);
+            CORE.Window.render.height = (int)roundf(CORE.Window.screen.height*scaleDpi.y);
             //TRACELOG(LOG_INFO, "DPI SCALING: %.2f, %.2f", scaleDpi.x, scaleDpi.y);
 
             // Screen scaling matrix is required in case desired screen area is different from display area
@@ -2009,8 +2040,8 @@ static void FramebufferSizeCallback(GLFWwindow *window, int width, int height)
         {
             // Set screen size to logical pixel size, considering content scaling
             Vector2 scaleDpi = GetWindowScaleDPI();
-            CORE.Window.screen.width = (int)((float)width/scaleDpi.x);
-            CORE.Window.screen.height = (int)((float)height/scaleDpi.y);
+            CORE.Window.screen.width = (int)roundf((float)width/scaleDpi.x);
+            CORE.Window.screen.height = (int)roundf((float)height/scaleDpi.y);
             CORE.Window.screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
 #if !defined(__APPLE__) && !defined(_GLFW_WAYLAND)
             // On macOS and Linux-Wayland, mouse coords are already in logical space
@@ -2034,8 +2065,8 @@ static void WindowContentScaleCallback(GLFWwindow *window, float scalex, float s
 {
     //TRACELOG(LOG_INFO, "GLFW3: Window content scale changed, scale: [%.2f,%.2f]", scalex, scaley);
 
-    CORE.Window.render.width = (int)((float)CORE.Window.screen.width*scalex);
-    CORE.Window.render.height = (int)((float)CORE.Window.screen.height*scaley);
+    CORE.Window.render.width = (int)roundf((float)CORE.Window.screen.width*scalex);
+    CORE.Window.render.height = (int)roundf((float)CORE.Window.screen.height*scaley);
     CORE.Window.currentFbo = CORE.Window.render;
 
     // NOTE: On APPLE platforms system should manage window/input scaling and also framebuffer scaling
@@ -2256,8 +2287,4 @@ static void JoystickCallback(int jid, int event)
     }
 }
 
-#ifdef _WIN32
-#   define WIN32_CLIPBOARD_IMPLEMENTATION
-#   include "../external/win32_clipboard.h"
-#endif
 // EOF

@@ -44,9 +44,9 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;              // Camera projection type
 
     // Create a cube model
-    Mesh cubeMesh = GenMeshCube(1.0f, 1.0f, 1.0f);      // Create a unit cube mesh
-    Model cubeModel = LoadModelFromMesh(cubeMesh);       // Convert mesh to a model
-    cubeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BEIGE;
+    Mesh meshCube = GenMeshCube(1.0f, 1.0f, 1.0f);      // Create a unit cube mesh
+    Model modelCube = LoadModelFromMesh(meshCube);       // Convert mesh to a model
+    modelCube.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = BEIGE;
 
     // Initialize voxel world - fill with voxels
     bool voxels[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE] = { false };
@@ -140,7 +140,7 @@ int main(void)
                             if (!voxels[x][y][z]) continue;
 
                             Vector3 position = { (float)x, (float)y, (float)z };
-                            DrawModel(cubeModel, position, 1.0f, BEIGE);
+                            DrawModel(modelCube, position, 1.0f, BEIGE);
                             DrawCubeWires(position, 1.0f, 1.0f, 1.0f, BLACK);
                         }
                     }
@@ -160,7 +160,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadModel(cubeModel);
+    UnloadModel(modelCube);
 
     CloseWindow();
     //--------------------------------------------------------------------------------------

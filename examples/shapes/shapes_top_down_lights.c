@@ -90,12 +90,12 @@ int main(void)
     SetupBoxes(boxes, &boxCount);
 
     // Create a checkerboard ground texture
-    Image img = GenImageChecked(64, 64, 32, 32, DARKBROWN, DARKGRAY);
-    Texture2D backgroundTexture = LoadTextureFromImage(img);
-    UnloadImage(img);
+    Image imChecked = GenImageChecked(64, 64, 32, 32, DARKBROWN, DARKGRAY);
+    Texture2D texBackground = LoadTextureFromImage(imChecked);
+    UnloadImage(imChecked);
 
     // Create a global light mask to hold all the blended lights
-    RenderTexture lightMask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    RenderTexture2D rtLightMask = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
     // Setup initial light
     SetupLight(0, 600, 400, 300);
@@ -135,7 +135,7 @@ int main(void)
         if (dirtyLights)
         {
             // Build up the light mask
-            BeginTextureMode(lightMask);
+            BeginTextureMode(rtLightMask);
 
                 ClearBackground(BLACK);
 
@@ -164,10 +164,10 @@ int main(void)
             ClearBackground(BLACK);
 
             // Draw the tile background
-            DrawTextureRec(backgroundTexture, (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)GetScreenHeight() }, Vector2Zero(), WHITE);
+            DrawTextureRec(texBackground, (Rectangle){ 0, 0, (float)GetScreenWidth(), (float)GetScreenHeight() }, Vector2Zero(), WHITE);
 
             // Overlay the shadows from all the lights
-            DrawTextureRec(lightMask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), ColorAlpha(WHITE, showLines? 0.75f : 1.0f));
+            DrawTextureRec(rtLightMask.texture, (Rectangle){ 0, 0, (float)GetScreenWidth(), -(float)GetScreenHeight() }, Vector2Zero(), ColorAlpha(WHITE, showLines? 0.75f : 1.0f));
 
             // Draw the lights
             for (int i = 0; i < MAX_LIGHTS; i++)
@@ -206,8 +206,8 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(backgroundTexture);
-    UnloadRenderTexture(lightMask);
+    UnloadTexture(texBackground);
+    UnloadRenderTexture(rtLightMask);
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
         if (lights[i].active) UnloadRenderTexture(lights[i].mask);

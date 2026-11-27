@@ -150,7 +150,7 @@ int main(void)
 
             float xOffset = 4.0f;
 
-            for (int digit = 0; digit < 6; digit++)
+            for (unsigned int digit = 0; digit < 6; digit++)
             {
                 for (int row = 0; row < 6; row++)
                 {
@@ -165,7 +165,7 @@ int main(void)
 
                         // Big hand
                         DrawRectanglePro(
-                            (Rectangle){centre.x, centre.y, clockFaceSize*0.5f+4.0f, 4.0f},
+                            (Rectangle){centre.x, centre.y, clockFaceSize*0.5f + 4.0f, 4.0f},
                             (Vector2){ 2.0f, 2.0f },
                             currentAngles[digit][row*4+col].x,
                             handsColor
@@ -173,16 +173,16 @@ int main(void)
 
                         // Little hand
                         DrawRectanglePro(
-                            (Rectangle){centre.x, centre.y, clockFaceSize*0.5f+2.0f, 4.0f},
+                            (Rectangle){centre.x, centre.y, clockFaceSize*0.5f + 2.0f, 4.0f},
                             (Vector2){ 2.0f, 2.0f },
-                            currentAngles[digit][row*4+col].y,
+                            currentAngles[digit][row*4 + col].y,
                             handsColor
                         );
                     }
                 }
 
                 xOffset += (clockFaceSize+clockFaceSpacing)*4;
-                if (digit%2 == 1)
+                if ((digit%2) == 1)
                 {
                     DrawRing((Vector2){xOffset + 4.0f, 160.0f}, 6.0f, 8.0f, 0.0f, 360.0f, 24, handsColor);
                     DrawRing((Vector2){xOffset + 4.0f, 225.0f}, 6.0f, 8.0f, 0.0f, 360.0f, 24, handsColor);

@@ -1200,27 +1200,37 @@ const char *GetClipboardText(void)
     return buffer;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    // TODO: bool SDL_SetClipboardData(SDL_ClipboardDataCallback callback, SDL_ClipboardCleanupCallback cleanup, void *userdata, const char *const *mime_types, size_t num_mime_types);
+    
+    return result;
+}
+
 // Get clipboard image
 Image GetClipboardImage(void)
 {
     Image image = { 0 };
 
-#if SUPPORT_CLIPBOARD_IMAGE
 #if !SUPPORT_MODULE_RTEXTURES
-    TRACELOG(LOG_WARNING, "Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_MODULE_RTEXTURES to work properly");
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
     return image;
 #endif
 
 // It's nice to have support Bitmap on Linux as well, but not as necessary as Windows
 #if !SUPPORT_FILEFORMAT_BMP && defined(_WIN32)
-    TRACELOG(LOG_WARNING, "WARNING: Enabling SUPPORT_CLIPBOARD_IMAGE requires SUPPORT_FILEFORMAT_BMP, specially on Windows");
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_FILEFORMAT_BMP on Windows");
     return image;
 #endif
 
 // From what I've tested applications on Wayland saves images on clipboard as PNG
 #if (!SUPPORT_FILEFORMAT_PNG || !SUPPORT_FILEFORMAT_JPG) && !defined(_WIN32)
-    TRACELOG(LOG_WARNING, "WARNING: Getting image from the clipboard might not work without SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
+    TRACELOG(LOG_WARNING, "Clipboard image might require SUPPORT_FILEFORMAT_PNG or SUPPORT_FILEFORMAT_JPG");
 #endif
+
     // Let's hope compiler put these arrays in static memory
     const char *imageFormats[] = {
         "image/bmp",
@@ -1228,6 +1238,7 @@ Image GetClipboardImage(void)
         "image/jpg",
         "image/tiff",
     };
+    
     const char *imageExtensions[] = {
         ".bmp",
         ".png",
@@ -1236,7 +1247,7 @@ Image GetClipboardImage(void)
     };
 
     size_t dataSize = 0;
-    void  *fileData = NULL;
+    void *fileData = NULL;
 
     for (int i = 0; i < SDL_arraysize(imageFormats); i++)
     {
@@ -1245,19 +1256,17 @@ Image GetClipboardImage(void)
         if (fileData)
         {
             image = LoadImageFromMemory(imageExtensions[i], fileData, (int)dataSize);
-
             SDL_free(fileData);
 
             if (IsImageValid(image))
             {
-                TRACELOG(LOG_INFO, "Clipboard: Got image from clipboard successfully: %s", imageExtensions[i]);
+                TRACELOG(LOG_INFO, "Clipboard image retrieved successfully (%s image data)", imageExtensions[i]);
                 return image;
             }
         }
     }
 
-    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard: Couldn't get clipboard data. ERROR: %s", SDL_GetError());
-#endif // SUPPORT_CLIPBOARD_IMAGE
+    if (!IsImageValid(image)) TRACELOG(LOG_WARNING, "Clipboard image data can not be retrieved, ERROR: %s", SDL_GetError());
 
     return image;
 }
@@ -1479,6 +1488,7 @@ void PollInputEvents(void)
     //for (int i = 0; i < 256; i++) CORE.Input.Keyboard.currentKeyState[i] = keys[i];
 
     CORE.Window.resizedLastFrame = false;
+    CORE.Window.shouldClose = false;
 
     if ((CORE.Window.eventWaiting) || (FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_MINIMIZED) && !FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN)))
     {
@@ -1652,12 +1662,12 @@ void PollInputEvents(void)
                     }
 
                     CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+                    // Check for registered exit key to request exit game loop on next iteration
+                    if ((key == CORE.Input.Keyboard.exitKey) && !event.key.repeat) CORE.Window.shouldClose = true;
                 }
 
                 if (event.key.repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
-
-                // Check for registered exit key to request exit game loop on next iteration
-                if (CORE.Input.Keyboard.currentKeyState[CORE.Input.Keyboard.exitKey]) CORE.Window.shouldClose = true;
 
             } break;
             case SDL_KEYUP:
