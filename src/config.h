@@ -72,10 +72,6 @@
     // Include pseudo-random numbers generator (rprand.h), based on Xoshiro128** and SplitMix64
     #define SUPPORT_RPRAND_GENERATOR        1
 #endif
-#ifndef SUPPORT_MOUSE_GESTURES
-    // Mouse gestures are directly mapped like touches and processed by the gestures system
-    #define SUPPORT_MOUSE_GESTURES          1
-#endif
 #ifndef SUPPORT_SSH_KEYBOARD_RPI
     // Reconfigure standard input to receive key inputs, works with SSH connection
     #define SUPPORT_SSH_KEYBOARD_RPI        1

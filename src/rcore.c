@@ -42,9 +42,6 @@
 *       #define SUPPORT_GESTURES_SYSTEM     1
 *           Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 *
-*       #define SUPPORT_MOUSE_GESTURES      1
-*           Mouse gestures are directly mapped like touches and processed by gestures system
-*
 *       #define SUPPORT_BUSY_WAIT_LOOP      1
 *           Use busy wait loop for timing sync, if not defined, a high-resolution timer is setup and used
 *
@@ -359,13 +356,13 @@ typedef struct CoreData {
             Vector2 currentWheelMove;       // Registers current mouse wheel variation
             Vector2 previousWheelMove;      // Registers previous mouse wheel variation
         } Mouse;
-        struct {
+        struct Touch {
             int pointCount;                                 // Number of touch points active
             int pointId[MAX_TOUCH_POINTS];                  // Point identifiers
-            Vector2 position[MAX_TOUCH_POINTS];             // Touch position on screen
+            Vector2 currentPosition[MAX_TOUCH_POINTS];      // Touch position on screen
             Vector2 previousPosition[MAX_TOUCH_POINTS];     // Previous touch position on screen
-            char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state
-            char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state
+            char currentTouchState[MAX_TOUCH_POINTS];       // Registers current touch state: 0-UP, 1-DOWN, 2-MOVE, 3-CANCEL
+            char previousTouchState[MAX_TOUCH_POINTS];      // Registers previous touch state: 0-UP, 1-DOWN, 2-MOVE, 3-CANCEL
         } Touch;
         struct {
             int lastButtonPressed;          // Register last gamepad button pressed
@@ -861,8 +858,8 @@ bool IsCursorOnScreen(void)
 // Clear background (framebuffer) to color
 void ClearBackground(Color color)
 {
-    rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
-    rlClearScreenBuffers();                             // Clear current framebuffers
+    rlClearColor(color.r, color.g, color.b, color.a); // Set clear color
+    rlClearScreenBuffers(); // Clear screen framebuffers (color and depth)
 }
 
 // Begin canvas (framebuffer) drawing
@@ -912,9 +909,57 @@ void EndDrawing(void)
 
         CORE.Time.frame += waitTime; // Total frame time: update + draw + wait
     }
+    
+#if SUPPORT_GESTURES_SYSTEM
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is called on an event, not every frame
+    //UpdateGestures();
 
-    PollInputEvents();      // Poll user events (before next frame update)
 #endif
+
+    PollInputEvents(); // Poll user events (before next frame update)
+    
+#if SUPPORT_GESTURES_SYSTEM
+    // If a previous swipe gesture was detected, just reset it
+    if ((GESTURES.current == GESTURE_SWIPE_RIGHT) || 
+        (GESTURES.current == GESTURE_SWIPE_UP) || 
+        (GESTURES.current == GESTURE_SWIPE_LEFT) || 
+        (GESTURES.current == GESTURE_SWIPE_DOWN))
+    {
+        GESTURES.current = GESTURE_NONE;
+    }
+    else if (((GESTURES.current == GESTURE_TAP) || (GESTURES.current == GESTURE_DOUBLETAP)) && 
+        (GESTURES.current != GESTURE_DRAG) && (GESTURES.Touch.pointCount == 1))
+    {
+        double currentTime = rgGetCurrentTime();
+        if ((currentTime - GESTURES.Touch.eventTime) > MIN_HOLD_TIME)
+        {
+            GESTURES.current = GESTURE_HOLD;
+            GESTURES.Hold.timeDuration = (currentTime - GESTURES.Touch.eventTime);
+        }
+    }
+
+    // Process gestures event: touch state changes
+    // NOTE: Touch move action (position change) is considered on move event (with threshold)
+    // WARNING: Only considering one touch point (id = 0), mouse on desktop platforms
+    if (CORE.Input.Touch.currentTouchState[0] != CORE.Input.Touch.previousTouchState[0])
+    {
+        // Register a new event with current touch data
+        GestureEvent gestureEvent = { 0 };
+        gestureEvent.pointCount = 1; // Register touch points count
+        gestureEvent.pointId[0] = 0; // Assign a pointer ID
+        gestureEvent.position[0] = CORE.Input.Touch.currentPosition[0];
+        gestureEvent.touchAction = CORE.Input.Touch.currentTouchState[0];
+
+        // Normalize gesture event position [0.0f..1.0f]
+        gestureEvent.position[0].x /= (float)GetScreenWidth();
+        gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+        // Gesture data is sent to gestures-system for processing
+        ProcessGestureEvent(gestureEvent);
+    }
+#endif
+#endif   //  !SUPPORT_CUSTOM_FRAME_CONTROL
 
 #if SUPPORT_SCREEN_CAPTURE
     if (IsKeyPressed(KEY_F12))
@@ -3846,8 +3891,8 @@ void PlayAutomationEvent(AutomationEvent event)
             case INPUT_TOUCH_DOWN: CORE.Input.Touch.currentTouchState[event.params[0]] = true; break;           // param[0]: id
             case INPUT_TOUCH_POSITION:      // param[0]: id, param[1]: x, param[2]: y
             {
-                CORE.Input.Touch.position[event.params[0]].x = (float)event.params[1];
-                CORE.Input.Touch.position[event.params[0]].y = (float)event.params[2];
+                CORE.Input.Touch.currentPosition[event.params[0]].x = (float)event.params[1];
+                CORE.Input.Touch.currentPosition[event.params[0]].y = (float)event.params[2];
             } break;
             case INPUT_GAMEPAD_CONNECT: CORE.Input.Gamepad.ready[event.params[0]] = true; break;                // param[0]: gamepad
             case INPUT_GAMEPAD_DISCONNECT: CORE.Input.Gamepad.ready[event.params[0]] = false; break;            // param[0]: gamepad
@@ -4265,14 +4310,14 @@ Vector2 GetMouseWheelMoveV(void)
 // Get touch position X for touch point 0 (relative to screen size)
 int GetTouchX(void)
 {
-    int touchX = (int)CORE.Input.Touch.position[0].x;
+    int touchX = (int)CORE.Input.Touch.currentPosition[0].x;
     return touchX;
 }
 
 // Get touch position Y for touch point 0 (relative to screen size)
 int GetTouchY(void)
 {
-    int touchY = (int)CORE.Input.Touch.position[0].y;
+    int touchY = (int)CORE.Input.Touch.currentPosition[0].y;
     return touchY;
 }
 
@@ -4281,7 +4326,7 @@ Vector2 GetTouchPosition(int index)
 {
     Vector2 position = { -1.0f, -1.0f };
 
-    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.position[index];
+    if (index < MAX_TOUCH_POINTS) position = CORE.Input.Touch.currentPosition[index];
     else TRACELOG(LOG_WARNING, "INPUT: Required touch point out of range (Max touch points: %i)", MAX_TOUCH_POINTS);
 
     return position;
@@ -4558,14 +4603,14 @@ static void RecordAutomationEvent(void)
         if (currentEventList->count == currentEventList->capacity) return;    // Security check
 
         // Event type: INPUT_TOUCH_POSITION
-        if (((int)CORE.Input.Touch.position[id].x != (int)CORE.Input.Touch.previousPosition[id].x) ||
-            ((int)CORE.Input.Touch.position[id].y != (int)CORE.Input.Touch.previousPosition[id].y))
+        if (((int)CORE.Input.Touch.currentPosition[id].x != (int)CORE.Input.Touch.previousPosition[id].x) ||
+            ((int)CORE.Input.Touch.currentPosition[id].y != (int)CORE.Input.Touch.previousPosition[id].y))
         {
             currentEventList->events[currentEventList->count].frame = CORE.Time.frameCounter;
             currentEventList->events[currentEventList->count].type = INPUT_TOUCH_POSITION;
             currentEventList->events[currentEventList->count].params[0] = id;
-            currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Touch.position[id].x;
-            currentEventList->events[currentEventList->count].params[2] = (int)CORE.Input.Touch.position[id].y;
+            currentEventList->events[currentEventList->count].params[1] = (int)CORE.Input.Touch.currentPosition[id].x;
+            currentEventList->events[currentEventList->count].params[2] = (int)CORE.Input.Touch.currentPosition[id].y;
 
             TRACELOG(LOG_INFO, "AUTOMATION: Frame: %i | Event type: INPUT_TOUCH_POSITION | Event parameters: %i, %i, %i", currentEventList->events[currentEventList->count].frame, currentEventList->events[currentEventList->count].params[0], currentEventList->events[currentEventList->count].params[1], currentEventList->events[currentEventList->count].params[2]);
             currentEventList->count++;

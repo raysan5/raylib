@@ -21,7 +21,6 @@
 *
 *   DEPENDENCIES:
 *       - DRM and GLM: System libraries for display initialization and configuration
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
@@ -1088,12 +1087,6 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1145,7 +1138,7 @@ void PollInputEvents(void)
 
     // Map touch position to mouse position for convenience
     // NOTE: For DRM touchscreen devices, this mapping is disabled to avoid false touch detection
-    // CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    // CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
 
     // Handle the mouse/touch/gestures events
     PollMouseEvents();
@@ -1956,8 +1949,8 @@ static void InitEvdevInput(void)
     // Reset variables
     for (int i = 0; i < MAX_TOUCH_POINTS; i++)
     {
-        CORE.Input.Touch.position[i].x = -1;
-        CORE.Input.Touch.position[i].y = -1;
+        CORE.Input.Touch.currentPosition[i].x = -1;
+        CORE.Input.Touch.currentPosition[i].y = -1;
         platform.touchActive[i] = false;
         platform.touchPosition[i].x = -1;
         platform.touchPosition[i].y = -1;
@@ -2337,8 +2330,8 @@ static void PollMouseEvents(void)
     if (fd == -1) return;
 
     struct input_event event = { 0 };
-    int touchAction = -1;           // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
-    static bool isMultitouch = false; // Detect if device supports MT events
+    int touchAction = -1;               // Actions: 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
+    static bool isMultitouch = false;   // Detect if device supports MT events
 
     // Try to read data from the mouse/touch/gesture and only continue if successful
     while (read(fd, &event, sizeof(event)) == (int)sizeof(event))
@@ -2356,7 +2349,7 @@ static void PollMouseEvents(void)
                 else CORE.Input.Mouse.currentPosition.x += event.value;
 
                 // NOTE: For DRM touchscreen, do not simulate touch from mouse movement
-                // CORE.Input.Touch.position[0].x = CORE.Input.Mouse.currentPosition.x;
+                // CORE.Input.Touch.currentPosition[0].x = CORE.Input.Mouse.currentPosition.x;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
@@ -2370,7 +2363,7 @@ static void PollMouseEvents(void)
                 else CORE.Input.Mouse.currentPosition.y += event.value;
 
                 // NOTE: For DRM touchscreen, do not simulate touch from mouse movement
-                // CORE.Input.Touch.position[0].y = CORE.Input.Mouse.currentPosition.y;
+                // CORE.Input.Touch.currentPosition[0].y = CORE.Input.Mouse.currentPosition.y;
                 touchAction = 2;    // TOUCH_ACTION_MOVE
             }
 
@@ -2575,7 +2568,7 @@ static void PollMouseEvents(void)
         {
             if (platform.touchActive[i])
             {
-                CORE.Input.Touch.position[k] = platform.touchPosition[i];
+                CORE.Input.Touch.currentPosition[k] = platform.touchPosition[i];
                 CORE.Input.Touch.pointId[k] = platform.touchId[i];
                 k++;
             }
@@ -2586,8 +2579,8 @@ static void PollMouseEvents(void)
         // Clear remaining slots
         for (int i = k; i < MAX_TOUCH_POINTS; i++)
         {
-            CORE.Input.Touch.position[i].x = -1;
-            CORE.Input.Touch.position[i].y = -1;
+            CORE.Input.Touch.currentPosition[i].x = -1;
+            CORE.Input.Touch.currentPosition[i].y = -1;
             CORE.Input.Touch.pointId[i] = -1;
         }
 
@@ -2601,7 +2594,7 @@ static void PollMouseEvents(void)
             for (int i = 0; i < MAX_TOUCH_POINTS; i++)
             {
                 gestureEvent.pointId[i] = i;
-                gestureEvent.position[i] = CORE.Input.Touch.position[i];
+                gestureEvent.position[i] = CORE.Input.Touch.currentPosition[i];
             }
 
             ProcessGestureEvent(gestureEvent);

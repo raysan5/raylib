@@ -16,8 +16,7 @@
 *           Custom flag for rcore on target platform -not used-
 *
 *   DEPENDENCIES:
-*       - emscripten: Allow interaction between browser API and C
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
+*       - Emscripten SDK: Allow interaction between browser API and C
 *
 *
 *   LICENSE: zlib/libpng
@@ -1120,12 +1119,6 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1159,7 +1152,7 @@ void PollInputEvents(void)
     // Reset touch positions
     // TODO: It resets on target platform the mouse position and not filled again until a move-event,
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentPosition[i] = (Vector2){ 0, 0 };
 
     // Get number of gamepads connected
     int numGamepads = 0;
@@ -1636,34 +1629,6 @@ static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent
         default: break;
     }
 
-#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    // Register touch actions
-    if ((CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] == 1) && (CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if ((CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] == 0) && (CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
-
-    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseMoveCallback()
-
-    // Assign a pointer ID
-    gestureEvent.pointId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = GetMousePosition();
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures-system for processing
-    // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
-    if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
-#endif
-
     // Don't prevent default to allow focusing on canvas
     return 0;
 }
@@ -1692,31 +1657,8 @@ static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseE
         CORE.Input.Mouse.currentPosition.x = normalizedX*(float)CORE.Window.screen.width;
         CORE.Input.Mouse.currentPosition.y = normalizedY*(float)CORE.Window.screen.height;
 
-        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
     }
-
-#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-
-    // Assign a pointer ID
-    gestureEvent.pointId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = CORE.Input.Touch.position[0];
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures-system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
 
     return 1; // The event was consumed by the callback handler
 }
@@ -1794,11 +1736,11 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
         CORE.Input.Touch.pointId[i] = touchEvent->touches[i].identifier;
 
         // Register touch points position
-        CORE.Input.Touch.position[i] = (Vector2){touchEvent->touches[i].targetX, touchEvent->touches[i].targetY};
+        CORE.Input.Touch.currentPosition[i] = (Vector2){touchEvent->touches[i].targetX, touchEvent->touches[i].targetY};
 
         // Normalize gestureEvent.position[x] for CORE.Window.screen.width and CORE.Window.screen.height
-        CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth()/(float)canvasWidth);
-        CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight()/(float)canvasHeight);
+        CORE.Input.Touch.currentPosition[i].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+        CORE.Input.Touch.currentPosition[i].y *= ((float)GetScreenHeight()/(float)canvasHeight);
 
         if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
         else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
@@ -1807,33 +1749,9 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
     // Update mouse position if a single touch is detected
     if (CORE.Input.Touch.pointCount == 1)
     {
-        CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;
-        CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
+        CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.currentPosition[0].x;
+        CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.currentPosition[0].y;
     }
-
-#if SUPPORT_GESTURES_SYSTEM
-    GestureEvent gestureEvent = { 0 };
-    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-
-    // Register touch actions
-    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
-
-    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
-        gestureEvent.position[i] = CORE.Input.Touch.position[i];
-
-        // Normalize gestureEvent.position[i]
-        gestureEvent.position[i].x /= (float)GetScreenWidth();
-        gestureEvent.position[i].y /= (float)GetScreenHeight();
-    }
-
-    // Gesture data is sent to gestures system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
 
     if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
     {
@@ -1846,8 +1764,9 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
                 for (int j = i; j < CORE.Input.Touch.pointCount - 1; j++)
                 {
                     CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[j + 1];
-                    CORE.Input.Touch.position[j] = CORE.Input.Touch.position[j + 1];
+                    CORE.Input.Touch.currentPosition[j] = CORE.Input.Touch.currentPosition[j + 1];
                 }
+
                 // Decrease touch points count to remove the last one
                 CORE.Input.Touch.pointCount--;
                 break;

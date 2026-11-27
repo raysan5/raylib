@@ -22,7 +22,6 @@
 *
 *   DEPENDENCIES:
 *       - rglfw: Manage graphic device, OpenGL context and inputs (Windows, Linux, OSX/macOS, FreeBSD...)
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
@@ -1317,21 +1316,14 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
 
     // Reset last gamepad button/axis registered state
     CORE.Input.Gamepad.lastButtonPressed = GAMEPAD_BUTTON_UNKNOWN;
-    //CORE.Input.Gamepad.axisCount = 0;
 
-    // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
+    // NOTE: Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
@@ -1353,15 +1345,20 @@ void PollInputEvents(void)
     // Register previous touch states
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
-    // Reset touch positions
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    // Register previous touch positions and reset
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+    {
+        CORE.Input.Touch.previousPosition[i] = CORE.Input.Touch.currentPosition[i];
+        CORE.Input.Touch.currentPosition[i] = (Vector2){ 0, 0 };
+    }
 
     // Map touch position to mouse position for convenience
     // WARNING: If the target desktop device supports touch screen, this behaviour should be reviewed!
     // TODO: GLFW does not support multi-touch input yet
     // REF: https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
     // REF: https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    CORE.Input.Touch.currentPosition[0] = GetMousePosition();
+    CORE.Input.Touch.previousPosition[0] = CORE.Input.Mouse.currentPosition;
 
     // Check if gamepads are ready
     // NOTE: Doing it here in case of disconnection
@@ -1465,7 +1462,7 @@ void PollInputEvents(void)
         glfwWaitEvents(); // Wait for in input events before continue (drawing is paused)
         CORE.Time.previous = GetTime();
     }
-    else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks) -> Update keys state
+    else glfwPollEvents(); // Poll input events: keyboard/mouse/window events (callbacks)
 
     CORE.Window.shouldClose = glfwWindowShouldClose(platform.handle);
 
@@ -2180,40 +2177,27 @@ static void CharCallback(GLFWwindow *window, unsigned int codepoint)
     }
 }
 
-// GLFW3: Mouse button callback, runs on mouse button pressed
+// GLFW3: Mouse button callback, runs on mouse button pressed and released
 static void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
     // but future releases may add more actions (i.e. GLFW_REPEAT)
     CORE.Input.Mouse.currentButtonState[button] = action;
-    CORE.Input.Touch.currentTouchState[button] = action;
 
-#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    // Register touch actions
-    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
-
-    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseCursorPosCallback()
-
-    // Assign a pointer ID
-    gestureEvent.pointId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = GetMousePosition();
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures-system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
+    // Processing mouse events as touches, using button id as touch id
+    if (action == GLFW_PRESS)
+    {
+        CORE.Input.Touch.pointCount = 1;
+        CORE.Input.Touch.pointId[button] = button;
+        CORE.Input.Touch.currentTouchState[button] = 1; // ACTION: DOWN
+        CORE.Input.Touch.currentPosition[button] = GetMousePosition();
+    }
+    else if (action == GLFW_RELEASE)
+    {
+        // Point count and id should be reseted at some point
+        CORE.Input.Touch.currentTouchState[button] = 0; // ACTION: UP
+        CORE.Input.Touch.currentPosition[button] = GetMousePosition();
+    }
 }
 
 // GLFW3: Cursor position callback, runs on mouse movement
@@ -2221,30 +2205,11 @@ static void MouseCursorPosCallback(GLFWwindow *window, double x, double y)
 {
     CORE.Input.Mouse.currentPosition.x = (float)x;
     CORE.Input.Mouse.currentPosition.y = (float)y;
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
 
-#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
-    // Process mouse events as touches to be able to use mouse-gestures
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-
-    // Assign a pointer ID
-    gestureEvent.pointId[0] = 0;
-
-    // Register touch points count
-    gestureEvent.pointCount = 1;
-
-    // Register touch points position, only one point registered
-    gestureEvent.position[0] = CORE.Input.Touch.position[0];
-
-    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-    gestureEvent.position[0].x /= (float)GetScreenWidth();
-    gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-    // Gesture data is sent to gestures-system for processing
-    ProcessGestureEvent(gestureEvent);
-#endif
+    // Register current touch position and movement action
+    CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
+    if (Vector2Distance(CORE.Input.Touch.currentPosition[0], CORE.Input.Touch.previousPosition[0]) > 3.0f)
+        CORE.Input.Touch.currentTouchState[0] = 2; // ACTION: MOVE
 }
 
 // GLFW3: Mouse wheel scroll callback, runs on mouse wheel changes
@@ -2254,18 +2219,12 @@ static void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
     CORE.Input.Mouse.currentWheelMove.y += (float)yoffset;
 }
 
-// GLFW3: Cursor ennter callback, when cursor enters the window
+// GLFW3: Cursor enter callback, when cursor enters the window
+// NOTE: Mouse position updated by MouseCursorPosCallback()
 static void CursorEnterCallback(GLFWwindow *window, int entered)
 {
-    if (entered)
-    {
-        // NOTE: Mouse position updated by MouseCursorPosCallback()
-        CORE.Input.Mouse.cursorOnScreen = true;
-    }
-    else
-    {
-        CORE.Input.Mouse.cursorOnScreen = false;
-    }
+    if (entered) CORE.Input.Mouse.cursorOnScreen = true;
+    else CORE.Input.Mouse.cursorOnScreen = false;
 }
 
 // GLFW3: Joystick connected/disconnected callback

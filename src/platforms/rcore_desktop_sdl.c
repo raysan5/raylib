@@ -21,7 +21,6 @@
 *
 *   DEPENDENCIES:
 *       - SDL 2 or SDL 3 (main library): Windowing and inputs management
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
@@ -1425,12 +1424,6 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1465,7 +1458,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Map touch position to mouse position for convenience
-    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    if (CORE.Input.Touch.pointCount == 0) CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
 
     int touchAction = -1;       // 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
     bool realTouch = false;     // Flag to differentiate real touch gestures from mouse ones
@@ -1750,7 +1743,7 @@ void PollInputEvents(void)
                     CORE.Input.Mouse.currentPosition.y = (float)event.motion.y;
                 }
 
-                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+                CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
                 touchAction = 2;
             } break;
 
@@ -1965,36 +1958,6 @@ void PollInputEvents(void)
             } break;
             default: break;
         }
-
-#if SUPPORT_GESTURES_SYSTEM
-        if (touchAction > -1)
-        {
-            // Process mouse events as touches to be able to use mouse-gestures
-            GestureEvent gestureEvent = { 0 };
-
-            // Register touch actions
-            gestureEvent.touchAction = touchAction;
-
-            // Assign a pointer ID
-            gestureEvent.pointId[0] = 0;
-
-            // Register touch points count
-            gestureEvent.pointCount = 1;
-
-            // Register touch points position, only one point registered
-            if (touchAction == 2 || realTouch) gestureEvent.position[0] = CORE.Input.Touch.position[0];
-            else gestureEvent.position[0] = GetMousePosition();
-
-            // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-            gestureEvent.position[0].x /= (float)GetScreenWidth();
-            gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-            // Gesture data is sent to gestures-system for processing
-            ProcessGestureEvent(gestureEvent);
-
-            touchAction = -1;
-        }
-#endif
     }
     //-----------------------------------------------------------------------------
 }
@@ -2191,7 +2154,7 @@ int InitPlatform(void)
 
     // Disable mouse events being interpreted as touch events
     // NOTE: This is wanted because there are SDL_FINGER* events available which provide unique data
-    // Due to the way PollInputEvents() and rgestures.h are currently implemented, setting this won't break SUPPORT_MOUSE_GESTURES
+
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
@@ -2298,8 +2261,8 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
     {
         SDL_Finger *finger = fingers[i];
         CORE.Input.Touch.pointId[i] = finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentPosition[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.currentPosition[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
 
@@ -2313,8 +2276,8 @@ static void UpdateTouchPointsSDL(SDL_TouchFingerEvent event)
     {
         SDL_Finger *finger = SDL_GetTouchFinger(event.touchId, i);
         CORE.Input.Touch.pointId[i] = (int)finger->id;
-        CORE.Input.Touch.position[i].x = finger->x*CORE.Window.screen.width;
-        CORE.Input.Touch.position[i].y = finger->y*CORE.Window.screen.height;
+        CORE.Input.Touch.currentPosition[i].x = finger->x*CORE.Window.screen.width;
+        CORE.Input.Touch.currentPosition[i].y = finger->y*CORE.Window.screen.height;
         CORE.Input.Touch.currentTouchState[i] = 1;
     }
 #endif

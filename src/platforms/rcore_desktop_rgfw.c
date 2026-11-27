@@ -21,7 +21,6 @@
 *
 *   DEPENDENCIES:
 *       - RGFW.h (main library): Windowing and inputs management
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
@@ -696,7 +695,7 @@ static void RGFW_cb_mouserawmotionfunc(const RGFW_event *e)
     CORE.Input.Mouse.currentPosition.y += mouseY;
 
     // simulate touch with the mouse
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
     RemapMouseToTouch(2);
 }
 static void RGFW_cb_mousemotionfunc(const RGFW_event *e)
@@ -724,7 +723,7 @@ static void RGFW_cb_mousemotionfunc(const RGFW_event *e)
     CORE.Input.Mouse.currentPosition.y = mouseY;
 
     // simulate touch with the mouse
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
     RemapMouseToTouch(2);
 }
 static void RGFW_cb_keyfunc(const RGFW_keyEvent* e)
@@ -1552,12 +1551,6 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -1586,7 +1579,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Map touch position to mouse position for convenience
-    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
 
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
@@ -2041,31 +2034,25 @@ static KeyboardKey ConvertScancodeToKey(u32 keycode)
 // NOTE: 0-TOUCH_ACTION_UP, 1-TOUCH_ACTION_DOWN, 2-TOUCH_ACTION_MOVE
 void RemapMouseToTouch(int touchAction)
 {
-    #if SUPPORT_GESTURES_SYSTEM
-        if (touchAction < 0) return;
+#if SUPPORT_GESTURES_SYSTEM
+    if (touchAction < 0) return;
 
-        GestureEvent gestureEvent = { 0 };
+    GestureEvent gestureEvent = { 0 };
+    gestureEvent.touchAction = touchAction;
+    gestureEvent.pointId[0] = 0;
+    gestureEvent.pointCount = 1;
 
-        // Register touch actions
-        gestureEvent.touchAction = touchAction;
+    // Register touch points position, only one point registered
+    if ((touchAction == 2) /*|| realTouch*/) gestureEvent.position[0] = CORE.Input.Touch.currentPosition[0];
+    else gestureEvent.position[0] = GetMousePosition();
 
-        // Assign a pointer ID
-        gestureEvent.pointId[0] = 0;
+    // Normalize gesture event position to [0.0f..1.0f]
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
 
-        // Register touch points count
-        gestureEvent.pointCount = 1;
-
-        // Register touch points position, only one point registered
-        if (touchAction == 2 /*|| realTouch*/) gestureEvent.position[0] = CORE.Input.Touch.position[0];
-        else gestureEvent.position[0] = GetMousePosition();
-
-        // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
-        gestureEvent.position[0].x /= (float)GetScreenWidth();
-        gestureEvent.position[0].y /= (float)GetScreenHeight();
-
-        // Gesture data is sent to gestures-system for processing
-        ProcessGestureEvent(gestureEvent);
-    #endif
+    // Gesture data is sent to gestures-system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
 }
 
 // Helper functions for Time

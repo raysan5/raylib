@@ -19,7 +19,6 @@
 *
 *   DEPENDENCIES:
 *       - Android NDK: Provides C API to access Android functionality
-*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
 *
 *
 *   LICENSE: zlib/libpng
@@ -861,12 +860,6 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if SUPPORT_GESTURES_SYSTEM
-    // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is called on an event, not every frame
-    UpdateGestures();
-#endif
-
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
@@ -891,7 +884,7 @@ void PollInputEvents(void)
     for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
 
     // Reset touch positions
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentPosition[i] = (Vector2){ 0, 0 };
 
     // Register previous keys states
     // NOTE: Android supports up to 260 keys
@@ -1472,7 +1465,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         // Register touch points position
         touchRaw.position[i] = (Vector2){ AMotionEvent_getX(event, i), AMotionEvent_getY(event, i) };
 
-        // Normalize CORE.Input.Touch.position[i] for CORE.Window.screen.width and CORE.Window.screen.height
+        // Normalize CORE.Input.Touch.currentPosition[i] for CORE.Window.screen.width and CORE.Window.screen.height
         float widthRatio = (float)(CORE.Window.screen.width + CORE.Window.renderOffset.x)/(float)CORE.Window.display.width;
         float heightRatio = (float)(CORE.Window.screen.height + CORE.Window.renderOffset.y)/(float)CORE.Window.display.height;
         touchRaw.position[i].x = touchRaw.position[i].x*widthRatio - (float)CORE.Window.renderOffset.x/2;
@@ -1575,7 +1568,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         if (hover) continue;
 
         CORE.Input.Touch.pointId[CORE.Input.Touch.pointCount] = touchRaw.pointId[i];
-        CORE.Input.Touch.position[CORE.Input.Touch.pointCount] = touchRaw.position[i];
+        CORE.Input.Touch.currentPosition[CORE.Input.Touch.pointCount] = touchRaw.position[i];
         CORE.Input.Touch.pointCount++;
     }
 
@@ -1587,10 +1580,10 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     // Stores the previous position of touch[0] only while it's active to calculate the delta
     if (flags == AMOTION_EVENT_ACTION_MOVE) CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
-    else CORE.Input.Mouse.previousPosition = CORE.Input.Touch.position[0];
+    else CORE.Input.Mouse.previousPosition = CORE.Input.Touch.currentPosition[0];
 
     // Map touch[0] as mouse input for convenience
-    CORE.Input.Mouse.currentPosition = CORE.Input.Touch.position[0];
+    CORE.Input.Mouse.currentPosition = CORE.Input.Touch.currentPosition[0];
     CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
 
     return 0;

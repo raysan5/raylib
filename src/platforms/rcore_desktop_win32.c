@@ -1855,7 +1855,7 @@ void PollInputEvents(void)
     // Reset touch positions
     // TODO: It resets on target platform the mouse position and not filled again until a move-event,
     // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.currentPosition[i] = (Vector2){ 0, 0 };
 
     memcpy(CORE.Input.Keyboard.previousKeyState, CORE.Input.Keyboard.currentKeyState, sizeof(CORE.Input.Keyboard.previousKeyState));
 
@@ -2678,7 +2678,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             {
                 CORE.Input.Mouse.currentPosition.x = (float)GET_X_LPARAM(lparam);
                 CORE.Input.Mouse.currentPosition.y = (float)GET_Y_LPARAM(lparam);
-                CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+                CORE.Input.Touch.currentPosition[0] = CORE.Input.Mouse.currentPosition;
             }
         } break;
         case WM_SYSKEYDOWN:
