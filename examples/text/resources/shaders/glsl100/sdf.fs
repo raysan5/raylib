@@ -10,7 +10,7 @@ varying vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 const float smoothing = 1.0/16.0;
 
 void main()

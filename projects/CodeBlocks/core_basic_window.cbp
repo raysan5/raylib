@@ -24,6 +24,7 @@
 	                <Add option="-framework IOKit" />
 	                <Add option="-framework CoreAudio" />
 	                <Add option="-framework CoreVideo" />
+	                <Add option="-framework QuartzCore" />
 				</Linker>
 			</Target>
 			<Target title="Release (Mac)">
@@ -44,6 +45,7 @@
 	                <Add option="-framework IOKit" />
 	                <Add option="-framework CoreAudio" />
 	                <Add option="-framework CoreVideo" />
+	                <Add option="-framework QuartzCore" />
 				</Linker>
 			</Target>
 			<Target title="Debug (Linux)">

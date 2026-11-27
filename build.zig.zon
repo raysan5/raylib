@@ -1,0 +1,33 @@
+.{
+    .name = .raylib,
+    .version = "6.0.0",
+    .minimum_zig_version = "0.17.0",
+
+    .fingerprint = 0x13035e5cb8bc1ac2, // Changing this has security and trust implications.
+
+    .dependencies = .{
+        .xcode_frameworks = .{
+            .url = "https://pkg.machengine.org/xcode-frameworks/8a1cfb373587ea4c9bb1468b7c986462d8d4e10e.tar.gz",
+            .hash = "N-V-__8AALShqgXkvqYU6f__FrA22SMWmi2TXCJjNTO1m8XJ",
+            .lazy = true,
+        },
+        .raygui = .{
+            .url = "git+https://github.com/raysan5/raygui#3f81e2bd02bf08dcd9d350e8e8b3cf58044d6877",
+            .hash = "N-V-__8AAPPCmABYkTrLoRGTR6whFQP1bvg7p5vpLsKIcn4G",
+            .lazy = true,
+        },
+        .emsdk = .{
+            .url = "git+https://github.com/emscripten-core/emsdk#4.0.9",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
+            .lazy = true,
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "examples",
+        "LICENSE",
+    },
+}

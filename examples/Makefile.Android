@@ -2,7 +2,7 @@
 #
 #   raylib makefile for Android project (APK building)
 #
-#   Copyright (c) 2017-2024 Ramon Santamaria (@raysan5)
+#   Copyright (c) 2017-2026 Ramon Santamaria (@raysan5)
 #
 #   This software is provided "as-is", without any express or implied warranty. In no event
 #   will the authors be held liable for any damages arising from the use of this software.
@@ -26,15 +26,16 @@ PLATFORM               ?= PLATFORM_ANDROID
 RAYLIB_PATH            ?= ..\..
 
 # Define Android architecture (armeabi-v7a, arm64-v8a, x86, x86-64) and API version
-# Starting in 2019 using ARM64 is mandatory for published apps,
-# Starting on August 2020, minimum required target API is Android 10 (API level 29)
+# NOTE: Starting in 2019 using ARM64 is mandatory for published apps
+# NOTE: Starting on August 2020, minimum required target API is Android 10 (API level 29)
+# NOTE: Android 13 (API level 33), released on August 2022 should be a safe bet
 ANDROID_ARCH           ?= ARM64
-ANDROID_API_VERSION     = 29
+ANDROID_API_VERSION     = 33
 
 # Android required path variables
 # NOTE: Starting with Android NDK r21, no more toolchain generation is required, NDK is the toolchain on itself
 ifeq ($(OS),Windows_NT)
-    ANDROID_NDK = C:/android-ndk
+    ANDROID_NDK = C:/android-ndk-r30
     ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/windows-x86_64
 else
     ANDROID_NDK ?= /usr/lib/android/ndk
@@ -55,10 +56,10 @@ ifeq ($(ANDROID_ARCH),x86_64)
 endif
 
 # Required path variables
-# NOTE: JAVA_HOME must be set to JDK (using OpenJDK 13)
-JAVA_HOME              ?= C:/open-jdk
+# NOTE: JAVA_HOME must be set to JDK (using OpenJDK 27.0.1.1)
+JAVA_HOME              ?= C:/open-jdk-27.0.1.1
 ANDROID_HOME           ?= C:/android-sdk
-ANDROID_BUILD_TOOLS    ?= $(ANDROID_HOME)/build-tools/29.0.3
+ANDROID_BUILD_TOOLS    ?= $(ANDROID_HOME)/build-tools/36.0.0
 ANDROID_PLATFORM_TOOLS  = $(ANDROID_HOME)/platform-tools
 
 # Android project configuration variables
@@ -130,14 +131,16 @@ ifeq ($(ANDROID_ARCH),ARM)
     CFLAGS = -std=c99 -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16
 endif
 ifeq ($(ANDROID_ARCH),ARM64)
-    CFLAGS = -std=c99 -target aarch64 -mfix-cortex-a53-835769
+    CFLAGS = -std=c99 -mfix-cortex-a53-835769
 endif
 # Compilation functions attributes options
 CFLAGS += -ffunction-sections -funwind-tables -fstack-protector-strong -fPIC
 # Compiler options for the linker
 CFLAGS += -Wall -Wa,--noexecstack -Wformat -Werror=format-security -no-canonical-prefixes
 # Preprocessor macro definitions
-CFLAGS += -DANDROID -DPLATFORM_ANDROID -D__ANDROID_API__=$(ANDROID_API_VERSION)
+CFLAGS += -DANDROID -DPLATFORM_ANDROID
+# NOTE: API level is already implicit on compiler call, no need for redefinition
+#-D__ANDROID_API__=$(ANDROID_API_VERSION)
 
 # Paths containing required header files
 INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(NATIVE_APP_GLUE_PATH)

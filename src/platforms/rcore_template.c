@@ -27,7 +27,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2024 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -54,11 +54,6 @@
 typedef struct {
     // TODO: Define the platform specific variables required
 
-    // Display data
-    EGLDisplay device;                  // Native display device (physical screen connection)
-    EGLSurface surface;                 // Surface to draw on, framebuffers (connected to context)
-    EGLContext context;                 // Graphic context, mode in which drawing can be done
-    EGLConfig config;                   // Graphic config
 } PlatformData;
 
 //----------------------------------------------------------------------------------
@@ -67,18 +62,6 @@ typedef struct {
 extern CoreData CORE;                   // Global CORE state context
 
 static PlatformData platform = { 0 };   // Platform specific data
-
-// if you want to support multiple windows, then you need to return true here handle
-//   up to MAX_WINDOWS contexts
-bool SupportMultiWindow()
-{
-    return false;
-}
-
-void ActivatePlatformContext()
-{
-}
-
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -98,7 +81,7 @@ bool InitGraphicsDevice(void);   // Initialize graphics device
 // Check if application should close
 bool WindowShouldClose(void)
 {
-    if (CORE.Window[0].ready) return CORE.Window[0].shouldClose;
+    if (CORE.Window[activeWindowContext].ready) return CORE.Window[activeWindowContext].shouldClose;
     else return true;
 }
 
@@ -126,7 +109,7 @@ void MinimizeWindow(void)
     TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
 }
 
-// Set window state: not minimized/maximized
+// Restore window from being minimized/maximized
 void RestoreWindow(void)
 {
     TRACELOG(LOG_WARNING, "RestoreWindow() not available on target platform");
@@ -159,7 +142,7 @@ void SetWindowIcons(Image *images, int count)
 // Set title for window
 void SetWindowTitle(const char *title)
 {
-    CORE.Window[0].title = title;
+    CORE.Window[activeWindowContext].title = title;
 }
 
 // Set window position on screen (windowed mode)
@@ -177,15 +160,15 @@ void SetWindowMonitor(int monitor)
 // Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMinSize(int width, int height)
 {
-    CORE.Window[0].screenMin.width = width;
-    CORE.Window[0].screenMin.height = height;
+    CORE.Window[activeWindowContext].screenMin.width = width;
+    CORE.Window[activeWindowContext].screenMin.height = height;
 }
 
 // Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
 void SetWindowMaxSize(int width, int height)
 {
-    CORE.Window[0].screenMax.width = width;
-    CORE.Window[0].screenMax.height = height;
+    CORE.Window[activeWindowContext].screenMax.width = width;
+    CORE.Window[activeWindowContext].screenMax.height = height;
 }
 
 // Set window dimensions
@@ -220,7 +203,7 @@ int GetMonitorCount(void)
     return 1;
 }
 
-// Get number of monitors
+// Get current monitor where window is placed
 int GetCurrentMonitor(void)
 {
     TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
@@ -304,32 +287,52 @@ const char *GetClipboardText(void)
     return NULL;
 }
 
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
+}
+
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = { 0 };
+
+    TRACELOG(LOG_WARNING, "Clipboard image retrieving not implemented");
+
+    return image;
+}
+
 // Show mouse cursor
 void ShowCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = false;
 }
 
-// Hides mouse cursor
+// Hide mouse cursor
 void HideCursor(void)
 {
     CORE.Input.Mouse.cursorHidden = true;
 }
 
-// Enables cursor (unlock cursor)
+// Enable cursor (unlock cursor)
 void EnableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window[0].screen.width/2, CORE.Window[0].screen.height/2);
+    SetMousePosition(CORE.Window[activeWindowContext].screen.width/2, CORE.Window[activeWindowContext].screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = false;
 }
 
-// Disables cursor (lock cursor)
+// Disable cursor (lock cursor)
 void DisableCursor(void)
 {
     // Set cursor position in the middle
-    SetMousePosition(CORE.Window[0].screen.width/2, CORE.Window[0].screen.height/2);
+    SetMousePosition(CORE.Window[activeWindowContext].screen.width/2, CORE.Window[activeWindowContext].screen.height/2);
 
     CORE.Input.Mouse.cursorHidden = true;
 }
@@ -348,27 +351,36 @@ void SwapScreenBuffer(void)
 double GetTime(void)
 {
     double time = 0.0;
+
     struct timespec ts = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    unsigned long long int nanoSeconds = (unsigned long long int)ts.tv_sec*1000000000LLU + (unsigned long long int)ts.tv_nsec;
+    unsigned long long nanoSeconds = (unsigned long long)ts.tv_sec*1000000000LLU + (unsigned long long)ts.tv_nsec;
 
-    time = (double)(nanoSeconds - CORE.Time.base)*1e-9;  // Elapsed time since InitTimer()
+    time = (double)(nanoSeconds - CORE.Time.base)*1e-9; // Elapsed time since InitTimer()
 
     return time;
 }
 
 // Open URL with default system browser (if available)
-// NOTE: This function is only safe to use if you control the URL given.
-// A user could craft a malicious string performing another action.
-// Only call this function yourself not with user input or make sure to check the string yourself.
-// Ref: https://github.com/raysan5/raylib/issues/686
+// WARNING: This function is only safe to use if you control the URL given,
+// a user could craft a malicious string to perform and undesired action
+// NOTE: Some safety checks have been added to mitigate security issues
 void OpenURL(const char *url)
 {
-    // Security check to (partially) avoid malicious code on target platform
-    if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
+    // Security check to (partially) avoid malicious code
+    if ((strchr(url, '\'') != NULL) || (strchr(url, '\"') != NULL))
+    {
+        // Filter characters: ' and "
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
+    }
+    else if ((strncmp(url, "http://", 7) != 0) && (strncmp(url, "https://", 8) != 0))
+    {
+        // Only allow URL starting with "http://" or "https://" protocols
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
+    }
     else
     {
-        // TODO:
+        // TODO: Load url using default browser
     }
 }
 
@@ -383,11 +395,16 @@ int SetGamepadMappings(const char *mappings)
     return 0;
 }
 
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
+{
+    TRACELOG(LOG_WARNING, "SetGamepadVibration() not implemented on target platform");
+}
+
 // Set mouse position XY
 void SetMousePosition(int x, int y)
 {
     CORE.Input.Mouse.currentPosition = (Vector2){ (float)x, (float)y };
-    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
 }
 
 // Set mouse cursor
@@ -396,12 +413,19 @@ void SetMouseCursor(int cursor)
     TRACELOG(LOG_WARNING, "SetMouseCursor() not implemented on target platform");
 }
 
+// Get physical key name.
+const char *GetKeyName(int key)
+{
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -435,7 +459,6 @@ void PollInputEvents(void)
     // TODO: Poll input events for current platform
 }
 
-
 //----------------------------------------------------------------------------------
 // Module Internal Functions Definition
 //----------------------------------------------------------------------------------
@@ -449,102 +472,27 @@ int InitPlatform(void)
     // raylib uses OpenGL so, platform should create that kind of connection
     // Below example illustrates that process using EGL library
     //----------------------------------------------------------------------------
-    CORE.Window[0].fullscreen = true;
-    CORE.Window[0].flags |= FLAG_FULLSCREEN_MODE;
+    FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE);
 
-    EGLint samples = 0;
-    EGLint sampleBuffer = 0;
-    if (CORE.Window[0].flags & FLAG_MSAA_4X_HINT)
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_MSAA_4X_HINT))
     {
-        samples = 4;
-        sampleBuffer = 1;
+        // TODO: Enable MSAA
+
         TRACELOG(LOG_INFO, "DISPLAY: Trying to enable MSAA x4");
     }
 
-    const EGLint framebufferAttribs[] =
+    // TODO: Init display and graphic device
+
+    // TODO: Check display, device and context activation
+    bool result = true;
+    if (result)
     {
-        EGL_RENDERABLE_TYPE, (rlGetVersion() == RL_OPENGL_ES_30)? EGL_OPENGL_ES3_BIT : EGL_OPENGL_ES2_BIT,      // Type of context support
-        EGL_RED_SIZE, 8,            // RED color bit depth (alternative: 5)
-        EGL_GREEN_SIZE, 8,          // GREEN color bit depth (alternative: 6)
-        EGL_BLUE_SIZE, 8,           // BLUE color bit depth (alternative: 5)
-        //EGL_TRANSPARENT_TYPE, EGL_NONE, // Request transparent framebuffer (EGL_TRANSPARENT_RGB does not work on RPI)
-        EGL_DEPTH_SIZE, 16,         // Depth buffer size (Required to use Depth testing!)
-        //EGL_STENCIL_SIZE, 8,      // Stencil buffer size
-        EGL_SAMPLE_BUFFERS, sampleBuffer,    // Activate MSAA
-        EGL_SAMPLES, samples,       // 4x Antialiasing if activated (Free on MALI GPUs)
-        EGL_NONE
-    };
+        CORE.Window[activeWindowContext].ready = true;
 
-    const EGLint contextAttribs[] =
-    {
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-        EGL_NONE
-    };
-
-    EGLint numConfigs = 0;
-
-    // Get an EGL device connection
-    platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (platform.device == EGL_NO_DISPLAY)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
-    }
-
-    // Initialize the EGL device connection
-    if (eglInitialize(platform.device, NULL, NULL) == EGL_FALSE)
-    {
-        // If all of the calls to eglInitialize returned EGL_FALSE then an error has occurred.
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
-        return false;
-    }
-
-    // Get an appropriate EGL framebuffer configuration
-    eglChooseConfig(platform.device, framebufferAttribs, &platform.config, 1, &numConfigs);
-
-    // Set rendering API
-    eglBindAPI(EGL_OPENGL_ES_API);
-
-    // Create an EGL rendering context
-    platform.context = eglCreateContext(platform.device, platform.config, EGL_NO_CONTEXT, contextAttribs);
-    if (platform.context == EGL_NO_CONTEXT)
-    {
-        TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
-        return -1;
-    }
-
-    // Create an EGL window surface
-    EGLint displayFormat = 0;
-
-    // EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is guaranteed to be accepted by ANativeWindow_setBuffersGeometry()
-    // As soon as we picked a EGLConfig, we can safely reconfigure the ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID
-    eglGetConfigAttrib(platform.device, platform.config, EGL_NATIVE_VISUAL_ID, &displayFormat);
-
-    // Android specific call
-    ANativeWindow_setBuffersGeometry(platform.app->window, 0, 0, displayFormat);       // Force use of native display size
-
-    platform.surface = eglCreateWindowSurface(platform.device, platform.config, platform.app->window, NULL);
-
-    // There must be at least one frame displayed before the buffers are swapped
-    eglSwapInterval(platform.device, 1);
-
-    EGLBoolean result = eglMakeCurrent(platform.device, platform.surface, platform.surface, platform.context);
-
-    // Check surface and context activation
-    if (result != EGL_FALSE)
-    {
-        CORE.Window[0].ready = true;
-
-        CORE.Window[0].render.width = CORE.Window[0].screen.width;
-        CORE.Window[0].render.height = CORE.Window[0].screen.height;
-        CORE.Window[0].currentFbo.width = CORE.Window[0].render.width;
-        CORE.Window[0].currentFbo.height = CORE.Window[0].render.height;
-
-        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window[0].display.width, CORE.Window[0].display.height);
-        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window[0].screen.width, CORE.Window[0].screen.height);
-        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window[0].render.width, CORE.Window[0].render.height);
-        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window[0].renderOffset.x, CORE.Window[0].renderOffset.y);
+        CORE.Window[activeWindowContext].render.width = CORE.Window[activeWindowContext].screen.width;
+        CORE.Window[activeWindowContext].render.height = CORE.Window[activeWindowContext].screen.height;
+        CORE.Window[activeWindowContext].currentFbo.width = CORE.Window[activeWindowContext].render.width;
+        CORE.Window[activeWindowContext].currentFbo.height = CORE.Window[activeWindowContext].render.height;
     }
     else
     {
@@ -553,17 +501,18 @@ int InitPlatform(void)
     }
     //----------------------------------------------------------------------------
 
-    // If everything work as expected, we can continue
-    CORE.Window[0].render.width = CORE.Window[0].screen.width;
-    CORE.Window[0].render.height = CORE.Window[0].screen.height;
-    CORE.Window[0].currentFbo.width = CORE.Window[0].render.width;
-    CORE.Window[0].currentFbo.height = CORE.Window[0].render.height;
+    // If everything worked as expected, continue
+    CORE.Window[activeWindowContext].render.width = CORE.Window[activeWindowContext].screen.width;
+    CORE.Window[activeWindowContext].render.height = CORE.Window[activeWindowContext].screen.height;
+    CORE.Window[activeWindowContext].currentFbo.width = CORE.Window[activeWindowContext].render.width;
+    CORE.Window[activeWindowContext].currentFbo.height = CORE.Window[activeWindowContext].render.height;
 
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
-    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window[0].display.width, CORE.Window[0].display.height);
-    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window[0].screen.width, CORE.Window[0].screen.height);
-    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window[0].render.width, CORE.Window[0].render.height);
-    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window[0].renderOffset.x, CORE.Window[0].renderOffset.y);
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+        FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
+    TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window[activeWindowContext].display.width, CORE.Window[activeWindowContext].display.height);
+    TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window[activeWindowContext].screen.width, CORE.Window[activeWindowContext].screen.height);
+    TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window[activeWindowContext].render.width, CORE.Window[activeWindowContext].render.height);
+    TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window[activeWindowContext].renderOffset.x, CORE.Window[activeWindowContext].renderOffset.y);
 
     // TODO: Load OpenGL extensions
     // NOTE: GL procedures address loader is required to load extensions

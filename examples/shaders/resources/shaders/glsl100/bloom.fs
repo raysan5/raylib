@@ -10,11 +10,11 @@ varying vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-// NOTE: Add here your custom variables
+// NOTE: Add your custom variables here
 
-const vec2 size = vec2(800, 450);   // render size
-const float samples = 5.0;          // pixels per axis; higher = bigger glow, worse performance
-const float quality = 2.5;             // lower = smaller glow, better quality
+const vec2 size = vec2(800, 450);   // Framebuffer size
+const float samples = 5.0;          // Pixels per axis; higher = bigger glow, worse performance
+const float quality = 2.5;          // Defines size factor: Lower = smaller glow, better quality
 
 void main()
 {

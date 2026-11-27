@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - gif playing
+*   raylib [textures] example - gif player
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2021-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2021-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -26,7 +28,7 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - gif playing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - gif player");
 
     int animFrames = 0;
 

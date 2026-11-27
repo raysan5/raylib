@@ -1,18 +1,19 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - Mesh instancing
+*   raylib [shaders] example - mesh instancing
+*
+*   Example complexity rating: [★★★★] 4/4
 *
 *   Example originally created with raylib 3.7, last time updated with raylib 4.2
 *
-*   Example contributed by @seanpringle and reviewed by Max (@moliad) and Ramon Santamaria (@raysan5)
+*   Example contributed by seanpringle (@seanpringle) and reviewed by Max (@moliad) and Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2020-2024 @seanpringle, Max (@moliad) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2020-2025 seanpringle (@seanpringle), Max (@moliad) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
-
 
 #include "raylib.h"
 #include "raymath.h"
@@ -51,7 +52,7 @@ int main(void)
     camera.projection = CAMERA_PERSPECTIVE;                     // Camera projection type
 
     // Define mesh to be instanced
-    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Mesh mesh = GenMeshCube(1.0f, 1.0f, 1.0f);
 
     // Define transforms to be uploaded to GPU for instances
     Matrix *transforms = (Matrix *)RL_CALLOC(MAX_INSTANCES, sizeof(Matrix));   // Pre-multiplied transformations passed to rlgl
@@ -61,9 +62,9 @@ int main(void)
     {
         Matrix translation = MatrixTranslate((float)GetRandomValue(-50, 50), (float)GetRandomValue(-50, 50), (float)GetRandomValue(-50, 50));
         Vector3 axis = Vector3Normalize((Vector3){ (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360), (float)GetRandomValue(0, 360) });
-        float angle = (float)GetRandomValue(0, 10)*DEG2RAD;
+        float angle = (float)GetRandomValue(0, 180)*DEG2RAD;
         Matrix rotation = MatrixRotate(axis, angle);
-        
+
         transforms[i] = MatrixMultiply(rotation, translation);
     }
 
@@ -73,7 +74,6 @@ int main(void)
     // Get shader locations
     shader.locs[SHADER_LOC_MATRIX_MVP] = GetShaderLocation(shader, "mvp");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocationAttrib(shader, "instanceTransform");
 
     // Set shader value: ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
@@ -118,15 +118,15 @@ int main(void)
             BeginMode3D(camera);
 
                 // Draw cube mesh with default material (BLUE)
-                DrawMesh(cube, matDefault, MatrixTranslate(-10.0f, 0.0f, 0.0f));
+                DrawMesh(mesh, matDefault, MatrixTranslate(-10.0f, 0.0f, 0.0f));
 
                 // Draw meshes instanced using material containing instancing shader (RED + lighting),
                 // transforms[] for the instances should be provided, they are dynamically
                 // updated in GPU every frame, so we can animate the different mesh instances
-                DrawMeshInstanced(cube, matInstances, transforms, MAX_INSTANCES);
+                DrawMeshInstanced(mesh, matInstances, transforms, MAX_INSTANCES);
 
                 // Draw cube mesh with default material (BLUE)
-                DrawMesh(cube, matDefault, MatrixTranslate(10.0f, 0.0f, 0.0f));
+                DrawMesh(mesh, matDefault, MatrixTranslate(10.0f, 0.0f, 0.0f));
 
             EndMode3D();
 
@@ -139,6 +139,9 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     RL_FREE(transforms);    // Free transforms
+    UnloadMaterial(matInstances);    // Also unloads the instancing shader
+    UnloadMaterial(matDefault);      // Unload default material
+    UnloadMesh(mesh);                // Unload cube mesh
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -1,0 +1,1864 @@
+/**********************************************************************************************
+*
+*   rcore_web_emscripten - Functions to manage window, graphics device and inputs
+*
+*   PLATFORM: WEB - EMSCRIPTEN
+*       - HTML5 (WebAssembly)
+*
+*   LIMITATIONS:
+*       - TBD
+*
+*   POSSIBLE IMPROVEMENTS:
+*       - TBD
+*
+*   CONFIGURATION:
+*       #define RCORE_PLATFORM_CUSTOM_FLAG
+*           Custom flag for rcore on target platform -not used-
+*
+*   DEPENDENCIES:
+*       - emscripten: Allow interaction between browser API and C
+*       - gestures: Gestures system for touch-ready devices (or simulated from mouse inputs)
+*
+*
+*   LICENSE: zlib/libpng
+*
+*   Copyright (c) 2025-2026 Ramon Santamaria (@raysan5) and contributors
+*
+*   This software is provided "as-is", without any express or implied warranty. In no event
+*   will the authors be held liable for any damages arising from the use of this software.
+*
+*   Permission is granted to anyone to use this software for any purpose, including commercial
+*   applications, and to alter it and redistribute it freely, subject to the following restrictions:
+*
+*     1. The origin of this software must not be misrepresented; you must not claim that you
+*     wrote the original software. If you use this software in a product, an acknowledgment
+*     in the product documentation would be appreciated but is not required.
+*
+*     2. Altered source versions must be plainly marked as such, and must not be misrepresented
+*     as being the original software.
+*
+*     3. This notice may not be removed or altered from any source distribution.
+*
+**********************************************************************************************/
+
+#include <emscripten/emscripten.h>      // Emscripten functionality for C
+#include <emscripten/dom_pk_codes.h>    // Emscripten physical keyboard codes
+#include <emscripten/html5.h>           // Emscripten HTML5 library
+
+#include <sys/time.h>   // Required for: timespec, nanosleep(), select() - POSIX
+
+//----------------------------------------------------------------------------------
+// Defines and Macros
+//----------------------------------------------------------------------------------
+#if (_POSIX_C_SOURCE < 199309L)
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L     // Required for: CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+#endif
+
+#define DOM_PK_CODE_MAPPED_NUM          128
+#define DOM_PK_CODE_EXTENDED_OFFSET     0xE000
+
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
+typedef struct {
+    char canvasId[64];                  // Current canvas id
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE glContext; // OpenGL context
+    unsigned int *pixels;               // Pointer to pixel data buffer (RGBA 32bit format)
+} PlatformData;
+
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
+extern CoreData CORE;                   // Global CORE state context
+
+static PlatformData platform = { 0 };   // Platform specific data
+
+static const KeyboardKey mapDomCodeToKey[DOM_PK_CODE_MAPPED_NUM] = {
+    [DOM_PK_ESCAPE] = KEY_ESCAPE,
+    [DOM_PK_0] = KEY_ZERO,
+    [DOM_PK_1] = KEY_ONE,
+    [DOM_PK_2] = KEY_TWO,
+    [DOM_PK_3] = KEY_THREE,
+    [DOM_PK_4] = KEY_FOUR,
+    [DOM_PK_5] = KEY_FIVE,
+    [DOM_PK_6] = KEY_SIX,
+    [DOM_PK_7] = KEY_SEVEN,
+    [DOM_PK_8] = KEY_EIGHT,
+    [DOM_PK_9] = KEY_NINE,
+    [DOM_PK_MINUS] = KEY_MINUS,
+    [DOM_PK_EQUAL] = KEY_EQUAL,
+    [DOM_PK_BACKSPACE] = KEY_BACKSPACE,
+    [DOM_PK_TAB] = KEY_TAB,
+    [DOM_PK_Q] = KEY_Q,
+    [DOM_PK_W] = KEY_W,
+    [DOM_PK_E] = KEY_E,
+    [DOM_PK_R] = KEY_R,
+    [DOM_PK_T] = KEY_T,
+    [DOM_PK_Y] = KEY_Y,
+    [DOM_PK_U] = KEY_U,
+    [DOM_PK_I] = KEY_I,
+    [DOM_PK_O] = KEY_O,
+    [DOM_PK_P] = KEY_P,
+    [DOM_PK_BRACKET_LEFT] = KEY_LEFT_BRACKET,
+    [DOM_PK_BRACKET_RIGHT] = KEY_RIGHT_BRACKET,
+    [DOM_PK_ENTER] = KEY_ENTER,
+    [DOM_PK_CONTROL_LEFT] = KEY_LEFT_CONTROL,
+    [DOM_PK_A] = KEY_A,
+    [DOM_PK_S] = KEY_S,
+    [DOM_PK_D] = KEY_D,
+    [DOM_PK_F] = KEY_F,
+    [DOM_PK_G] = KEY_G,
+    [DOM_PK_H] = KEY_H,
+    [DOM_PK_J] = KEY_J,
+    [DOM_PK_K] = KEY_K,
+    [DOM_PK_L] = KEY_L,
+    [DOM_PK_SEMICOLON] = KEY_SEMICOLON,
+    [DOM_PK_QUOTE] = KEY_APOSTROPHE,
+    [DOM_PK_BACKQUOTE] = KEY_GRAVE,
+    [DOM_PK_SHIFT_LEFT] = KEY_LEFT_SHIFT,
+    [DOM_PK_BACKSLASH] = KEY_BACKSLASH,
+    [DOM_PK_Z] = KEY_Z,
+    [DOM_PK_X] = KEY_X,
+    [DOM_PK_C] = KEY_C,
+    [DOM_PK_V] = KEY_V,
+    [DOM_PK_B] = KEY_B,
+    [DOM_PK_N] = KEY_N,
+    [DOM_PK_M] = KEY_M,
+    [DOM_PK_COMMA] = KEY_COMMA,
+    [DOM_PK_PERIOD] = KEY_PERIOD,
+    [DOM_PK_SLASH] = KEY_SLASH,
+    [DOM_PK_SHIFT_RIGHT] = KEY_RIGHT_SHIFT,
+    [DOM_PK_NUMPAD_MULTIPLY] = KEY_KP_MULTIPLY,
+    [DOM_PK_ALT_LEFT] = KEY_LEFT_ALT,
+    [DOM_PK_SPACE] = KEY_SPACE,
+    [DOM_PK_CAPS_LOCK] = KEY_CAPS_LOCK,
+    [DOM_PK_F1] = KEY_F1,
+    [DOM_PK_F2] = KEY_F2,
+    [DOM_PK_F3] = KEY_F3,
+    [DOM_PK_F4] = KEY_F4,
+    [DOM_PK_F5] = KEY_F5,
+    [DOM_PK_F6] = KEY_F6,
+    [DOM_PK_F7] = KEY_F7,
+    [DOM_PK_F8] = KEY_F8,
+    [DOM_PK_F9] = KEY_F9,
+    [DOM_PK_F10] = KEY_F10,
+    [DOM_PK_PAUSE] = KEY_PAUSE,
+    [DOM_PK_SCROLL_LOCK] = KEY_SCROLL_LOCK,
+    [DOM_PK_NUMPAD_7] = KEY_KP_7,
+    [DOM_PK_NUMPAD_8] = KEY_KP_8,
+    [DOM_PK_NUMPAD_9] = KEY_KP_9,
+    [DOM_PK_NUMPAD_SUBTRACT] = KEY_KP_SUBTRACT,
+    [DOM_PK_NUMPAD_4] = KEY_KP_4,
+    [DOM_PK_NUMPAD_5] = KEY_KP_5,
+    [DOM_PK_NUMPAD_6] = KEY_KP_6,
+    [DOM_PK_NUMPAD_ADD] = KEY_KP_ADD,
+    [DOM_PK_NUMPAD_1] = KEY_KP_1,
+    [DOM_PK_NUMPAD_2] = KEY_KP_2,
+    [DOM_PK_NUMPAD_3] = KEY_KP_3,
+    [DOM_PK_NUMPAD_0] = KEY_KP_0,
+    [DOM_PK_NUMPAD_DECIMAL] = KEY_KP_DECIMAL,
+    [DOM_PK_PRINT_SCREEN] = KEY_PRINT_SCREEN,
+    [DOM_PK_F11] = KEY_F11,
+    [DOM_PK_F12] = KEY_F12,
+    [DOM_PK_NUMPAD_EQUAL] = KEY_KP_EQUAL,
+    [DOM_PK_NUMPAD_COMMA] = KEY_KP_DECIMAL
+};
+
+// Emscripten places keys with extended scan codes (right-side modifiers, navigation and some keypad keys) in the 0xE0xx range
+static const KeyboardKey mapDomCodeToKeyExtended[DOM_PK_CODE_MAPPED_NUM] = {
+    [DOM_PK_NUMPAD_ENTER - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KP_ENTER,
+    [DOM_PK_CONTROL_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_CONTROL,
+    [DOM_PK_AUDIO_VOLUME_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_VOLUME_DOWN,
+    [DOM_PK_AUDIO_VOLUME_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_VOLUME_UP,
+    [DOM_PK_NUMPAD_DIVIDE - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KP_DIVIDE,
+    [DOM_PK_ALT_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_ALT,
+    [DOM_PK_NUM_LOCK - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_NUM_LOCK,
+    [DOM_PK_HOME - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_HOME,
+    [DOM_PK_ARROW_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_UP,
+    [DOM_PK_PAGE_UP - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_PAGE_UP,
+    [DOM_PK_ARROW_LEFT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_LEFT,
+    [DOM_PK_ARROW_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT,
+    [DOM_PK_END - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_END,
+    [DOM_PK_ARROW_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_DOWN,
+    [DOM_PK_PAGE_DOWN - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_PAGE_DOWN,
+    [DOM_PK_INSERT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_INSERT,
+    [DOM_PK_DELETE - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_DELETE,
+    [DOM_PK_META_LEFT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_LEFT_SUPER,
+    [DOM_PK_META_RIGHT - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_RIGHT_SUPER,
+    [DOM_PK_CONTEXT_MENU - DOM_PK_CODE_EXTENDED_OFFSET] = KEY_KB_MENU
+};
+
+static const char cursorLUT[11][12] = {
+    "default",     // 0  MOUSE_CURSOR_DEFAULT
+    "default",     // 1  MOUSE_CURSOR_ARROW
+    "text",        // 2  MOUSE_CURSOR_IBEAM
+    "crosshair",   // 3  MOUSE_CURSOR_CROSSHAIR
+    "pointer",     // 4  MOUSE_CURSOR_POINTING_HAND
+    "ew-resize",   // 5  MOUSE_CURSOR_RESIZE_EW
+    "ns-resize",   // 6  MOUSE_CURSOR_RESIZE_NS
+    "nwse-resize", // 7  MOUSE_CURSOR_RESIZE_NWSE
+    "nesw-resize", // 8  MOUSE_CURSOR_RESIZE_NESW
+    "move",        // 9  MOUSE_CURSOR_RESIZE_ALL
+    "not-allowed"  // 10 MOUSE_CURSOR_NOT_ALLOWED
+};
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Declaration
+//----------------------------------------------------------------------------------
+int InitPlatform(void);          // Initialize platform (graphics, inputs and more)
+void ClosePlatform(void);        // Close platform
+
+// OpenGL extensions loader
+static void *WebGLGetProcAddress(const char *procName); // Get WebGL extension procedure address, used by rlLoadExtensions()
+
+// Emscripten window callback events
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData);
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData);
+static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData);
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData);
+static EM_BOOL EmscriptenCanvasResizedCallback(int eventType, const void *reserved, void *userData);
+// TODO: Implement GLFW3 alternative for drop callback, runs when drop files into browser/canvas
+//static void WindowDropCallback(GLFWwindow *window, int count, const char **paths);
+
+// Emscripten input callback events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData);
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
+static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheelEvent *wheelEvent, void *userData);
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData);
+static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData);
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData);
+
+static KeyboardKey ConvertKeyboardEventToKey(const EmscriptenKeyboardEvent *keyboardEvent);
+
+// JS: Set the canvas id provided by the module configuration
+EM_JS(void, SetCanvasIdJs, (char *out, int outSize), {
+    var canvasId = "#" + Module.canvas.id;
+    stringToUTF8(canvasId, out, outSize);
+});
+
+//----------------------------------------------------------------------------------
+// Module Functions Declaration
+//----------------------------------------------------------------------------------
+// NOTE: Functions declaration is provided by raylib.h
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Window and Graphics Device
+//----------------------------------------------------------------------------------
+
+// Check if application should close
+// This will always return false on a web-build as web builds have no control over this functionality
+// Sleep is handled in EndDrawing() for synchronous code
+bool WindowShouldClose(void)
+{
+    // Emscripten Asyncify is required to run synchronous code in asynchronous JS
+    // REF: https://emscripten.org/docs/porting/asyncify.html
+
+    // WindowShouldClose() is not called on a web-ready raylib application if using emscripten_set_main_loop()
+    // and encapsulating one frame execution on a UpdateDrawFrame() function,
+    // allowing the browser to manage execution asynchronously
+
+    // NOTE: Optionally, time can be managed, giving control back-to-browser as required,
+    // but it seems below line could generate stuttering on some browsers
+    emscripten_sleep(12);
+
+    return false;
+}
+
+// Toggle fullscreen mode
+void ToggleFullscreen(void)
+{
+    EmscriptenFullscreenChangeEvent status = { 0 };
+    if (emscripten_get_fullscreen_status(&status) != EMSCRIPTEN_RESULT_SUCCESS) return;
+    if (status.isFullscreen && (strcmp(status.id, platform.canvasId + 1) != 0)) return;
+
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE))
+    {
+        if (emscripten_exit_fullscreen() == EMSCRIPTEN_RESULT_SUCCESS)
+        {
+            FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE);
+        }
+    }
+    else
+    {
+        unsigned int previousFlags = CORE.Window[activeWindowContext].flags;
+        if ((previousFlags & (FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE)) == 0) CORE.Window[activeWindowContext].previousScreen = CORE.Window[activeWindowContext].screen;
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE);
+        FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE);
+
+        if (status.isFullscreen) SetWindowSize(CORE.Window[activeWindowContext].previousScreen.width, CORE.Window[activeWindowContext].previousScreen.height);
+        else
+        {
+            // Replace any request that is still waiting for a user input event
+            if ((previousFlags & (FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE)) != 0) emscripten_exit_fullscreen();
+
+            EmscriptenFullscreenStrategy strategy = {
+                .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
+                .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_NONE, // SetWindowSize() applies the DPI scale
+                .canvasResizedCallback = EmscriptenCanvasResizedCallback
+            };
+            EMSCRIPTEN_RESULT result = emscripten_request_fullscreen_strategy(platform.canvasId, true, &strategy);
+            if ((result != EMSCRIPTEN_RESULT_SUCCESS) && (result != EMSCRIPTEN_RESULT_DEFERRED))
+            {
+                CORE.Window[activeWindowContext].flags = previousFlags & ~(FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE);
+                TRACELOG(LOG_WARNING, "WINDOW: Failed to enter fullscreen");
+            }
+        }
+    }
+}
+
+// Toggle borderless windowed mode
+void ToggleBorderlessWindowed(void)
+{
+    EmscriptenFullscreenChangeEvent status = { 0 };
+    if (emscripten_get_fullscreen_status(&status) != EMSCRIPTEN_RESULT_SUCCESS) return;
+    if (status.isFullscreen && (strcmp(status.id, platform.canvasId + 1) != 0)) return;
+
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        if (emscripten_exit_fullscreen() == EMSCRIPTEN_RESULT_SUCCESS)
+        {
+            FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE);
+        }
+    }
+    else
+    {
+        unsigned int previousFlags = CORE.Window[activeWindowContext].flags;
+        if ((previousFlags & (FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE)) == 0) CORE.Window[activeWindowContext].previousScreen = CORE.Window[activeWindowContext].screen;
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE);
+        FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE);
+
+        if (status.isFullscreen) EmscriptenCanvasResizedCallback(EMSCRIPTEN_EVENT_CANVASRESIZED, NULL, NULL);
+        else
+        {
+            // Replace any request that is still waiting for a user input event
+            if ((previousFlags & (FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE)) != 0) emscripten_exit_fullscreen();
+
+            EmscriptenFullscreenStrategy strategy = {
+                .scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH,
+                .canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_NONE, // SetWindowSize() applies the DPI scale
+                .canvasResizedCallback = EmscriptenCanvasResizedCallback
+            };
+            EMSCRIPTEN_RESULT result = emscripten_request_fullscreen_strategy(platform.canvasId, true, &strategy);
+            if ((result != EMSCRIPTEN_RESULT_SUCCESS) && (result != EMSCRIPTEN_RESULT_DEFERRED))
+            {
+                CORE.Window[activeWindowContext].flags = previousFlags & ~(FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE);
+                TRACELOG(LOG_WARNING, "WINDOW: Failed to enter fullscreen");
+            }
+        }
+    }
+}
+
+// Set window state: maximized, if resizable
+void MaximizeWindow(void)
+{
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) && !FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED);
+    }
+}
+
+// Set window state: minimized
+void MinimizeWindow(void)
+{
+    TRACELOG(LOG_WARNING, "MinimizeWindow() not available on target platform");
+}
+
+// Restore window from being minimized/maximized
+void RestoreWindow(void)
+{
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) && FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED);
+    }
+}
+
+// Set window configuration state using flags
+void SetWindowState(unsigned int flags)
+{
+    if (!CORE.Window[activeWindowContext].ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
+
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE) &&
+        !FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        ToggleBorderlessWindowed();
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE) &&
+        !FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE))
+    {
+        ToggleFullscreen();
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if ((FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) != FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE)) && FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
+    {
+        FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE);
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if ((FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED) != FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED)) && FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE))
+        {
+            FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED);
+        }
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
+    {
+        TRACELOG(LOG_WARNING, "SetWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
+}
+
+// Clear window configuration state flags
+void ClearWindowState(unsigned int flags)
+{
+    // Check previous state and requested state to apply required changes
+    // NOTE: In most cases the functions already change the flags internally
+
+    // State change: FLAG_VSYNC_HINT
+    if (FLAG_IS_SET(flags, FLAG_VSYNC_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_VSYNC_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_BORDERLESS_WINDOWED_MODE
+    if (FLAG_IS_SET(flags, FLAG_BORDERLESS_WINDOWED_MODE) &&
+        FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        ToggleBorderlessWindowed();
+    }
+
+    // State change: FLAG_FULLSCREEN_MODE
+    if (FLAG_IS_SET(flags, FLAG_FULLSCREEN_MODE) &&
+        FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE))
+    {
+        ToggleFullscreen();
+    }
+
+    // State change: FLAG_WINDOW_RESIZABLE
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) && FLAG_IS_SET(flags, FLAG_WINDOW_RESIZABLE))
+    {
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE);
+    }
+
+    // State change: FLAG_WINDOW_HIDDEN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIDDEN))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIDDEN) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MINIMIZED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MINIMIZED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MAXIMIZED
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED) && FLAG_IS_SET(flags, FLAG_WINDOW_MAXIMIZED))
+    {
+        if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE))
+        {
+            FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED);
+        }
+    }
+
+    // State change: FLAG_WINDOW_UNDECORATED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNDECORATED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNDECORATED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_UNFOCUSED
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_UNFOCUSED))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_UNFOCUSED) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_TOPMOST
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TOPMOST))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TOPMOST) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_ALWAYS_RUN
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_ALWAYS_RUN) not available on target platform");
+    }
+
+    // The following states can not be changed after window creation
+    // NOTE: Review for PLATFORM_WEB
+
+    // State change: FLAG_WINDOW_TRANSPARENT
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_TRANSPARENT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_TRANSPARENT) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_HIGHDPI
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_HIGHDPI))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_HIGHDPI) not available on target platform");
+    }
+
+    // State change: FLAG_WINDOW_MOUSE_PASSTHROUGH
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MOUSE_PASSTHROUGH))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_WINDOW_MOUSE_PASSTHROUGH) not available on target platform");
+    }
+
+    // State change: FLAG_MSAA_4X_HINT
+    if (FLAG_IS_SET(flags, FLAG_MSAA_4X_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_MSAA_4X_HINT) not available on target platform");
+    }
+
+    // State change: FLAG_INTERLACED_HINT
+    if (FLAG_IS_SET(flags, FLAG_INTERLACED_HINT))
+    {
+        TRACELOG(LOG_WARNING, "ClearWindowState(FLAG_INTERLACED_HINT) not available on target platform");
+    }
+}
+
+// Set icon for window
+void SetWindowIcon(Image image)
+{
+    TRACELOG(LOG_WARNING, "SetWindowIcon() not available on target platform");
+}
+
+// Set icon for window, multiple images
+void SetWindowIcons(Image *images, int count)
+{
+    TRACELOG(LOG_WARNING, "SetWindowIcons() not available on target platform");
+}
+
+// Set title for window
+void SetWindowTitle(const char *title)
+{
+    CORE.Window[activeWindowContext].title = title;
+    emscripten_set_window_title(title);
+}
+
+// Set window position on screen (windowed mode)
+void SetWindowPosition(int x, int y)
+{
+    TRACELOG(LOG_WARNING, "SetWindowPosition() not available on target platform");
+}
+
+// Set monitor for the current window
+void SetWindowMonitor(int monitor)
+{
+    TRACELOG(LOG_WARNING, "SetWindowMonitor() not available on target platform");
+}
+
+// Set window minimum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMinSize(int width, int height)
+{
+    CORE.Window[activeWindowContext].screenMin.width = width;
+    CORE.Window[activeWindowContext].screenMin.height = height;
+
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) != 0) SetWindowSize(CORE.Window[activeWindowContext].screen.width, CORE.Window[activeWindowContext].screen.height);
+}
+
+// Set window maximum dimensions (FLAG_WINDOW_RESIZABLE)
+void SetWindowMaxSize(int width, int height)
+{
+    CORE.Window[activeWindowContext].screenMax.width = width;
+    CORE.Window[activeWindowContext].screenMax.height = height;
+
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) != 0) SetWindowSize(CORE.Window[activeWindowContext].screen.width, CORE.Window[activeWindowContext].screen.height);
+}
+
+// Set window dimensions
+void SetWindowSize(int width, int height)
+{
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_RESIZABLE) &&
+        ((CORE.Window[activeWindowContext].flags & (FLAG_FULLSCREEN_MODE | FLAG_BORDERLESS_WINDOWED_MODE)) == 0))
+    {
+        if (width < (int)CORE.Window[activeWindowContext].screenMin.width) width = CORE.Window[activeWindowContext].screenMin.width;
+        else if ((width > (int)CORE.Window[activeWindowContext].screenMax.width) && (CORE.Window[activeWindowContext].screenMax.width > 0)) width = CORE.Window[activeWindowContext].screenMax.width;
+
+        if (height < (int)CORE.Window[activeWindowContext].screenMin.height) height = CORE.Window[activeWindowContext].screenMin.height;
+        else if ((height > (int)CORE.Window[activeWindowContext].screenMax.height) && (CORE.Window[activeWindowContext].screenMax.height > 0)) height = CORE.Window[activeWindowContext].screenMax.height;
+    }
+
+    const bool screenResized = (CORE.Window[activeWindowContext].screen.width != (unsigned int)width) ||
+        (CORE.Window[activeWindowContext].screen.height != (unsigned int)height);
+
+    // Keep the requested logical size; round only the framebuffer dimensions
+    Vector2 scaleDpi = { 1.0f, 1.0f };
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIGHDPI)) scaleDpi = GetWindowScaleDPI();
+    const unsigned int renderWidth = (unsigned int)roundf((float)width*scaleDpi.x);
+    const unsigned int renderHeight = (unsigned int)roundf((float)height*scaleDpi.y);
+    const bool renderResized = (CORE.Window[activeWindowContext].render.width != renderWidth) ||
+        (CORE.Window[activeWindowContext].render.height != renderHeight);
+
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    if (renderResized)
+    {
+        platform.pixels = (unsigned int *)RL_REALLOC(platform.pixels, (size_t)renderWidth*renderHeight*sizeof(unsigned int));
+        rlResizeFramebuffer(renderWidth, renderHeight);
+    }
+#endif
+
+    int canvasWidth = 0;
+    int canvasHeight = 0;
+    emscripten_get_canvas_element_size(platform.canvasId, &canvasWidth, &canvasHeight);
+    const bool canvasResized = ((unsigned int)canvasWidth != renderWidth) ||
+        ((unsigned int)canvasHeight != renderHeight);
+
+    // CSS controls the displayed size independently of the framebuffer resolution
+    if (canvasResized) emscripten_set_canvas_element_size(platform.canvasId, renderWidth, renderHeight);
+
+    CORE.Window[activeWindowContext].screen.width = width;
+    CORE.Window[activeWindowContext].screen.height = height;
+
+    if (renderResized || canvasResized)
+    {
+        SetupViewport(renderWidth, renderHeight);
+        CORE.Window[activeWindowContext].currentFbo = CORE.Window[activeWindowContext].render;
+    }
+    if (screenResized || renderResized || canvasResized) CORE.Window[activeWindowContext].resizedLastFrame = true;
+    CORE.Window[activeWindowContext].screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+}
+
+// Set window opacity, value opacity is between 0.0 and 1.0
+void SetWindowOpacity(float opacity)
+{
+    if (opacity >= 1.0f) opacity = 1.0f;
+    else if (opacity <= 0.0f) opacity = 0.0f;
+
+    EM_ASM({ Module.canvas.style.opacity = $0; }, opacity);
+}
+
+// Set window focused
+void SetWindowFocused(void)
+{
+    TRACELOG(LOG_WARNING, "SetWindowFocused() not available on target platform");
+}
+
+// Get native window handle
+void *GetWindowHandle(void)
+{
+    TRACELOG(LOG_WARNING, "GetWindowHandle() not implemented on target platform");
+    return NULL;
+}
+
+// Get number of monitors
+int GetMonitorCount(void)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorCount() not implemented on target platform");
+    return 1;
+}
+
+// Get current monitor where window is placed
+int GetCurrentMonitor(void)
+{
+    TRACELOG(LOG_WARNING, "GetCurrentMonitor() not implemented on target platform");
+    return 0;
+}
+
+// Get selected monitor position
+Vector2 GetMonitorPosition(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPosition() not implemented on target platform");
+    return (Vector2){ 0, 0 };
+}
+
+// Get selected monitor width (currently used by monitor)
+int GetMonitorWidth(int monitor)
+{
+    // Get the width of the user's entire screen in CSS logical pixels,
+    // no physical pixels, it would require multiplying by device pixel ratio
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int width = 0;
+    width = EM_ASM_INT( { return window.screen.width; }, 0);
+    return width;
+}
+
+// Get selected monitor height (currently used by monitor)
+int GetMonitorHeight(int monitor)
+{
+    // Get the height of the user's entire screen in CSS logical pixels,
+    // no physical pixels, it would require multiplying by device pixel ratio
+    // NOTE: Returned value is limited to the current monitor where the browser window is located
+    int height = 0;
+    height = EM_ASM_INT( { return window.screen.height; }, 0);
+    return height;
+}
+
+// Get selected monitor physical width in millimetres
+int GetMonitorPhysicalWidth(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalWidth() not implemented on target platform");
+    return 0;
+}
+
+// Get selected monitor physical height in millimetres
+int GetMonitorPhysicalHeight(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorPhysicalHeight() not implemented on target platform");
+    return 0;
+}
+
+// Get selected monitor refresh rate
+int GetMonitorRefreshRate(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorRefreshRate() not implemented on target platform");
+    return 0;
+}
+
+// Get the human-readable, UTF-8 encoded name of the selected monitor
+const char *GetMonitorName(int monitor)
+{
+    TRACELOG(LOG_WARNING, "GetMonitorName() not implemented on target platform");
+    return "";
+}
+
+// Get window position XY on monitor
+Vector2 GetWindowPosition(void)
+{
+    // Browser window position, top-left corner relative to the physical screen origin, expressed in CSS logical pixels
+    // NOTE: Returned position is relative to the current monitor where the browser window is located
+    Vector2 position = { 0, 0 };
+    position.x = (float)EM_ASM_INT( { return window.screenX; }, 0);
+    position.y = (float)EM_ASM_INT( { return window.screenY; }, 0);
+    return position;
+}
+
+// Get current monitor device pixel ratio
+Vector2 GetWindowScaleDPI(void)
+{
+    // Get device pixel ratio
+    // NOTE: Returned scale is relative to the current monitor where the browser window is located
+    Vector2 scale = { 1.0f, 1.0f };
+    scale.x = (float)EM_ASM_DOUBLE( { return window.devicePixelRatio; } );
+    scale.y = scale.x;
+    return scale;
+}
+
+// Set clipboard text content
+void SetClipboardText(const char *text)
+{
+    // Security check to (partially) avoid malicious code
+    if (strchr(text, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided Clipboard could be potentially malicious, avoid [\'] character");
+    else EM_ASM({ navigator.clipboard.writeText(UTF8ToString($0)); }, text);
+}
+
+// Async EM_JS to be able to await clickboard read asynchronous function
+EM_ASYNC_JS(void, RequestClipboardData, (void), {
+    if (navigator.clipboard && window.isSecureContext)
+    {
+        let items = await navigator.clipboard.read();
+        for (const item of items)
+        {
+            // Check if this item contains plain text or image
+            if (item.types.includes("text/plain"))
+            {
+                const blob = await item.getType("text/plain");
+                const text = await blob.text();
+                window._lastClipboardString = text;
+            }
+            else if (item.types.find(t => t.startsWith("image/")))
+            {
+                const blob = await item.getType(item.types.find(t => t.startsWith("image/")));
+                const bitmap = await createImageBitmap(blob);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+                // Store image and data for the Fetch function
+                window._lastImgWidth = canvas.width;
+                window._lastImgHeight = canvas.height;
+                window._lastImgData = imgData;
+            }
+        }
+    }
+    else console.warn("Clipboard read() requires HTTPS/Localhost");
+});
+
+// Returns the string created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(char *, GetLastPastedText, (void), {
+    var str = window._lastClipboardString || "";
+    var length = lengthBytesUTF8(str) + 1;
+    
+    if (length > 1)
+    {
+        var ptr = _malloc(length);
+        stringToUTF8(str, ptr, length);
+        
+        return ptr;
+    }
+
+    return 0;
+});
+
+// Returns the image created by RequestClipboardData from JS memory to Emscripten C memory
+EM_JS(unsigned char *, GetLastPastedImage, (int *width, int *height), {
+    if (window._lastImgData)
+    {
+        const data = window._lastImgData;
+        if (data.length > 0)
+        {
+            const ptr = _malloc(data.length);
+            HEAPU8.set(data, ptr);
+
+            // Set the width and height via the pointers passed from C
+            // HEAP32 handles the 4-byte integers
+            if (width) setValue(width, window._lastImgWidth,  'i32');
+            if (height) setValue(height, window._lastImgHeight, 'i32');
+
+            // Clear the JS buffer so there is no need to fetch the same image twice
+            window._lastImgData = null;
+
+            return ptr;
+        }
+    }
+
+    return 0;
+});
+
+// Get clipboard text content
+// NOTE: returned string is allocated and freed by GLFW
+const char *GetClipboardText(void)
+{
+    RequestClipboardData();
+    
+    return GetLastPastedText();
+}
+
+// Set clipboard image content
+bool SetClipboardImage(Image image)
+{
+    bool result = false;
+    
+    TRACELOG(LOG_WARNING, "SetClipboardImage() not implemented on target platform");
+    
+    return result;
+}
+
+// Get clipboard image
+Image GetClipboardImage(void)
+{
+    Image image = { 0 };
+    
+#if !SUPPORT_MODULE_RTEXTURES
+    TRACELOG(LOG_WARNING, "Clipboard image requires SUPPORT_MODULE_RTEXTURES to work");
+    return image;
+#endif
+
+    RequestClipboardData();
+
+    int width = 0; 
+    int height = 0;
+    unsigned char *data = GetLastPastedImage(&width, &height);
+    
+    if (data != NULL)
+    {
+        image.data = data;
+        image.width = width;
+        image.height = height;
+        image.mipmaps = 1;
+        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+    }
+
+    return image;
+}
+
+// Show mouse cursor
+void ShowCursor(void)
+{
+    if (CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[CORE.Input.Mouse.cursor]);
+
+        CORE.Input.Mouse.cursorHidden = false;
+    }
+}
+
+// Hide mouse cursor
+void HideCursor(void)
+{
+    if (!CORE.Input.Mouse.cursorHidden)
+    {
+        EM_ASM(Module.canvas.style.cursor = 'none';);
+
+        CORE.Input.Mouse.cursorHidden = true;
+    }
+}
+
+// Enable cursor (unlock cursor)
+void EnableCursor(void)
+{
+    emscripten_exit_pointerlock();
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window[activeWindowContext].screen.width/2, CORE.Window[activeWindowContext].screen.height/2);
+
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
+}
+
+// Disable cursor (lock cursor)
+void DisableCursor(void)
+{
+    emscripten_request_pointerlock(platform.canvasId, 1);
+
+    // Set cursor position in the middle
+    SetMousePosition(CORE.Window[activeWindowContext].screen.width/2, CORE.Window[activeWindowContext].screen.height/2);
+
+    // NOTE: CORE.Input.Mouse.cursorLocked handled by EmscriptenPointerlockCallback()
+}
+
+// Swap back buffer with front buffer (screen drawing)
+void SwapScreenBuffer(void)
+{
+#if defined(GRAPHICS_API_OPENGL_SOFTWARE)
+    // Update framebuffer
+    rlCopyFramebuffer(0, 0, CORE.Window[activeWindowContext].render.width, CORE.Window[activeWindowContext].render.height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, platform.pixels);
+
+    // Copy framebuffer data into canvas
+    EM_ASM({
+        const width = $0;
+        const height = $1;
+        const ptr = $2;
+
+        // Get canvas and 2d context created
+        const canvas = Module.canvas;
+        //const canvas = Module['canvas'];
+        const ctx = canvas.getContext('2d');
+
+        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height))
+        {
+            Module.__img = ctx.createImageData(width, height);
+        }
+
+        const src = HEAPU8.subarray(ptr, ptr + width*height*4); // RGBA (4 bytes)
+        Module.__img.data.set(src);
+        ctx.putImageData(Module.__img, 0, 0);
+
+    }, CORE.Window[activeWindowContext].render.width, CORE.Window[activeWindowContext].render.height, platform.pixels);
+#endif
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
+// Get elapsed time measure in seconds since InitTimer()
+double GetTime(void)
+{
+    double time = emscripten_get_now()/1000.0;
+
+    return time;
+}
+
+// Open URL with default system browser (if available)
+// WARNING: This function is only safe to use if you control the URL given,
+// a user could craft a malicious string to perform and undesired action
+// NOTE: Some safety checks have been added to mitigate security issues
+void OpenURL(const char *url)
+{
+    // Security check to (partially) avoid malicious code
+    if ((strchr(url, '\'') != NULL) || (strchr(url, '\"') != NULL))
+    {
+        // Filter characters: ' and "
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'\"] characters");
+    }
+    else if ((strncmp(url, "http://", 7) != 0) && (strncmp(url, "https://", 8) != 0))
+    {
+        // Only allow URL starting with "http://" or "https://" protocols
+        TRACELOG(LOG_WARNING, "SYSTEM: Provided URL must start with 'http://' or 'https://' protocols");
+    }
+    else emscripten_run_script(TextFormat("window.open('%s', '_blank')", url));
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Inputs
+//----------------------------------------------------------------------------------
+
+// Set internal gamepad mappings
+int SetGamepadMappings(const char *mappings)
+{
+    TRACELOG(LOG_INFO, "SetGamepadMappings not implemented in rcore_web.c");
+
+    return 0;
+}
+
+// Set gamepad vibration
+void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration)
+{
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (duration > 0.0f))
+    {
+        if (leftMotor < 0.0f) leftMotor = 0.0f;
+        if (leftMotor > 1.0f) leftMotor = 1.0f;
+        if (rightMotor < 0.0f) rightMotor = 0.0f;
+        if (rightMotor > 1.0f) rightMotor = 1.0f;
+        if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
+        duration *= 1000.0f; // Convert duration to ms
+
+        // NOTE: [2024.10.21] Current browser support:
+        // - vibrationActuator API: Chrome, Edge, Opera, Safari, Android Chrome, Android Webview
+        // - hapticActuators API: Firefox
+        EM_ASM({
+            try { navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 }); }
+            catch (e)
+            {
+                try { navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3); }
+                catch (e) { }
+            }
+        }, gamepad, leftMotor, rightMotor, duration);
+    }
+}
+
+// Set mouse position XY
+void SetMousePosition(int x, int y)
+{
+    // WARNING: Not supported by browser for security reasons
+}
+
+// Set mouse cursor
+void SetMouseCursor(int cursor)
+{
+    if (CORE.Input.Mouse.cursor != cursor)
+    {
+        if (!CORE.Input.Mouse.cursorLocked) EM_ASM( { Module.canvas.style.cursor = UTF8ToString($0); }, cursorLUT[cursor]);
+        CORE.Input.Mouse.cursor = cursor;
+    }
+}
+
+// Get physical key name
+const char *GetKeyName(int key)
+{
+    // TODO: Browser can definitely provide a key name e->key
+    TRACELOG(LOG_WARNING, "GetKeyName() not implemented on target platform");
+    return "";
+}
+
+// Register all input events
+void PollInputEvents(void)
+{
+#if SUPPORT_GESTURES_SYSTEM
+    // NOTE: Gestures update must be called every frame to reset gestures correctly
+    // because ProcessGestureEvent() is called on an event, not every frame
+    UpdateGestures();
+#endif
+
+    // Reset keys/chars pressed registered
+    CORE.Input.Keyboard.keyPressedQueueCount = 0;
+    CORE.Input.Keyboard.charPressedQueueCount = 0;
+
+    // Reset last gamepad button/axis registered state
+    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
+    //CORE.Input.Gamepad.axisCount = 0;
+
+    // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
+
+    // Register previous keys states
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
+    {
+        CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
+        CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
+    }
+
+    // Register previous mouse states
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+
+    // Register previous mouse wheel state
+    CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
+
+    // Register previous mouse position
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+    // Register previous touch states
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+
+    // Reset touch positions
+    // TODO: It resets on target platform the mouse position and not filled again until a move-event,
+    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+
+    // Get number of gamepads connected
+    int numGamepads = 0;
+    if (emscripten_sample_gamepad_data() == EMSCRIPTEN_RESULT_SUCCESS) numGamepads = emscripten_get_num_gamepads();
+
+    for (int i = 0; (i < numGamepads) && (i < MAX_GAMEPADS); i++)
+    {
+        // Register previous gamepad button states
+        for (int k = 0; k < MAX_GAMEPAD_BUTTONS; k++) CORE.Input.Gamepad.previousButtonState[i][k] = CORE.Input.Gamepad.currentButtonState[i][k];
+
+        EmscriptenGamepadEvent gamepadState = { 0 };
+        int result = emscripten_get_gamepad_status(i, &gamepadState);
+
+        if (result == EMSCRIPTEN_RESULT_SUCCESS)
+        {
+            // Register buttons data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numButtons) && (j < MAX_GAMEPAD_BUTTONS); j++)
+            {
+                GamepadButton button = -1;
+
+                // Gamepad Buttons reference: https://www.w3.org/TR/gamepad/#gamepad-interface
+                switch (j)
+                {
+                    case 0: button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN; break;
+                    case 1: button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT; break;
+                    case 2: button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT; break;
+                    case 3: button = GAMEPAD_BUTTON_RIGHT_FACE_UP; break;
+                    case 4: button = GAMEPAD_BUTTON_LEFT_TRIGGER_1; break;
+                    case 5: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1; break;
+                    case 6: button = GAMEPAD_BUTTON_LEFT_TRIGGER_2; break;
+                    case 7: button = GAMEPAD_BUTTON_RIGHT_TRIGGER_2; break;
+                    case 8: button = GAMEPAD_BUTTON_MIDDLE_LEFT; break;
+                    case 9: button = GAMEPAD_BUTTON_MIDDLE_RIGHT; break;
+                    case 10: button = GAMEPAD_BUTTON_LEFT_THUMB; break;
+                    case 11: button = GAMEPAD_BUTTON_RIGHT_THUMB; break;
+                    case 12: button = GAMEPAD_BUTTON_LEFT_FACE_UP; break;
+                    case 13: button = GAMEPAD_BUTTON_LEFT_FACE_DOWN; break;
+                    case 14: button = GAMEPAD_BUTTON_LEFT_FACE_LEFT; break;
+                    case 15: button = GAMEPAD_BUTTON_LEFT_FACE_RIGHT; break;
+                    default: break;
+                }
+
+                if (button + 1 != 0) // Check for valid button
+                {
+                    if (gamepadState.digitalButton[j] == 1)
+                    {
+                        CORE.Input.Gamepad.currentButtonState[i][button] = 1;
+                        CORE.Input.Gamepad.lastButtonPressed = button;
+                    }
+                    else CORE.Input.Gamepad.currentButtonState[i][button] = 0;
+                }
+
+                //TRACELOG(LOG_DEBUG, "INPUT: Gamepad %d, button %d: Digital: %d, Analog: %g", gamepadState.index, j, gamepadState.digitalButton[j], gamepadState.analogButton[j]);
+            }
+
+            // Register axis data for every connected gamepad
+            for (int j = 0; (j < gamepadState.numAxes) && (j < MAX_GAMEPAD_AXES); j++)
+            {
+                CORE.Input.Gamepad.axisState[i][j] = gamepadState.axis[j];
+            }
+
+            CORE.Input.Gamepad.axisCount[i] = gamepadState.numAxes;
+        }
+    }
+
+    CORE.Window[activeWindowContext].resizedLastFrame = false;
+}
+
+//----------------------------------------------------------------------------------
+// Module Internal Functions Definition
+//----------------------------------------------------------------------------------
+
+// Initialize platform: graphics, inputs and more
+int InitPlatform(void)
+{
+    SetCanvasIdJs(platform.canvasId, 64); // Get the current canvas id
+
+    CORE.Window[activeWindowContext].render = CORE.Window[activeWindowContext].screen;
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIGHDPI))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        CORE.Window[activeWindowContext].render.width = (int)roundf(CORE.Window[activeWindowContext].screen.width*scaleDpi.x);
+        CORE.Window[activeWindowContext].render.height = (int)roundf(CORE.Window[activeWindowContext].screen.height*scaleDpi.y);
+        CORE.Window[activeWindowContext].screenScale = MatrixScale(scaleDpi.x, scaleDpi.y, 1.0f);
+    }
+    CORE.Window[activeWindowContext].currentFbo = CORE.Window[activeWindowContext].render;
+
+    // Initialize graphic device: display/window and graphic context
+    //----------------------------------------------------------------------------
+    emscripten_set_canvas_element_size(platform.canvasId, CORE.Window[activeWindowContext].render.width, CORE.Window[activeWindowContext].render.height);
+    EmscriptenWebGLContextAttributes attribs = { 0 };
+    emscripten_webgl_init_context_attributes(&attribs);
+    attribs.alpha = EM_TRUE;
+    attribs.depth = EM_TRUE;
+    attribs.stencil = EM_FALSE;
+    attribs.antialias = EM_FALSE;
+
+    // Check window creation flags
+    // Disable FLAG_WINDOW_MINIMIZED, not supported
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MINIMIZED)) FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MINIMIZED);
+
+    // Disable FLAG_WINDOW_MAXIMIZED, not supported
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED)) FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_MAXIMIZED);
+
+    // Disable FLAG_WINDOW_TOPMOST, not supported
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_TOPMOST)) FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_TOPMOST);
+
+    // NOTE: Some other flags are not supported on HTML5
+
+    // Request MSAA (usually x4 on WebGL 1.0)
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_MSAA_4X_HINT)) attribs.antialias = EM_TRUE;
+
+    // Check selection OpenGL version
+    if (rlGetVersion() == RL_OPENGL_SOFTWARE)
+    {
+        // Avoid creating a WebGL canvas, create 2d canvas for software rendering
+        platform.pixels = (unsigned int *)RL_CALLOC((size_t)CORE.Window[activeWindowContext].render.width*CORE.Window[activeWindowContext].render.height, sizeof(unsigned int));
+    }
+    else if (rlGetVersion() == RL_OPENGL_ES_20) // Request OpenGL ES 2.0 context --> WebGL 1.0
+    {
+        attribs.majorVersion = 1; // WebGL 1.0 requested
+        attribs.minorVersion = 0;
+
+        // Create WebGL context
+        platform.glContext = emscripten_webgl_create_context(platform.canvasId, &attribs);
+        if (platform.glContext == 0) return 0;
+
+        emscripten_webgl_make_context_current(platform.glContext);
+    }
+    else if (rlGetVersion() == RL_OPENGL_ES_30) // Request OpenGL ES 3.0 context --> WebGL 2.0
+    {
+        attribs.majorVersion = 2; // WebGL 2.0 requested
+        attribs.minorVersion = 0;
+
+        // Create WebGL context
+        platform.glContext = emscripten_webgl_create_context(platform.canvasId, &attribs);
+        if (platform.glContext == 0) return 0;
+
+        emscripten_webgl_make_context_current(platform.glContext);
+    }
+
+    // NOTE: Getting video modes is not implemented in emscripten GLFW3 version
+    CORE.Window[activeWindowContext].display.width = CORE.Window[activeWindowContext].screen.width;
+    CORE.Window[activeWindowContext].display.height = CORE.Window[activeWindowContext].screen.height;
+
+    // Set default window title
+    emscripten_set_window_title((CORE.Window[activeWindowContext].title != 0)? CORE.Window[activeWindowContext].title : " ");
+
+    // Check context activation
+    if ((platform.glContext != 0) || (platform.pixels != NULL))
+    {
+        CORE.Window[activeWindowContext].ready = true;
+
+        TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+            FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
+        TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window[activeWindowContext].display.width, CORE.Window[activeWindowContext].display.height);
+        TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window[activeWindowContext].screen.width, CORE.Window[activeWindowContext].screen.height);
+        TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window[activeWindowContext].render.width, CORE.Window[activeWindowContext].render.height);
+        TRACELOG(LOG_INFO, "    > Viewport offsets: %i, %i", CORE.Window[activeWindowContext].renderOffset.x, CORE.Window[activeWindowContext].renderOffset.y);
+    }
+    else
+    {
+        TRACELOG(LOG_FATAL, "PLATFORM: Failed to initialize graphics device");
+        return -1;
+    }
+
+    // Load OpenGL extensions
+    // NOTE: GL procedures address loader is required to load extensions
+    if (platform.glContext != 0) rlLoadExtensions(WebGLGetProcAddress);
+    //----------------------------------------------------------------------------
+
+    // Initialize events callbacks
+    //----------------------------------------------------------------------------
+    // Setup window/canvas events callbacks
+    emscripten_set_fullscreenchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenFullscreenChangeCallback);
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenResizeCallback);
+    emscripten_set_blur_callback(platform.canvasId, NULL, 1, EmscriptenFocusCallback);
+    emscripten_set_focus_callback(platform.canvasId, NULL, 1, EmscriptenFocusCallback);
+    emscripten_set_visibilitychange_callback(NULL, 1, EmscriptenVisibilityChangeCallback);
+
+    // Setup input events
+    emscripten_set_keypress_callback(platform.canvasId, NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keydown_callback(platform.canvasId, NULL, 1, EmscriptenKeyboardCallback);
+    emscripten_set_keyup_callback(platform.canvasId, NULL, 1, EmscriptenKeyboardCallback);
+
+    emscripten_set_click_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
+    //emscripten_set_dblclick_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_mousedown_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_mouseup_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_mousemove_callback(platform.canvasId, NULL, 1, EmscriptenMouseCallback);
+    emscripten_set_mousemove_callback(platform.canvasId, NULL, 1, EmscriptenMouseMoveCallback);
+    emscripten_set_wheel_callback(platform.canvasId, NULL, 1, EmscriptenMouseWheelCallback);
+    emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, EmscriptenPointerlockCallback);
+
+    emscripten_set_touchstart_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchend_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchmove_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+    emscripten_set_touchcancel_callback(platform.canvasId, NULL, 1, EmscriptenTouchCallback);
+
+    emscripten_set_gamepadconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+    emscripten_set_gamepaddisconnected_callback(NULL, 1, EmscriptenGamepadCallback);
+
+    //----------------------------------------------------------------------------
+
+    // Initialize timing system
+    //----------------------------------------------------------------------------
+    InitTimer();
+    //----------------------------------------------------------------------------
+
+    // Initialize storage system
+    //----------------------------------------------------------------------------
+    CORE.Storage.basePath = GetWorkingDirectory();
+    //----------------------------------------------------------------------------
+
+    TRACELOG(LOG_INFO, "PLATFORM: WEB: Initialized successfully");
+
+    return 0;
+}
+
+// Close platform
+// NOTE: Platform closing is managed by browser, so,
+// this function is actually not required, but still
+// implementing some logic behaviour
+void ClosePlatform(void)
+{
+    if (platform.pixels != NULL) RL_FREE(platform.pixels);
+
+    if (platform.glContext != 0) emscripten_webgl_destroy_context(platform.glContext);
+}
+
+// Get WebGL extension procedure address
+// WARNING: rlGetProcAddress() uses this loader, so it only returns the functions listed below
+static void *WebGLGetProcAddress(const char *procName)
+{
+    void *proc = NULL;
+
+#if defined(GRAPHICS_API_OPENGL_ES2)
+    if (strcmp(procName, "glGenVertexArraysOES") == 0) proc = (void *)glGenVertexArraysOES;
+    else if (strcmp(procName, "glBindVertexArrayOES") == 0) proc = (void *)glBindVertexArrayOES;
+    else if (strcmp(procName, "glDeleteVertexArraysOES") == 0) proc = (void *)glDeleteVertexArraysOES;
+    else if (strcmp(procName, "glDrawArraysInstancedANGLE") == 0) proc = (void *)glDrawArraysInstancedANGLE;
+    else if (strcmp(procName, "glDrawElementsInstancedANGLE") == 0) proc = (void *)glDrawElementsInstancedANGLE;
+    else if (strcmp(procName, "glVertexAttribDivisorANGLE") == 0) proc = (void *)glVertexAttribDivisorANGLE;
+#endif
+
+    return proc;
+}
+
+// Emscripten callback functions, called on specific browser events
+//-------------------------------------------------------------------------------------------------------
+// Emscripten: Called on resize event
+static EM_BOOL EmscriptenResizeCallback(int eventType, const EmscriptenUiEvent *event, void *userData)
+{
+    // Only the borderless canvas follows the browser screen size
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        EmscriptenFullscreenChangeEvent status = { 0 };
+        if ((emscripten_get_fullscreen_status(&status) == EMSCRIPTEN_RESULT_SUCCESS) &&
+            status.isFullscreen && (strcmp(status.id, platform.canvasId + 1) == 0))
+            return EmscriptenCanvasResizedCallback(EMSCRIPTEN_EVENT_CANVASRESIZED, NULL, NULL);
+    }
+
+    // Update framebuffer density when browser zoom changes DPR
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIGHDPI))
+    {
+        Vector2 scaleDpi = GetWindowScaleDPI();
+        if ((scaleDpi.x != CORE.Window[activeWindowContext].screenScale.m0) || (scaleDpi.y != CORE.Window[activeWindowContext].screenScale.m5))
+            SetWindowSize(CORE.Window[activeWindowContext].screen.width, CORE.Window[activeWindowContext].screen.height);
+    }
+
+    return 0;
+}
+
+// Emscripten: Apply logical sizes after the fullscreen strategy changes or restores the canvas
+static EM_BOOL EmscriptenCanvasResizedCallback(int eventType, const void *reserved, void *userData)
+{
+    if (FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE))
+    {
+        int width = EM_ASM_INT( return screen.width; );
+        int height = EM_ASM_INT( return screen.height; );
+        SetWindowSize(width, height);
+    }
+    // Called after Emscripten restores the old framebuffer and CSS; apply the current DPI to the saved logical size
+    else if (!FLAG_IS_SET(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE))
+        SetWindowSize(CORE.Window[activeWindowContext].previousScreen.width, CORE.Window[activeWindowContext].previousScreen.height);
+
+    return 0;
+}
+
+// Emscripten: Called on windows focus change events
+static EM_BOOL EmscriptenFocusCallback(int eventType, const EmscriptenFocusEvent *focusEvent, void *userData)
+{
+    EM_BOOL consumed = 1;
+
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_BLUR:
+        {
+            FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_UNFOCUSED);
+            memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+            memset(CORE.Input.Mouse.currentButtonState, 0, sizeof(CORE.Input.Mouse.currentButtonState));
+            memset(CORE.Input.Touch.currentTouchState, 0, sizeof(CORE.Input.Touch.currentTouchState));
+            CORE.Input.Touch.pointCount = 0;
+        } break;
+        case EMSCRIPTEN_EVENT_FOCUS: FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_UNFOCUSED); break;
+        default: consumed = 0; break;
+    }
+
+    return consumed;
+}
+
+// Emscripten: Called on visibility change events
+static EM_BOOL EmscriptenVisibilityChangeCallback(int eventType, const EmscriptenVisibilityChangeEvent *visibilityChangeEvent, void *userData)
+{
+    if (visibilityChangeEvent->hidden) FLAG_SET(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIDDEN); // The window was hidden
+    else FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_WINDOW_HIDDEN); // The window was restored
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on fullscreen change events
+static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
+{
+    if (strcmp(event->id, platform.canvasId + 1) != 0) return 0;
+
+    if (!event->isFullscreen)
+    {
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_FULLSCREEN_MODE);
+        FLAG_CLEAR(CORE.Window[activeWindowContext].flags, FLAG_BORDERLESS_WINDOWED_MODE);
+    }
+
+    // Fullscreen transitions can drop keyup events
+    memset(CORE.Input.Keyboard.currentKeyState, 0, sizeof(CORE.Input.Keyboard.currentKeyState));
+
+    return 1; // The event was consumed by the callback handler
+}
+
+/*
+// GLFW3: Called on file-drop over the window
+// TODO: Implement Emscripten (or HTML5/JS) alternative
+static void WindowDropCallback(GLFWwindow *window, int count, const char **paths)
+{
+    if (count > 0)
+    {
+        // In case previous dropped filepaths have not been freed, free them
+        if (CORE.Window[activeWindowContext].dropFileCount > 0)
+        {
+            for (unsigned int i = 0; i < CORE.Window[activeWindowContext].dropFileCount; i++) RL_FREE(CORE.Window[activeWindowContext].dropFilepaths[i]);
+
+            RL_FREE(CORE.Window[activeWindowContext].dropFilepaths);
+
+            CORE.Window[activeWindowContext].dropFileCount = 0;
+            CORE.Window[activeWindowContext].dropFilepaths = NULL;
+        }
+
+        // WARNING: Paths are freed by GLFW when the callback returns, an internal copy should be kept
+        CORE.Window[activeWindowContext].dropFileCount = count;
+        CORE.Window[activeWindowContext].dropFilepaths = (char **)RL_CALLOC(CORE.Window[activeWindowContext].dropFileCount, sizeof(char *));
+
+        for (unsigned int i = 0; i < CORE.Window[activeWindowContext].dropFileCount; i++)
+        {
+            CORE.Window[activeWindowContext].dropFilepaths[i] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
+            snprintf(CORE.Window[activeWindowContext].dropFilepaths[i], MAX_FILEPATH_LENGTH, "%s", paths[i]);
+        }
+    }
+}
+*/
+
+// Emscripten keyboard event to raylib key mapping
+static KeyboardKey ConvertKeyboardEventToKey(const EmscriptenKeyboardEvent *keyboardEvent)
+{
+    DOM_PK_CODE_TYPE code = emscripten_compute_dom_pk_code(keyboardEvent->code);
+    KeyboardKey key = KEY_NULL;
+
+    if ((code > DOM_PK_UNKNOWN) && (code < DOM_PK_CODE_MAPPED_NUM)) key = mapDomCodeToKey[code];
+    else if ((code >= DOM_PK_CODE_EXTENDED_OFFSET) && (code < (DOM_PK_CODE_EXTENDED_OFFSET + DOM_PK_CODE_MAPPED_NUM)))
+    {
+        key = mapDomCodeToKeyExtended[code - DOM_PK_CODE_EXTENDED_OFFSET];
+    }
+
+    return key;
+}
+
+// Emscripten: Called on key events
+static EM_BOOL EmscriptenKeyboardCallback(int eventType, const EmscriptenKeyboardEvent *keyboardEvent, void *userData)
+{
+    KeyboardKey key = ConvertKeyboardEventToKey(keyboardEvent);
+    EM_BOOL preventDefault = 1;
+
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_KEYDOWN:
+        {
+            // Ignore repeats for keys cleared by a focus or fullscreen transition
+            if ((key != KEY_NULL) && (!keyboardEvent->repeat || (CORE.Input.Keyboard.currentKeyState[key] != 0)))
+            {
+                // Check if there is space available in the key queue
+                if ((!keyboardEvent->repeat) && (CORE.Input.Keyboard.currentKeyState[key] == 0) &&
+                    (CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE))
+                {
+                    CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = key;
+                    CORE.Input.Keyboard.keyPressedQueueCount++;
+                }
+
+                CORE.Input.Keyboard.currentKeyState[key] = 1;
+
+                if (keyboardEvent->repeat) CORE.Input.Keyboard.keyRepeatInFrame[key] = 1;
+
+                // Check the exit key to set close window
+                if ((key == CORE.Input.Keyboard.exitKey) && !keyboardEvent->repeat) CORE.Window[activeWindowContext].shouldClose = true;
+            }
+
+            // Allow printable keydown events so the browser can emit the keypress event used to collect characters
+            preventDefault = ((key == KEY_BACKSPACE) || (key == KEY_TAB) ||
+                (key == KEY_INSERT) || (key == KEY_DELETE) ||
+                (key == KEY_HOME) || (key == KEY_END) ||
+                (key == KEY_PAGE_UP) || (key == KEY_PAGE_DOWN) ||
+                (key == KEY_LEFT) || (key == KEY_RIGHT) ||
+                (key == KEY_UP) || (key == KEY_DOWN) ||
+                ((key >= KEY_F1) && (key <= KEY_F12)) || keyboardEvent->ctrlKey);
+        } break;
+        case EMSCRIPTEN_EVENT_KEYUP:
+        {
+            if (key != KEY_NULL) CORE.Input.Keyboard.currentKeyState[key] = 0;
+        } break;
+        case EMSCRIPTEN_EVENT_KEYPRESS:
+        {
+            unsigned int codepoint = keyboardEvent->charCode;
+            if ((codepoint < 32) || ((codepoint > 126) && (codepoint < 160))) break;
+
+            // Check if there is space available in the queue for characters to be added
+            if (CORE.Input.Keyboard.charPressedQueueCount < MAX_CHAR_PRESSED_QUEUE)
+            {
+                CORE.Input.Keyboard.charPressedQueue[CORE.Input.Keyboard.charPressedQueueCount] = keyboardEvent->charCode;
+                CORE.Input.Keyboard.charPressedQueueCount++;
+            }
+        } break;
+        default: break;
+    }
+
+    return preventDefault;
+}
+
+// Emscripten: Called on mouse input events
+static EM_BOOL EmscriptenMouseCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    switch (eventType)
+    {
+        case EMSCRIPTEN_EVENT_MOUSEENTER: {
+            // NOTE: Mouse position updated by EmscriptenMouseMoveCallback(),
+            // EmscriptenPointerlockCallback(), and EmscriptenTouchCallback()
+            CORE.Input.Mouse.cursorOnScreen = true;
+        } break;
+        case EMSCRIPTEN_EVENT_MOUSELEAVE:
+        {
+            CORE.Input.Mouse.cursorOnScreen = false;
+            CORE.Input.Mouse.currentPosition = (Vector2){ 0 };
+        } break;
+        case EMSCRIPTEN_EVENT_MOUSEDOWN:
+        {
+            // NOTE: Emscripten and raylib buttons indices are not aligned
+            if (mouseEvent->button == 0) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 1;
+            else if (mouseEvent->button == 1) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_MIDDLE] = 1;
+            else if (mouseEvent->button == 2) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_RIGHT] = 1;
+
+            //CORE.Input.Touch.currentTouchState[button] = action;
+        } break;
+        case EMSCRIPTEN_EVENT_MOUSEUP:
+        {
+            if (mouseEvent->button == 0) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] = 0;
+            else if (mouseEvent->button == 1) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_MIDDLE] = 0;
+            else if (mouseEvent->button == 2) CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_RIGHT] = 0;
+        } break;
+        default: break;
+    }
+
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    // Register touch actions
+    if ((CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] == 1) && (CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[MOUSE_BUTTON_LEFT] == 0) && (CORE.Input.Mouse.previousButtonState[MOUSE_BUTTON_LEFT] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
+
+    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseMoveCallback()
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+
+    // Normalize gestureEvent.position[0] for CORE.Window[activeWindowContext].screen.width and CORE.Window[activeWindowContext].screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    // Prevent calling ProcessGestureEvent() when Emscripten is present and there's a touch gesture, so EmscriptenTouchCallback() can handle it itself
+    if (GetMouseX() != 0 || GetMouseY() != 0) ProcessGestureEvent(gestureEvent);
+#endif
+
+    // Don't prevent default to allow focusing on canvas
+    return 0;
+}
+
+// Emscripten: Called on mouse move events
+static EM_BOOL EmscriptenMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+    if (CORE.Input.Mouse.cursorLocked)
+    {
+        CORE.Input.Mouse.previousPosition.x = CORE.Input.Mouse.lockedPosition.x - mouseEvent->movementX;
+        CORE.Input.Mouse.previousPosition.y = CORE.Input.Mouse.lockedPosition.y - mouseEvent->movementY;
+    }
+    else
+    {
+        // Get mouse position in canvas CSS pixels
+        float mouseCssX = (float)mouseEvent->targetX;
+        float mouseCssY = (float)mouseEvent->targetY;
+
+        // Get canvas sizes
+        double cssWidth = 0.0;
+        double cssHeight = 0.0;
+        emscripten_get_element_css_size(platform.canvasId, &cssWidth, &cssHeight);
+
+        float normalizedX = mouseCssX/(float)cssWidth;
+        float normalizedY = mouseCssY/(float)cssHeight;
+        CORE.Input.Mouse.currentPosition.x = normalizedX*(float)CORE.Window[activeWindowContext].screen.width;
+        CORE.Input.Mouse.currentPosition.y = normalizedY*(float)CORE.Window[activeWindowContext].screen.height;
+
+        CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+    }
+
+#if SUPPORT_GESTURES_SYSTEM && SUPPORT_MOUSE_GESTURES
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = CORE.Input.Touch.position[0];
+
+    // Normalize gestureEvent.position[0] for CORE.Window[activeWindowContext].screen.width and CORE.Window[activeWindowContext].screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on mouse wheel events
+static EM_BOOL EmscriptenMouseWheelCallback(int eventType, const EmscriptenWheelEvent *wheelEvent, void *userData)
+{
+    if (eventType == EMSCRIPTEN_EVENT_WHEEL)
+    {
+        // Convert to glfw units
+        // Scaling factors copied from emscripten's libbrowser.js
+        float wheelScale = 1.0f/100.0f;
+        if (wheelEvent->deltaMode == DOM_DELTA_LINE) wheelScale = 1.0f/3.0f;
+        else if (wheelEvent->deltaMode == DOM_DELTA_PAGE) wheelScale = 80.0f;
+
+        CORE.Input.Mouse.currentWheelMove.x -= (float)wheelEvent->deltaX*wheelScale;
+        CORE.Input.Mouse.currentWheelMove.y -= (float)wheelEvent->deltaY*wheelScale;
+    }
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on pointer lock events
+static EM_BOOL EmscriptenPointerlockCallback(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
+{
+    CORE.Input.Mouse.cursorLocked = EM_ASM_INT( { if (document.pointerLockElement) return 1; }, 0);
+
+    if (CORE.Input.Mouse.cursorLocked)
+    {
+        CORE.Input.Mouse.lockedPosition = CORE.Input.Mouse.currentPosition;
+        CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.lockedPosition;
+    }
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on connect/disconnect gamepads events
+static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
+    /*
+    TRACELOG(LOG_DEBUG, "%s: timeStamp: %g, connected: %d, index: %ld, numAxes: %d, numButtons: %d, id: \"%s\", mapping: \"%s\"",
+           eventType != 0? emscripten_event_type_to_string(eventType) : "Gamepad state",
+           gamepadEvent->timestamp, gamepadEvent->connected, gamepadEvent->index, gamepadEvent->numAxes, gamepadEvent->numButtons, gamepadEvent->id, gamepadEvent->mapping);
+
+    for (int i = 0; i < gamepadEvent->numAxes; i++) TRACELOG(LOG_DEBUG, "Axis %d: %g", i, gamepadEvent->axis[i]);
+    for (int i = 0; i < gamepadEvent->numButtons; i++) TRACELOG(LOG_DEBUG, "Button %d: Digital: %d, Analog: %g", i, gamepadEvent->digitalButton[i], gamepadEvent->analogButton[i]);
+    */
+
+    if (gamepadEvent->connected && (gamepadEvent->index < MAX_GAMEPADS))
+    {
+        CORE.Input.Gamepad.ready[gamepadEvent->index] = true;
+        snprintf(CORE.Input.Gamepad.name[gamepadEvent->index], MAX_GAMEPAD_NAME_LENGTH, "%s", gamepadEvent->id);
+    }
+    else CORE.Input.Gamepad.ready[gamepadEvent->index] = false;
+
+    return 1; // The event was consumed by the callback handler
+}
+
+// Emscripten: Called on touch input events
+static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent *touchEvent, void *userData)
+{
+    // Register touch points count
+    CORE.Input.Touch.pointCount = touchEvent->numTouches;
+
+    double canvasWidth = 0.0;
+    double canvasHeight = 0.0;
+    // NOTE: emscripten_get_canvas_element_size() returns canvas.width and canvas.height but
+    // looking for actual CSS size: canvas.style.width and canvas.style.height
+    // EMSCRIPTEN_RESULT res = emscripten_get_canvas_element_size("#canvas", &canvasWidth, &canvasHeight);
+    emscripten_get_element_css_size(platform.canvasId, &canvasWidth, &canvasHeight);
+
+    for (int i = 0; (i < CORE.Input.Touch.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // Register touch points id
+        CORE.Input.Touch.pointId[i] = touchEvent->touches[i].identifier;
+
+        // Register touch points position
+        CORE.Input.Touch.position[i] = (Vector2){touchEvent->touches[i].targetX, touchEvent->touches[i].targetY};
+
+        // Normalize gestureEvent.position[x] for CORE.Window[activeWindowContext].screen.width and CORE.Window[activeWindowContext].screen.height
+        CORE.Input.Touch.position[i].x *= ((float)GetScreenWidth()/(float)canvasWidth);
+        CORE.Input.Touch.position[i].y *= ((float)GetScreenHeight()/(float)canvasHeight);
+
+        if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) CORE.Input.Touch.currentTouchState[i] = 1;
+        else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) CORE.Input.Touch.currentTouchState[i] = 0;
+    }
+
+    // Update mouse position if a single touch is detected
+    if (CORE.Input.Touch.pointCount == 1)
+    {
+        CORE.Input.Mouse.currentPosition.x = CORE.Input.Touch.position[0].x;
+        CORE.Input.Mouse.currentPosition.y = CORE.Input.Touch.position[0].y;
+    }
+
+#if SUPPORT_GESTURES_SYSTEM
+    GestureEvent gestureEvent = { 0 };
+    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
+
+    // Register touch actions
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHSTART) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHEND) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHMOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (eventType == EMSCRIPTEN_EVENT_TOUCHCANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+
+    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
+        gestureEvent.position[i] = CORE.Input.Touch.position[i];
+
+        // Normalize gestureEvent.position[i]
+        gestureEvent.position[i].x /= (float)GetScreenWidth();
+        gestureEvent.position[i].y /= (float)GetScreenHeight();
+    }
+
+    // Gesture data is sent to gestures system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+
+    if (eventType == EMSCRIPTEN_EVENT_TOUCHEND)
+    {
+        // Identify the EMSCRIPTEN_EVENT_TOUCHEND and remove it from the list
+        for (int i = 0; i < CORE.Input.Touch.pointCount; i++)
+        {
+            if (touchEvent->touches[i].isChanged)
+            {
+                // Move all touch points one position up
+                for (int j = i; j < CORE.Input.Touch.pointCount - 1; j++)
+                {
+                    CORE.Input.Touch.pointId[j] = CORE.Input.Touch.pointId[j + 1];
+                    CORE.Input.Touch.position[j] = CORE.Input.Touch.position[j + 1];
+                }
+                // Decrease touch points count to remove the last one
+                CORE.Input.Touch.pointCount--;
+                break;
+            }
+        }
+        // Clamp pointCount to avoid negative values
+        if (CORE.Input.Touch.pointCount < 0) CORE.Input.Touch.pointCount = 0;
+    }
+
+    return 1; // The event was consumed by the callback handler
+}
+//-------------------------------------------------------------------------------------------------------
+
+// EOF

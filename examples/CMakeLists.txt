@@ -1,5 +1,17 @@
 # Setup the project and settings
+cmake_minimum_required(VERSION 3.22)
 project(examples)
+
+# Include raylib's cmake helper functions, so the examples can also be
+# configured standalone (`cd examples && cmake .`) and not only as part
+# of the raylib project.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
+include(AddIfFlagCompiles)
+
+# Default to the Desktop platform when configured standalone.
+if (NOT DEFINED PLATFORM)
+    set(PLATFORM "Desktop" CACHE STRING "Platform to build examples for")
+endif ()
 
 # Directories that contain examples
 set(example_dirs
@@ -90,35 +102,54 @@ if (${PLATFORM} MATCHES "Android")
 
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_custom_uniform.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_model_shader.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_view_depth.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_postprocessing.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_raymarching.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_palette_switch.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shaders_basic_lighting.c)
 
 elseif (${PLATFORM} MATCHES "Web")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
-    # Since WASM is used, ALLOW_MEMORY_GROWTH has no extra overheads
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --shell-file ${CMAKE_SOURCE_DIR}/src/shell.html")
-    set(CMAKE_EXECUTABLE_SUFFIX ".html")
-
-    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
-
-    # Remove the -rdynamic flag because otherwise emscripten
-    # does not generate HTML+JS+WASM files, only a non-working
-    # and fat HTML
-    string(REPLACE "-rdynamic" "" CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS}")
+    set(example_sources) # clear example_sources
+    list(APPEND example_sources core/core_input_gestures_testbed.c)
 
 elseif ("${PLATFORM}" STREQUAL "DRM")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
+
+elseif ("${PLATFORM}" MATCHES "Memory")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
+
+elseif ("${OPENGL_VERSION}" STREQUAL "Software")
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/raylib_opengl_interop.c)
+
+elseif (NOT SUPPORT_GESTURES_SYSTEM)
+    # Items requiring gestures system
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/textures/textures_mouse_painting.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_basic_screen_manager.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input_gestures_web.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input_gestures.c)
 
 endif ()
 
 # The rlgl_standalone example only targets desktop, without shared libraries.
 if (BUILD_SHARED_LIBS OR NOT ${PLATFORM} MATCHES "Desktop")
     list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/rlgl_standalone.c)
+endif()
 
+# The audio examples fail to link if raylib is built without raudio
+if (NOT SUPPORT_MODULE_RAUDIO)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_mixed_processor.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_module_playing.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_music_stream.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_raw_stream.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_sound_loading.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_sound_multi.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/audio/audio_stream_effects.c)
+
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/others/embedded_files_loading.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/textures/textures_sprite_button.c)
+    list(REMOVE_ITEM example_sources ${CMAKE_CURRENT_SOURCE_DIR}/textures/textures_sprite_explosion.c)
 endif()
 
 include_directories(BEFORE SYSTEM others/external/include)
@@ -141,13 +172,58 @@ foreach (example_source ${example_sources})
         target_link_libraries(${example_name} m)
     endif()
 
+    # This example calls system OpenGL stencil functions directly.
+    if ("${example_name}" STREQUAL "gl_scissor_shapes")
+        if ("${PLATFORM}" MATCHES "Desktop" OR "${PLATFORM}" MATCHES "RGFW")
+            find_package(OpenGL REQUIRED)
+            target_link_libraries(${example_name} OpenGL::GL)
+        endif ()
+    endif ()
+
     string(REGEX MATCH ".*/.*/" resources_dir ${example_source})
     string(APPEND resources_dir "resources")
 
-    if (${PLATFORM} MATCHES "Web" AND EXISTS ${resources_dir})
-        # The local resources path needs to be mapped to /resources virtual path
-        string(APPEND resources_dir "@resources")
-        set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+    if (${PLATFORM} MATCHES "Web")
+        target_compile_options(${example_name} PRIVATE -Os)
+        target_link_options(${example_name} PRIVATE
+            -sALLOW_MEMORY_GROWTH=1
+            -sEXPORTED_RUNTIME_METHODS=[requestFullscreen]
+            -sUSE_GLFW=3
+            --shell-file "${CMAKE_SOURCE_DIR}/src/shell.html"
+        )
+        set_target_properties(${example_name} PROPERTIES SUFFIX ".html")
+
+        if (EXISTS ${resources_dir})
+            # The local resources path needs to be mapped to /resources virtual path
+            string(APPEND resources_dir "@resources")
+            set_target_properties(${example_name} PROPERTIES LINK_FLAGS "--preload-file ${resources_dir}")
+        endif ()
+
+        if(${GRAPHICS} MATCHES "GRAPHICS_API_OPENGL_ES3")
+            target_link_options(${example_name} PUBLIC "-sMIN_WEBGL_VERSION=2")
+            target_link_options(${example_name} PUBLIC "-sMAX_WEBGL_VERSION=2")
+        endif()
+
+        # Checks if OSX and links appropriate frameworks (Only required on MacOS)
+        if (APPLE)
+            target_link_libraries(${example_name} "-framework IOKit")
+            target_link_libraries(${example_name} "-framework Cocoa")
+            target_link_libraries(${example_name} "-framework OpenGL")
+            target_link_libraries(${example_name} "-framework QuartzCore")
+        endif()
+
+    elseif (${PLATFORM} MATCHES "RGFW")
+        if (APPLE)
+            target_link_libraries(${example_name} "-framework IOKit")
+            target_link_libraries(${example_name} "-framework Cocoa")
+            target_link_libraries(${example_name} "-framework OpenGL")
+        elseif (WIN32)
+            target_link_libraries(${example_name} "-lgdi32")
+            target_link_libraries(${example_name} "-lwinmm")
+        elseif (UNIX)
+            target_link_libraries(${example_name} "-lX11")
+            target_link_libraries(${example_name} "-lXrandr")
+        endif()
     endif ()
 endforeach ()
 

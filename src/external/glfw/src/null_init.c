@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016 Google Inc.
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -260,5 +260,6 @@ void _glfwTerminateNull(void)
     free(_glfw.null.clipboardString);
     _glfwTerminateOSMesa();
     _glfwTerminateEGL();
+    memset(&_glfw.null, 0, sizeof(_glfw.null));
 }
 

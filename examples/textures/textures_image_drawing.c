@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Image loading and drawing on it
+*   raylib [textures] example - image drawing
+*
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -37,7 +39,8 @@ int main(void)
     Image parrots = LoadImage("resources/parrots.png");     // Load image in CPU memory (RAM)
 
     // Draw one image over the other with a scaling of 1.5f
-    ImageDraw(&parrots, cat, (Rectangle){ 0, 0, (float)cat.width, (float)cat.height }, (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, WHITE);
+    ImageDrawImagePro(&parrots, cat, (Rectangle){ 0, 0, (float)cat.width, (float)cat.height }, 
+        (Rectangle){ 30, 40, cat.width*1.5f, cat.height*1.5f }, (Vector2){ 0 }, 0.0f, WHITE);
     ImageCrop(&parrots, (Rectangle){ 0, 50, (float)parrots.width, (float)parrots.height - 100 }); // Crop resulting image
 
     // Draw on the image with a few image draw methods
@@ -47,7 +50,7 @@ int main(void)
 
     UnloadImage(cat);       // Unload image from RAM
 
-    // Load custom font for frawing on image
+    // Load custom font for drawing on image
     Font font = LoadFont("resources/custom_jupiter_crash.png");
 
     // Draw over image using custom font

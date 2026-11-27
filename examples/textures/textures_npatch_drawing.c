@@ -1,6 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - N-patch drawing
+*   raylib [textures] example - npatch drawing
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   NOTE: Images are loaded in CPU memory (RAM); textures are loaded in GPU memory (VRAM)
 *
@@ -11,7 +13,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2024 Jorge A. Gomes (@overdev) and Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Jorge A. Gomes (@overdev) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -27,10 +29,10 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - N-patch drawing");
+    InitWindow(screenWidth, screenHeight, "raylib [textures] example - npatch drawing");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-    Texture2D nPatchTexture = LoadTexture("resources/ninepatch_button.png");
+    Texture2D texNPatch = LoadTexture("resources/ninepatch_button.png");
 
     Vector2 mousePosition = { 0 };
     Vector2 origin = { 0.0f, 0.0f };
@@ -87,14 +89,14 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             // Draw the n-patches
-            DrawTextureNPatch(nPatchTexture, ninePatchInfo2, dstRec2, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, ninePatchInfo1, dstRec1, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, h3PatchInfo, dstRecH, origin, 0.0f, WHITE);
-            DrawTextureNPatch(nPatchTexture, v3PatchInfo, dstRecV, origin, 0.0f, WHITE);
+            DrawTextureNPatch(texNPatch, ninePatchInfo2, dstRec2, origin, 0.0f, WHITE);
+            DrawTextureNPatch(texNPatch, ninePatchInfo1, dstRec1, origin, 0.0f, WHITE);
+            DrawTextureNPatch(texNPatch, h3PatchInfo, dstRecH, origin, 0.0f, WHITE);
+            DrawTextureNPatch(texNPatch, v3PatchInfo, dstRecV, origin, 0.0f, WHITE);
 
             // Draw the source texture
             DrawRectangleLines(5, 88, 74, 266, BLUE);
-            DrawTexture(nPatchTexture, 10, 93, WHITE);
+            DrawTexture(texNPatch, 10, 93, WHITE);
             DrawText("TEXTURE", 15, 360, 10, DARKGRAY);
 
             DrawText("Move the mouse to stretch or shrink the n-patches", 10, 20, 20, DARKGRAY);
@@ -105,7 +107,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(nPatchTexture);       // Texture unloading
+    UnloadTexture(texNPatch);       // Texture unloading
 
     CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.5 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2021 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -39,7 +39,8 @@ void* _glfwPlatformLoadModule(const char* path)
 
 void _glfwPlatformFreeModule(void* module)
 {
-    FreeLibrary((HMODULE) module);
+    if (module)
+        FreeLibrary((HMODULE) module);
 }
 
 GLFWproc _glfwPlatformGetModuleSymbol(void* module, const char* name)

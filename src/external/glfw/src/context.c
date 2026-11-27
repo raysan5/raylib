@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.5 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2016 Camilla Löwy <elmindreda@glfw.org>
@@ -195,7 +195,7 @@ const _GLFWfbconfig* _glfwChooseFBConfig(const _GLFWfbconfig* desired,
     {
         current = alternatives + i;
 
-        if (desired->stereo > 0 && current->stereo == 0)
+        if (desired->stereo && !current->stereo)
         {
             // Stereo is a hard constraint
             continue;
@@ -368,7 +368,12 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         window->context.getProcAddress("glGetIntegerv");
     window->context.GetString = (PFNGLGETSTRINGPROC)
         window->context.getProcAddress("glGetString");
-    if (!window->context.GetIntegerv || !window->context.GetString)
+    window->context.Flush = (PFNGLFLUSHPROC)
+        window->context.getProcAddress("glFlush");
+
+    if (!window->context.GetIntegerv ||
+        !window->context.GetString ||
+        !window->context.Flush)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR, "Entry point retrieval is broken");
         glfwMakeContextCurrent((GLFWwindow*) previous);
@@ -615,10 +620,10 @@ GLFWbool _glfwStringInExtensionString(const char* string, const char* extensions
 
 GLFWAPI void glfwMakeContextCurrent(GLFWwindow* handle)
 {
+    _GLFW_REQUIRE_INIT();
+
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFWwindow* previous;
-
-    _GLFW_REQUIRE_INIT();
 
     previous = _glfwPlatformGetTls(&_glfw.contextSlot);
 
@@ -647,10 +652,10 @@ GLFWAPI GLFWwindow* glfwGetCurrentContext(void)
 
 GLFWAPI void glfwSwapBuffers(GLFWwindow* handle)
 {
+    _GLFW_REQUIRE_INIT();
+
     _GLFWwindow* window = (_GLFWwindow*) handle;
     assert(window != NULL);
-
-    _GLFW_REQUIRE_INIT();
 
     if (window->context.client == GLFW_NO_API)
     {

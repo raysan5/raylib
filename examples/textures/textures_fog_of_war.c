@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [textures] example - Fog of war
+*   raylib [textures] example - fog of war
+*
+*   Example complexity rating: [★★★☆] 3/4
 *
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2018-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2018-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -19,6 +21,9 @@
 #define PLAYER_SIZE      16         // Player size
 #define PLAYER_TILE_VISIBILITY  2   // Player can see 2 tiles around its position
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 // Map data type
 typedef struct Map {
     unsigned int tilesX;            // Number of tiles in X axis
@@ -46,8 +51,8 @@ int main(void)
     // NOTE: We can have up to 256 values for tile ids and for tile fog state,
     // probably we don't need that many values for fog state, it can be optimized
     // to use only 2 bits per fog state (reducing size by 4) but logic will be a bit more complex
-    map.tileIds = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
-    map.tileFog = (unsigned char *)calloc(map.tilesX*map.tilesY, sizeof(unsigned char));
+    map.tileIds = (unsigned char *)RL_CALLOC(map.tilesX*map.tilesY, sizeof(unsigned char));
+    map.tileFog = (unsigned char *)RL_CALLOC(map.tilesX*map.tilesY, sizeof(unsigned char));
 
     // Load map tiles (generating 2 random tile ids for testing)
     // NOTE: Map tile ids should be probably loaded from an external map file
@@ -61,8 +66,9 @@ int main(void)
     // Render texture to render fog of war
     // NOTE: To get an automatic smooth-fog effect we use a render texture to render fog
     // at a smaller size (one pixel per tile) and scale it on drawing with bilinear filtering
-    RenderTexture2D fogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
-    SetTextureFilter(fogOfWar.texture, TEXTURE_FILTER_BILINEAR);
+    RenderTexture2D rtFogOfWar = LoadRenderTexture(map.tilesX, map.tilesY);
+    SetTextureFilter(rtFogOfWar.texture, TEXTURE_FILTER_BILINEAR);
+    SetTextureWrap(rtFogOfWar.texture, TEXTURE_WRAP_CLAMP);
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -88,8 +94,8 @@ int main(void)
         for (unsigned int i = 0; i < map.tilesX*map.tilesY; i++) if (map.tileFog[i] == 1) map.tileFog[i] = 2;
 
         // Get current tile position from player pixel position
-        playerTileX = (int)((playerPosition.x + MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
-        playerTileY = (int)((playerPosition.y + MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
+        playerTileX = (int)((playerPosition.x + (float)MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
+        playerTileY = (int)((playerPosition.y + (float)MAP_TILE_SIZE/2)/MAP_TILE_SIZE);
 
         // Check visibility and update fog
         // NOTE: We check tilemap limits to avoid processing tiles out-of-array-bounds (it could crash program)
@@ -101,7 +107,7 @@ int main(void)
         // Draw
         //----------------------------------------------------------------------------------
         // Draw fog of war to a small render texture for automatic smoothing on scaling
-        BeginTextureMode(fogOfWar);
+        BeginTextureMode(rtFogOfWar);
             ClearBackground(BLANK);
             for (unsigned int y = 0; y < map.tilesY; y++)
                 for (unsigned int x = 0; x < map.tilesX; x++)
@@ -129,7 +135,7 @@ int main(void)
 
 
             // Draw fog of war (scaled to full map, bilinear filtering)
-            DrawTexturePro(fogOfWar.texture, (Rectangle){ 0, 0, (float)fogOfWar.texture.width, (float)-fogOfWar.texture.height },
+            DrawTexturePro(rtFogOfWar.texture, (Rectangle){ 0, 0, (float)rtFogOfWar.texture.width, (float)-rtFogOfWar.texture.height },
                            (Rectangle){ 0, 0, (float)map.tilesX*MAP_TILE_SIZE, (float)map.tilesY*MAP_TILE_SIZE },
                            (Vector2){ 0, 0 }, 0.0f, WHITE);
 
@@ -143,10 +149,10 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    free(map.tileIds);      // Free allocated map tile ids
-    free(map.tileFog);      // Free allocated map tile fog state
+    RL_FREE(map.tileIds);   // Free allocated map tile ids
+    RL_FREE(map.tileFog);   // Free allocated map tile fog state
 
-    UnloadRenderTexture(fogOfWar);  // Unload render texture
+    UnloadRenderTexture(rtFogOfWar);  // Unload render texture
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------

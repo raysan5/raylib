@@ -1,13 +1,15 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - Font loading
+*   raylib [text] example - font loading
+*
+*   Example complexity rating: [★☆☆☆] 1/4
 *
 *   NOTE: raylib can load fonts from multiple input file formats:
 *
 *     - TTF/OTF > Sprite font atlas is generated on loading, user can configure
 *                 some of the generation parameters (size, characters to include)
 *     - BMFonts > Angel code font fileformat, sprite font image must be provided
-*                 together with the .fnt file, font generation cna not be configured
+*                 together with the .fnt file, font generation can not be configured
 *     - XNA Spritefont > Sprite font image, following XNA Spritefont conventions,
 *                 Characters in image must follow some spacing and order rules
 *
@@ -16,7 +18,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2016-2024 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2016-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -36,12 +38,12 @@ int main(void)
 
     // Define characters to draw
     // NOTE: raylib supports UTF-8 encoding, following list is actually codified as UTF8 internally
-    const char msg[256] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmn\nopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓ\nÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷\nøùúûüýþÿ";
+    const char *msg = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHI\nJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklm\nnopqrstuvwxyz{|}~¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒ\nÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö\n÷øùúûüýþÿ";
 
     // NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
 
     // BMFont (AngelCode) : Font data and image atlas have been generated using external program
-    Font fontBm = LoadFont("resources/pixantiqua.fnt");
+    Font fontBm = LoadFont("resources/pixantiqua.fnt"); // Requires "resources/pixantiqua.png"
 
     // TTF font : Font data and atlas are generated directly from TTF
     // NOTE: We define a font base size of 32 pixels tall and up-to 250 characters

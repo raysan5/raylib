@@ -5,7 +5,8 @@ layout (location = 1) in vec2 vertexTexCoord;
 
 out vec2 texCoord;
 
-void main() {
+void main()
+{
     gl_Position = vec4(vertexPosition, 1.0);
     texCoord = vertexTexCoord;
 }

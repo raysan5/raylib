@@ -10,7 +10,8 @@ in vec3 fragNormal;
 uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
 
-void main() {
+void main()
+{
     // store the fragment position vector in the first gbuffer texture
     gPosition = fragPosition;
     // also store the per-fragment normals into the gbuffer

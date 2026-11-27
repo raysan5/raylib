@@ -4,7 +4,7 @@ This provides a base project template which builds with [CMake](https://cmake.or
 
 ## Usage
 
-To compile the example, use one of the following dependending on your build target...
+To compile the example, use one of the following depending on your build target...
 
 ### Desktop
 
@@ -22,6 +22,6 @@ Compiling for the web requires the [Emscripten SDK](https://emscripten.org/docs/
 ``` bash
 mkdir build
 cd build
-emcmake cmake .. -DPLATFORM=Web -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-s USE_GLFW=3" -DCMAKE_EXECUTABLE_SUFFIX=".html"
+emcmake cmake .. -DPLATFORM=Web -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXECUTABLE_SUFFIX=".html"
 emmake make
 ```

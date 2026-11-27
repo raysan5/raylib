@@ -2,6 +2,8 @@
 *
 *   raylib [core] example - automation events
 *
+*   Example complexity rating: [★★★☆] 3/4
+*
 *   Example originally created with raylib 5.0, last time updated with raylib 5.0
 *
 *   Example based on 2d_camera_platformer example by arvyy (@arvyy)
@@ -9,7 +11,7 @@
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2023-2025 Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -22,6 +24,9 @@
 
 #define MAX_ENVIRONMENT_ELEMENTS    5
 
+//----------------------------------------------------------------------------------
+// Types and Structures Definition
+//----------------------------------------------------------------------------------
 typedef struct Player {
     Vector2 position;
     float speed;
@@ -33,7 +38,6 @@ typedef struct EnvElement {
     int blocking;
     Color color;
 } EnvElement;
-
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -52,7 +56,7 @@ int main(void)
     player.position = (Vector2){ 400, 280 };
     player.speed = 0;
     player.canJump = false;
-    
+
     // Define environment elements (platforms)
     EnvElement envElements[MAX_ENVIRONMENT_ELEMENTS] = {
         {{ 0, 0, 1000, 400 }, 0, LIGHTGRAY },
@@ -65,16 +69,16 @@ int main(void)
     // Define camera
     Camera2D camera = { 0 };
     camera.target = player.position;
-    camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
-    
+
     // Automation events
     AutomationEventList aelist = LoadAutomationEventList(0);  // Initialize list of automation events to record new events
     SetAutomationEventList(&aelist);
     bool eventRecording = false;
     bool eventPlaying = false;
-    
+
     unsigned int frameCounter = 0;
     unsigned int playFrameCounter = 0;
     unsigned int currentPlayFrame = 0;
@@ -88,7 +92,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float deltaTime = 0.015f;//GetFrameTime();
-        
+
         // Dropped files logic
         //----------------------------------------------------------------------------------
         if (IsFileDropped())
@@ -100,20 +104,20 @@ int main(void)
             {
                 UnloadAutomationEventList(aelist);
                 aelist = LoadAutomationEventList(droppedFiles.paths[0]);
-                
+
                 eventRecording = false;
-                
+
                 // Reset scene state to play
                 eventPlaying = true;
                 playFrameCounter = 0;
                 currentPlayFrame = 0;
-                
+
                 player.position = (Vector2){ 400, 280 };
                 player.speed = 0;
                 player.canJump = false;
 
                 camera.target = player.position;
-                camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+                camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
                 camera.rotation = 0.0f;
                 camera.zoom = 1.0f;
             }
@@ -157,11 +161,6 @@ int main(void)
         }
         else player.canJump = true;
 
-        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
-
-        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
-
         if (IsKeyPressed(KEY_R))
         {
             // Reset game state
@@ -170,86 +169,21 @@ int main(void)
             player.canJump = false;
 
             camera.target = player.position;
-            camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+            camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
             camera.rotation = 0.0f;
             camera.zoom = 1.0f;
         }
         //----------------------------------------------------------------------------------
 
-        // Update camera
+        // Events playing
+        // NOTE: Logic must be before Camera update because it depends on mouse-wheel value,
+        // that can be set by the played event... but some other inputs could be affected
         //----------------------------------------------------------------------------------
-        camera.target = player.position;
-        camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
-        float minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
-
-        for (int i = 0; i < MAX_ENVIRONMENT_ELEMENTS; i++)
-        {
-            EnvElement *element = &envElements[i];
-            minX = fminf(element->rect.x, minX);
-            maxX = fmaxf(element->rect.x + element->rect.width, maxX);
-            minY = fminf(element->rect.y, minY);
-            maxY = fmaxf(element->rect.y + element->rect.height, maxY);
-        }
-
-        Vector2 max = GetWorldToScreen2D((Vector2){ maxX, maxY }, camera);
-        Vector2 min = GetWorldToScreen2D((Vector2){ minX, minY }, camera);
-
-        if (max.x < screenWidth) camera.offset.x = screenWidth - (max.x - screenWidth/2);
-        if (max.y < screenHeight) camera.offset.y = screenHeight - (max.y - screenHeight/2);
-        if (min.x > 0) camera.offset.x = screenWidth/2 - min.x;
-        if (min.y > 0) camera.offset.y = screenHeight/2 - min.y;
-        //----------------------------------------------------------------------------------
-        
-        // Toggle events recording
-        if (IsKeyPressed(KEY_S))
-        {
-            if (!eventPlaying)
-            {
-                if (eventRecording)
-                {
-                    StopAutomationEventRecording();
-                    eventRecording = false;
-                    
-                    ExportAutomationEventList(aelist, "automation.rae");
-                    
-                    TraceLog(LOG_INFO, "RECORDED FRAMES: %i", aelist.count);
-                }
-                else 
-                {
-                    SetAutomationEventBaseFrame(180);
-                    StartAutomationEventRecording();
-                    eventRecording = true;
-                }
-            }
-        }
-        else if (IsKeyPressed(KEY_A))
-        {
-            if (!eventRecording && (aelist.count > 0))
-            {
-                // Reset scene state to play
-                eventPlaying = true;
-                playFrameCounter = 0;
-                currentPlayFrame = 0;
-
-                player.position = (Vector2){ 400, 280 };
-                player.speed = 0;
-                player.canJump = false;
-
-                camera.target = player.position;
-                camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
-                camera.rotation = 0.0f;
-                camera.zoom = 1.0f;
-            }
-        }
-        
         if (eventPlaying)
         {
             // NOTE: Multiple events could be executed in a single frame
             while (playFrameCounter == aelist.events[currentPlayFrame].frame)
             {
-                TraceLog(LOG_INFO, "PLAYING: PlayFrameCount: %i | currentPlayFrame: %i | Event Frame: %i, param: %i", 
-                    playFrameCounter, currentPlayFrame, aelist.events[currentPlayFrame].frame, aelist.events[currentPlayFrame].params[0]);
-                
                 PlayAutomationEvent(aelist.events[currentPlayFrame]);
                 currentPlayFrame++;
 
@@ -263,10 +197,82 @@ int main(void)
                     break;
                 }
             }
-            
+
             playFrameCounter++;
         }
-        
+        //----------------------------------------------------------------------------------
+
+        // Update camera
+        //----------------------------------------------------------------------------------
+        camera.target = player.position;
+        camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
+        float minX = 1000, minY = 1000, maxX = -1000, maxY = -1000;
+
+        // WARNING: On event replay, mouse-wheel internal value is set
+        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
+        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
+        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
+
+        for (int i = 0; i < MAX_ENVIRONMENT_ELEMENTS; i++)
+        {
+            EnvElement *element = &envElements[i];
+            minX = fminf(element->rect.x, minX);
+            maxX = fmaxf(element->rect.x + element->rect.width, maxX);
+            minY = fminf(element->rect.y, minY);
+            maxY = fmaxf(element->rect.y + element->rect.height, maxY);
+        }
+
+        Vector2 max = GetWorldToScreen2D((Vector2){ maxX, maxY }, camera);
+        Vector2 min = GetWorldToScreen2D((Vector2){ minX, minY }, camera);
+
+        if (max.x < screenWidth) camera.offset.x = screenWidth - (max.x - (float)screenWidth/2);
+        if (max.y < screenHeight) camera.offset.y = screenHeight - (max.y - (float)screenHeight/2);
+        if (min.x > 0) camera.offset.x = (float)screenWidth/2 - min.x;
+        if (min.y > 0) camera.offset.y = (float)screenHeight/2 - min.y;
+        //----------------------------------------------------------------------------------
+
+        // Events management
+        if (IsKeyPressed(KEY_S))    // Toggle events recording
+        {
+            if (!eventPlaying)
+            {
+                if (eventRecording)
+                {
+                    StopAutomationEventRecording();
+                    eventRecording = false;
+
+                    ExportAutomationEventList(aelist, "automation.rae");
+
+                    TraceLog(LOG_INFO, "RECORDED FRAMES: %i", aelist.count);
+                }
+                else
+                {
+                    SetAutomationEventBaseFrame(180);
+                    StartAutomationEventRecording();
+                    eventRecording = true;
+                }
+            }
+        }
+        else if (IsKeyPressed(KEY_A)) // Toggle events playing (WARNING: Starts next frame)
+        {
+            if (!eventRecording && (aelist.count > 0))
+            {
+                // Reset scene state to play
+                eventPlaying = true;
+                playFrameCounter = 0;
+                currentPlayFrame = 0;
+
+                player.position = (Vector2){ 400, 280 };
+                player.speed = 0;
+                player.canJump = false;
+
+                camera.target = player.position;
+                camera.offset = (Vector2){ GetRenderWidth()/2.0f, GetRenderHeight()/2.0f };
+                camera.rotation = 0.0f;
+                camera.zoom = 1.0f;
+            }
+        }
+
         if (eventRecording || eventPlaying) frameCounter++;
         else frameCounter = 0;
         //----------------------------------------------------------------------------------
@@ -289,7 +295,7 @@ int main(void)
                 DrawRectangleRec((Rectangle){ player.position.x - 20, player.position.y - 40, 40, 40 }, RED);
 
             EndMode2D();
-            
+
             // Draw game controls
             DrawRectangle(10, 10, 290, 145, Fade(SKYBLUE, 0.5f));
             DrawRectangleLines(10, 10, 290, 145, Fade(BLUE, 0.8f));
@@ -319,7 +325,7 @@ int main(void)
 
                 if (((frameCounter/15)%2) == 1) DrawText(TextFormat("PLAYING RECORDED EVENTS... [%i]", currentPlayFrame), 50, 170, 10, DARKGREEN);
             }
-            
+
 
         EndDrawing();
         //----------------------------------------------------------------------------------

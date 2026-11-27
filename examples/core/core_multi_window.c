@@ -12,7 +12,7 @@
 *
 *   Enjoy using raylib. :)
 *
-*   Example originally created with raylib 1.0, last time updated with raylib 1.0
+*   Example originally created with raylib 5.0, last time updated with raylib 6.5
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -48,7 +48,7 @@ void CheckWindowCollisions(WindowInfo* window)
 {
     if (window->position.x + window->texture.width > GetScreenWidth())
     {
-        window->position.x = GetScreenWidth() - window->texture.width;
+        window->position.x = (float)(GetScreenWidth() - window->texture.width);
         window->velocity.x *= -1;
     }
 
@@ -60,7 +60,7 @@ void CheckWindowCollisions(WindowInfo* window)
 
     if (window->position.y + window->texture.height > GetScreenHeight())
     {
-        window->position.y = GetScreenHeight() - window->texture.height;
+        window->position.y = (float)(GetScreenHeight() - window->texture.height);
         window->velocity.y *= -1;
     }
 
@@ -95,9 +95,10 @@ int main(void)
     // before we can do anything we have to tell raylib what window context to use.
     // we will be swapping the active context all over the place.
     SetActiveWindowContext(window1.contextId);
-    SetWindowPosition(10, GetWindowPosition().y);
+    SetWindowPosition(10, (int)GetWindowPosition().y);
 
-    // The FPS and timing systems are only updated for window 0, so we just need to set our target FPS for that context
+    // The FPS and timing systems are only updated by the primary window (lowest open window id),
+    // target FPS is a global setting, it can be set from any window context
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     
     // load the texture we want to draw. Every context has it's own set of textures and texture IDs. so you must load them for each context.
@@ -109,7 +110,7 @@ int main(void)
     // load the texture for window 2, even though this is the same texture file we used in window 1, we have to reload it for context 2.
     window2.texture = LoadTexture("resources/wabbit_alpha.png");
 
-    SetWindowPosition(820, GetWindowPosition().y);
+    SetWindowPosition(820, (int)GetWindowPosition().y);
     //--------------------------------------------------------------------------------------
 
 	window1.position = (Vector2){ 300,300 };
@@ -130,7 +131,7 @@ int main(void)
         window2.position = Vector2Add(window2.position, Vector2Scale(window2.velocity, speed * GetFrameTime()));
 
         // Draw
-        // process windows backwards because the lowest window ID will call wait time.
+        // process windows backwards because the lowest window ID (primary window) waits for frame timing and polls input events
 
         if (window2.open)
         {
@@ -155,7 +156,7 @@ int main(void)
                 ClearBackground(BLACK);
 
                 DrawText("I am the other window", 190, 200, 20, RAYWHITE);
-                DrawTexture(window2.texture, window2.position.x, window2.position.y, WHITE);
+                DrawTextureV(window2.texture, window2.position, WHITE);
                 EndDrawing();
             }
         }
@@ -186,7 +187,7 @@ int main(void)
 
                 DrawText("I am the main window", 190, 200, 20, LIGHTGRAY);
 
-                DrawTexture(window1.texture, window1.position.x, window1.position.y, WHITE);
+                DrawTextureV(window1.texture, window1.position, WHITE);
                 DrawFPS(0, 0);
 
                 EndDrawing(); 

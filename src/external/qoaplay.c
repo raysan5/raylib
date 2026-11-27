@@ -46,7 +46,6 @@ typedef struct {
     unsigned int sample_position;   // Current streaming sample position
 
     unsigned char *buffer;          // Buffer used to read samples from file/memory (used on decoding)
-    unsigned int buffer_len;        // Buffer length to read samples for streaming
 
     short *sample_data;             // Sample data decoded
     unsigned int sample_data_len;   // Sample data decoded length
@@ -105,13 +104,13 @@ qoaplay_desc *qoaplay_open(const char *path)
     // + a buffer to hold one frame of encoded data
     unsigned int buffer_size = qoa_max_frame_size(&qoa);
     unsigned int sample_data_size = qoa.channels*QOA_FRAME_LEN*sizeof(short)*2;
-    qoaplay_desc *qoa_ctx = QOA_MALLOC(sizeof(qoaplay_desc) + buffer_size + sample_data_size);
+    qoaplay_desc *qoa_ctx = (qoaplay_desc *)QOA_MALLOC(sizeof(qoaplay_desc) + buffer_size + sample_data_size);
     memset(qoa_ctx, 0, sizeof(qoaplay_desc));
 
     qoa_ctx->file = file;
     qoa_ctx->file_data = NULL;
     qoa_ctx->file_data_size = 0;
-    qoa_ctx->file_data_offset = 0;
+    qoa_ctx->file_data_offset = first_frame_pos;
     qoa_ctx->first_frame_pos = first_frame_pos;
 
     // Setup data pointers to previously allocated data
@@ -128,34 +127,30 @@ qoaplay_desc *qoaplay_open(const char *path)
 // Open QOA file from memory, no FILE pointer required
 qoaplay_desc *qoaplay_open_memory(const unsigned char *data, int data_size)
 {
-    // Read and decode the file header
-    unsigned char header[QOA_MIN_FILESIZE];
-    memcpy(header, data, QOA_MIN_FILESIZE);
-
     qoa_desc qoa;
-    unsigned int first_frame_pos = qoa_decode_header(header, QOA_MIN_FILESIZE, &qoa);
+    if (data_size < QOA_MIN_FILESIZE) return NULL;
+    unsigned int first_frame_pos = qoa_decode_header(data, QOA_MIN_FILESIZE, &qoa);
     if (!first_frame_pos) return NULL;
 
     // Allocate one chunk of memory for the qoaplay_desc struct
     // + the sample data for one frame
     // + a buffer to hold one frame of encoded data
-    unsigned int buffer_size = qoa_max_frame_size(&qoa);
     unsigned int sample_data_size = qoa.channels*QOA_FRAME_LEN*sizeof(short)*2;
-    qoaplay_desc *qoa_ctx = QOA_MALLOC(sizeof(qoaplay_desc) + buffer_size + sample_data_size);
+    qoaplay_desc *qoa_ctx = (qoaplay_desc *)QOA_MALLOC(sizeof(qoaplay_desc) + sample_data_size + data_size);
     memset(qoa_ctx, 0, sizeof(qoaplay_desc));
 
     qoa_ctx->file = NULL;
 
     // Keep a copy of file data provided to be managed internally
-    qoa_ctx->file_data = (unsigned char *)QOA_MALLOC(data_size);
+    qoa_ctx->file_data = (((unsigned char *)qoa_ctx) + sizeof(qoaplay_desc) + sample_data_size);
     memcpy(qoa_ctx->file_data, data, data_size);
     qoa_ctx->file_data_size = data_size;
-    qoa_ctx->file_data_offset = 0;
+    qoa_ctx->file_data_offset = first_frame_pos;
     qoa_ctx->first_frame_pos = first_frame_pos;
 
     // Setup data pointers to previously allocated data
-    qoa_ctx->buffer = ((unsigned char *)qoa_ctx) + sizeof(qoaplay_desc);
-    qoa_ctx->sample_data = (short *)(((unsigned char *)qoa_ctx) + sizeof(qoaplay_desc) + buffer_size);
+    qoa_ctx->buffer = NULL;
+    qoa_ctx->sample_data = (short *)(((unsigned char *)qoa_ctx) + sizeof(qoaplay_desc));
 
     qoa_ctx->info.channels = qoa.channels;
     qoa_ctx->info.samplerate = qoa.samplerate;
@@ -169,11 +164,7 @@ void qoaplay_close(qoaplay_desc *qoa_ctx)
 {
     if (qoa_ctx->file) fclose(qoa_ctx->file);
 
-    if ((qoa_ctx->file_data) && (qoa_ctx->file_data_size > 0))
-    {
-        QOA_FREE(qoa_ctx->file_data);
-        qoa_ctx->file_data_size = 0;
-    }
+    qoa_ctx->file_data_size = 0;
 
     QOA_FREE(qoa_ctx);
 }
@@ -181,16 +172,23 @@ void qoaplay_close(qoaplay_desc *qoa_ctx)
 // Decode one frame from QOA data
 unsigned int qoaplay_decode_frame(qoaplay_desc *qoa_ctx)
 {
-    if (qoa_ctx->file) qoa_ctx->buffer_len = fread(qoa_ctx->buffer, 1, qoa_max_frame_size(&qoa_ctx->info), qoa_ctx->file);
+    unsigned char *buffer;
+    unsigned int buffer_len;
+
+    if (qoa_ctx->file)
+    {
+        buffer = qoa_ctx->buffer;
+        buffer_len = fread(buffer, 1, qoa_max_frame_size(&qoa_ctx->info), qoa_ctx->file);
+    }
     else
     {
-        qoa_ctx->buffer_len = qoa_max_frame_size(&qoa_ctx->info);
-        memcpy(qoa_ctx->buffer, qoa_ctx->file_data + qoa_ctx->file_data_offset, qoa_ctx->buffer_len);
-        qoa_ctx->file_data_offset += qoa_ctx->buffer_len;
+        buffer = qoa_ctx->file_data + qoa_ctx->file_data_offset;
+        buffer_len = qoa_max_frame_size(&qoa_ctx->info);
+        qoa_ctx->file_data_offset += buffer_len;
     }
 
     unsigned int frame_len;
-    qoa_decode_frame(qoa_ctx->buffer, qoa_ctx->buffer_len, &qoa_ctx->info, qoa_ctx->sample_data, &frame_len);
+    qoa_decode_frame(buffer, buffer_len, &qoa_ctx->info, qoa_ctx->sample_data, &frame_len);
     qoa_ctx->sample_data_pos = 0;
     qoa_ctx->sample_data_len = frame_len;
 
@@ -201,7 +199,7 @@ unsigned int qoaplay_decode_frame(qoaplay_desc *qoa_ctx)
 void qoaplay_rewind(qoaplay_desc *qoa_ctx)
 {
     if (qoa_ctx->file) fseek(qoa_ctx->file, qoa_ctx->first_frame_pos, SEEK_SET);
-    else qoa_ctx->file_data_offset = 0;
+    else qoa_ctx->file_data_offset = qoa_ctx->first_frame_pos;
 
     qoa_ctx->sample_position = 0;
     qoa_ctx->sample_data_len = 0;

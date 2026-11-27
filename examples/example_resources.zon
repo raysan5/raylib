@@ -1,0 +1,1422 @@
+.{
+    .{
+        "core_input_gamepad",
+        .{
+            .{
+                .src_path = "examples/core/resources/ps3.png",
+                .virtual_path = "resources/ps3.png",
+            },
+            .{
+                .src_path = "examples/core/resources/xbox.png",
+                .virtual_path = "resources/xbox.png",
+            },
+        },
+    },
+    .{
+        "core_text_file_loading",
+        .{
+            .{
+                .src_path = "examples/core/resources/text_file.txt",
+                .virtual_path = "resources/text_file.txt",
+            },
+        },
+    },
+    .{
+        "core_vr_simulator",
+        .{
+            .{
+                .src_path = "examples/core/resources/shaders/glsl100/distortion.fs",
+                .virtual_path = "resources/shaders/glsl100/distortion.fs",
+            },
+        },
+    },
+    .{
+        "textures_background_scrolling",
+        .{
+            .{
+                .src_path = "examples/textures/resources/cyberpunk_street_background.png",
+                .virtual_path = "resources/cyberpunk_street_background.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/cyberpunk_street_midground.png",
+                .virtual_path = "resources/cyberpunk_street_midground.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/cyberpunk_street_foreground.png",
+                .virtual_path = "resources/cyberpunk_street_foreground.png",
+            },
+        },
+    },
+    .{
+        "textures_blend_modes",
+        .{
+            .{
+                .src_path = "examples/textures/resources/cyberpunk_street_background.png",
+                .virtual_path = "resources/cyberpunk_street_background.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/cyberpunk_street_foreground.png",
+                .virtual_path = "resources/cyberpunk_street_foreground.png",
+            },
+        },
+    },
+    .{
+        "textures_bunnymark",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raybunny.png",
+                .virtual_path = "resources/raybunny.png",
+            },
+        },
+    },
+    .{
+        "textures_gif_player",
+        .{
+            .{
+                .src_path = "examples/textures/resources/scarfy_run.gif",
+                .virtual_path = "resources/scarfy_run.gif",
+            },
+        },
+    },
+    .{
+        "textures_image_channel",
+        .{
+            .{
+                .src_path = "examples/textures/resources/fudesumi.png",
+                .virtual_path = "resources/fudesumi.png",
+            },
+        },
+    },
+    .{
+        "textures_image_drawing",
+        .{
+            .{
+                .src_path = "examples/textures/resources/cat.png",
+                .virtual_path = "resources/cat.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/parrots.png",
+                .virtual_path = "resources/parrots.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/custom_jupiter_crash.png",
+                .virtual_path = "resources/custom_jupiter_crash.png",
+            },
+        },
+    },
+    .{
+        "textures_image_kernel",
+        .{
+            .{
+                .src_path = "examples/textures/resources/cat.png",
+                .virtual_path = "resources/cat.png",
+            },
+        },
+    },
+    .{
+        "textures_image_loading",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raylib_logo.png",
+                .virtual_path = "resources/raylib_logo.png",
+            },
+        },
+    },
+    .{
+        "textures_image_processing",
+        .{
+            .{
+                .src_path = "examples/textures/resources/parrots.png",
+                .virtual_path = "resources/parrots.png",
+            },
+        },
+    },
+    .{
+        "textures_image_rotate",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raylib_logo.png",
+                .virtual_path = "resources/raylib_logo.png",
+            },
+        },
+    },
+    .{
+        "textures_image_text",
+        .{
+            .{
+                .src_path = "examples/textures/resources/parrots.png",
+                .virtual_path = "resources/parrots.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/KAISG.ttf",
+                .virtual_path = "resources/KAISG.ttf",
+            },
+        },
+    },
+    .{
+        "textures_logo_raylib",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raylib_logo.png",
+                .virtual_path = "resources/raylib_logo.png",
+            },
+        },
+    },
+    .{
+        "textures_magnifying_glass",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raybunny.png",
+                .virtual_path = "resources/raybunny.png",
+            },
+            .{
+                .src_path = "examples/textures/resources/parrots.png",
+                .virtual_path = "resources/parrots.png",
+            },
+        },
+    },
+    .{
+        "textures_npatch_drawing",
+        .{
+            .{
+                .src_path = "examples/textures/resources/ninepatch_button.png",
+                .virtual_path = "resources/ninepatch_button.png",
+            },
+        },
+    },
+    .{
+        "textures_particles_blending",
+        .{
+            .{
+                .src_path = "examples/textures/resources/spark_flame.png",
+                .virtual_path = "resources/spark_flame.png",
+            },
+        },
+    },
+    .{
+        "textures_polygon_drawing",
+        .{
+            .{
+                .src_path = "examples/textures/resources/cat.png",
+                .virtual_path = "resources/cat.png",
+            },
+        },
+    },
+    .{
+        "textures_raw_data",
+        .{
+            .{
+                .src_path = "examples/textures/resources/fudesumi.raw",
+                .virtual_path = "resources/fudesumi.raw",
+            },
+        },
+    },
+    .{
+        "textures_sprite_animation",
+        .{
+            .{
+                .src_path = "examples/textures/resources/scarfy.png",
+                .virtual_path = "resources/scarfy.png",
+            },
+        },
+    },
+    .{
+        "textures_sprite_button",
+        .{
+            .{
+                .src_path = "examples/textures/resources/buttonfx.wav",
+                .virtual_path = "resources/buttonfx.wav",
+            },
+            .{
+                .src_path = "examples/textures/resources/button.png",
+                .virtual_path = "resources/button.png",
+            },
+        },
+    },
+    .{
+        "textures_sprite_explosion",
+        .{
+            .{
+                .src_path = "examples/textures/resources/boom.wav",
+                .virtual_path = "resources/boom.wav",
+            },
+            .{
+                .src_path = "examples/textures/resources/explosion.png",
+                .virtual_path = "resources/explosion.png",
+            },
+        },
+    },
+    .{
+        "textures_sprite_stacking",
+        .{
+            .{
+                .src_path = "examples/textures/resources/booth.png",
+                .virtual_path = "resources/booth.png",
+            },
+        },
+    },
+    .{
+        "textures_srcrec_dstrec",
+        .{
+            .{
+                .src_path = "examples/textures/resources/scarfy.png",
+                .virtual_path = "resources/scarfy.png",
+            },
+        },
+    },
+    .{
+        "textures_textured_curve",
+        .{
+            .{
+                .src_path = "examples/textures/resources/road.png",
+                .virtual_path = "resources/road.png",
+            },
+        },
+    },
+    .{
+        "textures_tiled_drawing",
+        .{
+            .{
+                .src_path = "examples/textures/resources/patterns.png",
+                .virtual_path = "resources/patterns.png",
+            },
+        },
+    },
+    .{
+        "textures_to_image",
+        .{
+            .{
+                .src_path = "examples/textures/resources/raylib_logo.png",
+                .virtual_path = "resources/raylib_logo.png",
+            },
+        },
+    },
+    .{
+        "text_3d_drawing",
+        .{
+            .{
+                .src_path = "examples/text/resources/shaders/glsl100/alpha_discard.fs",
+                .virtual_path = "resources/shaders/glsl100/alpha_discard.fs",
+            },
+        },
+    },
+    .{
+        "text_codepoints_loading",
+        .{
+            .{
+                .src_path = "examples/text/resources/DotGothic16-Regular.ttf",
+                .virtual_path = "resources/DotGothic16-Regular.ttf",
+            },
+        },
+    },
+    .{
+        "text_font_filters",
+        .{
+            .{
+                .src_path = "examples/text/resources/KAISG.ttf",
+                .virtual_path = "resources/KAISG.ttf",
+            },
+        },
+    },
+    .{
+        "text_font_loading",
+        .{
+            .{
+                .src_path = "examples/text/resources/pixantiqua.fnt",
+                .virtual_path = "resources/pixantiqua.fnt",
+            },
+            .{
+                .src_path = "examples/text/resources/pixantiqua.png",
+                .virtual_path = "resources/pixantiqua.png",
+            },
+            .{
+                .src_path = "examples/text/resources/pixantiqua.ttf",
+                .virtual_path = "resources/pixantiqua.ttf",
+            },
+        },
+    },
+    .{
+        "text_font_sdf",
+        .{
+            .{
+                .src_path = "examples/text/resources/anonymous_pro_bold.ttf",
+                .virtual_path = "resources/anonymous_pro_bold.ttf",
+            },
+            .{
+                .src_path = "examples/text/resources/shaders/glsl100/sdf.fs",
+                .virtual_path = "resources/shaders/glsl100/sdf.fs",
+            },
+        },
+    },
+    .{
+        "text_font_spritefont",
+        .{
+            .{
+                .src_path = "examples/text/resources/custom_mecha.png",
+                .virtual_path = "resources/custom_mecha.png",
+            },
+            .{
+                .src_path = "examples/text/resources/custom_alagard.png",
+                .virtual_path = "resources/custom_alagard.png",
+            },
+            .{
+                .src_path = "examples/text/resources/custom_jupiter_crash.png",
+                .virtual_path = "resources/custom_jupiter_crash.png",
+            },
+        },
+    },
+    .{
+        "text_sprite_fonts",
+        .{
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/alagard.png",
+                .virtual_path = "resources/sprite_fonts/alagard.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/pixelplay.png",
+                .virtual_path = "resources/sprite_fonts/pixelplay.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/mecha.png",
+                .virtual_path = "resources/sprite_fonts/mecha.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/setback.png",
+                .virtual_path = "resources/sprite_fonts/setback.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/romulus.png",
+                .virtual_path = "resources/sprite_fonts/romulus.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/pixantiqua.png",
+                .virtual_path = "resources/sprite_fonts/pixantiqua.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/alpha_beta.png",
+                .virtual_path = "resources/sprite_fonts/alpha_beta.png",
+            },
+            .{
+                .src_path = "examples/text/resources/sprite_fonts/jupiter_crash.png",
+                .virtual_path = "resources/sprite_fonts/jupiter_crash.png",
+            },
+        },
+    },
+    .{
+        "text_unicode_emojis",
+        .{
+            .{
+                .src_path = "examples/text/resources/dejavu.fnt",
+                .virtual_path = "resources/dejavu.fnt",
+            },
+            .{
+                .src_path = "examples/text/resources/dejavu.png",
+                .virtual_path = "resources/dejavu.png",
+            },
+            .{
+                .src_path = "examples/text/resources/noto_cjk.fnt",
+                .virtual_path = "resources/noto_cjk.fnt",
+            },
+            .{
+                .src_path = "examples/text/resources/noto_cjk.png",
+                .virtual_path = "resources/noto_cjk.png",
+            },
+            .{
+                .src_path = "examples/text/resources/symbola.fnt",
+                .virtual_path = "resources/symbola.fnt",
+            },
+            .{
+                .src_path = "examples/text/resources/symbola.png",
+                .virtual_path = "resources/symbola.png",
+            },
+        },
+    },
+    .{
+        "text_unicode_ranges",
+        .{
+            .{
+                .src_path = "examples/text/resources/NotoSansTC-Regular.ttf",
+                .virtual_path = "resources/NotoSansTC-Regular.ttf",
+            },
+        },
+    },
+    .{
+        "models_animation_blend_custom",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman.glb",
+                .virtual_path = "resources/models/gltf/greenman.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.vs",
+                .virtual_path = "resources/shaders/glsl100/skinning.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.fs",
+                .virtual_path = "resources/shaders/glsl100/skinning.fs",
+            },
+        },
+    },
+    .{
+        "models_animation_blending",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/robot.glb",
+                .virtual_path = "resources/models/gltf/robot.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.vs",
+                .virtual_path = "resources/shaders/glsl100/skinning.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.fs",
+                .virtual_path = "resources/shaders/glsl100/skinning.fs",
+            },
+        },
+    },
+    .{
+        "models_animation_gpu_skinning",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman.glb",
+                .virtual_path = "resources/models/gltf/greenman.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.vs",
+                .virtual_path = "resources/shaders/glsl100/skinning.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skinning.fs",
+                .virtual_path = "resources/shaders/glsl100/skinning.fs",
+            },
+        },
+    },
+    .{
+        "models_animation_timing",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/robot.glb",
+                .virtual_path = "resources/models/gltf/robot.glb",
+            },
+        },
+    },
+    .{
+        "models_billboard_rendering",
+        .{
+            .{
+                .src_path = "examples/models/resources/billboard.png",
+                .virtual_path = "resources/billboard.png",
+            },
+        },
+    },
+    .{
+        "models_bone_socket",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman.glb",
+                .virtual_path = "resources/models/gltf/greenman.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman_hat.glb",
+                .virtual_path = "resources/models/gltf/greenman_hat.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman_sword.glb",
+                .virtual_path = "resources/models/gltf/greenman_sword.glb",
+            },
+            .{
+                .src_path = "examples/models/resources/models/gltf/greenman_shield.glb",
+                .virtual_path = "resources/models/gltf/greenman_shield.glb",
+            },
+        },
+    },
+    .{
+        "models_cubicmap_rendering",
+        .{
+            .{
+                .src_path = "examples/models/resources/cubicmap.png",
+                .virtual_path = "resources/cubicmap.png",
+            },
+            .{
+                .src_path = "examples/models/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+        },
+    },
+    .{
+        "models_decals",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/obj/character.obj",
+                .virtual_path = "resources/models/obj/character.obj",
+            },
+            .{
+                .src_path = "examples/models/resources/models/obj/character_diffuse.png",
+                .virtual_path = "resources/models/obj/character_diffuse.png",
+            },
+            .{
+                .src_path = "examples/models/resources/raylib_logo.png",
+                .virtual_path = "resources/raylib_logo.png",
+            },
+        },
+    },
+    .{
+        "models_directional_billboard",
+        .{
+            .{
+                .src_path = "examples/models/resources/skillbot.png",
+                .virtual_path = "resources/skillbot.png",
+            },
+        },
+    },
+    .{
+        "models_first_person_maze",
+        .{
+            .{
+                .src_path = "examples/models/resources/cubicmap.png",
+                .virtual_path = "resources/cubicmap.png",
+            },
+            .{
+                .src_path = "examples/models/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+        },
+    },
+    .{
+        "models_heightmap_rendering",
+        .{
+            .{
+                .src_path = "examples/models/resources/heightmap.png",
+                .virtual_path = "resources/heightmap.png",
+            },
+        },
+    },
+    .{
+        "models_loading",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/obj/castle.obj",
+                .virtual_path = "resources/models/obj/castle.obj",
+            },
+            .{
+                .src_path = "examples/models/resources/models/obj/castle_diffuse.png",
+                .virtual_path = "resources/models/obj/castle_diffuse.png",
+            },
+        },
+    },
+    .{
+        "models_loading_gltf",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/gltf/robot.glb",
+                .virtual_path = "resources/models/gltf/robot.glb",
+            },
+        },
+    },
+    .{
+        "models_loading_iqm",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/iqm/guy.iqm",
+                .virtual_path = "resources/models/iqm/guy.iqm",
+            },
+            .{
+                .src_path = "examples/models/resources/models/iqm/guytex.png",
+                .virtual_path = "resources/models/iqm/guytex.png",
+            },
+            .{
+                .src_path = "examples/models/resources/models/iqm/guyanim.iqm",
+                .virtual_path = "resources/models/iqm/guyanim.iqm",
+            },
+        },
+    },
+    .{
+        "models_loading_m3d",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/m3d/cesium_man.m3d",
+                .virtual_path = "resources/models/m3d/cesium_man.m3d",
+            },
+        },
+    },
+    .{
+        "models_loading_vox",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/vox/chr_knight.vox",
+                .virtual_path = "resources/models/vox/chr_knight.vox",
+            },
+            .{
+                .src_path = "examples/models/resources/models/vox/chr_sword.vox",
+                .virtual_path = "resources/models/vox/chr_sword.vox",
+            },
+            .{
+                .src_path = "examples/models/resources/models/vox/monu9.vox",
+                .virtual_path = "resources/models/vox/monu9.vox",
+            },
+            .{
+                .src_path = "examples/models/resources/models/vox/fez.vox",
+                .virtual_path = "resources/models/vox/fez.vox",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/voxel_lighting.vs",
+                .virtual_path = "resources/shaders/glsl100/voxel_lighting.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/voxel_lighting.fs",
+                .virtual_path = "resources/shaders/glsl100/voxel_lighting.fs",
+            },
+        },
+    },
+    .{
+        "models_mesh_picking",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/obj/turret.obj",
+                .virtual_path = "resources/models/obj/turret.obj",
+            },
+            .{
+                .src_path = "examples/models/resources/models/obj/turret_diffuse.png",
+                .virtual_path = "resources/models/obj/turret_diffuse.png",
+            },
+        },
+    },
+    .{
+        "models_rotating_cube",
+        .{
+            .{
+                .src_path = "examples/models/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+        },
+    },
+    .{
+        "models_skybox_rendering",
+        .{
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skybox.vs",
+                .virtual_path = "resources/shaders/glsl100/skybox.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/skybox.fs",
+                .virtual_path = "resources/shaders/glsl100/skybox.fs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/cubemap.vs",
+                .virtual_path = "resources/shaders/glsl100/cubemap.vs",
+            },
+            .{
+                .src_path = "examples/models/resources/shaders/glsl100/cubemap.fs",
+                .virtual_path = "resources/shaders/glsl100/cubemap.fs",
+            },
+            .{
+                .src_path = "examples/models/resources/dresden_square_2k.hdr",
+                .virtual_path = "resources/dresden_square_2k.hdr",
+            },
+            .{
+                .src_path = "examples/models/resources/skybox.png",
+                .virtual_path = "resources/skybox.png",
+            },
+        },
+    },
+    .{
+        "models_textured_cube",
+        .{
+            .{
+                .src_path = "examples/models/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+        },
+    },
+    .{
+        "models_yaw_pitch_roll",
+        .{
+            .{
+                .src_path = "examples/models/resources/models/obj/plane.obj",
+                .virtual_path = "resources/models/obj/plane.obj",
+            },
+            .{
+                .src_path = "examples/models/resources/models/obj/plane_diffuse.png",
+                .virtual_path = "resources/models/obj/plane_diffuse.png",
+            },
+        },
+    },
+    .{
+        "shaders_ascii_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/fudesumi.png",
+                .virtual_path = "resources/fudesumi.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/raysan.png",
+                .virtual_path = "resources/raysan.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/ascii.fs",
+                .virtual_path = "resources/shaders/glsl100/ascii.fs",
+            },
+        },
+    },
+    .{
+        "shaders_basic_lighting",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lighting.vs",
+                .virtual_path = "resources/shaders/glsl100/lighting.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lighting.fs",
+                .virtual_path = "resources/shaders/glsl100/lighting.fs",
+            },
+        },
+    },
+    .{
+        "shaders_basic_pbr",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/pbr.vs",
+                .virtual_path = "resources/shaders/glsl100/pbr.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/pbr.fs",
+                .virtual_path = "resources/shaders/glsl100/pbr.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/old_car_new.glb",
+                .virtual_path = "resources/models/old_car_new.glb",
+            },
+            .{
+                .src_path = "examples/shaders/resources/old_car_d.png",
+                .virtual_path = "resources/old_car_d.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/old_car_mra.png",
+                .virtual_path = "resources/old_car_mra.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/old_car_n.png",
+                .virtual_path = "resources/old_car_n.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/old_car_e.png",
+                .virtual_path = "resources/old_car_e.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/plane.glb",
+                .virtual_path = "resources/models/plane.glb",
+            },
+            .{
+                .src_path = "examples/shaders/resources/road_a.png",
+                .virtual_path = "resources/road_a.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/road_mra.png",
+                .virtual_path = "resources/road_mra.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/road_n.png",
+                .virtual_path = "resources/road_n.png",
+            },
+        },
+    },
+    .{
+        "shaders_cel_shading",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/models/old_car_new.glb",
+                .virtual_path = "resources/models/old_car_new.glb",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/cel.vs",
+                .virtual_path = "resources/shaders/glsl100/cel.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/cel.fs",
+                .virtual_path = "resources/shaders/glsl100/cel.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/outline_hull.vs",
+                .virtual_path = "resources/shaders/glsl100/outline_hull.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/outline_hull.fs",
+                .virtual_path = "resources/shaders/glsl100/outline_hull.fs",
+            },
+        },
+    },
+    .{
+        "shaders_color_correction",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/parrots.png",
+                .virtual_path = "resources/parrots.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/cat.png",
+                .virtual_path = "resources/cat.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/mandrill.png",
+                .virtual_path = "resources/mandrill.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/fudesumi.png",
+                .virtual_path = "resources/fudesumi.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/color_correction.fs",
+                .virtual_path = "resources/shaders/glsl100/color_correction.fs",
+            },
+        },
+    },
+    .{
+        "shaders_custom_uniform",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/models/barracks.obj",
+                .virtual_path = "resources/models/barracks.obj",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/barracks_diffuse.png",
+                .virtual_path = "resources/models/barracks_diffuse.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/swirl.fs",
+                .virtual_path = "resources/shaders/glsl100/swirl.fs",
+            },
+        },
+    },
+    .{
+        "shaders_deferred_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/gbuffer.vs",
+                .virtual_path = "resources/shaders/glsl100/gbuffer.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/gbuffer.fs",
+                .virtual_path = "resources/shaders/glsl100/gbuffer.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/deferred_shading.vs",
+                .virtual_path = "resources/shaders/glsl100/deferred_shading.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/deferred_shading.fs",
+                .virtual_path = "resources/shaders/glsl100/deferred_shading.fs",
+            },
+        },
+    },
+    .{
+        "shaders_depth_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/depth_render.fs",
+                .virtual_path = "resources/shaders/glsl100/depth_render.fs",
+            },
+        },
+    },
+    .{
+        "shaders_depth_writing",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/depth_write.fs",
+                .virtual_path = "resources/shaders/glsl100/depth_write.fs",
+            },
+        },
+    },
+    .{
+        "shaders_eratosthenes_sieve",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/eratosthenes.fs",
+                .virtual_path = "resources/shaders/glsl100/eratosthenes.fs",
+            },
+        },
+    },
+    .{
+        "shaders_fog_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/texel_checker.png",
+                .virtual_path = "resources/texel_checker.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lighting.vs",
+                .virtual_path = "resources/shaders/glsl100/lighting.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/fog.fs",
+                .virtual_path = "resources/shaders/glsl100/fog.fs",
+            },
+        },
+    },
+    .{
+        "shaders_game_of_life",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/game_of_life.fs",
+                .virtual_path = "resources/shaders/glsl100/game_of_life.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/r_pentomino.png",
+                .virtual_path = "resources/game_of_life/r_pentomino.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/glider.png",
+                .virtual_path = "resources/game_of_life/glider.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/acorn.png",
+                .virtual_path = "resources/game_of_life/acorn.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/spaceships.png",
+                .virtual_path = "resources/game_of_life/spaceships.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/still_lifes.png",
+                .virtual_path = "resources/game_of_life/still_lifes.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/oscillators.png",
+                .virtual_path = "resources/game_of_life/oscillators.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/puffer_train.png",
+                .virtual_path = "resources/game_of_life/puffer_train.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/glider_gun.png",
+                .virtual_path = "resources/game_of_life/glider_gun.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/game_of_life/breeder.png",
+                .virtual_path = "resources/game_of_life/breeder.png",
+            },
+        },
+    },
+    .{
+        "shaders_hot_reloading",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/reload.fs",
+                .virtual_path = "resources/shaders/glsl100/reload.fs",
+            },
+        },
+    },
+    .{
+        "shaders_hybrid_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/hybrid_raymarch.fs",
+                .virtual_path = "resources/shaders/glsl100/hybrid_raymarch.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/hybrid_raster.fs",
+                .virtual_path = "resources/shaders/glsl100/hybrid_raster.fs",
+            },
+        },
+    },
+    .{
+        "shaders_julia_set",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/julia_set.fs",
+                .virtual_path = "resources/shaders/glsl100/julia_set.fs",
+            },
+        },
+    },
+    .{
+        "shaders_lightmap_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lightmap.vs",
+                .virtual_path = "resources/shaders/glsl100/lightmap.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lightmap.fs",
+                .virtual_path = "resources/shaders/glsl100/lightmap.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/spark_flame.png",
+                .virtual_path = "resources/spark_flame.png",
+            },
+        },
+    },
+    .{
+        "shaders_mandelbrot_set",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/mandelbrot_set.fs",
+                .virtual_path = "resources/shaders/glsl100/mandelbrot_set.fs",
+            },
+        },
+    },
+    .{
+        "shaders_mesh_instancing",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lighting_instancing.vs",
+                .virtual_path = "resources/shaders/glsl100/lighting_instancing.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/lighting.fs",
+                .virtual_path = "resources/shaders/glsl100/lighting.fs",
+            },
+        },
+    },
+    .{
+        "shaders_model_shader",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/models/watermill.obj",
+                .virtual_path = "resources/models/watermill.obj",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/watermill_diffuse.png",
+                .virtual_path = "resources/models/watermill_diffuse.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/grayscale.fs",
+                .virtual_path = "resources/shaders/glsl100/grayscale.fs",
+            },
+        },
+    },
+    .{
+        "shaders_multi_sample2d",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/color_mix.fs",
+                .virtual_path = "resources/shaders/glsl100/color_mix.fs",
+            },
+        },
+    },
+    .{
+        "shaders_normalmap_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/normalmap.vs",
+                .virtual_path = "resources/shaders/glsl100/normalmap.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/normalmap.fs",
+                .virtual_path = "resources/shaders/glsl100/normalmap.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/plane.glb",
+                .virtual_path = "resources/models/plane.glb",
+            },
+            .{
+                .src_path = "examples/shaders/resources/tiles_diffuse.png",
+                .virtual_path = "resources/tiles_diffuse.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/tiles_normal.png",
+                .virtual_path = "resources/tiles_normal.png",
+            },
+        },
+    },
+    .{
+        "shaders_palette_switch",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/palette_switch.fs",
+                .virtual_path = "resources/shaders/glsl100/palette_switch.fs",
+            },
+        },
+    },
+    .{
+        "shaders_postprocessing",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/models/church.obj",
+                .virtual_path = "resources/models/church.obj",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/church_diffuse.png",
+                .virtual_path = "resources/models/church_diffuse.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/grayscale.fs",
+                .virtual_path = "resources/shaders/glsl100/grayscale.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/posterization.fs",
+                .virtual_path = "resources/shaders/glsl100/posterization.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/dream_vision.fs",
+                .virtual_path = "resources/shaders/glsl100/dream_vision.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/pixelizer.fs",
+                .virtual_path = "resources/shaders/glsl100/pixelizer.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/cross_hatching.fs",
+                .virtual_path = "resources/shaders/glsl100/cross_hatching.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/cross_stitching.fs",
+                .virtual_path = "resources/shaders/glsl100/cross_stitching.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/predator.fs",
+                .virtual_path = "resources/shaders/glsl100/predator.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/scanlines.fs",
+                .virtual_path = "resources/shaders/glsl100/scanlines.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/fisheye.fs",
+                .virtual_path = "resources/shaders/glsl100/fisheye.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/sobel.fs",
+                .virtual_path = "resources/shaders/glsl100/sobel.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/bloom.fs",
+                .virtual_path = "resources/shaders/glsl100/bloom.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/blur.fs",
+                .virtual_path = "resources/shaders/glsl100/blur.fs",
+            },
+        },
+    },
+    .{
+        "shaders_raymarching_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/raymarching.fs",
+                .virtual_path = "resources/shaders/glsl100/raymarching.fs",
+            },
+        },
+    },
+    .{
+        "shaders_rounded_rectangle",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/base.vs",
+                .virtual_path = "resources/shaders/glsl100/base.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/rounded_rectangle.fs",
+                .virtual_path = "resources/shaders/glsl100/rounded_rectangle.fs",
+            },
+        },
+    },
+    .{
+        "shaders_shadowmap_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/shadowmap.vs",
+                .virtual_path = "resources/shaders/glsl100/shadowmap.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/shadowmap.fs",
+                .virtual_path = "resources/shaders/glsl100/shadowmap.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/models/robot.glb",
+                .virtual_path = "resources/models/robot.glb",
+            },
+        },
+    },
+    .{
+        "shaders_shapes_textures",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/fudesumi.png",
+                .virtual_path = "resources/fudesumi.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/grayscale.fs",
+                .virtual_path = "resources/shaders/glsl100/grayscale.fs",
+            },
+        },
+    },
+    .{
+        "shaders_simple_mask",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/mask.fs",
+                .virtual_path = "resources/shaders/glsl100/mask.fs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/plasma.png",
+                .virtual_path = "resources/plasma.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/mask.png",
+                .virtual_path = "resources/mask.png",
+            },
+        },
+    },
+    .{
+        "shaders_spotlight_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/raysan.png",
+                .virtual_path = "resources/raysan.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/spotlight.fs",
+                .virtual_path = "resources/shaders/glsl100/spotlight.fs",
+            },
+        },
+    },
+    .{
+        "shaders_texture_outline",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/fudesumi.png",
+                .virtual_path = "resources/fudesumi.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/outline.fs",
+                .virtual_path = "resources/shaders/glsl100/outline.fs",
+            },
+        },
+    },
+    .{
+        "shaders_texture_rendering",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/cubes_panning.fs",
+                .virtual_path = "resources/shaders/glsl100/cubes_panning.fs",
+            },
+        },
+    },
+    .{
+        "shaders_texture_tiling",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/cubicmap_atlas.png",
+                .virtual_path = "resources/cubicmap_atlas.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/tiling.fs",
+                .virtual_path = "resources/shaders/glsl100/tiling.fs",
+            },
+        },
+    },
+    .{
+        "shaders_texture_waves",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/space.png",
+                .virtual_path = "resources/space.png",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/wave.fs",
+                .virtual_path = "resources/shaders/glsl100/wave.fs",
+            },
+        },
+    },
+    .{
+        "shaders_vertex_displacement",
+        .{
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/vertex_displacement.vs",
+                .virtual_path = "resources/shaders/glsl100/vertex_displacement.vs",
+            },
+            .{
+                .src_path = "examples/shaders/resources/shaders/glsl100/vertex_displacement.fs",
+                .virtual_path = "resources/shaders/glsl100/vertex_displacement.fs",
+            },
+        },
+    },
+    .{
+        "audio_mixed_processor",
+        .{
+            .{
+                .src_path = "examples/audio/resources/country.mp3",
+                .virtual_path = "resources/country.mp3",
+            },
+            .{
+                .src_path = "examples/audio/resources/coin.wav",
+                .virtual_path = "resources/coin.wav",
+            },
+        },
+    },
+    .{
+        "audio_module_playing",
+        .{
+            .{
+                .src_path = "examples/audio/resources/mini1111.xm",
+                .virtual_path = "resources/mini1111.xm",
+            },
+        },
+    },
+    .{
+        "audio_music_stream",
+        .{
+            .{
+                .src_path = "examples/audio/resources/country.mp3",
+                .virtual_path = "resources/country.mp3",
+            },
+        },
+    },
+    .{
+        "audio_sound_loading",
+        .{
+            .{
+                .src_path = "examples/audio/resources/sound.wav",
+                .virtual_path = "resources/sound.wav",
+            },
+            .{
+                .src_path = "examples/audio/resources/target.ogg",
+                .virtual_path = "resources/target.ogg",
+            },
+        },
+    },
+    .{
+        "audio_sound_multi",
+        .{
+            .{
+                .src_path = "examples/audio/resources/sound.wav",
+                .virtual_path = "resources/sound.wav",
+            },
+        },
+    },
+    .{
+        "audio_sound_positioning",
+        .{
+            .{
+                .src_path = "examples/audio/resources/coin.wav",
+                .virtual_path = "resources/coin.wav",
+            },
+        },
+    },
+    .{
+        "audio_spectrum_visualizer",
+        .{
+            .{
+                .src_path = "examples/audio/resources/shaders/glsl100/fft.fs",
+                .virtual_path = "resources/shaders/glsl100/fft.fs",
+            },
+            .{
+                .src_path = "examples/audio/resources/country.mp3",
+                .virtual_path = "resources/country.mp3",
+            },
+        },
+    },
+    .{
+        "audio_stream_effects",
+        .{
+            .{
+                .src_path = "examples/audio/resources/country.mp3",
+                .virtual_path = "resources/country.mp3",
+            },
+        },
+    },
+}

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 X11 - www.glfw.org
+// GLFW 3.5 X11 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 
 // Check whether the display mode should be included in enumeration
@@ -150,6 +151,12 @@ void _glfwPollMonitorsX11(void)
             }
 
             XRRCrtcInfo* ci = XRRGetCrtcInfo(_glfw.x11.display, sr, oi->crtc);
+            if (!ci)
+            {
+                XRRFreeOutputInfo(oi);
+                continue;
+            }
+
             if (ci->rotation == RR_Rotate_90 || ci->rotation == RR_Rotate_270)
             {
                 widthMM  = oi->mm_height;
@@ -611,7 +618,6 @@ void _glfwSetGammaRampX11(_GLFWmonitor* monitor, const GLFWgammaramp* ramp)
 
 GLFWAPI RRCrtc glfwGetX11Adapter(GLFWmonitor* handle)
 {
-    _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(None);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_X11)
@@ -619,13 +625,15 @@ GLFWAPI RRCrtc glfwGetX11Adapter(GLFWmonitor* handle)
         _glfwInputError(GLFW_PLATFORM_UNAVAILABLE, "X11: Platform not initialized");
         return None;
     }
+
+    _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
+    assert(monitor != NULL);
 
     return monitor->x11.crtc;
 }
 
 GLFWAPI RROutput glfwGetX11Monitor(GLFWmonitor* handle)
 {
-    _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(None);
 
     if (_glfw.platform.platformID != GLFW_PLATFORM_X11)
@@ -633,6 +641,9 @@ GLFWAPI RROutput glfwGetX11Monitor(GLFWmonitor* handle)
         _glfwInputError(GLFW_PLATFORM_UNAVAILABLE, "X11: Platform not initialized");
         return None;
     }
+
+    _GLFWmonitor* monitor = (_GLFWmonitor*) handle;
+    assert(monitor != NULL);
 
     return monitor->x11.output;
 }

@@ -123,7 +123,7 @@ void jar_xm_generate_samples(jar_xm_context_t* ctx, float* output, size_t numsam
 // * @param output buffer of 2*numsamples elements (A left and right value for each sample)
 // * @param numsamples number of samples to generate
 void jar_xm_generate_samples_16bit(jar_xm_context_t* ctx, short* output, size_t numsamples) {
-    float* musicBuffer = JARXM_MALLOC((2*numsamples)*sizeof(float));
+    float* musicBuffer = (float *)JARXM_MALLOC((2*numsamples)*sizeof(float));
     jar_xm_generate_samples(ctx, musicBuffer, numsamples);
 
     if(output){
@@ -136,7 +136,7 @@ void jar_xm_generate_samples_16bit(jar_xm_context_t* ctx, short* output, size_t 
 // * @param output buffer of 2*numsamples elements (A left and right value for each sample)
 // * @param numsamples number of samples to generate
 void jar_xm_generate_samples_8bit(jar_xm_context_t* ctx, char* output, size_t numsamples) {
-    float* musicBuffer = JARXM_MALLOC((2*numsamples)*sizeof(float));
+    float* musicBuffer = (float *)JARXM_MALLOC((2*numsamples)*sizeof(float));
     jar_xm_generate_samples(ctx, musicBuffer, numsamples);
 
     if(output){
@@ -231,6 +231,13 @@ uint64_t jar_xm_get_remaining_samples(jar_xm_context_t* ctx);
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+
+#ifdef DEBUG
+    // Undefine DEBUG to avoid external redefinition warnings/conflicts
+    // This is probably a common definition for
+    // many external build systems' debug configurations
+    #undef DEBUG
+#endif
 
 #if JAR_XM_DEBUG            //JAR_XM_DEBUG defined as 0
 #include <stdio.h>
@@ -536,7 +543,7 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
 #endif
 
     bytes_needed = jar_xm_get_memory_needed_for_context(moddata, moddata_length);
-    mempool = JARXM_MALLOC(bytes_needed);
+    mempool = (char *)JARXM_MALLOC(bytes_needed);
     if(mempool == NULL && bytes_needed > 0) { /* JARXM_MALLOC() failed, trouble ahead */
         DEBUG("call to JARXM_MALLOC() failed, returned %p", (void*)mempool);
         return 2;
@@ -551,11 +558,11 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
 
     ctx->rate = rate;
     mempool = jar_xm_load_module(ctx, moddata, moddata_length, mempool);
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
 
     ctx->channels = (jar_xm_channel_context_t*)mempool;
     mempool += ctx->module.num_channels * sizeof(jar_xm_channel_context_t);
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
 
     ctx->default_global_volume = 1.f;
     ctx->global_volume = ctx->default_global_volume;
@@ -576,7 +583,7 @@ int jar_xm_create_context_safe(jar_xm_context_t** ctxp, const char* moddata, siz
         ch->actual_panning = .5f;
     }
 
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
     ctx->row_loop_count = (uint8_t *)mempool;
     mempool += MAX_NUM_ROWS * sizeof(uint8_t);
 
@@ -674,14 +681,14 @@ uint64_t jar_xm_get_latest_trigger_of_channel(jar_xm_context_t *ctx, uint16_t ch
 
 //* Bound reader macros.
 //* If we attempt to read the buffer out-of-bounds, pretend that the buffer is infinitely padded with zeroes.
-#define READ_U8(offset) (((offset) < moddata_length) ? (*(uint8_t*)(moddata + (offset))) : 0)
+#define READ_U8(offset) (((offset) < moddata_length) ? (*(uint8_t *)(moddata + (offset))) : 0)
 #define READ_U16(offset) ((uint16_t)READ_U8(offset) | ((uint16_t)READ_U8((offset) + 1) << 8))
 #define READ_U32(offset) ((uint32_t)READ_U16(offset) | ((uint32_t)READ_U16((offset) + 2) << 16))
 #define READ_MEMCPY(ptr, offset, length) memcpy_pad(ptr, length, moddata, moddata_length, offset)
 
 static void memcpy_pad(void *dst, size_t dst_len, const void *src, size_t src_len, size_t offset) {
-    uint8_t *dst_c = dst;
-    const uint8_t *src_c = src;
+    uint8_t *dst_c = (uint8_t *)dst;
+    const uint8_t *src_c = (uint8_t *)src;
 
     /* how many bytes can be copied without overrunning `src` */
     size_t copy_bytes = (src_len >= offset) ? (src_len - offset) : 0;
@@ -801,10 +808,10 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
     mod->linear_interpolation = 1; // Linear interpolation can be set after loading
     mod->ramping = 1; // ramping can be set after loading
     mempool += mod->num_patterns * sizeof(jar_xm_pattern_t);
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
     mod->instruments = (jar_xm_instrument_t*)mempool;
     mempool += mod->num_instruments * sizeof(jar_xm_instrument_t);
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
     uint16_t flags = READ_U32(offset + 14);
     mod->frequency_type = (flags & (1 << 0)) ? jar_xm_LINEAR_FREQUENCIES : jar_xm_AMIGA_FREQUENCIES;
     ctx->default_tempo = READ_U16(offset + 16);
@@ -877,7 +884,7 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
 
         offset += packed_patterndata_size;
     }
-    mempool = ALIGN_PTR(mempool, 16);
+    mempool = (char *)ALIGN_PTR(mempool, 16);
 
     /* Read instruments */
     for(uint16_t i = 0; i < ctx->module.num_instruments; ++i) {
@@ -894,6 +901,11 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
 
             instr->volume_envelope.num_points = READ_U8(offset + 225);
             instr->panning_envelope.num_points = READ_U8(offset + 226);
+
+            if (instr->volume_envelope.num_points > NUM_ENVELOPE_POINTS)
+                instr->volume_envelope.num_points = NUM_ENVELOPE_POINTS;
+            if (instr->panning_envelope.num_points > NUM_ENVELOPE_POINTS)
+                instr->panning_envelope.num_points = NUM_ENVELOPE_POINTS;
 
             for(uint8_t j = 0; j < instr->volume_envelope.num_points; ++j) {
                 instr->volume_envelope.points[j].frame = READ_U16(offset + 129 + 4 * j);
@@ -921,11 +933,11 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
             instr->panning_envelope.enabled = flags & (1 << 0);
             instr->panning_envelope.sustain_enabled = flags & (1 << 1);
             instr->panning_envelope.loop_enabled = flags & (1 << 2);
-            instr->vibrato_type = READ_U8(offset + 235);
+            instr->vibrato_type = (jar_xm_waveform_type_t)READ_U8(offset + 235);
             if(instr->vibrato_type == 2) {
-                instr->vibrato_type = 1;
+                instr->vibrato_type = (jar_xm_waveform_type_t)1;
             } else if(instr->vibrato_type == 1) {
-                instr->vibrato_type = 2;
+                instr->vibrato_type = (jar_xm_waveform_type_t)2;
             }
             instr->vibrato_sweep = READ_U8(offset + 236);
             instr->vibrato_depth = READ_U8(offset + 237);
@@ -969,7 +981,7 @@ char* jar_xm_load_module(jar_xm_context_t* ctx, const char* moddata, size_t modd
             sample->panning = (float)READ_U8(offset + 15) / 255.f;
             sample->relative_note = (int8_t)READ_U8(offset + 16);
             READ_MEMCPY(sample->name, 18, SAMPLE_NAME_LENGTH);
-            sample->data = (float*)mempool;
+            sample->data = (float *)mempool;
             if(sample->bits == 16) {
                 /* 16 bit sample */
                 mempool += sample->length * (sizeof(float) >> 1);
@@ -1204,7 +1216,7 @@ static void jar_xm_tone_portamento(jar_xm_context_t* ctx, jar_xm_channel_context
 }
 
 static void jar_xm_pitch_slide(jar_xm_context_t* ctx, jar_xm_channel_context_t* ch, float period_offset) {
-    /* Don't ask about the 4.f coefficient. I found mention of it nowhere. Found by ear™. */
+    /* Don't ask about the 4.f coefficient. I found mention of it nowhere. Found by ear. */
     if(ctx->module.frequency_type == jar_xm_LINEAR_FREQUENCIES) {period_offset *= 4.f; }
     ch->period += period_offset;
     jar_xm_CLAMP_DOWN(ch->period);
@@ -1468,7 +1480,7 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
             jar_xm_pitch_slide(ctx, ch, ch->fine_portamento_down_param);
             break;
         case 4: /* E4y: Set vibrato control */
-            ch->vibrato_waveform = s->effect_param & 3;
+            ch->vibrato_waveform = (jar_xm_waveform_type_t)(s->effect_param & 3);
             ch->vibrato_waveform_retrigger = !((s->effect_param >> 2) & 1);
             break;
         case 5: /* E5y: Set finetune */
@@ -1495,7 +1507,7 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
             }
             break;
         case 7: /* E7y: Set tremolo control */
-            ch->tremolo_waveform = s->effect_param & 3;
+            ch->tremolo_waveform = (jar_xm_waveform_type_t)(s->effect_param & 3);
             ch->tremolo_waveform_retrigger = !((s->effect_param >> 2) & 1);
             break;
         case 0xA: /* EAy: Fine volume slide up */
@@ -1507,7 +1519,7 @@ static void jar_xm_handle_note_and_instrument(jar_xm_context_t* ctx, jar_xm_chan
             jar_xm_volume_slide(ch, ch->fine_volume_slide_param);
             break;
         case 0xD: /* EDy: Note delay */
-            /* XXX: figure this out better. EDx triggers the note even when there no note and no instrument. But ED0 acts like like a ghost note, EDx (x ≠ 0) does not. */
+            /* XXX: figure this out better. EDx triggers the note even when there no note and no instrument. But ED0 acts like like a ghost note, EDx (x != 0) does not. */
             if(s->note == 0 && s->instrument == 0) {
                 unsigned int flags = jar_xm_TRIGGER_KEEP_VOLUME;
                 if(ch->current->effect_param & 0x0F) {
@@ -1795,7 +1807,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
             if(ch->current->effect_param > 0) {
                 char arp_offset = ctx->tempo % 3;
                 switch(arp_offset) {
-                case 2: /* 0 -> x -> 0 -> y -> x -> … */
+                case 2: /* 0 -> x -> 0 -> y -> x -> ... */
                     if(ctx->current_tick == 1) {
                         ch->arp_in_progress = true;
                         ch->arp_note_offset = ch->current->effect_param >> 4;
@@ -1803,7 +1815,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
                         break;
                     }
                     /* No break here, this is intended */
-                case 1: /* 0 -> 0 -> y -> x -> … */
+                case 1: /* 0 -> 0 -> y -> x -> ... */
                     if(ctx->current_tick == 0) {
                         ch->arp_in_progress = false;
                         ch->arp_note_offset = 0;
@@ -1811,7 +1823,7 @@ static void jar_xm_tick(jar_xm_context_t* ctx) {
                         break;
                     }
                     /* No break here, this is intended */
-                case 0: /* 0 -> y -> x -> … */
+                case 0: /* 0 -> y -> x -> ... */
                     jar_xm_arpeggio(ctx, ch, ch->current->effect_param, ctx->current_tick - arp_offset);
                 default:
                     break;
@@ -2216,7 +2228,7 @@ int jar_xm_create_context_from_file(jar_xm_context_t** ctx, uint32_t rate, const
         return 4;
     }
 
-    char* data = JARXM_MALLOC(size + 1);
+    char* data = (char *)JARXM_MALLOC(size + 1);
     if(!data || fread(data, 1, size, xmf) < size) {
         fclose(xmf);
         DEBUG_ERR(data ? "fread() failed" : "JARXM_MALLOC() failed");

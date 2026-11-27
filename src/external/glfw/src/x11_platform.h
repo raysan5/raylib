@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 X11 - www.glfw.org
+// GLFW 3.5 X11 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -452,9 +452,6 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceXlibPresentationSupportKHR)(V
 typedef VkResult (APIENTRY *PFN_vkCreateXcbSurfaceKHR)(VkInstance,const VkXcbSurfaceCreateInfoKHR*,const VkAllocationCallbacks*,VkSurfaceKHR*);
 typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR)(VkPhysicalDevice,uint32_t,xcb_connection_t*,xcb_visualid_t);
 
-#include "xkb_unicode.h"
-#include "posix_poll.h"
-
 #define GLFW_X11_WINDOW_STATE           _GLFWwindowX11 x11;
 #define GLFW_X11_LIBRARY_WINDOW_STATE   _GLFWlibraryX11 x11;
 #define GLFW_X11_MONITOR_STATE          _GLFWmonitorX11 x11;
@@ -463,6 +460,7 @@ typedef VkBool32 (APIENTRY *PFN_vkGetPhysicalDeviceXcbPresentationSupportKHR)(Vk
 #define GLFW_GLX_CONTEXT_STATE          _GLFWcontextGLX glx;
 #define GLFW_GLX_LIBRARY_CONTEXT_STATE  _GLFWlibraryGLX glx;
 
+#define GLFW_INVALID_CODEPOINT 0xffffffffu
 
 // GLX-specific per-context data
 //
@@ -470,6 +468,7 @@ typedef struct _GLFWcontextGLX
 {
     GLXContext      handle;
     GLXWindow       window;
+    GLXFBConfig     fbconfig;
 } _GLFWcontextGLX;
 
 // GLX-specific global data
@@ -504,18 +503,18 @@ typedef struct _GLFWlibraryGLX
     PFNGLXSWAPINTERVALEXTPROC           SwapIntervalEXT;
     PFNGLXSWAPINTERVALMESAPROC          SwapIntervalMESA;
     PFNGLXCREATECONTEXTATTRIBSARBPROC   CreateContextAttribsARB;
-    GLFWbool        SGI_swap_control;
-    GLFWbool        EXT_swap_control;
-    GLFWbool        MESA_swap_control;
-    GLFWbool        ARB_multisample;
-    GLFWbool        ARB_framebuffer_sRGB;
-    GLFWbool        EXT_framebuffer_sRGB;
-    GLFWbool        ARB_create_context;
-    GLFWbool        ARB_create_context_profile;
-    GLFWbool        ARB_create_context_robustness;
-    GLFWbool        EXT_create_context_es2_profile;
-    GLFWbool        ARB_create_context_no_error;
-    GLFWbool        ARB_context_flush_control;
+    bool            SGI_swap_control;
+    bool            EXT_swap_control;
+    bool            MESA_swap_control;
+    bool            ARB_multisample;
+    bool            ARB_framebuffer_sRGB;
+    bool            EXT_framebuffer_sRGB;
+    bool            ARB_create_context;
+    bool            ARB_create_context_profile;
+    bool            ARB_create_context_robustness;
+    bool            EXT_create_context_es2_profile;
+    bool            ARB_create_context_no_error;
+    bool            ARB_context_flush_control;
 } _GLFWlibraryGLX;
 
 // X11-specific per-window data
@@ -983,6 +982,8 @@ unsigned long _glfwGetWindowPropertyX11(Window window,
                                         Atom type,
                                         unsigned char** value);
 GLFWbool _glfwIsVisualTransparentX11(Visual* visual);
+
+uint32_t _glfwKeySym2UnicodeX11(unsigned int keysym);
 
 void _glfwGrabErrorHandlerX11(void);
 void _glfwReleaseErrorHandlerX11(void);

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.5 Cocoa - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -290,8 +290,6 @@ void _glfwSetVideoModeCocoa(_GLFWmonitor* monitor, const GLFWvidmode* desired);
 void _glfwRestoreVideoModeCocoa(_GLFWmonitor* monitor);
 
 float _glfwTransformYCocoa(float y);
-
-void* _glfwLoadLocalVulkanLoaderCocoa(void);
 
 GLFWbool _glfwInitNSGL(void);
 void _glfwTerminateNSGL(void);

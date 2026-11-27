@@ -198,7 +198,7 @@ extern int zsdeflate(struct sdefl *s, void *o, const void *i, int n, int lvl);
 static int
 sdefl_ilog2(int n) {
   if (!n) return 0;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__llvm__) && !defined(__INTEL_COMPILER)   // @raysan5, address PR #5367
   unsigned long msbp = 0;
   _BitScanReverse(&msbp, (unsigned long)n);
   return (int)msbp;
